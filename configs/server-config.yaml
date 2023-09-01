@@ -1,0 +1,22 @@
+init:
+  root:
+    email: admin@rig.dev
+    password: TeamRig22!
+
+auth:
+  jwt:
+    secret: shhhdonotshare
+
+repository:
+  secret:
+    mongodb:
+      key: thisisasecret
+
+registry:
+  log_level: warn
+
+client:
+  mongo:
+    host: localhost:27017
+    user: mongodb
+    password: mongodb

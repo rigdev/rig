@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package api.v1.project.settings;
+
+import "api/v1/project/settings/settings.proto";
+
+service Service {
+  // Gets the users settings for the current project.
+  rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse) {}
+  // Sets the users settings for the current project.
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {}
+}
+
+message GetSettingsRequest {}
+
+message GetSettingsResponse {
+  api.v1.project.settings.Settings settings = 1;
+}
+
+message UpdateSettingsRequest {
+  repeated api.v1.project.settings.Update updates = 1;
+}
+
+message UpdateSettingsResponse {}

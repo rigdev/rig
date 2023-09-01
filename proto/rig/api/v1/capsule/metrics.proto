@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "google/protobuf/timestamp.proto";
+
+message ContainerMetrics {
+    google.protobuf.Timestamp timestamp = 1;
+    uint64 memory_bytes = 2;
+    uint64 cpu_ms = 3;
+    uint64 storage_bytes = 4;
+}
+
+message InstanceMetrics {
+    string capsule_id = 1;
+    string instance_id = 2;
+    ContainerMetrics main_container = 3;
+    ContainerMetrics proxy_container = 4;
+}

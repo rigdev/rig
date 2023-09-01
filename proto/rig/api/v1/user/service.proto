@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package api.v1.user;
+
+import "model/user.proto";
+import "model/common.proto";
+import "api/v1/user/user.proto";
+
+// The service to manage users in Users
+service Service {
+  // Create a new user
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  // Update a users profile and info
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+  // Get the list of active sessions for the given user.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
+  // Get a user by user-id.
+  rpc Get(GetRequest) returns (GetResponse) {}
+  // Lookup a user by a unique identifier - email, username, phone number etc.
+  rpc GetByIdentifier(GetByIdentifierRequest) returns (GetByIdentifierResponse) {}
+  // List users
+  rpc List(ListRequest) returns (ListResponse) {}
+  // Delete a specific user
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+}
+
+message GetByIdentifierRequest {
+  model.UserIdentifier identifier = 1;
+}
+
+message GetByIdentifierResponse {
+  api.v1.user.User user = 1;
+}
+
+// The request of a Users.Create RPC
+message CreateRequest {
+  // Initial fields to set.
+  repeated api.v1.user.Update initializers = 1;
+}
+
+// The response of a Users.Create RPC
+message CreateResponse {
+  // The created user.
+  api.v1.user.User user = 1;
+}
+
+// The request of a Users.Update RPC
+message UpdateRequest {
+  // The user identifier to fetch the user
+  string user_id = 1;
+  repeated api.v1.user.Update updates = 2;
+}
+
+// The response of a Users.Update RPC
+message UpdateResponse {}
+
+// The request of an Users.Get RPC
+message GetRequest {
+  // The user identifier to fetch the user
+  string user_id = 1;
+}
+
+// The response of an Users.Get RPC
+message GetResponse {
+  api.v1.user.User user = 1;
+}
+
+// The request of an Users.ListSessions RPC
+message ListSessionsRequest {
+  string user_id = 1;
+  model.Pagination pagination = 2;
+}
+
+// The response of a Users.ListSessions RPC
+message ListSessionsResponse {
+  repeated api.v1.user.SessionEntry sessions = 1;
+  uint64 total = 2;
+}
+
+// The request of an Users.Delete RPC
+message DeleteRequest {
+  // The user identifier to fetch the user
+  string user_id = 1;
+}
+
+// The response of an Users.Delete RPC
+message DeleteResponse {}
+
+// The request of a Users.List RPC
+message ListRequest {
+  model.Pagination pagination = 1;
+  string search = 2;
+}
+
+// The response of a Users.List RPC
+message ListResponse {
+  // The users returned
+  repeated model.UserEntry users = 1;
+  // Return number of users in database
+  uint64 total = 2;
+}

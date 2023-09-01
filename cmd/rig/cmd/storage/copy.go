@@ -1,0 +1,339 @@
+package storage
+
+import (
+	"context"
+	"io"
+	"io/fs"
+	"log"
+	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+	"regexp"
+	"strings"
+
+	"github.com/bufbuild/connect-go"
+	"github.com/jedib0t/go-pretty/v6/progress"
+	"github.com/rigdev/rig-go-api/api/v1/storage"
+	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/iterator"
+	"github.com/spf13/cobra"
+	"golang.org/x/sync/semaphore"
+)
+
+var excludeList = []string{
+	".git",
+	".DS_Store",
+}
+
+func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+	rawFrom := args[0]
+	rawTo := args[1]
+
+	pw := progress.NewWriter()
+	pw.SetOutputWriter(cmd.OutOrStderr())
+	pw.SetStyle(progress.StyleCircle)
+	pw.SetNumTrackersExpected(3)
+	go pw.Render()
+
+	if isNSUri(rawFrom) {
+		bucket, prefix, err := parseNSUri(rawFrom)
+		if err != nil {
+			return err
+		}
+		results := []*storage.ListObjectsResponse_Result{}
+		base := ""
+		if prefix != "" {
+			base = filepath.Base(prefix)
+		}
+		if !strings.Contains(base, ".") {
+			res, err := nc.Storage().ListObjects(ctx, &connect.Request[storage.ListObjectsRequest]{
+				Msg: &storage.ListObjectsRequest{
+					Bucket:    bucket,
+					Prefix:    prefix,
+					Recursive: storageRecursive,
+				},
+			})
+			if err != nil {
+				return err
+			}
+			results = res.Msg.GetResults()
+		} else {
+			toBase := filepath.Base(rawTo)
+			if !strings.Contains(toBase, ".") {
+				rawTo = path.Join(rawTo, base)
+			}
+
+			res, err := nc.Storage().GetObject(ctx, &connect.Request[storage.GetObjectRequest]{
+				Msg: &storage.GetObjectRequest{
+					Bucket: bucket,
+					Path:   prefix,
+				},
+			})
+			if err != nil {
+				return err
+			}
+			results = append(results, &storage.ListObjectsResponse_Result{
+				Result: &storage.ListObjectsResponse_Result_Object{
+					Object: res.Msg.GetObject(),
+				},
+			})
+		}
+		if isNSUri(rawTo) {
+			// Copy.
+			dstBucket, dstPrefix, err := parseNSUri(rawTo)
+			if err != nil {
+				return err
+			}
+			var p int64 = 3
+			sem := semaphore.NewWeighted(p)
+			for _, o := range results {
+				obj := o.GetObject()
+				if obj == nil {
+					continue
+				}
+				p := strings.TrimPrefix(obj.GetPath(), prefix)
+
+				sem.Acquire(ctx, 1)
+
+				go func() {
+					t := &progress.Tracker{
+						Message: obj.GetPath(),
+						Units:   progress.UnitsBytes,
+						Total:   int64(obj.GetSize()),
+					}
+					pw.AppendTracker(t)
+
+					if _, err := nc.Storage().CopyObject(ctx, &connect.Request[storage.CopyObjectRequest]{
+						Msg: &storage.CopyObjectRequest{
+							FromBucket: bucket,
+							FromPath:   obj.GetPath(),
+							ToBucket:   dstBucket,
+							ToPath:     path.Join(dstPrefix, p),
+						},
+					}); err != nil {
+						log.Fatal(err)
+					}
+					t.Increment(t.Total)
+					sem.Release(1)
+				}()
+			}
+			sem.Acquire(ctx, p)
+			pw.Stop()
+			return nil
+		} else {
+			// Download.
+			var p int64 = 3
+			sem := semaphore.NewWeighted(p)
+			for _, o := range results {
+				obj := o.GetObject()
+				if obj == nil {
+					continue
+				}
+				p := strings.TrimPrefix(obj.GetPath(), prefix)
+
+				sem.Acquire(ctx, 1)
+				go func() {
+					t := &progress.Tracker{
+						Message: obj.GetPath(),
+						Units:   progress.UnitsBytes,
+						Total:   int64(obj.GetSize()),
+					}
+					pw.AppendTracker(t)
+
+					if err := downloadFile(ctx, cmd, t, bucket, path.Join(rawTo, p), nc); err != nil {
+						log.Fatal(err)
+					}
+
+					sem.Release(1)
+				}()
+			}
+
+			sem.Acquire(ctx, p)
+			pw.Stop()
+			return nil
+		}
+	} else if isNSUri(rawTo) {
+		// Upload.
+		bucket, prefix, err := parseNSUri(rawTo)
+		if err != nil {
+			return err
+		}
+
+		itFiles := iterator.NewProducer[string]()
+
+		go func() {
+			defer itFiles.Done()
+			if err := filepath.WalkDir(rawFrom, func(path string, d fs.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+				if regexp.MustCompile(strings.Join(excludeList, "|")).Match([]byte(path)) {
+					return nil
+				}
+				if path != rawFrom && !storageRecursive && d.IsDir() {
+					return filepath.SkipDir
+				}
+				if d.Type().IsRegular() {
+					itFiles.Value(path)
+				}
+				return nil
+			}); err != nil {
+				itFiles.Error(err)
+			}
+		}()
+
+		it := iterator.Map[string](itFiles, func(filePath string) (*progress.Tracker, error) {
+			t := &progress.Tracker{
+				Message: filePath,
+				Units:   progress.UnitsBytes,
+			}
+			pw.AppendTracker(t)
+			return t, nil
+		})
+
+		defer it.Close()
+
+		var p int64 = 3
+
+		sem := semaphore.NewWeighted(p)
+		for {
+			t, err := it.Next()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return err
+			}
+
+			p := strings.TrimPrefix(t.Message, rawFrom)
+
+			sem.Acquire(ctx, 1)
+
+			go func() {
+				if err := uploadFile(ctx, cmd, t, bucket, path.Join(prefix, p), nc); err != nil {
+					log.Fatal(err)
+				}
+
+				sem.Release(1)
+			}()
+		}
+
+		sem.Acquire(ctx, p)
+		pw.Stop()
+		return nil
+	} else {
+		return errors.InvalidArgumentErrorf("one of `from` and `to` must be a storage path")
+	}
+}
+
+func uploadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bucket, path string, nc rig.Client) error {
+	from := t.Message
+
+	f, err := os.Open(from)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	s, err := f.Stat()
+	if err != nil {
+		return err
+	}
+
+	size := s.Size()
+
+	t.UpdateTotal(size)
+
+	mimeData := make([]byte, 512)
+	n, err := f.Read(mimeData)
+	if err != nil {
+		return err
+	}
+
+	if _, err := f.Seek(0, 0); err != nil {
+		return err
+	}
+
+	m := &storage.UploadObjectRequest_Metadata{
+		Bucket:      bucket,
+		Path:        path,
+		Size:        uint64(size),
+		ContentType: http.DetectContentType(mimeData[:n]),
+	}
+
+	// Upload.
+	c := nc.Storage().UploadObject(ctx)
+	if err := c.Send(&storage.UploadObjectRequest{Request: &storage.UploadObjectRequest_Metadata_{Metadata: m}}); err != nil {
+		return err
+	}
+
+	buffer := make([]byte, 64*1024)
+	for {
+		n, err := f.Read(buffer)
+		if err == io.EOF {
+			_, err := c.CloseAndReceive()
+			if err != nil {
+				return err
+			}
+
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		if err := c.Send(&storage.UploadObjectRequest{Request: &storage.UploadObjectRequest_Chunk{Chunk: buffer[:n]}}); err != nil {
+			return err
+		}
+
+		t.Increment(int64(n))
+	}
+}
+
+func downloadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bucket, path string, nc rig.Client) error {
+	from := t.Message
+	// Create the directories if they don't exist.
+	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
+		return err
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	// Download.
+	c, err := nc.Storage().DownloadObject(ctx, &connect.Request[storage.DownloadObjectRequest]{
+		Msg: &storage.DownloadObjectRequest{
+			Bucket: bucket,
+			Path:   from,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+
+	for c.Receive() {
+		res := c.Msg()
+		n, err := f.Write(res.GetChunk())
+		if err != nil {
+			return err
+		}
+		t.Increment(int64(n))
+	}
+	// For some reason the EOF error does not match io.EOF, but instead is unknown at just says unknown: EOF
+	if c.Err() == io.EOF {
+		return nil
+	}
+	if errors.IsUnknown(c.Err()) {
+		return nil
+	} else if c.Err() != nil {
+		return c.Err()
+	} else {
+		return nil
+	}
+}

@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package api.v1.project;
+
+import "api/v1/project/project.proto";
+import "model/common.proto";
+
+// The service to manage your project in Users
+service Service {
+  // Create project
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  // Delete project (everything in Users)
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+  // Get project
+  rpc Get(GetRequest) returns (GetResponse) {}
+  // Get project list
+  rpc List(ListRequest) returns (ListResponse) {}
+  // Update updates the profile of the project
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+  // Get public key of system
+  rpc PublicKey(PublicKeyRequest) returns (PublicKeyResponse) {}
+  // Use generates a project token for editing the project as the current
+  // user.
+  rpc Use(UseRequest) returns (UseResponse) {}
+}
+
+// The request of a Namespace.Create RPC
+message CreateRequest {
+  repeated api.v1.project.Update initializers = 1;
+}
+
+// The response of a Namespace.Create RPC
+message CreateResponse {
+  api.v1.project.Project project = 1;
+}
+
+// The request of a Namespace.Delete RPC
+message DeleteRequest {}
+
+// The response of a Namespace.Delete RPC
+message DeleteResponse {}
+
+// The request of a Namespace.Update RPC
+message UpdateRequest {
+  repeated api.v1.project.Update updates = 1;
+}
+
+// The response of a Namespace.Update RPC
+message UpdateResponse {}
+
+// The request of a Namespace.Get RPC
+message GetRequest {}
+
+// The response of a Namespace.Get RPC
+message GetResponse {
+  api.v1.project.Project project = 1;
+}
+
+// The request of a Namespace.List RPC
+message ListRequest {
+  model.Pagination pagination = 1;
+}
+
+message ListResponse {
+  repeated api.v1.project.Project projects = 1;
+  int64 total = 2;
+}
+
+// The request of a Namespace.PublicKey RPC
+message PublicKeyRequest {}
+
+// The response of a Namespace.PublicKey RPC
+message PublicKeyResponse {
+  // The id of the project
+  string public_key = 1;
+}
+
+message UseRequest {
+  string project_id = 1;
+}
+
+message UseResponse {
+  string project_token = 1;
+}

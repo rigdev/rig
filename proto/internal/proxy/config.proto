@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package proxy;
+
+import "api/v1/capsule/rollout.proto";
+
+enum Layer {
+  LAYER_UNSPECIFIED = 0;
+  LAYER_4 = 4;
+  LAYER_7 = 7;
+}
+
+message Interface {
+  uint32 source_port = 1;
+  uint32 target_port = 2;
+  Layer layer = 3;
+  repeated api.v1.capsule.Middleware middlewares = 4;
+}
+
+message Config {
+  string target_host = 1;
+  repeated Interface interfaces = 2;
+  string project_id = 3;
+  JWTMethod jwt_method = 4;
+}
+
+message JWTMethod {
+  oneof method {
+    string certificate = 1;
+    string secret = 2;
+  }
+}

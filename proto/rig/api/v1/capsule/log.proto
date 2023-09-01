@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "google/protobuf/timestamp.proto";
+
+message Log {
+  google.protobuf.Timestamp timestamp = 1;
+  LogMessage message = 2;
+}
+
+message LogMessage {
+  oneof message {
+    bytes stdout = 1;
+    bytes stderr = 2;
+  }
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "model/author.proto";
+import "google/protobuf/timestamp.proto";
+
+message Capsule {
+  string capsule_id = 1;
+  string name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  model.Author created_by = 4;
+  uint64 current_rollout = 5;
+}
+
+message Update {}

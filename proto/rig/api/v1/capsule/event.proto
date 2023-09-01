@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "google/protobuf/timestamp.proto";
+import "model/author.proto";
+
+message Event {
+  // Potential author associated with the event.
+  model.Author created_by = 1;
+  google.protobuf.Timestamp created_at = 2;
+  uint64 rollout_id = 3;
+  string message = 4;
+  EventData event_data = 5;
+}
+
+message RolloutEvent {}
+message AbortEvent {}
+message ErrorEvent {}
+
+message EventData {
+  oneof kind {
+    RolloutEvent rollout = 1;
+    ErrorEvent error = 2;
+    AbortEvent abort = 3;
+  }
+}

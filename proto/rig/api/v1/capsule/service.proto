@@ -1,0 +1,230 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "api/v1/capsule/capsule.proto";
+import "api/v1/capsule/log.proto";
+import "api/v1/capsule/build.proto";
+import "api/v1/capsule/instance.proto";
+import "api/v1/capsule/rollout.proto";
+import "api/v1/capsule/event.proto";
+import "api/v1/capsule/metrics.proto";
+import "model/common.proto";
+
+// The service to manage capsules.
+service Service {
+  // Create a new capsule.
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  // Get a capsule by id.
+  rpc Get(GetRequest) returns (GetResponse) {}
+  // Delete a capsule.
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+  // Logs returns (and streams) the log output of a capsule.
+  rpc Logs(LogsRequest) returns (stream LogsResponse) {}
+  // Update a capsule.
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+  // Lists all capsules for current project.
+  rpc List(ListRequest) returns (ListResponse) {}
+  // Get a capsule by name.
+  rpc GetByName(GetByNameRequest) returns (GetByNameResponse) {}
+  // Create a new build.
+  // Builds are immutable and cannot change. Create a new build to make
+  // changes from an existing one.
+  rpc CreateBuild(CreateBuildRequest) returns (CreateBuildResponse) {}
+  // List builds for a capsule.
+  rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse) {}
+  // Delete a build.
+  rpc DeleteBuild(DeleteBuildRequest) returns (DeleteBuildResponse) {}
+  // Deploy changes to a capsule.
+  // When deploying, a new rollout will be initiated. Only one rollout can be
+  // running at a single point in time.
+  // Use `Abort` to abort an already running rollout.
+  rpc Deploy(DeployRequest) returns (DeployResponse) {}
+  // Lists all instances for the capsule.
+  rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {}
+  // Restart a single capsule instance.
+  rpc RestartInstance(RestartInstanceRequest)
+      returns (RestartInstanceResponse) {}
+  // Get a single rollout by ID.
+  rpc GetRollout(GetRolloutRequest) returns (GetRolloutResponse) {}
+  // Lists all rollouts for the capsule.
+  rpc ListRollouts(ListRolloutsRequest) returns (ListRolloutsResponse) {}
+  // Abort the rollout.
+  rpc AbortRollout(AbortRolloutRequest) returns (AbortRolloutResponse) {}
+
+  rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
+  // Get metrics for a capsule
+  rpc CapsuleMetrics(CapsuleMetricsRequest) returns (CapsuleMetricsResponse) {}
+}
+
+message CreateRequest {
+  // The name of the capsule. This property must be unique and cannot be changed
+  // after creation.
+  // Resources created in associating with the capsule will use this name.
+  string name = 1;
+  // The initial properties of the capsule.
+  repeated api.v1.capsule.Update initializers = 2;
+}
+
+message CreateResponse {
+  string capsule_id = 1;
+}
+
+message GetRequest {
+  string capsule_id = 1;
+}
+
+message GetResponse {
+  api.v1.capsule.Capsule capsule = 1;
+}
+
+message DeleteRequest {
+  // The capsule to delete.
+  string capsule_id = 1;
+}
+
+message DeleteResponse {}
+
+message LogsRequest {
+  // The capsule to read logs from.
+  string capsule_id = 1;
+  // The instance in the capsule to read logs from.
+  string instance_id = 2;
+  // If true, the request will stay open and stream new log messages.
+  bool follow = 3;
+}
+
+// The response of a capsule.Logs RPC
+message LogsResponse {
+  api.v1.capsule.Log log = 1;
+}
+
+message UpdateRequest {
+  // The capsule to update.
+  string capsule_id = 1;
+  // The updates to apply to the capsule.
+  repeated api.v1.capsule.Update updates = 2;
+}
+
+message UpdateResponse {}
+
+message ListRequest {
+  model.Pagination pagination = 2;
+}
+
+message ListResponse {
+  // The capsules.
+  repeated api.v1.capsule.Capsule capsules = 1;
+  uint64 total = 2;
+}
+
+message GetByNameRequest {
+  // The capsule to get.
+  string name = 1;
+}
+
+message GetByNameResponse {
+  api.v1.capsule.Capsule capsule = 1;
+}
+
+message CreateBuildRequest {
+  string capsule_id = 1;
+  string build_id = 2;
+  string image = 3;
+  api.v1.capsule.Origin origin = 4;
+  map<string, string> labels = 5;
+}
+
+message CreateBuildResponse {}
+
+message ListBuildsRequest {
+  string capsule_id = 1;
+  model.Pagination pagination = 2;
+}
+
+message ListBuildsResponse {
+  repeated api.v1.capsule.Build builds = 1;
+  uint64 total = 2;
+}
+
+message DeleteBuildRequest {
+  string capsule_id = 1;
+  string build_id = 2;
+}
+
+message DeleteBuildResponse {}
+
+message DeployRequest {
+  string capsule_id = 1;
+  // Changes to include in the new rollout.
+  repeated api.v1.capsule.Change changes = 2;
+}
+
+message DeployResponse {
+  uint64 rollout_id = 1;
+}
+
+message ListInstancesRequest {
+  string capsule_id = 1;
+  model.Pagination pagination = 2;
+}
+
+message ListInstancesResponse {
+  repeated api.v1.capsule.Instance instances = 1;
+  uint64 total = 2;
+}
+
+message RestartInstanceRequest {
+  string capsule_id = 1;
+  string instance_id = 2;
+}
+
+message RestartInstanceResponse {}
+
+message ListRolloutsRequest {
+  string capsule_id = 1;
+  model.Pagination pagination = 2;
+}
+
+message ListRolloutsResponse {
+  repeated api.v1.capsule.Rollout rollouts = 1;
+  uint64 total = 2;
+}
+
+message GetRolloutRequest {
+  string capsule_id = 1;
+  uint64 rollout_id = 2;
+}
+
+message GetRolloutResponse {
+  api.v1.capsule.Rollout rollout = 1;
+}
+
+message AbortRolloutRequest {
+  string capsule_id = 1;
+  uint64 rollout_id = 2;
+}
+
+message AbortRolloutResponse {}
+
+message ListEventsRequest {
+  string capsule_id = 1;
+  uint64 rollout_id = 2;
+  model.Pagination pagination = 3;
+}
+
+message ListEventsResponse {
+  repeated api.v1.capsule.Event events = 1;
+  uint64 total = 2;
+}
+
+message CapsuleMetricsRequest {
+  string capsule_id = 1;
+  // If set, only returns metrics for the given instance_id.
+  string instance_id = 2;
+  model.Pagination pagination = 3;
+}
+
+message CapsuleMetricsResponse {
+  repeated InstanceMetrics instance_metrics = 1;
+}

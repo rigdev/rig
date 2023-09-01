@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "google/protobuf/timestamp.proto";
+import "model/author.proto";
+
+message Build {
+  string build_id = 1;
+  string image = 2;
+  model.Author created_by = 3;
+  google.protobuf.Timestamp created_at = 4;
+  Origin origin = 5;
+  map<string, string> labels = 6;
+}
+
+message GitReference {
+  string repository_url = 1;
+  string commit_sha = 2;
+  string commit_url = 3;
+}
+
+message Origin {
+  oneof kind {
+    GitReference git_reference = 1;
+  }
+}

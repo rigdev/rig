@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package api.v1.project;
+
+import "google/protobuf/timestamp.proto";
+
+message Project {
+  string project_id = 1;
+  string name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string installation_id = 5;
+}
+
+message Update {
+  oneof field {
+    string name = 1;
+  }
+}

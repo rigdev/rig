@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package api.v1.service_account;
+import "api/v1/service_account/service_account.proto";
+
+// The service to manage your project Service Accounts
+service Service {
+  // Create a new Service Account. The returned client_id and client_secret can
+  // be used as login credentials. Note that the client_secret can only be read
+  // out once, at creation.
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+
+  // List all service accounts for the current project.
+  rpc List(ListRequest) returns (ListResponse) {}
+
+  // Delete a service account. It can take up to the TTL of access tokens for
+  // existing sessions using this service_account, to expire.
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+}
+
+message CreateRequest {
+  string name = 1;
+}
+
+message CreateResponse {
+  api.v1.service_account.ServiceAccount service_account = 1;
+  string client_id = 2;
+  string client_secret = 3;
+}
+
+message ListRequest {}
+
+message ListResponse {
+  repeated api.v1.service_account.Entry service_accounts = 1;
+}
+
+message DeleteRequest {
+  string service_account_id = 1;
+}
+
+message DeleteResponse {}

@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "google/protobuf/timestamp.proto";
+import "model/author.proto";
+
+enum RolloutState {
+  ROLLOUT_STATE_UNSPECIFIED = 0;
+  ROLLOUT_STATE_PENDING = 1;
+  ROLLOUT_STATE_PREPARING = 6;
+  ROLLOUT_STATE_DEPLOYING = 2;
+  ROLLOUT_STATE_OBSERVING = 7;
+  ROLLOUT_STATE_DONE = 3;
+  ROLLOUT_STATE_ABORTED = 4;
+  ROLLOUT_STATE_FAILED = 5;
+}
+
+message Change {
+  oneof field {
+    uint32 replicas = 1;
+    string build_id = 2;
+    Network network = 3;
+    ContainerSettings container_settings = 4;
+    bool auto_add_rig_service_accounts = 5;
+  }
+}
+
+message Rollout {
+  uint64 rollout_id = 1;
+  RolloutConfig config = 2;
+  RolloutStatus status = 3;
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_ABORT = 1;
+}
+
+message RolloutConfig {
+  // The user who initiated the rollout.
+  model.Author created_by = 1;
+  google.protobuf.Timestamp created_at = 2;
+  repeated Change changes = 3;
+  uint32 replicas = 4;
+  string build_id = 5;
+  Network network = 6;
+  ContainerSettings container_settings = 7;
+  bool auto_add_rig_service_accounts = 8;
+}
+
+message RolloutStatus {
+  RolloutState state = 1;
+  google.protobuf.Timestamp updated_at = 2;
+  string message = 3;
+}
+
+message ContainerSettings {
+  map<string, string> environment_variables = 1;
+  string command = 2;
+  repeated string args = 3;
+}
+
+message Network {
+  repeated Interface interfaces = 1;
+}
+
+message Interface {
+  uint32 port = 1;
+  string name = 2;
+  PublicInterface public = 4;
+  Logging logging = 5;
+  Authentication authentication = 6;
+}
+
+message PublicInterface {
+  bool enabled = 1;
+  RoutingMethod method = 2;
+}
+
+message RoutingMethod {
+  message LoadBalancer {
+    uint32 port = 1;
+  }
+
+  message Ingress {
+    string host = 1;
+    bool tls = 2;
+    string path_prefix = 3;
+  }
+
+  oneof kind {
+    LoadBalancer load_balancer = 1;
+    Ingress ingress = 2;
+  }
+}
+
+message Middleware {
+  oneof kind {
+    Logging logging = 1;
+    Authentication authentication = 2;
+  }
+}
+
+message Logging {
+  bool enabled = 1;
+}
+
+message Authentication {
+  bool enabled = 1;
+  Auth default = 2;
+  repeated HttpAuth http = 3;
+  GRPC grpc = 4;
+}
+
+message HttpAuth {
+  string path = 1;
+  Auth auth = 2;
+  bool exact = 3;
+}
+
+message GRPC {
+  Auth auth = 1;
+  string path_prefix = 2;
+  map<string, GRPCService> services = 3;
+}
+
+message GRPCService {
+  Auth auth = 1;
+  map<string, GRPCMethod> methods = 2;
+}
+
+message GRPCMethod {
+  Auth auth = 1;
+}
+
+message Auth {
+  message AllowAny {}
+  message AllowAuthorized {
+    map<string, string> claims = 1;
+  }
+
+  oneof method {
+    AllowAny allow_any = 1;
+    AllowAuthorized allow_authorized = 2;
+  }
+}
