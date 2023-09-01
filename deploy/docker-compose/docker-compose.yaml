@@ -69,11 +69,6 @@ services:
       - rig
       - default
 
-  rig-service:
-    scale: 0
-    image: ghcr.io/rigdev/rig:0.1.0
-    command: rig-proxy
-
 networks:
   rig:
     external: true
