@@ -12,7 +12,7 @@ type Client struct {
 	logger  *zap.Logger
 }
 
-const _writeKey = "m3fSWwbtFqGThjByteCa3nPneKSxCgay"
+const _writeKey = "v00FCszKOcE7YFHOLUHCgoGdam9QhvRi"
 
 // New implements text.Provider interface using the Twilio client.
 func New(cfg config.Config, logger *zap.Logger) *Client {
