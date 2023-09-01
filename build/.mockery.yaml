@@ -1,0 +1,16 @@
+quiet: false
+inpackage: true
+with-expecter: true
+keeptree: false
+dir: "{{ .InterfaceDir }}"
+filename: "mock_{{ .InterfaceNameSnake }}.go"
+packages:
+  github.com/rigdev/rig/internal/service/user:
+    interfaces:
+      Service:
+  github.com/rigdev/rig/internal/service/project:
+    interfaces:
+      Service:
+  github.com/rigdev/rig/internal/repository:
+    interfaces:
+      Session:

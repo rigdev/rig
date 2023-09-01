@@ -1,0 +1,81 @@
+name: Main Protobuf
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - proto/rig/**
+
+jobs:
+  publish-api:
+    name: Publish API to rig-*-api
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21.0
+
+      - name: Cache tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            tools/bin
+          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-tools-
+
+      - name: Build
+        run: make proto
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm install @bufbuild/buf @bufbuild/protoc-gen-es @bufbuild/protobuf @bufbuild/protoc-gen-connect-es @bufbuild/connect
+
+      - run: npx buf generate --template proto/buf.gen.publish.yaml proto/rig
+
+      - name: Checkout rig-ts-api repo
+        uses: actions/checkout@v3
+        with:
+          repository: rigdev/rig-ts-api
+          path: rig-ts-api
+          token: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"
+
+      - name: Push to rig-ts-api
+        run: |
+          cd rig-ts-api
+          rm -fr api/ model/
+          cp -R ../gen/ts/rig/* .
+          git config user.name "rigbot"
+          git config user.email "shared@rig.dev"
+          git add .
+          git commit -am "push latest version of APIs" && git push || true
+        env:
+          GITHUB_TOKEN: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"
+
+      - name: Checkout rig-go-api repo
+        uses: actions/checkout@v3
+        with:
+          repository: rigdev/rig-go-api
+          path: rig-go-api
+          token: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"
+
+      - name: Push to rig-go-api
+        run: |
+          cd rig-go-api
+          rm -fr api/ model/
+          cp -R ../gen/go/rig/* .
+          git config user.name "rigbot"
+          git config user.email "shared@rig.dev"
+          git add .
+          git commit -am "push latest version of APIs" && git push || true
+        env:
+          GITHUB_TOKEN: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"

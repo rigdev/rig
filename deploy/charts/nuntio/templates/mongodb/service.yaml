@@ -1,0 +1,28 @@
+{{- if .Values.mongodb.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rig.fullname" . }}-mongodb
+  labels: {{ include "rig.mongodb.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 27017
+      targetPort: mongodb
+      protocol: TCP
+      name: mongodb
+  selector: {{ include "rig.mongodb.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rig.fullname" . }}-mongodb-headless
+  labels: {{ include "rig.mongodb.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: 27017
+      targetPort: mongodb
+      protocol: TCP
+      name: mongodb
+  selector: {{ include "rig.mongodb.selectorLabels" . | nindent 4 }}
+{{- end }}

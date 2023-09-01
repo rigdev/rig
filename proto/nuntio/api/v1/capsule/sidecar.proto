@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+message Sidecar {
+  repeated SidecarInterface interfaces = 1;
+}
+
+message SidecarInterface {
+  uint32 port = 1;
+  uint32 proxy_port = 2;
+}

@@ -1,0 +1,49 @@
+name: Main Charts
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - deploy/charts/*/Chart.yaml
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          path: main
+
+      - name: Checkout charts repo
+        uses: actions/checkout@v3
+        with:
+          repository: rigdev/charts
+          path: charts
+          token: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      - name: Install chart-releaser
+        uses: helm/chart-releaser-action@v1.5.0
+        with:
+          install_only: true
+          version: v1.6.0
+
+      - name: Release charts
+        run: |
+          cd charts
+          git config user.name "rigbot"
+          git config user.email "shared@rig.dev"
+          cr package ../main/deploy/charts/rig
+          cr upload --skip-existing
+          cr index --index-path "." --push
+        env:
+          CR_OWNER: "rigdev"
+          CR_GIT_REPO: "charts"
+          CR_PAGES_BRANCH: "main"
+          CR_TOKEN: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"

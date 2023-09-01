@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package api.v1.storage;
+
+import "google/protobuf/timestamp.proto";
+import "model/credentials.proto";
+
+message Bucket {
+  string name = 1;
+  string region = 2;
+  string provider_bucket = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message Object {
+  string path = 1;
+  google.protobuf.Timestamp last_modified = 2;
+  uint64 size = 3;
+  string etag = 4;
+  string content_type = 5;
+}
+
+message Provider {
+  string name = 1;
+  Config config = 3;
+  repeated Bucket buckets = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message Config {
+  oneof config {
+    MinioConfig minio = 1;
+    GcsConfig gcs = 2;
+    S3Config s3 = 3;
+  }
+}
+
+message ProviderEntry {
+  string provider_id = 1;
+  string name = 2;
+  Config config = 3;
+  repeated Bucket buckets = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message GcsConfig {
+  bytes config = 1;
+}
+
+message MinioConfig {
+  string endpoint = 1;
+  string region = 2;
+  model.ProviderCredentials credentials = 3;
+  bool secure = 4;
+}
+
+message S3Config {
+  string region = 1;
+  model.ProviderCredentials credentials = 2;
+}

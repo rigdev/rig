@@ -1,0 +1,16 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/rigdev/rig-go-api
+plugins:
+  - name: go
+    path: tools/bin/protoc-gen-go
+    out: gen/go
+    opt:
+      - paths=source_relative
+  - name: connect-go
+    path: tools/bin/protoc-gen-connect-go
+    out: gen/go
+    opt:
+      - paths=source_relative

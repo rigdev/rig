@@ -1,0 +1,168 @@
+syntax = "proto3";
+
+package api.v1.authentication;
+
+import "api/v1/authentication/user.proto";
+import "model/auth.proto";
+import "model/user.proto";
+
+// The service to manage public endpoints in Users
+service Service {
+  // Login authenticats a user and returns a access/refresh token
+  rpc Login(LoginRequest) returns (LoginResponse) {}
+  // Logout validates the access token and blocks it afterwards
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+  // Get the logged in user
+  rpc Get(GetRequest) returns (GetResponse) {}
+  // Register creates a new user
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  // Send reset password email to the user
+  rpc SendPasswordReset(SendPasswordResetRequest)
+      returns (SendPasswordResetResponse) {}
+  // Reset password of the user
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {}
+  // Delete logged in user
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+  // Refresh logged in token pair
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
+  // Get auth config for how available login methods
+  rpc GetAuthConfig(GetAuthConfigRequest) returns (GetAuthConfigResponse) {}
+  // Verify email
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {}
+  // Verify phone number
+  rpc VerifyPhoneNumber(VerifyPhoneNumberRequest)
+      returns (VerifyPhoneNumberResponse) {}
+}
+
+// the request of a Public.VerifyEmail RPC
+message VerifyEmailRequest {
+  string code = 1;
+  string email = 2;
+  string project_id = 3;
+}
+
+// the response of a Public.VerifyEmail RPC
+message VerifyEmailResponse {}
+
+// the request of a Public.VerifyPhoneNumber RPC
+message VerifyPhoneNumberRequest {
+  string code = 1;
+  string phone_number = 2;
+  string project_id = 3;
+}
+
+// the response of a Public.VerifyPhoneNumber RPC
+message VerifyPhoneNumberResponse {}
+
+message UserPassword {
+  model.UserIdentifier identifier = 1;
+  string password = 2;
+  string project_id = 3;
+}
+
+message ClientCredentials {
+  string client_id = 1;
+  string client_secret = 2;
+}
+
+// The request of a Public.Login RPC
+message LoginRequest {
+  oneof method {
+    UserPassword user_password = 1;
+    ClientCredentials client_credentials = 3;
+  }
+}
+
+// The response of a Public.Login RPC
+message LoginResponse {
+  authentication.Token token = 1;
+  string user_id = 2;
+  model.UserInfo user_info = 3;
+}
+
+// The request of a Public.Logout RPC
+message LogoutRequest {}
+
+// The response of a Public.Logout RPC
+message LogoutResponse {}
+
+// The request of a Public.Get RPC
+message GetRequest {}
+
+// The response of a Public.Get RPC
+message GetResponse {
+  model.UserInfo user_info = 1;
+  string user_id = 2;
+}
+
+// The request of a Public.Create RPC
+message RegisterRequest {
+  oneof method {
+    UserPassword user_password = 1;
+  }
+}
+
+// The response of a Public.Create RPC
+message RegisterResponse {
+  authentication.Token token = 1;
+  string user_id = 2;
+  model.UserInfo user_info = 3;
+}
+
+message SendPasswordResetRequest {
+  model.UserIdentifier identifier = 1;
+  string project_id = 2;
+}
+
+message SendPasswordResetResponse {}
+
+// The request of a Public.ResetPassword RPC
+message ResetPasswordRequest {
+  string code = 1;
+  string new_password = 2;
+  model.UserIdentifier identifier = 3;
+  string project_id = 4;
+}
+
+// The response of a Public.ResetPassword RPC
+message ResetPasswordResponse {}
+
+// The request of a Public.Delete RPC
+message DeleteRequest {}
+
+// The response of a Public.Delete RPC
+message DeleteResponse {}
+
+// The request of a Public.Delete RPC
+message RefreshTokenRequest {
+  // The access token of the user
+  string refresh_token = 1;
+}
+
+// The response of a Public.Delete RPC
+message RefreshTokenResponse {
+  authentication.Token token = 1;
+}
+
+// The request of a Public.AuthenticationServiceGetAuthConfigRequest RPC
+message GetAuthConfigRequest {
+  // Optional redirect address for OAuth2
+  string redirect_addr = 1;
+  string project_id = 2;
+}
+
+// The response of a Public.AuthenticationServiceGetAuthConfigRequest RPC
+message GetAuthConfigResponse {
+  // The name of the project
+  string name = 1;
+  // The logo of the project
+  string logo_url = 2;
+  // If to validate password
+  bool validate_password = 3;
+  // Array of supported login methods.
+  repeated model.LoginType login_types = 4;
+  // Array of supported oauth providers.
+  repeated authentication.OauthProvider oauth_providers = 5;
+  // True if new users can sign up.
+  bool allows_register = 7;
+}

@@ -1,0 +1,16 @@
+*
+!/Makefile
+!/buf.*
+!/cmd
+!/gen
+!/go.mod
+!/go.sum
+!/go.work
+!/go.work.sum
+!/internal
+!/pkg
+!/proto
+!/tools/go.mod
+!/tools/go.sum
+!/tools/go.work
+!/tools/tools.go

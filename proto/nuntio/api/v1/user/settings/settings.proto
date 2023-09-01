@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package api.v1.user.settings;
+
+import "google/protobuf/duration.proto";
+
+import "model/common.proto";
+import "model/auth.proto";
+import "model/credentials.proto";
+
+message Update {
+  message LoginMechanisms {
+    repeated model.LoginType login_mechanisms = 1;
+  }
+
+  message CallbackUrls {
+    repeated string callback_urls = 1;
+  }
+
+  oneof field {
+    bool allow_register = 1;
+    bool is_verified_email_required = 2;
+    bool is_verified_phone_required = 3;
+    google.protobuf.Duration access_token_ttl = 4;
+    google.protobuf.Duration refresh_token_ttl = 5;
+    google.protobuf.Duration verification_code_ttl = 6;
+    model.HashingConfig password_hashing = 7;
+    LoginMechanisms login_mechanisms = 8;
+    CallbackUrls callback_urls = 9;
+    OauthProviderUpdate oauth_provider = 10;
+  }
+}
+
+message RegisterMethod {
+  message System {}
+
+  message Signup {
+    model.LoginType login_type = 1;
+  }
+
+  oneof method {
+    System system = 1;
+    Signup signup = 2;
+    model.OauthProvider oauth_provider = 3;
+  }
+}
+
+message AuthMethod {
+  oneof method {
+    model.LoginType login_type = 1;
+    model.OauthProvider oauth_provider = 2;
+  }
+}
+
+message Settings {
+  bool allow_register = 1;
+  bool is_verified_email_required = 2;
+  bool is_verified_phone_required = 3;
+  google.protobuf.Duration access_token_ttl = 4;
+  google.protobuf.Duration refresh_token_ttl = 5;
+  google.protobuf.Duration verification_code_ttl = 6;
+  model.HashingConfig password_hashing = 7;
+  repeated model.LoginType login_mechanisms = 8;
+  OauthSettings oauth_settings = 9;
+  bool send_welcome_mail = 10;
+}
+
+message OauthProviderSettings {
+  string secret_id = 1;
+  string client_id = 2;
+  string issuer = 3;
+  bool allow_login = 4;
+  bool allow_register = 5;
+}
+
+message OauthProviderUpdate {
+  model.OauthProvider provider = 1;
+  model.ProviderCredentials credentials = 2;
+  bool allow_login = 3;
+  bool allow_register = 4;
+}
+
+message OauthSettings {
+  repeated string callback_urls = 2;
+  OauthProviderSettings google = 3;
+  OauthProviderSettings github = 4;
+  OauthProviderSettings facebook = 5;
+}

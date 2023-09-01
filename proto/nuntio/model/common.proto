@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package model;
+
+message BcryptHashingConfig {
+  int32 cost = 1;
+}
+
+message BcryptHashingInstance {}
+
+message ScryptHashingConfig {
+  string signer_key = 1;
+  string salt_separator = 2;
+  int32 rounds = 3;
+  int32 mem_cost = 4;
+  int32 p = 5;
+  int32 key_len = 6;
+}
+
+message ScryptHashingInstance {
+  bytes salt = 1;
+}
+
+message HashingConfig {
+  oneof method {
+    BcryptHashingConfig bcrypt = 1;
+    ScryptHashingConfig scrypt = 2;
+  }
+}
+
+message HashingInstance {
+  HashingConfig config = 1;
+  bytes hash = 2;
+  oneof instance {
+    BcryptHashingInstance bcrypt = 3;
+    ScryptHashingInstance scrypt = 4;
+  }
+}
+
+message Pagination {
+  uint32 offset = 1;
+  uint32 limit = 2;
+  bool descending = 3;
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package oauth2;
+
+import "model/auth.proto";
+import "google/protobuf/timestamp.proto";
+
+message ProviderLink {
+    model.OauthProvider provider = 1;
+    google.protobuf.Timestamp created_at = 2;
+    string issuer = 3;
+    string subject = 4;
+  }

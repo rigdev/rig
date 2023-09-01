@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package rollout;
+
+import "google/protobuf/timestamp.proto";
+import "api/v1/capsule/rollout.proto";
+
+message Status {
+  api.v1.capsule.RolloutStatus status = 1;
+  google.protobuf.Timestamp scheduled_at = 2;
+  ServiceAccountCredentials rig_service_account = 3;
+}
+
+message ServiceAccountCredentials {
+  string client_id = 1;
+  string client_secret_key = 2;
+}

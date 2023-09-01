@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package model;
+
+import "google/protobuf/timestamp.proto";
+
+import "model/auth.proto";
+
+message UserIdentifier {
+  oneof identifier {
+    string username = 1;
+    string email = 2;
+    string phone_number = 3;
+  }
+}
+
+message UserInfo {
+  string email = 1;
+  string username = 2;
+  string phone_number = 3;
+  google.protobuf.Timestamp created_at = 5;
+  repeated string group_ids = 6;
+}
+
+message UserEntry {
+  string user_id = 1;
+  string printable_name = 2;
+  RegisterInfo register_info = 3;
+  bool verified = 4;
+  repeated string group_ids = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message MemberEntry {
+  UserEntry user = 1;
+  google.protobuf.Timestamp joined_at = 5;
+}
+
+message RegisterInfo {
+  string creater_id = 1;
+  RegisterMethod method = 2;
+}
+
+message RegisterMethod {
+  message System {}
+
+  message Signup {
+    model.LoginType login_type = 1;
+  }
+
+  message Migration {
+    string from = 1;
+  }
+
+  oneof method {
+    System system = 1;
+    Signup signup = 2;
+    OauthProvider oauth_provider = 3;
+    Migration migration = 4;
+  }
+}
