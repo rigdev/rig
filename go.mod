@@ -48,8 +48,8 @@ require (
 
 require (
 	github.com/go-chi/chi/v5 v5.0.10
-	github.com/rigdev/rig-go-api v0.0.0-20230823123142-59c2010c676c
-	github.com/rigdev/rig-go-sdk v0.0.0-20230823123721-9fd9a524d18f
+	github.com/rigdev/rig-go-api v0.0.0-20230901110907-d3cdf0db09f7
+	github.com/rigdev/rig-go-sdk v0.0.0-20230901111022-ea6af2ed0b83
 	k8s.io/metrics v0.28.0
 )
 
@@ -185,7 +185,7 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/dig v1.17.0 // indirect
+	go.uber.org/dig v1.17.0
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.13.0
 	golang.org/x/sys v0.10.0 // indirect

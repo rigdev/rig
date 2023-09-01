@@ -386,14 +386,6 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/mwitkow/grpc-proxy v0.0.0-20230212185441-f345521cb9c9 h1:62uLwA3l2JMH84liO4ZhnjTH5PjFyCYxbHLgXPaJMtI=
 github.com/mwitkow/grpc-proxy v0.0.0-20230212185441-f345521cb9c9/go.mod h1:MvMXoufZAtqExNexqi4cjrNYE9MefKddKylxjS+//n0=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/rigdev/rig-go-api v0.0.0-20230821123250-3f7cfe758b7d h1:0+vxsp4TGn4NLdtjdw+4mqq9O4W3anH/6hKQaQ5LVTU=
-github.com/rigdev/rig-go-api v0.0.0-20230821123250-3f7cfe758b7d/go.mod h1:3YAUCtIAa26QdaIcJCoj3BOhakUBkpGo56APuhArRzg=
-github.com/rigdev/rig-go-api v0.0.0-20230823123142-59c2010c676c h1:w8/+hSBZY41Ko3DX/MRjaBTrvvUAeXr5YVNBPCBpUAE=
-github.com/rigdev/rig-go-api v0.0.0-20230823123142-59c2010c676c/go.mod h1:3YAUCtIAa26QdaIcJCoj3BOhakUBkpGo56APuhArRzg=
-github.com/rigdev/rig-go-sdk v0.0.0-20230821131006-410b7b4b5333 h1:t7YMRbmeHI1Dd9B4xgImhFVgOkszJgdb/wV8DzYCy7s=
-github.com/rigdev/rig-go-sdk v0.0.0-20230821131006-410b7b4b5333/go.mod h1:wTL+0MmVAkQOhrUp55CBA5iyk1JEkYKBXPxg6LyH0Ak=
-github.com/rigdev/rig-go-sdk v0.0.0-20230823123721-9fd9a524d18f h1:63wDAQ4qDyl9nbklkhs9hfjOOIUydjFsEAY1Pesgde0=
-github.com/rigdev/rig-go-sdk v0.0.0-20230823123721-9fd9a524d18f/go.mod h1:Qp/NduZ5ne8i4cIcWFsXDqq+P12tMd6mMCfz1N1cdCI=
 github.com/nyaruka/phonenumbers v1.1.7 h1:5UUI9hE79Kk0dymSquXbMYB7IlNDNhvu2aNlJpm9et8=
 github.com/nyaruka/phonenumbers v1.1.7/go.mod h1:DC7jZd321FqUe+qWSNcHi10tyIyGNXGcNbfkPvdp1Vs=
 github.com/onsi/ginkgo/v2 v2.9.4 h1:xR7vG4IXt5RWx6FfIjyAtsoMAtnc3C/rFXBBd2AjZwE=
@@ -431,6 +423,10 @@ github.com/prometheus/procfs v0.0.2/go.mod h1:TjEm7ze935MbeOT/UhFTIMYKhuLP4wbCsT
 github.com/prometheus/procfs v0.0.3/go.mod h1:4A/X28fw3Fc593LaREMrKMqOKvUAntwMDaekg4FpcdQ=
 github.com/prometheus/procfs v0.9.0 h1:wzCHvIvM5SxWqYvwgVL7yJY8Lz3PKn49KQtpgMYJfhI=
 github.com/prometheus/procfs v0.9.0/go.mod h1:+pB4zwohETzFnmlpe6yd2lSc+0/46IYZRB/chUwxUZY=
+github.com/rigdev/rig-go-api v0.0.0-20230901110907-d3cdf0db09f7 h1:pQhsUv03qeOAM9CnBtCG0UBatGT9H1k98ucAW9oAFmQ=
+github.com/rigdev/rig-go-api v0.0.0-20230901110907-d3cdf0db09f7/go.mod h1:fraLUk9ekeQvvu5bOmUmpNAsBqG2QzqWU9wzGbPwB/w=
+github.com/rigdev/rig-go-sdk v0.0.0-20230901111022-ea6af2ed0b83 h1:3Fh+7eltFuxnfifO5MtnKW0A6fGXYlu17epYDTSab+Y=
+github.com/rigdev/rig-go-sdk v0.0.0-20230901111022-ea6af2ed0b83/go.mod h1:yg3WEmYEXYaqgIwHZ4mdfTrQGTjkzU+7qW2CLFsyu8M=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=

@@ -4,13 +4,6 @@ import "go.uber.org/zap/zapcore"
 
 func newDefault() Config {
 	return Config{
-		Init: Init{
-			Root: InitRoot{
-				Email:    "",
-				Password: "",
-			},
-		},
-
 		Management: Management{
 			Port:      4747,
 			PublicURL: "",

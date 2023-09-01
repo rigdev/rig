@@ -3,14 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/rigdev/rig/internal/build"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/core"
 	"github.com/rigdev/rig/internal/handler"
 	"github.com/rigdev/rig/internal/handler/registry"
-	"github.com/rigdev/rig/internal/initd"
 	"github.com/spf13/cobra"
 
 	pkg_service "github.com/rigdev/rig/pkg/service"
@@ -49,13 +47,8 @@ func createRootCMD() *cobra.Command {
 				core.GetModule(cfg),
 				handler.Module,
 				fx.Invoke(
-					func(cfg config.Config, s *pkg_service.Server, i *initd.Service) {
+					func(cfg config.Config, s *pkg_service.Server) {
 						s.EmbeddedFileServer()
-
-						if err := i.InitUser(); err != nil {
-							log.Fatal(err)
-						}
-
 						s.Init()
 					},
 				),

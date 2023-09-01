@@ -4,7 +4,6 @@ import (
 	"github.com/rigdev/rig/internal/client"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway"
-	pkg_initd "github.com/rigdev/rig/internal/initd"
 	"github.com/rigdev/rig/internal/oauth2"
 	"github.com/rigdev/rig/internal/repository"
 	"github.com/rigdev/rig/internal/service"
@@ -23,6 +22,5 @@ func GetModule(cfg config.Config) fx.Option {
 		repository.Module,
 		gateway.Module,
 		telemetry.Module,
-		pkg_initd.Module,
 	)
 }

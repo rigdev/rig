@@ -1,8 +1,3 @@
-init:
-  root:
-    email: admin@rig.dev
-    password: TeamRig22!
-
 auth:
   jwt:
     secret: shhhdonotshare
