@@ -2,6 +2,8 @@ module github.com/rigdev/rig
 
 go 1.20
 
+replace github.com/rigdev/rig-go-api/ => ./gen/go/rig
+
 require (
 	cloud.google.com/go/storage v1.30.1
 	github.com/aws/aws-sdk-go-v2 v1.18.1
