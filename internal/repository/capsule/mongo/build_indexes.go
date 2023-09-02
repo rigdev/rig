@@ -89,5 +89,18 @@ func (r *MongoRepository) BuildIndexes(ctx context.Context) error {
 	if _, err := r.MetricsCol.Indexes().CreateOne(ctx, metricsIDIndexModel); err != nil {
 		return err
 	}
+
+	buildIDIndexModel := mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "project_id", Value: 1},
+			{Key: "capsule_id", Value: 1},
+			{Key: "build_id", Value: 1},
+		},
+		Options: options.Index().SetUnique(true),
+	}
+	if _, err := r.BuildCol.Indexes().CreateOne(ctx, buildIDIndexModel); err != nil {
+		return err
+	}
+
 	return nil
 }
