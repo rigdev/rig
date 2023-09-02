@@ -1,7 +1,8 @@
 builds:
   - id: rig
     binary: rig
-    main: ./cmd/rig
+    dir: ./cmd/rig
+    main: ./
     env:
       - CGO_ENABLED=0
     goos:
