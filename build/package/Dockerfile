@@ -7,7 +7,7 @@ WORKDIR /app
 
 RUN apk add --no-cache ca-certificates make git
 
-COPY go.mod go.sum go.work Makefile ./
+COPY go.mod go.sum Makefile ./
 COPY tools tools
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
