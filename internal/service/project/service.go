@@ -354,8 +354,8 @@ func (s *service) ensureRigProjectExists() (uuid.UUID, error) {
 		us.IsVerifiedEmailRequired = false
 		us.SendWelcomeMail = false
 
-		if s.cfg.Management.PublicURL != "" {
-			us.GetOauthSettings().CallbackUrls = []string{s.cfg.Management.PublicURL}
+		if s.cfg.PublicURL != "" {
+			us.GetOauthSettings().CallbackUrls = []string{s.cfg.PublicURL}
 		}
 
 		if s.cfg.OAuth.Google.ClientID != "" && s.cfg.OAuth.Google.ClientSecret != "" {

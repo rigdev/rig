@@ -69,7 +69,7 @@ func (t *Telemetry) Wrap(next middleware.MiddlewareHandlerFunc) middleware.Middl
 		d := &telemetryData{}
 
 		defer func() {
-			if !t.cfg.Management.Telemetry.Enabled {
+			if !t.cfg.Telemetry.Enabled {
 				return
 			}
 
@@ -126,7 +126,7 @@ func (t *Telemetry) onError(ctx context.Context, err error) {
 		return
 	}
 
-	if !t.cfg.Management.Telemetry.Enabled {
+	if !t.cfg.Telemetry.Enabled {
 		return
 	}
 

@@ -3,8 +3,9 @@ package config
 import "go.uber.org/zap/zapcore"
 
 type Config struct {
-	Init       Init       `mapstructure:"init"`
-	Management Management `mapstructure:"management"`
+	Port       int        `mapstructure:"port"`
+	PublicURL  string     `mapstructure:"public_url"`
+	Telemetry  Telemetery `mapstructure:"telemetry"`
 	Auth       Auth       `mapstructure:"auth"`
 	Client     Client     `mapstructure:"client"`
 	Repository Repository `mapstructure:"repository"`
@@ -14,22 +15,7 @@ type Config struct {
 	Registry   Registry   `mapstructure:"registry"`
 }
 
-type Init struct {
-	Root InitRoot `mapstructure:"root"`
-}
-
-type InitRoot struct {
-	Email    string `mapstructure:"email"`
-	Password string `mapstructure:"password"`
-}
-
-type Management struct {
-	Port      int                 `mapstructure:"port"`
-	PublicURL string              `mapstructure:"public_url"`
-	Telemetry ManagementTelemetry `mapstructure:"telemetry"`
-}
-
-type ManagementTelemetry struct {
+type Telemetery struct {
 	Enabled bool `mapstructure:"enabled"`
 }
 

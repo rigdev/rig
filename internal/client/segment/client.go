@@ -16,7 +16,7 @@ const _writeKey = "v00FCszKOcE7YFHOLUHCgoGdam9QhvRi"
 
 // New implements text.Provider interface using the Twilio client.
 func New(cfg config.Config, logger *zap.Logger) *Client {
-	if cfg.Management.Telemetry.Enabled {
+	if cfg.Telemetry.Enabled {
 		logger.Info("admin usage telemetry enabled. see https://docs.rig.dev/usage for more information.")
 	}
 

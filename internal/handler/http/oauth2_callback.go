@@ -119,7 +119,7 @@ func (h *Handler) Build() (string, string, service.HandlerFunc) {
 			return err
 		}
 
-		callBackURL, err := url.JoinPath(h.cfg.Management.PublicURL, "oauth/callback")
+		callBackURL, err := url.JoinPath(h.cfg.PublicURL, "oauth/callback")
 		if err != nil {
 			return fmt.Errorf("could not build callback URL: %w", err)
 		}
