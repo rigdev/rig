@@ -1,9 +1,10 @@
 <h1 align="center">
-    <a href="https://www.rig.dev">
-      <picture>
-        <img alt="rig" src="https://github.com/rigdev/rig/assets/22043/d8433e7b-4fe5-40ee-a2a2-bbfec9b26c63" width="40%" />
-      </picture>
-    </a>
+  <a href="https://www.rig.dev">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/rigdev/rig/assets/3807831/a16db5e3-6eeb-4061-a9f1-1ecf714c870d">
+      <img alt="rig" src="https://github.com/rigdev/rig/assets/3807831/6aa0133b-1199-4458-948e-69493ff35ae0" width="40%">
+    </picture>
+  </a>
 </h1>
 
   <h4 align="center"><a href="https://docs.rig.dev/">Documentation</a> | <a href="https://rig.dev/">Website</a></h4>
@@ -23,6 +24,7 @@
     <img src="https://img.shields.io/twitter/follow/rig.svg?label=Follow%20@rig.dev" alt="Follow @rig.dev" />
   </a>
 </p>
+
 
 ## 🌟 What is Rig?
 
