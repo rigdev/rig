@@ -24,33 +24,31 @@ func TestNew(t *testing.T) {
 		{
 			name: "env overrides default",
 			envVars: map[string]string{
-				"RIG_MANAGEMENT_PORT": "4242",
+				"RIG_PORT": "4242",
 			},
 			expected: func() Config {
 				c := newDefault()
-				c.Management.Port = 4242
+				c.Port = 4242
 				return c
 			},
 		},
 		{
-			name: "config is read from file",
-			filePathContent: `management:
-  port: 4242`,
+			name:            "config is read from file",
+			filePathContent: `port: 4242`,
 			expected: func() Config {
 				c := newDefault()
-				c.Management.Port = 4242
+				c.Port = 4242
 				return c
 			},
 		},
 		{
 			name: "config is read from search path",
 			searchPathContent: map[string]string{
-				"/etc/rig": `management:
-  port: 4242`,
+				"/etc/rig": `port: 4242`,
 			},
 			expected: func() Config {
 				c := newDefault()
-				c.Management.Port = 4242
+				c.Port = 4242
 				return c
 			},
 		},
@@ -95,11 +93,11 @@ func TestNew(t *testing.T) {
 				defer os.RemoveAll(d)
 				for sp, c := range test.searchPathContent {
 					tmpSP := filepath.Join(d, sp)
-					assert.NoError(t, os.MkdirAll(tmpSP, 0700))
+					assert.NoError(t, os.MkdirAll(tmpSP, 0o700))
 					assert.NoError(t, os.WriteFile(
 						filepath.Join(tmpSP, "server-config.yaml"),
 						[]byte(c),
-						0644,
+						0o644,
 					))
 				}
 			}

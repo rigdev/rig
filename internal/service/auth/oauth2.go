@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-api/api/v1/user"
@@ -30,7 +30,7 @@ func (s *Service) GetOauth2Providers(ctx context.Context, redirect string) ([]*a
 		return nil, err
 	}
 	oauthproviders := []*authentication.OauthProvider{}
-	rigRedirect, err := url.JoinPath(s.cfg.Management.PublicURL, "oauth/callback")
+	rigRedirect, err := url.JoinPath(s.cfg.PublicURL, "oauth/callback")
 	if err != nil {
 		return nil, fmt.Errorf("could not build callback URL: %w", err)
 	}

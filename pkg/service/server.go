@@ -202,7 +202,7 @@ func (s *Server) Start() error {
 		&http2.Server{},
 	)
 
-	l, err := net.Listen("tcp", fmt.Sprint(":", s.cfg.Management.Port))
+	l, err := net.Listen("tcp", fmt.Sprint(":", s.cfg.Port))
 	if err != nil {
 		return err
 	}

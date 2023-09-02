@@ -16,7 +16,7 @@ GOENVS ?= CGO_ENABLED=0
 GO ?= $(GOENVS) go
 LDFLAGS ?= -s -w
 GOBUILD = $(GO) build -ldflags "$(LDFLAGS)"
-DEVENVS = RIG_MANAGEMENT_TELEMETRY_ENABLED=false
+DEVENVS = RIG_TELEMETRY_ENABLED=false
 
 .PHONY: build-rig
 build-rig: ## 🔨 Build rig binary
@@ -110,7 +110,7 @@ deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
   		--namespace rig-system \
 		--set image.tag=$(TAG) \
 		--set mongodb.enabled=true \
-		--set rig.management.telemetry.enabled=false \
+		--set rig.telemetry.enabled=false \
   		--create-namespace
 	$(KUBECTL) rollout restart deployment -n rig-system rig
 

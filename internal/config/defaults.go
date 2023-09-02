@@ -4,12 +4,10 @@ import "go.uber.org/zap/zapcore"
 
 func newDefault() Config {
 	return Config{
-		Management: Management{
-			Port:      4747,
-			PublicURL: "",
-			Telemetry: ManagementTelemetry{
-				Enabled: true,
-			},
+		Port:      4747,
+		PublicURL: "",
+		Telemetry: Telemetery{
+			Enabled: true,
 		},
 
 		Auth: Auth{
