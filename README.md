@@ -12,7 +12,6 @@
   The open-source cloud development platform for Kubernetes
 </p>
 
-
 <p align="center">
   <a href="https://github.com/rigdev/rig/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-apache2-blue.svg" alt="Rig is released under the Apache2 license." />
@@ -43,7 +42,7 @@ Everything you need to get started with Cloud Development for Kubernetes infrast
 
 ## 🧑‍💻 Getting Started
 
-Our Getting Started Guide is available [here](https://beta-docs.rig.dev/get-started/).
+Our Getting Started Guide is available [here](https://docs.rig.dev/getting-started/).
 
 The guide allows you to set up either your local machine or a Kubernetes cluster in production.
 
