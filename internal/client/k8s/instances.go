@@ -71,7 +71,7 @@ func (c *Client) ListInstances(
 }
 
 // RestartInstance implements cluster.Gateway.
-func (c *Client) RestartInstance(ctx context.Context, deploymentID string, instanceID string) error {
+func (c *Client) RestartInstance(ctx context.Context, capsuleName string, instanceID string) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (c *Client) RestartInstance(ctx context.Context, deploymentID string, insta
 	return nil
 }
 
-func podToInstance(pod v1.Pod, deploymentID string) (*capsule.Instance, error) {
+func podToInstance(pod v1.Pod, capsuleName string) (*capsule.Instance, error) {
 	i := &capsule.Instance{
 		InstanceId: pod.Name,
 		BuildId:    pod.Labels[labelVersion],
@@ -97,7 +97,7 @@ func podToInstance(pod v1.Pod, deploymentID string) (*capsule.Instance, error) {
 		CreatedAt:  timestamppb.New(pod.ObjectMeta.CreationTimestamp.Time),
 	}
 
-	if cs := podGetContainerStatus(pod, deploymentID); cs != nil {
+	if cs := podGetContainerStatus(pod, capsuleName); cs != nil {
 		i.RestartCount = uint32(cs.RestartCount)
 
 		if cs.State.Running != nil {
@@ -114,7 +114,7 @@ func podToInstance(pod v1.Pod, deploymentID string) (*capsule.Instance, error) {
 
 func podGetContainerStatus(pod v1.Pod, container string) *v1.ContainerStatus {
 	for _, cs := range pod.Status.ContainerStatuses {
-		if cs.ContainerID == container {
+		if cs.Name == container {
 			return &cs
 		}
 	}
