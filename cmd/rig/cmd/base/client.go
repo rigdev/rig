@@ -11,10 +11,21 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/pkg/service"
 	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/fx"
 )
+
+const (
+	_rigProjectTokenHeader = "X-Rig-Project-Token"
+)
+
+var _omitProjectToken = map[string]struct{}{
+	"/api.v1.project.Service/Use":    {},
+	"/api.v1.project.Service/Create": {},
+	"/api.v1.project.Service/List":   {},
+
+	"/grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo": {},
+}
 
 var clientModule = fx.Module("client",
 	fx.Supply(&http.Client{}),
@@ -87,7 +98,7 @@ type authInterceptor struct {
 }
 
 func (i *authInterceptor) handleAuth(ctx context.Context, h http.Header, method string) {
-	if _, ok := service.OmitProjectToken[method]; !ok {
+	if _, ok := _omitProjectToken[method]; !ok {
 		i.setProjectToken(ctx, h)
 	}
 }
@@ -126,7 +137,7 @@ func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
 		}
 	}
 
-	h.Set(service.RigProjectTokenHeader, fmt.Sprint(i.cfg.Context().Project.ProjectToken))
+	h.Set(_rigProjectTokenHeader, fmt.Sprint(i.cfg.Context().Project.ProjectToken))
 }
 
 func (i *authInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
