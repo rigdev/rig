@@ -23,8 +23,8 @@ func StorageGetObject(ctx context.Context, cmd *cobra.Command, args []string, nc
 	} else {
 		path = args[0]
 	}
-	if isNSUri(path) {
-		bucket, prefix, err := parseNSUri(path)
+	if isRSUri(path) {
+		bucket, prefix, err := parseRSUri(path)
 		if err != nil {
 			return err
 		}

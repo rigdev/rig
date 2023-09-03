@@ -6,7 +6,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 )
 
-func isNSUri(raw string) bool {
+func isRSUri(raw string) bool {
 	_, _, err := parseRSUri(raw)
 	return err == nil
 }
@@ -18,7 +18,7 @@ func parseRSUri(raw string) (string, string, error) {
 	}
 
 	if uri.Scheme != "rs" {
-		return "", "", errors.InvalidArgumentErrorf("expect file of format `ns://bucket/path/to/file`")
+		return "", "", errors.InvalidArgumentErrorf("expect file of format `rs://bucket/path/to/file`")
 	}
 
 	return uri.Host, uri.Path, nil
