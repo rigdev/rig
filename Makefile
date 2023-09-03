@@ -91,14 +91,14 @@ docker: ## 🐳 Build docker image
 .PHONY: docker-compose-up
 docker-compose-up: ## 🐳 Run docker-compose
 	@echo "$(DEVENVS)" | sed -e "s/ /\n/" > ./deploy/docker-compose/.env.dev
-	docker-compose \
+	docker compose \
 		-f ./deploy/docker-compose/docker-compose.yaml \
 		--env-file ./deploy/docker-compose/.env.dev \
 		up --build -d
 
 .PHONY: docker-compose-down
 docker-compose-down: ## 🐳 Stop docker-compose
-	docker-compose -f ./deploy/docker-compose/docker-compose.yaml down
+	docker compose -f ./deploy/docker-compose/docker-compose.yaml down
 
 KUBECTX ?= kind-rig
 KUBECTL ?= kubectl --context $(KUBECTX)

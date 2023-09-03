@@ -18,6 +18,11 @@ type telemetryKeyType string
 
 const _telemetryKey telemetryKeyType = "telemetry"
 
+var _omitPaths = map[string]struct{}{
+	"/api.v1.capsule.Service/ListInstances":  {},
+	"/api.v1.capsule.Service/CapsuleMetrics": {},
+}
+
 type Telemetry struct {
 	logger         *zap.Logger
 	sc             *segment.Client
@@ -74,6 +79,10 @@ func (t *Telemetry) Wrap(next middleware.MiddlewareHandlerFunc) middleware.Middl
 			}
 
 			if d.userID == nil || d.userID.IsNil() {
+				return
+			}
+
+			if _, ok := _omitPaths[r.URL.Path]; ok {
 				return
 			}
 
