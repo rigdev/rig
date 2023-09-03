@@ -23,8 +23,8 @@ func StorageDeleteObject(ctx context.Context, cmd *cobra.Command, args []string,
 	} else {
 		path = args[0]
 	}
-	if isNSUri(path) {
-		bucket, prefix, err := parseNSUri(path)
+	if isRigUri(path) {
+		bucket, prefix, err := parseRigUri(path)
 		if err != nil {
 			return err
 		}

@@ -37,8 +37,8 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 	pw.SetNumTrackersExpected(3)
 	go pw.Render()
 
-	if isNSUri(rawFrom) {
-		bucket, prefix, err := parseNSUri(rawFrom)
+	if isRigUri(rawFrom) {
+		bucket, prefix, err := parseRigUri(rawFrom)
 		if err != nil {
 			return err
 		}
@@ -80,9 +80,9 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 				},
 			})
 		}
-		if isNSUri(rawTo) {
+		if isRigUri(rawTo) {
 			// Copy.
-			dstBucket, dstPrefix, err := parseNSUri(rawTo)
+			dstBucket, dstPrefix, err := parseRigUri(rawTo)
 			if err != nil {
 				return err
 			}
@@ -154,9 +154,9 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 			pw.Stop()
 			return nil
 		}
-	} else if isNSUri(rawTo) {
+	} else if isRigUri(rawTo) {
 		// Upload.
-		bucket, prefix, err := parseNSUri(rawTo)
+		bucket, prefix, err := parseRigUri(rawTo)
 		if err != nil {
 			return err
 		}
