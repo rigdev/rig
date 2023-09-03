@@ -21,9 +21,8 @@
   <a href="https://discord.gg/Tn5wmXMM2U">
     <img src="https://img.shields.io/badge/chat-on%20discord-7289DA.svg" alt="Discord Chat" />
   </a>
-
-  <a href="https://twitter.com/intent/follow?screen_name=rig.dev">
-    <img src="https://img.shields.io/twitter/follow/rig.svg?label=Follow%20@rig.dev" alt="Follow @rig.dev" />
+  <a href="https://twitter.com/intent/follow?screen_name=Rig_dev">
+    <img src="https://img.shields.io/twitter/follow/rig.svg?label=Follow%20@Rig_dev" alt="Follow @Rig_dev" />
   </a>
 </p>
 
