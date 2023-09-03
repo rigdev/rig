@@ -1,3 +1,7 @@
+[![Rig.dev](https://github.com/rigdev/rig/assets/3807831/b40ae289-0395-4cc3-9712-ccb9e9e2db3a)](https://rig.dev)
+
+[![license](https://img.shields.io/badge/license-apache2-blue.svg)](https://github.com/rigdev/rig/blob/main/LICENSE) [![discord](https://img.shields.io/badge/chat-on%20discord-7289DA.svg)](https://discord.gg/Tn5wmXMM2U) [![twitter](https://img.shields.io/twitter/follow/rig.svg?label=Follow%20@Rig_dev)](https://twitter.com/intent/follow?screen_name=Rig_dev)
+
 ## 🌟 What is Rig?
 
 Rig is an open-source cloud development platform for Kubernetes. It features simple-to-use Capsules for Application deployments and batteries-included Modules for Auth, User-management, Storage, and Databases.
