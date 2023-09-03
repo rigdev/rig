@@ -2,7 +2,7 @@
   <a href="https://www.rig.dev">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/rigdev/rig/assets/3807831/95fa4658-a3be-4b8b-beba-febaef26def1">
-      <img alt="rig" src="https://github.com/rigdev/rig/assets/3807831/b40ae289-0395-4cc3-9712-ccb9e9e2db3a" width="40%">
+      <img alt="rig" src="https://github.com/rigdev/rig/assets/3807831/b40ae289-0395-4cc3-9712-ccb9e9e2db3a" width="22%">
     </picture>
   </a>
 </p>
