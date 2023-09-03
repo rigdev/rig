@@ -28,7 +28,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "rig.fullname" $ }}
+                name: {{ include "rig.fullname" $ }}-svc
                 port:
                   number: {{ $.Values.service.port }}
     {{- end }}
