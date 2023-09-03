@@ -55,7 +55,7 @@ func StorageLs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 		return nil
 	}
 
-	bucket, prefix, err := parseRSUri(args[0])
+	bucket, prefix, err := parseRigUri(args[0])
 	if err != nil {
 		return err
 	}
