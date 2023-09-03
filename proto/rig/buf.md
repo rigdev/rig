@@ -1,4 +1,4 @@
-[![Rig.dev](https://github.com/rigdev/rig/assets/3807831/b40ae289-0395-4cc3-9712-ccb9e9e2db3a)](https://rig.dev)
+[![Rig.dev](https://github.com/rigdev/rig/assets/3807831/ddf2a96b-e9a8-44c5-9b83-a333736bd472)](https://rig.dev)
 
 [![license](https://img.shields.io/badge/license-apache2-blue.svg)](https://github.com/rigdev/rig/blob/main/LICENSE) [![discord](https://img.shields.io/badge/chat-on%20discord-7289DA.svg)](https://discord.gg/Tn5wmXMM2U) [![twitter](https://img.shields.io/twitter/follow/rig.svg?label=Follow%20@Rig_dev)](https://twitter.com/intent/follow?screen_name=Rig_dev)
 
