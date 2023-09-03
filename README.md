@@ -10,7 +10,7 @@
 <p align="center"><b><a href="https://docs.rig.dev/">Documentation</a> | <a href="https://rig.dev/">Website</a></b></p>
 
 <p align="center">
-  The open-source cloud development platform for Kubernetes
+  The open-source application platform for Kubernetes
 </p>
 
 <p align="center">
