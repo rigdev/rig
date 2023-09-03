@@ -40,7 +40,7 @@ func StorageLs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 			}
 
 			for _, b := range res.Msg.GetBuckets() {
-				l.AppendItem(fmt.Sprint("ns://", b.GetName(), "/ - (created_at=", b.GetCreatedAt().AsTime().Format(time.RFC3339), ")"))
+				l.AppendItem(fmt.Sprint("rig://", b.GetName(), "/ - (created_at=", b.GetCreatedAt().AsTime().Format(time.RFC3339), ")"))
 				cmd.Println(l.Render())
 				l.Reset()
 				l.SetStyle(list.StyleConnectedRounded)
@@ -60,7 +60,7 @@ func StorageLs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 		return err
 	}
 
-	l.AppendItem(fmt.Sprint("ns://", path.Join(bucket, prefix)))
+	l.AppendItem(fmt.Sprint("rig://", path.Join(bucket, prefix)))
 	l.Indent()
 
 	// List files.
