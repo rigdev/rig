@@ -10,7 +10,7 @@
 <p align="center"><b><a href="https://docs.rig.dev/">Documentation</a> | <a href="https://rig.dev/">Website</a></b></p>
 
 <p align="center">
-  The open-source cloud development platform for Kubernetes
+  The open-source application platform for Kubernetes
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 
 ## 🌟 What is Rig?
 
-Rig is an open-source cloud development platform for Kubernetes. It features simple-to-use Capsules for Application deployments and batteries-included Modules for Auth, User-management, Storage, and Databases.
+Rig.dev offers an open-source application platform for Kubernetes. We empower developers with our developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging and scaling applications. On top, we provide foundational APIs for user management, authentication, storage, and database integrations.
 
 ## 📦 Features
 
