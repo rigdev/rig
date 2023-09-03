@@ -48,7 +48,7 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: data
-        labels: {{ include "rig.mongodb.labels" . | nindent 10 }}
+        labels: {{ include "rig.mongodb.selectorLabels" . | nindent 10 }}
       spec:
         accessModes: [ "ReadWriteOnce" ]
         {{- with .Values.mongodb.storage.className }}
