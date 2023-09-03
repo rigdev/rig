@@ -7,17 +7,17 @@ import (
 )
 
 func isNSUri(raw string) bool {
-	_, _, err := parseNSUri(raw)
+	_, _, err := parseRSUri(raw)
 	return err == nil
 }
 
-func parseNSUri(raw string) (string, string, error) {
+func parseRSUri(raw string) (string, string, error) {
 	uri, err := url.Parse(raw)
 	if err != nil {
 		return "", "", err
 	}
 
-	if uri.Scheme != "ns" {
+	if uri.Scheme != "rs" {
 		return "", "", errors.InvalidArgumentErrorf("expect file of format `ns://bucket/path/to/file`")
 	}
 
