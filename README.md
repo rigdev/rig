@@ -1,4 +1,5 @@
-<p align="center">
+<br>
+<p align="center" style="margin-top: 14px !important;">
   <a href="https://www.rig.dev">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/rigdev/rig/assets/3807831/95fa4658-a3be-4b8b-beba-febaef26def1">
