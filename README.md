@@ -1,8 +1,8 @@
 <p align="center">
   <a href="https://www.rig.dev">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/rigdev/rig/assets/3807831/95fa4658-a3be-4b8b-beba-febaef26def1">
-      <img alt="rig" src="https://github.com/rigdev/rig/assets/3807831/b40ae289-0395-4cc3-9712-ccb9e9e2db3a" width="230px">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/rigdev/rig/assets/3807831/2b31efd1-c518-4939-8f2a-411805902d03">
+      <img alt="rig" src="https://github.com/rigdev/rig/assets/3807831/ddf2a96b-e9a8-44c5-9b83-a333736bd472" width="230px">
     </picture>
   </a>
 </p>
@@ -17,9 +17,11 @@
   <a href="https://github.com/rigdev/rig/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-apache2-blue.svg" alt="Rig is released under the Apache2 license." />
   </a>
+
   <a href="https://discord.gg/Tn5wmXMM2U">
     <img src="https://img.shields.io/badge/chat-on%20discord-7289DA.svg" alt="Discord Chat" />
   </a>
+
   <a href="https://twitter.com/intent/follow?screen_name=rig.dev">
     <img src="https://img.shields.io/twitter/follow/rig.svg?label=Follow%20@rig.dev" alt="Follow @rig.dev" />
   </a>
