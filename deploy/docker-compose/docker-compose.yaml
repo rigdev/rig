@@ -60,6 +60,7 @@ services:
       - RIG_REPOSITORY_PROJECT_STORE=mongodb
       - RIG_REPOSITORY_DATABASE_STORE=mongodb
       - RIG_REPOSITORY_SECRET_STORE=mongodb
+      - RIG_TELEMETRY_ENABLED=$RIG_TELEMETRY_ENABLED
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
