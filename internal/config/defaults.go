@@ -6,7 +6,7 @@ func newDefault() Config {
 	return Config{
 		Port:      4747,
 		PublicURL: "",
-		Telemetry: Telemetery{
+		Telemetry: Telemetry{
 			Enabled: true,
 		},
 

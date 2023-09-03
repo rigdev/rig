@@ -5,7 +5,7 @@ import "go.uber.org/zap/zapcore"
 type Config struct {
 	Port       int        `mapstructure:"port"`
 	PublicURL  string     `mapstructure:"public_url"`
-	Telemetry  Telemetery `mapstructure:"telemetry"`
+	Telemetry  Telemetry  `mapstructure:"telemetry"`
 	Auth       Auth       `mapstructure:"auth"`
 	Client     Client     `mapstructure:"client"`
 	Repository Repository `mapstructure:"repository"`
@@ -15,7 +15,7 @@ type Config struct {
 	Registry   Registry   `mapstructure:"registry"`
 }
 
-type Telemetery struct {
+type Telemetry struct {
 	Enabled bool `mapstructure:"enabled"`
 }
 
