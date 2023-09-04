@@ -26,24 +26,7 @@ func (p *Provider) ToProto() (*storage.Provider, error) {
 	return pr, nil
 }
 
-func (p *Provider) ToProtoEntry() (*storage.ProviderEntry, error) {
-	pp, err := p.ToProto()
-	if err != nil {
-		return nil, err
-	}
-
-	e := &storage.ProviderEntry{
-		ProviderId: p.ProviderID.String(),
-		Name:       p.Name,
-		Config:     pp.GetConfig(),
-		Buckets:    p.Buckets,
-		CreatedAt:  pp.CreatedAt,
-	}
-
-	return e, nil
-}
-
-func ProviderFromProto(projectID, providerID, secretsID uuid.UUID, p *storage.Provider) (*Provider, error) {
+func ProviderFromProto(projectID, secretID uuid.UUID, p *storage.Provider) (*Provider, error) {
 	bs, err := proto.Marshal(p)
 	if err != nil {
 		return nil, err
@@ -51,8 +34,8 @@ func ProviderFromProto(projectID, providerID, secretsID uuid.UUID, p *storage.Pr
 
 	return &Provider{
 		ProjectID:  projectID,
-		ProviderID: providerID,
-		SecretID:   secretsID,
+		ProviderID: uuid.UUID(p.GetProviderId()),
+		SecretID:   secretID,
 		Name:       p.GetName(),
 		Buckets:    p.GetBuckets(),
 		Data:       bs,

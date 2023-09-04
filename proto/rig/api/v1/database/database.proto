@@ -3,39 +3,33 @@ syntax = "proto3";
 package api.v1.database;
 
 import "google/protobuf/timestamp.proto";
-
-message Update {
-  oneof field {
-    string name = 1;
-  }
-}
-
-enum Type {
-  TYPE_UNSPECIFIED = 0;
-  TYPE_MONGO = 1;
-  TYPE_POSTGRES = 2;
-}
+import "model/credentials.proto";
 
 message Table {
   string name = 1;
 }
 
-message Credential {
-  string client_id = 1;
-  string secret = 2;
-  string name = 3;
-  google.protobuf.Timestamp created_at = 4;
+message MongoConfig {
+  model.ProviderCredentials credentials = 1;
+  string host = 2;
 }
 
-message Info {
-  repeated Credential credentials = 1;
-  google.protobuf.Timestamp created_at = 2;
-  repeated Table tables = 3;
+message PostgresConfig {
+  model.ProviderCredentials credentials = 1;
+  string host = 2;
+}
+
+message Config {
+  oneof config {
+    MongoConfig mongo = 1;
+    PostgresConfig postgres = 2;
+  }
 }
 
 message Database {
   string database_id = 1;
-  string name = 2;  // unique
-  Type type = 3;
-  Info info = 4;
+  string name = 2;
+  Config config = 3;
+  repeated Table tables = 4;
+  google.protobuf.Timestamp created_at = 5;
 }

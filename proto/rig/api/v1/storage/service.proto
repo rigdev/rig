@@ -50,8 +50,7 @@ message CreateProviderRequest {
 }
 
 message CreateProviderResponse {
-  string provider_id = 1;
-  api.v1.storage.Provider provider = 2;
+  api.v1.storage.Provider provider = 1;
 }
 
 message DeleteProviderRequest {
@@ -73,7 +72,7 @@ message ListProvidersRequest {
 }
 
 message ListProvidersResponse {
-  repeated api.v1.storage.ProviderEntry providers = 1;
+  repeated api.v1.storage.Provider providers = 1;
   uint64 total = 2;
 }
 

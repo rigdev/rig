@@ -21,7 +21,8 @@ message Object {
 }
 
 message Provider {
-  string name = 1;
+  string provider_id = 1;
+  string name = 2;
   Config config = 3;
   repeated Bucket buckets = 4;
   google.protobuf.Timestamp created_at = 5;
@@ -33,14 +34,6 @@ message Config {
     GcsConfig gcs = 2;
     S3Config s3 = 3;
   }
-}
-
-message ProviderEntry {
-  string provider_id = 1;
-  string name = 2;
-  Config config = 3;
-  repeated Bucket buckets = 4;
-  google.protobuf.Timestamp created_at = 5;
 }
 
 message GcsConfig {

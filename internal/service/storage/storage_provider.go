@@ -34,41 +34,42 @@ func (s *Service) LookupProvider(ctx context.Context, name string) (uuid.UUID, *
 	return pid, p, err
 }
 
-func (s *Service) CreateProvider(ctx context.Context, name string, config *storage.Config, linkBuckets bool) (uuid.UUID, *storage.Provider, error) {
+func (s *Service) CreateProvider(ctx context.Context, name string, config *storage.Config, linkBuckets bool) (*storage.Provider, error) {
 	providerID := uuid.New()
 
 	p := &storage.Provider{
-		Name:      name,
-		Config:    config,
-		CreatedAt: timestamppb.Now(),
+		ProviderId: providerID.String(),
+		Name:       name,
+		Config:     config,
+		CreatedAt:  timestamppb.Now(),
 	}
 
 	sg, err := s.getStorageGateway(ctx, p)
 	if err != nil {
-		return uuid.Nil, nil, err
+		return nil, err
 	}
 
 	err = sg.Test(ctx)
 	if err != nil {
-		return uuid.Nil, nil, err
+		return nil, err
 	}
 
 	if linkBuckets {
 		bucketsIt, err := sg.ListBuckets(ctx)
 		if err != nil {
-			return uuid.Nil, nil, err
+			return nil, err
 		}
 		defer bucketsIt.Close()
 
 		rigBucketsIt, err := s.ListBuckets(ctx)
 		if err != nil {
-			return uuid.Nil, nil, err
+			return nil, err
 		}
 		defer rigBucketsIt.Close()
 
 		rigBuckets, err := iterator.Collect(rigBucketsIt)
 		if err != nil {
-			return uuid.Nil, nil, err
+			return nil, err
 		}
 
 		buckets := []*storage.Bucket{}
@@ -78,7 +79,7 @@ func (s *Service) CreateProvider(ctx context.Context, name string, config *stora
 				p.Buckets = buckets
 				break
 			} else if err != nil {
-				return uuid.Nil, nil, err
+				return nil, err
 			}
 
 			if !slices.ContainsFunc(rigBuckets, func(bb *storage.Bucket) bool {
@@ -108,14 +109,14 @@ func (s *Service) CreateProvider(ctx context.Context, name string, config *stora
 	case *storage.Config_S3:
 		secret, err = json.Marshal(config.GetS3().GetCredentials())
 		if err != nil {
-			return uuid.Nil, nil, err
+			return nil, err
 		}
 
 		config.GetS3().Credentials = nil
 	case *storage.Config_Minio:
 		secret, err = json.Marshal(config.GetMinio().GetCredentials())
 		if err != nil {
-			return uuid.Nil, nil, err
+			return nil, err
 		}
 
 		config.GetMinio().Credentials = nil
@@ -123,15 +124,15 @@ func (s *Service) CreateProvider(ctx context.Context, name string, config *stora
 
 	err = s.rsec.Create(ctx, sID, secret)
 	if err != nil {
-		return uuid.Nil, nil, err
+		return nil, err
 	}
 
-	p, err = s.rs.Create(ctx, providerID, sID, p)
+	p, err = s.rs.Create(ctx, sID, p)
 	if err != nil {
-		return uuid.Nil, nil, err
+		return nil, err
 	}
 
-	return providerID, p, nil
+	return p, nil
 }
 
 func (s *Service) DeleteProvider(ctx context.Context, providerID uuid.UUID) error {
@@ -148,7 +149,7 @@ func (s *Service) DeleteProvider(ctx context.Context, providerID uuid.UUID) erro
 	return s.rs.Delete(ctx, providerID)
 }
 
-func (s *Service) ListProviders(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*storage.ProviderEntry], uint64, error) {
+func (s *Service) ListProviders(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*storage.Provider], uint64, error) {
 	return s.rs.List(ctx, pagination)
 }
 

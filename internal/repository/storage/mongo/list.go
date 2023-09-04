@@ -5,13 +5,13 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-api/model"
+	"github.com/rigdev/rig/internal/repository/storage/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/internal/repository/storage/mongo/schema"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (m *MongoRepository) List(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*storage.ProviderEntry], uint64, error) {
+func (m *MongoRepository) List(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*storage.Provider], uint64, error) {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -27,7 +27,7 @@ func (m *MongoRepository) List(ctx context.Context, pagination *model.Pagination
 		return nil, 0, err
 	}
 
-	it := iterator.NewProducer[*storage.ProviderEntry]()
+	it := iterator.NewProducer[*storage.Provider]()
 	go func() {
 		defer it.Done()
 		defer cursor.Close(ctx)
@@ -38,7 +38,7 @@ func (m *MongoRepository) List(ctx context.Context, pagination *model.Pagination
 				return
 			}
 
-			e, err := p.ToProtoEntry()
+			e, err := p.ToProto()
 			if err != nil {
 				it.Error(err)
 				return

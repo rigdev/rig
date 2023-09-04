@@ -14,7 +14,7 @@ func (h *Handler) Get(ctx context.Context, req *connect.Request[database.GetRequ
 		return nil, err
 	}
 
-	db, err := h.ds.Get(ctx, dbId)
+	db, _, err := h.ds.Get(ctx, dbId)
 	if err != nil {
 		return nil, err
 	}

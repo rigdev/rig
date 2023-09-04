@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig/pkg/errors"
@@ -9,43 +10,58 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Service) Create(ctx context.Context, dbType database.Type, initializers []*database.Update) (uuid.UUID, *database.Database, error) {
-	databaseID := uuid.New()
-
-	switch dbType {
-	case database.Type_TYPE_MONGO:
-		if err := s.mongoEnabled(); err != nil {
-			return uuid.Nil, nil, err
-		}
-	case database.Type_TYPE_POSTGRES:
-		if err := s.postgresEnabled(); err != nil {
-			return uuid.Nil, nil, err
-		}
-		if _, err := s.postgres.Exec("create database " + formatDatabaseID(databaseID)); err != nil {
-			return uuid.Nil, nil, err
-		}
-	default:
-		return uuid.Nil, nil, errors.InvalidArgumentErrorf("invalid database type: %v", dbType)
+func (s *Service) Create(ctx context.Context, name string, config *database.Config, linkTables bool) (*database.Database, error) {
+	if name == "" {
+		return nil, errors.InvalidArgumentErrorf("missing required database name")
 	}
 
+	databaseID := uuid.New()
 	d := &database.Database{
 		DatabaseId: databaseID.String(),
-		Type:       dbType,
-		Info: &database.Info{
-			CreatedAt:   timestamppb.Now(),
-			Credentials: []*database.Credential{},
-		},
+		Name:       name,
+		Config:     config,
+		Tables:     []*database.Table{},
+		CreatedAt:  timestamppb.Now(),
 	}
-	if err := applyUpdates(d, initializers); err != nil {
-		return uuid.Nil, nil, err
-	}
-	if d.Name == "" {
-		return uuid.Nil, nil, errors.InvalidArgumentErrorf("missing required database name")
-	}
-	var err error
-	d, err = s.dr.Create(ctx, d)
+
+	gateway, err := s.getDatabaseGateway(ctx, d)
 	if err != nil {
-		return uuid.Nil, nil, err
+		return nil, err
 	}
-	return databaseID, d, nil
+
+	err = gateway.Test(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	sID := uuid.New()
+	var secret []byte
+
+	switch config.Config.(type) {
+	case *database.Config_Mongo:
+		secret, err = json.Marshal(config.GetMongo().GetCredentials())
+		if err != nil {
+			return nil, err
+		}
+
+		config.GetMongo().Credentials = nil
+	case *database.Config_Postgres:
+		secret, err = json.Marshal(config.GetPostgres().GetCredentials())
+		if err != nil {
+			return nil, err
+		}
+
+		config.GetPostgres().Credentials = nil
+	}
+
+	err = s.secr.Create(ctx, sID, secret)
+	if err != nil {
+		return nil, err
+	}
+
+	d, err = s.dr.Create(ctx, sID, d)
+	if err != nil {
+		return nil, err
+	}
+	return d, nil
 }

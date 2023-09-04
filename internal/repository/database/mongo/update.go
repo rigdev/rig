@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/rigdev/rig-go-api/api/v1/database"
-	"github.com/rigdev/rig/internal/repository/database/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -15,19 +14,13 @@ func (m *MongoRepository) Update(ctx context.Context, database *database.Databas
 	if err != nil {
 		return nil, err
 	}
-	d, err := schema.DatabaseFromProto(projectID, database)
-	if err != nil {
-		return nil, err
-	}
-	if err := m.DatabaseCollection.FindOneAndUpdate(
-		ctx,
-		bson.M{"project_id": projectID, "database_id": database.GetDatabaseId()},
-		bson.M{
-			"$set": d,
-		},
-	).Decode(&d); err != nil {
+
+	filter := bson.M{"database_id": database.GetDatabaseId(), "project_id": projectID}
+	update := bson.M{"$set": bson.M{"name": database.GetName(), "tables": database.GetTables()}}
+
+	if _, err := m.DatabaseCollection.UpdateOne(ctx, filter, update); err != nil {
 		return nil, err
 	}
 
-	return d.ToProto()
+	return database, nil
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func (h Handler) CreateProvider(ctx context.Context, req *connect.Request[storage.CreateProviderRequest]) (*connect.Response[storage.CreateProviderResponse], error) {
-	_, p, err := h.ss.CreateProvider(ctx, req.Msg.GetName(), req.Msg.GetConfig(), req.Msg.GetLinkBuckets())
+	p, err := h.ss.CreateProvider(ctx, req.Msg.GetName(), req.Msg.GetConfig(), req.Msg.GetLinkBuckets())
 	if err != nil {
 		return nil, err
 	}

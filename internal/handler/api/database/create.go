@@ -8,17 +8,12 @@ import (
 )
 
 func (h *Handler) Create(ctx context.Context, req *connect.Request[database.CreateRequest]) (*connect.Response[database.CreateResponse], error) {
-	databaseID, db, err := h.ds.Create(ctx, req.Msg.GetType(), req.Msg.GetInitializers())
+	db, err := h.ds.Create(ctx, req.Msg.GetName(), req.Msg.GetConfig(), req.Msg.GetLinkTables())
 	if err != nil {
 		return nil, err
 	}
-	clientId, clientSecret, err := h.ds.CreateCredential(ctx, "Default Credential", databaseID)
-	if err != nil {
-		return nil, err
-	}
+
 	return connect.NewResponse(&database.CreateResponse{
-		Database:     db,
-		ClientId:     clientId,
-		ClientSecret: clientSecret,
+		Database: db,
 	}), nil
 }

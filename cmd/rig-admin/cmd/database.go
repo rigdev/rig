@@ -23,44 +23,17 @@ func init() {
 	database.PersistentFlags().StringVar(&databaseId, "database", "", "uuid of your database")
 
 	createDatabase := &cobra.Command{
-		Use:  "create-database <db> <type>",
+		Use:  "create-database <name> <type> <username> <password> <host>",
 		RunE: register(CreateDatabase),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(5),
 	}
 	database.AddCommand(createDatabase)
-
-	createDatabaseCredential := &cobra.Command{
-		Use:  "create-credential <name>",
-		RunE: register(CreateDatabaseCredential),
-		Args: cobra.ExactArgs(1),
-	}
-	database.AddCommand(createDatabaseCredential)
-
-	deleteDatabaseCredential := &cobra.Command{
-		Use:  "delete-credential <clientId>",
-		RunE: register(DeleteDatabaseCredential),
-		Args: cobra.ExactArgs(1),
-	}
-	database.AddCommand(deleteDatabaseCredential)
-
-	listCredentials := &cobra.Command{
-		Use:  "list-credentials",
-		RunE: register(ListDatabaseCredentials),
-	}
-	database.AddCommand(listCredentials)
 
 	getDatabase := &cobra.Command{
 		Use:  "get-database",
 		RunE: register(GetDatabase),
 	}
 	database.AddCommand(getDatabase)
-
-	connectDatabase := &cobra.Command{
-		Use:  "connect <clientId> <clientSecret>",
-		RunE: register(ConnectDatabase),
-		Args: cobra.ExactArgs(2),
-	}
-	database.AddCommand(connectDatabase)
 
 	deleteDatabase := &cobra.Command{
 		Use:  "delete-database",
@@ -97,20 +70,35 @@ func init() {
 	rootCmd.AddCommand(database)
 }
 
-func getDbType(databaseType string) (database.Type, error) {
-	if databaseType == "" {
-		return database.Type_TYPE_UNSPECIFIED, errors.New("type is required")
-	}
-	var dbType database.Type
-	switch databaseType {
-	case "mongo":
-		dbType = database.Type_TYPE_MONGO
+func getDbConfig(args []string) (*database.Config, error) {
+	switch args[1] {
 	case "postgres":
-		dbType = database.Type_TYPE_POSTGRES
+		return &database.Config{
+			Config: &database.Config_Postgres{
+				Postgres: &database.PostgresConfig{
+					Credentials: &model.ProviderCredentials{
+						PublicKey:  args[2],
+						PrivateKey: args[3],
+					},
+					Host: args[4],
+				},
+			},
+		}, nil
+	case "mongo":
+		return &database.Config{
+			Config: &database.Config_Mongo{
+				Mongo: &database.MongoConfig{
+					Credentials: &model.ProviderCredentials{
+						PublicKey:  args[2],
+						PrivateKey: args[3],
+					},
+					Host: args[4],
+				},
+			},
+		}, nil
 	default:
-		return database.Type_TYPE_UNSPECIFIED, fmt.Errorf("invalid database type: %v (insert mongo or postgres)", databaseType)
+		return nil, errors.New("invalid database type")
 	}
-	return dbType, nil
 }
 
 func CreateDatabase(ctx context.Context, cmd *cobra.Command, args []string, ds *service_database.Service, logger *zap.Logger) error {
@@ -118,81 +106,15 @@ func CreateDatabase(ctx context.Context, cmd *cobra.Command, args []string, ds *
 	if databaseName == "" {
 		return errors.New("database name is required")
 	}
-	dbType, err := getDbType(args[1])
+	config, err := getDbConfig(args)
 	if err != nil {
 		return err
 	}
-	databaseID, db, err := ds.Create(ctx, dbType, []*database.Update{
-		{Field: &database.Update_Name{Name: databaseName}},
-	})
+	db, err := ds.Create(ctx, databaseName, config, false)
 	if err != nil {
 		return err
 	}
-	logger.Info("created database", zap.String("name", databaseName), zap.String("type", db.GetType().String()), zap.String("id", databaseID.String()))
-	return nil
-}
-
-func CreateDatabaseCredential(ctx context.Context, cmd *cobra.Command, args []string, ds *service_database.Service, logger *zap.Logger) error {
-	if databaseId == "" {
-		return errors.New("missing required database id")
-	}
-	credentialName := args[0]
-	if credentialName == "" {
-		return errors.New("credential name is required")
-	}
-
-	dbId, err := uuid.Parse(databaseId)
-	if err != nil {
-		return err
-	}
-
-	clientId, clientSecret, err := ds.CreateCredential(ctx, credentialName, dbId)
-	if err != nil {
-		return err
-	}
-	logger.Info("created credential", zap.String("clientId", clientId), zap.String("secret", clientSecret))
-	return nil
-}
-
-func DeleteDatabaseCredential(ctx context.Context, cmd *cobra.Command, args []string, ds *service_database.Service, logger *zap.Logger) error {
-	if databaseId == "" {
-		return errors.New("missing required database id")
-	}
-	credentialsName := args[0]
-	if credentialsName == "" {
-		return errors.New("credentials name is required")
-	}
-
-	dbId, err := uuid.Parse(databaseId)
-	if err != nil {
-		return err
-	}
-
-	if err := ds.DeleteCredential(ctx, credentialsName, dbId); err != nil {
-		return err
-	}
-	logger.Info("deleted credential", zap.String("clientId", credentialsName))
-	return nil
-}
-
-func ListDatabaseCredentials(ctx context.Context, cmd *cobra.Command, args []string, ds *service_database.Service, logger *zap.Logger) error {
-	if databaseId == "" {
-		return errors.New("missing required database id")
-	}
-
-	dbId, err := uuid.Parse(databaseId)
-	if err != nil {
-		return err
-	}
-
-	credentials, err := ds.ListCredentials(ctx, dbId)
-	if err != nil {
-		return err
-	}
-	logger.Info("found credentials", zap.Int("amount", len(credentials)))
-	for _, credential := range credentials {
-		logger.Info("credential", zap.String("name", credential.GetName()), zap.String("clientId", credential.ClientId), zap.String("secret", string(credential.Secret)))
-	}
+	logger.Info("created database", zap.String("name", databaseName), zap.String("id", db.GetDatabaseId()))
 	return nil
 }
 
@@ -206,43 +128,11 @@ func GetDatabase(ctx context.Context, cmd *cobra.Command, args []string, ds *ser
 		return err
 	}
 
-	database, err := ds.Get(ctx, dbId)
+	database, _, err := ds.Get(ctx, dbId)
 	if err != nil {
 		return err
 	}
 	logger.Info("got database", zap.String("name", database.Name))
-	return nil
-}
-
-func ConnectDatabase(ctx context.Context, cmd *cobra.Command, args []string, ds *service_database.Service, logger *zap.Logger) error {
-	if databaseId == "" {
-		return errors.New("missing required database id")
-	}
-
-	dbId, err := uuid.Parse(databaseId)
-	if err != nil {
-		return err
-	}
-
-	clientId := args[0]
-	if clientId == "" {
-		return errors.New("clientId is required")
-	}
-	clientSecret := args[1]
-	if clientSecret == "" {
-		return errors.New("clientSecret is required")
-	}
-	endpoint, _, err := ds.GetDatabaseEndpoint(ctx, dbId, clientId, clientSecret)
-	if err != nil {
-		return err
-	}
-	fmt.Printf(`
-
-connect to mongo by running:
-mongosh "%s"
-
-	`, endpoint)
-
 	return nil
 }
 
@@ -276,7 +166,7 @@ func ListDatabases(ctx context.Context, cmd *cobra.Command, ds *service_database
 		} else if err != nil {
 			return err
 		}
-		logger.Info("", zap.String("name", database.Name), zap.String("type", database.GetType().String()), zap.Time("createdAt", database.GetInfo().GetCreatedAt().AsTime()))
+		logger.Info("", zap.String("name", database.Name), zap.Time("createdAt", database.GetCreatedAt().AsTime()))
 	}
 	return nil
 }

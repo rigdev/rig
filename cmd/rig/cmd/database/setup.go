@@ -1,16 +1,15 @@
 package database
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 var (
 	outputJSON bool
+	linkTables bool
 )
 
 var (
@@ -23,6 +22,7 @@ var (
 	dbTypeString string
 	clientID     string
 	clientSecret string
+	host         string
 )
 
 func Setup(parent *cobra.Command) {
@@ -37,23 +37,12 @@ func Setup(parent *cobra.Command) {
 	}
 	createDatabase.Flags().StringVarP(&name, "name", "n", "", "name of the database")
 	createDatabase.Flags().StringVarP(&dbTypeString, "type", "t", "", "type of the database (mongo, postgres)")
+	createDatabase.Flags().StringVarP(&clientID, "client-id", "i", "", "client id")
+	createDatabase.Flags().StringVarP(&clientSecret, "client-secret", "s", "", "client secret")
+	createDatabase.Flags().StringVarP(&host, "host", "h", "", "host")
+	createDatabase.Flags().BoolVarP(&linkTables, "link-tables", "l", false, "link tables")
+
 	database.AddCommand(createDatabase)
-
-	createDatabaseCredential := &cobra.Command{
-		Use:  "create-credentials [id | db-name]",
-		RunE: base.Register(CreateCredential),
-		Args: cobra.MaximumNArgs(1),
-	}
-	createDatabaseCredential.Flags().StringVarP(&name, "name", "n", "", "name of the credentials")
-	database.AddCommand(createDatabaseCredential)
-
-	deleteCredential := &cobra.Command{
-		Use:  "delete-credentials [id | db-name]",
-		RunE: base.Register(DeleteCredential),
-		Args: cobra.MaximumNArgs(1),
-	}
-	deleteCredential.Flags().StringVarP(&name, "name", "n", "", "name of the credentials")
-	database.AddCommand(deleteCredential)
 
 	getDatabase := &cobra.Command{
 		Use:  "get [id | name]",
@@ -62,15 +51,6 @@ func Setup(parent *cobra.Command) {
 	}
 	getDatabase.Flags().BoolVar(&outputJSON, "json", false, "output as json")
 	database.AddCommand(getDatabase)
-
-	connect := &cobra.Command{
-		Use:  "connect [id | name]",
-		RunE: base.Register(Connect),
-		Args: cobra.MaximumNArgs(1),
-	}
-	connect.Flags().StringVarP(&clientID, "client-id", "i", "", "client id")
-	connect.Flags().StringVarP(&clientSecret, "client-secret", "s", "", "client secret")
-	database.AddCommand(connect)
 
 	delete := &cobra.Command{
 		Use:  "delete [id | name]",
@@ -119,18 +99,13 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(database)
 }
 
-func getDbType(databaseType string) (database.Type, error) {
-	if databaseType == "" {
-		return database.Type_TYPE_UNSPECIFIED, errors.New("type is required")
-	}
-	var dbType database.Type
-	switch databaseType {
-	case "mongo":
-		dbType = database.Type_TYPE_MONGO
-	case "postgres":
-		dbType = database.Type_TYPE_POSTGRES
+func GetDBTypeString(db *database.Database) (string, error) {
+	switch db.GetConfig().GetConfig().(type) {
+	case *database.Config_Mongo:
+		return "mongo", nil
+	case *database.Config_Postgres:
+		return "postgres", nil
 	default:
-		return database.Type_TYPE_UNSPECIFIED, fmt.Errorf("invalid database type: %v (insert mongo or postgres)", databaseType)
+		return "", errors.InvalidArgumentErrorf("invalid database type")
 	}
-	return dbType, nil
 }
