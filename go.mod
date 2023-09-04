@@ -49,7 +49,7 @@ require (
 
 require (
 	github.com/go-chi/chi/v5 v5.0.10
-	github.com/rigdev/rig-go-api v0.0.0-20230901110907-d3cdf0db09f7
+	github.com/rigdev/rig-go-api v0.0.0-20230904101308-f541d3e3f612
 	k8s.io/metrics v0.28.0
 )
 

@@ -12,9 +12,9 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nyaruka/phonenumbers v1.1.7
-	github.com/rigdev/rig v0.1.1
-	github.com/rigdev/rig-go-api v0.0.0-20230901110907-d3cdf0db09f7
-	github.com/rigdev/rig-go-sdk v0.0.0-20230901111022-ea6af2ed0b83
+	github.com/rigdev/rig v1.0.1-0.20230904093445-a6da69986745
+	github.com/rigdev/rig-go-api v0.0.0-20230904101308-f541d3e3f612
+	github.com/rigdev/rig-go-sdk v0.0.0-20230902170251-18fbb97d0692
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	go.uber.org/dig v1.17.0
