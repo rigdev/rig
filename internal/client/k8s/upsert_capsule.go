@@ -3,6 +3,8 @@ package k8s
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -36,11 +38,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		return err
 	}
 
-	bs, err := c.ps.GetProjectDockerSecret(ctx)
-	if err != nil {
-		return err
-	}
-	if err := c.reconcilePullSecret(ctx, ns, bs); err != nil {
+	if err := c.reconcilePullSecret(ctx, ns, cc.RegistryAuth); err != nil {
 		return err
 	}
 
@@ -59,7 +57,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 	if err := c.reconcileEnvSecret(ctx, capsuleName, ns, cc); err != nil {
 		return err
 	}
-	if err := c.reconcileDeployment(ctx, capsuleName, ns, len(bs) > 0, cc); err != nil {
+	if err := c.reconcileDeployment(ctx, capsuleName, ns, cc.RegistryAuth != nil, cc); err != nil {
 		return err
 	}
 
@@ -76,21 +74,38 @@ func (c *Client) reconcileProjectNamespace(ctx context.Context, namespace string
 	return nil
 }
 
-func (c *Client) reconcilePullSecret(ctx context.Context, namespace string, data []byte) error {
-	if len(data) == 0 {
+func (c *Client) reconcilePullSecret(ctx context.Context, namespace string, auth *cluster.RegistryAuth) error {
+	if auth == nil {
 		if err := c.deletePullSecret(ctx, namespace); err != nil {
 			return err
 		}
 		return nil
 	}
 
+	bs, err := json.Marshal(map[string]interface{}{
+		"auths": map[string]interface{}{
+			auth.Host: map[string]interface{}{
+				"auth": base64.StdEncoding.EncodeToString(
+					[]byte(fmt.Sprint(
+						auth.RegistrySecret.GetUsername(),
+						":",
+						auth.RegistrySecret.GetPassword()),
+					),
+				),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
 	s := acsv1.Secret(fmt.Sprintf("%s-pull", namespace), namespace).
 		WithType(v1.SecretTypeDockerConfigJson).
-		WithData(map[string][]byte{".dockerconfigjson": data})
-	_, err := c.cs.CoreV1().Secrets(namespace).Apply(ctx, s, applyOpts())
-	if err != nil {
+		WithData(map[string][]byte{".dockerconfigjson": bs})
+	if _, err := c.cs.CoreV1().Secrets(namespace).Apply(ctx, s, applyOpts()); err != nil {
 		return fmt.Errorf("could not apply pull secret: %w", err)
 	}
+
 	return nil
 }
 

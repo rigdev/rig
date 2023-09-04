@@ -10,6 +10,7 @@ import (
 	storage_settings "github.com/rigdev/rig-go-api/api/v1/storage/settings"
 	user_settings "github.com/rigdev/rig-go-api/api/v1/user/settings"
 	"github.com/rigdev/rig-go-api/model"
+	"github.com/rigdev/rig/gen/go/registry"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/email"
 	"github.com/rigdev/rig/internal/oauth2"
@@ -32,7 +33,7 @@ type Service interface {
 	List(ctx context.Context, query *model.Pagination) (iterator.Iterator[*project.Project], int64, error)
 	DeleteProject(ctx context.Context) error
 
-	GetProjectDockerSecret(ctx context.Context) ([]byte, error)
+	GetProjectDockerSecret(ctx context.Context, host string) (*registry.Secret, error)
 
 	GetEmailProvider(ctx context.Context) (email.Gateway, error)
 

@@ -25,12 +25,12 @@ func ProjectGetSettings(ctx context.Context, cmd *cobra.Command, args []string, 
 	}
 
 	dockerRegistries := []table.Row{}
-	for i, r := range set.GetDockerRegistries().GetHosts() {
+	for i, r := range set.GetDockerRegistries() {
 		if i == 0 {
 			dockerRegistries = append(dockerRegistries, table.Row{"Docker Registries", r})
 			continue
 		}
-		dockerRegistries = append(dockerRegistries, table.Row{"", r})
+		dockerRegistries = append(dockerRegistries, table.Row{"", r.GetHost()})
 	}
 
 	t := table.NewWriter()

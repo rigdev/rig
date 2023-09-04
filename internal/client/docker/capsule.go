@@ -36,7 +36,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		return err
 	}
 
-	image, err := c.ensureImage(ctx, cc.Image)
+	image, err := c.ensureImage(ctx, cc.Image, cc.RegistryAuth)
 	if err != nil {
 		return err
 	}

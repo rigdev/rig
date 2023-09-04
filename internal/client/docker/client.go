@@ -3,6 +3,8 @@ package docker
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -12,14 +14,16 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/internal/config"
+	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -177,7 +181,7 @@ func (c *Client) ensureNetwork(ctx context.Context) (string, error) {
 	return projectID.String(), nil
 }
 
-func (c *Client) ensureImage(ctx context.Context, image string) (string, error) {
+func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.RegistryAuth) (string, error) {
 	if strings.IndexByte(image, ':') < 0 {
 		image += ":latest"
 	}
@@ -195,7 +199,30 @@ func (c *Client) ensureImage(ctx context.Context, image string) (string, error) 
 	if len(is) == 0 {
 		c.logger.Debug("pulling image", zap.String("image", image))
 
-		r, err := c.dc.ImagePull(ctx, image, types.ImagePullOptions{})
+		opts := types.ImagePullOptions{}
+
+		if auth != nil {
+			ac := registry.AuthConfig{
+				ServerAddress: auth.Host,
+				Username:      auth.RegistrySecret.GetUsername(),
+				Password:      auth.RegistrySecret.GetPassword(),
+				Auth: base64.StdEncoding.EncodeToString(
+					[]byte(fmt.Sprint(
+						auth.RegistrySecret.GetUsername(),
+						":",
+						auth.RegistrySecret.GetPassword()),
+					),
+				),
+			}
+			secret, err := json.Marshal(ac)
+			if err != nil {
+				return "", err
+			}
+
+			opts.RegistryAuth = base64.StdEncoding.EncodeToString(secret)
+		}
+
+		r, err := c.dc.ImagePull(ctx, image, opts)
 		if err != nil {
 			return "", err
 		}

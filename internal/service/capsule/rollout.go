@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/distribution/distribution/v3/reference"
 	"github.com/golang-jwt/jwt"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
@@ -239,6 +240,9 @@ func (j *rolloutJob) Run(ctx context.Context) error {
 	rs := proto.Clone(oldRS).(*rollout.Status)
 
 	err = j.run(ctx, c, rc, rs, version, logger)
+	if err != nil {
+		rs.Status.Message = errors.MessageOf(err)
+	}
 
 	if proto.Equal(rs, oldRS) {
 		rs.ScheduledAt = timestamppb.New(time.Now().Add(3 * time.Second))
@@ -423,6 +427,22 @@ func (j *rolloutJob) run(
 			Replicas:          rc.GetReplicas(),
 			Namespace:         j.projectID.String(),
 			Network:           rc.GetNetwork(),
+		}
+
+		ref, err := reference.ParseDockerRef(b.GetBuildId())
+		if err != nil {
+			return errors.InvalidArgumentErrorf("%v", err)
+		}
+
+		host := reference.Domain(ref)
+		if ds, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
+		} else if err != nil {
+			return err
+		} else {
+			cc.RegistryAuth = &cluster.RegistryAuth{
+				Host:           host,
+				RegistrySecret: ds,
+			}
 		}
 
 		if cc.ContainerSettings == nil {

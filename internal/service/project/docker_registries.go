@@ -6,27 +6,38 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	project_settings "github.com/rigdev/rig-go-api/api/v1/project/settings"
+	"github.com/rigdev/rig/gen/go/registry"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
+	"google.golang.org/protobuf/proto"
 )
 
-func (s *service) GetProjectDockerSecret(ctx context.Context) ([]byte, error) {
+func (s *service) GetProjectDockerSecret(ctx context.Context, host string) (*registry.Secret, error) {
 	ps, err := s.GetProjectSettings(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	stringSid := ps.DockerRegistries.GetSecretId()
-	if stringSid == "" {
-		return nil, nil
+	for _, p := range ps.GetDockerRegistries() {
+		if p.GetHost() == host {
+			bs, err := s.rs.Get(ctx, uuid.UUID(p.GetSecretId()))
+			if err != nil {
+				return nil, err
+			}
+
+			rs := &registry.Secret{}
+			if err := proto.Unmarshal(bs, rs); err != nil {
+				return nil, err
+			}
+
+			return rs, nil
+		}
 	}
 
-	bs, err := s.rs.Get(ctx, uuid.UUID(stringSid))
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
+	return nil, errors.NotFoundErrorf("registry host not found")
 }
 
 func (s *service) applyAddDockerRegistry(
@@ -34,40 +45,26 @@ func (s *service) applyAddDockerRegistry(
 	set *project_settings.Settings,
 	reg *project_settings.Update_AddDockerRegistry,
 ) error {
-	cfg := createDockerConfigJSON(reg)
-	if set.DockerRegistries == nil {
-		set.DockerRegistries = &project_settings.DockerRegistries{}
-	}
-
-	if sid := set.DockerRegistries.GetSecretId(); sid != "" {
-		id := uuid.UUID(sid)
-
-		existingCFG, err := s.getDockerSecret(ctx, id)
-		if err != nil {
-			return err
-		}
-
-		existingCFG.merge(cfg)
-		if err := s.updateDockerSecret(ctx, existingCFG, id); err != nil {
-			return err
-		}
-	} else {
-		id, err := s.createDockerSecret(ctx, cfg)
-		if err != nil {
-			return err
-		}
-		set.DockerRegistries.SecretId = id.String()
-	}
-
-	found := false
-	for _, h := range set.DockerRegistries.GetHosts() {
-		if h == reg.AddDockerRegistry.GetHost() {
-			found = true
+	for _, h := range set.GetDockerRegistries() {
+		if reg.AddDockerRegistry.GetHost() == h.GetHost() {
+			return errors.AlreadyExistsErrorf("registry host already exists")
 		}
 	}
-	if !found {
-		set.DockerRegistries.Hosts = append(set.DockerRegistries.Hosts, reg.AddDockerRegistry.GetHost())
+
+	rs, err := createRegistrySecret(reg)
+	if err != nil {
+		return err
 	}
+
+	id, err := s.createDockerSecret(ctx, rs)
+	if err != nil {
+		return err
+	}
+
+	set.DockerRegistries = append(set.DockerRegistries, &project_settings.DockerRegistry{
+		Host:     reg.AddDockerRegistry.GetHost(),
+		SecretId: id.String(),
+	})
 
 	return nil
 }
@@ -75,53 +72,32 @@ func (s *service) applyAddDockerRegistry(
 func (s *service) applyDeleteDockerRegistry(
 	ctx context.Context,
 	set *project_settings.Settings,
-	del *project_settings.Update_DeleteDockerRegistry,
+	reg *project_settings.Update_DeleteDockerRegistry,
 ) error {
-	if set.DockerRegistries == nil {
-		return nil
-	}
-	sid := set.DockerRegistries.GetSecretId()
-	if sid == "" {
-		return nil
-	}
-
-	id := uuid.UUID(sid)
-
-	existingCFG, err := s.getDockerSecret(ctx, id)
-	if err != nil {
-		return err
-	}
-	if _, ok := existingCFG.Auths[del.DeleteDockerRegistry]; ok {
-		delete(existingCFG.Auths, del.DeleteDockerRegistry)
-		if len(existingCFG.Auths) == 0 {
-			if err := s.deleteDockerSecret(ctx, id); err != nil {
+	for i, h := range set.GetDockerRegistries() {
+		if reg.DeleteDockerRegistry == h.GetHost() {
+			secretID, err := uuid.Parse(h.GetSecretId())
+			if err != nil {
 				return err
 			}
-		} else {
-			if err := s.updateDockerSecret(ctx, existingCFG, id); err != nil {
+
+			if err := s.deleteDockerSecret(ctx, secretID); err != nil {
 				return err
 			}
+
+			set.DockerRegistries = append(
+				set.GetDockerRegistries()[:i],
+				set.GetDockerRegistries()[i+1:]...,
+			)
+			return nil
 		}
 	}
 
-	var hs []string
-	for _, h := range set.DockerRegistries.GetHosts() {
-		if h == del.DeleteDockerRegistry {
-			continue
-		}
-		hs = append(hs, h)
-	}
-	if len(hs) == 0 {
-		set.DockerRegistries = nil
-	} else {
-		set.DockerRegistries.Hosts = hs
-	}
-
-	return nil
+	return errors.NotFoundErrorf("registry not found")
 }
 
-func (s *service) createDockerSecret(ctx context.Context, reg *dockerConfigJSON) (*uuid.UUID, error) {
-	bs, err := json.Marshal(reg)
+func (s *service) createDockerSecret(ctx context.Context, rs *registry.Secret) (*uuid.UUID, error) {
+	bs, err := proto.Marshal(rs)
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal docker config: %w", err)
 	}
@@ -135,71 +111,57 @@ func (s *service) createDockerSecret(ctx context.Context, reg *dockerConfigJSON)
 	return &id, nil
 }
 
-func (s *service) getDockerSecret(ctx context.Context, id uuid.UUID) (*dockerConfigJSON, error) {
-	bs, err := s.rs.Get(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	var cfg dockerConfigJSON
-	if err := json.NewDecoder(bytes.NewReader(bs)).Decode(&cfg); err != nil {
-		return nil, fmt.Errorf("could not decode docker secret: %w", err)
-	}
-	return &cfg, nil
-}
-
-func (s *service) updateDockerSecret(ctx context.Context, cfg *dockerConfigJSON, id uuid.UUID) error {
-	bs, err := json.Marshal(cfg)
-	if err != nil {
-		return fmt.Errorf("could not marshal docker config: %w", err)
-	}
-
-	if err := s.rs.Update(ctx, id, bs); err != nil {
-		return fmt.Errorf("could not update docker config.json: %w", err)
-	}
-
-	return nil
-}
-
 func (s *service) deleteDockerSecret(ctx context.Context, id uuid.UUID) error {
-	if err := s.rs.Delete(ctx, id); err != nil {
-		return fmt.Errorf("could not delete docker config.json secret: %w", err)
-	}
-	return nil
+	return s.rs.Delete(ctx, id)
 }
 
-type dockerConfigJSON struct {
-	Auths map[string]dockerConfigJSONAuth `json:"auths"`
-}
-
-func createDockerConfigJSON(reg *project_settings.Update_AddDockerRegistry) *dockerConfigJSON {
-	cfg := dockerConfigJSON{Auths: map[string]dockerConfigJSONAuth{}}
+func createRegistrySecret(reg *project_settings.Update_AddDockerRegistry) (*registry.Secret, error) {
 	switch v := reg.AddDockerRegistry.Field.(type) {
-	case *project_settings.DockerRegistry_Auth:
-		cfg.Auths[reg.AddDockerRegistry.GetHost()] = dockerConfigJSONAuth{
-			Auth: reg.AddDockerRegistry.GetAuth(),
+	case *project_settings.AddDockerRegistry_Auth:
+		raw, err := base64.StdEncoding.DecodeString(v.Auth)
+		if err != nil {
+			return nil, errors.InvalidArgumentErrorf("invalid auth format, expected base64 encoded payload")
 		}
-	case *project_settings.DockerRegistry_Credentials:
-		up := fmt.Sprintf("%s:%s", v.Credentials.GetUsername(), v.Credentials.GetPassword())
-		cfg.Auths[reg.AddDockerRegistry.GetHost()] = dockerConfigJSONAuth{
-			Auth:     base64.StdEncoding.EncodeToString([]byte(up)),
-			Username: v.Credentials.GetUsername(),
-			Password: v.Credentials.GetPassword(),
-			Email:    v.Credentials.GetEmail(),
+
+		var r struct {
+			Username string
+			Password string
+			Auth     string
 		}
-	}
-	return &cfg
-}
+		if err := json.Unmarshal(raw, &r); err == nil {
+			if r.Username != "" && r.Password != "" {
+				return &registry.Secret{
+					Username: r.Username,
+					Password: r.Password,
+				}, nil
+			}
 
-func (cfg *dockerConfigJSON) merge(newCFG *dockerConfigJSON) {
-	for h, a := range newCFG.Auths {
-		cfg.Auths[h] = a
-	}
-}
+			if r.Auth == "" {
+				errors.InvalidArgumentErrorf("invalid auth format, expected base64 json token with `username/password` or `auth`")
+			}
 
-type dockerConfigJSONAuth struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Email    string `json:"email"`
-	Auth     string `json:"auth"`
+			raw, err = base64.StdEncoding.DecodeString(r.Auth)
+			if err != nil {
+				return nil, errors.InvalidArgumentErrorf("invalid auth format, expected base64 encoded payload")
+			}
+		}
+
+		if idx := bytes.IndexByte(raw, ':'); idx > 0 && idx < len(raw)-1 {
+			return &registry.Secret{
+				Username: string(raw[0:idx]),
+				Password: string(raw[idx+1:]),
+			}, nil
+		}
+
+		return nil, errors.InvalidArgumentErrorf("invalid auth format, expected json or `username:password` formatted base64 token")
+
+	case *project_settings.AddDockerRegistry_Credentials:
+		return &registry.Secret{
+			Username: v.Credentials.Username,
+			Password: v.Credentials.Password,
+		}, nil
+
+	default:
+		return nil, errors.InvalidArgumentErrorf("invalid registry auth type '%v'", reflect.TypeOf(v))
+	}
 }

@@ -25,7 +25,7 @@ message SmtpInstance {
   int64 port = 2;
 }
 
-message EmailInstance{
+message EmailInstance {
   oneof instance {
     DefaultInstance default = 1;
     MailjetInstance mailjet = 2;
@@ -33,7 +33,7 @@ message EmailInstance{
   }
 }
 
-message TextInstance{
+message TextInstance {
   oneof instance {
     DefaultInstance default = 1;
     TwilioInstance twilio = 2;
@@ -86,34 +86,34 @@ message Settings {
   EmailProviderEntry email_provider = 1;
   TextProviderEntry text_provider = 2;
   Templates templates = 3;
-  DockerRegistries docker_registries = 4;
-}
-
-message DockerRegistries {
-    string secret_id = 1;
-    repeated string hosts = 2;
+  repeated DockerRegistry docker_registries = 4;
 }
 
 message DockerRegistry {
-    string host = 1;
-    oneof field {
-        string auth = 2;
-        DockerRegistryCredentials credentials = 3;
-    }
+  string secret_id = 1;
+  string host = 2;
+}
+
+message AddDockerRegistry {
+  string host = 1;
+  oneof field {
+    string auth = 2;
+    DockerRegistryCredentials credentials = 3;
+  }
 }
 
 message DockerRegistryCredentials {
-    string username = 1;
-    string password = 2;
-    string email = 3;
+  string username = 1;
+  string password = 2;
+  string email = 3;
 }
 
 message Update {
-    oneof field {
-        EmailProvider email_provider = 1;
-        TextProvider text_provider = 2;
-        Template template = 3;
-        DockerRegistry add_docker_registry = 4;
-        string delete_docker_registry = 5;
-    }
+  oneof field {
+    EmailProvider email_provider = 1;
+    TextProvider text_provider = 2;
+    Template template = 3;
+    AddDockerRegistry add_docker_registry = 4;
+    string delete_docker_registry = 5;
+  }
 }
