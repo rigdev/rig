@@ -20,7 +20,6 @@ type Capsule struct {
 	Network           *capsule.Network
 	Namespace         string
 	Metadata          map[string]string
-	BuildID           string
 	JWTMethod         *proxy.JWTMethod
 	RegistryAuth      *RegistryAuth
 }

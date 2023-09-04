@@ -423,7 +423,6 @@ func (j *rolloutJob) run(
 			CapsuleID:         j.capsuleID.String(),
 			Image:             b.GetBuildId(),
 			ContainerSettings: rc.GetContainerSettings(),
-			BuildID:           rc.GetBuildId(),
 			Replicas:          rc.GetReplicas(),
 			Namespace:         j.projectID.String(),
 			Network:           rc.GetNetwork(),

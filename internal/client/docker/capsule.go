@@ -23,7 +23,6 @@ import (
 )
 
 const (
-	_rigBuildIDLabel   = "io.rig.build-id"
 	_rigCapsuleIDLabel = "io.rig.capsule-id"
 	_rigProjectIDLabel = "io.rig.project-id"
 )
@@ -56,7 +55,6 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		Cmd:          cmd,
 		ExposedPorts: nat.PortSet{},
 		Labels: map[string]string{
-			_rigBuildIDLabel:   cc.BuildID,
 			_rigCapsuleIDLabel: cc.CapsuleID,
 			_rigProjectIDLabel: pid.String(),
 		},
@@ -198,11 +196,7 @@ func (c *Client) ListInstances(ctx context.Context, capsuleName string) (iterato
 
 		i.RestartCount = uint32(cj.RestartCount)
 
-		if buildID, ok := ci.Labels[_rigBuildIDLabel]; ok {
-			i.BuildId = buildID
-		} else {
-			c.logger.Warn("missing build-id label")
-		}
+		i.BuildId = ci.Image
 
 		if cj.State.StartedAt != "" {
 			if sa, err := time.Parse(time.RFC3339Nano, cj.State.StartedAt); err != nil {
