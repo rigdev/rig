@@ -16,6 +16,10 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
+      - name: Add git tag
+        id: gittag
+        run: echo "gittag=$(git tag --points-at HEAD)" >> $GITHUB_OUTPUT
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -57,7 +61,10 @@ jobs:
           git config user.name "rig-bot"
           git config user.email "shared@rig.dev"
           git add .
-          git commit -am "push latest version of APIs" && git push || true
+          git commit -am "push latest version of APIs" && git push
+          git push
+          export hack_tag_var=${{steps.gittag.outputs.gittag}}
+          if [[ $hack_tag_var ]]; then git push origin $hack_tag_var; fi || true
         env:
           GITHUB_TOKEN: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"
 
@@ -76,6 +83,8 @@ jobs:
           git config user.name "rig-bot"
           git config user.email "shared@rig.dev"
           git add .
-          git commit -am "push latest version of APIs" && git push || true
+          git commit -am "push latest version of APIs" && git push
+          export hack_tag_var=${{steps.gittag.outputs.gittag}}
+          if [[ $hack_tag_var ]]; then git push origin $hack_tag_var; fi || true
         env:
           GITHUB_TOKEN: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"
