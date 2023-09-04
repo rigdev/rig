@@ -58,7 +58,7 @@ Furthermore, be sure to check out our [Code of Conduct](https://github.com/rigde
 
 We love additions in all forms, to make Rig even greater.
 
-The easiest steps are to file bug reports, gaps in documentation, etc. If you know how to improve it yourself, we encourage you to work the relevant repository and create a Pull Request.
+The easiest steps are to file bug reports, gaps in documentation, etc. If you know how to improve it yourself, we encourage you to fork the relevant repository and create a Pull Request.
 
 ## 📖 License
 
