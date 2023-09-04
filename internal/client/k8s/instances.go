@@ -92,7 +92,7 @@ func (c *Client) RestartInstance(ctx context.Context, capsuleName string, instan
 func podToInstance(pod v1.Pod, capsuleName string) (*capsule.Instance, error) {
 	i := &capsule.Instance{
 		InstanceId: pod.Name,
-		BuildId:    pod.Labels[labelVersion],
+		BuildId:    podGetContainerImage(pod, capsuleName),
 		State:      podStatusToCapsuleState(pod.Status),
 		CreatedAt:  timestamppb.New(pod.ObjectMeta.CreationTimestamp.Time),
 	}
@@ -119,6 +119,15 @@ func podGetContainerStatus(pod v1.Pod, container string) *v1.ContainerStatus {
 		}
 	}
 	return nil
+}
+
+func podGetContainerImage(pod v1.Pod, container string) string {
+	for _, cs := range pod.Spec.Containers {
+		if cs.Name == container {
+			return cs.Image
+		}
+	}
+	return ""
 }
 
 func podStatusToCapsuleState(status v1.PodStatus) capsule.State {
