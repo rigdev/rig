@@ -7,11 +7,13 @@ import "model/author.proto";
 
 message Build {
   string build_id = 1;
-  string image = 2;
-  model.Author created_by = 3;
-  google.protobuf.Timestamp created_at = 4;
-  Origin origin = 5;
-  map<string, string> labels = 6;
+  string digest = 2;
+  string repository = 3;
+  string tag = 4;
+  model.Author created_by = 5;
+  google.protobuf.Timestamp created_at = 6;
+  Origin origin = 7;
+  map<string, string> labels = 8;
 }
 
 message GitReference {

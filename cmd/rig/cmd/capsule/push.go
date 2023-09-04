@@ -15,7 +15,6 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/utils"
-	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
@@ -64,14 +63,10 @@ func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsule
 		return err
 	}
 
-	matches := regexp.MustCompile("digest: (sha256:.*) size:").FindStringSubmatch(string(bs))
-	var rigImageDigest string
-	if len(matches) > 1 {
-		rigImageDigest = fmt.Sprint(rigRef.Name(), "@", matches[1])
-	}
-
-	if rigImageDigest == "" {
-		return errors.InvalidArgumentErrorf("missing image digest")
+	digests := regexp.MustCompile("digest: (sha256:.*) size:").FindStringSubmatch(string(bs))
+	var digest string
+	if len(digests) > 1 {
+		digest = digests[1]
 	}
 
 	pt.MarkAsDone()
@@ -85,8 +80,8 @@ func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsule
 	if _, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
 			CapsuleId: capsuleID.String(),
-			BuildId:   buildID,
-			Image:     rigImageDigest,
+			Image:     rigRef.Name(),
+			Digest:    digest,
 		},
 	}); err != nil {
 		return err

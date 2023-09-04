@@ -2,14 +2,12 @@ package capsule
 
 import (
 	"context"
-	"strings"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/utils"
-	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -22,17 +20,16 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 		}
 	}
 
-	// Generate a new tag for the build.
-	buildID := strings.ReplaceAll(uuid.New().String()[:24], "-", "")
-
-	if _, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
+	var buildID string
+	if res, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
 			CapsuleId: capsuleID.String(),
-			BuildId:   buildID,
 			Image:     image,
 		},
 	}); err != nil {
 		return err
+	} else {
+		buildID = res.Msg.GetBuildId()
 	}
 
 	if deploy {

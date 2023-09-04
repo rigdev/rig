@@ -3,6 +3,7 @@ package capsule
 import (
 	"context"
 
+	"github.com/distribution/distribution/v3/reference"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/internal/gateway/cluster"
@@ -122,35 +123,46 @@ func (s *Service) UpdateCapsule(ctx context.Context, capsuleID uuid.UUID, us []*
 	return nil
 }
 
-func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, buildID string, image string, origin *capsule.Origin, labels map[string]string) error {
-	if buildID == "" {
-		return errors.InvalidArgumentErrorf("empty build ID")
+func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, image, digest string, origin *capsule.Origin, labels map[string]string) (string, error) {
+	if image == "" {
+		return "", errors.InvalidArgumentErrorf("missing image")
 	}
 
-	_, err := s.GetCapsule(ctx, capsuleID)
+	ref, err := reference.ParseDockerRef(image)
 	if err != nil {
-		return err
+		return "", errors.InvalidArgumentErrorf("invalid image format: %b", err)
+	}
+
+	tagged, ok := reference.TagNameOnly(ref).(reference.NamedTagged)
+	if !ok {
+		return "", errors.InvalidArgumentErrorf("invalid image tag")
+	}
+
+	if _, err := s.GetCapsule(ctx, capsuleID); err != nil {
+		return "", err
+	}
+
+	by, err := s.as.GetAuthor(ctx)
+	if err != nil {
+		return "", err
 	}
 
 	b := &capsule.Build{
-		BuildId:   buildID,
-		Image:     image,
-		CreatedAt: timestamppb.Now(),
-		Origin:    origin,
-		Labels:    labels,
-	}
-
-	if a, err := s.as.GetAuthor(ctx); err != nil {
-		return err
-	} else {
-		b.CreatedBy = a
+		BuildId:    tagged.String(),
+		Digest:     digest,
+		Repository: tagged.Name(),
+		Tag:        tagged.Tag(),
+		CreatedBy:  by,
+		CreatedAt:  timestamppb.Now(),
+		Origin:     origin,
+		Labels:     labels,
 	}
 
 	if err := s.cr.CreateBuild(ctx, capsuleID, b); err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return tagged.String(), nil
 }
 
 func (s *Service) ListBuilds(ctx context.Context, capsuleID uuid.UUID, pagination *model.Pagination) (iterator.Iterator[*capsule.Build], uint64, error) {

@@ -121,15 +121,16 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 	}
 
 	if image != "" {
-		buildID := uuid.New().String()
-		if _, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
+		var buildID string
+		if res, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 			Msg: &capsule.CreateBuildRequest{
 				CapsuleId: capsuleID.String(),
-				BuildId:   buildID,
 				Image:     image,
 			},
 		}); err != nil {
 			return err
+		} else {
+			buildID = res.Msg.GetBuildId()
 		}
 
 		init = append(init, &capsule.Change{

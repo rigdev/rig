@@ -2,7 +2,7 @@ module github.com/rigdev/rig
 
 go 1.20
 
-replace github.com/rigdev/rig-go-api/ => ./gen/go/rig
+replace github.com/rigdev/rig-go-api => ./gen/go/rig
 
 require (
 	cloud.google.com/go/storage v1.30.1
