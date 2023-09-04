@@ -7,8 +7,6 @@ services:
       MONGO_INITDB_ROOT_USERNAME: mongodb
       MONGO_INITDB_ROOT_PASSWORD: mongodb
       MONGO_INITDB_DATABASE: rig
-    networks:
-      - rig
     ports:
       - 27017:27017
     volumes:
@@ -18,8 +16,6 @@ services:
   minio:
     image: quay.io/minio/minio:latest
     command: server --console-address ":9001" /data
-    networks:
-      - rig
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -66,13 +62,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ../../configs/server-config.yaml:/etc/rig/server-config.yaml
 
-    networks:
-      - rig
-      - default
-
 networks:
-  rig:
-    external: true
+  default:
+    name: rig
+
 volumes:
   mongodb-data:
   minio-data:

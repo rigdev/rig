@@ -5,6 +5,7 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/gen/go/proxy"
+	"github.com/rigdev/rig/gen/go/registry"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
 )
@@ -21,6 +22,12 @@ type Capsule struct {
 	Metadata          map[string]string
 	BuildID           string
 	JWTMethod         *proxy.JWTMethod
+	RegistryAuth      *RegistryAuth
+}
+
+type RegistryAuth struct {
+	Host           string
+	RegistrySecret *registry.Secret
 }
 
 type Gateway interface {

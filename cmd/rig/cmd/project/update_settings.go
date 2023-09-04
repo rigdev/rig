@@ -251,11 +251,16 @@ func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
 }
 
 func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) {
-	if len(s.GetDockerRegistries().GetHosts()) == 0 {
+	if len(s.GetDockerRegistries()) == 0 {
 		return nil, nil
 	}
 
-	_, res, err := utils.PromptSelect("Choose a registry to delete:", s.GetDockerRegistries().GetHosts(), false)
+	var hosts []string
+	for _, r := range s.GetDockerRegistries() {
+		hosts = append(hosts, r.GetHost())
+	}
+
+	_, res, err := utils.PromptSelect("Choose a registry to delete:", hosts, false)
 	if err != nil {
 		return nil, err
 	}
@@ -288,9 +293,9 @@ func promptAddDockerRegistry(s *settings.Settings) (*settings.Update, error) {
 		return nil, err
 	}
 
-	reg := &settings.DockerRegistry{
+	reg := &settings.AddDockerRegistry{
 		Host: host,
-		Field: &settings.DockerRegistry_Credentials{
+		Field: &settings.AddDockerRegistry_Credentials{
 			Credentials: &settings.DockerRegistryCredentials{
 				Username: username,
 				Password: password,
@@ -430,7 +435,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 		}, nil
 	case utils.FormatField(settingsAddDockerRegistry.String()):
 		jsonValue := []byte(value)
-		reg := settings.DockerRegistry{}
+		reg := settings.AddDockerRegistry{}
 		if err := protojson.Unmarshal(jsonValue, &reg); err != nil {
 			return nil, err
 		}

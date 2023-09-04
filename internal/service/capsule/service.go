@@ -8,6 +8,7 @@ import (
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/repository"
 	"github.com/rigdev/rig/internal/service/auth"
+	"github.com/rigdev/rig/internal/service/project"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -21,15 +22,17 @@ type Service struct {
 	sr     repository.Secret
 	cg     cluster.Gateway
 	as     *auth.Service
+	ps     project.Service
 	q      *Queue[Job]
 }
 
-func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, as *auth.Service, logger *zap.Logger) *Service {
+func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, as *auth.Service, ps project.Service, logger *zap.Logger) *Service {
 	s := &Service{
 		cr:     cr,
 		sr:     sr,
 		cg:     cg,
 		as:     as,
+		ps:     ps,
 		q:      NewQueue[Job](),
 		logger: logger,
 	}

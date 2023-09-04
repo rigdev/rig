@@ -25,7 +25,7 @@ func (c *Client) upsertService(ctx context.Context, capsuleName string, pc *prox
 
 	cfg := strconv.QuoteToASCII(string(bs))
 
-	image, err := c.ensureImage(ctx, fmt.Sprint("ghcr.io/rigdev/rig:", build.Version()))
+	image, err := c.ensureImage(ctx, fmt.Sprint("ghcr.io/rigdev/rig:", build.Version()), nil)
 	if err != nil {
 		return err
 	}
