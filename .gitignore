@@ -34,7 +34,6 @@
 # vendor/
 
 /vendor
-go.work
 go.work.sum
 
 
