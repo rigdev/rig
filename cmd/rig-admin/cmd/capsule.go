@@ -172,9 +172,8 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 		return err
 	}
 
-	buildID := uuid.New().String()
-
-	if err := cs.CreateBuild(ctx, capsuleID, buildID, buildImage, nil, nil); err != nil {
+	buildID, err := cs.CreateBuild(ctx, capsuleID, buildImage, "", nil, nil)
+	if err != nil {
 		return err
 	}
 
@@ -207,7 +206,7 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, args []string, c
 				return err
 			}
 		}
-		logger.Info("Build Listed", zap.String("id", c.GetBuildId()), zap.String("image", c.GetImage()))
+		logger.Info("Build Listed", zap.String("id", c.GetBuildId()), zap.String("image", c.GetBuildId()))
 	}
 	return nil
 }

@@ -18,13 +18,6 @@ type Capsule struct {
 	Data      []byte    `bson:"data,omitempty" json:"data,omitempty"`
 }
 
-type Build struct {
-	ProjectID uuid.UUID `bson:"project_id" json:"project_id"`
-	CapsuleID uuid.UUID `bson:"capsule_id" json:"capsule_id"`
-	BuildID   string    `bson:"build_id" json:"build_id"`
-	Data      []byte    `bson:"data,omitempty" json:"data,omitempty"`
-}
-
 type Rollout struct {
 	ProjectID   uuid.UUID  `bson:"project_id" json:"project_id"`
 	CapsuleID   uuid.UUID  `bson:"capsule_id" json:"capsule_id"`
@@ -62,29 +55,6 @@ func CapsuleFromProto(projectID uuid.UUID, p *capsule.Capsule) (Capsule, error) 
 		ProjectID: projectID,
 		CapsuleID: uuid.UUID(p.GetCapsuleId()),
 		Name:      p.GetName(),
-		Data:      bs,
-	}, nil
-}
-
-func (b Build) ToProto() (*capsule.Build, error) {
-	p := &capsule.Build{}
-	if err := proto.Unmarshal(b.Data, p); err != nil {
-		return nil, err
-	}
-
-	return p, nil
-}
-
-func BuildFromProto(projectID, capsuleID uuid.UUID, b *capsule.Build) (Build, error) {
-	bs, err := proto.Marshal(b)
-	if err != nil {
-		return Build{}, err
-	}
-
-	return Build{
-		ProjectID: projectID,
-		CapsuleID: capsuleID,
-		BuildID:   b.GetBuildId(),
 		Data:      bs,
 	}, nil
 }

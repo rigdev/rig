@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
@@ -23,6 +24,7 @@ func (m *MongoRepository) CreateBuild(ctx context.Context, capsuleID uuid.UUID, 
 	}
 
 	if _, err := m.BuildCol.InsertOne(ctx, bp); mongo.IsDuplicateKeyError(err) {
+		fmt.Println(err)
 		return errors.AlreadyExistsErrorf("build already exists")
 	} else if err != nil {
 		return err

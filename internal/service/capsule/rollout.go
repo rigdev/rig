@@ -417,7 +417,7 @@ func (j *rolloutJob) run(
 
 		cc := &cluster.Capsule{
 			CapsuleID:         j.capsuleID.String(),
-			Image:             b.GetImage(),
+			Image:             b.GetBuildId(),
 			ContainerSettings: rc.GetContainerSettings(),
 			BuildID:           rc.GetBuildId(),
 			Replicas:          rc.GetReplicas(),

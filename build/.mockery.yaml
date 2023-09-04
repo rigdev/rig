@@ -14,3 +14,4 @@ packages:
   github.com/rigdev/rig/internal/repository:
     interfaces:
       Session:
+      Capsule:

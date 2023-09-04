@@ -9,16 +9,16 @@ import (
 )
 
 func (h *Handler) CreateBuild(ctx context.Context, req *connect.Request[capsule.CreateBuildRequest]) (*connect.Response[capsule.CreateBuildResponse], error) {
-	cid, err := uuid.Parse(req.Msg.GetCapsuleId())
+	capsuleID, err := uuid.Parse(req.Msg.GetCapsuleId())
 	if err != nil {
 		return nil, err
 	}
 
-	err = h.cs.CreateBuild(
+	buildID, err := h.cs.CreateBuild(
 		ctx,
-		cid,
-		req.Msg.GetBuildId(),
+		capsuleID,
 		req.Msg.GetImage(),
+		req.Msg.GetDigest(),
 		req.Msg.GetOrigin(),
 		req.Msg.GetLabels(),
 	)
@@ -27,6 +27,8 @@ func (h *Handler) CreateBuild(ctx context.Context, req *connect.Request[capsule.
 	}
 
 	return &connect.Response[capsule.CreateBuildResponse]{
-		Msg: &capsule.CreateBuildResponse{},
+		Msg: &capsule.CreateBuildResponse{
+			BuildId: buildID,
+		},
 	}, nil
 }

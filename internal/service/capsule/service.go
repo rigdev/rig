@@ -122,41 +122,6 @@ func (s *Service) UpdateCapsule(ctx context.Context, capsuleID uuid.UUID, us []*
 	return nil
 }
 
-func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, buildID string, image string, origin *capsule.Origin, labels map[string]string) error {
-	if buildID == "" {
-		return errors.InvalidArgumentErrorf("empty build ID")
-	}
-
-	_, err := s.GetCapsule(ctx, capsuleID)
-	if err != nil {
-		return err
-	}
-
-	b := &capsule.Build{
-		BuildId:   buildID,
-		Image:     image,
-		CreatedAt: timestamppb.Now(),
-		Origin:    origin,
-		Labels:    labels,
-	}
-
-	if a, err := s.as.GetAuthor(ctx); err != nil {
-		return err
-	} else {
-		b.CreatedBy = a
-	}
-
-	if err := s.cr.CreateBuild(ctx, capsuleID, b); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) ListBuilds(ctx context.Context, capsuleID uuid.UUID, pagination *model.Pagination) (iterator.Iterator[*capsule.Build], uint64, error) {
-	return s.cr.ListBuilds(ctx, pagination, capsuleID)
-}
-
 func (s *Service) ListInstances(ctx context.Context, capsuleID uuid.UUID, pagination *model.Pagination) (iterator.Iterator[*capsule.Instance], uint64, error) {
 	c, err := s.cr.Get(ctx, capsuleID)
 	if err != nil {
