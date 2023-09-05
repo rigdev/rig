@@ -14,7 +14,7 @@ func (h *Handler) CreateCredentials(ctx context.Context, req *connect.Request[da
 		return nil, err
 	}
 
-	clientSecret, err := h.ds.CreateCredentials(ctx, req.Msg.GetName(), dbId)
+	clientSecret, err := h.ds.CreateCredentials(ctx, req.Msg.GetClientId(), dbId)
 	if err != nil {
 		return nil, err
 	}

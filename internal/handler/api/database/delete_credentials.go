@@ -14,7 +14,7 @@ func (h *Handler) DeleteCredentials(ctx context.Context, req *connect.Request[da
 		return nil, err
 	}
 
-	err = h.ds.DeleteCredentials(ctx, req.Msg.GetName(), dbId)
+	err = h.ds.DeleteCredentials(ctx, req.Msg.GetClientId(), dbId)
 	if err != nil {
 		return nil, err
 	}
