@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/internal/build"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/core"
@@ -73,7 +72,6 @@ func register(f interface{}) func(cmd *cobra.Command, args []string) error {
 
 				return ProjectID(pID), nil
 			}),
-			fx.Provide(rig.NewClient),
 			fx.Invoke(f),
 			fx.NopLogger,
 		)
