@@ -14,11 +14,12 @@ func (h *Handler) CreateCredentials(ctx context.Context, req *connect.Request[da
 		return nil, err
 	}
 
-	clientSecret, err := h.ds.CreateCredentials(ctx, req.Msg.GetClientId(), dbId)
+	clientId, clientSecret, err := h.ds.CreateCredentials(ctx, dbId)
 	if err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&database.CreateCredentialsResponse{
 		ClientSecret: clientSecret,
+		ClientId:     clientId,
 	}), nil
 }

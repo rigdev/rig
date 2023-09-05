@@ -76,11 +76,11 @@ func CreateDatabase(ctx context.Context, cmd *cobra.Command, args []string, ds *
 		return errors.New("database name is required")
 	}
 
-	defSecret, db, err := ds.Create(ctx, databaseName, database.Type_TYPE_MONGODB)
+	clientId, clientSecret, db, err := ds.Create(ctx, databaseName, database.Type_TYPE_MONGODB)
 	if err != nil {
 		return err
 	}
-	logger.Info("created database", zap.String("name", databaseName), zap.String("default secret", defSecret), zap.String("id", db.GetDatabaseId()))
+	logger.Info("created database", zap.String("name", databaseName), zap.String("client id", clientId), zap.String("client secret", clientSecret), zap.String("id", db.GetDatabaseId()))
 	return nil
 }
 

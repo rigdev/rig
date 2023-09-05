@@ -26,7 +26,7 @@ func Setup(parent *cobra.Command) {
 	}
 
 	getDatabaseEndpoint := &cobra.Command{
-		Use:  "connect [id | name]",
+		Use:  "get-endpoint [id | name]",
 		RunE: base.Register(GetEndpoint),
 		Args: cobra.MaximumNArgs(1),
 	}
@@ -45,9 +45,8 @@ func Setup(parent *cobra.Command) {
 	createDatabaseCredentials := &cobra.Command{
 		Use:  "create-credentials [id | db-name]",
 		RunE: base.Register(CreateCredentials),
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.NoArgs,
 	}
-	createDatabaseCredentials.Flags().StringVarP(&clientID, "clientId", "c", "", "ClientId of the credentials")
 	database.AddCommand(createDatabaseCredentials)
 
 	deleteDatabaseCredentials := &cobra.Command{

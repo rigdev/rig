@@ -25,10 +25,10 @@ service Service {
 
 message CreateCredentialsRequest {
   string database_id = 1;
-  string client_id = 2;
 }
 
 message CreateCredentialsResponse {
+  string client_id = 1;
   string client_secret = 2;
 }
 
@@ -65,7 +65,8 @@ message CreateRequest {
 
 message CreateResponse {
   database.Database database = 1;
-  string client_secret = 2;
+  string client_id = 2;
+  string client_secret = 3;
 }
 
 message GetRequest {

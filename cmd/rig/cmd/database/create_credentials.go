@@ -20,22 +20,15 @@ func CreateCredentials(ctx context.Context, cmd *cobra.Command, args []string, n
 		return err
 	}
 
-	if clientID == "" {
-		clientID, err = utils.PromptGetInput("Client ID", utils.ValidateNonEmpty)
-		if err != nil {
-			return err
-		}
-	}
 	res, err := nc.Database().CreateCredentials(ctx, &connect.Request[database.CreateCredentialsRequest]{
 		Msg: &database.CreateCredentialsRequest{
 			DatabaseId: id,
-			ClientId:   clientID,
 		},
 	})
 	if err != nil {
 		return err
 	}
 
-	cmd.Printf("created credential - clientID: %s, secret: %s\n", clientID, res.Msg.GetClientSecret())
+	cmd.Printf("created credential \nclientID: %s, \nsecret: %s\n", res.Msg.GetClientId(), res.Msg.GetClientSecret())
 	return nil
 }

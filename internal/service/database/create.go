@@ -9,9 +9,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Service) Create(ctx context.Context, name string, dbType database.Type) (string, *database.Database, error) {
+func (s *Service) Create(ctx context.Context, name string, dbType database.Type) (string, string, *database.Database, error) {
 	if name == "" {
-		return "", nil, errors.InvalidArgumentErrorf("missing required database name")
+		return "", "", nil, errors.InvalidArgumentErrorf("missing required database name")
 	}
 
 	databaseID := uuid.New()
@@ -25,23 +25,24 @@ func (s *Service) Create(ctx context.Context, name string, dbType database.Type)
 
 	gateway, err := s.getDatabaseGateway(ctx, d)
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
 
 	dbName := formatDatabaseID(databaseID.String())
 	err = gateway.Create(ctx, dbName)
 	if err != nil {
-		return "", nil, err
-	}
-
-	clientSecret, err := s.CreateCredentials(ctx, "default", databaseID)
-	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
 
 	d, err = s.dr.Create(ctx, d)
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
-	return clientSecret, d, nil
+
+	clientId, clientSecret, err := s.CreateCredentials(ctx, databaseID)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	return clientId, clientSecret, d, nil
 }

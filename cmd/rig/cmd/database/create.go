@@ -27,6 +27,6 @@ func Create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Clien
 		return err
 	}
 
-	cmd.Printf("created database %s with default secret %s and id %s\n", name, res.Msg.GetClientSecret(), res.Msg.GetDatabase().GetDatabaseId())
+	cmd.Printf("created database %s with credentials: \nclient id: %s \nclient secret %s\n", name, res.Msg.GetClientId(), res.Msg.GetClientSecret())
 	return nil
 }

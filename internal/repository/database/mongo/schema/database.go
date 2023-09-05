@@ -22,6 +22,7 @@ func (d Database) ToProto() (*database.Database, error) {
 	}
 
 	p.Tables = d.Tables
+	p.ClientIds = d.ClientIds
 
 	return p, nil
 }
@@ -37,6 +38,7 @@ func DatabaseFromProto(projectID uuid.UUID, d *database.Database) (Database, err
 		ProjectID:  projectID,
 		Name:       d.GetName(),
 		Tables:     d.GetTables(),
+		ClientIds:  d.GetClientIds(),
 		Data:       bs,
 	}, nil
 }

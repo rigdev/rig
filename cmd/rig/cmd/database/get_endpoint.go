@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/database"
@@ -15,10 +16,12 @@ func GetEndpoint(ctx context.Context, cmd *cobra.Command, args []string, rc rig.
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := utils.GetDatabase(ctx, identifier, rc)
+	db, id, err := utils.GetDatabase(ctx, identifier, rc)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("creds", db.GetClientIds())
 
 	if clientID == "" {
 		clientID, err = utils.PromptGetInput("Client ID", utils.ValidateNonEmpty)
