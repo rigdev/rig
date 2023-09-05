@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
+	utils2 "github.com/rigdev/rig/cmd/rig/cmd/utils"
 	"github.com/rigdev/rig/internal/config"
 	auth_service "github.com/rigdev/rig/internal/service/auth"
 	user_service "github.com/rigdev/rig/internal/service/user"
@@ -126,39 +127,16 @@ func UsersCreate(ctx context.Context, cmd *cobra.Command, us user_service.Servic
 		UseProjectID: auth.RigProjectID,
 	})
 
-	if userPassword == "" {
-		pw, err := getPasswordPrompt("Password:")
-		if err != nil {
-			return err
-		}
-
-		userPassword = pw
-	}
-
-	var ups []*user.Update
-
-	if userEmail != "" {
-		ups = append(ups, &user.Update{Field: &user.Update_Email{Email: userEmail}})
-	}
-
-	if userUsername != "" {
-		ups = append(ups, &user.Update{Field: &user.Update_Username{Username: userUsername}})
-	}
-
-	if userPhoneNumber != "" {
-		ups = append(ups, &user.Update{Field: &user.Update_PhoneNumber{PhoneNumber: userPhoneNumber}})
-	}
-
-	if userPassword != "" {
-		ups = append(ups, &user.Update{Field: &user.Update_Password{Password: userPassword}})
-	}
-
-	u, err := us.CreateUser(ctx, &model.RegisterMethod{Method: &model.RegisterMethod_System_{}}, ups)
+	updates, err := utils2.GetUserAndPasswordUpdates(userUsername, userEmail, userPhoneNumber, userPassword)
 	if err != nil {
 		return err
 	}
 
-	logger.Info("created user", zap.String("user_id", u.GetUserId()), zap.String("email", u.GetUserInfo().GetEmail()), zap.String("username", u.GetUserInfo().GetUsername()))
+	res, err := us.CreateUser(ctx, &model.RegisterMethod{Method: &model.RegisterMethod_System_{}}, updates)
+	if err != nil {
+		return err
+	}
+	cmd.Println("User created with ID:", res.UserId)
 
 	return nil
 }
