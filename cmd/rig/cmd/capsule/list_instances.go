@@ -10,7 +10,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ func CapsuleListInstances(ctx context.Context, cmd *cobra.Command, capsuleID Cap
 
 	if outputJSON {
 		for _, i := range resp.Msg.GetInstances() {
-			cmd.Println(utils.ProtoToPrettyJson(i))
+			cmd.Println(common.ProtoToPrettyJson(i))
 		}
 		return nil
 	}

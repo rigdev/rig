@@ -7,7 +7,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -62,7 +62,7 @@ func ProjectUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 
 	updates := []*project.Update{}
 	for {
-		i, res, err := utils.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
 		if err != nil {
 			return err
 		}
@@ -105,7 +105,7 @@ func promptProjectUpdate(f projectField, p *project.Project) (*project.Update, e
 
 func parseUpdate() (*project.Update, error) {
 	switch field {
-	case utils.FormatField(projectName.String()):
+	case common.FormatField(projectName.String()):
 		return &project.Update{
 			Field: &project.Update_Name{
 				Name: value,

@@ -11,7 +11,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/list"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +34,7 @@ func StorageLs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 
 			if outputJson {
 				for _, b := range res.Msg.GetBuckets() {
-					cmd.Println(utils.ProtoToPrettyJson(b))
+					cmd.Println(common.ProtoToPrettyJson(b))
 				}
 				return nil
 			}
@@ -77,7 +77,7 @@ func StorageLs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 
 		if outputJson {
 			for _, o := range res.Msg.GetResults() {
-				cmd.Println(utils.ProtoToPrettyJson(o))
+				cmd.Println(common.ProtoToPrettyJson(o))
 			}
 			token = res.Msg.GetToken()
 			if token == "" {

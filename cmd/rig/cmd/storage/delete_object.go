@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 
 	"github.com/bufbuild/connect-go"
@@ -16,7 +16,7 @@ func StorageDeleteObject(ctx context.Context, cmd *cobra.Command, args []string,
 	var path string
 	var err error
 	if len(args) < 1 {
-		path, err = utils.PromptGetInput("Object path:", utils.ValidateNonEmpty)
+		path, err = common.PromptGetInput("Object path:", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}

@@ -9,7 +9,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -19,7 +19,7 @@ import (
 func CapsuleConfigureNetwork(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client) error {
 	var err error
 	if networkFile == "" {
-		networkFile, err = utils.PromptGetInput("Enter Network file path", utils.ValidateNonEmpty)
+		networkFile, err = common.PromptGetInput("Enter Network file path", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}

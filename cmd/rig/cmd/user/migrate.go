@@ -13,7 +13,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -77,7 +77,7 @@ func UserMigrate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 	}
 
 	if platform == "" {
-		_, platform, err = utils.PromptSelect("Where are you migrating from?", fields, false)
+		_, platform, err = common.PromptSelect("Where are you migrating from?", fields, false)
 		if err != nil {
 			return err
 		}
@@ -103,7 +103,7 @@ func migrateFromFirebase(ctx context.Context, nc rig.Client) error {
 		methodUsersFile.String(),
 	}
 
-	i, _, err := utils.PromptSelect("How do you want to migrate?", fields, false)
+	i, _, err := common.PromptSelect("How do you want to migrate?", fields, false)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func migrateFromFirebase(ctx context.Context, nc rig.Client) error {
 func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 	var err error
 	if credFilePath == "" {
-		credFilePath, err = utils.PromptGetInput("Credentials Path:", utils.ValidateNonEmpty)
+		credFilePath, err = common.PromptGetInput("Credentials Path:", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}
@@ -159,7 +159,7 @@ func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 
 	// input hashing key for password
 	if hashingKey == "" {
-		hashingKey, err = utils.PromptGetInput("Hashing Key:", utils.ValidateNonEmpty)
+		hashingKey, err = common.PromptGetInput("Hashing Key:", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}
@@ -262,7 +262,7 @@ func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 func migrateFromFirebaseUsersFile(ctx context.Context, nc rig.Client) error {
 	var err error
 	if usersFilePath == "" {
-		usersFilePath, err = utils.PromptGetInput("users.json path:", utils.ValidateNonEmpty)
+		usersFilePath, err = common.PromptGetInput("users.json path:", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}
@@ -289,7 +289,7 @@ func migrateFromFirebaseUsersFile(ctx context.Context, nc rig.Client) error {
 
 	// input hashing key for password
 	if hashingKey == "" {
-		hashingKey, err = utils.PromptGetInput("Hashing Key:", utils.ValidateNonEmpty)
+		hashingKey, err = common.PromptGetInput("Hashing Key:", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}

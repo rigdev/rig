@@ -13,8 +13,8 @@ import (
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +22,7 @@ import (
 func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client, cfg *base.Config) error {
 	var err error
 	if image == "" {
-		image, err = utils.PromptGetInput("Enter Image", utils.ValidateNonEmpty)
+		image, err = common.PromptGetInput("Enter Image", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}

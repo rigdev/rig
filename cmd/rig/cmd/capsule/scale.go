@@ -7,7 +7,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +15,7 @@ import (
 func CapsuleScale(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client) error {
 	var r uint64
 	if replicas == -1 {
-		rString, err := utils.PromptGetInput("Enter Replica Count", utils.ValidateNonEmpty)
+		rString, err := common.PromptGetInput("Enter Replica Count", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}

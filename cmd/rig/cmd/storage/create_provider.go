@@ -11,14 +11,14 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
 func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
 	var err error
 	if name == "" {
-		name, err = utils.PromptGetInput("Provider identifier:", utils.ValidateNonEmpty)
+		name, err = common.PromptGetInput("Provider identifier:", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 			"Minio",
 		}
 		var i int
-		i, providerType, err = utils.PromptSelect("Provider type:", fields, false)
+		i, providerType, err = common.PromptSelect("Provider type:", fields, false)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 		switch i {
 		case 0:
 			// GCS
-			path, err := utils.PromptGetInput("Credentials Path:", utils.ValidateNonEmpty)
+			path, err := common.PromptGetInput("Credentials Path:", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}
@@ -84,17 +84,17 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 			}
 		case 1:
 			// S3
-			accessKey, err := utils.PromptGetInput("Access Key:", utils.ValidateNonEmpty)
+			accessKey, err := common.PromptGetInput("Access Key:", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}
 
-			secretKey, err := utils.PromptGetInput("Secret Key:", utils.ValidateNonEmpty)
+			secretKey, err := common.PromptGetInput("Secret Key:", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}
 
-			region, err := utils.PromptGetInput("Region:", utils.ValidateNonEmpty)
+			region, err := common.PromptGetInput("Region:", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}
@@ -114,17 +114,17 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 		case 2:
 			// Minio
 
-			accessKey, err := utils.PromptGetInput("Access Key:", utils.ValidateNonEmpty)
+			accessKey, err := common.PromptGetInput("Access Key:", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}
 
-			secretKey, err := utils.PromptGetInput("Secret Key:", utils.ValidateNonEmpty)
+			secretKey, err := common.PromptGetInput("Secret Key:", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}
 
-			endpoint, err := utils.PromptGetInput("Endpoint:", utils.ValidateNonEmpty)
+			endpoint, err := common.PromptGetInput("Endpoint:", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}

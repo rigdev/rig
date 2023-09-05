@@ -11,7 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ func CapsuleListRollouts(ctx context.Context, cmd *cobra.Command, capsuleID Caps
 
 	if outputJSON {
 		for _, r := range resp.Msg.GetRollouts() {
-			cmd.Println(utils.ProtoToPrettyJson(r))
+			cmd.Println(common.ProtoToPrettyJson(r))
 		}
 		return nil
 	}

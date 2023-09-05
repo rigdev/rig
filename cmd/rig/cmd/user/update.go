@@ -10,7 +10,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	utils2 "github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
@@ -92,7 +92,7 @@ func UserUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	u, id, err := utils.GetUser(ctx, identifier, nc)
+	u, id, err := common.GetUser(ctx, identifier, nc)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func UserUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 
 	updates := []*user.Update{}
 	for {
-		i, res, err := utils.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
 		if err != nil {
 			return err
 		}
@@ -166,7 +166,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 	switch f {
 	case userEmail:
 		defEmail := u.GetUserInfo().GetEmail()
-		email, err := utils.PromptGetInputWithDefault("Email:", utils2.ValidateEmail, defEmail)
+		email, err := common.PromptGetInputWithDefault("Email:", utils2.ValidateEmail, defEmail)
 		if err != nil {
 			return nil, nil
 		}
@@ -180,7 +180,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userUsername:
 		defUsername := u.GetUserInfo().GetUsername()
-		username, err := utils.PromptGetInputWithDefault("Username:", utils.ValidateNonEmpty, defUsername)
+		username, err := common.PromptGetInputWithDefault("Username:", common.ValidateNonEmpty, defUsername)
 		if err != nil {
 			return nil, nil
 		}
@@ -194,7 +194,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userPhoneNumber:
 		defPhone := u.GetUserInfo().GetPhoneNumber()
-		phone, err := utils.PromptGetInputWithDefault("Phone:", utils2.ValidatePhone, defPhone)
+		phone, err := common.PromptGetInputWithDefault("Phone:", utils2.ValidatePhone, defPhone)
 		if err != nil {
 			return nil, nil
 		}
@@ -207,7 +207,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 			}, nil
 		}
 	case userPassword:
-		password, err := utils.GetPasswordPrompt("Password:")
+		password, err := common.GetPasswordPrompt("Password:")
 		if err != nil {
 			return nil, nil
 		}
@@ -218,7 +218,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}, nil
 	case userIsEmailVerified:
 		defIsEmailVerified := strconv.FormatBool(u.GetIsEmailVerified())
-		isEmailVerified, err := utils.PromptGetInputWithDefault("Is email verified:", utils.BoolValidate, defIsEmailVerified)
+		isEmailVerified, err := common.PromptGetInputWithDefault("Is email verified:", common.BoolValidate, defIsEmailVerified)
 		if err != nil {
 			return nil, nil
 		}
@@ -231,7 +231,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userIsPhoneVerified:
 		defIsPhoneVerified := strconv.FormatBool(u.GetIsPhoneVerified())
-		isPhoneVerified, err := utils.PromptGetInputWithDefault("Is phone verified:", utils.BoolValidate, defIsPhoneVerified)
+		isPhoneVerified, err := common.PromptGetInputWithDefault("Is phone verified:", common.BoolValidate, defIsPhoneVerified)
 		if err != nil {
 			return nil, nil
 		}
@@ -253,11 +253,11 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 		return u, err
 	case userSetMetaData:
-		key, err := utils.PromptGetInput("Key:", utils.ValidateNonEmpty)
+		key, err := common.PromptGetInput("Key:", common.ValidateNonEmpty)
 		if err != nil {
 			return nil, nil
 		}
-		value, err := utils.PromptGetInput("Value:", utils.ValidateNonEmpty)
+		value, err := common.PromptGetInput("Value:", common.ValidateNonEmpty)
 		if err != nil {
 			return nil, nil
 		}
@@ -270,7 +270,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 			},
 		}, nil
 	case userDeleteMetaData:
-		key, err := utils.PromptGetInput("Key:", utils.ValidateNonEmpty)
+		key, err := common.PromptGetInput("Key:", common.ValidateNonEmpty)
 		if err != nil {
 			return nil, nil
 		}
@@ -302,7 +302,7 @@ func getUserProfileUpdate(p *user.Profile) (*user.Update, error) {
 		Country:           p.GetCountry(),
 	}
 	for {
-		i, res, err := utils.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
 		if err != nil {
 			return nil, nil
 		}
@@ -330,7 +330,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 	switch f {
 	case userProfileFirstName:
 		defFirstName := p.GetFirstName()
-		firstName, err := utils.PromptGetInputWithDefault("First name:", utils.ValidateNonEmpty, defFirstName)
+		firstName, err := common.PromptGetInputWithDefault("First name:", common.ValidateNonEmpty, defFirstName)
 		if err != nil {
 			return err
 		}
@@ -339,7 +339,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 		}
 	case userProfileLastName:
 		defLastName := p.GetLastName()
-		lastName, err := utils.PromptGetInputWithDefault("Last name:", utils.ValidateNonEmpty, defLastName)
+		lastName, err := common.PromptGetInputWithDefault("Last name:", common.ValidateNonEmpty, defLastName)
 		if err != nil {
 			return err
 		}
@@ -348,7 +348,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 		}
 	case userProfilePreferredLanguage:
 		defPreferredLanguage := p.GetPreferredLanguage()
-		preferredLanguage, err := utils.PromptGetInputWithDefault("Preferred language:", utils.ValidateNonEmpty, defPreferredLanguage)
+		preferredLanguage, err := common.PromptGetInputWithDefault("Preferred language:", common.ValidateNonEmpty, defPreferredLanguage)
 		if err != nil {
 			return err
 		}
@@ -357,7 +357,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 		}
 	case userProfileCountry:
 		defCountry := p.GetCountry()
-		country, err := utils.PromptGetInputWithDefault("Country:", utils.ValidateNonEmpty, defCountry)
+		country, err := common.PromptGetInputWithDefault("Country:", common.ValidateNonEmpty, defCountry)
 		if err != nil {
 			return err
 		}
@@ -370,31 +370,31 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 
 func parseUpdate() (*user.Update, error) {
 	switch field {
-	case utils.FormatField(userEmail.String()):
+	case common.FormatField(userEmail.String()):
 		return &user.Update{
 			Field: &user.Update_Email{
 				Email: value,
 			},
 		}, nil
-	case utils.FormatField(userUsername.String()):
+	case common.FormatField(userUsername.String()):
 		return &user.Update{
 			Field: &user.Update_Username{
 				Username: value,
 			},
 		}, nil
-	case utils.FormatField(userPhoneNumber.String()):
+	case common.FormatField(userPhoneNumber.String()):
 		return &user.Update{
 			Field: &user.Update_PhoneNumber{
 				PhoneNumber: value,
 			},
 		}, nil
-	case utils.FormatField(userPassword.String()):
+	case common.FormatField(userPassword.String()):
 		return &user.Update{
 			Field: &user.Update_Password{
 				Password: value,
 			},
 		}, nil
-	case utils.FormatField(userProfile.String()):
+	case common.FormatField(userProfile.String()):
 		jsonValue := []byte(value)
 		p := user.Profile{}
 		if err := protojson.Unmarshal(jsonValue, &p); err != nil {
@@ -405,7 +405,7 @@ func parseUpdate() (*user.Update, error) {
 				Profile: &p,
 			},
 		}, nil
-	case utils.FormatField(userIsEmailVerified.String()):
+	case common.FormatField(userIsEmailVerified.String()):
 		b, err := strconv.ParseBool(value)
 		if err != nil {
 			return nil, err
@@ -415,7 +415,7 @@ func parseUpdate() (*user.Update, error) {
 				IsEmailVerified: b,
 			},
 		}, nil
-	case utils.FormatField(userIsPhoneVerified.String()):
+	case common.FormatField(userIsPhoneVerified.String()):
 		b, err := strconv.ParseBool(value)
 		if err != nil {
 			return nil, err
@@ -425,11 +425,11 @@ func parseUpdate() (*user.Update, error) {
 				IsPhoneVerified: b,
 			},
 		}, nil
-	case utils.FormatField(userResetSessions.String()):
+	case common.FormatField(userResetSessions.String()):
 		return &user.Update{
 			Field: &user.Update_ResetSessions_{},
 		}, nil
-	case utils.FormatField(userSetMetaData.String()):
+	case common.FormatField(userSetMetaData.String()):
 		// temp struct to keep a key value pair
 		keyValue := struct {
 			Key   string `json:"key"`
@@ -448,7 +448,7 @@ func parseUpdate() (*user.Update, error) {
 				},
 			},
 		}, nil
-	case utils.FormatField(userDeleteMetaData.String()):
+	case common.FormatField(userDeleteMetaData.String()):
 		return &user.Update{
 			Field: &user.Update_DeleteMetadataKey{
 				DeleteMetadataKey: value,

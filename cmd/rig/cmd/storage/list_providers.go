@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +31,7 @@ func StorageListProviders(ctx context.Context, cmd *cobra.Command, nc rig.Client
 
 	if outputJson {
 		for _, u := range resp.Msg.GetProviders() {
-			cmd.Println(utils.ProtoToPrettyJson(u))
+			cmd.Println(common.ProtoToPrettyJson(u))
 		}
 		return nil
 	}

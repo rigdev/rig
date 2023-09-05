@@ -7,7 +7,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func ProjectGet(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 	}
 
 	if outputJSON {
-		cmd.Println(utils.ProtoToPrettyJson(resp.Msg.GetProject()))
+		cmd.Println(common.ProtoToPrettyJson(resp.Msg.GetProject()))
 		return nil
 	}
 

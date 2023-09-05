@@ -6,14 +6,14 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
 func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client) error {
 	var err error
 	if buildID == "" {
-		buildID, err = utils.PromptGetInput("Enter Build ID", utils.ValidateNonEmpty)
+		buildID, err = common.PromptGetInput("Enter Build ID", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}

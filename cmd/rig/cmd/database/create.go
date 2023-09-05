@@ -6,21 +6,21 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
 func Create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
 	var err error
 	if name == "" {
-		name, err = utils.PromptGetInput("Database name:", utils.ValidateNonEmpty)
+		name, err = common.PromptGetInput("Database name:", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}
 	}
 
 	if dbTypeString == "" {
-		_, dbTypeString, err = utils.PromptSelect("Database type:", []string{"mongo", "postgres"}, false)
+		_, dbTypeString, err = common.PromptSelect("Database type:", []string{"mongo", "postgres"}, false)
 		if err != nil {
 			return err
 		}

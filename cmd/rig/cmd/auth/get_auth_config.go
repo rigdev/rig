@@ -8,8 +8,8 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -33,7 +33,7 @@ func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, n
 			psIds = append(psIds, p.GetProjectId())
 		}
 
-		i, _, err := utils.PromptSelect("Project: ", ps, false)
+		i, _, err := common.PromptSelect("Project: ", ps, false)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, n
 	}
 
 	if redirectAddr == "" {
-		redirectAddr, err = utils.PromptGetInput("Oauth Redirect Address", utils.ValidateNonEmpty)
+		redirectAddr, err = common.PromptGetInput("Oauth Redirect Address", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, n
 	}
 
 	if outputJSON {
-		cmd.Println(utils.ProtoToPrettyJson(res.Msg))
+		cmd.Println(common.ProtoToPrettyJson(res.Msg))
 		return nil
 	}
 

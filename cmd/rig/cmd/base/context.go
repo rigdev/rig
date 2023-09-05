@@ -3,7 +3,7 @@ package base
 import (
 	"fmt"
 
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 )
 
 func UseContext(cfg *Config, name string) error {
@@ -29,7 +29,7 @@ func SelectContext(cfg *Config) error {
 		}
 	}
 
-	n, _, err := utils.PromptSelect("Context:", labels, false)
+	n, _, err := common.PromptSelect("Context:", labels, false)
 	if err != nil {
 		return err
 	}
@@ -39,12 +39,12 @@ func SelectContext(cfg *Config) error {
 }
 
 func CreateContext(cfg *Config) error {
-	name, err := utils.PromptGetInputWithDefault("Name:", utils.ValidateSystemName, "local")
+	name, err := common.PromptGetInputWithDefault("Name:", common.ValidateSystemName, "local")
 	if err != nil {
 		return err
 	}
 
-	server, err := utils.PromptGetInputWithDefault("Server:", utils.ValidateURL, "http://localhost:4747/")
+	server, err := common.PromptGetInputWithDefault("Server:", common.ValidateURL, "http://localhost:4747/")
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func CreateContext(cfg *Config) error {
 		Auth: &Auth{},
 	})
 
-	if ok, err := utils.PromptConfirm("Do you want activate this context now", true); err != nil {
+	if ok, err := common.PromptConfirm("Do you want activate this context now", true); err != nil {
 		return err
 	} else if ok {
 		cfg.CurrentContext = name

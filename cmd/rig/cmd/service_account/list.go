@@ -7,7 +7,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,7 @@ func ServiceAccountList(ctx context.Context, cmd *cobra.Command, args []string, 
 
 	if outputJSON {
 		for _, cred := range resp.Msg.GetServiceAccounts() {
-			cmd.Println(utils.ProtoToPrettyJson(cred))
+			cmd.Println(common.ProtoToPrettyJson(cred))
 		}
 		return nil
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ func UserDelete(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := utils.GetUser(ctx, identifier, nc)
+	_, id, err := common.GetUser(ctx, identifier, nc)
 	if err != nil {
 		return err
 	}

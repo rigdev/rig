@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ func ListTables(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := utils.GetDatabase(ctx, identifier, nc)
+	_, id, err := common.GetDatabase(ctx, identifier, nc)
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func ListTables(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 
 	if outputJSON {
 		for _, tb := range res.Msg.GetTables() {
-			cmd.Println(utils.ProtoToPrettyJson(tb))
+			cmd.Println(common.ProtoToPrettyJson(tb))
 		}
 		return nil
 	}

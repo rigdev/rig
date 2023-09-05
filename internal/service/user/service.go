@@ -2,11 +2,11 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/mail"
 	"reflect"
 
+	"github.com/nyaruka/phonenumbers"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
 	"github.com/rigdev/rig-go-api/model"
@@ -20,7 +20,6 @@ import (
 	"github.com/rigdev/rig/pkg/iterator"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/rigdev/rig/pkg/uuid"
-	"github.com/nyaruka/phonenumbers"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -103,7 +102,6 @@ func (s *service) CreateUser(ctx context.Context, rm *model.RegisterMethod, init
 	}
 
 	userID := uuid.New()
-	fmt.Println("UserID in Create User:", userID)
 	u := &user.User{
 		UserId: userID.String(),
 		UserInfo: &model.UserInfo{

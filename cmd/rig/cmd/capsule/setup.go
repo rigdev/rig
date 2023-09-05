@@ -9,8 +9,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
@@ -216,7 +216,7 @@ func provideCapsuleID(ctx context.Context, nc rig.Client, args []string) (Capsul
 	var capsuleName string
 	var err error
 	if len(args) == 0 {
-		capsuleName, err = utils.PromptGetInput("Enter Capsule name", utils.ValidateNonEmpty)
+		capsuleName, err = common.PromptGetInput("Enter Capsule name", common.ValidateNonEmpty)
 		if err != nil {
 			return "", err
 		}

@@ -1,16 +1,14 @@
 package auth
 
 import (
-	"os"
-
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 )
 
 var (
-	authUser     string
-	authPassword string
-	redirectAddr string
+	authPassword       string
+	authUserIdentifier string
+	redirectAddr       string
 )
 
 var outputJSON bool
@@ -22,12 +20,12 @@ func Setup(parent *cobra.Command) {
 
 	login := &cobra.Command{
 		Use:   "login",
-		Short: "Login with username and password",
+		Short: "Login with user identifier and password",
 		Args:  cobra.NoArgs,
 		RunE:  base.Register(AuthLogin),
 	}
-	login.PersistentFlags().StringVarP(&authUser, "user", "u", os.Getenv("RIG_USER"), "name of the user, can be either email or username")
-	login.PersistentFlags().StringVarP(&authPassword, "password", "p", os.Getenv("RIG_PASSWORD"), "password for the user")
+	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
+	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
 	auth.AddCommand(login)
 
 	get := &cobra.Command{

@@ -10,7 +10,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ func UserList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cli
 
 	if outputJson {
 		for _, u := range resp.Msg.GetUsers() {
-			cmd.Println(utils.ProtoToPrettyJson(u))
+			cmd.Println(common.ProtoToPrettyJson(u))
 		}
 		return nil
 	}

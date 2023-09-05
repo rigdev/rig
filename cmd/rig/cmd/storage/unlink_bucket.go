@@ -7,7 +7,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/list"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,7 @@ func StorageUnlinkBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	var bucket string
 	var err error
 	if len(args) < 1 {
-		bucket, err = utils.PromptGetInput("Bucket name:", ValidateBucketName)
+		bucket, err = common.PromptGetInput("Bucket name:", ValidateBucketName)
 		if err != nil {
 			return err
 		}
