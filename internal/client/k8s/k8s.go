@@ -58,3 +58,7 @@ func (*Client) CreateVolume(ctx context.Context, id string) error {
 	// This is a noop as volumes are provisioned as part of a StatefulSet
 	return nil
 }
+
+func (c *Client) ImageExistsNatively(ctx context.Context, image string) (bool, string, error) {
+	return false, "", nil
+}

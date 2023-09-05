@@ -21,6 +21,7 @@ func (h *Handler) CreateBuild(ctx context.Context, req *connect.Request[capsule.
 		req.Msg.GetDigest(),
 		req.Msg.GetOrigin(),
 		req.Msg.GetLabels(),
+		!req.Msg.GetSkipImageCheck(),
 	)
 	if err != nil {
 		return nil, err

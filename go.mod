@@ -21,7 +21,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.52
 	github.com/mwitkow/grpc-proxy v0.0.0-20230212185441-f345521cb9c9
 	github.com/nyaruka/phonenumbers v1.1.7
-	github.com/opencontainers/image-spec v1.0.2
+	github.com/opencontainers/image-spec v1.1.0-rc3
 	github.com/segmentio/analytics-go/v3 v3.2.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
@@ -55,7 +55,8 @@ require (
 
 require (
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
+	github.com/google/go-containerregistry v0.16.1 // indirect
+	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 )
 
