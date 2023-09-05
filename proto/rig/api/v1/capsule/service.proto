@@ -133,6 +133,7 @@ message CreateBuildRequest {
   string digest = 3;
   api.v1.capsule.Origin origin = 4;
   map<string, string> labels = 5;
+  bool skip_image_check = 6;
 }
 
 message CreateBuildResponse {

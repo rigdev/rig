@@ -251,3 +251,22 @@ func (c *Client) getContainers(ctx context.Context, prefix string) ([]types.Cont
 
 	return cs, nil
 }
+
+func (c *Client) ImageExistsNatively(ctx context.Context, image string) (bool, string, error) {
+	fmt.Println("checking", image)
+	is, err := c.dc.ImageList(ctx, types.ImageListOptions{
+		Filters: filters.NewArgs(filters.KeyValuePair{
+			Key:   "reference",
+			Value: image,
+		}),
+	})
+	if err != nil {
+		return false, "", err
+	}
+
+	if len(is) == 0 {
+		return false, "", nil
+	}
+
+	return true, is[0].ID, nil
+}

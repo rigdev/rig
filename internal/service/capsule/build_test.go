@@ -20,11 +20,11 @@ func Test_CreateBuild_InvalidArguments(t *testing.T) {
 		logger: zaptest.NewLogger(t),
 	}
 
-	_, err := s.CreateBuild(ctx, capsuleID, "foo-bar_baz:", "", nil, nil)
-	require.EqualError(t, err, "invalid_argument: invalid reference format")
+	_, err := s.CreateBuild(ctx, capsuleID, "foo-bar_baz::", "", nil, nil, false)
+	require.EqualError(t, err, "invalid_argument: could not parse reference: foo-bar_baz::")
 
-	_, err = s.CreateBuild(ctx, capsuleID, "foo-bar_baz@sha256:5247f24ee94ef18029105b9a8fe2e67a021f449a7ce270ecbb451a1d42289bf6", "", nil, nil)
-	require.EqualError(t, err, "invalid_argument: invalid image tag")
+	_, err = s.CreateBuild(ctx, capsuleID, "foo-bar_baz@ha256:5247f24ee94ef18029105b9a8fe2e67a021f449a7ce270ecbb451a1d42289bf6", "", nil, nil, false)
+	require.EqualError(t, err, "invalid_argument: could not parse reference: foo-bar_baz@ha256:5247f24ee94ef18029105b9a8fe2e67a021f449a7ce270ecbb451a1d42289bf6")
 }
 
 func Test_CreateBuild_ValidArguments(t *testing.T) {
@@ -40,11 +40,11 @@ func Test_CreateBuild_ValidArguments(t *testing.T) {
 		logger: zaptest.NewLogger(t),
 	}
 
-	buildID, err := s.CreateBuild(ctx, capsuleID, "foobar", "", nil, nil)
+	buildID, err := s.CreateBuild(ctx, capsuleID, "foobar", "", nil, nil, false)
 	require.NoError(t, err)
-	require.Equal(t, "docker.io/library/foobar:latest", buildID)
+	require.Equal(t, "index.docker.io/library/foobar:latest", buildID)
 
-	buildID, err = s.CreateBuild(ctx, capsuleID, "foobar:hattehat", "", nil, nil)
+	buildID, err = s.CreateBuild(ctx, capsuleID, "foobar:hattehat", "", nil, nil, false)
 	require.NoError(t, err)
-	require.Equal(t, "docker.io/library/foobar:hattehat", buildID)
+	require.Equal(t, "index.docker.io/library/foobar:hattehat", buildID)
 }

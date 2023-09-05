@@ -3,7 +3,10 @@ package capsule
 import (
 	"context"
 
-	"github.com/docker/distribution/reference"
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/pkg/errors"
@@ -12,19 +15,27 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, image, digest string, origin *capsule.Origin, labels map[string]string) (string, error) {
+func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, image, digest string, origin *capsule.Origin, labels map[string]string, validateImage bool) (string, error) {
 	if image == "" {
 		return "", errors.InvalidArgumentErrorf("missing image")
 	}
 
-	ref, err := reference.ParseDockerRef(image)
+	ref, err := name.ParseReference(image)
 	if err != nil {
 		return "", errors.InvalidArgumentErrorf("%v", err)
 	}
 
-	tagged, ok := reference.TagNameOnly(ref).(reference.NamedTagged)
-	if !ok {
-		return "", errors.InvalidArgumentErrorf("invalid image tag")
+	if validateImage {
+		d, err := s.validateImage(ctx, ref)
+		if err != nil {
+			return "", err
+		}
+
+		if digest != "" && digest != d {
+			return "", errors.InvalidArgumentErrorf("provided digest doesn't match image")
+		}
+
+		digest = d
 	}
 
 	if _, err := s.GetCapsule(ctx, capsuleID); err != nil {
@@ -37,10 +48,10 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, image, d
 	}
 
 	b := &capsule.Build{
-		BuildId:    tagged.String(),
+		BuildId:    ref.Name(),
 		Digest:     digest,
-		Repository: tagged.Name(),
-		Tag:        tagged.Tag(),
+		Repository: ref.Context().RepositoryStr(),
+		Tag:        ref.Identifier(),
 		CreatedBy:  by,
 		CreatedAt:  timestamppb.Now(),
 		Origin:     origin,
@@ -51,9 +62,52 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, image, d
 		return "", err
 	}
 
-	return tagged.String(), nil
+	return ref.Name(), nil
 }
 
 func (s *Service) ListBuilds(ctx context.Context, capsuleID uuid.UUID, pagination *model.Pagination) (iterator.Iterator[*capsule.Build], uint64, error) {
 	return s.cr.ListBuilds(ctx, pagination, capsuleID)
+}
+
+func (s *Service) validateImage(ctx context.Context, ref name.Reference) (string, error) {
+	if ok, d, err := s.cg.ImageExistsNatively(ctx, ref.String()); err != nil {
+		return "", err
+	} else if ok {
+		return d, nil
+	}
+
+	var opts []remote.Option
+	if ds, err := s.ps.GetProjectDockerSecret(ctx, ref.Context().RegistryStr()); errors.IsNotFound(err) {
+	} else if err != nil {
+		return "", err
+	} else {
+		opts = append(opts, remote.WithAuth(&authn.Basic{
+			Username: ds.GetUsername(),
+			Password: ds.GetPassword(),
+		}))
+	}
+
+	img, err := remote.Image(ref, opts...)
+	if err != nil {
+		if terr, ok := err.(*transport.Error); ok {
+			if len(terr.Errors) > 0 {
+				switch terr.Errors[0].Code {
+				case transport.UnauthorizedErrorCode:
+					return "", errors.UnauthenticatedErrorf("error checking container registry '%s': %v", ref.Context().RegistryStr(), terr.Errors[0].Message)
+				case transport.ManifestUnknownErrorCode:
+					return "", errors.NotFoundErrorf("tag `%s` not found in container registry", ref.Identifier())
+				default:
+					return "", errors.UnknownErrorf("error from container registry '%s': %v", ref.Context().RegistryStr(), terr.Errors[0].String())
+				}
+			}
+		}
+		return "", err
+	}
+
+	d, err := img.Digest()
+	if err != nil {
+		return "", err
+	}
+
+	return d.String(), nil
 }

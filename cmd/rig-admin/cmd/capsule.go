@@ -172,7 +172,7 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 		return err
 	}
 
-	buildID, err := cs.CreateBuild(ctx, capsuleID, buildImage, "", nil, nil)
+	buildID, err := cs.CreateBuild(ctx, capsuleID, buildImage, "", nil, nil, true)
 	if err != nil {
 		return err
 	}
