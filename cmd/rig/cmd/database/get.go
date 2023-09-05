@@ -24,18 +24,12 @@ func Get(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) 
 		return nil
 	}
 
-	dbType, err := GetDBTypeString(db)
-	if err != nil {
-		return err
-	}
-
 	// print a table with a column for attributes, and a column for values
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{"Attribute", "Value"})
 	t.AppendRows([]table.Row{
 		{"ID", id},
 		{"Name", db.GetName()},
-		{"Type", dbType},
 		{"Num Tables", len(db.GetTables())},
 		{"Created At", db.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")},
 	})

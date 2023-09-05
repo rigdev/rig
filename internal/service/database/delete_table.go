@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Service) DeleteTable(ctx context.Context, databaseID uuid.UUID, tableName string) error {
-	db, _, err := s.Get(ctx, databaseID)
+	db, err := s.Get(ctx, databaseID)
 	if err != nil {
 		return err
 	}
@@ -17,7 +17,8 @@ func (s *Service) DeleteTable(ctx context.Context, databaseID uuid.UUID, tableNa
 		return err
 	}
 
-	if err := gateway.DeleteTable(ctx, db.GetName(), tableName); err != nil {
+	dbName := formatDatabaseID(databaseID.String())
+	if err := gateway.DeleteTable(ctx, dbName, tableName); err != nil {
 		return err
 	}
 

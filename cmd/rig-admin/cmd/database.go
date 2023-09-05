@@ -23,9 +23,9 @@ func init() {
 	database.PersistentFlags().StringVar(&databaseId, "database", "", "uuid of your database")
 
 	createDatabase := &cobra.Command{
-		Use:  "create-database <name> <type> <username> <password> <host>",
+		Use:  "create-database <name>",
 		RunE: register(CreateDatabase),
-		Args: cobra.ExactArgs(5),
+		Args: cobra.ExactArgs(1),
 	}
 	database.AddCommand(createDatabase)
 
@@ -70,51 +70,17 @@ func init() {
 	rootCmd.AddCommand(database)
 }
 
-func getDbConfig(args []string) (*database.Config, error) {
-	switch args[1] {
-	case "postgres":
-		return &database.Config{
-			Config: &database.Config_Postgres{
-				Postgres: &database.PostgresConfig{
-					Credentials: &model.ProviderCredentials{
-						PublicKey:  args[2],
-						PrivateKey: args[3],
-					},
-					Host: args[4],
-				},
-			},
-		}, nil
-	case "mongo":
-		return &database.Config{
-			Config: &database.Config_Mongo{
-				Mongo: &database.MongoConfig{
-					Credentials: &model.ProviderCredentials{
-						PublicKey:  args[2],
-						PrivateKey: args[3],
-					},
-					Host: args[4],
-				},
-			},
-		}, nil
-	default:
-		return nil, errors.New("invalid database type")
-	}
-}
-
 func CreateDatabase(ctx context.Context, cmd *cobra.Command, args []string, ds *service_database.Service, logger *zap.Logger) error {
 	databaseName := args[0]
 	if databaseName == "" {
 		return errors.New("database name is required")
 	}
-	config, err := getDbConfig(args)
+
+	defSecret, db, err := ds.Create(ctx, databaseName, database.Type_TYPE_MONGODB)
 	if err != nil {
 		return err
 	}
-	db, err := ds.Create(ctx, databaseName, config, false)
-	if err != nil {
-		return err
-	}
-	logger.Info("created database", zap.String("name", databaseName), zap.String("id", db.GetDatabaseId()))
+	logger.Info("created database", zap.String("name", databaseName), zap.String("default secret", defSecret), zap.String("id", db.GetDatabaseId()))
 	return nil
 }
 
@@ -128,7 +94,7 @@ func GetDatabase(ctx context.Context, cmd *cobra.Command, args []string, ds *ser
 		return err
 	}
 
-	database, _, err := ds.Get(ctx, dbId)
+	database, err := ds.Get(ctx, dbId)
 	if err != nil {
 		return err
 	}

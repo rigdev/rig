@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Service) Delete(ctx context.Context, databaseID uuid.UUID) error {
-	db, sid, err := s.Get(ctx, databaseID)
+	db, err := s.Get(ctx, databaseID)
 	if err != nil {
 		return err
 	}
@@ -17,11 +17,8 @@ func (s *Service) Delete(ctx context.Context, databaseID uuid.UUID) error {
 		return err
 	}
 
-	if err := gateway.Delete(ctx, db.GetName()); err != nil {
-		return err
-	}
-
-	if err := s.secr.Delete(ctx, sid); err != nil {
+	dbName := formatDatabaseID(databaseID.String())
+	if err := gateway.Delete(ctx, dbName); err != nil {
 		return err
 	}
 

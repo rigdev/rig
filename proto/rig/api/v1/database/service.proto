@@ -7,6 +7,11 @@ import "model/common.proto";
 
 // The service to manage databases.
 service Service {
+  rpc CreateCredentials(CreateCredentialsRequest) returns (CreateCredentialsResponse) {}
+  rpc DeleteCredentials(DeleteCredentialsRequest) returns (DeleteCredentialsResponse) {}
+
+  rpc GetEndpoint(GetEndpointRequest) returns (GetEndpointResponse) {}
+
   rpc Create(CreateRequest) returns (CreateResponse) {}
   rpc Get(GetRequest) returns (GetResponse) {}
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
@@ -16,6 +21,33 @@ service Service {
   rpc CreateTable(CreateTableRequest) returns (CreateTableResponse) {}
   rpc DeleteTable(DeleteTableRequest) returns (DeleteTableResponse) {}
   rpc ListTables(ListTablesRequest) returns (ListTablesResponse) {}
+}
+
+message CreateCredentialsRequest {
+  string database_id = 1;
+  string client_id = 2;
+}
+
+message CreateCredentialsResponse {
+  string client_secret = 2;
+}
+
+message DeleteCredentialsRequest {
+  string database_id = 1;
+  string client_id = 2;
+}
+
+message DeleteCredentialsResponse {}
+
+message GetEndpointRequest {
+  string database_id = 1;
+  string client_id = 2;
+  string client_secret = 3;
+}
+
+message GetEndpointResponse {
+  string endpoint = 1;
+  string database_name = 2;
 }
 
 message GetByNameRequest {
@@ -28,12 +60,12 @@ message GetByNameResponse {
 
 message CreateRequest {
   string name = 1;
-  api.v1.database.Config config = 2;
-  bool link_tables = 3;
+  api.v1.database.Type db_type = 2;
 }
 
 message CreateResponse {
   database.Database database = 1;
+  string client_secret = 2;
 }
 
 message GetRequest {

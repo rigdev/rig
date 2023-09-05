@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rigdev/rig-go-api/api/v1/database"
-	mongo_gateway "github.com/rigdev/rig/internal/client/mongo/gateway"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/pkg/utils"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,13 +13,13 @@ import (
 	"go.uber.org/zap"
 )
 
-func New(user, password, host string, logger *zap.Logger) (*mongo.Client, error) {
+func New(cfg config.Config, logger *zap.Logger) (*mongo.Client, error) {
 	ctx := context.Background()
 	logger.Debug("trying to create mongo client...")
 	withRetry := 3
-	mongoUri := fmt.Sprintf("mongodb://%s:%s@%s/?retryWrites=true&w=majority", user, password, host)
-	if user == "" {
-		mongoUri = fmt.Sprintf("mongodb://%s/?retryWrites=true&w=majority", host)
+	mongoUri := fmt.Sprintf("mongodb://%s:%s@%s/?retryWrites=true&w=majority", cfg.Client.Mongo.User, cfg.Client.Mongo.Password, cfg.Client.Mongo.Host)
+	if cfg.Client.Mongo.User == "" {
+		mongoUri = fmt.Sprintf("mongodb://%s/?retryWrites=true&w=majority", cfg.Client.Mongo.Host)
 	}
 	var client *mongo.Client
 	if err := utils.Retry(withRetry, time.Second*5, func() (err error) {
@@ -42,19 +40,6 @@ func New(user, password, host string, logger *zap.Logger) (*mongo.Client, error)
 	}
 	logger.Debug("mongo client created...")
 	return client, nil
-}
-
-func NewDefault(cfg config.Config, logger *zap.Logger) (*mongo.Client, error) {
-	return New(cfg.Client.Mongo.User, cfg.Client.Mongo.Password, cfg.Client.Mongo.Host, logger)
-}
-
-func NewGateway(db *database.Database, logger *zap.Logger) (*mongo_gateway.MongoGateway, error) {
-	m := db.GetConfig().GetMongo()
-	c, err := New(m.GetCredentials().GetPublicKey(), m.GetCredentials().GetPrivateKey(), m.GetHost(), logger)
-	if err != nil {
-		return nil, err
-	}
-	return mongo_gateway.New(c), nil
 }
 
 func PerformMongHealthCheck(ctx context.Context, client *mongo.Client) error {

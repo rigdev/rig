@@ -14,10 +14,10 @@ import (
 func GetModule(cfg config.Config) fx.Option {
 	var opts []fx.Option
 	if cfg.Client.Mongo.Host != "" {
-		opts = append(opts, fx.Provide(mongo.NewDefault))
+		opts = append(opts, fx.Provide(mongo.New))
 	}
 	if cfg.Client.Postgres.Host != "" {
-		opts = append(opts, fx.Provide(postgres.NewDefault))
+		opts = append(opts, fx.Provide(postgres.New))
 	}
 	switch cfg.Cluster.Type {
 	case config.ClusterTypeDocker:

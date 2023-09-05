@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Service) ListTables(ctx context.Context, databaseID uuid.UUID) ([]*database.Table, error) {
-	db, _, err := s.Get(ctx, databaseID)
+	db, err := s.Get(ctx, databaseID)
 	if err != nil {
 		return nil, err
 	}

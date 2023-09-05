@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handler) GetByName(ctx context.Context, req *connect.Request[database.GetByNameRequest]) (*connect.Response[database.GetByNameResponse], error) {
-	db, _, err := h.ds.GetByName(ctx, req.Msg.GetName())
+	db, err := h.ds.GetByName(ctx, req.Msg.GetName())
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/rigdev/rig/pkg/uuid"
 )
 
-func (s *Service) Get(ctx context.Context, databaseID uuid.UUID) (*database.Database, uuid.UUID, error) {
+func (s *Service) Get(ctx context.Context, databaseID uuid.UUID) (*database.Database, error) {
 	return s.dr.Get(ctx, databaseID)
 
 }

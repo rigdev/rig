@@ -36,11 +36,7 @@ func List(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client)
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{fmt.Sprintf("DBs (%d)", res.Msg.GetTotal()), "Name", "Type"})
 	for i, db := range res.Msg.GetDatabases() {
-		dbType, err := GetDBTypeString(db)
-		if err != nil {
-			return err
-		}
-		t.AppendRow(table.Row{i + 1, db.GetName(), dbType})
+		t.AppendRow(table.Row{i + 1, db.GetName()})
 	}
 	cmd.Println(t.Render())
 	return nil
