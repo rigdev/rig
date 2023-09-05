@@ -49,15 +49,21 @@ require (
 
 require (
 	github.com/go-chi/chi/v5 v5.0.10
+	github.com/google/go-containerregistry v0.16.1
 	github.com/rigdev/rig-go-api v0.0.0-20230904101308-f541d3e3f612
 	k8s.io/metrics v0.28.0
 )
 
 require (
+	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
+	github.com/benbjohnson/clock v1.3.0 // indirect
+	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
+	github.com/docker/cli v24.0.0+incompatible // indirect
+	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/google/go-containerregistry v0.16.1 // indirect
-	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/vbatts/tar-split v0.11.3 // indirect
 )
 
 require (
@@ -117,7 +123,6 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -150,7 +155,7 @@ require (
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang/protobuf v1.5.3
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
