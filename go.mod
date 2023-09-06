@@ -2,8 +2,6 @@ module github.com/rigdev/rig
 
 go 1.20
 
-replace github.com/rigdev/rig-go-api => ./gen/go/rig
-
 require (
 	cloud.google.com/go/storage v1.30.1
 	github.com/aws/aws-sdk-go-v2 v1.18.1
@@ -48,22 +46,24 @@ require (
 )
 
 require (
+	firebase.google.com/go v3.13.0+incompatible
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/go-containerregistry v0.16.1
-	github.com/rigdev/rig-go-api v0.0.0-20230904101308-f541d3e3f612
+	github.com/jedib0t/go-pretty/v6 v6.4.6
+	github.com/rigdev/rig-go-api v0.0.0-20230905151115-0a42d524bfae
 	github.com/rigdev/rig-go-sdk v0.0.0-20230902170251-18fbb97d0692
-	github.com/rigdev/rig/cmd/rig v0.0.0-20230905193640-c7940281e66e
 	k8s.io/metrics v0.28.0
 )
 
 require (
+	cloud.google.com/go/firestore v1.9.0 // indirect
+	cloud.google.com/go/longrunning v0.4.1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/jedib0t/go-pretty/v6 v6.4.6 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
