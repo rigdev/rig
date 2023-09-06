@@ -148,9 +148,13 @@ func (s *service) applySettingsUpdates(ctx context.Context, set *project_setting
 			t.Subject = v.Template.Subject
 			t.Body = v.Template.Body
 		case *project_settings.Update_AddDockerRegistry:
-			s.applyAddDockerRegistry(ctx, set, v)
+			if err := s.applyAddDockerRegistry(ctx, set, v); err != nil {
+				return err
+			}
 		case *project_settings.Update_DeleteDockerRegistry:
-			s.applyDeleteDockerRegistry(ctx, set, v)
+			if err := s.applyDeleteDockerRegistry(ctx, set, v); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
