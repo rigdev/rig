@@ -48,7 +48,7 @@ jobs:
             const release = await github.rest.repos.getReleaseByTag({
               "owner": "rigdev",
               "repo": "dashboard",
-              "tag": "v0.2.8"
+              "tag": "v0.2.9"
             })
             const asset = release.data.assets.find(a => a.name == "public.tar.gz")
             if (!asset) {
