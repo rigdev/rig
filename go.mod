@@ -47,6 +47,7 @@ require (
 
 require (
 	firebase.google.com/go v3.13.0+incompatible
+	github.com/fatih/color v1.15.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/go-containerregistry v0.16.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
@@ -64,6 +65,8 @@ require (
 	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect

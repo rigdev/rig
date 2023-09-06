@@ -83,3 +83,13 @@ func CreateContext(cfg *Config) error {
 
 	return cfg.Save()
 }
+
+func ConfigInit(cfg *Config) error {
+	if ok, err := common.PromptConfirm("Do you want to configure a new context", true); err != nil {
+		return err
+	} else if !ok {
+		return nil
+	}
+
+	return CreateContext(cfg)
+}
