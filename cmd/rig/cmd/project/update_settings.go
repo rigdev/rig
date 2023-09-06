@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -131,7 +131,7 @@ func ProjectUpdateSettings(ctx context.Context, cmd *cobra.Command, args []strin
 	}
 
 	for {
-		i, res, err := utils.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
 		if err != nil {
 			return err
 		}
@@ -187,7 +187,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) (*settings.Upda
 }
 
 func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
-	_, field, err := utils.PromptSelect("Choose a type:", []string{
+	_, field, err := common.PromptSelect("Choose a type:", []string{
 		"MailJet",
 		"Smtp",
 		"Default",
@@ -260,7 +260,7 @@ func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) 
 		hosts = append(hosts, r.GetHost())
 	}
 
-	_, res, err := utils.PromptSelect("Choose a registry to delete:", hosts, false)
+	_, res, err := common.PromptSelect("Choose a registry to delete:", hosts, false)
 	if err != nil {
 		return nil, err
 	}
@@ -273,22 +273,22 @@ func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) 
 }
 
 func promptAddDockerRegistry(s *settings.Settings) (*settings.Update, error) {
-	host, err := utils.PromptGetInput("Enter host", utils.ValidateNonEmpty)
+	host, err := common.PromptGetInput("Enter host", common.ValidateNonEmpty)
 	if err != nil {
 		return nil, err
 	}
 
-	username, err := utils.PromptGetInput("Enter username", utils.ValidateNonEmpty)
+	username, err := common.PromptGetInput("Enter username", common.ValidateNonEmpty)
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := utils.PromptGetInput("Enter password", utils.ValidateNonEmpty)
+	password, err := common.PromptGetInput("Enter password", common.ValidateNonEmpty)
 	if err != nil {
 		return nil, err
 	}
 
-	email, err := utils.PromptGetInput("Enter email", utils.ValidateEmail)
+	email, err := common.PromptGetInput("Enter email", common.ValidateEmail)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +331,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 	}
 
 	for {
-		_, res, err := utils.PromptSelect("Choose a field to update:", fields, true)
+		_, res, err := common.PromptSelect("Choose a field to update:", fields, true)
 		if err != nil {
 			return err
 		}
@@ -341,31 +341,31 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 
 		switch res {
 		case emailProviderPublicKey.String():
-			key, err := utils.PromptGetInput("Enter public key", utils.ValidateNonEmpty)
+			key, err := common.PromptGetInput("Enter public key", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}
 			p.Credentials.PublicKey = key
 		case emailProviderPrivateKey.String():
-			key, err := utils.PromptGetInput("Enter private key", utils.ValidateNonEmpty)
+			key, err := common.PromptGetInput("Enter private key", common.ValidateNonEmpty)
 			if err != nil {
 				return err
 			}
 			p.Credentials.PrivateKey = key
 		case emailProviderFromEmail.String():
-			email, err := utils.PromptGetInputWithDefault("Enter from email", utils.ValidateEmail, p.GetFrom())
+			email, err := common.PromptGetInputWithDefault("Enter from email", common.ValidateEmail, p.GetFrom())
 			if err != nil {
 				return err
 			}
 			p.From = email
 		case emailProviderHost.String():
-			host, err := utils.PromptGetInputWithDefault("Enter host", utils.ValidateNonEmpty, p.GetInstance().GetSmtp().GetHost())
+			host, err := common.PromptGetInputWithDefault("Enter host", common.ValidateNonEmpty, p.GetInstance().GetSmtp().GetHost())
 			if err != nil {
 				return err
 			}
 			p.GetInstance().GetSmtp().Host = host
 		case emailProviderPort.String():
-			port, err := utils.PromptGetInputWithDefault("Enter port", utils.ValidateNonEmpty, strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort())))
+			port, err := common.PromptGetInputWithDefault("Enter port", common.ValidateNonEmpty, strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort())))
 			if err != nil {
 				return err
 			}
@@ -390,7 +390,7 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 	}
 
 	for {
-		_, res, err := utils.PromptSelect("Choose a field to update:", fields, true)
+		_, res, err := common.PromptSelect("Choose a field to update:", fields, true)
 		if err != nil {
 			return nil, err
 		}
@@ -400,13 +400,13 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 
 		switch res {
 		case tempalteFieldSubject.String():
-			subject, err := utils.PromptGetInputWithDefault("Enter subject", utils.ValidateNonEmpty, t.GetSubject())
+			subject, err := common.PromptGetInputWithDefault("Enter subject", common.ValidateNonEmpty, t.GetSubject())
 			if err != nil {
 				return nil, err
 			}
 			t.Subject = subject
 		case templateFieldBody.String():
-			body, err := utils.PromptGetInputWithDefault("Enter body", utils.ValidateNonEmpty, t.GetBody())
+			body, err := common.PromptGetInputWithDefault("Enter body", common.ValidateNonEmpty, t.GetBody())
 			if err != nil {
 				return nil, err
 			}
@@ -422,7 +422,7 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 
 func parseSettingsUpdate() (*settings.Update, error) {
 	switch field {
-	case utils.FormatField(settingsEmailProvider.String()):
+	case common.FormatField(settingsEmailProvider.String()):
 		jsonValue := []byte(value)
 		prov := settings.EmailProvider{}
 		if err := protojson.Unmarshal(jsonValue, &prov); err != nil {
@@ -433,7 +433,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				EmailProvider: &prov,
 			},
 		}, nil
-	case utils.FormatField(settingsAddDockerRegistry.String()):
+	case common.FormatField(settingsAddDockerRegistry.String()):
 		jsonValue := []byte(value)
 		reg := settings.AddDockerRegistry{}
 		if err := protojson.Unmarshal(jsonValue, &reg); err != nil {
@@ -444,7 +444,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				AddDockerRegistry: &reg,
 			},
 		}, nil
-	case utils.FormatField(settingsDeleteDockerRegistry.String()):
+	case common.FormatField(settingsDeleteDockerRegistry.String()):
 		return &settings.Update{
 			Field: &settings.Update_DeleteDockerRegistry{
 				DeleteDockerRegistry: value,

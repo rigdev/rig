@@ -1,4 +1,4 @@
-package utils
+package common
 
 import (
 	"context"
@@ -16,12 +16,10 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-api/api/v1/user"
-	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/rigdev/rig/pkg/uuid"
-	"github.com/nyaruka/phonenumbers"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -233,7 +231,11 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 	var resId string
 	id, err := uuid.Parse(identifier)
 	if err != nil {
-		ident := parseUserIdentifier(identifier)
+		ident, err := ParseUserIdentifier(identifier)
+		if err != nil {
+			return nil, "", err
+		}
+
 		res, err := nc.User().GetByIdentifier(ctx, connect.NewRequest(&user.GetByIdentifierRequest{
 			Identifier: ident,
 		}))
@@ -254,30 +256,6 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 		resId = id.String()
 	}
 	return u, resId, nil
-}
-
-func parseUserIdentifier(identifier string) *model.UserIdentifier {
-	var id *model.UserIdentifier
-	if _, err := mail.ParseAddress(identifier); err == nil {
-		id = &model.UserIdentifier{
-			Identifier: &model.UserIdentifier_Email{
-				Email: identifier,
-			},
-		}
-	} else if _, err := phonenumbers.Parse(identifier, ""); err == nil {
-		id = &model.UserIdentifier{
-			Identifier: &model.UserIdentifier_PhoneNumber{
-				PhoneNumber: identifier,
-			},
-		}
-	} else {
-		id = &model.UserIdentifier{
-			Identifier: &model.UserIdentifier_Username{
-				Username: identifier,
-			},
-		}
-	}
-	return id
 }
 
 func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Group, string, error) {

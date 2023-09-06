@@ -6,7 +6,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ func UserAddMember(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 	if len(args) > 1 {
 		uidentifier = args[0]
 	}
-	u, uuid, err := utils.GetUser(ctx, uidentifier, nc)
+	u, uuid, err := common.GetUser(ctx, uidentifier, nc)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func UserAddMember(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			gnames = append(gnames, gname)
 		}
 
-		_, gname, err := utils.PromptSelect("Select group", gnames, false)
+		_, gname, err := common.PromptSelect("Select group", gnames, false)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ func UserAddMember(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			return nil
 		}
 	} else {
-		g, id, err := utils.GetGroup(ctx, groupIdentifier, nc)
+		g, id, err := common.GetGroup(ctx, groupIdentifier, nc)
 		if err != nil {
 			return err
 		}

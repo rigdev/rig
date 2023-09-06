@@ -7,7 +7,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/list"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
@@ -54,7 +54,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 			for i, p := range res.Msg.GetProviders() {
 				providerNames[i] = p.GetName()
 			}
-			i, _, err := utils.PromptSelect("Select provider:", providerNames, false)
+			i, _, err := common.PromptSelect("Select provider:", providerNames, false)
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	}
 
 	if name == "" {
-		name, err = utils.PromptGetInput("Bucket name:", ValidateBucketName)
+		name, err = common.PromptGetInput("Bucket name:", ValidateBucketName)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	}
 
 	if providerBucketName == "" {
-		providerBucketName, err = utils.PromptGetInputWithDefault("Provider bucket name:", ValidateBucketName, name)
+		providerBucketName, err = common.PromptGetInputWithDefault("Provider bucket name:", ValidateBucketName, name)
 		if err != nil {
 			return err
 		}

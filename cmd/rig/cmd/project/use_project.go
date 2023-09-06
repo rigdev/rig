@@ -7,7 +7,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
@@ -28,7 +28,7 @@ func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 			ps = append(ps, p.GetName())
 		}
 
-		i, _, err := utils.PromptSelect("Project: ", ps, false)
+		i, _, err := common.PromptSelect("Project: ", ps, false)
 		if err != nil {
 			return err
 		}

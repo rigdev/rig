@@ -8,7 +8,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,7 @@ func GroupListMembers(ctx context.Context, cmd *cobra.Command, args []string, nc
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, uid, err := utils.GetGroup(ctx, identifier, nc)
+	_, uid, err := common.GetGroup(ctx, identifier, nc)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func GroupListMembers(ctx context.Context, cmd *cobra.Command, args []string, nc
 
 	if outputJSON {
 		for _, u := range resp.Msg.GetMembers() {
-			cmd.Println(utils.ProtoToPrettyJson(u))
+			cmd.Println(common.ProtoToPrettyJson(u))
 		}
 		return nil
 	}

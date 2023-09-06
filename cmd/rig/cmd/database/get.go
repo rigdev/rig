@@ -5,7 +5,7 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -14,13 +14,13 @@ func Get(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) 
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	db, id, err := utils.GetDatabase(ctx, identifier, nc)
+	db, id, err := common.GetDatabase(ctx, identifier, nc)
 	if err != nil {
 		return err
 	}
 
 	if outputJSON {
-		cmd.Println(utils.ProtoToPrettyJson(db))
+		cmd.Println(common.ProtoToPrettyJson(db))
 		return nil
 	}
 

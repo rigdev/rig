@@ -2,59 +2,43 @@ package auth
 
 import (
 	"context"
-	"strings"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
-func AuthLogin(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *base.Config, logger *zap.Logger) error {
-	if authUser == "" {
-		u, err := utils.PromptGetInput("Enter Username or Email", utils.ValidateNonEmpty)
+func AuthLogin(ctx context.Context, cmd *cobra.Command, client rig.Client, cfg *base.Config) error {
+	var identifier *model.UserIdentifier
+	var err error
+	if authUserIdentifier == "" {
+		identifier, err = common.PromptUserIndentifier()
 		if err != nil {
 			return err
 		}
-
-		authUser = u
-	}
-
-	var id *model.UserIdentifier
-	if strings.Contains(authUser, "@") {
-		id = &model.UserIdentifier{
-			Identifier: &model.UserIdentifier_Email{
-				Email: authUser,
-			},
-		}
 	} else {
-		id = &model.UserIdentifier{
-			Identifier: &model.UserIdentifier_Username{
-				Username: authUser,
-			},
-		}
+		identifier, err = common.ParseUserIdentifier(authUserIdentifier)
 	}
 
 	if authPassword == "" {
-		pw, err := utils.GetPasswordPrompt("Enter Password")
+		pw, err := common.GetPasswordPrompt("Enter Password")
 		if err != nil {
 			return err
 		}
-
 		authPassword = string(pw)
 	}
 
-	res, err := nc.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
+	res, err := client.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
 		Msg: &authentication.LoginRequest{
 			Method: &authentication.LoginRequest_UserPassword{
 				UserPassword: &authentication.UserPassword{
-					Identifier: id,
+					Identifier: identifier,
 					Password:   authPassword,
 					ProjectId:  auth.RigProjectID.String(),
 				},

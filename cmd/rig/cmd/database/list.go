@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ func List(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client)
 
 	if outputJSON {
 		for _, db := range res.Msg.GetDatabases() {
-			cmd.Println(utils.ProtoToPrettyJson(db))
+			cmd.Println(common.ProtoToPrettyJson(db))
 		}
 		return nil
 	}

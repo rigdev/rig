@@ -10,7 +10,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +29,7 @@ func ProjectList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 
 	if outputJSON {
 		for _, p := range resp.Msg.GetProjects() {
-			cmd.Println(utils.ProtoToPrettyJson(p))
+			cmd.Println(common.ProtoToPrettyJson(p))
 		}
 		return nil
 	}

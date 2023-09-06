@@ -7,7 +7,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +15,7 @@ import (
 func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *base.Config) error {
 	if name == "" {
 		var err error
-		name, err = utils.PromptGetInput("Project name:", utils.ValidateNonEmpty)
+		name, err = common.PromptGetInput("Project name:", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}

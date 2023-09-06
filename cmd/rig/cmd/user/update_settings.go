@@ -12,7 +12,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -153,7 +153,7 @@ func UserUpdateSettings(ctx context.Context, cmd *cobra.Command, args []string, 
 	}
 
 	for {
-		i, res, err := utils.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
 		if err != nil {
 			return err
 		}
@@ -193,7 +193,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 	switch f {
 	case settingsAllowRegister:
 		defAllowRegister := strconv.FormatBool(s.GetAllowRegister())
-		allowRegister, err := utils.PromptGetInputWithDefault("Allow Register:", utils.BoolValidate, defAllowRegister)
+		allowRegister, err := common.PromptGetInputWithDefault("Allow Register:", common.BoolValidate, defAllowRegister)
 		if err != nil {
 			return nil, nil
 		}
@@ -206,7 +206,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsIsVerifiedEmailRequired:
 		defIsVerifiedEmailRequired := strconv.FormatBool(s.GetIsVerifiedEmailRequired())
-		isVerifiedEmailRequired, err := utils.PromptGetInputWithDefault("Verify Email Required:", utils.BoolValidate, defIsVerifiedEmailRequired)
+		isVerifiedEmailRequired, err := common.PromptGetInputWithDefault("Verify Email Required:", common.BoolValidate, defIsVerifiedEmailRequired)
 		if err != nil {
 			return nil, nil
 		}
@@ -219,7 +219,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsIsVerifiedPhoneRequired:
 		defIsVerifiedPhoneRequired := strconv.FormatBool(s.GetIsVerifiedPhoneRequired())
-		isVerifiedPhoneRequired, err := utils.PromptGetInputWithDefault("Verify Phone Required:", utils.BoolValidate, defIsVerifiedPhoneRequired)
+		isVerifiedPhoneRequired, err := common.PromptGetInputWithDefault("Verify Phone Required:", common.BoolValidate, defIsVerifiedPhoneRequired)
 		if err != nil {
 			return nil, nil
 		}
@@ -232,7 +232,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsAccessTokenTTL:
 		defAccessTokenTtl := strconv.Itoa(int(s.GetAccessTokenTtl().AsDuration().Minutes()))
-		accessTokenTtl, err := utils.PromptGetInputWithDefault("Access Token TTL (minutes):", utils.ValidateInt, defAccessTokenTtl)
+		accessTokenTtl, err := common.PromptGetInputWithDefault("Access Token TTL (minutes):", common.ValidateInt, defAccessTokenTtl)
 		if err != nil {
 			return nil, nil
 		}
@@ -249,7 +249,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, err
 	case settingsRefreshTokenTTL:
 		defRefreshTokenTtl := strconv.Itoa(int(s.GetRefreshTokenTtl().AsDuration().Hours()))
-		refreshTokenTtl, err := utils.PromptGetInputWithDefault("Refresh Token TTL (hours):", utils.ValidateInt, defRefreshTokenTtl)
+		refreshTokenTtl, err := common.PromptGetInputWithDefault("Refresh Token TTL (hours):", common.ValidateInt, defRefreshTokenTtl)
 		if err != nil {
 			return nil, nil
 		}
@@ -266,7 +266,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsVerificationCodeTTL:
 		defVerificationCodeTtl := strconv.Itoa(int(s.GetVerificationCodeTtl().AsDuration().Minutes()))
-		verificationCodeTtl, err := utils.PromptGetInputWithDefault("Verification Code TTL (minutes):", utils.ValidateInt, defVerificationCodeTtl)
+		verificationCodeTtl, err := common.PromptGetInputWithDefault("Verification Code TTL (minutes):", common.ValidateInt, defVerificationCodeTtl)
 		if err != nil {
 			return nil, nil
 		}
@@ -309,7 +309,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		"Bcrypt",
 		"Scrypt",
 	}
-	_, res, err := utils.PromptSelect("Choose hashing algorithm", fields, false)
+	_, res, err := common.PromptSelect("Choose hashing algorithm", fields, false)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		}
 
 		bcrypt := &model.BcryptHashingConfig{}
-		cost, err := utils.PromptGetInputWithDefault("Cost:", utils.ValidateInt, defCost)
+		cost, err := common.PromptGetInputWithDefault("Cost:", common.ValidateInt, defCost)
 		if err != nil {
 			return nil, err
 		}
@@ -352,40 +352,40 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		}
 
 		scrypt := &model.ScryptHashingConfig{}
-		key, err := utils.PromptGetInputWithDefault("Key:", utils.ValidateNonEmpty, defKey)
+		key, err := common.PromptGetInputWithDefault("Key:", common.ValidateNonEmpty, defKey)
 		if err != nil {
 			return nil, err
 		}
 		scrypt.SignerKey = key
 
-		saltSeparator, err := utils.PromptGetInputWithDefault("Salt Separator:", utils.ValidateNonEmpty, defSaltSeparator)
+		saltSeparator, err := common.PromptGetInputWithDefault("Salt Separator:", common.ValidateNonEmpty, defSaltSeparator)
 		if err != nil {
 			return nil, err
 		}
 		scrypt.SaltSeparator = saltSeparator
 
-		rounds, err := utils.PromptGetInputWithDefault("Rounds:", utils.ValidateInt, defRounds)
+		rounds, err := common.PromptGetInputWithDefault("Rounds:", common.ValidateInt, defRounds)
 		if err != nil {
 			return nil, err
 		}
 		roundsInt, _ := strconv.Atoi(rounds)
 		scrypt.Rounds = int32(roundsInt)
 
-		memCost, err := utils.PromptGetInputWithDefault("Memory Cost:", utils.ValidateInt, defMemCost)
+		memCost, err := common.PromptGetInputWithDefault("Memory Cost:", common.ValidateInt, defMemCost)
 		if err != nil {
 			return nil, err
 		}
 		memCostInt, _ := strconv.Atoi(memCost)
 		scrypt.MemCost = int32(memCostInt)
 
-		parallelism, err := utils.PromptGetInputWithDefault("Parallelism:", utils.ValidateInt, defParallelism)
+		parallelism, err := common.PromptGetInputWithDefault("Parallelism:", common.ValidateInt, defParallelism)
 		if err != nil {
 			return nil, err
 		}
 		parallelismInt, _ := strconv.Atoi(parallelism)
 		scrypt.P = int32(parallelismInt)
 
-		keyLength, err := utils.PromptGetInputWithDefault("Key Length:", utils.ValidateInt, defKeyLength)
+		keyLength, err := common.PromptGetInputWithDefault("Key Length:", common.ValidateInt, defKeyLength)
 		if err != nil {
 			return nil, err
 		}
@@ -421,7 +421,7 @@ func getLoginMechanismsUpdate(current []model.LoginType) (*settings.Update, erro
 
 	selected := []model.LoginType{}
 	for {
-		i, res, err := utils.PromptSelect("Choose login types", fields, false)
+		i, res, err := common.PromptSelect("Choose login types", fields, false)
 		if err != nil {
 			fmt.Println(err.Error())
 			break
@@ -479,7 +479,7 @@ func getOauthSettingsUpdate(current *settings.OauthSettings) ([]*settings.Update
 	}
 	callbacks := current.GetCallbackUrls()
 	for {
-		_, res, err := utils.PromptSelect("Choose Oauth provider", fields, false)
+		_, res, err := common.PromptSelect("Choose Oauth provider", fields, false)
 		if err != nil {
 			return nil, err
 		}
@@ -543,27 +543,27 @@ func getOauthSettingsUpdate(current *settings.OauthSettings) ([]*settings.Update
 func updateOauthProvider(u *settings.OauthProviderUpdate) (*settings.OauthProviderUpdate, error) {
 	fmt.Println("Current Oauth Provider Settings: ", u)
 
-	allowLogin, err := utils.PromptGetInputWithDefault("Allow Login:", utils.BoolValidate, strconv.FormatBool(u.GetAllowLogin()))
+	allowLogin, err := common.PromptGetInputWithDefault("Allow Login:", common.BoolValidate, strconv.FormatBool(u.GetAllowLogin()))
 	if err != nil {
 		return nil, err
 	}
 	allowLoginBool, _ := strconv.ParseBool(allowLogin)
 	u.AllowLogin = allowLoginBool
 
-	allowRegister, err := utils.PromptGetInputWithDefault("Allow Register:", utils.BoolValidate, strconv.FormatBool(u.GetAllowRegister()))
+	allowRegister, err := common.PromptGetInputWithDefault("Allow Register:", common.BoolValidate, strconv.FormatBool(u.GetAllowRegister()))
 	if err != nil {
 		return nil, err
 	}
 	allowRegisterBool, _ := strconv.ParseBool(allowRegister)
 	u.AllowRegister = allowRegisterBool
 
-	clientID, err := utils.PromptGetInputWithDefault("Client ID:", utils.ValidateNonEmpty, u.GetCredentials().GetPublicKey())
+	clientID, err := common.PromptGetInputWithDefault("Client ID:", common.ValidateNonEmpty, u.GetCredentials().GetPublicKey())
 	if err != nil {
 		return nil, err
 	}
 	u.Credentials.PublicKey = clientID
 
-	clientSecret, err := utils.PromptGetInputWithDefault("Client Secret:", utils.ValidateNonEmpty, u.Credentials.GetPrivateKey())
+	clientSecret, err := common.PromptGetInputWithDefault("Client Secret:", common.ValidateNonEmpty, u.Credentials.GetPrivateKey())
 	if err != nil {
 		return nil, err
 	}
@@ -582,7 +582,7 @@ func updateCallbacks(current []string) []string {
 		"Done",
 	}
 	for {
-		_, res, err := utils.PromptSelect("Choose action", fields, false)
+		_, res, err := common.PromptSelect("Choose action", fields, false)
 		if err != nil {
 			fmt.Println(err.Error())
 			break
@@ -591,7 +591,7 @@ func updateCallbacks(current []string) []string {
 			break
 		}
 		if res == "Add" {
-			callback, err := utils.PromptGetInput("Callback:", utils.ValidateNonEmpty)
+			callback, err := common.PromptGetInput("Callback:", common.ValidateNonEmpty)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -603,12 +603,12 @@ func updateCallbacks(current []string) []string {
 				fmt.Println("No callbacks to edit")
 				continue
 			}
-			i, res, err := utils.PromptSelect("Choose callback to edit", current, false)
+			i, res, err := common.PromptSelect("Choose callback to edit", current, false)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
 			}
-			callback, err := utils.PromptGetInputWithDefault("Callback:", utils.ValidateNonEmpty, res)
+			callback, err := common.PromptGetInputWithDefault("Callback:", common.ValidateNonEmpty, res)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -620,7 +620,7 @@ func updateCallbacks(current []string) []string {
 				fmt.Println("No callbacks to remove")
 				continue
 			}
-			i, _, err := utils.PromptSelect("Choose callback to remove", current, false)
+			i, _, err := common.PromptSelect("Choose callback to remove", current, false)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -633,7 +633,7 @@ func updateCallbacks(current []string) []string {
 
 func parseSettingsUpdate() (*settings.Update, error) {
 	switch field {
-	case utils.FormatField(settingsAllowRegister.String()):
+	case common.FormatField(settingsAllowRegister.String()):
 		allowRegister, err := strconv.ParseBool(value)
 		if err != nil {
 			return nil, err
@@ -643,7 +643,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				AllowRegister: allowRegister,
 			},
 		}, nil
-	case utils.FormatField(settingsIsVerifiedEmailRequired.String()):
+	case common.FormatField(settingsIsVerifiedEmailRequired.String()):
 		isVerifiedEmailRequired, err := strconv.ParseBool(value)
 		if err != nil {
 			return nil, err
@@ -653,7 +653,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				IsVerifiedEmailRequired: isVerifiedEmailRequired,
 			},
 		}, nil
-	case utils.FormatField(settingsIsVerifiedPhoneRequired.String()):
+	case common.FormatField(settingsIsVerifiedPhoneRequired.String()):
 		isVerifiedPhoneRequired, err := strconv.ParseBool(value)
 		if err != nil {
 			return nil, err
@@ -663,7 +663,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				IsVerifiedPhoneRequired: isVerifiedPhoneRequired,
 			},
 		}, nil
-	case utils.FormatField(settingsAccessTokenTTL.String()):
+	case common.FormatField(settingsAccessTokenTTL.String()):
 		accessTokenTtl, err := strconv.Atoi(value)
 		if err != nil {
 			return nil, err
@@ -675,7 +675,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				},
 			},
 		}, nil
-	case utils.FormatField(settingsRefreshTokenTTL.String()):
+	case common.FormatField(settingsRefreshTokenTTL.String()):
 		refreshTokenTtl, err := strconv.Atoi(value)
 		if err != nil {
 			return nil, err
@@ -687,7 +687,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				},
 			},
 		}, nil
-	case utils.FormatField(settingsVerificationCodeTTL.String()):
+	case common.FormatField(settingsVerificationCodeTTL.String()):
 		verificationCodeTtl, err := strconv.Atoi(value)
 		if err != nil {
 			return nil, err
@@ -699,7 +699,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				},
 			},
 		}, nil
-	case utils.FormatField(settingsPasswordHashing.String()):
+	case common.FormatField(settingsPasswordHashing.String()):
 		jsonValue := []byte(value)
 		hashingConfig := model.HashingConfig{}
 		err := protojson.Unmarshal(jsonValue, &hashingConfig)
@@ -711,7 +711,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				PasswordHashing: &hashingConfig,
 			},
 		}, nil
-	case utils.FormatField(settingsLoginMechanisms.String()):
+	case common.FormatField(settingsLoginMechanisms.String()):
 		jsonValue := []byte(value)
 		loginMechanisms := []model.LoginType{}
 		err := json.Unmarshal(jsonValue, &loginMechanisms)
@@ -725,7 +725,7 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				},
 			},
 		}, nil
-	case utils.FormatField(settingsOauthSettings.String()):
+	case common.FormatField(settingsOauthSettings.String()):
 		jsonValue := []byte(value)
 		oauthUpdate := settings.OauthProviderUpdate{}
 		err := protojson.Unmarshal(jsonValue, &oauthUpdate)

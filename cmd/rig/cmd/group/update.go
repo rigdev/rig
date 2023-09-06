@@ -8,7 +8,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func GroupUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	g, uid, err := utils.GetGroup(ctx, identifier, nc)
+	g, uid, err := common.GetGroup(ctx, identifier, nc)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func GroupUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 
 	updates := []*group.Update{}
 	for {
-		i, res, err := utils.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func GroupUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 	switch f {
 	case groupName:
-		name, err := utils.PromptGetInputWithDefault("Name:", utils.ValidateNonEmpty, g.GetName())
+		name, err := common.PromptGetInputWithDefault("Name:", common.ValidateNonEmpty, g.GetName())
 		if err != nil {
 			return nil, err
 		}
@@ -100,11 +100,11 @@ func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 			}, nil
 		}
 	case groupSetMetaData:
-		key, err := utils.PromptGetInput("Key:", utils.ValidateNonEmpty)
+		key, err := common.PromptGetInput("Key:", common.ValidateNonEmpty)
 		if err != nil {
 			return nil, err
 		}
-		value, err := utils.PromptGetInput("Value:", utils.ValidateNonEmpty)
+		value, err := common.PromptGetInput("Value:", common.ValidateNonEmpty)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 		}, nil
 
 	case groupDeleteMetaData:
-		key, err := utils.PromptGetInput("Key:", utils.ValidateNonEmpty)
+		key, err := common.PromptGetInput("Key:", common.ValidateNonEmpty)
 		if err != nil {
 			return nil, err
 		}

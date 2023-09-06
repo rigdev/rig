@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +29,7 @@ func CapsuleList(ctx context.Context, cmd *cobra.Command, nc rig.Client) error {
 
 	if outputJSON {
 		for _, c := range resp.Msg.GetCapsules() {
-			cmd.Println(utils.ProtoToPrettyJson(c))
+			cmd.Println(common.ProtoToPrettyJson(c))
 		}
 		return nil
 	}

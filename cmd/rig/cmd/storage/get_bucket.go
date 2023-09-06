@@ -7,7 +7,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ func StorageGetBucket(ctx context.Context, cmd *cobra.Command, args []string, nc
 	var bucket string
 	var err error
 	if len(args) < 1 {
-		bucket, err = utils.PromptGetInput("Bucket name:", ValidateBucketName)
+		bucket, err = common.PromptGetInput("Bucket name:", ValidateBucketName)
 		if err != nil {
 			return err
 		}
@@ -33,7 +33,7 @@ func StorageGetBucket(ctx context.Context, cmd *cobra.Command, args []string, nc
 	}
 
 	if outputJson {
-		cmd.Println(utils.ProtoToPrettyJson(res.Msg.GetBucket()))
+		cmd.Println(common.ProtoToPrettyJson(res.Msg.GetBucket()))
 		return nil
 	}
 

@@ -6,7 +6,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -15,20 +15,20 @@ func Connect(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Clie
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := utils.GetDatabase(ctx, identifier, nc)
+	_, id, err := common.GetDatabase(ctx, identifier, nc)
 	if err != nil {
 		return err
 	}
 
 	if clientID == "" {
-		clientID, err = utils.PromptGetInput("Client ID", utils.ValidateNonEmpty)
+		clientID, err = common.PromptGetInput("Client ID", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}
 	}
 
 	if clientSecret == "" {
-		clientSecret, err = utils.PromptGetInput("Client Secret", utils.ValidateNonEmpty)
+		clientSecret, err = common.PromptGetInput("Client Secret", common.ValidateNonEmpty)
 		if err != nil {
 			return err
 		}

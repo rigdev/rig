@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ func UserListSessions(ctx context.Context, cmd *cobra.Command, args []string, nc
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := utils.GetUser(ctx, identifier, nc)
+	_, id, err := common.GetUser(ctx, identifier, nc)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func UserListSessions(ctx context.Context, cmd *cobra.Command, args []string, nc
 
 	if outputJson {
 		for _, s := range resp.Msg.GetSessions() {
-			cmd.Println(utils.ProtoToPrettyJson(s))
+			cmd.Println(common.ProtoToPrettyJson(s))
 		}
 		return nil
 	}

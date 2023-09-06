@@ -51,6 +51,8 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/go-containerregistry v0.16.1
 	github.com/rigdev/rig-go-api v0.0.0-20230904101308-f541d3e3f612
+	github.com/rigdev/rig-go-sdk v0.0.0-20230902170251-18fbb97d0692
+	github.com/rigdev/rig/cmd/rig v0.0.0-20230905193640-c7940281e66e
 	k8s.io/metrics v0.28.0
 )
 
@@ -61,7 +63,10 @@ require (
 	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
+	github.com/jedib0t/go-pretty/v6 v6.4.6 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 )
@@ -91,7 +96,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/distribution v2.8.2+incompatible // indirect
+	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect

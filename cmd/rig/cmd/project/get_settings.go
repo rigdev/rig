@@ -7,7 +7,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ func ProjectGetSettings(ctx context.Context, cmd *cobra.Command, args []string, 
 	set := resp.Msg.GetSettings()
 
 	if outputJSON {
-		cmd.Println(utils.ProtoToPrettyJson(set))
+		cmd.Println(common.ProtoToPrettyJson(set))
 		return nil
 	}
 

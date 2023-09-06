@@ -6,7 +6,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/utils"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ func UserRemoveMember(ctx context.Context, cmd *cobra.Command, args []string, nc
 	if len(args) > 1 {
 		uidentifier = args[1]
 	}
-	_, uuid, err := utils.GetUser(ctx, uidentifier, nc)
+	_, uuid, err := common.GetUser(ctx, uidentifier, nc)
 	if err != nil {
 		return err
 	}
@@ -36,14 +36,14 @@ func UserRemoveMember(ctx context.Context, cmd *cobra.Command, args []string, nc
 		}
 
 		var i int
-		i, gname, err = utils.PromptSelect("Select group", fields, false)
+		i, gname, err = common.PromptSelect("Select group", fields, false)
 		if err != nil {
 			return err
 		}
 
 		guid = res.Msg.GetGroups()[i].GetGroupId()
 	} else {
-		g, id, err := utils.GetGroup(ctx, groupIdentifier, nc)
+		g, id, err := common.GetGroup(ctx, groupIdentifier, nc)
 		if err != nil {
 			return err
 		}
