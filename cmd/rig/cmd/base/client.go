@@ -11,6 +11,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/fx"
 )
@@ -29,7 +30,7 @@ var _omitProjectToken = map[string]struct{}{
 
 var clientModule = fx.Module("client",
 	fx.Supply(&http.Client{}),
-	fx.Provide(func(s *Service, cfg *Config) rig.Client {
+	fx.Provide(func(s *cmd_config.Service, cfg *cmd_config.Config) rig.Client {
 		ai := &authInterceptor{cfg: cfg}
 		nc := rig.NewClient(
 			rig.WithHost(s.Server),
@@ -39,7 +40,7 @@ var clientModule = fx.Module("client",
 		ai.nc = nc
 		return nc
 	}),
-	fx.Provide(func(cfg *Config) []connect.Interceptor {
+	fx.Provide(func(cfg *cmd_config.Config) []connect.Interceptor {
 		return []connect.Interceptor{&userAgentInterceptor{}, &authInterceptor{cfg: cfg}}
 	}),
 )
@@ -73,27 +74,27 @@ func (i *userAgentInterceptor) setUserAgent(h http.Header) {
 }
 
 type configSessionManager struct {
-	cfg *Config
+	cfg *cmd_config.Config
 }
 
 func (s *configSessionManager) GetAccessToken() string {
-	return s.cfg.Auth().AccessToken
+	return s.cfg.GetCurrentAuth().AccessToken
 }
 
 func (s *configSessionManager) GetRefreshToken() string {
-	return s.cfg.Auth().RefreshToken
+	return s.cfg.GetCurrentAuth().RefreshToken
 }
 
 func (s *configSessionManager) SetAccessToken(accessToken, refreshToken string) {
-	s.cfg.Auth().AccessToken = accessToken
-	s.cfg.Auth().RefreshToken = refreshToken
+	s.cfg.GetCurrentAuth().AccessToken = accessToken
+	s.cfg.GetCurrentAuth().RefreshToken = refreshToken
 	if err := s.cfg.Save(); err != nil {
 		fmt.Fprintf(os.Stderr, "error saving config: %v\n", err)
 	}
 }
 
 type authInterceptor struct {
-	cfg *Config
+	cfg *cmd_config.Config
 	nc  rig.Client
 }
 
@@ -104,7 +105,7 @@ func (i *authInterceptor) handleAuth(ctx context.Context, h http.Header, method 
 }
 
 func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
-	if i.cfg.Context().Project.ProjectToken == "" {
+	if i.cfg.GetCurrentContext().Project.ProjectToken == "" {
 		return
 	}
 
@@ -113,7 +114,7 @@ func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
 		SkipClaimsValidation: true,
 	}
 	_, _, err := p.ParseUnverified(
-		i.cfg.Context().Project.ProjectToken,
+		i.cfg.GetCurrentContext().Project.ProjectToken,
 		&c,
 	)
 	if err != nil {
@@ -121,23 +122,23 @@ func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
 	}
 
 	// Don't use if invalid user id.
-	if i.cfg.Auth().UserID.String() != c.Subject {
+	if i.cfg.GetCurrentAuth().UserID.String() != c.Subject {
 		return
 	}
 
-	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) && i.cfg.Context().Project.ProjectID != uuid.Nil {
+	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) && i.cfg.GetCurrentContext().Project.ProjectID != uuid.Nil {
 		res, err := i.nc.Project().Use(ctx, &connect.Request[project.UseRequest]{
 			Msg: &project.UseRequest{
-				ProjectId: i.cfg.Context().Project.ProjectID.String(),
+				ProjectId: i.cfg.GetCurrentContext().Project.ProjectID.String(),
 			},
 		})
 		if err == nil {
-			i.cfg.Context().Project.ProjectToken = res.Msg.GetProjectToken()
+			i.cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
 			i.cfg.Save()
 		}
 	}
 
-	h.Set(_rigProjectTokenHeader, fmt.Sprint(i.cfg.Context().Project.ProjectToken))
+	h.Set(_rigProjectTokenHeader, fmt.Sprint(i.cfg.GetCurrentContext().Project.ProjectToken))
 }
 
 func (i *authInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {

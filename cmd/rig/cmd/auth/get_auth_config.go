@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *base.Config, logger *zap.Logger) error {
+func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
 	var projectID uuid.UUID
 	var err error
 	if len(args) != 1 {

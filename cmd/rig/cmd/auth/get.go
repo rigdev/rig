@@ -9,12 +9,12 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
 
-func AuthGet(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *base.Config, logger *zap.Logger) error {
+func AuthGet(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
 	res, err := nc.Authentication().Get(ctx, &connect.Request[authentication.GetRequest]{
 		Msg: &authentication.GetRequest{},
 	})

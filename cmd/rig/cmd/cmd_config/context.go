@@ -1,4 +1,4 @@
-package base
+package cmd_config
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 func UseContext(cfg *Config, name string) error {
 	for _, c := range cfg.Contexts {
 		if c.Name == name {
-			cfg.CurrentContext = c.Name
+			cfg.CurrentContextName = c.Name
 			return cfg.Save()
 		}
 	}
@@ -22,7 +22,7 @@ func SelectContext(cfg *Config) error {
 	var labels []string
 	for _, c := range cfg.Contexts {
 		names = append(names, c.Name)
-		if c.Name == cfg.CurrentContext {
+		if c.Name == cfg.CurrentContextName {
 			labels = append(labels, c.Name+"*")
 		} else {
 			labels = append(labels, c.Name)
@@ -34,7 +34,7 @@ func SelectContext(cfg *Config) error {
 		return err
 	}
 
-	cfg.CurrentContext = cfg.Contexts[n].Name
+	cfg.CurrentContextName = cfg.Contexts[n].Name
 	return cfg.Save()
 }
 
@@ -50,9 +50,9 @@ func CreateContext(cfg *Config) error {
 	}
 
 	cfg.Contexts = append(cfg.Contexts, &Context{
-		Name:    name,
-		Service: name,
-		User:    name,
+		Name:        name,
+		ServiceName: name,
+		UserName:    name,
 	})
 
 	cfg.Services = append(cfg.Services, &Service{
@@ -68,7 +68,7 @@ func CreateContext(cfg *Config) error {
 	if ok, err := common.PromptConfirm("Do you want activate this context now", true); err != nil {
 		return err
 	} else if ok {
-		cfg.CurrentContext = name
+		cfg.CurrentContextName = name
 	}
 
 	return cfg.Save()

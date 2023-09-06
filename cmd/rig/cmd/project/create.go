@@ -6,13 +6,13 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
-func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *base.Config) error {
+func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
 	if name == "" {
 		var err error
 		name, err = common.PromptGetInput("Project name:", common.ValidateNonEmpty)
@@ -51,8 +51,8 @@ func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			return err
 		}
 
-		cfg.Context().Project.ProjectID = uuid.UUID(p.GetProjectId())
-		cfg.Context().Project.ProjectToken = res.Msg.GetProjectToken()
+		cfg.GetCurrentContext().Project.ProjectID = uuid.UUID(p.GetProjectId())
+		cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
 		if err := cfg.Save(); err != nil {
 			return err
 		}

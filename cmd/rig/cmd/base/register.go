@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 	"go.uber.org/dig"
 	"go.uber.org/fx"
@@ -18,7 +19,7 @@ func AddOptions(opts ...fx.Option) {
 
 func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		cfg, err := NewConfig("")
+		cfg, err := cmd_config.NewConfig("")
 		if err != nil {
 			return err
 		}
@@ -29,43 +30,12 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 			fx.Supply(cmd),
 			fx.Supply(args),
 			fx.Provide(zap.NewDevelopment),
-			fx.Provide(func() (*Context, error) {
-				if cfg.CurrentContext == "" {
-					if len(cfg.Contexts) > 0 {
-						cmd.Println("No context selected, please select one")
-						if err := SelectContext(cfg); err != nil {
-							return nil, err
-						}
-					} else {
-						cmd.Println("No context available, please create one")
-						if err := CreateContext(cfg); err != nil {
-							return nil, err
-						}
-					}
-				}
-
-				c := cfg.Context()
-				if c == nil {
-					return nil, fmt.Errorf("no current context in config, run `rig config init`")
-				}
-
-				c.service = cfg.Service()
-				if c.service == nil {
-					return nil, fmt.Errorf("missing service config for context `%v`", cfg.CurrentContext)
-				}
-
-				c.auth = cfg.Auth()
-				if c.auth == nil {
-					return nil, fmt.Errorf("missing auth config for context `%v`", cfg.CurrentContext)
-				}
-
-				return c, nil
+			fx.Provide(getContext),
+			fx.Provide(func(c *cmd_config.Context) *cmd_config.Auth {
+				return c.Auth
 			}),
-			fx.Provide(func(c *Context) *Auth {
-				return c.auth
-			}),
-			fx.Provide(func(c *Context) *Service {
-				return c.service
+			fx.Provide(func(c *cmd_config.Context) *cmd_config.Service {
+				return c.Service
 			}),
 			fx.Provide(func() context.Context { return context.Background() }),
 			fx.Options(_options...),
@@ -81,4 +51,37 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 		}
 		return dig.RootCause(f.Err())
 	}
+}
+
+func getContext(cfg *cmd_config.Config, cmd *cobra.Command) (*cmd_config.Context, error) {
+	if cfg.CurrentContextName == "" {
+		if len(cfg.Contexts) > 0 {
+			cmd.Println("No context selected, please select one")
+			if err := cmd_config.SelectContext(cfg); err != nil {
+				return nil, err
+			}
+		} else {
+			cmd.Println("No context available, please create one")
+			if err := cmd_config.CreateContext(cfg); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	c := cfg.GetCurrentContext()
+	if c == nil {
+		return nil, fmt.Errorf("no current context in config, run `rig config init`")
+	}
+
+	c.Service = cfg.GetCurrentService()
+	if c.Service == nil {
+		return nil, fmt.Errorf("missing service config for context `%v`", cfg.CurrentContextName)
+	}
+
+	c.Auth = cfg.GetCurrentAuth()
+	if c.Auth == nil {
+		return nil, fmt.Errorf("missing auth config for context `%v`", cfg.CurrentContextName)
+	}
+
+	return c, nil
 }

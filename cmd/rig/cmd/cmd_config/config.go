@@ -1,4 +1,4 @@
-package base
+package cmd_config
 
 import (
 	"os"
@@ -17,16 +17,16 @@ type Auth struct {
 }
 
 type Context struct {
-	Name    string `yaml:"name"`
-	Service string `yaml:"service"`
-	User    string `yaml:"user"`
-	Project struct {
+	Name        string `yaml:"name"`
+	ServiceName string `yaml:"service"`
+	UserName    string `yaml:"user"`
+	Project     struct {
 		ProjectID    uuid.UUID `yaml:"project_id"`
 		ProjectToken string    `yaml:"project_token"`
 	} `yaml:"project"`
 
-	service *Service
-	auth    *Auth
+	Service *Service
+	Auth    *Auth
 }
 
 type Service struct {
@@ -46,14 +46,14 @@ type Config struct {
 
 	Users []*User `yaml:"users"`
 
-	CurrentContext string `yaml:"current_context"`
+	CurrentContextName string `yaml:"current_context"`
 
 	filePath string
 }
 
-func (cfg *Config) Context() *Context {
+func (cfg *Config) GetCurrentContext() *Context {
 	for _, c := range cfg.Contexts {
-		if c.Name == cfg.CurrentContext {
+		if c.Name == cfg.CurrentContextName {
 			return c
 		}
 	}
@@ -61,28 +61,28 @@ func (cfg *Config) Context() *Context {
 	return nil
 }
 
-func (cfg *Config) Auth() *Auth {
-	c := cfg.Context()
+func (cfg *Config) GetCurrentAuth() *Auth {
+	c := cfg.GetCurrentContext()
 	if c == nil {
 		return nil
 	}
 
 	for _, u := range cfg.Users {
-		if u.Name == c.User {
+		if u.Name == c.UserName {
 			return u.Auth
 		}
 	}
 	return nil
 }
 
-func (cfg *Config) Service() *Service {
-	c := cfg.Context()
+func (cfg *Config) GetCurrentService() *Service {
+	c := cfg.GetCurrentContext()
 	if c == nil {
 		return nil
 	}
 
 	for _, cl := range cfg.Services {
-		if cl.Name == c.Service {
+		if cl.Name == c.ServiceName {
 			return cl
 		}
 	}
