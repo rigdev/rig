@@ -18,8 +18,8 @@ type Auth struct {
 
 type Context struct {
 	Name        string `yaml:"name"`
-	ServiceName string `yaml:"service"`
-	UserName    string `yaml:"user"`
+	ServiceName string `yaml:"service_name"`
+	UserName    string `yaml:"user_name"`
 	Project     struct {
 		ProjectID    uuid.UUID `yaml:"project_id"`
 		ProjectToken string    `yaml:"project_token"`

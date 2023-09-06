@@ -39,6 +39,7 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 			}),
 			fx.Provide(func() context.Context { return context.Background() }),
 			fx.Options(_options...),
+			fx.Invoke(CheckAuth),
 			fx.Invoke(f),
 			fx.NopLogger,
 		)

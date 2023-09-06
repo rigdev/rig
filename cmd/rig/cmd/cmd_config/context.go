@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/pkg/uuid"
 )
 
 func UseContext(cfg *Config, name string) error {
@@ -53,6 +54,13 @@ func CreateContext(cfg *Config) error {
 		Name:        name,
 		ServiceName: name,
 		UserName:    name,
+		Project: struct {
+			ProjectID    uuid.UUID `yaml:"project_id"`
+			ProjectToken string    `yaml:"project_token"`
+		}{
+			ProjectID:    uuid.Nil,
+			ProjectToken: "",
+		},
 	})
 
 	cfg.Services = append(cfg.Services, &Service{
@@ -62,7 +70,9 @@ func CreateContext(cfg *Config) error {
 
 	cfg.Users = append(cfg.Users, &User{
 		Name: name,
-		Auth: &Auth{},
+		Auth: &Auth{
+			UserID: uuid.Nil,
+		},
 	})
 
 	if ok, err := common.PromptConfirm("Do you want activate this context now", true); err != nil {
