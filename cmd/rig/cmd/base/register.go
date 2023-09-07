@@ -32,10 +32,10 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 			fx.Provide(zap.NewDevelopment),
 			fx.Provide(getContext),
 			fx.Provide(func(c *cmd_config.Context) *cmd_config.Auth {
-				return c.Auth
+				return c.GetAuth()
 			}),
 			fx.Provide(func(c *cmd_config.Context) *cmd_config.Service {
-				return c.Service
+				return c.GetService()
 			}),
 			fx.Provide(func() context.Context { return context.Background() }),
 			fx.Options(_options...),
@@ -74,13 +74,15 @@ func getContext(cfg *cmd_config.Config, cmd *cobra.Command) (*cmd_config.Context
 		return nil, fmt.Errorf("no current context in config, run `rig config init`")
 	}
 
-	c.Service = cfg.GetCurrentService()
-	if c.Service == nil {
+	fmt.Println(c.GetService())
+	c.SetService(cfg.GetCurrentService())
+	fmt.Println(c.GetService())
+	if c.GetService() == nil {
 		return nil, fmt.Errorf("missing service config for context `%v`", cfg.CurrentContextName)
 	}
 
-	c.Auth = cfg.GetCurrentAuth()
-	if c.Auth == nil {
+	c.SetAuth(cfg.GetCurrentAuth())
+	if c.GetAuth() == nil {
 		return nil, fmt.Errorf("missing auth config for context `%v`", cfg.CurrentContextName)
 	}
 

@@ -18,15 +18,31 @@ type Auth struct {
 
 type Context struct {
 	Name        string `yaml:"name"`
-	ServiceName string `yaml:"service_name"`
-	UserName    string `yaml:"user_name"`
+	ServiceName string `yaml:"service"`
+	UserName    string `yaml:"user"`
 	Project     struct {
 		ProjectID    uuid.UUID `yaml:"project_id"`
 		ProjectToken string    `yaml:"project_token"`
 	} `yaml:"project"`
 
-	Service *Service
-	Auth    *Auth
+	service *Service
+	auth    *Auth
+}
+
+func (c *Context) GetService() *Service {
+	return c.service
+}
+
+func (c *Context) SetService(s *Service) {
+	c.service = s
+}
+
+func (c *Context) GetAuth() *Auth {
+	return c.auth
+}
+
+func (c *Context) SetAuth(a *Auth) {
+	c.auth = a
 }
 
 type Service struct {
