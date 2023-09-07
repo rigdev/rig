@@ -91,7 +91,8 @@ func (t *Telemetry) Wrap(next middleware.MiddlewareHandlerFunc) middleware.Middl
 				Properties: analytics.NewProperties().
 					SetPath(r.URL.Path).
 					Set("userAgent", r.UserAgent()).
-					Set("installationId", t.installationID.String()),
+					Set("installationId", t.installationID.String()).
+					Set("clusterType", t.cfg.Cluster.Type),
 				UserId: d.userID.String(),
 			}
 			t.sc.Track(at)
