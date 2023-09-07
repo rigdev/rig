@@ -53,7 +53,7 @@ func GroupUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 
 	updates := []*group.Update{}
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func GroupUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 	switch f {
 	case groupName:
-		name, err := common.PromptGetInputWithDefault("Name:", common.ValidateNonEmpty, g.GetName())
+		name, err := common.PromptGetInput("Name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(g.GetName()))
 		if err != nil {
 			return nil, err
 		}
@@ -100,11 +100,11 @@ func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 			}, nil
 		}
 	case groupSetMetaData:
-		key, err := common.PromptGetInput("Key:", common.ValidateNonEmpty)
+		key, err := common.PromptGetInput("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}
-		value, err := common.PromptGetInput("Value:", common.ValidateNonEmpty)
+		value, err := common.PromptGetInput("Value:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 		}, nil
 
 	case groupDeleteMetaData:
-		key, err := common.PromptGetInput("Key:", common.ValidateNonEmpty)
+		key, err := common.PromptGetInput("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}

@@ -21,7 +21,7 @@ func DeleteCredential(ctx context.Context, cmd *cobra.Command, args []string, nc
 	}
 
 	if name == "" {
-		name, err = common.PromptGetInput("Credential Name", common.ValidateNonEmpty)
+		name, err = common.PromptGetInput("Credential Name", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

@@ -22,7 +22,7 @@ import (
 func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client, cfg *cmd_config.Config) error {
 	var err error
 	if image == "" {
-		image, err = common.PromptGetInput("Enter Image", common.ValidateNonEmpty)
+		image, err = common.PromptGetInput("Enter Image", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

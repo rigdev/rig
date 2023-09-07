@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	goerrors "errors"
 	"net/mail"
 	"net/url"
 	"regexp"
@@ -11,25 +10,16 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/docker/distribution/reference"
-	"github.com/manifoldco/promptui"
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/utils"
 	"github.com/rigdev/rig/pkg/uuid"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
-
-var GetInputTemplates = &promptui.PromptTemplates{
-	Prompt:  "{{ . }} ",
-	Valid:   "{{ . | green }} ",
-	Invalid: "{{ . | red }} ",
-	Success: "{{ . | bold }} ",
-}
 
 var ValidateAll = func(input string) error {
 	return nil
@@ -91,19 +81,16 @@ var ValidateImage = func(input string) error {
 	return nil
 }
 
-func PromptGetInput(label string, validate func(input string) error) (string, error) {
-	prompt := promptui.Prompt{
-		Label:     label,
-		Templates: GetInputTemplates,
-		Validate:  validate,
+var ValidateBool = func(s string) error {
+	if s == "" {
+		return nil
 	}
 
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
+	if _, err := parseBool(s); err != nil {
+		return err
 	}
 
-	return result, nil
+	return nil
 }
 
 func parseBool(s string) (bool, error) {
@@ -116,113 +103,10 @@ func parseBool(s string) (bool, error) {
 	return false, errors.InvalidArgumentErrorf("invalid bool format")
 }
 
-func PromptConfirm(label string, def bool) (bool, error) {
-	prompt := promptui.Prompt{
-		Label: label,
-		// Templates: GetInputTemplates,
-		IsConfirm: true,
-		Validate: func(s string) error {
-			if s == "" {
-				return nil
-			}
-
-			if _, err := parseBool(s); err != nil {
-				return err
-			}
-
-			return nil
-		},
-		Default: "N",
-	}
-
-	if def {
-		prompt.Default = "Y"
-	}
-
-	result, err := prompt.Run()
-	confirmed := !goerrors.Is(err, promptui.ErrAbort)
-	if err != nil && confirmed {
-		return false, err
-	}
-
-	if result == "" {
-		return def, nil
-	}
-
-	return parseBool(result)
-}
-
-func PromptGetInputWithDefault(label string, validate func(input string) error, def string) (string, error) {
-	prompt := promptui.Prompt{
-		Label:     label,
-		Templates: GetInputTemplates,
-		Validate:  validate,
-		Default:   def,
-		AllowEdit: true,
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-
-	return result, nil
-}
-
-func PromptSelect(label string, items []string, hideSelected bool) (int, string, error) {
-	templates := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "->{{ . | cyan }}",
-		Inactive: "  {{ . | cyan }}",
-		Selected: "{{ . | green }}",
-	}
-
-	prompt := promptui.Select{
-		Templates:    templates,
-		Label:        label,
-		Items:        items,
-		HideSelected: hideSelected,
-	}
-
-	i, res, err := prompt.Run()
-	if err != nil {
-		return 0, "", err
-	}
-
-	return i, res, nil
-}
-
-func GetPasswordPrompt(label string) (string, error) {
-	prompt := promptui.Prompt{
-		Label:       label,
-		Templates:   GetInputTemplates,
-		HideEntered: true,
-		Mask:        '*',
-		Validate: func(input string) error {
-			if err := utils.ValidatePassword(input); err != nil {
-				return err
-			}
-			return nil
-		},
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
-}
-
 func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User, string, error) {
 	var err error
 	if identifier == "" {
-		validateIdentifier := func(identifier string) error {
-			if identifier == "" {
-				return errors.InvalidArgumentErrorf("Please provide an identifier")
-			}
-			return nil
-		}
-		identifier, err = PromptGetInput("User Identifier:", validateIdentifier)
+		identifier, err = PromptGetInput("User Identifier:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}
@@ -261,13 +145,7 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Group, string, error) {
 	var err error
 	if identifier == "" {
-		validateIdentifier := func(identifier string) error {
-			if identifier == "" {
-				return errors.InvalidArgumentErrorf("Please provide an identifier")
-			}
-			return nil
-		}
-		identifier, err = PromptGetInput("Group Identifier:", validateIdentifier)
+		identifier, err = PromptGetInput("Group Identifier:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}
@@ -300,13 +178,7 @@ func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Gro
 func GetDatabase(ctx context.Context, identifier string, nc rig.Client) (*database.Database, string, error) {
 	var err error
 	if identifier == "" {
-		validateIdentifier := func(identifier string) error {
-			if identifier == "" {
-				return errors.InvalidArgumentErrorf("Please provide an identifier")
-			}
-			return nil
-		}
-		identifier, err = PromptGetInput("DB Identifier:", validateIdentifier)
+		identifier, err = PromptGetInput("DB Identifier:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}
@@ -340,13 +212,7 @@ func GetDatabase(ctx context.Context, identifier string, nc rig.Client) (*databa
 func GetStorageProvider(ctx context.Context, identifier string, nc rig.Client) (*storage.Provider, string, error) {
 	var err error
 	if identifier == "" {
-		validateIdentifier := func(identifier string) error {
-			if identifier == "" {
-				return errors.InvalidArgumentErrorf("Please provide an identifier")
-			}
-			return nil
-		}
-		identifier, err = PromptGetInput("Provider Identifier:", validateIdentifier)
+		identifier, err = PromptGetInput("Provider Identifier:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}

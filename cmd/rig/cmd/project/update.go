@@ -62,7 +62,7 @@ func ProjectUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 
 	updates := []*project.Update{}
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}

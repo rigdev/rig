@@ -54,7 +54,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 			for i, p := range res.Msg.GetProviders() {
 				providerNames[i] = p.GetName()
 			}
-			i, _, err := common.PromptSelect("Select provider:", providerNames, false)
+			i, _, err := common.PromptSelect("Select provider:", providerNames)
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	}
 
 	if name == "" {
-		name, err = common.PromptGetInput("Bucket name:", ValidateBucketName)
+		name, err = common.PromptGetInput("Bucket name:", ValidateBucketNameOpt)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	}
 
 	if providerBucketName == "" {
-		providerBucketName, err = common.PromptGetInputWithDefault("Provider bucket name:", ValidateBucketName, name)
+		providerBucketName, err = common.PromptGetInput("Provider bucket name:", ValidateBucketNameOpt, common.InputDefaultOpt(name))
 		if err != nil {
 			return err
 		}

@@ -85,7 +85,7 @@ func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config, logger
 }
 
 func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
-	name, err := common.PromptGetInput("Project name:", common.ValidateNonEmpty)
+	name, err := common.PromptGetInput("Project name:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *
 }
 
 func login(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
-	u, err := common.PromptGetInput("Enter Username or Email", common.ValidateNonEmpty)
+	u, err := common.PromptGetInput("Enter Username or Email", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func useProject(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) erro
 		ps = append(ps, p.GetName())
 	}
 
-	i, _, err := common.PromptSelect("Project: ", ps, false)
+	i, _, err := common.PromptSelect("Project: ", ps)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ func loginWithRetry(ctx context.Context, client rig.Client, identifierStr, passw
 		}
 
 		if shouldPromptPassword {
-			password, err = common.GetPasswordPrompt("Enter Password")
+			password, err = common.GetPasswordPrompt("Enter Password:")
 			if err != nil {
 				return nil, err
 			}

@@ -33,7 +33,7 @@ func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, n
 			psIds = append(psIds, p.GetProjectId())
 		}
 
-		i, _, err := common.PromptSelect("Project: ", ps, false)
+		i, _, err := common.PromptSelect("Project: ", ps)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, n
 	}
 
 	if redirectAddr == "" {
-		redirectAddr, err = common.PromptGetInput("Oauth Redirect Address", common.ValidateNonEmpty)
+		redirectAddr, err = common.PromptGetInput("Oauth Redirect Address", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

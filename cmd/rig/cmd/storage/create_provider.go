@@ -18,7 +18,7 @@ import (
 func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
 	var err error
 	if name == "" {
-		name, err = common.PromptGetInput("Provider identifier:", common.ValidateNonEmpty)
+		name, err = common.PromptGetInput("Provider identifier:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 			"Minio",
 		}
 		var i int
-		i, providerType, err = common.PromptSelect("Provider type:", fields, false)
+		i, providerType, err = common.PromptSelect("Provider type:", fields)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 		switch i {
 		case 0:
 			// GCS
-			path, err := common.PromptGetInput("Credentials Path:", common.ValidateNonEmpty)
+			path, err := common.PromptGetInput("Credentials Path:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
@@ -84,17 +84,17 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 			}
 		case 1:
 			// S3
-			accessKey, err := common.PromptGetInput("Access Key:", common.ValidateNonEmpty)
+			accessKey, err := common.PromptGetInput("Access Key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 
-			secretKey, err := common.PromptGetInput("Secret Key:", common.ValidateNonEmpty)
+			secretKey, err := common.PromptGetInput("Secret Key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 
-			region, err := common.PromptGetInput("Region:", common.ValidateNonEmpty)
+			region, err := common.PromptGetInput("Region:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
@@ -114,17 +114,17 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 		case 2:
 			// Minio
 
-			accessKey, err := common.PromptGetInput("Access Key:", common.ValidateNonEmpty)
+			accessKey, err := common.PromptGetInput("Access Key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 
-			secretKey, err := common.PromptGetInput("Secret Key:", common.ValidateNonEmpty)
+			secretKey, err := common.PromptGetInput("Secret Key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 
-			endpoint, err := common.PromptGetInput("Endpoint:", common.ValidateNonEmpty)
+			endpoint, err := common.PromptGetInput("Endpoint:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}

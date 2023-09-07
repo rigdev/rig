@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -189,4 +190,9 @@ var ValidateBucketName = func(input string) error {
 		return errors.InvalidArgumentErrorf("bucket name must end with a lowercase letter or number")
 	}
 	return nil
+}
+
+var ValidateBucketNameOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+	inp.Validate = ValidateBucketName
+	return inp
 }
