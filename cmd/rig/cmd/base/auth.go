@@ -25,25 +25,49 @@ var (
 )
 
 func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
+	ctx := context.Background()
+
 	if _, ok := cmd.Annotations[OmitUser]; ok {
 		return nil
 	} else if uuid.UUID(cfg.GetCurrentAuth().UserID).IsNil() {
-		login, err := common.PromptConfirm("You are not logged in. Would you like to login now?", true)
+		loginBool, err := common.PromptConfirm("You are not logged in. Would you like to login now?", true)
 		if err != nil {
 			return err
 		}
-		if !login {
+		if !loginBool {
 			return errors.UnauthenticatedErrorf("Login to continue")
 		}
-		err = Login(rc, cfg)
+		err = login(ctx, rc, cfg)
 		if err != nil {
 			return err
 		}
 	}
 
+	res, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
+	if err != nil {
+		return err
+	}
+
 	if _, ok := cmd.Annotations[OmitProject]; ok {
 		return nil
-	} else if uuid.UUID(cfg.GetCurrentContext().Project.ProjectID).IsNil() {
+	}
+
+	if res.Msg.GetProjects() == nil || len(res.Msg.GetProjects()) == 0 {
+		create, err := common.PromptConfirm("You have no projects. Would you like to create on now?", true)
+		if err != nil {
+			return err
+		}
+		if !create {
+			return errors.FailedPreconditionErrorf("Create and select a project to continue")
+		}
+
+		err = createProject(ctx, cmd, rc, cfg)
+		if err != nil {
+			return err
+		}
+	}
+
+	if uuid.UUID(cfg.GetCurrentContext().Project.ProjectID).IsNil() {
 		use, err := common.PromptConfirm("You have not selected a project. Would you like to select one now?", true)
 		if err != nil {
 			return err
@@ -51,7 +75,8 @@ func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config, logger
 		if !use {
 			return errors.FailedPreconditionErrorf("Select a project to continue")
 		}
-		err = UseProject(rc, cfg)
+
+		err = useProject(ctx, rc, cfg)
 		if err != nil {
 			return err
 		}
@@ -59,7 +84,60 @@ func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config, logger
 	return nil
 }
 
-func Login(rc rig.Client, cfg *cmd_config.Config) error {
+func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
+	name, err := common.PromptGetInput("Project name:", common.ValidateNonEmpty)
+	if err != nil {
+		return err
+	}
+
+	initializers := []*project.Update{
+		{
+			Field: &project.Update_Name{
+				Name: name,
+			},
+		},
+	}
+
+	res, err := rc.Project().Create(ctx, &connect.Request[project.CreateRequest]{
+		Msg: &project.CreateRequest{
+			Initializers: initializers,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	p := res.Msg.GetProject()
+	cmd.Printf("Successfully created project %s with id %s \n", name, p.GetProjectId())
+
+	useProject, err := common.PromptConfirm("Would you like to use this project now?", true)
+	if err != nil {
+		return err
+	}
+
+	if useProject {
+		res, err := rc.Project().Use(ctx, &connect.Request[project.UseRequest]{
+			Msg: &project.UseRequest{
+				ProjectId: p.GetProjectId(),
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		cfg.GetCurrentContext().Project.ProjectID = uuid.UUID(p.GetProjectId())
+		cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
+		if err := cfg.Save(); err != nil {
+			return err
+		}
+
+		cmd.Println("Changed project successfully!")
+	}
+
+	return nil
+}
+
+func login(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
 	u, err := common.PromptGetInput("Enter Username or Email", common.ValidateNonEmpty)
 	if err != nil {
 		return err
@@ -85,7 +163,7 @@ func Login(rc rig.Client, cfg *cmd_config.Config) error {
 		return err
 	}
 
-	res, err := rc.Authentication().Login(context.Background(), &connect.Request[authentication.LoginRequest]{
+	res, err := rc.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
 		Msg: &authentication.LoginRequest{
 			Method: &authentication.LoginRequest_UserPassword{
 				UserPassword: &authentication.UserPassword{
@@ -116,10 +194,9 @@ func Login(rc rig.Client, cfg *cmd_config.Config) error {
 	return nil
 }
 
-func UseProject(rc rig.Client, cfg *cmd_config.Config) error {
+func useProject(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
 	var projectID uuid.UUID
 	var err error
-	ctx := context.Background()
 	list_res, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return err

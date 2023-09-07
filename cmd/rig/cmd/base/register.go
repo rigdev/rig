@@ -74,9 +74,7 @@ func getContext(cfg *cmd_config.Config, cmd *cobra.Command) (*cmd_config.Context
 		return nil, fmt.Errorf("no current context in config, run `rig config init`")
 	}
 
-	fmt.Println(c.GetService())
 	c.SetService(cfg.GetCurrentService())
-	fmt.Println(c.GetService())
 	if c.GetService() == nil {
 		return nil, fmt.Errorf("missing service config for context `%v`", cfg.CurrentContextName)
 	}
