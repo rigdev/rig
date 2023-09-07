@@ -44,6 +44,7 @@ jobs:
 
       - name: Test cli import
         run: |
+          echo ${{github.event.pull_request}}
           go mod init example.com
           go mod edit -replace github.com/rigdev/rig=github.com/${{ github.event.pull_request.repository }}@${{ github.event.pull_request.head.sha }}
           echo -e 'package main\nimport (\n	_ "github.com/rigdev/rig/cmd/rig/cmd"\n)\nfunc main() {\n}\n' > main.go
