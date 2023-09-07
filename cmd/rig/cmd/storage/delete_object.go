@@ -16,7 +16,7 @@ func StorageDeleteObject(ctx context.Context, cmd *cobra.Command, args []string,
 	var path string
 	var err error
 	if len(args) < 1 {
-		path, err = common.PromptGetInput("Object path:", common.ValidateNonEmpty)
+		path, err = common.PromptGetInput("Object path:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

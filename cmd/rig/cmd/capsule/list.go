@@ -14,7 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func CapsuleList(ctx context.Context, cmd *cobra.Command, nc rig.Client) error {
+func CapsuleList(ctx context.Context, cmd *cobra.Command, nc rig.Client, args []string) error {
+	fmt.Println("args: ", args)
 	resp, err := nc.Capsule().List(ctx, &connect.Request[capsule.ListRequest]{
 		Msg: &capsule.ListRequest{
 			Pagination: &model.Pagination{

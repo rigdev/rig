@@ -2,11 +2,8 @@ package capsule
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/manifoldco/promptui"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -216,7 +213,7 @@ func provideCapsuleID(ctx context.Context, nc rig.Client, args []string) (Capsul
 	var capsuleName string
 	var err error
 	if len(args) == 0 {
-		capsuleName, err = common.PromptGetInput("Enter Capsule name", common.ValidateNonEmpty)
+		capsuleName, err = common.PromptGetInput("Enter Capsule name", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return "", err
 		}
@@ -264,28 +261,6 @@ func provideInstanceID(ctx context.Context, nc rig.Client, capsuleID CapsuleID, 
 		return items[0], nil
 	}
 
-	return promptGetFromList("instance", items), nil
-}
-
-func promptGetFromList(label string, items []string) string {
-	templates := &promptui.SelectTemplates{
-		// Prompt:  "{{ . }} ",
-		// Valid:   "{{ . | green }} ",
-		// Invalid: "{{ . | red }} ",
-		// Success: "{{ . | bold }} ",
-	}
-
-	prompt := promptui.Select{
-		Label:     label,
-		Items:     items,
-		Templates: templates,
-	}
-
-	_, result, err := prompt.Run()
-	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
-		os.Exit(1)
-	}
-
-	return result
+	_, s, err := common.PromptSelect("instance", items)
+	return s, err
 }

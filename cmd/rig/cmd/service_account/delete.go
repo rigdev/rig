@@ -20,7 +20,7 @@ func ServiceAccountDelete(ctx context.Context, cmd *cobra.Command, args []string
 	}
 
 	if id == "" {
-		id, err = common.PromptGetInput("ID:", common.ValidateNonEmpty)
+		id, err = common.PromptGetInput("ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

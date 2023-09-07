@@ -28,7 +28,7 @@ func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 			ps = append(ps, p.GetName())
 		}
 
-		i, _, err := common.PromptSelect("Project: ", ps, false)
+		i, _, err := common.PromptSelect("Project: ", ps)
 		if err != nil {
 			return err
 		}

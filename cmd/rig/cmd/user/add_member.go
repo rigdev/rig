@@ -49,7 +49,7 @@ func UserAddMember(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			gnames = append(gnames, gname)
 		}
 
-		_, gname, err := common.PromptSelect("Select group", gnames, false)
+		_, gname, err := common.PromptSelect("Select group", gnames)
 		if err != nil {
 			return err
 		}

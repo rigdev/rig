@@ -7,14 +7,13 @@ import (
 	"strings"
 
 	"github.com/lucasepe/codename"
-	"github.com/manifoldco/promptui"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/internal/config"
 	auth_service "github.com/rigdev/rig/internal/service/auth"
 	user_service "github.com/rigdev/rig/internal/service/user"
 	"github.com/rigdev/rig/pkg/auth"
-	"github.com/rigdev/rig/pkg/utils"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -127,7 +126,7 @@ func UsersCreate(ctx context.Context, cmd *cobra.Command, us user_service.Servic
 	})
 
 	if userPassword == "" {
-		pw, err := getPasswordPrompt("Password:")
+		pw, err := common.GetPasswordPrompt("Password:")
 		if err != nil {
 			return err
 		}
@@ -314,24 +313,4 @@ func UsersGetSettings(ctx context.Context, cmd *cobra.Command, us user_service.S
 	}
 	logger.Info("settings", zap.Any("settings", settings))
 	return nil
-}
-
-func getPasswordPrompt(label string) (string, error) {
-	prompt := promptui.Prompt{
-		Label:       label,
-		HideEntered: true,
-		Mask:        '*',
-		Validate: func(input string) error {
-			if err := utils.ValidatePassword(input); err != nil {
-				return err
-			}
-			return nil
-		},
-	}
-
-	result, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-	return result, nil
 }

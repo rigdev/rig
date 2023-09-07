@@ -131,7 +131,7 @@ func ProjectUpdateSettings(ctx context.Context, cmd *cobra.Command, args []strin
 	}
 
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields, true)
+		i, res, err := common.PromptSelect("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
 		"MailJet",
 		"Smtp",
 		"Default",
-	}, false)
+	})
 	if err != nil {
 		return nil, nil
 	}
@@ -260,7 +260,7 @@ func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) 
 		hosts = append(hosts, r.GetHost())
 	}
 
-	_, res, err := common.PromptSelect("Choose a registry to delete:", hosts, false)
+	_, res, err := common.PromptSelect("Choose a registry to delete:", hosts)
 	if err != nil {
 		return nil, err
 	}
@@ -273,22 +273,22 @@ func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) 
 }
 
 func promptAddDockerRegistry(s *settings.Settings) (*settings.Update, error) {
-	host, err := common.PromptGetInput("Enter host", common.ValidateNonEmpty)
+	host, err := common.PromptGetInput("Enter host", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	username, err := common.PromptGetInput("Enter username", common.ValidateNonEmpty)
+	username, err := common.PromptGetInput("Enter username", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := common.PromptGetInput("Enter password", common.ValidateNonEmpty)
+	password, err := common.PromptGetInput("Enter password", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	email, err := common.PromptGetInput("Enter email", common.ValidateEmail)
+	email, err := common.PromptGetInput("Enter email", common.ValidateEmailOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +331,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 	}
 
 	for {
-		_, res, err := common.PromptSelect("Choose a field to update:", fields, true)
+		_, res, err := common.PromptSelect("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
@@ -341,31 +341,31 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 
 		switch res {
 		case emailProviderPublicKey.String():
-			key, err := common.PromptGetInput("Enter public key", common.ValidateNonEmpty)
+			key, err := common.PromptGetInput("Enter public key", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 			p.Credentials.PublicKey = key
 		case emailProviderPrivateKey.String():
-			key, err := common.PromptGetInput("Enter private key", common.ValidateNonEmpty)
+			key, err := common.PromptGetInput("Enter private key", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 			p.Credentials.PrivateKey = key
 		case emailProviderFromEmail.String():
-			email, err := common.PromptGetInputWithDefault("Enter from email", common.ValidateEmail, p.GetFrom())
+			email, err := common.PromptGetInput("Enter from email", common.ValidateEmailOpt, common.InputDefaultOpt(p.GetFrom()))
 			if err != nil {
 				return err
 			}
 			p.From = email
 		case emailProviderHost.String():
-			host, err := common.PromptGetInputWithDefault("Enter host", common.ValidateNonEmpty, p.GetInstance().GetSmtp().GetHost())
+			host, err := common.PromptGetInput("Enter host", common.ValidateNonEmptyOpt, common.InputDefaultOpt(p.GetInstance().GetSmtp().GetHost()))
 			if err != nil {
 				return err
 			}
 			p.GetInstance().GetSmtp().Host = host
 		case emailProviderPort.String():
-			port, err := common.PromptGetInputWithDefault("Enter port", common.ValidateNonEmpty, strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort())))
+			port, err := common.PromptGetInput("Enter port", common.ValidateNonEmptyOpt, common.InputDefaultOpt(strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort()))))
 			if err != nil {
 				return err
 			}
@@ -390,7 +390,7 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 	}
 
 	for {
-		_, res, err := common.PromptSelect("Choose a field to update:", fields, true)
+		_, res, err := common.PromptSelect("Choose a field to update:", fields)
 		if err != nil {
 			return nil, err
 		}
@@ -400,13 +400,13 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 
 		switch res {
 		case tempalteFieldSubject.String():
-			subject, err := common.PromptGetInputWithDefault("Enter subject", common.ValidateNonEmpty, t.GetSubject())
+			subject, err := common.PromptGetInput("Enter subject", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetSubject()))
 			if err != nil {
 				return nil, err
 			}
 			t.Subject = subject
 		case templateFieldBody.String():
-			body, err := common.PromptGetInputWithDefault("Enter body", common.ValidateNonEmpty, t.GetBody())
+			body, err := common.PromptGetInput("Enter body", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetBody()))
 			if err != nil {
 				return nil, err
 			}

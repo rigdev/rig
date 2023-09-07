@@ -30,7 +30,7 @@ func SelectContext(cfg *Config) error {
 		}
 	}
 
-	n, _, err := common.PromptSelect("Context:", labels, false)
+	n, _, err := common.PromptSelect("Context:", labels)
 	if err != nil {
 		return err
 	}
@@ -40,12 +40,12 @@ func SelectContext(cfg *Config) error {
 }
 
 func CreateContext(cfg *Config) error {
-	name, err := common.PromptGetInputWithDefault("Name:", common.ValidateSystemName, "local")
+	name, err := common.PromptGetInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt("local"))
 	if err != nil {
 		return err
 	}
 
-	server, err := common.PromptGetInputWithDefault("Server:", common.ValidateURL, "http://localhost:4747/")
+	server, err := common.PromptGetInput("Server:", common.ValidateURLOpt, common.InputDefaultOpt("http://localhost:4747/"))
 	if err != nil {
 		return err
 	}

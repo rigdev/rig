@@ -17,7 +17,7 @@ import (
 func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
 	var err error
 	if name == "" {
-		name, err = common.PromptGetInput("Capsule name: ", common.ValidateSystemName)
+		name, err = common.PromptGetInput("Capsule name: ", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
@@ -30,7 +30,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 		if ok, err := common.PromptConfirm("Do you want to add an initial image", true); err != nil {
 			return err
 		} else if ok {
-			if image, err = common.PromptGetInput("Image: ", common.ValidateImage); err != nil {
+			if image, err = common.PromptGetInput("Image: ", common.ValidateImageOpt); err != nil {
 				return err
 			}
 
@@ -40,7 +40,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 				ifc := &capsule.Interface{
 					Name: "default",
 				}
-				portStr, err := common.PromptGetInput("Which port: ", common.ValidateInt)
+				portStr, err := common.PromptGetInput("Which port: ", common.ValidateIntOpt)
 				if err != nil {
 					return err
 				}
@@ -59,14 +59,15 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 						Enabled: true,
 						Method:  &capsule.RoutingMethod{},
 					}
-					i, _, err := common.PromptSelect("Which method?", []string{"Load balancer (raw traffic routing)", "Ingress (HTTP/HTTPS routing)"}, false)
+					options := []string{"Load balancer (raw traffic routing)", "Ingress (HTTP/HTTPS routing)"}
+					i, _, err := common.PromptSelect("Which method?", options)
 					if err != nil {
 						return err
 					}
 
 					switch i {
 					case 0:
-						portStr, err := common.PromptGetInput("What public port to use: ", common.ValidateInt)
+						portStr, err := common.PromptGetInput("What public port to use: ", common.ValidateIntOpt)
 						if err != nil {
 							return err
 						}
@@ -95,7 +96,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 				})
 			}
 		}
-		replicasStr, err := common.PromptGetInputWithDefault("Replicas: ", common.ValidateInt, "1")
+		replicasStr, err := common.PromptGetInput("Replicas: ", common.ValidateIntOpt, common.InputDefaultOpt("1"))
 		if err != nil {
 			return err
 		}

@@ -11,7 +11,7 @@ import (
 
 func PromptUserIndentifierUpdate() (*user.Update, error) {
 	var err error
-	identifier, err := PromptGetInput("Username, email or phone number:", ValidateAll)
+	identifier, err := PromptGetInput("Username, email or phone number:", ValidateAllOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,7 @@ func PromptUserIndentifierUpdate() (*user.Update, error) {
 
 func PromptUserIndentifier() (*model.UserIdentifier, error) {
 	var err error
-	identifierStr, err := PromptGetInput("Username, email or phone number:", ValidateAll)
+	identifierStr, err := PromptGetInput("Username, email or phone number:", ValidateAllOpt)
 	if err != nil {
 		return nil, err
 	}

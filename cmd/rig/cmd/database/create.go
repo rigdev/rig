@@ -13,14 +13,14 @@ import (
 func Create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
 	var err error
 	if name == "" {
-		name, err = common.PromptGetInput("Database name:", common.ValidateNonEmpty)
+		name, err = common.PromptGetInput("Database name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
 	}
 
 	if dbTypeString == "" {
-		_, dbTypeString, err = common.PromptSelect("Database type:", []string{"mongo", "postgres"}, false)
+		_, dbTypeString, err = common.PromptSelect("Database type:", []string{"mongo", "postgres"})
 		if err != nil {
 			return err
 		}

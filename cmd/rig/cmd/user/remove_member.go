@@ -36,7 +36,7 @@ func UserRemoveMember(ctx context.Context, cmd *cobra.Command, args []string, nc
 		}
 
 		var i int
-		i, gname, err = common.PromptSelect("Select group", fields, false)
+		i, gname, err = common.PromptSelect("Select group", fields)
 		if err != nil {
 			return err
 		}

@@ -19,7 +19,7 @@ import (
 func CapsuleConfigureNetwork(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client) error {
 	var err error
 	if networkFile == "" {
-		networkFile, err = common.PromptGetInput("Enter Network file path", common.ValidateNonEmpty)
+		networkFile, err = common.PromptGetInput("Enter Network file path", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

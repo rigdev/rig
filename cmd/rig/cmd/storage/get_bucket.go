@@ -15,7 +15,7 @@ func StorageGetBucket(ctx context.Context, cmd *cobra.Command, args []string, nc
 	var bucket string
 	var err error
 	if len(args) < 1 {
-		bucket, err = common.PromptGetInput("Bucket name:", ValidateBucketName)
+		bucket, err = common.PromptGetInput("Bucket name:", ValidateBucketNameOpt)
 		if err != nil {
 			return err
 		}
