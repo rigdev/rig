@@ -6,15 +6,15 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
 
-func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *base.Config, logger *zap.Logger) error {
+func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
 	var projectID uuid.UUID
 	var err error
 	if len(args) != 1 {
@@ -71,8 +71,8 @@ func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 		return err
 	}
 
-	cfg.Context().Project.ProjectID = projectID
-	cfg.Context().Project.ProjectToken = res.Msg.GetProjectToken()
+	cfg.GetCurrentContext().Project.ProjectID = projectID
+	cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
 	if err := cfg.Save(); err != nil {
 		return err
 	}

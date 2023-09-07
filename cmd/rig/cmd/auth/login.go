@@ -9,14 +9,14 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
-func AuthLogin(ctx context.Context, cmd *cobra.Command, client rig.Client, cfg *base.Config) error {
+func AuthLogin(ctx context.Context, cmd *cobra.Command, client rig.Client, cfg *cmd_config.Config) error {
 	res, err := loginWithRetry(ctx, client, authUserIdentifier, authPassword, auth.RigProjectID.String())
 	if err != nil {
 		return err
@@ -27,9 +27,9 @@ func AuthLogin(ctx context.Context, cmd *cobra.Command, client rig.Client, cfg *
 		return err
 	}
 
-	cfg.Auth().UserID = uid
-	cfg.Auth().AccessToken = res.Msg.GetToken().GetAccessToken()
-	cfg.Auth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
+	cfg.GetCurrentAuth().UserID = uid
+	cfg.GetCurrentAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
+	cfg.GetCurrentAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
 	if err := cfg.Save(); err != nil {
 		return err
 	}

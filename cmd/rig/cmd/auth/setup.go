@@ -22,7 +22,11 @@ func Setup(parent *cobra.Command) {
 		Use:   "login",
 		Short: "Login with user identifier and password",
 		Args:  cobra.NoArgs,
-		RunE:  base.Register(AuthLogin),
+		Annotations: map[string]string{
+			base.OmitUser:    "",
+			base.OmitProject: "",
+		},
+		RunE: base.Register(AuthLogin),
 	}
 	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
 	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
@@ -33,6 +37,9 @@ func Setup(parent *cobra.Command) {
 		Short: "Get user information associated with the current user",
 		Args:  cobra.NoArgs,
 		RunE:  base.Register(AuthGet),
+		Annotations: map[string]string{
+			base.OmitProject: "",
+		},
 	}
 	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	auth.AddCommand(get)
@@ -42,6 +49,9 @@ func Setup(parent *cobra.Command) {
 		Short: "Get the authorization config with allowed login methods and configurations",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  base.Register(AuthGetAuthConfig),
+		Annotations: map[string]string{
+			base.OmitProject: "",
+		},
 	}
 	getAuthConfig.Flags().StringVarP(&redirectAddr, "redirect-addr", "r", "", "redirect address for oauth2")
 	getAuthConfig.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")

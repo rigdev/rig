@@ -66,6 +66,9 @@ func Setup(parent *cobra.Command) {
 		Use:  "create",
 		Args: cobra.NoArgs,
 		RunE: base.Register(ProjectCreate),
+		Annotations: map[string]string{
+			base.OmitProject: "",
+		},
 	}
 	createProject.Flags().StringVarP(&name, "name", "n", "", "Project name")
 	createProject.Flags().BoolVar(&useProject, "use", false, "Use the created project")
@@ -115,6 +118,9 @@ func Setup(parent *cobra.Command) {
 		Use:  "list",
 		Args: cobra.NoArgs,
 		RunE: base.Register(ProjectList),
+		Annotations: map[string]string{
+			base.OmitProject: "",
+		},
 	}
 	listProjects.Flags().IntVarP(&offset, "offset", "o", 0, "Offset")
 	listProjects.Flags().IntVarP(&limit, "limit", "l", 10, "Limit")

@@ -1,15 +1,16 @@
-package base
+package cmd_config
 
 import (
 	"fmt"
 
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/pkg/uuid"
 )
 
 func UseContext(cfg *Config, name string) error {
 	for _, c := range cfg.Contexts {
 		if c.Name == name {
-			cfg.CurrentContext = c.Name
+			cfg.CurrentContextName = c.Name
 			return cfg.Save()
 		}
 	}
@@ -22,7 +23,7 @@ func SelectContext(cfg *Config) error {
 	var labels []string
 	for _, c := range cfg.Contexts {
 		names = append(names, c.Name)
-		if c.Name == cfg.CurrentContext {
+		if c.Name == cfg.CurrentContextName {
 			labels = append(labels, c.Name+"*")
 		} else {
 			labels = append(labels, c.Name)
@@ -34,7 +35,7 @@ func SelectContext(cfg *Config) error {
 		return err
 	}
 
-	cfg.CurrentContext = cfg.Contexts[n].Name
+	cfg.CurrentContextName = cfg.Contexts[n].Name
 	return cfg.Save()
 }
 
@@ -50,9 +51,16 @@ func CreateContext(cfg *Config) error {
 	}
 
 	cfg.Contexts = append(cfg.Contexts, &Context{
-		Name:    name,
-		Service: name,
-		User:    name,
+		Name:        name,
+		ServiceName: name,
+		UserName:    name,
+		Project: struct {
+			ProjectID    uuid.UUID `yaml:"project_id"`
+			ProjectToken string    `yaml:"project_token"`
+		}{
+			ProjectID:    uuid.Nil,
+			ProjectToken: "",
+		},
 	})
 
 	cfg.Services = append(cfg.Services, &Service{
@@ -62,13 +70,15 @@ func CreateContext(cfg *Config) error {
 
 	cfg.Users = append(cfg.Users, &User{
 		Name: name,
-		Auth: &Auth{},
+		Auth: &Auth{
+			UserID: uuid.Nil,
+		},
 	})
 
 	if ok, err := common.PromptConfirm("Do you want activate this context now", true); err != nil {
 		return err
 	} else if ok {
-		cfg.CurrentContext = name
+		cfg.CurrentContextName = name
 	}
 
 	return cfg.Save()

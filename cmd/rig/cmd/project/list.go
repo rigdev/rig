@@ -9,12 +9,12 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 )
 
-func ProjectList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *base.Config) error {
+func ProjectList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
 	req := &project.ListRequest{
 		Pagination: &model.Pagination{
 			Offset: uint32(offset),
