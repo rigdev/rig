@@ -14,55 +14,16 @@ import (
 	"go.uber.org/zap"
 )
 
-func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
+func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, client rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
 	var projectID uuid.UUID
 	var err error
-	if len(args) != 1 {
-		res, err := nc.Project().List(ctx, &connect.Request[project.ListRequest]{})
-		if err != nil {
-			return err
-		}
-
-		var ps []string
-		for _, p := range res.Msg.GetProjects() {
-			ps = append(ps, p.GetName())
-		}
-
-		i, _, err := common.PromptSelect("Project: ", ps)
-		if err != nil {
-			return err
-		}
-
-		projectID, err = uuid.Parse(res.Msg.GetProjects()[i].GetProjectId())
-		if err != nil {
-			return err
-		}
+	if len(args) == 0 {
+		projectID, err = promptForProjectID(ctx, client)
 	} else {
-		if id, err := uuid.Parse(args[0]); err == nil {
-			projectID = id
-		} else {
-			res, err := nc.Project().List(ctx, &connect.Request[project.ListRequest]{})
-			if err != nil {
-				return err
-			}
-
-			for _, p := range res.Msg.GetProjects() {
-				if p.GetName() == args[0] {
-					projectID, err = uuid.Parse(p.GetProjectId())
-					if err != nil {
-						return err
-					}
-					break
-				}
-			}
-		}
+		projectID, err = projectIDFromArg(ctx, client, args[0])
 	}
 
-	if projectID == uuid.Nil {
-		return errors.NotFoundErrorf("project '%v' not found", args[0])
-	}
-
-	res, err := nc.Project().Use(ctx, &connect.Request[project.UseRequest]{
+	res, err := client.Project().Use(ctx, &connect.Request[project.UseRequest]{
 		Msg: &project.UseRequest{
 			ProjectId: projectID.String(),
 		},
@@ -80,4 +41,51 @@ func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 	cmd.Println("Changed project successfully!")
 
 	return nil
+}
+
+func promptForProjectID(ctx context.Context, client rig.Client) (uuid.UUID, error) {
+	res, err := client.Project().List(ctx, &connect.Request[project.ListRequest]{})
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	var ps []string
+	for _, p := range res.Msg.GetProjects() {
+		ps = append(ps, p.GetName())
+	}
+
+	i, _, err := common.PromptSelect("Project: ", ps)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	projectID, err := uuid.Parse(res.Msg.GetProjects()[i].GetProjectId())
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return projectID, nil
+}
+
+func projectIDFromArg(ctx context.Context, client rig.Client, projectArg string) (uuid.UUID, error) {
+	if id, err := uuid.Parse(projectArg); err == nil {
+		return id, nil
+	}
+	res, err := client.Project().List(ctx, &connect.Request[project.ListRequest]{})
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	for _, p := range res.Msg.GetProjects() {
+		if p.GetName() != projectArg {
+			continue
+		}
+		projectID, err := uuid.Parse(p.GetProjectId())
+		if err != nil {
+			return uuid.Nil, err
+		}
+		return projectID, nil
+	}
+
+	return uuid.Nil, errors.NotFoundErrorf("project '%v' not found", projectArg)
 }
