@@ -16,7 +16,7 @@ func StorageGetObject(ctx context.Context, cmd *cobra.Command, args []string, nc
 	var path string
 	var err error
 	if len(args) < 1 {
-		path, err = common.PromptGetInput("Object path:", common.ValidateNonEmptyOpt)
+		path, err = common.PromptInput("Object path:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

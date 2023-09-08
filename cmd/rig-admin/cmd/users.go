@@ -126,7 +126,7 @@ func UsersCreate(ctx context.Context, cmd *cobra.Command, us user_service.Servic
 	})
 
 	if userPassword == "" {
-		pw, err := common.GetPasswordPrompt("Password:")
+		pw, err := common.PromptPassword("Password:")
 		if err != nil {
 			return err
 		}

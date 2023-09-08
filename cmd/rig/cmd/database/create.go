@@ -13,7 +13,7 @@ import (
 func Create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
 	var err error
 	if name == "" {
-		name, err = common.PromptGetInput("Database name:", common.ValidateNonEmptyOpt)
+		name, err = common.PromptInput("Database name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

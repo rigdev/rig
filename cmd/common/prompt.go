@@ -71,7 +71,7 @@ var InputDefaultOpt = func(def string) GetInputOption {
 	}
 }
 
-func PromptGetInput(label string, opts ...GetInputOption) (string, error) {
+func PromptInput(label string, opts ...GetInputOption) (string, error) {
 	input := textinput.New(label)
 	for _, opt := range opts {
 		input = opt(input)
@@ -84,7 +84,7 @@ func PromptGetInput(label string, opts ...GetInputOption) (string, error) {
 	return s, nil
 }
 
-func GetPasswordPrompt(label string) (string, error) {
+func PromptPassword(label string) (string, error) {
 	input := textinput.New(label)
 	input.Hidden = true
 	input.Validate = utils.ValidatePassword
@@ -109,7 +109,7 @@ func PromptSelect(label string, choices []string) (int, string, error) {
 }
 
 func PromptConfirm(label string, def bool) (bool, error) {
-	input := textinput.New(label + "?")
+	input := textinput.New(label)
 	input.Validate = ValidateBool
 	input.Template = confirmTemplateY
 	if !def {

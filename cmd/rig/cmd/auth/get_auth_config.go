@@ -68,7 +68,7 @@ func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, n
 	}
 
 	if redirectAddr == "" {
-		redirectAddr, err = common.PromptGetInput("Oauth Redirect Address", common.ValidateNonEmptyOpt)
+		redirectAddr, err = common.PromptInput("Oauth Redirect Address", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

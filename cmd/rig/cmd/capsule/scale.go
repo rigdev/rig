@@ -15,7 +15,7 @@ import (
 func CapsuleScale(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client) error {
 	var r uint64
 	if replicas == -1 {
-		rString, err := common.PromptGetInput("Enter Replica Count", common.ValidateNonEmptyOpt)
+		rString, err := common.PromptInput("Enter Replica Count:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

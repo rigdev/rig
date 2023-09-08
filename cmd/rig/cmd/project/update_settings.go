@@ -273,22 +273,22 @@ func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) 
 }
 
 func promptAddDockerRegistry(s *settings.Settings) (*settings.Update, error) {
-	host, err := common.PromptGetInput("Enter host", common.ValidateNonEmptyOpt)
+	host, err := common.PromptInput("Enter host:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	username, err := common.PromptGetInput("Enter username", common.ValidateNonEmptyOpt)
+	username, err := common.PromptInput("Enter username:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := common.PromptGetInput("Enter password", common.ValidateNonEmptyOpt)
+	password, err := common.PromptInput("Enter password:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	email, err := common.PromptGetInput("Enter email", common.ValidateEmailOpt)
+	email, err := common.PromptInput("Enter email:", common.ValidateEmailOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -341,31 +341,31 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 
 		switch res {
 		case emailProviderPublicKey.String():
-			key, err := common.PromptGetInput("Enter public key", common.ValidateNonEmptyOpt)
+			key, err := common.PromptInput("Enter public key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 			p.Credentials.PublicKey = key
 		case emailProviderPrivateKey.String():
-			key, err := common.PromptGetInput("Enter private key", common.ValidateNonEmptyOpt)
+			key, err := common.PromptInput("Enter private key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 			p.Credentials.PrivateKey = key
 		case emailProviderFromEmail.String():
-			email, err := common.PromptGetInput("Enter from email", common.ValidateEmailOpt, common.InputDefaultOpt(p.GetFrom()))
+			email, err := common.PromptInput("Enter from email:", common.ValidateEmailOpt, common.InputDefaultOpt(p.GetFrom()))
 			if err != nil {
 				return err
 			}
 			p.From = email
 		case emailProviderHost.String():
-			host, err := common.PromptGetInput("Enter host", common.ValidateNonEmptyOpt, common.InputDefaultOpt(p.GetInstance().GetSmtp().GetHost()))
+			host, err := common.PromptInput("Enter host:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(p.GetInstance().GetSmtp().GetHost()))
 			if err != nil {
 				return err
 			}
 			p.GetInstance().GetSmtp().Host = host
 		case emailProviderPort.String():
-			port, err := common.PromptGetInput("Enter port", common.ValidateNonEmptyOpt, common.InputDefaultOpt(strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort()))))
+			port, err := common.PromptInput("Enter port:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort()))))
 			if err != nil {
 				return err
 			}
@@ -400,13 +400,13 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 
 		switch res {
 		case tempalteFieldSubject.String():
-			subject, err := common.PromptGetInput("Enter subject", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetSubject()))
+			subject, err := common.PromptInput("Enter subject:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetSubject()))
 			if err != nil {
 				return nil, err
 			}
 			t.Subject = subject
 		case templateFieldBody.String():
-			body, err := common.PromptGetInput("Enter body", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetBody()))
+			body, err := common.PromptInput("Enter body:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetBody()))
 			if err != nil {
 				return nil, err
 			}

@@ -17,7 +17,7 @@ import (
 func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
 	var err error
 	if name == "" {
-		name, err = common.PromptGetInput("Capsule name: ", common.ValidateSystemNameOpt)
+		name, err = common.PromptInput("Capsule name:", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
@@ -27,20 +27,20 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 	var image string
 	var replicas int
 	if interactive {
-		if ok, err := common.PromptConfirm("Do you want to add an initial image", true); err != nil {
+		if ok, err := common.PromptConfirm("Do you want to add an initial image?", true); err != nil {
 			return err
 		} else if ok {
-			if image, err = common.PromptGetInput("Image: ", common.ValidateImageOpt); err != nil {
+			if image, err = common.PromptInput("Image:", common.ValidateImageOpt); err != nil {
 				return err
 			}
 
-			if ok, err := common.PromptConfirm("Does the image listen to a port", true); err != nil {
+			if ok, err := common.PromptConfirm("Does the image listen to a port?", true); err != nil {
 				return err
 			} else if ok {
 				ifc := &capsule.Interface{
 					Name: "default",
 				}
-				portStr, err := common.PromptGetInput("Which port: ", common.ValidateIntOpt)
+				portStr, err := common.PromptInput("Which port:", common.ValidateIntOpt)
 				if err != nil {
 					return err
 				}
@@ -52,7 +52,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 
 				ifc.Port = uint32(port)
 
-				if ok, err := common.PromptConfirm("Do you want to make the port public available", false); err != nil {
+				if ok, err := common.PromptConfirm("Do you want to make the port public available?", false); err != nil {
 					return err
 				} else if ok {
 					ifc.Public = &capsule.PublicInterface{
@@ -67,7 +67,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 
 					switch i {
 					case 0:
-						portStr, err := common.PromptGetInput("What public port to use: ", common.ValidateIntOpt)
+						portStr, err := common.PromptInput("What public port to use:", common.ValidateIntOpt)
 						if err != nil {
 							return err
 						}
@@ -96,7 +96,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 				})
 			}
 		}
-		replicasStr, err := common.PromptGetInput("Replicas: ", common.ValidateIntOpt, common.InputDefaultOpt("1"))
+		replicasStr, err := common.PromptInput("Replicas:", common.ValidateIntOpt, common.InputDefaultOpt("1"))
 		if err != nil {
 			return err
 		}

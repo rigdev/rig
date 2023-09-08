@@ -21,7 +21,7 @@ func CreateTable(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 	}
 
 	if name == "" {
-		name, err = common.PromptGetInput("Table Name", common.ValidateNonEmptyOpt)
+		name, err = common.PromptInput("Table Name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

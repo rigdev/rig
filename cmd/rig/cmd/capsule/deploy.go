@@ -13,7 +13,7 @@ import (
 func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client) error {
 	var err error
 	if buildID == "" {
-		buildID, err = common.PromptGetInput("Enter Build ID", common.ValidateNonEmptyOpt)
+		buildID, err = common.PromptInput("Enter Build ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

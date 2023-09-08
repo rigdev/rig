@@ -106,7 +106,7 @@ func parseBool(s string) (bool, error) {
 func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User, string, error) {
 	var err error
 	if identifier == "" {
-		identifier, err = PromptGetInput("User Identifier:", ValidateSystemNameOpt)
+		identifier, err = PromptInput("User Identifier:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}
@@ -145,7 +145,7 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Group, string, error) {
 	var err error
 	if identifier == "" {
-		identifier, err = PromptGetInput("Group Identifier:", ValidateSystemNameOpt)
+		identifier, err = PromptInput("Group Identifier:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}
@@ -178,7 +178,7 @@ func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Gro
 func GetDatabase(ctx context.Context, identifier string, nc rig.Client) (*database.Database, string, error) {
 	var err error
 	if identifier == "" {
-		identifier, err = PromptGetInput("DB Identifier:", ValidateSystemNameOpt)
+		identifier, err = PromptInput("DB Identifier:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}
@@ -212,7 +212,7 @@ func GetDatabase(ctx context.Context, identifier string, nc rig.Client) (*databa
 func GetStorageProvider(ctx context.Context, identifier string, nc rig.Client) (*storage.Provider, string, error) {
 	var err error
 	if identifier == "" {
-		identifier, err = PromptGetInput("Provider Identifier:", ValidateSystemNameOpt)
+		identifier, err = PromptInput("Provider Identifier:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}

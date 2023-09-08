@@ -40,12 +40,12 @@ func SelectContext(cfg *Config) error {
 }
 
 func CreateContext(cfg *Config) error {
-	name, err := common.PromptGetInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt("local"))
+	name, err := common.PromptInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt("local"))
 	if err != nil {
 		return err
 	}
 
-	server, err := common.PromptGetInput("Server:", common.ValidateURLOpt, common.InputDefaultOpt("http://localhost:4747/"))
+	server, err := common.PromptInput("Server:", common.ValidateURLOpt, common.InputDefaultOpt("http://localhost:4747/"))
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func CreateContext(cfg *Config) error {
 		},
 	})
 
-	if ok, err := common.PromptConfirm("Do you want activate this context now", true); err != nil {
+	if ok, err := common.PromptConfirm("Do you want activate this context now?", true); err != nil {
 		return err
 	} else if ok {
 		cfg.CurrentContextName = name
@@ -85,7 +85,7 @@ func CreateContext(cfg *Config) error {
 }
 
 func ConfigInit(cfg *Config) error {
-	if ok, err := common.PromptConfirm("Do you want to configure a new context", true); err != nil {
+	if ok, err := common.PromptConfirm("Do you want to configure a new context?", true); err != nil {
 		return err
 	} else if !ok {
 		return nil

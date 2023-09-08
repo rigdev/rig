@@ -15,7 +15,7 @@ func ServiceAccountCreate(ctx context.Context, cmd *cobra.Command, args []string
 	var err error
 
 	if name == "" {
-		name, err = common.PromptGetInput("Name:", common.ValidateNonEmptyOpt)
+		name, err = common.PromptInput("Name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

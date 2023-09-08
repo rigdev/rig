@@ -121,7 +121,7 @@ func migrateFromFirebase(ctx context.Context, nc rig.Client) error {
 func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 	var err error
 	if credFilePath == "" {
-		credFilePath, err = common.PromptGetInput("Credentials Path:", common.ValidateNonEmptyOpt)
+		credFilePath, err = common.PromptInput("Credentials Path:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
@@ -159,7 +159,7 @@ func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 
 	// input hashing key for password
 	if hashingKey == "" {
-		hashingKey, err = common.PromptGetInput("Hashing Key:", common.ValidateNonEmptyOpt)
+		hashingKey, err = common.PromptInput("Hashing Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
@@ -262,7 +262,7 @@ func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 func migrateFromFirebaseUsersFile(ctx context.Context, nc rig.Client) error {
 	var err error
 	if usersFilePath == "" {
-		usersFilePath, err = common.PromptGetInput("users.json path:", common.ValidateNonEmptyOpt)
+		usersFilePath, err = common.PromptInput("users.json path:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
@@ -289,7 +289,7 @@ func migrateFromFirebaseUsersFile(ctx context.Context, nc rig.Client) error {
 
 	// input hashing key for password
 	if hashingKey == "" {
-		hashingKey, err = common.PromptGetInput("Hashing Key:", common.ValidateNonEmptyOpt)
+		hashingKey, err = common.PromptInput("Hashing Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

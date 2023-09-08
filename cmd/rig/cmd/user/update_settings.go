@@ -193,7 +193,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 	switch f {
 	case settingsAllowRegister:
 		defAllowRegister := strconv.FormatBool(s.GetAllowRegister())
-		allowRegister, err := common.PromptGetInput("Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(defAllowRegister))
+		allowRegister, err := common.PromptInput("Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(defAllowRegister))
 		if err != nil {
 			return nil, nil
 		}
@@ -206,7 +206,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsIsVerifiedEmailRequired:
 		defIsVerifiedEmailRequired := strconv.FormatBool(s.GetIsVerifiedEmailRequired())
-		isVerifiedEmailRequired, err := common.PromptGetInput("Verify Email Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedEmailRequired))
+		isVerifiedEmailRequired, err := common.PromptInput("Verify Email Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedEmailRequired))
 		if err != nil {
 			return nil, nil
 		}
@@ -219,7 +219,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsIsVerifiedPhoneRequired:
 		defIsVerifiedPhoneRequired := strconv.FormatBool(s.GetIsVerifiedPhoneRequired())
-		isVerifiedPhoneRequired, err := common.PromptGetInput("Verify Phone Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedPhoneRequired))
+		isVerifiedPhoneRequired, err := common.PromptInput("Verify Phone Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedPhoneRequired))
 		if err != nil {
 			return nil, nil
 		}
@@ -232,7 +232,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsAccessTokenTTL:
 		defAccessTokenTtl := strconv.Itoa(int(s.GetAccessTokenTtl().AsDuration().Minutes()))
-		accessTokenTtl, err := common.PromptGetInput("Access Token TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defAccessTokenTtl))
+		accessTokenTtl, err := common.PromptInput("Access Token TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defAccessTokenTtl))
 		if err != nil {
 			return nil, nil
 		}
@@ -249,7 +249,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, err
 	case settingsRefreshTokenTTL:
 		defRefreshTokenTtl := strconv.Itoa(int(s.GetRefreshTokenTtl().AsDuration().Hours()))
-		refreshTokenTtl, err := common.PromptGetInput("Refresh Token TTL (hours):", common.ValidateIntOpt, common.InputDefaultOpt(defRefreshTokenTtl))
+		refreshTokenTtl, err := common.PromptInput("Refresh Token TTL (hours):", common.ValidateIntOpt, common.InputDefaultOpt(defRefreshTokenTtl))
 		if err != nil {
 			return nil, nil
 		}
@@ -266,7 +266,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsVerificationCodeTTL:
 		defVerificationCodeTtl := strconv.Itoa(int(s.GetVerificationCodeTtl().AsDuration().Minutes()))
-		verificationCodeTtl, err := common.PromptGetInput("Verification Code TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defVerificationCodeTtl))
+		verificationCodeTtl, err := common.PromptInput("Verification Code TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defVerificationCodeTtl))
 		if err != nil {
 			return nil, nil
 		}
@@ -320,7 +320,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		}
 
 		bcrypt := &model.BcryptHashingConfig{}
-		cost, err := common.PromptGetInput("Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defCost))
+		cost, err := common.PromptInput("Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defCost))
 		if err != nil {
 			return nil, err
 		}
@@ -352,40 +352,40 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		}
 
 		scrypt := &model.ScryptHashingConfig{}
-		key, err := common.PromptGetInput("Key:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defKey))
+		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defKey))
 		if err != nil {
 			return nil, err
 		}
 		scrypt.SignerKey = key
 
-		saltSeparator, err := common.PromptGetInput("Salt Separator:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defSaltSeparator))
+		saltSeparator, err := common.PromptInput("Salt Separator:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defSaltSeparator))
 		if err != nil {
 			return nil, err
 		}
 		scrypt.SaltSeparator = saltSeparator
 
-		rounds, err := common.PromptGetInput("Rounds:", common.ValidateIntOpt, common.InputDefaultOpt(defRounds))
+		rounds, err := common.PromptInput("Rounds:", common.ValidateIntOpt, common.InputDefaultOpt(defRounds))
 		if err != nil {
 			return nil, err
 		}
 		roundsInt, _ := strconv.Atoi(rounds)
 		scrypt.Rounds = int32(roundsInt)
 
-		memCost, err := common.PromptGetInput("Memory Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defMemCost))
+		memCost, err := common.PromptInput("Memory Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defMemCost))
 		if err != nil {
 			return nil, err
 		}
 		memCostInt, _ := strconv.Atoi(memCost)
 		scrypt.MemCost = int32(memCostInt)
 
-		parallelism, err := common.PromptGetInput("Parallelism:", common.ValidateIntOpt, common.InputDefaultOpt(defParallelism))
+		parallelism, err := common.PromptInput("Parallelism:", common.ValidateIntOpt, common.InputDefaultOpt(defParallelism))
 		if err != nil {
 			return nil, err
 		}
 		parallelismInt, _ := strconv.Atoi(parallelism)
 		scrypt.P = int32(parallelismInt)
 
-		keyLength, err := common.PromptGetInput("Key Length:", common.ValidateIntOpt, common.InputDefaultOpt(defKeyLength))
+		keyLength, err := common.PromptInput("Key Length:", common.ValidateIntOpt, common.InputDefaultOpt(defKeyLength))
 		if err != nil {
 			return nil, err
 		}
@@ -543,27 +543,27 @@ func getOauthSettingsUpdate(current *settings.OauthSettings) ([]*settings.Update
 func updateOauthProvider(u *settings.OauthProviderUpdate) (*settings.OauthProviderUpdate, error) {
 	fmt.Println("Current Oauth Provider Settings: ", u)
 
-	allowLogin, err := common.PromptGetInput("Allow Login:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowLogin())))
+	allowLogin, err := common.PromptInput("Allow Login:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowLogin())))
 	if err != nil {
 		return nil, err
 	}
 	allowLoginBool, _ := strconv.ParseBool(allowLogin)
 	u.AllowLogin = allowLoginBool
 
-	allowRegister, err := common.PromptGetInput("Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowRegister())))
+	allowRegister, err := common.PromptInput("Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowRegister())))
 	if err != nil {
 		return nil, err
 	}
 	allowRegisterBool, _ := strconv.ParseBool(allowRegister)
 	u.AllowRegister = allowRegisterBool
 
-	clientID, err := common.PromptGetInput("Client ID:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.GetCredentials().GetPublicKey()))
+	clientID, err := common.PromptInput("Client ID:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.GetCredentials().GetPublicKey()))
 	if err != nil {
 		return nil, err
 	}
 	u.Credentials.PublicKey = clientID
 
-	clientSecret, err := common.PromptGetInput("Client Secret:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.Credentials.GetPrivateKey()))
+	clientSecret, err := common.PromptInput("Client Secret:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.Credentials.GetPrivateKey()))
 	if err != nil {
 		return nil, err
 	}
@@ -591,7 +591,7 @@ func updateCallbacks(current []string) []string {
 			break
 		}
 		if res == "Add" {
-			callback, err := common.PromptGetInput("Callback:", common.ValidateNonEmptyOpt)
+			callback, err := common.PromptInput("Callback:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -608,7 +608,7 @@ func updateCallbacks(current []string) []string {
 				fmt.Println(err.Error())
 				continue
 			}
-			callback, err := common.PromptGetInput("Callback:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(res))
+			callback, err := common.PromptInput("Callback:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(res))
 			if err != nil {
 				fmt.Println(err.Error())
 				continue
