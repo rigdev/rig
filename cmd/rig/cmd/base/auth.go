@@ -26,7 +26,6 @@ var (
 
 func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
 	ctx := context.Background()
-
 	if _, ok := cmd.Annotations[OmitUser]; ok {
 		return nil
 	} else if uuid.UUID(cfg.GetCurrentAuth().UserID).IsNil() {

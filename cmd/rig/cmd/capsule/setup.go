@@ -198,6 +198,8 @@ func Setup(parent *cobra.Command) {
 	events.Flags().Uint64VarP(&rollout, "rollout", "r", 0, "rollout to get events from")
 	capsule.AddCommand(events)
 
+	setupSetResources(capsule)
+
 	parent.AddCommand(capsule)
 
 	base.AddOptions(

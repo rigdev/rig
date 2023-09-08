@@ -64,6 +64,11 @@ var ValidateBoolOpt = func(inp *textinput.TextInput) *textinput.TextInput {
 	return inp
 }
 
+var ValidateQuantityOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+	inp.Validate = ValidateQuantity
+	return inp
+}
+
 var InputDefaultOpt = func(def string) GetInputOption {
 	return func(inp *textinput.TextInput) *textinput.TextInput {
 		inp.InitialValue = def
@@ -99,6 +104,7 @@ func PromptPassword(label string) (string, error) {
 
 func PromptSelect(label string, choices []string) (int, string, error) {
 	sp := selection.New(label, choices)
+	sp.Filter = nil
 	sp.PageSize = 4
 	choice, err := sp.RunPrompt()
 	if err != nil {
