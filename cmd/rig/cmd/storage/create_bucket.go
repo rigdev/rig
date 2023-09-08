@@ -64,7 +64,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	}
 
 	if name == "" {
-		name, err = common.PromptGetInput("Bucket name:", ValidateBucketNameOpt)
+		name, err = common.PromptInput("Bucket name:", ValidateBucketNameOpt)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	}
 
 	if providerBucketName == "" {
-		providerBucketName, err = common.PromptGetInput("Provider bucket name:", ValidateBucketNameOpt, common.InputDefaultOpt(name))
+		providerBucketName, err = common.PromptInput("Provider bucket name:", ValidateBucketNameOpt, common.InputDefaultOpt(name))
 		if err != nil {
 			return err
 		}

@@ -15,7 +15,7 @@ import (
 func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
 	if name == "" {
 		var err error
-		name, err = common.PromptGetInput("Project name:", common.ValidateNonEmptyOpt)
+		name, err = common.PromptInput("Project name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

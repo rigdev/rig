@@ -87,7 +87,7 @@ func GroupUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 	switch f {
 	case groupName:
-		name, err := common.PromptGetInput("Name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(g.GetName()))
+		name, err := common.PromptInput("Name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(g.GetName()))
 		if err != nil {
 			return nil, err
 		}
@@ -100,11 +100,11 @@ func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 			}, nil
 		}
 	case groupSetMetaData:
-		key, err := common.PromptGetInput("Key:", common.ValidateNonEmptyOpt)
+		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}
-		value, err := common.PromptGetInput("Value:", common.ValidateNonEmptyOpt)
+		value, err := common.PromptInput("Value:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 		}, nil
 
 	case groupDeleteMetaData:
-		key, err := common.PromptGetInput("Key:", common.ValidateNonEmptyOpt)
+		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}

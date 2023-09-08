@@ -11,7 +11,7 @@ import (
 )
 
 func ConfigInit(ctx context.Context, cmd *cobra.Command, cfg *cmd_config.Config, logger *zap.Logger) error {
-	if ok, err := common.PromptConfirm("Do you want to configure a new context", true); err != nil {
+	if ok, err := common.PromptConfirm("Do you want to configure a new context?", true); err != nil {
 		return err
 	} else if !ok {
 		return fmt.Errorf("aborted")

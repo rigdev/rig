@@ -21,14 +21,14 @@ func Connect(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Clie
 	}
 
 	if clientID == "" {
-		clientID, err = common.PromptGetInput("Client ID", common.ValidateNonEmptyOpt)
+		clientID, err = common.PromptInput("Client ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
 	}
 
 	if clientSecret == "" {
-		clientSecret, err = common.PromptGetInput("Client Secret", common.ValidateNonEmptyOpt)
+		clientSecret, err = common.PromptInput("Client Secret:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

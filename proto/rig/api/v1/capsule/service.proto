@@ -55,6 +55,8 @@ service Service {
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
   // Get metrics for a capsule
   rpc CapsuleMetrics(CapsuleMetricsRequest) returns (CapsuleMetricsResponse) {}
+
+    // rpc UpdateResources(
 }
 
 message CreateRequest {

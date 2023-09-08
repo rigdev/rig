@@ -18,7 +18,7 @@ import (
 func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
 	var err error
 	if name == "" {
-		name, err = common.PromptGetInput("Provider identifier:", common.ValidateNonEmptyOpt)
+		name, err = common.PromptInput("Provider identifier:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 		switch i {
 		case 0:
 			// GCS
-			path, err := common.PromptGetInput("Credentials Path:", common.ValidateNonEmptyOpt)
+			path, err := common.PromptInput("Credentials Path:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
@@ -84,17 +84,17 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 			}
 		case 1:
 			// S3
-			accessKey, err := common.PromptGetInput("Access Key:", common.ValidateNonEmptyOpt)
+			accessKey, err := common.PromptInput("Access Key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 
-			secretKey, err := common.PromptGetInput("Secret Key:", common.ValidateNonEmptyOpt)
+			secretKey, err := common.PromptInput("Secret Key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 
-			region, err := common.PromptGetInput("Region:", common.ValidateNonEmptyOpt)
+			region, err := common.PromptInput("Region:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
@@ -114,17 +114,17 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 		case 2:
 			// Minio
 
-			accessKey, err := common.PromptGetInput("Access Key:", common.ValidateNonEmptyOpt)
+			accessKey, err := common.PromptInput("Access Key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 
-			secretKey, err := common.PromptGetInput("Secret Key:", common.ValidateNonEmptyOpt)
+			secretKey, err := common.PromptInput("Secret Key:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 
-			endpoint, err := common.PromptGetInput("Endpoint:", common.ValidateNonEmptyOpt)
+			endpoint, err := common.PromptInput("Endpoint:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}

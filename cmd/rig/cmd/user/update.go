@@ -165,7 +165,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 	switch f {
 	case userEmail:
 		defEmail := u.GetUserInfo().GetEmail()
-		email, err := common.PromptGetInput("Email:", common.ValidateEmailOpt, common.InputDefaultOpt(defEmail))
+		email, err := common.PromptInput("Email:", common.ValidateEmailOpt, common.InputDefaultOpt(defEmail))
 		if err != nil {
 			return nil, nil
 		}
@@ -179,7 +179,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userUsername:
 		defUsername := u.GetUserInfo().GetUsername()
-		username, err := common.PromptGetInput("Username:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defUsername))
+		username, err := common.PromptInput("Username:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defUsername))
 		if err != nil {
 			return nil, nil
 		}
@@ -193,7 +193,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userPhoneNumber:
 		defPhone := u.GetUserInfo().GetPhoneNumber()
-		phone, err := common.PromptGetInput("Phone:", common.ValidatePhoneOpt, common.InputDefaultOpt(defPhone))
+		phone, err := common.PromptInput("Phone:", common.ValidatePhoneOpt, common.InputDefaultOpt(defPhone))
 		if err != nil {
 			return nil, nil
 		}
@@ -206,7 +206,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 			}, nil
 		}
 	case userPassword:
-		password, err := common.GetPasswordPrompt("Password:")
+		password, err := common.PromptPassword("Password:")
 		if err != nil {
 			return nil, nil
 		}
@@ -217,7 +217,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}, nil
 	case userIsEmailVerified:
 		defIsEmailVerified := strconv.FormatBool(u.GetIsEmailVerified())
-		isEmailVerified, err := common.PromptGetInput("Is email verified:", common.BoolValidateOpt, common.InputDefaultOpt(defIsEmailVerified))
+		isEmailVerified, err := common.PromptInput("Is email verified:", common.BoolValidateOpt, common.InputDefaultOpt(defIsEmailVerified))
 		if err != nil {
 			return nil, nil
 		}
@@ -230,7 +230,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userIsPhoneVerified:
 		defIsPhoneVerified := strconv.FormatBool(u.GetIsPhoneVerified())
-		isPhoneVerified, err := common.PromptGetInput("Is phone verified:", common.BoolValidateOpt, common.InputDefaultOpt(defIsPhoneVerified))
+		isPhoneVerified, err := common.PromptInput("Is phone verified:", common.BoolValidateOpt, common.InputDefaultOpt(defIsPhoneVerified))
 		if err != nil {
 			return nil, nil
 		}
@@ -252,11 +252,11 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 		return u, err
 	case userSetMetaData:
-		key, err := common.PromptGetInput("Key:", common.ValidateNonEmptyOpt)
+		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, nil
 		}
-		value, err := common.PromptGetInput("Value:", common.ValidateNonEmptyOpt)
+		value, err := common.PromptInput("Value:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, nil
 		}
@@ -269,7 +269,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 			},
 		}, nil
 	case userDeleteMetaData:
-		key, err := common.PromptGetInput("Key:", common.ValidateNonEmptyOpt)
+		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, nil
 		}
@@ -329,7 +329,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 	switch f {
 	case userProfileFirstName:
 		defFirstName := p.GetFirstName()
-		firstName, err := common.PromptGetInput("First name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defFirstName))
+		firstName, err := common.PromptInput("First name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defFirstName))
 		if err != nil {
 			return err
 		}
@@ -338,7 +338,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 		}
 	case userProfileLastName:
 		defLastName := p.GetLastName()
-		lastName, err := common.PromptGetInput("Last name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defLastName))
+		lastName, err := common.PromptInput("Last name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defLastName))
 		if err != nil {
 			return err
 		}
@@ -347,7 +347,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 		}
 	case userProfilePreferredLanguage:
 		defPreferredLanguage := p.GetPreferredLanguage()
-		preferredLanguage, err := common.PromptGetInput("Preferred language:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defPreferredLanguage))
+		preferredLanguage, err := common.PromptInput("Preferred language:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defPreferredLanguage))
 		if err != nil {
 			return err
 		}
@@ -356,7 +356,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 		}
 	case userProfileCountry:
 		defCountry := p.GetCountry()
-		country, err := common.PromptGetInput("Country:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defCountry))
+		country, err := common.PromptInput("Country:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defCountry))
 		if err != nil {
 			return err
 		}

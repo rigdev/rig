@@ -213,7 +213,7 @@ func provideCapsuleID(ctx context.Context, nc rig.Client, args []string) (Capsul
 	var capsuleName string
 	var err error
 	if len(args) == 0 {
-		capsuleName, err = common.PromptGetInput("Enter Capsule name", common.ValidateNonEmptyOpt)
+		capsuleName, err = common.PromptInput("Enter Capsule name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return "", err
 		}

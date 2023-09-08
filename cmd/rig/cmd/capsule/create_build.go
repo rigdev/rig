@@ -14,7 +14,7 @@ import (
 func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client, cfg *cmd_config.Config) error {
 	var err error
 	if image == "" {
-		image, err = common.PromptGetInput("Enter image", common.ValidateImageOpt)
+		image, err = common.PromptInput("Enter image:", common.ValidateImageOpt)
 		if err != nil {
 			return err
 		}

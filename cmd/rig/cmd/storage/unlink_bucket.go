@@ -17,7 +17,7 @@ func StorageUnlinkBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	var bucket string
 	var err error
 	if len(args) < 1 {
-		bucket, err = common.PromptGetInput("Bucket name:", ValidateBucketNameOpt)
+		bucket, err = common.PromptInput("Bucket name:", ValidateBucketNameOpt)
 		if err != nil {
 			return err
 		}

@@ -74,11 +74,11 @@ func createUser(ctx context.Context, us user_service.Service) error {
 		return nil
 	}
 
-	email, err := common.PromptGetInput("Email of the new user:", common.ValidateEmailOpt)
+	email, err := common.PromptInput("Email of the new user:", common.ValidateEmailOpt)
 	if err != nil {
 		return err
 	}
-	password, err := common.GetPasswordPrompt("Password:")
+	password, err := common.PromptPassword("Password:")
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func createProject(ctx context.Context, ps project_service.Service) error {
 	}
 
 	for {
-		projectName, err := common.PromptGetInput("Project name:", common.ValidateNonEmptyOpt)
+		projectName, err := common.PromptInput("Project name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

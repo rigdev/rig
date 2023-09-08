@@ -15,6 +15,10 @@ func Setup(parent *cobra.Command) {
 		Short: "Initialize a new context",
 		Args:  cobra.NoArgs,
 		RunE:  base.Register(ConfigInit),
+		Annotations: map[string]string{
+			base.OmitProject: "",
+			base.OmitUser:    "",
+		},
 	}
 	config.AddCommand(init)
 
@@ -23,6 +27,10 @@ func Setup(parent *cobra.Command) {
 		Short: "Change the current context to use",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  base.Register(ConfigUseContext),
+		Annotations: map[string]string{
+			base.OmitProject: "",
+			base.OmitUser:    "",
+		},
 	}
 	config.AddCommand(useContext)
 
