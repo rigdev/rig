@@ -97,6 +97,13 @@ func podToInstance(pod v1.Pod, capsuleID string) (*capsule.Instance, error) {
 		CreatedAt:  timestamppb.New(pod.ObjectMeta.CreationTimestamp.Time),
 	}
 
+	for _, c := range pod.Status.Conditions {
+		if i.Message != "" {
+			i.Message += ", "
+		}
+		i.Message += c.Message
+	}
+
 	if cs := podGetContainerStatus(pod, capsuleID); cs != nil {
 		i.RestartCount = uint32(cs.RestartCount)
 
