@@ -302,11 +302,11 @@ func (c *Client) reconcileEnvSecret(ctx context.Context, capsuleName, namespace 
 }
 
 func (c *Client) reconcileConfigFileMount(ctx context.Context, capsuleName, namespace string, cc *cluster.Capsule) error {
-	if len(cc.ConfigFileMounts) == 0 {
+	if len(cc.ConfigFileMounts.GetConfigFileMounts()) == 0 {
 		return c.deleteConfigMap(ctx, capsuleName, namespace)
 	}
 
-	for _, cf := range cc.ConfigFileMounts {
+	for _, cf := range cc.ConfigFileMounts.GetConfigFileMounts() {
 		if cf.GetPath() == "" {
 			return fmt.Errorf("config file mount path cannot be empty")
 		}
@@ -344,7 +344,7 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 
 	var volumes []*acsv1.VolumeApplyConfiguration
 	if hasConfigFileMount(cc) {
-		for _, cf := range cc.ConfigFileMounts {
+		for _, cf := range cc.ConfigFileMounts.GetConfigFileMounts() {
 			cmName := fmt.Sprintf("cfg-%s", cf.GetPath())
 			vol := acsv1.Volume().
 				WithName(cmName).
@@ -463,7 +463,7 @@ func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerAp
 	}
 
 	if hasConfigFileMount(cc) {
-		for _, cf := range cc.ConfigFileMounts {
+		for _, cf := range cc.ConfigFileMounts.GetConfigFileMounts() {
 			cmName := fmt.Sprintf("cfg-%s", cf.GetPath())
 			con.WithVolumeMounts(acsv1.VolumeMount().
 				WithName(cmName).
@@ -545,7 +545,7 @@ func hasConfigFileMount(cc *cluster.Capsule) bool {
 		return false
 	}
 
-	return len(cc.ConfigFileMounts) > 0
+	return len(cc.ConfigFileMounts.GetConfigFileMounts()) > 0
 }
 
 func hasInterfaces(cc *cluster.Capsule) bool {

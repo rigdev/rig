@@ -1,7 +1,11 @@
 package capsule
 
 import (
+	"bufio"
 	"context"
+	"io"
+	"os"
+	"path"
 	"strconv"
 
 	"github.com/bufbuild/connect-go"
@@ -92,6 +96,73 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 						Network: &capsule.Network{
 							Interfaces: []*capsule.Interface{ifc},
 						},
+					},
+				})
+			}
+
+			if ok, err := common.PromptConfirm("Do you want to mount config files", false); err != nil {
+				return err
+			} else if ok {
+				cfms := &capsule.ConfigFileMounts{
+					ConfigFileMounts: []*capsule.ConfigFileMount{},
+				}
+				for {
+					cf := &capsule.ConfigFileMount{
+						Files: []*capsule.File{},
+					}
+					mountPath, err := common.PromptGetInput("Mount dir path: ", common.ValidateNonEmptyOpt)
+					if err != nil {
+						return err
+					}
+					cf.Path = mountPath
+
+					f := &capsule.File{}
+					for {
+						filepath, err := common.PromptGetInput("File path: ", common.ValidateNonEmptyOpt)
+						if err != nil {
+							return err
+						}
+
+						f.Name = path.Base(filepath)
+
+						// Open file and parse the content into the file struct
+						file, err := os.Open(filepath)
+						if err != nil {
+							return err
+						}
+						defer file.Close()
+
+						stat, err := file.Stat()
+						if err != nil {
+							return err
+						}
+
+						buf := make([]byte, stat.Size())
+						_, err = bufio.NewReader(file).Read(buf)
+						if err != nil && err != io.EOF {
+							return err
+						}
+
+						f.Content = string(buf)
+						cf.Files = append(cf.Files, f)
+
+						if ok, err := common.PromptConfirm("Do you want to add another file", false); err != nil {
+							return err
+						} else if !ok {
+							break
+						}
+					}
+
+					if ok, err := common.PromptConfirm("Do you want to mount to another dir", false); err != nil {
+						return err
+					} else if !ok {
+						break
+					}
+				}
+
+				init = append(init, &capsule.Change{
+					Field: &capsule.Change_ConfigFileMounts{
+						ConfigFileMounts: cfms,
 					},
 				})
 			}

@@ -86,6 +86,8 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 			rc.Network = v.Network
 		case *capsule.Change_ContainerSettings:
 			rc.ContainerSettings = v.ContainerSettings
+		case *capsule.Change_ConfigFileMounts:
+			rc.ConfigFileMounts = v.ConfigFileMounts
 		case *capsule.Change_AutoAddRigServiceAccounts:
 			rc.AutoAddRigServiceAccounts = v.AutoAddRigServiceAccounts
 		default:
