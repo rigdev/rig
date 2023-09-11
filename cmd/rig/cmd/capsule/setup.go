@@ -199,6 +199,7 @@ func Setup(parent *cobra.Command) {
 	capsule.AddCommand(events)
 
 	setupSetResources(capsule)
+	setupGetResources(capsule)
 
 	parent.AddCommand(capsule)
 
