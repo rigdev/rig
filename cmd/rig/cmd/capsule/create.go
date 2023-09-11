@@ -110,7 +110,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 					cf := &capsule.ConfigFileMount{
 						Files: []*capsule.File{},
 					}
-					mountPath, err := common.PromptGetInput("Mount dir path: ", common.ValidateNonEmptyOpt)
+					mountPath, err := common.PromptInput("Mount dir path: ", common.ValidateNonEmptyOpt)
 					if err != nil {
 						return err
 					}
@@ -118,7 +118,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 
 					f := &capsule.File{}
 					for {
-						filepath, err := common.PromptGetInput("File path: ", common.ValidateNonEmptyOpt)
+						filepath, err := common.PromptInput("File path: ", common.ValidateNonEmptyOpt)
 						if err != nil {
 							return err
 						}
@@ -152,6 +152,8 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 							break
 						}
 					}
+
+					cfms.ConfigFileMounts = append(cfms.ConfigFileMounts, cf)
 
 					if ok, err := common.PromptConfirm("Do you want to mount to another dir", false); err != nil {
 						return err
