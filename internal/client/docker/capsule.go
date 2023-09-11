@@ -67,6 +67,12 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		dcc.Env = append(dcc.Env, fmt.Sprint(k, "=", v))
 	}
 
+	if cc.ContainerSettings.Resources == nil {
+		cc.ContainerSettings.Resources = &capsule.Resources{
+			Requests: &capsule.ResourceList{},
+			Limits:   &capsule.ResourceList{},
+		}
+	}
 	limits := cc.ContainerSettings.Resources.Limits
 	dhc := &container.HostConfig{
 		NetworkMode:  container.NetworkMode(netID),
@@ -156,6 +162,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 			dcc,
 			dhc,
 			dnc,
+			cc.ConfigFileMounts,
 		)
 		if err != nil {
 			return err

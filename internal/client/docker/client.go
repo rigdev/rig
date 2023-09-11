@@ -1,12 +1,15 @@
 package docker
 
 import (
+	"archive/tar"
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"strings"
 	"time"
 
@@ -112,7 +115,67 @@ func (w *logsWriter) Write(bs []byte) (int, error) {
 	return len(bs), nil
 }
 
-func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig) error {
+type fileInfo struct {
+	name string
+	size int64
+}
+
+func (info *fileInfo) Name() string {
+	return info.name
+}
+
+func (info *fileInfo) Size() int64 {
+	return info.size
+}
+
+func (info *fileInfo) IsDir() bool {
+	return false
+}
+
+func (info *fileInfo) Mode() fs.FileMode {
+	return 0o600
+}
+
+func (info *fileInfo) ModTime() time.Time {
+	return time.Now()
+}
+
+func (info *fileInfo) Sys() any {
+	return nil
+}
+
+func (c *Client) copyFileToContainer(ctx context.Context, containerID, p string, file *capsule.File) error {
+	var buffer bytes.Buffer
+
+	tw := tar.NewWriter(&buffer)
+	defer tw.Close()
+
+	data := []byte(file.Content)
+
+	header, err := tar.FileInfoHeader(&fileInfo{
+		name: file.Name,
+		size: int64(len(data)),
+	}, "")
+	if err != nil {
+		return err
+	}
+
+	if err := tw.WriteHeader(header); err != nil {
+		return err
+	}
+
+	if _, err := tw.Write(data); err != nil {
+		return err
+	}
+
+	if err := tw.Close(); err != nil {
+		return err
+	}
+
+	return c.dc.CopyToContainer(ctx, containerID, p, bufio.NewReader(&buffer), types.CopyToContainerOptions{})
+}
+
+func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, configMounts *capsule.ConfigFileMounts) error {
 	id, err := c.lookupContainer(ctx, containerID)
 	if errors.IsNotFound(err) {
 		// Already ready to create.
@@ -128,6 +191,16 @@ func (c *Client) createAndStartContainer(ctx context.Context, containerID string
 
 	if _, err := c.dc.ContainerCreate(ctx, cc, hc, nc, &v1.Platform{}, containerID); err != nil {
 		return err
+	}
+
+	if configMounts != nil {
+		for _, m := range configMounts.GetConfigFileMounts() {
+			for _, f := range m.GetFiles() {
+				if err := c.copyFileToContainer(ctx, containerID, m.GetPath(), f); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	if err := c.dc.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {

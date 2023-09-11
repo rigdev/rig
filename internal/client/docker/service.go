@@ -66,7 +66,7 @@ func (c *Client) upsertService(ctx context.Context, capsuleName string, pc *prox
 		}}
 	}
 
-	if err := c.createAndStartContainer(ctx, containerID, cc, hc, nc); err != nil {
+	if err := c.createAndStartContainer(ctx, containerID, cc, hc, nc, nil); err != nil {
 		return err
 	}
 
