@@ -24,6 +24,7 @@ import (
 	"github.com/rigdev/rig/internal/build"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/pkg/auth"
+	"github.com/rigdev/rig/pkg/utils"
 )
 
 // UpsertCapsule implements cluster.Gateway.
@@ -360,22 +361,40 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 	return nil
 }
 
-func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerApplyConfiguration {
-	rl := v1.ResourceList{
-		v1.ResourceCPU:              resource.MustParse("500m"),
-		v1.ResourceEphemeralStorage: resource.MustParse("512Mi"),
-		v1.ResourceMemory:           resource.MustParse("512Mi"),
+func makeResources(cc *cluster.Capsule) *acsv1.ResourceRequirementsApplyConfiguration {
+	requests := v1.ResourceList{}
+	limits := v1.ResourceList{}
+	fillResourceList(utils.DefaultResources.Requests, requests)
+	fillResourceList(utils.DefaultResources.Limits, limits)
+
+	if cc.ContainerSettings == nil {
+		return acsv1.ResourceRequirements().WithRequests(requests).WithLimits(limits)
 	}
 
+	r := cc.ContainerSettings.GetResources()
+	fillResourceList(r.Requests, requests)
+	fillResourceList(r.Limits, limits)
+	return acsv1.ResourceRequirements().WithRequests(requests).WithLimits(limits)
+}
+
+func fillResourceList(r *capsule.ResourceList, list v1.ResourceList) {
+	if r.Cpu != 0 {
+		list[v1.ResourceCPU] = *resource.NewQuantity(int64(r.Cpu), resource.DecimalSI)
+	}
+	if r.Memory != 0 {
+		list[v1.ResourceMemory] = *resource.NewQuantity(int64(r.Memory), resource.DecimalSI)
+	}
+	if r.EphemeralStorage != 0 {
+		list[v1.ResourceEphemeralStorage] = *resource.NewQuantity(int64(r.EphemeralStorage), resource.DecimalSI)
+	}
+}
+
+func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerApplyConfiguration {
 	con := acsv1.Container().
 		WithName(capsuleName).
 		WithImage(cc.Image).
 		WithArgs(cc.ContainerSettings.GetArgs()...).
-		WithResources(
-			acsv1.ResourceRequirements().
-				WithRequests(rl).
-				WithLimits(rl),
-		).
+		WithResources(makeResources(cc)).
 		// TODO(anders): Get from configuration.
 		WithEnv(acsv1.EnvVar().WithName("RIG_HOST").WithValue("http://rig.rig-system.svc.cluster.local:4747"))
 

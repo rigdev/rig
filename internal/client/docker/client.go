@@ -196,40 +196,42 @@ func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.Re
 		return "", err
 	}
 
-	if len(is) == 0 {
-		c.logger.Debug("pulling image", zap.String("image", image))
+	if len(is) != 0 {
+		return image, nil
+	}
 
-		opts := types.ImagePullOptions{}
+	c.logger.Debug("pulling image", zap.String("image", image))
 
-		if auth != nil {
-			ac := registry.AuthConfig{
-				ServerAddress: auth.Host,
-				Username:      auth.RegistrySecret.GetUsername(),
-				Password:      auth.RegistrySecret.GetPassword(),
-				Auth: base64.StdEncoding.EncodeToString(
-					[]byte(fmt.Sprint(
-						auth.RegistrySecret.GetUsername(),
-						":",
-						auth.RegistrySecret.GetPassword()),
-					),
+	opts := types.ImagePullOptions{}
+
+	if auth != nil {
+		ac := registry.AuthConfig{
+			ServerAddress: auth.Host,
+			Username:      auth.RegistrySecret.GetUsername(),
+			Password:      auth.RegistrySecret.GetPassword(),
+			Auth: base64.StdEncoding.EncodeToString(
+				[]byte(fmt.Sprint(
+					auth.RegistrySecret.GetUsername(),
+					":",
+					auth.RegistrySecret.GetPassword()),
 				),
-			}
-			secret, err := json.Marshal(ac)
-			if err != nil {
-				return "", err
-			}
-
-			opts.RegistryAuth = base64.StdEncoding.EncodeToString(secret)
+			),
 		}
-
-		r, err := c.dc.ImagePull(ctx, image, opts)
+		secret, err := json.Marshal(ac)
 		if err != nil {
 			return "", err
 		}
 
-		if _, err := io.Copy(io.Discard, r); err != nil {
-			return "", err
-		}
+		opts.RegistryAuth = base64.StdEncoding.EncodeToString(secret)
+	}
+
+	r, err := c.dc.ImagePull(ctx, image, opts)
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := io.Copy(io.Discard, r); err != nil {
+		return "", err
 	}
 
 	return image, nil
