@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -79,42 +76,6 @@ func SetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 	return nil
 }
 
-func getCurrentContainerSettings(ctx context.Context, capsuleID CapsuleID, client rig.Client) (*capsule.ContainerSettings, error) {
-	resp, err := client.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
-		CapsuleId: capsuleID.String(),
-		Pagination: &model.Pagination{
-			Offset:     0,
-			Limit:      1,
-			Descending: true,
-		},
-	}))
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.Msg.Total == 0 {
-		return nil, nil
-	}
-
-	r, err := client.Capsule().GetRollout(ctx, connect.NewRequest(&capsule.GetRolloutRequest{
-		CapsuleId: capsuleID.String(),
-		RolloutId: resp.Msg.Rollouts[0].RolloutId,
-	}))
-	if err != nil {
-		return nil, err
-	}
-
-	container := r.Msg.Rollout.Config.GetContainerSettings()
-	if container == nil {
-		container = &capsule.ContainerSettings{}
-	}
-	if container.Resources == nil {
-		container.Resources = &capsule.Resources{}
-	}
-	utils.FeedDefaultResources(container.Resources)
-	return container, nil
-}
-
 func setResourcesInteractive(curResources *capsule.Resources) error {
 	for {
 		i, _, err := common.PromptSelect("What to update", []string{"Requests", "Limits", "Done"})
@@ -154,15 +115,15 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 			switch i {
 			case 0:
 				name = "CPU"
-				current = strconv.FormatInt(int64(curR.Cpu), 10) + "m"
+				current = milliIntToString(uint64(curR.Cpu))
 				resourceString = &cpu
 			case 1:
 				name = "memory"
-				current = common.FormatIntToSI(curR.Memory, 3) + "B"
+				current = intToByteString(curR.Memory)
 				resourceString = &mem
 			case 2:
 				name = "ephemeral storage"
-				current = common.FormatIntToSI(curR.EphemeralStorage, 3) + "B"
+				current = intToByteString(curR.EphemeralStorage)
 				resourceString = &ephemeral
 			default:
 				done = true
@@ -183,6 +144,14 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 	}
 
 	return nil
+}
+
+func milliIntToString(millis uint64) string {
+	return fmt.Sprintf("%v", float64(millis)/1000)
+}
+
+func intToByteString(i uint64) string {
+	return common.FormatIntToSI(i, 3) + "B"
 }
 
 func setResourcesFromFlags(curResources *capsule.Resources) error {
