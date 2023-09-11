@@ -372,6 +372,12 @@ func makeResources(cc *cluster.Capsule) *acsv1.ResourceRequirementsApplyConfigur
 	}
 
 	r := cc.ContainerSettings.GetResources()
+	if r == nil {
+		r = &capsule.Resources{
+			Requests: &capsule.ResourceList{},
+			Limits:   &capsule.ResourceList{},
+		}
+	}
 	fillResourceList(r.Requests, requests)
 	fillResourceList(r.Limits, limits)
 	return acsv1.ResourceRequirements().WithRequests(requests).WithLimits(limits)
