@@ -6,9 +6,8 @@ import (
 
 var DefaultResources = &capsule.Resources{
 	Requests: &capsule.ResourceList{
-		Cpu:              200,
-		Memory:           512_000_000,
-		EphemeralStorage: 512_000_000,
+		Cpu:    200,
+		Memory: 512_000_000,
 	},
 	Limits: &capsule.ResourceList{
 		Cpu:              0,
