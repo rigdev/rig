@@ -385,7 +385,7 @@ func makeResources(cc *cluster.Capsule) *acsv1.ResourceRequirementsApplyConfigur
 
 func fillResourceList(r *capsule.ResourceList, list v1.ResourceList) {
 	if r.Cpu != 0 {
-		list[v1.ResourceCPU] = *resource.NewQuantity(int64(r.Cpu), resource.DecimalSI)
+		list[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%vm", r.Cpu))
 	}
 	if r.Memory != 0 {
 		list[v1.ResourceMemory] = *resource.NewQuantity(int64(r.Memory), resource.DecimalSI)
