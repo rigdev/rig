@@ -67,11 +67,16 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		dcc.Env = append(dcc.Env, fmt.Sprint(k, "=", v))
 	}
 
+	limits := cc.ContainerSettings.Resources.Limits
 	dhc := &container.HostConfig{
 		NetworkMode:  container.NetworkMode(netID),
 		PortBindings: nat.PortMap{},
 		RestartPolicy: container.RestartPolicy{
 			Name: "always",
+		},
+		Resources: container.Resources{
+			Memory:   int64(limits.Memory),
+			NanoCPUs: int64(limits.Cpu * 1_000_000),
 		},
 	}
 
