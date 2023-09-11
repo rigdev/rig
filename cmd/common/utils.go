@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"math"
 	"net/mail"
 	"net/url"
 	"regexp"
@@ -19,6 +20,7 @@ import (
 	"github.com/rigdev/rig/pkg/uuid"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 var ValidateAll = func(input string) error {
@@ -91,6 +93,11 @@ var ValidateBool = func(s string) error {
 	}
 
 	return nil
+}
+
+var ValidateQuantity = func(s string) error {
+	_, err := resource.ParseQuantity(s)
+	return err
 }
 
 func parseBool(s string) (bool, error) {
@@ -249,4 +256,70 @@ func FormatField(s string) string {
 
 func ProtoToPrettyJson(m protoreflect.ProtoMessage) string {
 	return protojson.Format(m)
+}
+
+func FormatIntToSI(n uint64, decimals int) string {
+	scale := uint64(math.Pow10(decimals))
+	n = (n * scale) / scale
+
+	suffix := ""
+	scale = 1
+	if n < 1_000 {
+		scale = 1
+		suffix = ""
+	} else if n < 1_000_000 {
+		scale = 1_000
+		suffix = "k"
+	} else if n < 1_000_000_000 {
+		scale = 1_000_000
+		suffix = "M"
+	} else if n < 1_000_000_000_000 {
+		scale = 1_000_000_000
+		suffix = "G"
+	} else {
+		scale = 1_000_000_000_000
+		suffix = "T"
+	}
+
+	result := float64(n) / float64(scale)
+	return ToStringWithSignificantDigits(result, 3) + suffix
+}
+
+func ToStringWithSignificantDigits(f float64, digits int) string {
+	sign := ""
+	if f < 0 {
+		sign = "-"
+	}
+
+	ff := math.Abs(f)
+	exponent := int(math.Max(0, math.Ceil(math.Log10(ff))))
+	ff = math.Round((ff / math.Pow10(exponent)) * math.Pow10(digits))
+
+	s := strconv.FormatInt(int64(ff), 10)
+	if s == "0" {
+		return "0"
+	}
+
+	if len(s) < exponent {
+		return sign + s + strings.Repeat("0", exponent-len(s))
+	}
+
+	integerPart := s[:exponent]
+	if exponent == 0 {
+		integerPart = "0"
+	}
+
+	fractionalPart := s[exponent:]
+	if len(s) < digits {
+		fractionalPart = strings.Repeat("0", digits-len(s)) + fractionalPart
+	}
+
+	fractionIsOnlyZeros := strings.Count(fractionalPart, "0") == len(fractionalPart)
+	if fractionIsOnlyZeros {
+		fractionalPart = ""
+	} else {
+		fractionalPart = "." + fractionalPart
+	}
+
+	return sign + integerPart + fractionalPart
 }
