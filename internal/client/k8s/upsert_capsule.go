@@ -316,7 +316,7 @@ func (c *Client) reconcileConfigFileMount(ctx context.Context, capsuleName, name
 		for _, f := range cf.GetFiles() {
 			files[f.GetName()] = f.GetContent()
 		}
-		cmName := fmt.Sprintf("cfg-%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
+		cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
 		cm := acsv1.ConfigMap(cmName, namespace).
 			WithData(files)
 
@@ -346,7 +346,7 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 	var volumes []*acsv1.VolumeApplyConfiguration
 	if hasConfigFileMount(cc) {
 		for _, cf := range cc.ConfigFileMounts.GetConfigFileMounts() {
-			cmName := fmt.Sprintf("cfg-%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
+			cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
 			vol := acsv1.Volume().
 				WithName(cmName).
 				WithConfigMap(
@@ -465,7 +465,7 @@ func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerAp
 
 	if hasConfigFileMount(cc) {
 		for _, cf := range cc.ConfigFileMounts.GetConfigFileMounts() {
-			cmName := fmt.Sprintf("cfg-%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
+			cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
 			con.WithVolumeMounts(acsv1.VolumeMount().
 				WithName(cmName).
 				WithMountPath(cf.GetPath()).
