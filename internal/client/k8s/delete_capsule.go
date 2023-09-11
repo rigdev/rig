@@ -115,6 +115,19 @@ func (c *Client) deleteEnvSecret(ctx context.Context, capsuleName, ns string) er
 	return nil
 }
 
+func (c *Client) deleteConfigMap(ctx context.Context, capsuleName, ns string) error {
+	err := c.cs.CoreV1().
+		ConfigMaps(ns).
+		Delete(ctx, capsuleName, metav1.DeleteOptions{})
+	if err != nil {
+		if kerrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("could not delete ConfigMap: %w", err)
+	}
+	return nil
+}
+
 func (c *Client) deleteDeployment(ctx context.Context, capsuleName, ns string) error {
 	err := c.cs.AppsV1().
 		Deployments(ns).

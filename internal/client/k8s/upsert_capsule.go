@@ -58,6 +58,9 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 	if err := c.reconcileEnvSecret(ctx, capsuleName, ns, cc); err != nil {
 		return err
 	}
+	if err := c.reconcileConfigFileMount(ctx, capsuleName, ns, cc); err != nil {
+		return err
+	}
 	if err := c.reconcileDeployment(ctx, capsuleName, ns, cc.RegistryAuth != nil, cc); err != nil {
 		return err
 	}
@@ -298,6 +301,34 @@ func (c *Client) reconcileEnvSecret(ctx context.Context, capsuleName, namespace 
 	return nil
 }
 
+func (c *Client) reconcileConfigFileMount(ctx context.Context, capsuleName, namespace string, cc *cluster.Capsule) error {
+	if len(cc.ConfigFileMounts) == 0 {
+		return c.deleteConfigMap(ctx, capsuleName, namespace)
+	}
+
+	for _, cf := range cc.ConfigFileMounts {
+		if cf.GetPath() == "" {
+			return fmt.Errorf("config file mount path cannot be empty")
+		}
+
+		files := make(map[string]string)
+		for _, f := range cf.GetFiles() {
+			files[f.GetName()] = f.GetContent()
+		}
+		cmName := fmt.Sprintf("cfg-%s", cf.GetPath())
+		cm := acsv1.ConfigMap(cmName, namespace).
+			WithData(files)
+
+		_, err := c.cs.CoreV1().
+			ConfigMaps(namespace).
+			Apply(ctx, cm, applyOpts())
+		if err != nil {
+			return fmt.Errorf("could not apply ConfigMap: %w", err)
+		}
+	}
+	return nil
+}
+
 func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace string, usePullSecret bool, cc *cluster.Capsule) error {
 	cons := []*acsv1.ContainerApplyConfiguration{
 		createContainer(capsuleName, cc),
@@ -311,6 +342,20 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 		cons = append(cons, con)
 	}
 
+	var volumes []*acsv1.VolumeApplyConfiguration
+	if hasConfigFileMount(cc) {
+		for _, cf := range cc.ConfigFileMounts {
+			cmName := fmt.Sprintf("cfg-%s", cf.GetPath())
+			vol := acsv1.Volume().
+				WithName(cmName).
+				WithConfigMap(
+					acsv1.ConfigMapVolumeSource().
+						WithName(cmName),
+				)
+			volumes = append(volumes, vol)
+		}
+	}
+
 	d := acsappsv1.Deployment(capsuleName, namespace).
 		WithLabels(commonLabels(capsuleName, cc)).
 		WithSpec(acsappsv1.DeploymentSpec().
@@ -321,7 +366,8 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 			WithTemplate(acsv1.PodTemplateSpec().
 				WithLabels(commonLabels(capsuleName, cc)).
 				WithSpec(acsv1.PodSpec().
-					WithContainers(cons...),
+					WithContainers(cons...).
+					WithVolumes(volumes...),
 				),
 			),
 		)
@@ -416,6 +462,17 @@ func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerAp
 		)
 	}
 
+	if hasConfigFileMount(cc) {
+		for _, cf := range cc.ConfigFileMounts {
+			cmName := fmt.Sprintf("cfg-%s", cf.GetPath())
+			con.WithVolumeMounts(acsv1.VolumeMount().
+				WithName(cmName).
+				WithMountPath(cf.GetPath()).
+				WithReadOnly(true),
+			)
+		}
+	}
+
 	infs := cc.Network.GetInterfaces()
 	ports := make([]*acsv1.ContainerPortApplyConfiguration, len(infs))
 	for i, inf := range infs {
@@ -481,6 +538,14 @@ func applyOpts() metav1.ApplyOptions {
 
 func hasEnvSecret(cc *cluster.Capsule) bool {
 	return len(cc.ContainerSettings.GetEnvironmentVariables()) > 0
+}
+
+func hasConfigFileMount(cc *cluster.Capsule) bool {
+	if cc == nil {
+		return false
+	}
+
+	return len(cc.ConfigFileMounts) > 0
 }
 
 func hasInterfaces(cc *cluster.Capsule) bool {
