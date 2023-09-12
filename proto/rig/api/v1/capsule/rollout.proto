@@ -21,9 +21,10 @@ message Change {
     uint32 replicas = 1;
     string build_id = 2;
     Network network = 3;
-    ConfigFileMounts config_file_mounts = 4;
-    ContainerSettings container_settings = 5;
-    bool auto_add_rig_service_accounts = 6;
+    ContainerSettings container_settings = 4;
+    bool auto_add_rig_service_accounts = 5;
+    ConfigFiles add_config_files = 6;
+    string remove_config_files = 7;
   }
 }
 
@@ -46,16 +47,12 @@ message RolloutConfig {
   uint32 replicas = 4;
   string build_id = 5;
   Network network = 6;
-  ConfigFileMounts config_file_mounts = 7;
-  ContainerSettings container_settings = 8;
-  bool auto_add_rig_service_accounts = 9;
+  ContainerSettings container_settings = 7;
+  bool auto_add_rig_service_accounts = 8;
+  repeated ConfigFiles config_files = 9;
 }
 
-message ConfigFileMounts {
-  repeated ConfigFileMount config_file_mounts = 1;
-}
-
-message ConfigFileMount {
+message ConfigFiles {
   string path = 1;
   repeated File files = 2;
 }

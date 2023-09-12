@@ -103,11 +103,8 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			if ok, err := common.PromptConfirm("Do you want to mount config files", false); err != nil {
 				return err
 			} else if ok {
-				cfms := &capsule.ConfigFileMounts{
-					ConfigFileMounts: []*capsule.ConfigFileMount{},
-				}
 				for {
-					cf := &capsule.ConfigFileMount{
+					cf := &capsule.ConfigFiles{
 						Files: []*capsule.File{},
 					}
 					mountPath, err := common.PromptInput("Mount dir path: ", common.ValidateNonEmptyOpt)
@@ -153,7 +150,11 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 						}
 					}
 
-					cfms.ConfigFileMounts = append(cfms.ConfigFileMounts, cf)
+					init = append(init, &capsule.Change{
+						Field: &capsule.Change_AddConfigFiles{
+							AddConfigFiles: cf,
+						},
+					})
 
 					if ok, err := common.PromptConfirm("Do you want to mount to another dir", false); err != nil {
 						return err
@@ -161,12 +162,6 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 						break
 					}
 				}
-
-				init = append(init, &capsule.Change{
-					Field: &capsule.Change_ConfigFileMounts{
-						ConfigFileMounts: cfms,
-					},
-				})
 			}
 		}
 		replicasStr, err := common.PromptInput("Replicas:", common.ValidateIntOpt, common.InputDefaultOpt("1"))

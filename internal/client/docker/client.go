@@ -175,7 +175,7 @@ func (c *Client) copyFileToContainer(ctx context.Context, containerID, p string,
 	return c.dc.CopyToContainer(ctx, containerID, p, bufio.NewReader(&buffer), types.CopyToContainerOptions{})
 }
 
-func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, configMounts *capsule.ConfigFileMounts) error {
+func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, configFiles []*capsule.ConfigFiles) error {
 	id, err := c.lookupContainer(ctx, containerID)
 	if errors.IsNotFound(err) {
 		// Already ready to create.
@@ -193,12 +193,10 @@ func (c *Client) createAndStartContainer(ctx context.Context, containerID string
 		return err
 	}
 
-	if configMounts != nil {
-		for _, m := range configMounts.GetConfigFileMounts() {
-			for _, f := range m.GetFiles() {
-				if err := c.copyFileToContainer(ctx, containerID, m.GetPath(), f); err != nil {
-					return err
-				}
+	for _, m := range configFiles {
+		for _, f := range m.GetFiles() {
+			if err := c.copyFileToContainer(ctx, containerID, m.GetPath(), f); err != nil {
+				return err
 			}
 		}
 	}

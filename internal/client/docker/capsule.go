@@ -162,7 +162,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 			dcc,
 			dhc,
 			dnc,
-			cc.ConfigFileMounts,
+			cc.ConfigFiles,
 		)
 		if err != nil {
 			return err

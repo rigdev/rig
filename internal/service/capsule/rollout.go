@@ -86,8 +86,15 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 			rc.Network = v.Network
 		case *capsule.Change_ContainerSettings:
 			rc.ContainerSettings = v.ContainerSettings
-		case *capsule.Change_ConfigFileMounts:
-			rc.ConfigFileMounts = v.ConfigFileMounts
+		case *capsule.Change_AddConfigFiles:
+			rc.ConfigFiles = append(rc.ConfigFiles, v.AddConfigFiles)
+		case *capsule.Change_RemoveConfigFiles:
+			for i, cf := range rc.ConfigFiles {
+				if cf.GetPath() == v.RemoveConfigFiles {
+					rc.ConfigFiles = append(rc.ConfigFiles[:i], rc.ConfigFiles[i+1:]...)
+					break
+				}
+			}
 		case *capsule.Change_AutoAddRigServiceAccounts:
 			rc.AutoAddRigServiceAccounts = v.AutoAddRigServiceAccounts
 		default:
@@ -425,7 +432,7 @@ func (j *rolloutJob) run(
 			CapsuleID:         j.capsuleID.String(),
 			Image:             b.GetBuildId(),
 			ContainerSettings: rc.GetContainerSettings(),
-			ConfigFileMounts:  rc.GetConfigFileMounts(),
+			ConfigFiles:       rc.GetConfigFiles(),
 			Replicas:          rc.GetReplicas(),
 			Namespace:         j.projectID.String(),
 			Network:           rc.GetNetwork(),
