@@ -3,7 +3,6 @@ package capsule
 import (
 	"context"
 	"os"
-	"path"
 	"strconv"
 
 	"github.com/bufbuild/connect-go"
@@ -104,14 +103,9 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 				for {
 					cf := &capsule.ConfigFile{}
 
-					mountPath, err := common.PromptInput("Mount path: ", common.ValidateNonEmptyOpt)
+					mountPath, err := common.PromptInput("Mount path: ", common.ValidateAbsPathOpt)
 					if err != nil {
 						return err
-					}
-
-					if !path.IsAbs(mountPath) {
-						cmd.Println("Path must be absolute")
-						continue
 					}
 
 					cf.Path = mountPath

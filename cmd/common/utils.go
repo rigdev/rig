@@ -5,6 +5,7 @@ import (
 	"math"
 	"net/mail"
 	"net/url"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -74,6 +75,12 @@ var ValidateURL = func(input string) error {
 	return err
 }
 
+var ValidateAbsolutePath = func(input string) error {
+	if abs := path.IsAbs(input); !abs {
+		return errors.InvalidArgumentErrorf("must be an absolute path")
+	}
+	return nil
+}
 var ValidateImage = func(input string) error {
 	_, err := reference.ParseDockerRef(input)
 	if err != nil {
