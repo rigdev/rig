@@ -76,6 +76,8 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 		return 0, err
 	}
 
+	fmt.Println(c)
+
 	for _, c := range cs {
 		switch v := c.GetField().(type) {
 		case *capsule.Change_Replicas:

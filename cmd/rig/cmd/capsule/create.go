@@ -125,7 +125,8 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 						// Open file and parse the content into the file struct
 						file, err := os.Open(filepath)
 						if err != nil {
-							return err
+							cmd.Println("Error opening file: ", err)
+							continue
 						}
 						defer file.Close()
 
