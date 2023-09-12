@@ -15,12 +15,10 @@ import (
 )
 
 var (
-	requestCPU       string
-	requestMemory    string
-	requestEphemeral string
-	limitCPU         string
-	limitMemory      string
-	limitEphemeral   string
+	requestCPU    string
+	requestMemory string
+	limitCPU      string
+	limitMemory   string
 )
 
 func setupSetResources(parent *cobra.Command) {
@@ -33,11 +31,9 @@ func setupSetResources(parent *cobra.Command) {
 
 	setResources.Flags().StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
 	setResources.Flags().StringVar(&requestMemory, "request-memory", "", "Minimum memory per container")
-	setResources.Flags().StringVar(&requestEphemeral, "request-ephemeral", "", "Minimum ephemeral storage per container")
 
 	setResources.Flags().StringVar(&limitCPU, "limit-cpu", "", "Maximum CPU cores per container")
 	setResources.Flags().StringVar(&limitMemory, "limit-memory", "", "Maximum memory per container")
-	setResources.Flags().StringVar(&limitEphemeral, "limit-ephemeral", "", "Maximum ephemeral storage per container")
 
 	parent.AddCommand(setResources)
 }
@@ -102,9 +98,8 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 
 		var cpu string
 		var mem string
-		var ephemeral string
 		for {
-			i, _, err := common.PromptSelect(fmt.Sprintf("Which resource %s to update", name), []string{"CPU", "Memory", "Ephemeral Storage", "Done"})
+			i, _, err := common.PromptSelect(fmt.Sprintf("Which resource %s to update", name), []string{"CPU", "Memory", "Done"})
 			if err != nil {
 				return err
 			}
@@ -121,10 +116,6 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 				name = "memory"
 				current = intToByteString(curR.Memory)
 				resourceString = &mem
-			case 2:
-				name = "ephemeral storage"
-				current = intToByteString(curR.EphemeralStorage)
-				resourceString = &ephemeral
 			default:
 				done = true
 			}
@@ -138,7 +129,7 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 				return err
 			}
 		}
-		if err := updateResources(curR, cpu, mem, ephemeral); err != nil {
+		if err := updateResources(curR, cpu, mem); err != nil {
 			return err
 		}
 	}
@@ -155,18 +146,18 @@ func intToByteString(i uint64) string {
 }
 
 func setResourcesFromFlags(curResources *capsule.Resources) error {
-	if err := updateResources(curResources.Requests, requestCPU, requestMemory, requestEphemeral); err != nil {
+	if err := updateResources(curResources.Requests, requestCPU, requestMemory); err != nil {
 		return err
 	}
 
-	if err := updateResources(curResources.Limits, limitCPU, limitMemory, limitEphemeral); err != nil {
+	if err := updateResources(curResources.Limits, limitCPU, limitMemory); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func updateResources(resources *capsule.ResourceList, cpu, mem, ephemeral string) error {
+func updateResources(resources *capsule.ResourceList, cpu, mem string) error {
 	if cpu != "" {
 		milliCPU, err := parseMilli(cpu)
 		if err != nil {
@@ -181,14 +172,6 @@ func updateResources(resources *capsule.ResourceList, cpu, mem, ephemeral string
 			return nil
 		}
 		resources.Memory = mem
-	}
-
-	if ephemeral != "" {
-		storage, err := parseBytes(ephemeral)
-		if err != nil {
-			return nil
-		}
-		resources.EphemeralStorage = storage
 	}
 
 	return nil
@@ -217,6 +200,6 @@ func parseBytes(s string) (uint64, error) {
 }
 
 func allFlagsEmpty() bool {
-	return requestCPU == "" && requestMemory == "" && requestEphemeral == "" && limitCPU == "" && limitMemory == "" && limitEphemeral == ""
+	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == ""
 
 }

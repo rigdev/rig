@@ -439,9 +439,6 @@ func fillResourceList(r *capsule.ResourceList, list v1.ResourceList) {
 	if r.Memory != 0 {
 		list[v1.ResourceMemory] = *resource.NewQuantity(int64(r.Memory), resource.DecimalSI)
 	}
-	if r.EphemeralStorage != 0 {
-		list[v1.ResourceEphemeralStorage] = *resource.NewQuantity(int64(r.EphemeralStorage), resource.DecimalSI)
-	}
 }
 
 func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerApplyConfiguration {
@@ -499,8 +496,7 @@ func createProxyContainer(capsuleName string, cc *cluster.Capsule) (*acsv1.Conta
 	rl := v1.ResourceList{
 		v1.ResourceCPU: resource.MustParse("500m"),
 		// TODO: validate that this limit is okay with regards to mounting configmaps and secrets as files.
-		v1.ResourceEphemeralStorage: resource.MustParse("0"),
-		v1.ResourceMemory:           resource.MustParse("128Mi"),
+		v1.ResourceMemory: resource.MustParse("128Mi"),
 	}
 
 	con := acsv1.Container().

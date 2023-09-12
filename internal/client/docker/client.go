@@ -252,10 +252,9 @@ func (c *Client) ensureNetwork(ctx context.Context) (string, error) {
 	return projectID.String(), nil
 }
 
-func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.RegistryAuth) (string, error) {
-	if strings.IndexByte(image, ':') < 0 {
-		image += ":latest"
-	}
+func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.RegistryAuth) error {
+	image = strings.TrimPrefix(image, "docker.io/library/")
+	image = strings.TrimPrefix(image, "index.docker.io/library/")
 
 	is, err := c.dc.ImageList(ctx, types.ImageListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
@@ -264,11 +263,11 @@ func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.Re
 		}),
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if len(is) != 0 {
-		return image, nil
+		return nil
 	}
 
 	c.logger.Debug("pulling image", zap.String("image", image))
@@ -290,7 +289,7 @@ func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.Re
 		}
 		secret, err := json.Marshal(ac)
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		opts.RegistryAuth = base64.StdEncoding.EncodeToString(secret)
@@ -298,14 +297,14 @@ func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.Re
 
 	r, err := c.dc.ImagePull(ctx, image, opts)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if _, err := io.Copy(io.Discard, r); err != nil {
-		return "", err
+		return err
 	}
 
-	return image, nil
+	return nil
 }
 
 func (c *Client) getContainers(ctx context.Context, prefix string) ([]types.Container, error) {
@@ -326,7 +325,8 @@ func (c *Client) getContainers(ctx context.Context, prefix string) ([]types.Cont
 }
 
 func (c *Client) ImageExistsNatively(ctx context.Context, image string) (bool, string, error) {
-	fmt.Println("checking", image)
+	image = strings.TrimPrefix(image, "docker.io/library/")
+	image = strings.TrimPrefix(image, "index.docker.io/library/")
 	is, err := c.dc.ImageList(ctx, types.ImageListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "reference",

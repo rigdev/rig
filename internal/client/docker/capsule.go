@@ -35,8 +35,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		return err
 	}
 
-	image, err := c.ensureImage(ctx, cc.Image, cc.RegistryAuth)
-	if err != nil {
+	if err := c.ensureImage(ctx, cc.Image, cc.RegistryAuth); err != nil {
 		return err
 	}
 
@@ -51,7 +50,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 	}
 
 	dcc := &container.Config{
-		Image:        image,
+		Image:        cc.Image,
 		Cmd:          cmd,
 		ExposedPorts: nat.PortSet{},
 		Labels: map[string]string{
