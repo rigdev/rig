@@ -2,7 +2,6 @@ package capsule
 
 import (
 	"context"
-	"os"
 	"strconv"
 
 	"github.com/bufbuild/connect-go"
@@ -95,53 +94,6 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 						},
 					},
 				})
-			}
-
-			if ok, err := common.PromptConfirm("Do you want add config files", false); err != nil {
-				return err
-			} else if ok {
-				for {
-					cf := &capsule.ConfigFile{}
-
-					mountPath, err := common.PromptInput("Mount path: ", common.ValidateAbsPathOpt)
-					if err != nil {
-						return err
-					}
-
-					cf.Path = mountPath
-
-					filepath, err := common.PromptInput("File path: ", common.ValidateNonEmptyOpt)
-					if err != nil {
-						return err
-					}
-
-					// Open file and parse the content into the file struct
-					content, err := os.ReadFile(filepath)
-					if err != nil {
-						cmd.Println("Error opening file: ", err)
-						continue
-					}
-
-					// if content size i greater than 1mb retry
-					if len(content) > 1024*1024 {
-						cmd.Println("File size is too big, max 1mb")
-						continue
-					}
-
-					cf.Content = content
-
-					init = append(init, &capsule.Change{
-						Field: &capsule.Change_AddConfigFile{
-							AddConfigFile: cf,
-						},
-					})
-
-					if ok, err := common.PromptConfirm("Do you want to add another file", false); err != nil {
-						return err
-					} else if !ok {
-						break
-					}
-				}
 			}
 		}
 		replicasStr, err := common.PromptInput("Replicas:", common.ValidateIntOpt, common.InputDefaultOpt("1"))
