@@ -133,7 +133,7 @@ func (info *fileInfo) IsDir() bool {
 }
 
 func (info *fileInfo) Mode() fs.FileMode {
-	return 0o600
+	return 0o644
 }
 
 func (info *fileInfo) ModTime() time.Time {
