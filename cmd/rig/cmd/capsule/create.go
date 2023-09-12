@@ -1,9 +1,7 @@
 package capsule
 
 import (
-	"bufio"
 	"context"
-	"io"
 	"os"
 	"path"
 	"strconv"
@@ -100,64 +98,51 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 				})
 			}
 
-			if ok, err := common.PromptConfirm("Do you want to mount config files", false); err != nil {
+			if ok, err := common.PromptConfirm("Do you want add config files", false); err != nil {
 				return err
 			} else if ok {
 				for {
-					cf := &capsule.ConfigFiles{
-						Files: []*capsule.File{},
-					}
-					mountPath, err := common.PromptInput("Mount dir path: ", common.ValidateNonEmptyOpt)
+					cf := &capsule.ConfigFile{}
+
+					mountPath, err := common.PromptInput("Mount path: ", common.ValidateNonEmptyOpt)
 					if err != nil {
 						return err
 					}
-					cf.Path = mountPath
 
-					f := &capsule.File{}
-					for {
-						filepath, err := common.PromptInput("File path: ", common.ValidateNonEmptyOpt)
-						if err != nil {
-							return err
-						}
-
-						f.Name = path.Base(filepath)
-
-						// Open file and parse the content into the file struct
-						file, err := os.Open(filepath)
-						if err != nil {
-							cmd.Println("Error opening file: ", err)
-							continue
-						}
-						defer file.Close()
-
-						stat, err := file.Stat()
-						if err != nil {
-							return err
-						}
-
-						buf := make([]byte, stat.Size())
-						_, err = bufio.NewReader(file).Read(buf)
-						if err != nil && err != io.EOF {
-							return err
-						}
-
-						f.Content = string(buf)
-						cf.Files = append(cf.Files, f)
-
-						if ok, err := common.PromptConfirm("Do you want to add another file", false); err != nil {
-							return err
-						} else if !ok {
-							break
-						}
+					if !path.IsAbs(mountPath) {
+						cmd.Println("Path must be absolute")
+						continue
 					}
 
+					cf.Path = mountPath
+
+					filepath, err := common.PromptInput("File path: ", common.ValidateNonEmptyOpt)
+					if err != nil {
+						return err
+					}
+
+					// Open file and parse the content into the file struct
+					content, err := os.ReadFile(filepath)
+					if err != nil {
+						cmd.Println("Error opening file: ", err)
+						continue
+					}
+
+					// if content size i greater than 1mb retry
+					if len(content) > 1024*1024 {
+						cmd.Println("File size is too big, max 1mb")
+						continue
+					}
+
+					cf.Content = content
+
 					init = append(init, &capsule.Change{
-						Field: &capsule.Change_AddConfigFiles{
-							AddConfigFiles: cf,
+						Field: &capsule.Change_AddConfigFile{
+							AddConfigFile: cf,
 						},
 					})
 
-					if ok, err := common.PromptConfirm("Do you want to mount to another dir", false); err != nil {
+					if ok, err := common.PromptConfirm("Do you want to add another file", false); err != nil {
 						return err
 					} else if !ok {
 						break

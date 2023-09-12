@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 
@@ -312,13 +313,14 @@ func (c *Client) reconcileConfigFileMount(ctx context.Context, capsuleName, name
 			return fmt.Errorf("config file mount path cannot be empty")
 		}
 
-		files := make(map[string]string)
-		for _, f := range cf.GetFiles() {
-			files[f.GetName()] = f.GetContent()
+		fileName := path.Base(cf.GetPath())
+		file := map[string][]byte{
+			fileName: cf.GetContent(),
 		}
-		cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
+
+		cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(strings.ReplaceAll(cf.GetPath(), "/", "-"), ".", "-"))
 		cm := acsv1.ConfigMap(cmName, namespace).
-			WithData(files)
+			WithBinaryData(file)
 
 		_, err := c.cs.CoreV1().
 			ConfigMaps(namespace).
@@ -346,7 +348,7 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 	var volumes []*acsv1.VolumeApplyConfiguration
 	if hasConfigFileMount(cc) {
 		for _, cf := range cc.ConfigFiles {
-			cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
+			cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(strings.ReplaceAll(cf.GetPath(), "/", "-"), ".", "-"))
 			vol := acsv1.Volume().
 				WithName(cmName).
 				WithConfigMap(
@@ -465,10 +467,14 @@ func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerAp
 
 	if hasConfigFileMount(cc) {
 		for _, cf := range cc.ConfigFiles {
-			cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(cf.GetPath(), "/", "-"))
+
+			subPath := path.Base(cf.GetPath())
+
+			cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(strings.ReplaceAll(cf.GetPath(), "/", "-"), ".", "-"))
 			con.WithVolumeMounts(acsv1.VolumeMount().
 				WithName(cmName).
 				WithMountPath(cf.GetPath()).
+				WithSubPath(subPath).
 				WithReadOnly(true),
 			)
 		}

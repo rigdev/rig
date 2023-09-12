@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"path"
 	"strings"
 	"time"
 
@@ -144,17 +145,18 @@ func (info *fileInfo) Sys() any {
 	return nil
 }
 
-func (c *Client) copyFileToContainer(ctx context.Context, containerID, p string, file *capsule.File) error {
+func (c *Client) copyFileToContainer(ctx context.Context, containerID string, file *capsule.ConfigFile) error {
 	var buffer bytes.Buffer
 
 	tw := tar.NewWriter(&buffer)
 	defer tw.Close()
 
-	data := []byte(file.Content)
+	dir := path.Dir(file.GetPath())
+	subPath := path.Base(file.GetPath())
 
 	header, err := tar.FileInfoHeader(&fileInfo{
-		name: file.Name,
-		size: int64(len(data)),
+		name: subPath,
+		size: int64(len(file.GetContent())),
 	}, "")
 	if err != nil {
 		return err
@@ -164,7 +166,7 @@ func (c *Client) copyFileToContainer(ctx context.Context, containerID, p string,
 		return err
 	}
 
-	if _, err := tw.Write(data); err != nil {
+	if _, err := tw.Write(file.GetContent()); err != nil {
 		return err
 	}
 
@@ -172,10 +174,10 @@ func (c *Client) copyFileToContainer(ctx context.Context, containerID, p string,
 		return err
 	}
 
-	return c.dc.CopyToContainer(ctx, containerID, p, bufio.NewReader(&buffer), types.CopyToContainerOptions{})
+	return c.dc.CopyToContainer(ctx, containerID, dir, bufio.NewReader(&buffer), types.CopyToContainerOptions{})
 }
 
-func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, configFiles []*capsule.ConfigFiles) error {
+func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, configFiles []*capsule.ConfigFile) error {
 	id, err := c.lookupContainer(ctx, containerID)
 	if errors.IsNotFound(err) {
 		// Already ready to create.
@@ -193,11 +195,9 @@ func (c *Client) createAndStartContainer(ctx context.Context, containerID string
 		return err
 	}
 
-	for _, m := range configFiles {
-		for _, f := range m.GetFiles() {
-			if err := c.copyFileToContainer(ctx, containerID, m.GetPath(), f); err != nil {
-				return err
-			}
+	for _, f := range configFiles {
+		if err := c.copyFileToContainer(ctx, containerID, f); err != nil {
+			return err
 		}
 	}
 

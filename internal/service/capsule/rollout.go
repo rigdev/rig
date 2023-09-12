@@ -88,11 +88,11 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 			rc.Network = v.Network
 		case *capsule.Change_ContainerSettings:
 			rc.ContainerSettings = v.ContainerSettings
-		case *capsule.Change_AddConfigFiles:
-			rc.ConfigFiles = append(rc.ConfigFiles, v.AddConfigFiles)
-		case *capsule.Change_RemoveConfigFiles:
+		case *capsule.Change_AddConfigFile:
+			rc.ConfigFiles = append(rc.ConfigFiles, v.AddConfigFile)
+		case *capsule.Change_RemoveConfigFile:
 			for i, cf := range rc.ConfigFiles {
-				if cf.GetPath() == v.RemoveConfigFiles {
+				if cf.GetPath() == v.RemoveConfigFile {
 					rc.ConfigFiles = append(rc.ConfigFiles[:i], rc.ConfigFiles[i+1:]...)
 					break
 				}
