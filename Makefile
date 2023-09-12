@@ -35,7 +35,7 @@ build-rig-admin: ## 🔨 Build rig-admin binary
 	$(GOBUILD) -o bin/rig-admin ./cmd/rig-admin
 
 .PHONY: gen
-gen: proto mocks ## 🪄 Run code generation (proto and mocks)
+gen: proto mocks manifests generate-k8s ## 🪄 Run code generation (proto and mocks)
 
 .PHONY: proto
 proto: proto-internal proto-public ## 🪄 Generate all protobuf
@@ -59,13 +59,42 @@ proto-public: gen/go/rig/go.mod buf protoc-gen-go protoc-gen-connect-go ## 🪄 
 mocks: mockery mocks-clean ## 🪄 Generate mocks
 	$(MOCKERY) --config ./build/.mockery.yaml
 
+.PHONY: manifests
+manifests: controller-gen ## 🪄 Clean mocks
+	$(CONTROLLER_GEN) rbac:roleName=rig crd webhook paths="./pkg/api/..." output:dir=deploy/kustomize output:crd:dir=deploy/kustomize/crd/bases
+
+.PHONY: generate-k8s
+generate-k8s: controller-gen ## 🪄 Generate runtime.Object implementations.
+	$(CONTROLLER_GEN) object paths="./pkg/api/..."
+
 .PHONY: mocks-clean
 mocks-clean: ## 🧹 Clean mocks
 	@find . -type f -name 'mock_*.go' -delete
 
 .PHONY: test
-test: gotestsum ## ✅ Run tests
-	$(GOTESTSUM) --format-hide-empty-pkg --junitfile test-result.xml
+test: gotestsum ## ✅ Run unit tests
+	$(GOTESTSUM) \
+		--format-hide-empty-pkg \
+		--hide-summary skipped \
+		--junitfile test-result.xml -- \
+		-short ./...
+
+ENVTEST_K8S_VERSION = 1.28.0
+
+.PHONY: test-all
+test-all: gotestsum ## ✅ Run all tests
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" \
+	$(GOTESTSUM) \
+		--format-hide-empty-pkg \
+		--junitfile test-result.xml
+
+.PHONY: test-integration
+test-integration: gotestsum setup-envtest ## ✅ Run integration tests
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" \
+	$(GOTESTSUM) \
+		--format-hide-empty-pkg \
+		--junitfile test-result.xml -- \
+		-run "^TestIntegration" ./...
 
 .PHONY: run
 run: build-rig-server ## 🏃 Run rig-server
@@ -217,3 +246,19 @@ gotestsum: ## 📦 Download kind locally if necessary.
 	(test -s $(GOTESTSUM) && \
 	$(GOTESTSUM) --version | grep $(GOTESTSUM_GO_MOD_VERSION)) || \
 	(cd tools && GOBIN=$(TOOLSBIN) go install -ldflags="-X gotest.tools/gotestsum/cmd.version=$(GOTESTSUM_GO_MOD_VERSION)" gotest.tools/gotestsum)
+
+CONTROLLER_GEN ?= $(TOOLSBIN)/controller-gen
+CONTROLLER_GEN_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "sigs.k8s.io/controller-tools" | cut -d ' ' -f2)
+
+.PHONY: controller-gen
+controller-gen: ## 📦 Download controller-gen locally if necessary.
+	(test -s $(CONTROLLER_GEN) && \
+	$(CONTROLLER_GEN) --version | grep $(CONTROLLER_GEN_GO_MOD_VERSION)) || \
+	(cd tools && GOBIN=$(TOOLSBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen)
+
+SETUP_ENVTEST ?= $(TOOLSBIN)/setup-envtest
+.PHONY: setup-envtest
+setup-envtest: ## 📦 Download setup-envtest locally if necessary.
+	(test -s $(SETUP_ENVTEST)) || \
+	(cd tools && GOBIN=$(TOOLSBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest)
+
