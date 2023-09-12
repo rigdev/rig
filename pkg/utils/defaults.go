@@ -10,9 +10,8 @@ var DefaultResources = &capsule.Resources{
 		Memory: 512_000_000,
 	},
 	Limits: &capsule.ResourceList{
-		Cpu:              0,
-		Memory:           0,
-		EphemeralStorage: 0,
+		Cpu:    0,
+		Memory: 0,
 	},
 }
 
@@ -34,8 +33,5 @@ func feedDefaultResourceList(r, defaultR *capsule.ResourceList) {
 	}
 	if r.Memory == 0 {
 		r.Memory = defaultR.Memory
-	}
-	if r.EphemeralStorage == 0 {
-		r.EphemeralStorage = defaultR.EphemeralStorage
 	}
 }
