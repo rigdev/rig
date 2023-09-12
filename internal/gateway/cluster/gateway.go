@@ -18,6 +18,7 @@ type Capsule struct {
 	Replicas          uint32
 	Volumes           map[string]string
 	Network           *capsule.Network
+	ConfigFiles       []*capsule.ConfigFile
 	Namespace         string
 	Metadata          map[string]string
 	JWTMethod         *proxy.JWTMethod

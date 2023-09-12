@@ -47,6 +47,7 @@ func GetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 	t.AppendRows([]table.Row{
 		{"CPU", milliIntToString(uint64(requests.Cpu)), milliIntToString(uint64(limits.Cpu))},
 		{"Memory", intToByteString(requests.Memory), intToByteString(limits.Memory)},
+		{"Ephemeral Storage", intToByteString(requests.EphemeralStorage), intToByteString(limits.EphemeralStorage)},
 	})
 	cmd.Println(t.Render())
 

@@ -66,7 +66,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		dcc.Env = append(dcc.Env, fmt.Sprint(k, "=", v))
 	}
 
-	limits := cc.ContainerSettings.Resources.Limits
+	limits := cc.ContainerSettings.GetResources().GetLimits()
 	dhc := &container.HostConfig{
 		NetworkMode:  container.NetworkMode(netID),
 		PortBindings: nat.PortMap{},
@@ -74,8 +74,8 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 			Name: "always",
 		},
 		Resources: container.Resources{
-			Memory:   int64(limits.Memory),
-			NanoCPUs: int64(limits.Cpu * 1_000_000),
+			Memory:   int64(limits.GetMemory()),
+			NanoCPUs: int64(limits.GetCpu() * 1_000_000),
 		},
 	}
 
@@ -155,6 +155,7 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 			dcc,
 			dhc,
 			dnc,
+			cc.ConfigFiles,
 		)
 		if err != nil {
 			return err

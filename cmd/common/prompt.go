@@ -29,6 +29,11 @@ var ValidateNonEmptyOpt = func(inp *textinput.TextInput) *textinput.TextInput {
 	return inp
 }
 
+var ValidateAbsPathOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+	inp.Validate = ValidateAbsolutePath
+	return inp
+}
+
 var ValidateEmailOpt = func(inp *textinput.TextInput) *textinput.TextInput {
 	inp.Validate = ValidateEmail
 	return inp

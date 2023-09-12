@@ -6,7 +6,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"path"
 	"strconv"
+	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	v1 "k8s.io/api/core/v1"
@@ -56,6 +58,9 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		return err
 	}
 	if err := c.reconcileEnvSecret(ctx, capsuleName, ns, cc); err != nil {
+		return err
+	}
+	if err := c.reconcileConfigFileMount(ctx, capsuleName, ns, cc); err != nil {
 		return err
 	}
 	if err := c.reconcileDeployment(ctx, capsuleName, ns, cc.RegistryAuth != nil, cc); err != nil {
@@ -298,6 +303,35 @@ func (c *Client) reconcileEnvSecret(ctx context.Context, capsuleName, namespace 
 	return nil
 }
 
+func (c *Client) reconcileConfigFileMount(ctx context.Context, capsuleName, namespace string, cc *cluster.Capsule) error {
+	if len(cc.ConfigFiles) == 0 {
+		return c.deleteConfigMap(ctx, capsuleName, namespace)
+	}
+
+	for _, cf := range cc.ConfigFiles {
+		if cf.GetPath() == "" {
+			return fmt.Errorf("config file mount path cannot be empty")
+		}
+
+		fileName := path.Base(cf.GetPath())
+		file := map[string][]byte{
+			fileName: cf.GetContent(),
+		}
+
+		cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(strings.ReplaceAll(cf.GetPath(), "/", "-"), ".", "-"))
+		cm := acsv1.ConfigMap(cmName, namespace).
+			WithBinaryData(file)
+
+		_, err := c.cs.CoreV1().
+			ConfigMaps(namespace).
+			Apply(ctx, cm, applyOpts())
+		if err != nil {
+			return fmt.Errorf("could not apply ConfigMap: %w", err)
+		}
+	}
+	return nil
+}
+
 func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace string, usePullSecret bool, cc *cluster.Capsule) error {
 	cons := []*acsv1.ContainerApplyConfiguration{
 		createContainer(capsuleName, cc),
@@ -311,6 +345,20 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 		cons = append(cons, con)
 	}
 
+	var volumes []*acsv1.VolumeApplyConfiguration
+	if hasConfigFileMount(cc) {
+		for _, cf := range cc.ConfigFiles {
+			cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(strings.ReplaceAll(cf.GetPath(), "/", "-"), ".", "-"))
+			vol := acsv1.Volume().
+				WithName(cmName).
+				WithConfigMap(
+					acsv1.ConfigMapVolumeSource().
+						WithName(cmName),
+				)
+			volumes = append(volumes, vol)
+		}
+	}
+
 	d := acsappsv1.Deployment(capsuleName, namespace).
 		WithLabels(commonLabels(capsuleName, cc)).
 		WithSpec(acsappsv1.DeploymentSpec().
@@ -321,7 +369,8 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 			WithTemplate(acsv1.PodTemplateSpec().
 				WithLabels(commonLabels(capsuleName, cc)).
 				WithSpec(acsv1.PodSpec().
-					WithContainers(cons...),
+					WithContainers(cons...).
+					WithVolumes(volumes...),
 				),
 			),
 		)
@@ -413,6 +462,21 @@ func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerAp
 		)
 	}
 
+	if hasConfigFileMount(cc) {
+		for _, cf := range cc.ConfigFiles {
+
+			subPath := path.Base(cf.GetPath())
+
+			cmName := fmt.Sprintf("cfg%s", strings.ReplaceAll(strings.ReplaceAll(cf.GetPath(), "/", "-"), ".", "-"))
+			con.WithVolumeMounts(acsv1.VolumeMount().
+				WithName(cmName).
+				WithMountPath(cf.GetPath()).
+				WithSubPath(subPath).
+				WithReadOnly(true),
+			)
+		}
+	}
+
 	infs := cc.Network.GetInterfaces()
 	ports := make([]*acsv1.ContainerPortApplyConfiguration, len(infs))
 	for i, inf := range infs {
@@ -477,6 +541,14 @@ func applyOpts() metav1.ApplyOptions {
 
 func hasEnvSecret(cc *cluster.Capsule) bool {
 	return len(cc.ContainerSettings.GetEnvironmentVariables()) > 0
+}
+
+func hasConfigFileMount(cc *cluster.Capsule) bool {
+	if cc == nil {
+		return false
+	}
+
+	return len(cc.ConfigFiles) > 0
 }
 
 func hasInterfaces(cc *cluster.Capsule) bool {

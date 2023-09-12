@@ -23,6 +23,8 @@ message Change {
     Network network = 3;
     ContainerSettings container_settings = 4;
     bool auto_add_rig_service_accounts = 5;
+    ConfigFile add_config_file = 6;
+    string remove_config_file = 7;
   }
 }
 
@@ -47,6 +49,12 @@ message RolloutConfig {
   Network network = 6;
   ContainerSettings container_settings = 7;
   bool auto_add_rig_service_accounts = 8;
+  repeated ConfigFile config_files = 9;
+}
+
+message ConfigFile {
+  string path = 1;
+  bytes content = 2;
 }
 
 message RolloutStatus {
@@ -63,17 +71,17 @@ message ContainerSettings {
 }
 
 message Resources {
-    ResourceList requests = 1;
-    ResourceList limits  = 2;
+  ResourceList requests = 1;
+  ResourceList limits = 2;
 }
 
 message ResourceList {
-    // Unit: milli-CPUs
-    uint32 cpu = 1;
-    // Unit: Bytes
-    uint64 memory = 2;
-    // Unit: Bytes
-    uint64 ephemeral_storage =3;
+  // Unit: milli-CPUs
+  uint32 cpu = 1;
+  // Unit: Bytes
+  uint64 memory = 2;
+  // Unit: Bytes
+  uint64 ephemeral_storage = 3;
 }
 
 message Network {
