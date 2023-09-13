@@ -96,13 +96,14 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 					},
 				})
 			}
+			cSettings := &capsule.ContainerSettings{
+				Args:                 []string{},
+				EnvironmentVariables: map[string]string{},
+			}
 
 			if ok, err := common.PromptConfirm("Do you want to add a command", false); err != nil {
 				return err
 			} else if ok {
-				cSettings := &capsule.ContainerSettings{
-					Args: []string{},
-				}
 
 				cmdStr, err := common.PromptInput("Command:", common.ValidateNonEmptyOpt)
 				if err != nil {
@@ -128,13 +129,36 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 
 					cSettings.Args = append(cSettings.Args, argStr)
 				}
-
-				init = append(init, &capsule.Change{
-					Field: &capsule.Change_ContainerSettings{
-						ContainerSettings: cSettings,
-					},
-				})
 			}
+
+			for {
+				ok, err := common.PromptConfirm("Do you want to add an environment variable", false)
+				if err != nil {
+					return err
+				}
+
+				if !ok {
+					break
+				}
+
+				keyStr, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
+				if err != nil {
+					return err
+				}
+
+				valueStr, err := common.PromptInput("Value:", common.ValidateNonEmptyOpt)
+				if err != nil {
+					return err
+				}
+
+				cSettings.EnvironmentVariables[keyStr] = valueStr
+			}
+
+			init = append(init, &capsule.Change{
+				Field: &capsule.Change_ContainerSettings{
+					ContainerSettings: cSettings,
+				},
+			})
 
 			if ok, err := common.PromptConfirm("Do you want add config files", false); err != nil {
 				return err
