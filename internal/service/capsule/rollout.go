@@ -87,12 +87,12 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 			rc.Network = v.Network
 		case *capsule.Change_ContainerSettings:
 			rc.ContainerSettings = v.ContainerSettings
-		case *capsule.Change_AddConfigFile:
-			if err := utils.ValiateConfigFilePath(v.AddConfigFile.GetPath()); err != nil {
+		case *capsule.Change_SetConfigFile:
+			if err := utils.ValiateConfigFilePath(v.SetConfigFile.GetPath()); err != nil {
 				return 0, err
 			}
 
-			rc.ConfigFiles = append(rc.ConfigFiles, v.AddConfigFile)
+			rc.ConfigFiles = append(rc.ConfigFiles, v.SetConfigFile)
 		case *capsule.Change_RemoveConfigFile:
 			for i, cf := range rc.ConfigFiles {
 				if cf.GetPath() == v.RemoveConfigFile {
