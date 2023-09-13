@@ -134,7 +134,8 @@ func (s *service) update(ctx context.Context) error {
 		projectCtx := auth.WithProjectID(ctx, pid)
 		iter, err := s.cluster.ListCapsuleMetrics(projectCtx)
 		if err != nil {
-			return err
+			s.log.Info("failed to read metrics for project", zap.Stringer("project_id", pid), zap.Error(err))
+			continue
 		}
 
 		for {
@@ -143,12 +144,16 @@ func (s *service) update(ctx context.Context) error {
 				break
 			}
 			if err != nil {
-				return err
+				s.log.Info("failed to read metrics for project", zap.Stringer("project_id", pid), zap.Error(err))
+				break
 			}
 
 			if err := s.cr.CreateMetrics(projectCtx, cms); err != nil {
-				return err
+				s.log.Info("failed to write metrics for project", zap.Stringer("project_id", pid), zap.Error(err))
+				break
 			}
+
+			iter.Close()
 		}
 	}
 	return nil
