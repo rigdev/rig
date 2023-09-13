@@ -45,10 +45,17 @@ func GetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 	t.AppendRows([]table.Row{{"", "Requests", "Limits"}})
 	t.AppendSeparator()
 	t.AppendRows([]table.Row{
-		{"CPU", milliIntToString(uint64(requests.Cpu)), milliIntToString(uint64(limits.Cpu))},
-		{"Memory", intToByteString(requests.Memory), intToByteString(limits.Memory)},
+		{"CPU", milliIntToString(uint64(requests.CpuMillis)), formatLimitString(milliIntToString, uint64(limits.CpuMillis))},
+		{"Memory", intToByteString(requests.MemoryBytes), formatLimitString(intToByteString, limits.MemoryBytes)},
 	})
 	cmd.Println(t.Render())
 
 	return nil
+}
+
+func formatLimitString(fmt func(uint64) string, n uint64) string {
+	if n == 0 {
+		return "-"
+	}
+	return fmt(n)
 }

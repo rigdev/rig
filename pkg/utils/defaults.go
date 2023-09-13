@@ -6,12 +6,12 @@ import (
 
 var DefaultResources = &capsule.Resources{
 	Requests: &capsule.ResourceList{
-		Cpu:    200,
-		Memory: 512_000_000,
+		CpuMillis:   200,
+		MemoryBytes: 512_000_000,
 	},
 	Limits: &capsule.ResourceList{
-		Cpu:    0,
-		Memory: 0,
+		CpuMillis:   0,
+		MemoryBytes: 0,
 	},
 }
 
@@ -28,10 +28,10 @@ func FeedDefaultResources(r *capsule.Resources) {
 }
 
 func feedDefaultResourceList(r, defaultR *capsule.ResourceList) {
-	if r.Cpu == 0 {
-		r.Cpu = defaultR.Cpu
+	if r.CpuMillis == 0 {
+		r.CpuMillis = defaultR.CpuMillis
 	}
-	if r.Memory == 0 {
-		r.Memory = defaultR.Memory
+	if r.MemoryBytes == 0 {
+		r.MemoryBytes = defaultR.MemoryBytes
 	}
 }

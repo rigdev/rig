@@ -74,8 +74,8 @@ func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *clus
 			Name: "always",
 		},
 		Resources: container.Resources{
-			Memory:   int64(limits.GetMemory()),
-			NanoCPUs: int64(limits.GetCpu() * 1_000_000),
+			Memory:   int64(limits.GetMemoryBytes()),
+			NanoCPUs: int64(limits.GetCpuMillis() * 1_000_000),
 		},
 	}
 

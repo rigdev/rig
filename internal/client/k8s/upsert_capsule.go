@@ -433,11 +433,11 @@ func makeResources(cc *cluster.Capsule) *acsv1.ResourceRequirementsApplyConfigur
 }
 
 func fillResourceList(r *capsule.ResourceList, list v1.ResourceList) {
-	if r.Cpu != 0 {
-		list[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%vm", r.Cpu))
+	if r.GetCpuMillis() != 0 {
+		list[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%vm", r.GetCpuMillis()))
 	}
-	if r.Memory != 0 {
-		list[v1.ResourceMemory] = *resource.NewQuantity(int64(r.Memory), resource.DecimalSI)
+	if r.GetMemoryBytes() != 0 {
+		list[v1.ResourceMemory] = *resource.NewQuantity(int64(r.GetMemoryBytes()), resource.DecimalSI)
 	}
 }
 
