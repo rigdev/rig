@@ -36,6 +36,12 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, image, d
 		}
 
 		digest = d
+		if ref.Identifier() == "latest" {
+			ref, err = name.ParseReference(ref.Context().String() + "@" + digest)
+			if err != nil {
+				return "", err
+			}
+		}
 	}
 
 	if _, err := s.GetCapsule(ctx, capsuleID); err != nil {

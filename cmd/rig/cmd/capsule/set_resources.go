@@ -96,6 +96,7 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 			break
 		}
 
+		isLimit := i == 1
 		var cpu string
 		var mem string
 		for {
@@ -110,11 +111,19 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 			switch i {
 			case 0:
 				name = "CPU"
-				current = milliIntToString(uint64(curR.Cpu))
+				if curR.GetCpuMillis() == 0 && isLimit {
+					current = "-"
+				} else {
+					current = milliIntToString(uint64(curR.GetCpuMillis()))
+				}
 				resourceString = &cpu
 			case 1:
 				name = "memory"
-				current = intToByteString(curR.Memory)
+				if curR.GetMemoryBytes() == 0 && isLimit {
+					current = "-"
+				} else {
+					current = intToByteString(curR.GetMemoryBytes())
+				}
 				resourceString = &mem
 			default:
 				done = true
@@ -163,7 +172,7 @@ func updateResources(resources *capsule.ResourceList, cpu, mem string) error {
 		if err != nil {
 			return err
 		}
-		resources.Cpu = milliCPU
+		resources.CpuMillis = milliCPU
 	}
 
 	if mem != "" {
@@ -171,7 +180,7 @@ func updateResources(resources *capsule.ResourceList, cpu, mem string) error {
 		if err != nil {
 			return nil
 		}
-		resources.Memory = mem
+		resources.MemoryBytes = mem
 	}
 
 	return nil

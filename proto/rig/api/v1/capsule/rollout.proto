@@ -77,11 +77,9 @@ message Resources {
 
 message ResourceList {
   // Unit: milli-CPUs
-  uint32 cpu = 1;
+  uint32 cpu_millis = 1;
   // Unit: Bytes
-  uint64 memory = 2;
-  // Unit: Bytes
-  uint64 ephemeral_storage = 3;
+  uint64 memory_bytes = 2;
 }
 
 message Network {
