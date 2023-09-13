@@ -131,8 +131,8 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 					cf.Content = content
 
 					init = append(init, &capsule.Change{
-						Field: &capsule.Change_AddConfigFile{
-							AddConfigFile: cf,
+						Field: &capsule.Change_SetConfigFile{
+							SetConfigFile: cf,
 						},
 					})
 
