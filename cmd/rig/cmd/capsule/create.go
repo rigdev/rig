@@ -100,16 +100,38 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			if ok, err := common.PromptConfirm("Do you want to add a command", false); err != nil {
 				return err
 			} else if ok {
+				cSettings := &capsule.ContainerSettings{
+					Args: []string{},
+				}
+
 				cmdStr, err := common.PromptInput("Command:", common.ValidateNonEmptyOpt)
 				if err != nil {
 					return err
 				}
 
+				cSettings.Command = cmdStr
+
+				for {
+					ok, err := common.PromptConfirm("Do you want to add an argument", false)
+					if err != nil {
+						return err
+					}
+
+					if !ok {
+						break
+					}
+
+					argStr, err := common.PromptInput("Argument:", common.ValidateNonEmptyOpt)
+					if err != nil {
+						return err
+					}
+
+					cSettings.Args = append(cSettings.Args, argStr)
+				}
+
 				init = append(init, &capsule.Change{
 					Field: &capsule.Change_ContainerSettings{
-						ContainerSettings: &capsule.ContainerSettings{
-							Command: cmdStr,
-						},
+						ContainerSettings: cSettings,
 					},
 				})
 			}
