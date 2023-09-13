@@ -12,6 +12,10 @@ func CodeOf(err error) connect.Code {
 }
 
 func MessageOf(err error) string {
+	if err == nil {
+		return ""
+	}
+
 	if e, ok := err.(*connect.Error); ok {
 		return e.Message()
 	}

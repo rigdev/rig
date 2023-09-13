@@ -16,6 +16,7 @@ import (
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/utils"
 	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
@@ -76,8 +77,6 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 		return 0, err
 	}
 
-	fmt.Println(c)
-
 	for _, c := range cs {
 		switch v := c.GetField().(type) {
 		case *capsule.Change_Replicas:
@@ -88,8 +87,24 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 			rc.Network = v.Network
 		case *capsule.Change_ContainerSettings:
 			rc.ContainerSettings = v.ContainerSettings
-		case *capsule.Change_AddConfigFile:
-			rc.ConfigFiles = append(rc.ConfigFiles, v.AddConfigFile)
+		case *capsule.Change_SetConfigFile:
+			if err := utils.ValiateConfigFilePath(v.SetConfigFile.GetPath()); err != nil {
+				return 0, err
+			}
+
+			// check if the config file already exists, and if so replace it otherwise append it
+			var found bool
+			for i, cf := range rc.ConfigFiles {
+				if cf.GetPath() == v.SetConfigFile.GetPath() {
+					rc.ConfigFiles[i] = v.SetConfigFile
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				rc.ConfigFiles = append(rc.ConfigFiles, v.SetConfigFile)
+			}
 		case *capsule.Change_RemoveConfigFile:
 			for i, cf := range rc.ConfigFiles {
 				if cf.GetPath() == v.RemoveConfigFile {

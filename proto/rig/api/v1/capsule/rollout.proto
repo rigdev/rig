@@ -23,7 +23,7 @@ message Change {
     Network network = 3;
     ContainerSettings container_settings = 4;
     bool auto_add_rig_service_accounts = 5;
-    ConfigFile add_config_file = 6;
+    ConfigFile set_config_file = 6;
     string remove_config_file = 7;
   }
 }
