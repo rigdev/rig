@@ -496,7 +496,7 @@ func createProxyContainer(capsuleName string, cc *cluster.Capsule) (*acsv1.Conta
 	rl := v1.ResourceList{
 		v1.ResourceCPU: resource.MustParse("100m"),
 		// TODO: validate that this limit is okay with regards to mounting configmaps and secrets as files.
-		v1.ResourceMemory: resource.MustParse("256Mi"),
+		v1.ResourceMemory: resource.MustParse("128Mi"),
 	}
 
 	con := acsv1.Container().
