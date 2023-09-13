@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"path"
 	"strings"
 
 	"github.com/rigdev/rig/pkg/errors"
@@ -19,11 +18,10 @@ func ValiateConfigFilePath(p string) error {
 		return errors.InvalidArgumentErrorf("must not be empty")
 	}
 
-	if !path.IsAbs(p) {
+	segments := strings.Split(p, "/")
+	if segments[0] != "" {
 		return errors.InvalidArgumentErrorf("must be an absolute path")
 	}
-
-	segments := strings.Split(p, "/")
 	for i := 1; i < len(segments); i++ {
 		s := segments[i]
 		// check for unescaped whitespace
@@ -31,6 +29,9 @@ func ValiateConfigFilePath(p string) error {
 			return errors.InvalidArgumentErrorf("must not contain unescaped whitespace")
 		}
 		if s == "" {
+			if i == len(segments)-1 {
+				return errors.InvalidArgumentErrorf("must not end with a slash")
+			}
 			return errors.InvalidArgumentErrorf("must not contain double slashes")
 		}
 		if s == "." || s == ".." {

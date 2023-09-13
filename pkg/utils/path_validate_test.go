@@ -47,12 +47,17 @@ func TestValiateConfigFilePath(t *testing.T) {
 			path:     "/path/to/config.yaml",
 			expected: nil,
 		},
+		{
+			name:     "empty path",
+			path:     "/",
+			expected: errors.InvalidArgumentErrorf("must not end with a slash"),
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := ValiateConfigFilePath(tc.path)
-			if errors.CodeOf(err) != errors.CodeOf(tc.expected) && errors.MessageOf(err) != errors.MessageOf(tc.expected) {
+			if errors.CodeOf(err) != errors.CodeOf(tc.expected) || errors.MessageOf(err) != errors.MessageOf(tc.expected) {
 				t.Errorf("expected %v, got %v", tc.expected, err)
 			}
 		})
