@@ -16,6 +16,7 @@ import (
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/utils"
 	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
@@ -76,8 +77,6 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 		return 0, err
 	}
 
-	fmt.Println(c)
-
 	for _, c := range cs {
 		switch v := c.GetField().(type) {
 		case *capsule.Change_Replicas:
@@ -89,6 +88,10 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 		case *capsule.Change_ContainerSettings:
 			rc.ContainerSettings = v.ContainerSettings
 		case *capsule.Change_AddConfigFile:
+			if err := utils.ValiateConfigFilePath(v.AddConfigFile.GetPath()); err != nil {
+				return 0, err
+			}
+
 			rc.ConfigFiles = append(rc.ConfigFiles, v.AddConfigFile)
 		case *capsule.Change_RemoveConfigFile:
 			for i, cf := range rc.ConfigFiles {
