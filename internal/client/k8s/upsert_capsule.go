@@ -494,9 +494,9 @@ const proxyContainerName = "rig-proxy"
 
 func createProxyContainer(capsuleName string, cc *cluster.Capsule) (*acsv1.ContainerApplyConfiguration, error) {
 	rl := v1.ResourceList{
-		v1.ResourceCPU: resource.MustParse("500m"),
+		v1.ResourceCPU: resource.MustParse("100m"),
 		// TODO: validate that this limit is okay with regards to mounting configmaps and secrets as files.
-		v1.ResourceMemory: resource.MustParse("128Mi"),
+		v1.ResourceMemory: resource.MustParse("256Mi"),
 	}
 
 	con := acsv1.Container().
@@ -508,11 +508,7 @@ func createProxyContainer(capsuleName string, cc *cluster.Capsule) (*acsv1.Conta
 				WithName(fmt.Sprintf("%s-proxy", capsuleName)),
 			),
 		).
-		WithResources(
-			acsv1.ResourceRequirements().
-				WithRequests(rl).
-				WithLimits(rl),
-		)
+		WithResources(acsv1.ResourceRequirements().WithRequests(rl))
 
 	infs := cc.Network.GetInterfaces()
 	pps, err := createProxyPorts(infs)
