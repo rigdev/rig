@@ -27,7 +27,7 @@ const (
 	_rigProjectIDLabel = "io.rig.project-id"
 )
 
-func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *cluster.Capsule) error {
+func (c *Client) upsertCapsule(ctx context.Context, capsuleName string, cc *cluster.Capsule) error {
 	c.logger.Debug("creating docker capsule", zap.String("capsuleName", capsuleName))
 
 	netID, err := c.ensureNetwork(ctx)
@@ -250,7 +250,7 @@ func (c *Client) RestartInstance(ctx context.Context, deploymentID, instanceID s
 	return nil
 }
 
-func (c *Client) DeleteCapsule(ctx context.Context, capsuleName string) error {
+func (c *Client) deleteCapsule(ctx context.Context, capsuleName string) error {
 	c.logger.Debug("delete docker capsule", zap.String("capsule_name", capsuleName))
 
 	cs, err := c.getInstances(ctx, capsuleName)

@@ -35,7 +35,7 @@ func CapsuleList(ctx context.Context, cmd *cobra.Command, nc rig.Client, args []
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Capsules (%d)", resp.Msg.GetTotal()), "ID", "Replicas", "Build ID"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Capsules (%d)", resp.Msg.GetTotal()), "Replicas", "Build ID"})
 	for _, c := range resp.Msg.GetCapsules() {
 		r, err := nc.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
 			Msg: &capsule.GetRolloutRequest{
@@ -51,7 +51,6 @@ func CapsuleList(ctx context.Context, cmd *cobra.Command, nc rig.Client, args []
 		}
 
 		t.AppendRow(table.Row{
-			c.GetName(),
 			c.GetCapsuleId(),
 			r.Msg.GetRollout().GetConfig().GetReplicas(),
 			r.Msg.GetRollout().GetConfig().GetBuildId(),

@@ -25,6 +25,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
+	"github.com/rigdev/rig/internal/repository"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
@@ -35,9 +36,10 @@ import (
 type Client struct {
 	logger *zap.Logger
 	dc     *client.Client
+	rcc    repository.ClusterConfig
 }
 
-func New(cfg config.Config, logger *zap.Logger) (*Client, error) {
+func New(cfg config.Config, logger *zap.Logger, rcc repository.ClusterConfig) (*Client, error) {
 	var opts []client.Opt
 	if cfg.Client.Docker.Host != "" {
 		opts = append(opts, client.WithHost(cfg.Client.Docker.Host))
@@ -51,6 +53,7 @@ func New(cfg config.Config, logger *zap.Logger) (*Client, error) {
 	return &Client{
 		logger: logger,
 		dc:     dc,
+		rcc:    rcc,
 	}, nil
 }
 

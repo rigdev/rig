@@ -17,7 +17,7 @@ import (
 func CapsuleListInstances(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
 	resp, err := nc.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			Pagination: &model.Pagination{
 				Offset: uint32(offset),
 				Limit:  uint32(limit),

@@ -31,9 +31,6 @@ type RegistryAuth struct {
 }
 
 type Gateway interface {
-	UpsertCapsule(ctx context.Context, capsuleName string, c *Capsule) error
-	DeleteCapsule(ctx context.Context, capsuleName string) error
-
 	ListInstances(ctx context.Context, capsuleName string) (iterator.Iterator[*capsule.Instance], uint64, error)
 	RestartInstance(ctx context.Context, capsuleName, instanceID string) error
 

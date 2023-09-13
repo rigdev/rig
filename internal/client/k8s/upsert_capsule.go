@@ -30,7 +30,7 @@ import (
 )
 
 // UpsertCapsule implements cluster.Gateway.
-func (c *Client) UpsertCapsule(ctx context.Context, capsuleName string, cc *cluster.Capsule) error {
+func (c *Client) upsertCapsule(ctx context.Context, capsuleName string, cc *cluster.Capsule) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err

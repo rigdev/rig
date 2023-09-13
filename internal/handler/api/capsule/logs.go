@@ -6,16 +6,10 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig/pkg/uuid"
 )
 
 func (h *Handler) Logs(ctx context.Context, req *connect.Request[capsule.LogsRequest], stream *connect.ServerStream[capsule.LogsResponse]) error {
-	cid, err := uuid.Parse(req.Msg.GetCapsuleId())
-	if err != nil {
-		return err
-	}
-
-	it, err := h.cs.Logs(ctx, cid, req.Msg.GetInstanceId(), req.Msg.GetFollow())
+	it, err := h.cs.Logs(ctx, req.Msg.GetCapsuleId(), req.Msg.GetInstanceId(), req.Msg.GetFollow())
 	if err != nil {
 		return err
 	}

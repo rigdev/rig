@@ -23,7 +23,7 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 	var buildID string
 	if res, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
-			CapsuleId:      capsuleID.String(),
+			CapsuleId:      capsuleID,
 			Image:          image,
 			SkipImageCheck: skipImageCheck,
 		},
@@ -36,7 +36,7 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 	if deploy {
 		if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 			Msg: &capsule.DeployRequest{
-				CapsuleId: capsuleID.String(),
+				CapsuleId: capsuleID,
 				Changes: []*capsule.Change{{
 					Field: &capsule.Change_BuildId{
 						BuildId: buildID,

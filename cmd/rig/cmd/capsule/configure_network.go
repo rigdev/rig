@@ -48,7 +48,7 @@ func CapsuleConfigureNetwork(ctx context.Context, cmd *cobra.Command, args []str
 
 	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_Network{
 					Network: n,

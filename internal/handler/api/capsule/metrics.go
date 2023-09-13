@@ -6,16 +6,10 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig/pkg/uuid"
 )
 
 func (h *Handler) CapsuleMetrics(ctx context.Context, req *connect.Request[capsule.CapsuleMetricsRequest]) (*connect.Response[capsule.CapsuleMetricsResponse], error) {
-	cid, err := uuid.Parse(req.Msg.GetCapsuleId())
-	if err != nil {
-		return nil, err
-	}
-
-	it, err := h.ms.ListWhereCapsuleID(ctx, req.Msg.GetPagination(), cid)
+	it, err := h.ms.ListWhereCapsuleID(ctx, req.Msg.GetPagination(), req.Msg.GetCapsuleId())
 	if err != nil {
 		return nil, err
 	}

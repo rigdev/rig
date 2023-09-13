@@ -10,7 +10,7 @@ import (
 )
 
 // DeleteCapsule implements cluster.Gateway.
-func (c *Client) DeleteCapsule(ctx context.Context, capsuleName string) error {
+func (c *Client) deleteCapsule(ctx context.Context, capsuleName string) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err
@@ -49,7 +49,6 @@ func (c *Client) deletePullSecret(ctx context.Context, namespace string) error {
 		return fmt.Errorf("could not delete pull Secret: %w", err)
 	}
 	return nil
-
 }
 
 func (c *Client) deleteProxyEnvSecret(ctx context.Context, capsuleName, namespace string) error {

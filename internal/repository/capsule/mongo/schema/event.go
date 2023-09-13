@@ -8,7 +8,7 @@ import (
 
 type Event struct {
 	ProjectID uuid.UUID `bson:"project_id" json:"project_id"`
-	CapsuleID uuid.UUID `bson:"capsule_id" json:"capsule_id"`
+	CapsuleID string    `bson:"capsule_id" json:"capsule_id"`
 	RolloutID uint64    `bson:"rollout_id" json:"rollout_id"`
 	Data      []byte    `bson:"data,omitempty" json:"data,omitempty"`
 }
@@ -22,7 +22,7 @@ func (e Event) ToProto() (*capsule.Event, error) {
 	return p, nil
 }
 
-func EventFromProto(projectID, capsuleID uuid.UUID, e *capsule.Event) (Event, error) {
+func EventFromProto(projectID uuid.UUID, capsuleID string, e *capsule.Event) (Event, error) {
 	bs, err := proto.Marshal(e)
 	if err != nil {
 		return Event{}, err

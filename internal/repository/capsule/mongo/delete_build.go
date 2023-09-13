@@ -5,11 +5,10 @@ import (
 
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (m *MongoRepository) DeleteBuild(ctx context.Context, capsuleID uuid.UUID, buildID string) error {
+func (m *MongoRepository) DeleteBuild(ctx context.Context, capsuleID string, buildID string) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err

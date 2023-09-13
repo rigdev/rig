@@ -11,7 +11,6 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -226,16 +225,13 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 		return err
 	}
 
-	capsuleID, err := uuid.Parse(res.Msg.GetCapsuleId())
-	if err != nil {
-		return err
-	}
+	capsuleID := res.Msg.GetCapsuleId()
 
 	if image != "" {
 		var buildID string
 		if res, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 			Msg: &capsule.CreateBuildRequest{
-				CapsuleId: capsuleID.String(),
+				CapsuleId: capsuleID,
 				Image:     image,
 			},
 		}); err != nil {
@@ -262,7 +258,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 	if len(init) > 0 {
 		if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 			Msg: &capsule.DeployRequest{
-				CapsuleId: capsuleID.String(),
+				CapsuleId: capsuleID,
 				Changes:   init,
 			},
 		}); err != nil {

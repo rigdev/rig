@@ -12,7 +12,7 @@ import (
 func CapsuleDelete(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
 	if _, err := nc.Capsule().Delete(ctx, &connect.Request[capsule.DeleteRequest]{
 		Msg: &capsule.DeleteRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 		},
 	}); err != nil {
 		return err

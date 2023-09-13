@@ -20,8 +20,8 @@ import (
 
 type Service interface {
 	List(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*capsule.InstanceMetrics], error)
-	ListWhereCapsuleID(ctx context.Context, pagination *model.Pagination, capsuleID uuid.UUID) (iterator.Iterator[*capsule.InstanceMetrics], error)
-	ListWhereCapsuleAndInstanceID(ctx context.Context, pagination *model.Pagination, capsuleID uuid.UUID, instanceID string) (iterator.Iterator[*capsule.InstanceMetrics], error)
+	ListWhereCapsuleID(ctx context.Context, pagination *model.Pagination, capsuleID string) (iterator.Iterator[*capsule.InstanceMetrics], error)
+	ListWhereCapsuleAndInstanceID(ctx context.Context, pagination *model.Pagination, capsuleID string, instanceID string) (iterator.Iterator[*capsule.InstanceMetrics], error)
 }
 
 type service struct {
@@ -36,11 +36,11 @@ func (s *service) List(ctx context.Context, pagination *model.Pagination) (itera
 	return s.cr.ListMetrics(ctx, pagination)
 }
 
-func (s *service) ListWhereCapsuleID(ctx context.Context, pagination *model.Pagination, capsuleID uuid.UUID) (iterator.Iterator[*capsule.InstanceMetrics], error) {
+func (s *service) ListWhereCapsuleID(ctx context.Context, pagination *model.Pagination, capsuleID string) (iterator.Iterator[*capsule.InstanceMetrics], error) {
 	return s.cr.GetMetrics(ctx, pagination, capsuleID)
 }
 
-func (s *service) ListWhereCapsuleAndInstanceID(ctx context.Context, pagination *model.Pagination, capsuleID uuid.UUID, instanceID string) (iterator.Iterator[*capsule.InstanceMetrics], error) {
+func (s *service) ListWhereCapsuleAndInstanceID(ctx context.Context, pagination *model.Pagination, capsuleID string, instanceID string) (iterator.Iterator[*capsule.InstanceMetrics], error) {
 	return s.cr.GetInstanceMetrics(ctx, pagination, capsuleID, instanceID)
 }
 

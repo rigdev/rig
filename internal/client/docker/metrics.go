@@ -9,7 +9,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -44,12 +43,6 @@ func (c *Client) ListCapsuleMetrics(ctx context.Context) (iterator.Iterator[*cap
 				continue
 			}
 
-			cid, err := uuid.Parse(cidLabel)
-			if err != nil {
-				p.Error(fmt.Errorf("could not parse capsule UUID from label: %w", err))
-				return
-			}
-
 			ccs, err := c.dc.ContainerStatsOneShot(ctx, cc.ID)
 			if err != nil {
 				p.Error(fmt.Errorf("could not get container stats: %w", err))
@@ -64,7 +57,7 @@ func (c *Client) ListCapsuleMetrics(ctx context.Context) (iterator.Iterator[*cap
 			}
 
 			cm := &capsule.InstanceMetrics{
-				CapsuleId:  cid.String(),
+				CapsuleId:  cidLabel,
 				InstanceId: containerName(cc),
 				MainContainer: &capsule.ContainerMetrics{
 					Timestamp:   timestamppb.New(s.Read),

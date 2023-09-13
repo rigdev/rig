@@ -11,11 +11,10 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, image, digest string, origin *capsule.Origin, labels map[string]string, validateImage bool) (string, error) {
+func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, digest string, origin *capsule.Origin, labels map[string]string, validateImage bool) (string, error) {
 	if image == "" {
 		return "", errors.InvalidArgumentErrorf("missing image")
 	}
@@ -65,7 +64,7 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID uuid.UUID, image, d
 	return ref.Name(), nil
 }
 
-func (s *Service) ListBuilds(ctx context.Context, capsuleID uuid.UUID, pagination *model.Pagination) (iterator.Iterator[*capsule.Build], uint64, error) {
+func (s *Service) ListBuilds(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*capsule.Build], uint64, error) {
 	return s.cr.ListBuilds(ctx, pagination, capsuleID)
 }
 

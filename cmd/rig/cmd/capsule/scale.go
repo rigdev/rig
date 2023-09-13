@@ -35,7 +35,7 @@ func CapsuleScale(ctx context.Context, cmd *cobra.Command, args []string, capsul
 	}}
 	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			Changes:   cgs,
 		},
 	}); err != nil {

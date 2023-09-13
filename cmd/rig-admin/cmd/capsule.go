@@ -105,22 +105,19 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, cs *c
 		return err
 	}
 
-	logger.Info("created capsule", zap.Stringer("capsule_id", id), zap.String("name", args[0]))
+	logger.Info("created capsule", zap.String("capsule_id", id), zap.String("name", args[0]))
 
 	return nil
 }
 
 func CapsuleDelete(ctx context.Context, cmd *cobra.Command, args []string, cs *capsule_service.Service, logger *zap.Logger) error {
-	capsuleID, err := uuid.Parse(args[0])
-	if err != nil {
-		return err
-	}
+	capsuleID := args[0]
 
 	if err := cs.DeleteCapsule(ctx, capsuleID); err != nil {
 		return err
 	}
 
-	logger.Info("capsule deleted", zap.Stringer("capsule_id", capsuleID))
+	logger.Info("capsule deleted", zap.String("capsule_id", capsuleID))
 
 	return nil
 }
@@ -160,17 +157,14 @@ func CapsuleList(ctx context.Context, cmd *cobra.Command, args []string, cs *cap
 				return err
 			}
 		}
-		logger.Info("Capsule Listed", zap.String("name", c.GetName()), zap.String("id", c.GetCapsuleId()),
+		logger.Info("Capsule Listed", zap.String("name", c.GetCapsuleId()), zap.String("id", c.GetCapsuleId()),
 			zap.Uint64("current rollout", c.GetCurrentRollout()))
 	}
 	return nil
 }
 
 func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, cs *capsule_service.Service, logger *zap.Logger) error {
-	capsuleID, err := uuid.Parse(args[0])
-	if err != nil {
-		return err
-	}
+	capsuleID := args[0]
 
 	buildID, err := cs.CreateBuild(ctx, capsuleID, buildImage, "", nil, nil, true)
 	if err != nil {
@@ -183,10 +177,7 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 }
 
 func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, args []string, cs *capsule_service.Service, logger *zap.Logger) error {
-	capsuleID, err := uuid.Parse(args[0])
-	if err != nil {
-		return err
-	}
+	capsuleID:= args[0]
 
 	it, total, err := cs.ListBuilds(ctx, capsuleID, &model.Pagination{
 		Offset: uint32(listOffset),
@@ -196,7 +187,7 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, args []string, c
 		return err
 	}
 
-	logger.Info("Builds listed", zap.Int("total", int(total)), zap.Stringer("capsule_id", capsuleID))
+	logger.Info("Builds listed", zap.Int("total", int(total)), zap.String("capsule_id", capsuleID))
 	for {
 		c, err := it.Next()
 		if err != nil {
@@ -212,11 +203,7 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, args []string, c
 }
 
 func CapsuleDeleteBuild(ctx context.Context, cmd *cobra.Command, args []string, cs *capsule_service.Service, logger *zap.Logger) error {
-	capsuleID, err := uuid.Parse(args[0])
-	if err != nil {
-		return err
-	}
-
+	capsuleID := args[0]
 	buildID := args[1]
 
 	if err := cs.DeleteBuild(ctx, capsuleID, buildID); err != nil {
@@ -229,11 +216,7 @@ func CapsuleDeleteBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 }
 
 func CapsuleDeployBuild(ctx context.Context, cmd *cobra.Command, args []string, cs *capsule_service.Service, logger *zap.Logger) error {
-	capsuleID, err := uuid.Parse(args[0])
-	if err != nil {
-		return err
-	}
-
+	capsuleID:= args[0]
 	buildID := args[1]
 	cgs := []*capsule.Change{{
 		Field: &capsule.Change_BuildId{BuildId: buildID},

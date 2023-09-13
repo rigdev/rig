@@ -6,16 +6,10 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 )
 
 func (h *Handler) ListInstances(ctx context.Context, req *connect.Request[capsule.ListInstancesRequest]) (*connect.Response[capsule.ListInstancesResponse], error) {
-	cid, err := uuid.Parse(req.Msg.GetCapsuleId())
-	if err != nil {
-		return nil, err
-	}
-
-	it, total, err := h.cs.ListInstances(ctx, cid, req.Msg.GetPagination())
+	it, total, err := h.cs.ListInstances(ctx, req.Msg.GetCapsuleId(), req.Msg.GetPagination())
 	if err != nil {
 		return nil, err
 	}

@@ -20,7 +20,7 @@ func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsu
 	}
 	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_BuildId{BuildId: buildID},
 			}},
