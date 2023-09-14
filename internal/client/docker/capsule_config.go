@@ -61,8 +61,9 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 			},
 		}
 	}
-	image, err := c.ensureImage(ctx, cfg.GetImage(), regAuth)
-	if err != nil {
+
+	image := cfg.GetImage()
+	if err := c.ensureImage(ctx, image, regAuth); err != nil {
 		return err
 	}
 
@@ -100,7 +101,6 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 		EndpointsConfig: map[string]*network.EndpointSettings{},
 	}
 
-	// useProxy := true
 	for _, e := range cfg.GetNetwork().GetInterfaces() {
 		if e.GetPublic().GetEnabled() {
 			switch v := e.GetPublic().GetMethod().GetKind().(type) {
@@ -112,11 +112,6 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 		}
 	}
 
-	// pc, err := cluster.CreateProxyConfig(ctx, cc.Network, cc.JWTMethod)
-	// if err != nil {
-	// 	return err
-	// }
-
 	existing, err := c.getInstances(ctx, cfg.GetName())
 	if err != nil {
 		return err
@@ -125,27 +120,14 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 	for i := 0; i < int(cfg.GetReplicas()); i++ {
 		containerID := fmt.Sprint(cfg.GetName(), "-instance-", i)
 
-		// if useProxy {
-		// 	pc.TargetHost = fmt.Sprint("instances.", cfg.GetName())
-		// 	dnc.EndpointsConfig[netID] = &network.EndpointSettings{
-		// 		Aliases: []string{
-		// 			pc.GetTargetHost(),
-		// 			containerID,
-		// 		},
-		// 	}
-		// 	if err := c.upsertService(ctx, cfg.GetName(), pc); err != nil {
-		// 		return err
-		// 	}
-		// } else {
 		dnc.EndpointsConfig[netID] = &network.EndpointSettings{
 			Aliases: []string{cfg.GetName(), containerID},
 		}
 		if err := c.deleteService(ctx, cfg.GetName()); err != nil {
 			return err
 		}
-		// }
 
-		if err := c.createAndStartContainer(ctx, containerID, dcc, dhc, dnc); err != nil {
+		if err := c.createAndStartContainer(ctx, containerID, dcc, dhc, dnc, cfg.GetConfigFiles()); err != nil {
 			return err
 		}
 

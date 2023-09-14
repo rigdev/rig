@@ -106,6 +106,10 @@ func (s *Service) DeleteCapsule(ctx context.Context, capsuleID string) error {
 		return err
 	}
 
+	if err := s.cr.Delete(ctx, capsuleID); err != nil {
+		return err
+	}
+
 	if err := s.ccg.DeleteCapsuleConfig(ctx, capsuleID); err != nil {
 		return err
 	}

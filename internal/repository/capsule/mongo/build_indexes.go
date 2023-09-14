@@ -34,28 +34,6 @@ func (r *MongoRepository) BuildIndexes(ctx context.Context) error {
 		}
 	}
 
-	capsuleIDIndexModel := mongo.IndexModel{
-		Keys: bson.D{
-			{Key: "project_id", Value: 1},
-			{Key: "capsule_id", Value: 1},
-		},
-		Options: options.Index().SetUnique(true),
-	}
-	if _, err := r.CapsuleCol.Indexes().CreateOne(ctx, capsuleIDIndexModel); err != nil {
-		return err
-	}
-
-	capsuleNameIndexModel := mongo.IndexModel{
-		Keys: bson.D{
-			{Key: "project_id", Value: 1},
-			{Key: "name", Value: 1},
-		},
-		Options: options.Index().SetUnique(true),
-	}
-	if _, err := r.CapsuleCol.Indexes().CreateOne(ctx, capsuleNameIndexModel); err != nil {
-		return err
-	}
-
 	rolloutScheduledAtIndexModel := mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "scheduled_at", Value: 1},

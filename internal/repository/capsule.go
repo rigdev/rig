@@ -20,7 +20,7 @@ type Capsule interface {
 	ListRollouts(ctx context.Context, pagination *model.Pagination, capsuleID string) (iterator.Iterator[*capsule.Rollout], uint64, error)
 	UpdateRolloutStatus(ctx context.Context, capsuleID string, rolloutID uint64, version uint64, rs *rollout.Status) error
 	GetRollout(ctx context.Context, capsuleID string, rolloutID uint64) (*capsule.RolloutConfig, *rollout.Status, uint64, error)
-	GetCurrentRollout(ctx context.Context, capsuleID string) (uint64,*capsule.RolloutConfig, *rollout.Status, uint64,  error)
+	GetCurrentRollout(ctx context.Context, capsuleID string) (uint64, *capsule.RolloutConfig, *rollout.Status, uint64, error)
 	ActiveRollouts(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[repo_capsule.ActiveRollout], error)
 
 	CreateEvent(ctx context.Context, capsuleID string, e *capsule.Event) error
@@ -30,6 +30,8 @@ type Capsule interface {
 	ListMetrics(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*capsule.InstanceMetrics], error)
 	GetMetrics(ctx context.Context, pagination *model.Pagination, capsuleID string) (iterator.Iterator[*capsule.InstanceMetrics], error)
 	GetInstanceMetrics(ctx context.Context, pagination *model.Pagination, capsuleID string, instanceID string) (iterator.Iterator[*capsule.InstanceMetrics], error)
+
+	Delete(ctx context.Context, capsuleID string) error
 
 	BuildIndexes(ctx context.Context) error
 }
