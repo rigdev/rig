@@ -22,10 +22,11 @@ var (
 )
 
 var (
-	deploy      bool
-	follow      bool
-	interactive bool
-	outputJSON  bool
+	deploy         bool
+	follow         bool
+	interactive    bool
+	outputJSON     bool
+	skipImageCheck bool
 )
 
 var (
@@ -70,6 +71,7 @@ func Setup(parent *cobra.Command) {
 	}
 	createBuild.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
 	createBuild.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy build after successful creation")
+	createBuild.Flags().BoolVarP(&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists")
 	capsule.AddCommand(createBuild)
 
 	deploy := &cobra.Command{

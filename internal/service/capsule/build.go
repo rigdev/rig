@@ -87,7 +87,8 @@ func (s *Service) validateImage(ctx context.Context, ref name.Reference) (string
 		}))
 	}
 
-	img, err := remote.Image(ref, opts...)
+	lookupRef := s.getLookupDockerRef(ref)
+	img, err := remote.Image(lookupRef, opts...)
 	if err != nil {
 		if terr, ok := err.(*transport.Error); ok {
 			if len(terr.Errors) > 0 {
@@ -110,4 +111,19 @@ func (s *Service) validateImage(ctx context.Context, ref name.Reference) (string
 	}
 
 	return d.String(), nil
+}
+
+func (s *Service) getLookupDockerRef(ref name.Reference) name.Reference {
+	cfg := s.cfg.Cluster.DevRegistry
+	if !cfg.Enabled || cfg.Host == "" || cfg.ClusterHost == "" {
+		return ref
+	}
+
+	if ref.Context().RegistryStr() != cfg.Host {
+		return ref
+	}
+
+	r, _ := name.NewRegistry(cfg.ClusterHost, name.Insecure)
+	repo := r.Repo(ref.Context().RepositoryStr())
+	return repo.Tag(ref.Identifier())
 }

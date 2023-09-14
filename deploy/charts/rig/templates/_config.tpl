@@ -29,6 +29,12 @@ client:
   {{- end }}
 cluster:
   type: k8s
+  {{- with .Values.rig.cluster.dev_registry }}
+  dev_registry:
+    enabled: {{ .enabled }}
+    host: {{ .host }}
+    cluster_host: {{ .cluster_host }}
+  {{- end }}
 {{- with .Values.rig.email }}
 email:
   type: {{ .type | quote }}
@@ -36,7 +42,7 @@ email:
 {{- with .Values.rig.registry }}
 registry:
   enabled: {{ .enabled }}
-  port: {{ .port }}
+  port: {{ .registry_port }}
   log_level: {{ .log_level }}
 {{- end }}
 {{- end -}}

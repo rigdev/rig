@@ -140,13 +140,16 @@ deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
 		--set image.tag=$(TAG) \
 		--set mongodb.enabled=true \
 		--set rig.telemetry.enabled=false \
+		--set rig.cluster.dev_registry.enabled=true \
+		--set rig.cluster.dev_registry.host="localhost:30000" \
+		--set rig.cluster.dev_registry.cluster_host="rig-registry:5000" \
   		--create-namespace
 	$(KUBECTL) rollout restart deployment -n rig-system rig
 
 .PHONY: kind-create
 kind-create: kind ## 🐋 Create kind cluster with rig dependencies
 	$(KIND) get clusters | grep '^rig$$' || \
-		$(KIND) create cluster --name rig
+		./deploy/kind/create.sh $(KIND)
 
 .PHONY: kind-load
 kind-load: kind docker ## 🐋 Load docker image into kind cluster
@@ -158,6 +161,10 @@ kind-deploy: kind kind-load deploy ## 🐋 Deploy rig to kind cluster
 .PHONY: kind-clean
 kind-clean: ## 🧹 Clean kind cluster
 	$(KIND) delete clusters rig
+
+.PHONY: kind-registry
+kind-registry: ## 🧹 Clean kind cluster
+	$(KUBECTL) apply -f ./deploy/registry/registry.yaml -n rig-system
 
 ##@ Release
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
+	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/repository"
 	"github.com/rigdev/rig/internal/service/auth"
@@ -24,9 +25,10 @@ type Service struct {
 	as     *auth.Service
 	ps     project.Service
 	q      *Queue[Job]
+	cfg    config.Config
 }
 
-func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, as *auth.Service, ps project.Service, logger *zap.Logger) *Service {
+func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, as *auth.Service, ps project.Service, cfg config.Config, logger *zap.Logger) *Service {
 	s := &Service{
 		cr:     cr,
 		sr:     sr,
@@ -34,6 +36,7 @@ func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway,
 		as:     as,
 		ps:     ps,
 		q:      NewQueue[Job](),
+		cfg:    cfg,
 		logger: logger,
 	}
 

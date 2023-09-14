@@ -112,7 +112,15 @@ type OAuthClientCredentials struct {
 }
 
 type Cluster struct {
-	Type ClusterType `mapstructure:"type"`
+	Type        ClusterType `mapstructure:"type"`
+	DevRegistry DevRegistry `mapstructure:"dev_registry"`
+}
+
+type DevRegistry struct {
+	Enabled     bool   `mapstructure:"enabled"`
+	Host        string `mapstructure:"host"`
+	ClusterHost string `mapstructure:"cluster_host"`
+	Size        uint64 `mapstructure:"size"`
 }
 
 type ClusterType string
@@ -136,7 +144,8 @@ const (
 )
 
 type Registry struct {
-	Enabled  bool          `mapstructure:"enabled"`
-	Port     int           `mapstructure:"port"`
+	Enabled bool `mapstructure:"enabled"`
+	// Naming the port 'port' leads to a clash
+	Port     int           `mapstructure:"registry_port"`
 	LogLevel zapcore.Level `mapstructure:"log_level"`
 }
