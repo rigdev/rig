@@ -97,7 +97,6 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 				})
 			}
 			cSettings := &capsule.ContainerSettings{
-				Args:                 []string{},
 				EnvironmentVariables: map[string]string{},
 			}
 
