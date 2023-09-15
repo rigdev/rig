@@ -140,9 +140,8 @@ deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
 		--set image.tag=$(TAG) \
 		--set mongodb.enabled=true \
 		--set rig.telemetry.enabled=false \
-		--set rig.cluster.dev_registry.enabled=true \
 		--set rig.cluster.dev_registry.host="localhost:30000" \
-		--set rig.cluster.dev_registry.cluster_host="rig-registry:5000" \
+		--set rig.cluster.dev_registry.cluster_host="registry:5000" \
   		--create-namespace
 	$(KUBECTL) rollout restart deployment -n rig-system rig
 

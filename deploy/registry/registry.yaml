@@ -2,21 +2,21 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    run: rig-registry
-  name: rig-registry
+    run: registry
+  name: registry
   namespace: rig-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: rig-registry
+      run: registry
   template:
     metadata:
       labels:
-        run: rig-registry
+        run: registry
     spec:
       containers:
-        - name: rig-registry
+        - name: registry
           image: registry:2
           ports:
             - containerPort: 5000
@@ -24,14 +24,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: rig-registry
+  name: registry
   namespace: rig-system
 spec:
   type: NodePort
   selector:
-    run: rig-registry
+    run: registry
   ports:
-    - name: rig-registry-tcp
+    - name: registry-tcp
       nodePort: 30000
       protocol: TCP
       port: 5000
