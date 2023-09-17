@@ -221,7 +221,7 @@ func CapsuleDeployBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 	cgs := []*capsule.Change{{
 		Field: &capsule.Change_BuildId{BuildId: buildID},
 	}}
-	if err := cs.Deploy(ctx, capsuleID, cgs); err != nil {
+	if _, err := cs.Deploy(ctx, capsuleID, cgs); err != nil {
 		return err
 	}
 

@@ -162,7 +162,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 				return err
 			} else if ok {
 				for {
-					cf := &capsule.ConfigFile{}
+					cf := &capsule.Change_ConfigFile{}
 
 					mountPath, err := common.PromptInput("Mount path: ", common.ValidateAbsPathOpt)
 					if err != nil {

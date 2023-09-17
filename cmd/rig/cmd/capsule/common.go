@@ -35,7 +35,7 @@ func getCurrentContainerSettings(ctx context.Context, capsuleID CapsuleID, clien
 		return nil, err
 	}
 
-	container := r.Msg.Rollout.Config.GetContainerSettings()
+	container := r.Msg.GetRollout().GetConfig().GetContainerSettings()
 	if container == nil {
 		container = &capsule.ContainerSettings{}
 	}
