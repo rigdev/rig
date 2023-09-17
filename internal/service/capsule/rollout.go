@@ -89,18 +89,30 @@ func (s *Service) newRollout(ctx context.Context, capsuleID string, cs []*capsul
 				return 0, err
 			}
 
+			author, err := s.as.GetAuthor(ctx)
+			if err != nil {
+				return 0, err
+			}
+
+			cfg := &capsule.ConfigFile{
+				Path:      v.SetConfigFile.GetPath(),
+				Content:   v.SetConfigFile.GetContent(),
+				UpdatedAt: timestamppb.New(now),
+				UpdatedBy: author,
+			}
+
 			// check if the config file already exists, and if so replace it otherwise append it
 			var found bool
 			for i, cf := range rc.ConfigFiles {
 				if cf.GetPath() == v.SetConfigFile.GetPath() {
-					rc.ConfigFiles[i] = v.SetConfigFile
+					rc.ConfigFiles[i] = cfg
 					found = true
 					break
 				}
 			}
 
 			if !found {
-				rc.ConfigFiles = append(rc.ConfigFiles, v.SetConfigFile)
+				rc.ConfigFiles = append(rc.ConfigFiles, cfg)
 			}
 		case *capsule.Change_RemoveConfigFile:
 			for i, cf := range rc.ConfigFiles {
