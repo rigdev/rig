@@ -7,7 +7,8 @@ import (
 
 func Setup(parent *cobra.Command) {
 	config := &cobra.Command{
-		Use: "config",
+		Use:   "config",
+		Short: "Manage Rig CLI configuration",
 	}
 
 	init := &cobra.Command{

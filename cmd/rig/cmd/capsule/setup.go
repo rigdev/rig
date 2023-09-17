@@ -1,27 +1,18 @@
 package capsule
 
 import (
-	"context"
-
-	"github.com/bufbuild/connect-go"
-	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
-	"go.uber.org/fx"
 )
 
 var (
-	offset   int
-	limit    int
-	rollout  uint64
-	replicas int
+	offset int
+	limit  int
 )
 
 var (
-	deploy         bool
+	deployBool     bool
 	follow         bool
 	interactive    bool
 	outputJSON     bool
@@ -30,249 +21,134 @@ var (
 )
 
 var (
-	name        string
-	image       string
-	buildID     string
-	networkFile string
-	instanceID  string
+	CapsuleID string
+	image     string
+	buildID   string
+	command   string
 )
 
-func Setup(parent *cobra.Command) {
-	capsule := &cobra.Command{
-		Use: "capsule",
+var (
+	args []string
+)
+
+var omitCapsuleIDAnnotation = map[string]string{
+	"OMIT_CAPSULE_ID": "true",
+}
+
+func Setup(parent *cobra.Command) *cobra.Command {
+	capsuleCmd := &cobra.Command{
+		Use:   "capsule",
+		Short: "Manage capsules",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Annotations["OMIT_CAPSULE_ID"] != "" {
+				return nil
+			}
+
+			if CapsuleID == "" {
+				var err error
+				CapsuleID, err = common.PromptInput("Capsule id:", common.ValidateNonEmptyOpt)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
 	}
+	capsuleCmd.PersistentFlags().StringVarP(&CapsuleID, "capsule-id", "c", "", "Id of the capsule")
+	capsuleCmd.RegisterFlagCompletionFunc("capsule-id", capsuleCompletions)
 
-	create := &cobra.Command{
-		Use:   "create",
-		Short: "Create a new capsule",
-		Args:  cobra.NoArgs,
-		RunE:  base.Register(CapsuleCreate),
+	capsuleCreate := &cobra.Command{
+		Use:               "create",
+		Short:             "Create a new capsule",
+		Args:              cobra.NoArgs,
+		RunE:              base.Register(create),
+		Annotations:       omitCapsuleIDAnnotation,
+		ValidArgsFunction: common.NoCompletions,
 	}
-	create.Flags().StringVarP(&name, "name", "n", "", "name of the capsule")
-	create.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode")
+	capsuleCreate.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode")
+	capsuleCreate.RegisterFlagCompletionFunc("interactive", common.BoolCompletions)
 
-	capsule.AddCommand(create)
+	capsuleCmd.AddCommand(capsuleCreate)
 
-	push := &cobra.Command{
-		Use:   "push [capsule-name]",
-		Short: "Push a local image to a Capsule",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsulePush),
+	capsulePush := &cobra.Command{
+		Use:               "push",
+		Short:             "Push a local image to a Capsule",
+		Args:              cobra.MaximumNArgs(1),
+		RunE:              base.Register(push),
+		ValidArgsFunction: common.NoCompletions,
 	}
-	push.Flags().StringVarP(&image, "image", "i", "", "image to push")
-	push.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy build after successful push")
-	capsule.AddCommand(push)
+	capsulePush.Flags().StringVarP(&image, "image", "i", "", "image to push")
+	capsulePush.Flags().BoolVarP(&deployBool, "deploy", "d", false, "deploy build after successful push")
+	capsulePush.RegisterFlagCompletionFunc("deploy", common.BoolCompletions)
+	capsulePush.RegisterFlagCompletionFunc("image", common.NoCompletions)
+	capsuleCmd.AddCommand(capsulePush)
 
-	createBuild := &cobra.Command{
-		Use:   "create-build [capsule-name]",
-		Short: "Create a new build with the given image",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleCreateBuild),
-	}
-	createBuild.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
-	createBuild.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy build after successful creation")
-	createBuild.Flags().BoolVarP(&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists")
-	createBuild.Flags().BoolVarP(&remote, "remote", "r", false, "Rig will not look for the image locally but assumes it from a remote registry. If not set, Rig will search locally and then remotely")
-	capsule.AddCommand(createBuild)
-
-	deploy := &cobra.Command{
-		Use:   "deploy [capsule-name]",
+	capsuleDeploy := &cobra.Command{
+		Use:   "deploy",
 		Short: "Deploy the given build to a capsule",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleDeploy),
+		RunE:  base.Register(deploy),
 		Long: `Deploy either the given rig-build or docker image to a capsule.
 If --build-id is given rig tries to find a matching existing rig-build to deploy.
 If --image is given rig tries to create a new rig-build from the docker image (if it doesn't already exist)
 Not both --build-id and --image can be given`,
 	}
-	deploy.Flags().StringVarP(&buildID, "build-id", "b", "", "rig build id to deploy")
-	deploy.Flags().StringVarP(&image, "image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist")
-	deploy.Flags().BoolVarP(&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote registry. If not set, Rig will search locally and then remotely")
-	capsule.AddCommand(deploy)
+	capsuleDeploy.Flags().StringVarP(&buildID, "build-id", "b", "", "rig build id to deploy")
+	capsuleDeploy.Flags().StringVarP(&image, "image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist")
+	capsuleDeploy.Flags().BoolVarP(&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote registry. If not set, Rig will search locally and then remotely")
+	capsuleDeploy.RegisterFlagCompletionFunc("build-id", BuildCompletions)
+	capsuleCmd.AddCommand(capsuleDeploy)
 
-	scale := &cobra.Command{
-		Use:   "scale [capsule-name]",
-		Short: "scale the capsule to a new number of replicas",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleScale),
+	capsuleAbort := &cobra.Command{
+		Use:               "abort",
+		Short:             "Abort the current rollout. This will leave the capsule in a undefined state",
+		Args:              cobra.NoArgs,
+		RunE:              base.Register(abort),
+		ValidArgsFunction: common.NoCompletions,
 	}
+	capsuleCmd.AddCommand(capsuleAbort)
 
-	scale.Flags().IntVarP(&replicas, "replicas", "r", -1, "number of replicas to scale to")
-	capsule.AddCommand(scale)
-
-	abort := &cobra.Command{
-		Use:   "abort [capsule-name]",
-		Short: "abort the current rollout. This will leave the capsule in a undefined state",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleAbort),
+	capsuleDelete := &cobra.Command{
+		Use:               "delete",
+		Short:             "Delete a capsule",
+		Args:              cobra.NoArgs,
+		RunE:              base.Register(delete),
+		ValidArgsFunction: common.NoCompletions,
 	}
-	capsule.AddCommand(abort)
+	capsuleCmd.AddCommand(capsuleDelete)
 
-	configureNetwork := &cobra.Command{
-		Use:   "configure-network [capsule-name]",
-		Short: "configure the network of the capsule",
-		Args:  cobra.MaximumNArgs(2),
-		RunE:  base.Register(CapsuleConfigureNetwork),
+	capsuleGet := &cobra.Command{
+		Use:               "get",
+		Short:             "Get one or more capsules",
+		Args:              cobra.NoArgs,
+		Annotations:       omitCapsuleIDAnnotation,
+		RunE:              base.Register(get),
+		ValidArgsFunction: common.NoCompletions,
 	}
-	configureNetwork.Flags().StringVarP(&networkFile, "network-file", "n", "", "network file to use")
-	capsule.AddCommand(configureNetwork)
+	capsuleGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
+	capsuleGet.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
+	capsuleGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
+	capsuleGet.RegisterFlagCompletionFunc("json", common.BoolCompletions)
+	capsuleGet.RegisterFlagCompletionFunc("offset", common.NoCompletions)
+	capsuleGet.RegisterFlagCompletionFunc("limit", common.NoCompletions)
+	capsuleCmd.AddCommand(capsuleGet)
 
-	delete := &cobra.Command{
-		Use:   "delete [capsule-name]",
-		Short: "Delete a capsule",
-		Args:  cobra.ExactArgs(1),
-		RunE:  base.Register(CapsuleDelete),
+	capsuleConfig := &cobra.Command{
+		Use:               "config",
+		Short:             "Configure the capsule",
+		Args:              cobra.NoArgs,
+		RunE:              base.Register(config),
+		ValidArgsFunction: common.NoCompletions,
 	}
-	capsule.AddCommand(delete)
+	capsuleConfig.Flags().Bool("auto-add-service-account", false, "automatically add the rig service account to the capsule")
+	capsuleConfig.Flags().StringVar(&command, "cmd", "", "Container CMD to run")
+	capsuleConfig.Flags().StringSliceVar(&args, "args", []string{}, "Container CMD args")
+	capsuleConfig.RegisterFlagCompletionFunc("auto-add-service-account", common.BoolCompletions)
+	capsuleConfig.RegisterFlagCompletionFunc("cmd", common.NoCompletions)
+	capsuleConfig.RegisterFlagCompletionFunc("args", common.NoCompletions)
+	capsuleCmd.AddCommand(capsuleConfig)
 
-	list := &cobra.Command{
-		Use:     "list",
-		Short:   "List capsules",
-		Aliases: []string{"ls"},
-		Args:    cobra.NoArgs,
-		RunE:    base.Register(CapsuleList),
-	}
-	list.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	list.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
-	list.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	capsule.AddCommand(list)
+	parent.AddCommand(capsuleCmd)
 
-	listBuilds := &cobra.Command{
-		Use:   "list-builds [capsule-name]",
-		Short: "List builds",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleListBuilds),
-	}
-	listBuilds.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	listBuilds.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
-	listBuilds.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	capsule.AddCommand(listBuilds)
-
-	listRollouts := &cobra.Command{
-		Use:   "list-rollouts [capsule-name]",
-		Short: "List rollouts",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleListRollouts),
-	}
-	listRollouts.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	listRollouts.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
-	listRollouts.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	capsule.AddCommand(listRollouts)
-
-	listInstances := &cobra.Command{
-		Use:   "list-instances [capsule-name]",
-		Short: "List instances",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleListInstances),
-	}
-	listInstances.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	listInstances.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
-	listInstances.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	capsule.AddCommand(listInstances)
-
-	restartInstance := &cobra.Command{
-		Use:   "restart-instance [capsule-name]",
-		Short: "Restart a single instance",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleRestartInstance),
-	}
-	restartInstance.Flags().StringVarP(&instanceID, "instance-id", "i", "", "instance id to restart")
-	capsule.AddCommand(restartInstance)
-
-	logs := &cobra.Command{
-		Use:   "logs [capsule-name]",
-		Short: "Read instance logs from the capsule ",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleLogs),
-	}
-	logs.Flags().StringVarP(&instanceID, "instance-id", "i", "", "instance id to restart")
-	logs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
-	capsule.AddCommand(logs)
-
-	config := &cobra.Command{
-		Use:   "config [capsule-name]",
-		Short: "Configure a capsule",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleConfig),
-	}
-	config.Flags().BoolP("auto-add-service-account", "a", false, "automatically create and add Rig service-account for this capsule")
-	capsule.AddCommand(config)
-
-	events := &cobra.Command{
-		Use:   "events [capsule-name]",
-		Short: "List events related to a rollout, default to the current rollout",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(CapsuleEvents),
-	}
-	events.Flags().Uint64VarP(&rollout, "rollout", "r", 0, "rollout to get events from")
-	capsule.AddCommand(events)
-
-	setupSetResources(capsule)
-	setupGetResources(capsule)
-
-	parent.AddCommand(capsule)
-
-	base.AddOptions(
-		fx.Provide(
-			provideCapsuleID,
-		),
-	)
-}
-
-type CapsuleID = string
-
-func provideCapsuleID(ctx context.Context, nc rig.Client, args []string) (CapsuleID, error) {
-	var capsuleID string
-	var err error
-	if len(args) == 0 {
-		capsuleID, err = common.PromptInput("Enter Capsule name:", common.ValidateNonEmptyOpt)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		capsuleID = args[0]
-	}
-
-	if _, err := nc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
-		Msg: &capsule.GetRequest{
-			CapsuleId: capsuleID,
-		},
-	}); err != nil {
-		return "", err
-	}
-
-	return capsuleID, nil
-}
-
-type InstanceID = string
-
-func provideInstanceID(ctx context.Context, nc rig.Client, capsuleID CapsuleID, arg string) (InstanceID, error) {
-	if arg != "" {
-		return arg, nil
-	}
-
-	res, err := nc.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
-		Msg: &capsule.ListInstancesRequest{
-			CapsuleId: capsuleID,
-		},
-	})
-	if err != nil {
-		return "", err
-	}
-
-	var items []string
-	for _, i := range res.Msg.GetInstances() {
-		items = append(items, i.GetInstanceId())
-	}
-
-	if len(items) == 0 {
-		return "", errors.InvalidArgumentErrorf("no instances selected")
-	}
-
-	if len(items) == 1 {
-		return items[0], nil
-	}
-
-	_, s, err := common.PromptSelect("instance", items)
-	return s, err
+	return capsuleCmd
 }

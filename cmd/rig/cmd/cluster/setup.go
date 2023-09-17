@@ -7,7 +7,8 @@ import (
 
 func Setup(parent *cobra.Command) {
 	cluster := &cobra.Command{
-		Use: "cluster",
+		Use:   "cluster",
+		Short: "Manage Rig clusters",
 	}
 
 	getConfig := &cobra.Command{

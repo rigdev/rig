@@ -1,7 +1,8 @@
-package capsule
+package rollout
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -9,14 +10,23 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func CapsuleEvents(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
-	if rollout == 0 {
+func CapsuleEvents(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+	var rollout uint64
+	var err error
+	if len(args) > 0 {
+		rollout, err = strconv.ParseUint(args[0], 10, 32)
+		if err != nil {
+			return errors.InvalidArgumentErrorf("invalid rollout id - %v", err)
+		}
+	} else {
 		resp, err := nc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 			Msg: &capsule.GetRequest{
-				CapsuleId: capsuleID,
+				CapsuleId: capsule_cmd.CapsuleID,
 			},
 		})
 		if err != nil {
@@ -28,7 +38,7 @@ func CapsuleEvents(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID,
 
 	resp, err := nc.Capsule().ListEvents(ctx, &connect.Request[capsule.ListEventsRequest]{
 		Msg: &capsule.ListEventsRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: capsule_cmd.CapsuleID,
 			Pagination: &model.Pagination{
 				Offset:     uint32(offset),
 				Limit:      uint32(limit),

@@ -1,4 +1,4 @@
-package capsule
+package network
 
 import (
 	"context"
@@ -9,19 +9,23 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/yaml.v3"
 )
 
-func CapsuleConfigureNetwork(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client) error {
+func configure(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
 	var err error
-	if networkFile == "" {
+	networkFile := ""
+	if len(args) == 0 {
 		networkFile, err = common.PromptInput("Enter Network file path:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
+	} else {
+		networkFile = args[0]
 	}
 
 	bs, err := os.ReadFile(networkFile)
@@ -43,11 +47,9 @@ func CapsuleConfigureNetwork(ctx context.Context, cmd *cobra.Command, args []str
 		return err
 	}
 
-	cmd.Println(n.GetInterfaces()[0])
-
 	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: capsule_cmd.CapsuleID,
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_Network{
 					Network: n,

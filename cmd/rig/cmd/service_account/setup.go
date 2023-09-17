@@ -20,7 +20,8 @@ var (
 
 func Setup(parent *cobra.Command) {
 	serviceAccount := &cobra.Command{
-		Use: "service-account",
+		Use:   "service-account",
+		Short: "Manage service accounts",
 	}
 
 	create := &cobra.Command{

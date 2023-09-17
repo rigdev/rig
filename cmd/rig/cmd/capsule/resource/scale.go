@@ -1,45 +1,23 @@
-package capsule
+package resource
 
 import (
 	"context"
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-var (
-	requestCPU    string
-	requestMemory string
-	limitCPU      string
-	limitMemory   string
-)
-
-func setupSetResources(parent *cobra.Command) {
-	setResources := &cobra.Command{
-		Use:   "set-resources",
-		Short: "Sets the container resources for the capsule",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(SetResources),
-	}
-
-	setResources.Flags().StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
-	setResources.Flags().StringVar(&requestMemory, "request-memory", "", "Minimum memory per container")
-
-	setResources.Flags().StringVar(&limitCPU, "limit-cpu", "", "Maximum CPU cores per container")
-	setResources.Flags().StringVar(&limitMemory, "limit-memory", "", "Maximum memory per container")
-
-	parent.AddCommand(setResources)
-}
-
-func SetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, client rig.Client, args []string) error {
-	container, err := getCurrentContainerSettings(ctx, capsuleID, client)
+func scale(ctx context.Context, cmd *cobra.Command, client rig.Client, args []string) error {
+	container, r, err := capsule_cmd.GetCurrentContainerResources(ctx, client)
 	if err != nil {
 		return nil
 	}
@@ -49,21 +27,28 @@ func SetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 	}
 
 	if allFlagsEmpty() {
-		err = setResourcesInteractive(container.Resources)
+		err = setResourcesInteractive(container.Resources, &r)
 	} else {
-		err = setResourcesFromFlags(container.Resources)
+		err = setResourcesFromFlags(container.Resources, &r)
 	}
 	if err != nil {
 		return err
 	}
 
 	_, err = client.Capsule().Deploy(ctx, connect.NewRequest(&capsule.DeployRequest{
-		CapsuleId: capsuleID,
-		Changes: []*capsule.Change{{
-			Field: &capsule.Change_ContainerSettings{
-				ContainerSettings: container,
+		CapsuleId: capsule_cmd.CapsuleID,
+		Changes: []*capsule.Change{
+			{
+				Field: &capsule.Change_ContainerSettings{
+					ContainerSettings: container,
+				},
 			},
-		}},
+			{
+				Field: &capsule.Change_Replicas{
+					Replicas: r,
+				},
+			},
+		},
 	}))
 	if err != nil {
 		return err
@@ -72,9 +57,9 @@ func SetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 	return nil
 }
 
-func setResourcesInteractive(curResources *capsule.Resources) error {
+func setResourcesInteractive(curResources *capsule.Resources, r *uint32) error {
 	for {
-		i, _, err := common.PromptSelect("What to update", []string{"Requests", "Limits", "Done"})
+		i, _, err := common.PromptSelect("What to update", []string{"Requests", "Limits", "Replicas", "Done"})
 		if err != nil {
 			return err
 		}
@@ -89,6 +74,18 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 		case 1:
 			curR = curResources.Limits
 			name = "limit"
+		case 2:
+			replicasString, err := common.PromptInput("New replicas (current is "+fmt.Sprintf("%v", *r)+"):", common.ValidateNonEmptyOpt)
+			if err != nil {
+				return err
+			}
+			replicasCount, err := strconv.ParseUint(replicasString, 10, 32)
+			if err != nil {
+				return errors.InvalidArgumentErrorf("invalid replica count; %v", err)
+			}
+			*r = uint32(replicasCount)
+			continue
+
 		default:
 			done = true
 		}
@@ -154,7 +151,7 @@ func intToByteString(i uint64) string {
 	return common.FormatIntToSI(i, 3) + "B"
 }
 
-func setResourcesFromFlags(curResources *capsule.Resources) error {
+func setResourcesFromFlags(curResources *capsule.Resources, r *uint32) error {
 	if err := updateResources(curResources.Requests, requestCPU, requestMemory); err != nil {
 		return err
 	}
@@ -163,6 +160,23 @@ func setResourcesFromFlags(curResources *capsule.Resources) error {
 		return err
 	}
 
+	if err := updateReplicas(r); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateReplicas(r *uint32) error {
+	if replicas == -1 {
+		return nil
+	}
+
+	if replicas < 0 {
+		return errors.InvalidArgumentErrorf("replicas must be positive")
+	}
+
+	*r = uint32(replicas)
 	return nil
 }
 
@@ -209,5 +223,5 @@ func parseBytes(s string) (uint64, error) {
 }
 
 func allFlagsEmpty() bool {
-	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == ""
+	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == "" && replicas == -1
 }

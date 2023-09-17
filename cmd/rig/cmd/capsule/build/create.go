@@ -1,4 +1,4 @@
-package capsule
+package build
 
 import (
 	"context"
@@ -7,22 +7,23 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
+	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 )
 
-func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client, cfg *cmd_config.Config, dockerClient *client.Client) error {
+func create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config, dockerClient *client.Client) error {
 	var err error
 
-	imageRef := imageRefFromFlags()
+	imageRef := cmd_capsule.ImageRefFromFlags()
 	if image == "" {
-		imageRef, err = promptForImage(ctx, dockerClient)
+		imageRef, err = cmd_capsule.PromptForImage(ctx, dockerClient)
 		if err != nil {
 			return err
 		}
 	}
 
-	buildID, err := createBuild(ctx, nc, capsuleID, dockerClient, imageRef)
+	buildID, err := cmd_capsule.CreateBuild(ctx, nc, cmd_capsule.CapsuleID, dockerClient, imageRef)
 	if err != nil {
 		return err
 	}
@@ -33,7 +34,7 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 
 	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: cmd_capsule.CapsuleID,
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_BuildId{
 					BuildId: buildID,

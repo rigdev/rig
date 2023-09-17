@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func CapsuleAbort(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
+func abort(ctx context.Context, cmd *cobra.Command, nc rig.Client) error {
 	c, err := nc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: CapsuleID,
 		},
 	})
 	if err != nil {
@@ -21,14 +21,14 @@ func CapsuleAbort(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 
 	if _, err := nc.Capsule().AbortRollout(ctx, &connect.Request[capsule.AbortRolloutRequest]{
 		Msg: &capsule.AbortRolloutRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: CapsuleID,
 			RolloutId: c.Msg.GetCapsule().GetCurrentRollout(),
 		},
 	}); err != nil {
 		return err
 	}
 
-	cmd.Println("Rollout aborted")
+	cmd.Println("Current rollout aborted")
 
 	return nil
 }

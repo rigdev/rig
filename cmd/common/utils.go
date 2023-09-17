@@ -83,6 +83,14 @@ var ValidateAbsolutePath = func(input string) error {
 	}
 	return nil
 }
+
+var ValidateFilePath = func(input string) error {
+	if path.Ext(input) == "" {
+		return errors.InvalidArgumentErrorf("must be a file path")
+	}
+	return nil
+}
+
 var ValidateImage = func(input string) error {
 	_, err := reference.ParseDockerRef(input)
 	if err != nil {

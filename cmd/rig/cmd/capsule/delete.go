@@ -9,15 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func CapsuleDelete(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
+func delete(ctx context.Context, cmd *cobra.Command, nc rig.Client) error {
 	if _, err := nc.Capsule().Delete(ctx, &connect.Request[capsule.DeleteRequest]{
 		Msg: &capsule.DeleteRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: CapsuleID,
 		},
 	}); err != nil {
 		return err
 	}
 
-	cmd.Println("Delete capsule", capsuleID)
+	cmd.Println("Delete capsule", CapsuleID)
 	return nil
 }

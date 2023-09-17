@@ -15,7 +15,8 @@ var outputJSON bool
 
 func Setup(parent *cobra.Command) {
 	auth := &cobra.Command{
-		Use: "auth",
+		Use:   "auth",
+		Short: "Manage authentication for the current user",
 	}
 
 	login := &cobra.Command{

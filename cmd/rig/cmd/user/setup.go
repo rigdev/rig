@@ -33,7 +33,8 @@ var (
 
 func Setup(parent *cobra.Command) {
 	user := &cobra.Command{
-		Use: "user",
+		Use:   "user",
+		Short: "Manage users in your projects",
 	}
 
 	create := &cobra.Command{

@@ -6,11 +6,33 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func CapsuleConfig(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
+func config(ctx context.Context, cmd *cobra.Command, rc rig.Client) error {
+	if len(args) > 0 && command == "" {
+		return errors.InvalidArgumentErrorf("command must be set when args are provided")
+	}
+
 	var cs []*capsule.Change
+
+	if command != "" {
+		r, err := GetCurrentRollout(ctx, rc)
+		if err != nil {
+			return err
+		}
+		containerSettings := r.GetConfig().GetContainerSettings()
+		containerSettings.Command = command
+
+		if len(args) > 0 {
+			containerSettings.Args = args
+		}
+
+		cs = append(cs, &capsule.Change{
+			Field: &capsule.Change_ContainerSettings{ContainerSettings: containerSettings},
+		})
+	}
 
 	if cmd.Flags().Changed("auto-add-service-account") {
 		autoAdd, err := cmd.Flags().GetBool("auto-add-service-account")
@@ -23,9 +45,9 @@ func CapsuleConfig(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID,
 		})
 	}
 
-	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+	if _, err := rc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: CapsuleID,
 			Changes:   cs,
 		},
 	}); err != nil {

@@ -1,4 +1,4 @@
-package capsule
+package instance
 
 import (
 	"context"
@@ -11,13 +11,14 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func CapsuleListInstances(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
+func get(ctx context.Context, args []string, cmd *cobra.Command, nc rig.Client) error {
 	resp, err := nc.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: cmd_capsule.CapsuleID,
 			Pagination: &model.Pagination{
 				Offset: uint32(offset),
 				Limit:  uint32(limit),
@@ -28,8 +29,24 @@ func CapsuleListInstances(ctx context.Context, cmd *cobra.Command, capsuleID Cap
 		return err
 	}
 
+	instances := resp.Msg.GetInstances()
+
+	if len(args) > 0 {
+		found := false
+		for _, i := range instances {
+			if i.GetInstanceId() == args[0] {
+				instances = []*capsule.Instance{i}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("instance %q not found", args[0])
+		}
+	}
+
 	if outputJSON {
-		for _, i := range resp.Msg.GetInstances() {
+		for _, i := range instances {
 			cmd.Println(common.ProtoToPrettyJson(i))
 		}
 		return nil
@@ -37,7 +54,7 @@ func CapsuleListInstances(ctx context.Context, cmd *cobra.Command, capsuleID Cap
 
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{fmt.Sprintf("Instances (%d)", resp.Msg.GetTotal()), "Build", "State", "Created At", "Uptime", "Restart Count"})
-	for _, i := range resp.Msg.GetInstances() {
+	for _, i := range instances {
 		uptime := time.Since(i.GetStartedAt().AsTime())
 		if i.GetFinishedAt().AsTime().After(i.GetStartedAt().AsTime()) {
 			uptime = -time.Since(i.GetFinishedAt().AsTime())
