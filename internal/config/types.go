@@ -120,7 +120,6 @@ type Cluster struct {
 type DevRegistry struct {
 	Host        string `mapstructure:"host"`
 	ClusterHost string `mapstructure:"cluster_host"`
-	Size        uint64 `mapstructure:"size"`
 }
 
 type ClusterType string

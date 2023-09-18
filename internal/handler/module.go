@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/rigdev/rig/internal/handler/api/authentication"
 	"github.com/rigdev/rig/internal/handler/api/capsule"
+	"github.com/rigdev/rig/internal/handler/api/cluster"
 	"github.com/rigdev/rig/internal/handler/api/database"
 	"github.com/rigdev/rig/internal/handler/api/group"
 	"github.com/rigdev/rig/internal/handler/api/project"
@@ -22,16 +23,17 @@ import (
 var Module = fx.Module(
 	"handler",
 	fx.Provide(
-		asGRPCHandler(user.New),
+		asGRPCHandler(authentication.New),
+		asGRPCHandler(capsule.New),
+		asGRPCHandler(cluster.New),
+		asGRPCHandler(database.New),
 		asGRPCHandler(group.New),
 		asGRPCHandler(project.New),
-		asGRPCHandler(capsule.New),
-		asGRPCHandler(authentication.New),
+		asGRPCHandler(project_settings.New),
 		asGRPCHandler(service_account.New),
 		asGRPCHandler(storage.New),
-		asGRPCHandler(database.New),
+		asGRPCHandler(user.New),
 		asGRPCHandler(user_settings.New),
-		asGRPCHandler(project_settings.New),
 		asHTTPHandler(http.New),
 		asHTTPHandler(storage_http.NewUploadHandler),
 		asHTTPHandler(storage_http.NewDownloadHandler),

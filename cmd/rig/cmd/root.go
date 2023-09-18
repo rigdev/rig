@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/cluster"
 	"github.com/rigdev/rig/cmd/rig/cmd/config"
 	"github.com/rigdev/rig/cmd/rig/cmd/database"
 	"github.com/rigdev/rig/cmd/rig/cmd/group"
@@ -33,6 +34,7 @@ func Execute() error {
 	group.Setup(rootCmd)
 	project.Setup(rootCmd)
 	config.Setup(rootCmd)
+	cluster.Setup(rootCmd)
 	rootCmd.AddCommand(build.VersionCommand())
 	return rootCmd.Execute()
 }
