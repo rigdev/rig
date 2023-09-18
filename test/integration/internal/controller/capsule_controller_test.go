@@ -256,6 +256,9 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 		assert.Equal(t, int32(1), p.Port)
 		assert.Equal(t, "http", p.TargetPort.StrVal)
 	}
+	if assert.Len(t, lb.OwnerReferences, 1) {
+		assert.Equal(t, capsuleOwnerRef, lb.OwnerReferences[0])
+	}
 
 	assert.NoError(t, k8sClient.Delete(ctx, &capsule))
 	assert.Eventually(t, func() bool {
