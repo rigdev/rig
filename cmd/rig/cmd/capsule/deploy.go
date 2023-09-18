@@ -15,7 +15,6 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 )
@@ -28,7 +27,7 @@ type imageInfo struct {
 func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, rc rig.Client) error {
 	var err error
 	if buildID == "" {
-		buildID, err = createBuild(ctx, rc, capsuleID.String())
+		buildID, err = createBuild(ctx, rc, capsuleID)
 		if err != nil {
 			return err
 		}
@@ -49,12 +48,12 @@ func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsu
 	return listenForEvents(ctx, res.Msg.GetRolloutId(), rc, capsuleID, cmd)
 }
 
-func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsuleID uuid.UUID, cmd *cobra.Command) error {
+func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsuleID string, cmd *cobra.Command) error {
 	eventCount := 0
 	for {
 		res, err := rc.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
 			Msg: &capsule.GetRolloutRequest{
-				CapsuleId: capsuleID.String(),
+				CapsuleId: capsuleID,
 				RolloutId: rolloutID,
 			},
 		})
@@ -64,7 +63,7 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 
 		eventRes, err := rc.Capsule().ListEvents(ctx, &connect.Request[capsule.ListEventsRequest]{
 			Msg: &capsule.ListEventsRequest{
-				CapsuleId: capsuleID.String(),
+				CapsuleId: capsuleID,
 				RolloutId: rolloutID,
 				Pagination: &model.Pagination{
 					Offset: uint32(eventCount),
