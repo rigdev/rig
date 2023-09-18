@@ -82,7 +82,7 @@ test: gotestsum ## ✅ Run unit tests
 ENVTEST_K8S_VERSION = 1.28.0
 
 .PHONY: test-all
-test-all: gotestsum ## ✅ Run all tests
+test-all: gotestsum setup-envtest ## ✅ Run all tests
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" \
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
@@ -185,7 +185,7 @@ $(TOOLSBIN):
 tools: buf mockery protoc-gen-go protoc-gen-connect-go modd goreleaser kind gotestsum ## 📦 Download all tools
 
 .PHONY: tools-ci
-tools-ci: buf mockery protoc-gen-go protoc-gen-connect-go goreleaser gotestsum ## 📦 Download tools used in CI
+tools-ci: buf mockery protoc-gen-go protoc-gen-connect-go goreleaser gotestsum controller-gen setup-envtest ## 📦 Download tools used in CI
 
 BUF ?= $(TOOLSBIN)/buf
 BUF_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "github.com/bufbuild/buf " | cut -d ' ' -f2 | cut -c2-)
