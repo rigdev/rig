@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig/internal/core"
 	"github.com/rigdev/rig/internal/handler"
 	"github.com/rigdev/rig/internal/handler/registry"
+	"github.com/rigdev/rig/internal/service/operator"
 	"github.com/spf13/cobra"
 
 	pkg_service "github.com/rigdev/rig/pkg/service"
@@ -41,6 +42,10 @@ func createRootCMD() *cobra.Command {
 			var opts []fx.Option
 			if cfg.Registry.Enabled {
 				opts = append(opts, fx.Invoke(func(_ *registry.Server) {}))
+			}
+
+			if cfg.Cluster.Type == config.ClusterTypeKubernetes {
+				opts = append(opts, fx.Invoke(func(_ operator.Service) {}))
 			}
 
 			f := fx.New(

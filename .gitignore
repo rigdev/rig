@@ -13,6 +13,10 @@
 /test-result.xml
 /deploy/docker-compose/.env.dev
 
+# at some point we might want to commit this so that rig can be installed via
+# kustomize
+/deploy/kustomize
+
 ### Go ###
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore

@@ -6,6 +6,7 @@ import (
 	"github.com/rigdev/rig/internal/service/database"
 	"github.com/rigdev/rig/internal/service/group"
 	"github.com/rigdev/rig/internal/service/metrics"
+	"github.com/rigdev/rig/internal/service/operator"
 	"github.com/rigdev/rig/internal/service/project"
 	"github.com/rigdev/rig/internal/service/storage"
 	"github.com/rigdev/rig/internal/service/user"
@@ -23,5 +24,6 @@ var Module = fx.Module(
 		database.NewService,
 		storage.NewService,
 		metrics.NewService,
+		operator.New,
 	),
 )

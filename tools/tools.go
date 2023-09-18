@@ -8,5 +8,7 @@ import (
 	_ "github.com/vektra/mockery/v2"
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
 	_ "gotest.tools/gotestsum"
+	_ "sigs.k8s.io/controller-runtime/tools/setup-envtest"
+	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
 	_ "sigs.k8s.io/kind"
 )
