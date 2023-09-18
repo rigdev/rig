@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package api.v1.cluster;
+
+// The service to your cluster running Rig.
+service Service {
+  // Status returns information about the cluster
+  rpc Status(StatusRequest) returns (StatusResponse) {}
+}
+
+message StatusRequest {}
+
+message StatusResponse {
+  ClusterType cluster_type = 1;
+  oneof dev_registry {
+    DockerDaemon docker = 2;
+    Registry registry = 3;
+  }
+}
+
+message DockerDaemon {}
+
+message Registry {
+  string host = 1;
+}
+
+
+enum ClusterType {
+  CLUSTER_TYPE_UNSPECIFIED = 0;
+  CLUSTER_TYPE_DOCKER = 1;
+  CLUSTER_TYPE_KUBERNETES = 2;
+}
