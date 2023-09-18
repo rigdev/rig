@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/rigdev/rig/internal/service/auth"
 	"github.com/rigdev/rig/internal/service/capsule"
+	"github.com/rigdev/rig/internal/service/cluster"
 	"github.com/rigdev/rig/internal/service/database"
 	"github.com/rigdev/rig/internal/service/group"
 	"github.com/rigdev/rig/internal/service/metrics"
@@ -25,5 +26,6 @@ var Module = fx.Module(
 		storage.NewService,
 		metrics.NewService,
 		operator.New,
+		cluster.NewService,
 	),
 )

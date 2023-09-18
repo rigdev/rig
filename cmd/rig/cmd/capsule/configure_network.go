@@ -3,7 +3,6 @@ package capsule
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"os"
 
 	"github.com/bufbuild/connect-go"
@@ -32,16 +31,16 @@ func CapsuleConfigureNetwork(ctx context.Context, cmd *cobra.Command, args []str
 
 	var raw interface{}
 	if err := yaml.Unmarshal(bs, &raw); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if bs, err = json.Marshal(raw); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	n := &capsule.Network{}
 	if err := protojson.Unmarshal(bs, n); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	cmd.Println(n.GetInterfaces()[0])
