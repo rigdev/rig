@@ -49,8 +49,22 @@ func (r *Capsule) ValidateDelete() (admission.Warnings, error) {
 }
 
 func (r *Capsule) validate() (admission.Warnings, error) {
-	warns, errs := r.validateInterfaces()
-	return warns, errs.ToAggregate()
+	var (
+		allWarns admission.Warnings
+		allErrs  field.ErrorList
+		warns    admission.Warnings
+		errs     field.ErrorList
+	)
+
+	warns, errs = r.validateInterfaces()
+	allWarns = append(allWarns, warns...)
+	allErrs = append(allErrs, errs...)
+
+	warns, errs = r.validateFiles()
+	allWarns = append(allWarns, warns...)
+	allErrs = append(allErrs, errs...)
+
+	return allWarns, allErrs.ToAggregate()
 }
 
 func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
@@ -94,6 +108,26 @@ func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
 }
 
 func (r *Capsule) validateFiles() (admission.Warnings, field.ErrorList) {
-	// TODO
-	return nil, nil
+	var errs field.ErrorList
+
+	paths := map[string]struct{}{}
+	filesPath := field.NewPath("spec").Child("files")
+	for i, f := range r.Spec.Files {
+		fPath := filesPath.Index(i)
+
+		if _, ok := paths[f.Path]; ok {
+			errs = append(errs, field.Duplicate(fPath.Child("path"), f.Path))
+		} else {
+			paths[f.Path] = struct{}{}
+		}
+
+		if f.Secret != nil && f.ConfigMap != nil {
+			errs = append(errs, field.Invalid(fPath, f, "configMap and secret are mutually exclusive"))
+		}
+		if f.Secret == nil && f.ConfigMap == nil {
+			errs = append(errs, field.Required(fPath, "one of configMap or secret is required"))
+		}
+	}
+
+	return nil, errs
 }

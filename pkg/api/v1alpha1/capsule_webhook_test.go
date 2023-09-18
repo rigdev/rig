@@ -87,3 +87,70 @@ func TestValidateInterfaces(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateFiles(t *testing.T) {
+	t.Parallel()
+	path := field.NewPath("spec").Child("files")
+	tests := []struct {
+		name         string
+		files        []File
+		expectedErrs field.ErrorList
+	}{
+		{name: "no files should cause no errors"},
+		{
+			name: "path should be unique",
+			files: []File{
+				{Path: "/test", ConfigMap: &FileContentRef{}},
+				{Path: "/test", ConfigMap: &FileContentRef{}},
+			},
+			expectedErrs: field.ErrorList{
+				field.Duplicate(path.Index(1).Child("path"), "/test"),
+			},
+		},
+		{
+			name: "configMap and secret are mutually exclusive",
+			files: []File{
+				{
+					Path:      "/test",
+					ConfigMap: &FileContentRef{},
+					Secret:    &FileContentRef{},
+				},
+			},
+			expectedErrs: field.ErrorList{
+				field.Invalid(path.Index(0), File{
+					Path:      "/test",
+					ConfigMap: &FileContentRef{},
+					Secret:    &FileContentRef{},
+				}, "configMap and secret are mutually exclusive"),
+			},
+		},
+		{
+			name: "one of configMap or secret is required",
+			files: []File{
+				{
+					Path: "/test",
+				},
+			},
+			expectedErrs: field.ErrorList{
+				field.Required(path.Index(0), "one of configMap or secret is required"),
+			},
+		},
+	}
+
+	for i := range tests {
+		test := tests[i]
+
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := &Capsule{
+				Spec: CapsuleSpec{
+					Files: test.files,
+				},
+			}
+
+			_, err := c.validateFiles()
+			assert.Equal(t, test.expectedErrs, err)
+		})
+	}
+}
