@@ -192,7 +192,6 @@ var ValidateBucketName = func(input string) error {
 	return nil
 }
 
-var ValidateBucketNameOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateBucketNameOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateBucketName
-	return inp
 }

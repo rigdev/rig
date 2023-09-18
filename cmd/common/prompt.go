@@ -7,84 +7,76 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type GetInputOption = func(*textinput.TextInput) *textinput.TextInput
+type GetInputOption = func(*textinput.TextInput)
 
-var ValidateAllOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+type SelectInputOption = func(s *selection.Selection[string])
+
+var ValidateAllOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateAll
-	return inp
 }
 
-var BoolValidateOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var BoolValidateOpt = func(inp *textinput.TextInput) {
 	inp.Validate = BoolValidate
-	return inp
 }
 
-var ValidateIntOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateIntOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateInt
-	return inp
 }
 
-var ValidateNonEmptyOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateNonEmptyOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateNonEmpty
-	return inp
 }
 
-var ValidateAbsPathOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateAbsPathOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateAbsolutePath
-	return inp
 }
 
-var ValidateEmailOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateEmailOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateEmail
-	return inp
 }
 
-var ValidateSystemNameOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateSystemNameOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateSystemName
-	return inp
 }
 
-var ValidateURLOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateURLOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateURL
-	return inp
 }
 
-var ValidateImageOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateImageOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateImage
-	return inp
 }
 
-var ValidatePhoneOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidatePhoneOpt = func(inp *textinput.TextInput) {
 	inp.Validate = utils.ValidatePhone
-	return inp
 }
 
-var ValidatePasswordOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidatePasswordOpt = func(inp *textinput.TextInput) {
 	inp.Validate = utils.ValidatePassword
-	return inp
 }
 
-var ValidateBoolOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateBoolOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateBool
-	return inp
 }
 
-var ValidateQuantityOpt = func(inp *textinput.TextInput) *textinput.TextInput {
+var ValidateQuantityOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateQuantity
-	return inp
 }
 
 var InputDefaultOpt = func(def string) GetInputOption {
-	return func(inp *textinput.TextInput) *textinput.TextInput {
+	return func(inp *textinput.TextInput) {
 		inp.InitialValue = def
-		return inp
 	}
+}
+
+var SelectEnableFilterOpt = func(s *selection.Selection[string]) {
+	s.Filter = selection.FilterContainsCaseSensitive[string]
 }
 
 func PromptInput(label string, opts ...GetInputOption) (string, error) {
 	input := textinput.New(label)
 	for _, opt := range opts {
-		input = opt(input)
+		opt(input)
 	}
 
 	s, err := input.RunPrompt()
@@ -107,10 +99,13 @@ func PromptPassword(label string) (string, error) {
 	return pw, nil
 }
 
-func PromptSelect(label string, choices []string) (int, string, error) {
+func PromptSelect(label string, choices []string, opts ...SelectInputOption) (int, string, error) {
 	sp := selection.New(label, choices)
 	sp.Filter = nil
-	sp.PageSize = 4
+	sp.PageSize = 5
+	for _, opt := range opts {
+		opt(sp)
+	}
 	choice, err := sp.RunPrompt()
 	if err != nil {
 		return 0, "", err
