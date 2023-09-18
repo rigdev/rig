@@ -51,7 +51,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/go-containerregistry v0.16.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/rigdev/rig-go-api v0.0.0-20230918104110-0184e937281f
+	github.com/rigdev/rig-go-api v0.0.0-20230918113547-85aa906e5160
 	github.com/rigdev/rig-go-sdk v0.0.0-20230902170251-18fbb97d0692
 	k8s.io/metrics v0.28.0
 	sigs.k8s.io/controller-runtime v0.16.1
