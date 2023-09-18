@@ -14,6 +14,7 @@ type CapsuleConfig struct {
 	Data                 []byte            `bson:"data,omitempty" json:"data,omitempty"`
 	EnvironmentVariables map[string]string `bson:"environmentVariables" json:"environmentVariables"`
 	Files                []*v1.ConfigMap   `bson:"files" json:"files"`
+	Secrets              []*v1.Secret      `bson:"secrets" json:"secrets"`
 }
 
 func (c CapsuleConfig) ToAPI() (*v1alpha1.Capsule, error) {

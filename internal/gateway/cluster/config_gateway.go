@@ -30,4 +30,9 @@ type ConfigGateway interface {
 	SetFile(ctx context.Context, capsuleID string, file *v1.ConfigMap) error
 	ListFiles(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*v1.ConfigMap], int64, error)
 	DeleteFile(ctx context.Context, capsuleID, name, namespace string) error
+
+	GetSecret(ctx context.Context, capsuleID, name, namespace string) (*v1.Secret, error)
+	SetSecret(ctx context.Context, capsuleID string, file *v1.Secret) error
+	ListSecrets(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*v1.Secret], int64, error)
+	DeleteSecret(ctx context.Context, capsuleID, name, namespace string) error
 }

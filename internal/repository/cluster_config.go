@@ -22,5 +22,8 @@ type ClusterConfig interface {
 	SetFiles(ctx context.Context, capsuleID string, files []*v1.ConfigMap) error
 	GetFiles(ctx context.Context, capsuleID string) ([]*v1.ConfigMap, error)
 
+	SetSecrets(ctx context.Context, capsuleID string, secrets []*v1.Secret) error
+	GetSecrets(ctx context.Context, capsuleID string) ([]*v1.Secret, error)
+
 	BuildIndexes(ctx context.Context) error
 }

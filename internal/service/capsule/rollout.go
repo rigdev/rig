@@ -2,6 +2,8 @@ package capsule
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"reflect"
@@ -533,16 +535,50 @@ func (j *rolloutJob) run(
 		}
 
 		host := reference.Domain(ref)
-		if _, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
+		pullSecretName := fmt.Sprintf("%s-pull", j.capsuleID)
+		if ds, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
+			if err := j.s.ccg.DeleteSecret(ctx, j.capsuleID, pullSecretName, j.projectID.String()); err != nil {
+				return err
+			}
+
+			cfg.Spec.ImagePullSecret = nil
 		} else if err != nil {
 			return err
 		} else {
-			// TODO(anders): fix
-			// cfg.RegistryAuth = &pb_capsule.Auth{
-			// 	Host:     host,
-			// 	Username: ds.GetUsername(),
-			// 	Password: ds.GetPassword(),
-			// }
+			bs, err := json.Marshal(map[string]interface{}{
+				"auths": map[string]interface{}{
+					host: map[string]interface{}{
+						"auth": base64.StdEncoding.EncodeToString(
+							[]byte(fmt.Sprint(
+								ds.GetUsername(),
+								":",
+								ds.GetPassword()),
+							),
+						),
+					},
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			ds := &v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      pullSecretName,
+					Namespace: j.projectID.String(),
+				},
+				Type: v1.SecretTypeDockerConfigJson,
+				Data: map[string][]byte{
+					".dockerconfigjson": bs,
+				},
+			}
+			if err := j.s.ccg.SetSecret(ctx, j.capsuleID, ds); err != nil {
+				return err
+			}
+
+			cfg.Spec.ImagePullSecret = &v1.LocalObjectReference{
+				Name: pullSecretName,
+			}
 		}
 
 		envs := rc.GetContainerSettings().GetEnvironmentVariables()
