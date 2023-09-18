@@ -23,8 +23,9 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 	var buildID string
 	if res, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
-			CapsuleId: capsuleID.String(),
-			Image:     image,
+			CapsuleId:      capsuleID.String(),
+			Image:          image,
+			SkipImageCheck: skipImageCheck,
 		},
 	}); err != nil {
 		return err

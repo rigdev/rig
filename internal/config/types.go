@@ -112,7 +112,14 @@ type OAuthClientCredentials struct {
 }
 
 type Cluster struct {
-	Type ClusterType `mapstructure:"type"`
+	Type        ClusterType `mapstructure:"type"`
+	DevRegistry DevRegistry `mapstructure:"dev_registry"`
+}
+
+type DevRegistry struct {
+	Host        string `mapstructure:"host"`
+	ClusterHost string `mapstructure:"cluster_host"`
+	Size        uint64 `mapstructure:"size"`
 }
 
 type ClusterType string

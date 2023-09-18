@@ -10,9 +10,8 @@ import (
 	"github.com/rigdev/rig/internal/handler"
 	"github.com/rigdev/rig/internal/handler/registry"
 	"github.com/rigdev/rig/internal/service/operator"
-	"github.com/spf13/cobra"
-
 	pkg_service "github.com/rigdev/rig/pkg/service"
+	"github.com/spf13/cobra"
 	"go.uber.org/dig"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
