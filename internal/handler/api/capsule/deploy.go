@@ -8,9 +8,15 @@ import (
 )
 
 func (h *Handler) Deploy(ctx context.Context, req *connect.Request[capsule.DeployRequest]) (*connect.Response[capsule.DeployResponse], error) {
-	if err := h.cs.Deploy(ctx, req.Msg.GetCapsuleId(), req.Msg.GetChanges()); err != nil {
+
+	rolloutID, err := h.cs.Deploy(ctx, req.Msg.GetCapsuleId(), req.Msg.GetChanges())
+	if err != nil {
 		return nil, err
 	}
 
-	return &connect.Response[capsule.DeployResponse]{}, nil
+	return &connect.Response[capsule.DeployResponse]{
+		Msg: &capsule.DeployResponse{
+			RolloutId: rolloutID,
+		},
+	}, nil
 }

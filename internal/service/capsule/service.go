@@ -178,12 +178,13 @@ func (s *Service) DeleteBuild(ctx context.Context, capsuleID string, buildID str
 	return s.cr.DeleteBuild(ctx, capsuleID, buildID)
 }
 
-func (s *Service) Deploy(ctx context.Context, capsuleID string, cs []*capsule.Change) error {
-	if _, err := s.newRollout(ctx, capsuleID, cs); err != nil {
-		return err
+func (s *Service) Deploy(ctx context.Context, capsuleID string, cs []*capsule.Change) (uint64, error) {
+	rolloutID, err := s.newRollout(ctx, capsuleID, cs)
+	if err != nil {
+		return 0, err
 	}
 
-	return nil
+	return rolloutID, nil
 }
 
 func (s *Service) ListRollouts(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*capsule.Rollout], uint64, error) {
