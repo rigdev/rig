@@ -4,13 +4,13 @@ package api.v1.cluster;
 
 // The service to your cluster running Rig.
 service Service {
-  // Status returns information about the cluster
-  rpc Status(StatusRequest) returns (StatusResponse) {}
+  // GetConfig returns the config for the cluster
+  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
 }
 
-message StatusRequest {}
+message GetConfigRequest {}
 
-message StatusResponse {
+message GetConfigResponse {
   ClusterType cluster_type = 1;
   oneof dev_registry {
     DockerDaemon docker = 2;
