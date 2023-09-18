@@ -5,13 +5,15 @@ import (
 
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/uuid"
+	v1 "k8s.io/api/core/v1"
 )
 
 type CapsuleConfig struct {
 	ProjectID            string            `bson:"project_id" json:"project_id"`
-	Name                 string            `bson:"name" json:"name"`
-	EnvironmentVariables map[string]string `bson:"environmentVariables" json:"environmentVariables"`
+	CapsuleID            string            `bson:"capsule_id" json:"capsule_id"`
 	Data                 []byte            `bson:"data,omitempty" json:"data,omitempty"`
+	EnvironmentVariables map[string]string `bson:"environmentVariables" json:"environmentVariables"`
+	Files                []*v1.ConfigMap   `bson:"files" json:"files"`
 }
 
 func (c CapsuleConfig) ToAPI() (*v1alpha1.Capsule, error) {
@@ -31,7 +33,7 @@ func CapsuleConfigFromAPI(projectID uuid.UUID, p *v1alpha1.Capsule) (CapsuleConf
 
 	return CapsuleConfig{
 		ProjectID:            projectID.String(),
-		Name:                 p.GetName(),
+		CapsuleID:            p.GetName(),
 		EnvironmentVariables: map[string]string{},
 		Data:                 bs,
 	}, nil

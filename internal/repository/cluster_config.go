@@ -6,6 +6,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/iterator"
+	v1 "k8s.io/api/core/v1"
 )
 
 type ClusterConfig interface {
@@ -17,6 +18,9 @@ type ClusterConfig interface {
 
 	SetEnvironmentVariables(ctx context.Context, capsuleID string, envs map[string]string) error
 	GetEnvironmentVariables(ctx context.Context, capsuleID string) (map[string]string, error)
+
+	SetFiles(ctx context.Context, capsuleID string, files []*v1.ConfigMap) error
+	GetFiles(ctx context.Context, capsuleID string) ([]*v1.ConfigMap, error)
 
 	BuildIndexes(ctx context.Context) error
 }

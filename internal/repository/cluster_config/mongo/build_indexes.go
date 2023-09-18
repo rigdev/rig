@@ -18,7 +18,7 @@ func (r *MongoRepository) BuildIndexes(ctx context.Context) error {
 	capsuleConfigIndexModel := mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "project_id", Value: 1},
-			{Key: "name", Value: 1},
+			{Key: "capsule_id", Value: 1},
 		},
 		Options: options.Index().SetUnique(true),
 	}

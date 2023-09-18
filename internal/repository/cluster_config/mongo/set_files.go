@@ -5,9 +5,10 @@ import (
 
 	"github.com/rigdev/rig/pkg/auth"
 	"go.mongodb.org/mongo-driver/bson"
+	v1 "k8s.io/api/core/v1"
 )
 
-func (r *MongoRepository) SetEnvironmentVariables(ctx context.Context, capsuleID string, envs map[string]string) error {
+func (r *MongoRepository) SetFiles(ctx context.Context, capsuleID string, files []*v1.ConfigMap) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err
@@ -17,11 +18,11 @@ func (r *MongoRepository) SetEnvironmentVariables(ctx context.Context, capsuleID
 		ctx,
 		bson.M{
 			"project_id": projectID,
-			"name":       capsuleID,
+			"capsule_id": capsuleID,
 		},
 		bson.M{
 			"$set": bson.M{
-				"environmentVariables": envs,
+				"files": files,
 			},
 		},
 	).Err(); err != nil {

@@ -24,10 +24,12 @@ func (r *MongoRepository) UpdateCapsuleConfig(ctx context.Context, p *v1alpha1.C
 		ctx,
 		bson.M{
 			"project_id": projectID,
-			"name":       p.GetName(),
+			"capsule_id": p.GetName(),
 		},
 		bson.M{
-			"$set": cp,
+			"$set": bson.M{
+				"data": cp.Data,
+			},
 		},
 	).Decode(&cp); err != nil {
 		return err

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/distribution/distribution/v3/reference"
@@ -20,6 +21,8 @@ import (
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (s *Service) GetRollout(ctx context.Context, capsuleID string, rolloutID uint64) (*capsule.Rollout, error) {
@@ -437,6 +440,21 @@ func (j *rolloutJob) run(
 			}
 		}
 
+	removeNext:
+		for _, f := range cfg.Spec.Files {
+			for _, cf := range rc.GetConfigFiles() {
+				if f.Path == cf.GetPath() {
+					continue removeNext
+				}
+			}
+
+			// Unused file, remove.
+			if err := j.s.ccg.DeleteFile(ctx, j.capsuleID, "file-"+strings.ReplaceAll(f.Path, "/", "-"), j.projectID.String()); errors.IsNotFound(err) {
+			} else if err != nil {
+				return err
+			}
+		}
+
 		rs.Status.State = capsule.RolloutState_ROLLOUT_STATE_DEPLOYING
 		rs.Status.Message = "deploying rollout to cluster"
 		return nil
@@ -453,8 +471,37 @@ func (j *rolloutJob) run(
 		cfg.Spec.Command = rc.GetContainerSettings().GetCommand()
 		cfg.Spec.Args = rc.GetContainerSettings().GetArgs()
 		cfg.Spec.Replicas = int32(rc.GetReplicas())
-		// TODO(anders): fix
-		// cfg.ConfigFiles = rc.GetConfigFiles()
+
+	addNext:
+		for _, cf := range rc.GetConfigFiles() {
+			for _, f := range cfg.Spec.Files {
+				if cf.GetPath() == f.Path {
+					continue addNext
+				}
+			}
+
+			// Missing file, add.
+			cm := &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "file-" + strings.ReplaceAll(cf.GetPath(), "/", "-"),
+					Namespace: j.projectID.String(),
+				},
+				BinaryData: map[string][]byte{
+					"content": cf.GetContent(),
+				},
+			}
+			if err := j.s.ccg.SetFile(ctx, j.capsuleID, cm); err != nil {
+				return err
+			}
+
+			cfg.Spec.Files = append(cfg.Spec.Files, v1alpha1.File{
+				Path: cf.GetPath(),
+				ConfigMap: &v1alpha1.FileContentRef{
+					Name: cm.Name,
+					Key:  "content",
+				},
+			})
+		}
 
 		for _, i := range rc.GetNetwork().GetInterfaces() {
 			capIf := v1alpha1.CapsuleInterface{

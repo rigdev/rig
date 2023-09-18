@@ -6,6 +6,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/iterator"
+	v1 "k8s.io/api/core/v1"
 )
 
 type ConfigGateway interface {
@@ -24,4 +25,9 @@ type ConfigGateway interface {
 	SetEnvironmentVariable(ctx context.Context, capsuleID, name, value string) error
 	GetEnvironmentVariable(ctx context.Context, capsuleID, name string) (value string, ok bool, err error)
 	DeleteEnvironmentVariable(ctx context.Context, capsuleID, name string) error
+
+	GetFile(ctx context.Context, capsuleID, name, namespace string) (*v1.ConfigMap, error)
+	SetFile(ctx context.Context, capsuleID string, file *v1.ConfigMap) error
+	ListFiles(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*v1.ConfigMap], int64, error)
+	DeleteFile(ctx context.Context, capsuleID, name, namespace string) error
 }
