@@ -25,8 +25,6 @@ service Service {
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
   // Lists all capsules for current project.
   rpc List(ListRequest) returns (ListResponse) {}
-  // Get a capsule by name.
-  rpc GetByName(GetByNameRequest) returns (GetByNameResponse) {}
   // Create a new build.
   // Builds are immutable and cannot change. Create a new build to make
   // changes from an existing one.
@@ -116,15 +114,6 @@ message ListResponse {
   // The capsules.
   repeated api.v1.capsule.Capsule capsules = 1;
   uint64 total = 2;
-}
-
-message GetByNameRequest {
-  // The capsule to get.
-  string name = 1;
-}
-
-message GetByNameResponse {
-  api.v1.capsule.Capsule capsule = 1;
 }
 
 message CreateBuildRequest {

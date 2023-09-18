@@ -9,11 +9,10 @@ import (
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (m *MongoRepository) ListBuilds(ctx context.Context, pagination *model.Pagination, capsuleID uuid.UUID) (iterator.Iterator[*capsule.Build], uint64, error) {
+func (m *MongoRepository) ListBuilds(ctx context.Context, pagination *model.Pagination, capsuleID string) (iterator.Iterator[*capsule.Build], uint64, error) {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return nil, 0, err

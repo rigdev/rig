@@ -8,13 +8,12 @@ import (
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (m *MongoRepository) CreateRollout(ctx context.Context, capsuleID uuid.UUID, rc *capsule.RolloutConfig, rs *rollout.Status) (uint64, error) {
+func (m *MongoRepository) CreateRollout(ctx context.Context, capsuleID string, rc *capsule.RolloutConfig, rs *rollout.Status) (uint64, error) {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return 0, err

@@ -7,6 +7,7 @@ import (
 
 // CapsuleSpec defines the desired state of Capsule
 type CapsuleSpec struct {
+	Replicas   int32                    `json:"replicas"`
 	Image      string                   `json:"image"`
 	Command    string                   `json:"command,omitempty"`
 	Args       []string                 `json:"args,omitempty"`

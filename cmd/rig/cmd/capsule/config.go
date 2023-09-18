@@ -25,7 +25,7 @@ func CapsuleConfig(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID,
 
 	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			Changes:   cs,
 		},
 	}); err != nil {

@@ -11,16 +11,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Capsule struct {
-	ProjectID uuid.UUID `bson:"project_id" json:"project_id"`
-	CapsuleID uuid.UUID `bson:"capsule_id" json:"capsule_id"`
-	Name      string    `bson:"name,omitempty" json:"name,omitempty"`
-	Data      []byte    `bson:"data,omitempty" json:"data,omitempty"`
-}
-
 type Rollout struct {
 	ProjectID   uuid.UUID  `bson:"project_id" json:"project_id"`
-	CapsuleID   uuid.UUID  `bson:"capsule_id" json:"capsule_id"`
+	CapsuleID   string     `bson:"capsule_id" json:"capsule_id"`
 	RolloutID   uint64     `bson:"rollout_id" json:"rollout_id"`
 	Version     uint64     `bson:"version" json:"version"`
 	ScheduledAt *time.Time `bson:"scheduled_at,omitempty" json:"scheduled_at,omitempty"`
@@ -31,32 +24,9 @@ type Rollout struct {
 type CapsuleMetric struct {
 	ProjectID  uuid.UUID `bson:"project_id" json:"project_id"`
 	Timestamp  time.Time `bson:"timestamp" json:"timestamp"`
-	CapsuleID  uuid.UUID `bson:"capsule_id" json:"capsule_id"`
+	CapsuleID  string    `bson:"capsule_id" json:"capsule_id"`
 	InstanceID string    `bson:"instance_id" json:"instance_id"`
 	Data       []byte    `bson:"data" json:"data"`
-}
-
-func (c Capsule) ToProto() (*capsule.Capsule, error) {
-	p := &capsule.Capsule{}
-	if err := proto.Unmarshal(c.Data, p); err != nil {
-		return nil, err
-	}
-
-	return p, nil
-}
-
-func CapsuleFromProto(projectID uuid.UUID, p *capsule.Capsule) (Capsule, error) {
-	bs, err := proto.Marshal(p)
-	if err != nil {
-		return Capsule{}, err
-	}
-
-	return Capsule{
-		ProjectID: projectID,
-		CapsuleID: uuid.UUID(p.GetCapsuleId()),
-		Name:      p.GetName(),
-		Data:      bs,
-	}, nil
 }
 
 func (r Rollout) ConfigToProto() (*capsule.RolloutConfig, error) {
@@ -95,7 +65,7 @@ func (r Rollout) ToProto() (*capsule.Rollout, error) {
 	}, nil
 }
 
-func RolloutFromProto(projectID, capsuleID uuid.UUID, rolloutID, version uint64, rc *capsule.RolloutConfig, rs *rollout.Status) (Rollout, error) {
+func RolloutFromProto(projectID uuid.UUID, capsuleID string, rolloutID, version uint64, rc *capsule.RolloutConfig, rs *rollout.Status) (Rollout, error) {
 	bsCfg, err := proto.Marshal(rc)
 	if err != nil {
 		return Rollout{}, err
@@ -155,7 +125,7 @@ func MetricFromProto(projectID uuid.UUID, p *capsule.InstanceMetrics) (CapsuleMe
 	return CapsuleMetric{
 		ProjectID:  projectID,
 		Timestamp:  p.GetMainContainer().Timestamp.AsTime(),
-		CapsuleID:  uuid.UUID(p.GetCapsuleId()),
+		CapsuleID:  p.GetCapsuleId(),
 		InstanceID: p.GetInstanceId(),
 		Data:       bs,
 	}, nil

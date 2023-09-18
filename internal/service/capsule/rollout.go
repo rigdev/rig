@@ -8,12 +8,10 @@ import (
 	"time"
 
 	"github.com/distribution/distribution/v3/reference"
-	"github.com/golang-jwt/jwt"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/gen/go/proxy"
 	"github.com/rigdev/rig/gen/go/rollout"
-	"github.com/rigdev/rig/internal/gateway/cluster"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
@@ -24,15 +22,16 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Service) GetRollout(ctx context.Context, capsuleID uuid.UUID, rolloutID uint64) (*capsule.Rollout, error) {
+func (s *Service) GetRollout(ctx context.Context, capsuleID string, rolloutID uint64) (*capsule.Rollout, error) {
 	rc, rs, _, err := s.cr.GetRollout(ctx, capsuleID, rolloutID)
 	return &capsule.Rollout{
-		Config: rc,
-		Status: rs.GetStatus(),
+		RolloutId: rolloutID,
+		Config:    rc,
+		Status:    rs.GetStatus(),
 	}, err
 }
 
-func (s *Service) AbortRollout(ctx context.Context, capsuleID uuid.UUID, rolloutID uint64) error {
+func (s *Service) AbortRollout(ctx context.Context, capsuleID string, rolloutID uint64) error {
 	_, rs, version, err := s.cr.GetRollout(ctx, capsuleID, rolloutID)
 	if err != nil {
 		return err
@@ -47,9 +46,8 @@ func (s *Service) AbortRollout(ctx context.Context, capsuleID uuid.UUID, rollout
 	return s.CreateEvent(ctx, capsuleID, rolloutID, "rollout aborted", &capsule.EventData{Kind: &capsule.EventData_Abort{}})
 }
 
-func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*capsule.Change) (uint64, error) {
-	c, err := s.cr.Get(ctx, capsuleID)
-	if err != nil {
+func (s *Service) newRollout(ctx context.Context, capsuleID string, cs []*capsule.Change) (uint64, error) {
+	if _, err := s.ccg.GetCapsuleConfig(ctx, capsuleID); err != nil {
 		return 0, err
 	}
 
@@ -57,12 +55,10 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 		Replicas: 1,
 	}
 
-	if c.GetCurrentRollout() != 0 {
-		pRC, ps, _, err := s.cr.GetRollout(ctx, capsuleID, c.GetCurrentRollout())
-		if err != nil {
-			return 0, err
-		}
-
+	if _, pRC, ps, _, err := s.cr.GetCurrentRollout(ctx, capsuleID); errors.IsNotFound(err) {
+	} else if err != nil {
+		return 0, err
+	} else {
 		if !isRolloutTerminated(ps) {
 			return 0, errors.FailedPreconditionErrorf("rollout already in progress")
 		}
@@ -73,6 +69,7 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 	now := time.Now()
 	rc.Changes = cs
 	rc.CreatedAt = timestamppb.New(now)
+	var err error
 	if rc.CreatedBy, err = s.as.GetAuthor(ctx); err != nil {
 		return 0, err
 	}
@@ -137,11 +134,6 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 		return 0, err
 	}
 
-	c.CurrentRollout = rolloutID
-	if err := s.cr.Update(ctx, c); err != nil {
-		return 0, err
-	}
-
 	if err := s.queueRolloutJob(ctx, capsuleID, rolloutID, now); err != nil {
 		return 0, err
 	}
@@ -149,7 +141,7 @@ func (s *Service) newRollout(ctx context.Context, capsuleID uuid.UUID, cs []*cap
 	return rolloutID, nil
 }
 
-func (s *Service) queueRolloutJob(ctx context.Context, capsuleID uuid.UUID, rolloutID uint64, ts time.Time) error {
+func (s *Service) queueRolloutJob(ctx context.Context, capsuleID string, rolloutID uint64, ts time.Time) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err
@@ -161,7 +153,7 @@ func (s *Service) queueRolloutJob(ctx context.Context, capsuleID uuid.UUID, roll
 		capsuleID: capsuleID,
 		rolloutID: rolloutID,
 	}, ts)
-	s.logger.Info("scheduled rollout job", zap.Time("scheduled_at", ts), zap.Stringer("capsule_id", capsuleID), zap.Uint64("rollout_id", rolloutID))
+	s.logger.Info("scheduled rollout job", zap.Time("scheduled_at", ts), zap.String("capsule_id", capsuleID), zap.Uint64("rollout_id", rolloutID))
 
 	return nil
 }
@@ -238,7 +230,7 @@ func (s *Service) runJob(ctx context.Context, job Job) {
 type rolloutJob struct {
 	s         *Service
 	projectID uuid.UUID
-	capsuleID uuid.UUID
+	capsuleID string
 	rolloutID uint64
 }
 
@@ -247,13 +239,13 @@ func (j *rolloutJob) Run(ctx context.Context) error {
 
 	logger := j.s.logger.With(
 		zap.Stringer("project_id", j.projectID),
-		zap.Stringer("capsule_id", j.capsuleID),
+		zap.String("capsule_id", j.capsuleID),
 		zap.Uint64("rollout_id", j.rolloutID),
 	)
 
 	logger.Info("running rollout job")
 
-	c, err := j.s.cr.Get(ctx, j.capsuleID)
+	c, err := j.s.ccg.GetCapsuleConfig(ctx, j.capsuleID)
 	if err != nil {
 		return err
 	}
@@ -326,7 +318,7 @@ func (j *rolloutJob) updateError(ctx context.Context, rc *capsule.RolloutConfig,
 
 func (j *rolloutJob) run(
 	ctx context.Context,
-	c *capsule.Capsule,
+	cfg *v1alpha1.Capsule,
 	rc *capsule.RolloutConfig,
 	rs *rollout.Status,
 	version uint64,
@@ -343,7 +335,7 @@ func (j *rolloutJob) run(
 		return nil
 
 	case capsule.RolloutState_ROLLOUT_STATE_PREPARING:
-		ccName := fmt.Sprint("rig-capsule-", c.GetName())
+		ccName := fmt.Sprint("rig-capsule-", cfg.GetName())
 		if rc.GetAutoAddRigServiceAccounts() {
 			if rs.GetRigServiceAccount().GetClientId() == "" {
 				if err := j.s.CreateEvent(ctx, j.capsuleID, j.rolloutID, "creating service-account", &capsule.EventData{Kind: &capsule.EventData_Rollout{Rollout: &capsule.RolloutEvent{}}}); err != nil {
@@ -445,14 +437,35 @@ func (j *rolloutJob) run(
 			return err
 		}
 
-		cc := &cluster.Capsule{
-			CapsuleID:         j.capsuleID.String(),
-			Image:             b.GetBuildId(),
-			ContainerSettings: rc.GetContainerSettings(),
-			ConfigFiles:       rc.GetConfigFiles(),
-			Replicas:          rc.GetReplicas(),
-			Namespace:         j.projectID.String(),
-			Network:           rc.GetNetwork(),
+		cfg.Spec.Image = rc.GetBuildId()
+		cfg.Spec.Command = rc.GetContainerSettings().GetCommand()
+		cfg.Spec.Args = rc.GetContainerSettings().GetArgs()
+		cfg.Spec.Replicas = int32(rc.GetReplicas())
+		// TODO(anders): fix
+		// cfg.ConfigFiles = rc.GetConfigFiles()
+
+		for _, i := range rc.GetNetwork().GetInterfaces() {
+			capIf := v1alpha1.CapsuleInterface{
+				Name: i.GetName(),
+				Port: int32(i.GetPort()),
+			}
+			if i.GetPublic().GetEnabled() {
+				switch v := i.GetPublic().GetMethod().GetKind().(type) {
+				case *capsule.RoutingMethod_Ingress_:
+					capIf.Public = &v1alpha1.CapsulePublicInterface{
+						Ingress: &v1alpha1.CapsuleInterfaceIngress{
+							Host: v.Ingress.GetHost(),
+						},
+					}
+				case *capsule.RoutingMethod_LoadBalancer_:
+					capIf.Public = &v1alpha1.CapsulePublicInterface{
+						LoadBalancer: &v1alpha1.CapsuleInterfaceLoadBalancer{
+							Port: int32(v.LoadBalancer.GetPort()),
+						},
+					}
+				}
+			}
+			cfg.Spec.Interfaces = append(cfg.Spec.Interfaces, capIf)
 		}
 
 		ref, err := reference.ParseDockerRef(b.GetBuildId())
@@ -461,24 +474,23 @@ func (j *rolloutJob) run(
 		}
 
 		host := reference.Domain(ref)
-		if ds, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
+		if _, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
 		} else if err != nil {
 			return err
 		} else {
-			cc.RegistryAuth = &cluster.RegistryAuth{
-				Host:           host,
-				RegistrySecret: ds,
-			}
+			// TODO(anders): fix
+			// cfg.RegistryAuth = &pb_capsule.Auth{
+			// 	Host:     host,
+			// 	Username: ds.GetUsername(),
+			// 	Password: ds.GetPassword(),
+			// }
 		}
 
-		if cc.ContainerSettings == nil {
-			cc.ContainerSettings = &capsule.ContainerSettings{}
+		envs := rc.GetContainerSettings().GetEnvironmentVariables()
+		if envs == nil {
+			envs = map[string]string{}
 		}
-		if cc.ContainerSettings.EnvironmentVariables == nil {
-			cc.ContainerSettings.EnvironmentVariables = map[string]string{}
-		}
-
-		cc.ContainerSettings.EnvironmentVariables["RIG_PROJECT_ID"] = j.projectID.String()
+		envs["RIG_PROJECT_ID"] = j.projectID.String()
 		if rc.GetAutoAddRigServiceAccounts() {
 			sid := uuid.UUID(rs.GetRigServiceAccount().GetClientSecretKey())
 
@@ -487,16 +499,8 @@ func (j *rolloutJob) run(
 				return err
 			}
 
-			cc.ContainerSettings.EnvironmentVariables["RIG_CLIENT_ID"] = rs.GetRigServiceAccount().GetClientId()
-			cc.ContainerSettings.EnvironmentVariables["RIG_CLIENT_SECRET"] = string(secretKey)
-		}
-
-		sm, key := j.s.as.GetJWTMethod()
-		switch sm.(type) {
-		case *jwt.SigningMethodHMAC:
-			cc.JWTMethod = &proxy.JWTMethod{Method: &proxy.JWTMethod_Secret{Secret: key}}
-		default:
-			cc.JWTMethod = &proxy.JWTMethod{Method: &proxy.JWTMethod_Certificate{Certificate: key}}
+			envs["RIG_CLIENT_ID"] = rs.GetRigServiceAccount().GetClientId()
+			envs["RIG_CLIENT_SECRET"] = string(secretKey)
 		}
 
 		if err := j.s.CreateEvent(ctx, j.capsuleID, j.rolloutID, "configuring cluster resources", &capsule.EventData{Kind: &capsule.EventData_Rollout{Rollout: &capsule.RolloutEvent{}}}); err != nil {
@@ -504,7 +508,11 @@ func (j *rolloutJob) run(
 		}
 
 		// Upsert the capsule.
-		if err := j.s.cg.UpsertCapsule(ctx, c.GetName(), cc); err != nil {
+		if err := j.s.ccg.SetEnvironmentVariables(ctx, cfg.Name, envs); err != nil {
+			return err
+		}
+
+		if err := j.s.ccg.UpdateCapsuleConfig(ctx, cfg); err != nil {
 			return err
 		}
 
@@ -513,7 +521,7 @@ func (j *rolloutJob) run(
 		return nil
 
 	case capsule.RolloutState_ROLLOUT_STATE_OBSERVING:
-		it, _, err := j.s.cg.ListInstances(ctx, c.GetName())
+		it, _, err := j.s.cg.ListInstances(ctx, cfg.GetName())
 		if err != nil {
 			return err
 		}

@@ -4,17 +4,20 @@ import (
 	"context"
 	"testing"
 
+	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_CreateBuild_InvalidArguments(t *testing.T) {
 	ctx := context.Background()
-	capsuleID := uuid.New()
+	capsuleID := uuid.New().String()
 
 	s := &Service{
 		logger: zaptest.NewLogger(t),
@@ -29,14 +32,18 @@ func Test_CreateBuild_InvalidArguments(t *testing.T) {
 
 func Test_CreateBuild_ValidArguments(t *testing.T) {
 	ctx := auth.WithProjectID(context.Background(), uuid.New())
-	capsuleID := uuid.New()
+	capsuleID := uuid.New().String()
 
 	cr := repository.NewMockCapsule(t)
-	cr.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, nil)
+	ccg := cluster.NewMockConfigGateway(t)
+
+	ccg.EXPECT().GetCapsuleConfig(mock.Anything, mock.Anything).Return(&v1alpha1.Capsule{ObjectMeta: v1.ObjectMeta{Name: capsuleID}}, nil)
+	cr.EXPECT().GetCurrentRollout(mock.Anything, mock.Anything).Return(0, nil, nil, 0, nil)
 	cr.EXPECT().CreateBuild(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	s := &Service{
 		cr:     cr,
+		ccg:    ccg,
 		logger: zaptest.NewLogger(t),
 	}
 

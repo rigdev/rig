@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package capsule;
+
+import "google/protobuf/timestamp.proto";
+
+message Status {
+  string name = 1;
+  map<string, string> labels = 2;
+  uint32 replicas = 3;
+}
+
+enum State {
+  STATE_UNSPECIFIED = 0;
+  STATE_PENDING = 1;
+  STATE_RUNNING = 2;
+  STATE_SUCCEEDED = 3;
+  STATE_FAILED = 4;
+}
+
+message Instance {
+  string instance_id = 1;
+  string build_id = 2;
+  State state = 3;
+  uint32 restart_count = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp started_at = 6;
+  google.protobuf.Timestamp finished_at = 7;
+}

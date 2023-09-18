@@ -25,6 +25,8 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
+	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
@@ -35,9 +37,10 @@ import (
 type Client struct {
 	logger *zap.Logger
 	dc     *client.Client
+	rcc    repository.ClusterConfig
 }
 
-func New(cfg config.Config, logger *zap.Logger) (*Client, error) {
+func New(cfg config.Config, logger *zap.Logger, rcc repository.ClusterConfig) (*Client, error) {
 	var opts []client.Opt
 	if cfg.Client.Docker.Host != "" {
 		opts = append(opts, client.WithHost(cfg.Client.Docker.Host))
@@ -51,11 +54,12 @@ func New(cfg config.Config, logger *zap.Logger) (*Client, error) {
 	return &Client{
 		logger: logger,
 		dc:     dc,
+		rcc:    rcc,
 	}, nil
 }
 
-func (c *Client) Logs(ctx context.Context, capsuleName string, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error) {
-	c.logger.Debug("reading docker logs", zap.String("deployment_id", capsuleName), zap.String("instance_id", instanceID))
+func (c *Client) Logs(ctx context.Context, capsuleID string, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error) {
+	c.logger.Debug("reading docker logs", zap.String("deployment_id", capsuleID), zap.String("instance_id", instanceID))
 
 	ls, err := c.dc.ContainerLogs(ctx, instanceID, types.ContainerLogsOptions{
 		ShowStdout: true,
@@ -177,7 +181,7 @@ func (c *Client) copyFileToContainer(ctx context.Context, containerID string, fi
 	return c.dc.CopyToContainer(ctx, containerID, dir, bufio.NewReader(&buffer), types.CopyToContainerOptions{})
 }
 
-func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, configFiles []*capsule.ConfigFile) error {
+func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, files []v1alpha1.File) error {
 	id, err := c.lookupContainer(ctx, containerID)
 	if errors.IsNotFound(err) {
 		// Already ready to create.
@@ -195,11 +199,11 @@ func (c *Client) createAndStartContainer(ctx context.Context, containerID string
 		return err
 	}
 
-	for _, f := range configFiles {
-		if err := c.copyFileToContainer(ctx, containerID, f); err != nil {
-			return err
-		}
-	}
+	// for _, f := range files {
+	// 	if err := c.copyFileToContainer(ctx, containerID, f); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	if err := c.dc.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
 		c.logger.Info("error starting container", zap.Error(err), zap.String("instance_id", containerID))

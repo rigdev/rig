@@ -9,7 +9,6 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -212,29 +211,29 @@ func Setup(parent *cobra.Command) {
 	)
 }
 
-type CapsuleID = uuid.UUID
+type CapsuleID = string
 
 func provideCapsuleID(ctx context.Context, nc rig.Client, args []string) (CapsuleID, error) {
-	var capsuleName string
+	var capsuleID string
 	var err error
 	if len(args) == 0 {
-		capsuleName, err = common.PromptInput("Enter Capsule name:", common.ValidateNonEmptyOpt)
+		capsuleID, err = common.PromptInput("Enter Capsule name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return "", err
 		}
 	} else {
-		capsuleName = args[0]
+		capsuleID = args[0]
 	}
-	res, err := nc.Capsule().GetByName(ctx, &connect.Request[capsule.GetByNameRequest]{
-		Msg: &capsule.GetByNameRequest{
-			Name: capsuleName,
+
+	if _, err := nc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
+		Msg: &capsule.GetRequest{
+			CapsuleId: capsuleID,
 		},
-	})
-	if err != nil {
+	}); err != nil {
 		return "", err
 	}
 
-	return uuid.UUID(res.Msg.GetCapsule().GetCapsuleId()), nil
+	return capsuleID, nil
 }
 
 type InstanceID = string
@@ -246,7 +245,7 @@ func provideInstanceID(ctx context.Context, nc rig.Client, capsuleID CapsuleID, 
 
 	res, err := nc.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 		},
 	})
 	if err != nil {

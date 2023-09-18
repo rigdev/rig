@@ -20,7 +20,7 @@ func CapsuleLogs(ctx context.Context, cmd *cobra.Command, args []string, capsule
 
 	s, err := nc.Capsule().Logs(ctx, &connect.Request[capsule.LogsRequest]{
 		Msg: &capsule.LogsRequest{
-			CapsuleId:  capsuleID.String(),
+			CapsuleId:  capsuleID,
 			InstanceId: instanceID,
 			Follow:     follow,
 		},

@@ -7,12 +7,11 @@ import (
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (m *MongoRepository) UpdateRolloutStatus(ctx context.Context, capsuleID uuid.UUID, rolloutID uint64, version uint64, rs *rollout.Status) error {
+func (m *MongoRepository) UpdateRolloutStatus(ctx context.Context, capsuleID string, rolloutID uint64, version uint64, rs *rollout.Status) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err

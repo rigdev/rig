@@ -82,6 +82,7 @@ type Repository struct {
 	Group            RepositoryStore       `mapstructure:"group"`
 	Project          RepositoryStore       `mapstructure:"project"`
 	Secret           RepositoryStoreSecret `mapstructure:"secret"`
+	ClusterConfig    RepositoryStore       `mapstructure:"cluster_config"`
 	Session          RepositoryStore       `mapstructure:"session"`
 	User             RepositoryStore       `mapstructure:"user"`
 	VerificationCode RepositoryStore       `mapstructure:"verification_code"`

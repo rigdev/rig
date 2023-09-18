@@ -8,13 +8,15 @@ import (
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/repository"
-	"github.com/rigdev/rig/internal/service/auth"
+	service_auth "github.com/rigdev/rig/internal/service/auth"
 	"github.com/rigdev/rig/internal/service/project"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
 	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Service struct {
@@ -22,17 +24,21 @@ type Service struct {
 	cr     repository.Capsule
 	sr     repository.Secret
 	cg     cluster.Gateway
-	as     *auth.Service
+	ccg    cluster.ConfigGateway
+	csg    cluster.StatusGateway
+	as     *service_auth.Service
 	ps     project.Service
 	q      *Queue[Job]
 	cfg    config.Config
 }
 
-func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, as *auth.Service, ps project.Service, cfg config.Config, logger *zap.Logger) *Service {
+func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, ccg cluster.ConfigGateway, csg cluster.StatusGateway, as *service_auth.Service, ps project.Service, cfg config.Config, logger *zap.Logger) *Service {
 	s := &Service{
 		cr:     cr,
 		sr:     sr,
 		cg:     cg,
+		ccg:    ccg,
+		csg:    csg,
 		as:     as,
 		ps:     ps,
 		q:      NewQueue[Job](),
@@ -45,58 +51,65 @@ func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway,
 	return s
 }
 
-func (s *Service) CreateCapsule(ctx context.Context, name string, is []*capsule.Update) (uuid.UUID, error) {
-	capsuleID := uuid.New()
-
-	c := &capsule.Capsule{
-		CapsuleId: capsuleID.String(),
-		Name:      name,
-		CreatedAt: timestamppb.Now(),
+func (s *Service) CreateCapsule(ctx context.Context, name string, is []*capsule.Update) (string, error) {
+	projectID, err := auth.GetProjectID(ctx)
+	if err != nil {
+		return "", err
 	}
 
-	if a, err := s.as.GetAuthor(ctx); err != nil {
-		return uuid.Nil, err
-	} else {
-		c.CreatedBy = a
+	cfg := &v1alpha1.Capsule{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: v1alpha1.GroupVersion.String(),
+			Kind:       "Capsule",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: projectID.String(),
+		},
+	}
+	if err := s.ccg.CreateCapsuleConfig(ctx, cfg); err != nil {
+		return "", err
 	}
 
-	if err := applyUpdates(c, is); err != nil {
-		return uuid.Nil, err
-	}
-
-	if err := s.cr.Create(ctx, c); err != nil {
-		return uuid.Nil, err
-	}
-
-	return capsuleID, nil
+	return name, nil
 }
 
-func (s *Service) GetCapsule(ctx context.Context, capsuleID uuid.UUID) (*capsule.Capsule, error) {
-	return s.cr.Get(ctx, capsuleID)
-}
-
-func (s *Service) GetCapsuleByName(ctx context.Context, name string) (*capsule.Capsule, error) {
-	return s.cr.GetByName(ctx, name)
-}
-
-func (s *Service) Logs(ctx context.Context, capsuleID uuid.UUID, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error) {
-	d, err := s.cr.Get(ctx, capsuleID)
+func (s *Service) GetCapsule(ctx context.Context, capsuleID string) (*capsule.Capsule, error) {
+	cfg, err := s.ccg.GetCapsuleConfig(ctx, capsuleID)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.cg.Logs(ctx, d.GetName(), instanceID, follow)
+	return s.toCapsule(ctx, cfg)
 }
 
-func (s *Service) DeleteCapsule(ctx context.Context, capsuleID uuid.UUID) error {
-	d, err := s.cr.Get(ctx, capsuleID)
-	if err != nil {
-		return err
+func (s *Service) toCapsule(ctx context.Context, cfg *v1alpha1.Capsule) (*capsule.Capsule, error) {
+	rolloutID, rc, rs, _, err := s.cr.GetCurrentRollout(ctx, cfg.GetName())
+	if errors.IsNotFound(err) {
+	} else if err != nil {
+		return nil, err
 	}
 
-	if err := s.cg.DeleteCapsule(ctx, d.GetName()); errors.IsNotFound(err) {
-		// The capsule didn't exist.
-	} else if err != nil {
+	return &capsule.Capsule{
+		CapsuleId:      cfg.GetName(),
+		CurrentRollout: rolloutID,
+		UpdatedAt:      rs.GetStatus().GetUpdatedAt(),
+		UpdatedBy:      rc.GetCreatedBy(),
+	}, nil
+}
+
+func (s *Service) Logs(ctx context.Context, capsuleID string, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error) {
+	d, err := s.GetCapsule(ctx, capsuleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.cg.Logs(ctx, d.GetCapsuleId(), instanceID, follow)
+}
+
+func (s *Service) DeleteCapsule(ctx context.Context, capsuleID string) error {
+	_, err := s.GetCapsule(ctx, capsuleID)
+	if err != nil {
 		return err
 	}
 
@@ -104,50 +117,50 @@ func (s *Service) DeleteCapsule(ctx context.Context, capsuleID uuid.UUID) error 
 		return err
 	}
 
+	if err := s.ccg.DeleteCapsuleConfig(ctx, capsuleID); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (s *Service) ListCapsules(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*capsule.Capsule], int64, error) {
-	return s.cr.List(ctx, pagination)
-}
-
-func (s *Service) UpdateCapsule(ctx context.Context, capsuleID uuid.UUID, us []*capsule.Update) error {
-	d, err := s.cr.Get(ctx, capsuleID)
-	if err != nil {
-		return err
-	}
-
-	if err := applyUpdates(d, us); err != nil {
-		return err
-	}
-
-	if err := s.cr.Update(ctx, d); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) ListInstances(ctx context.Context, capsuleID uuid.UUID, pagination *model.Pagination) (iterator.Iterator[*capsule.Instance], uint64, error) {
-	c, err := s.cr.Get(ctx, capsuleID)
+	it, total, err := s.ccg.ListCapsuleConfigs(ctx, pagination)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return s.cg.ListInstances(ctx, c.GetName())
+	it2 := iterator.Map(it, func(cfg *v1alpha1.Capsule) (*capsule.Capsule, error) {
+		return s.toCapsule(ctx, cfg)
+	})
+
+	return it2, total, nil
 }
 
-func (s *Service) RestartInstance(ctx context.Context, capsuleID uuid.UUID, instanceID string) error {
-	c, err := s.cr.Get(ctx, capsuleID)
+func (s *Service) UpdateCapsule(ctx context.Context, capsuleID uuid.UUID, us []*capsule.Update) error {
+	return errors.UnimplementedErrorf("UpdateCapsule not implemented")
+}
+
+func (s *Service) ListInstances(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*capsule.Instance], uint64, error) {
+	c, err := s.GetCapsule(ctx, capsuleID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return s.cg.ListInstances(ctx, c.GetCapsuleId())
+}
+
+func (s *Service) RestartInstance(ctx context.Context, capsuleID string, instanceID string) error {
+	c, err := s.GetCapsule(ctx, capsuleID)
 	if err != nil {
 		return err
 	}
 
-	return s.cg.RestartInstance(ctx, c.GetName(), instanceID)
+	return s.cg.RestartInstance(ctx, c.GetCapsuleId(), instanceID)
 }
 
-func (s *Service) DeleteBuild(ctx context.Context, capsuleID uuid.UUID, buildID string) error {
-	cp, err := s.cr.Get(ctx, capsuleID)
+func (s *Service) DeleteBuild(ctx context.Context, capsuleID string, buildID string) error {
+	cp, err := s.GetCapsule(ctx, capsuleID)
 	if err != nil {
 		return err
 	}
@@ -165,7 +178,7 @@ func (s *Service) DeleteBuild(ctx context.Context, capsuleID uuid.UUID, buildID 
 	return s.cr.DeleteBuild(ctx, capsuleID, buildID)
 }
 
-func (s *Service) Deploy(ctx context.Context, capsuleID uuid.UUID, cs []*capsule.Change) error {
+func (s *Service) Deploy(ctx context.Context, capsuleID string, cs []*capsule.Change) error {
 	if _, err := s.newRollout(ctx, capsuleID, cs); err != nil {
 		return err
 	}
@@ -173,7 +186,7 @@ func (s *Service) Deploy(ctx context.Context, capsuleID uuid.UUID, cs []*capsule
 	return nil
 }
 
-func (s *Service) ListRollouts(ctx context.Context, capsuleID uuid.UUID, pagination *model.Pagination) (iterator.Iterator[*capsule.Rollout], uint64, error) {
+func (s *Service) ListRollouts(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*capsule.Rollout], uint64, error) {
 	return s.cr.ListRollouts(ctx, pagination, capsuleID)
 }
 

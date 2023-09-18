@@ -16,7 +16,7 @@ func CapsuleEvents(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID,
 	if rollout == 0 {
 		resp, err := nc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 			Msg: &capsule.GetRequest{
-				CapsuleId: capsuleID.String(),
+				CapsuleId: capsuleID,
 			},
 		})
 		if err != nil {
@@ -28,7 +28,7 @@ func CapsuleEvents(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID,
 
 	resp, err := nc.Capsule().ListEvents(ctx, &connect.Request[capsule.ListEventsRequest]{
 		Msg: &capsule.ListEventsRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			Pagination: &model.Pagination{
 				Offset:     uint32(offset),
 				Limit:      uint32(limit),

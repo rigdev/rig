@@ -15,7 +15,7 @@ func (h *Handler) Create(ctx context.Context, req *connect.Request[capsule.Creat
 
 	return &connect.Response[capsule.CreateResponse]{
 		Msg: &capsule.CreateResponse{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 		},
 	}, nil
 }

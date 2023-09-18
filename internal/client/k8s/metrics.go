@@ -7,7 +7,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -35,14 +34,13 @@ func (c *Client) ListCapsuleMetrics(ctx context.Context) (iterator.Iterator[*cap
 			}
 
 			for _, ms := range ml.Items {
-				cid, err := uuid.Parse(capsuleIDFromLabels(ms.GetLabels()))
-				if err != nil {
-					p.Error(err)
-					return
+				cid := capsuleIDFromLabels(ms.GetLabels())
+				if cid == "" {
+					continue
 				}
 
 				cm := &capsule.InstanceMetrics{
-					CapsuleId:      cid.String(),
+					CapsuleId:      cid,
 					InstanceId:     ms.GetName(),
 					MainContainer:  getMainContainerMetrics(ms.Containers, ms.Timestamp),
 					ProxyContainer: getProxyContainerMetrics(ms.Containers, ms.Timestamp),

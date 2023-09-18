@@ -8,11 +8,10 @@ import (
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func (m *MongoRepository) CreateBuild(ctx context.Context, capsuleID uuid.UUID, b *capsule.Build) error {
+func (m *MongoRepository) CreateBuild(ctx context.Context, capsuleID string, b *capsule.Build) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err

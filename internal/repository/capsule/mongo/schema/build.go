@@ -8,7 +8,7 @@ import (
 
 type Build struct {
 	ProjectID uuid.UUID `bson:"project_id" json:"project_id"`
-	CapsuleID uuid.UUID `bson:"capsule_id" json:"capsule_id"`
+	CapsuleID string    `bson:"capsule_id" json:"capsule_id"`
 	BuildID   string    `bson:"build_id" json:"build_id"`
 	Data      []byte    `bson:"data,omitempty" json:"data,omitempty"`
 }
@@ -22,7 +22,7 @@ func (b Build) ToProto() (*capsule.Build, error) {
 	return p, nil
 }
 
-func BuildFromProto(projectID, capsuleID uuid.UUID, b *capsule.Build) (Build, error) {
+func BuildFromProto(projectID uuid.UUID, capsuleID string, b *capsule.Build) (Build, error) {
 	bs, err := proto.Marshal(b)
 	if err != nil {
 		return Build{}, err

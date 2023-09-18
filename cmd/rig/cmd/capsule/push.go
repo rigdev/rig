@@ -79,7 +79,7 @@ func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsule
 
 	if _, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			Image:     rigRef.Name(),
 			Digest:    digest,
 		},
@@ -90,7 +90,7 @@ func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsule
 	if deploy {
 		if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 			Msg: &capsule.DeployRequest{
-				CapsuleId: capsuleID.String(),
+				CapsuleId: capsuleID,
 				Changes: []*capsule.Change{{
 					Field: &capsule.Change_BuildId{
 						BuildId: buildID,

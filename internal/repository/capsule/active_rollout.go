@@ -8,7 +8,7 @@ import (
 
 type ActiveRollout struct {
 	ProjectID   uuid.UUID
-	CapsuleID   uuid.UUID
+	CapsuleID   string
 	RolloutID   uint64
 	ScheduledAt time.Time
 }

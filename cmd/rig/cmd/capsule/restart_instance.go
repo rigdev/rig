@@ -17,7 +17,7 @@ func CapsuleRestartInstance(ctx context.Context, cmd *cobra.Command, capsuleID C
 
 	if _, err := nc.Capsule().RestartInstance(ctx, &connect.Request[capsule.RestartInstanceRequest]{
 		Msg: &capsule.RestartInstanceRequest{
-			CapsuleId:  capsuleID.String(),
+			CapsuleId:  capsuleID,
 			InstanceId: instanceID,
 		},
 	}); err != nil {

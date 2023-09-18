@@ -8,7 +8,6 @@ import (
 )
 
 type MongoRepository struct {
-	CapsuleCol      *mongo.Collection
 	BuildCol        *mongo.Collection
 	RolloutCol      *mongo.Collection
 	CapsuleEventCol *mongo.Collection
@@ -19,7 +18,6 @@ func NewRepository(c *mongo.Client) (*MongoRepository, error) {
 	db := c.Database("rig")
 
 	repo := &MongoRepository{
-		CapsuleCol:      c.Database("rig").Collection("capsules"),
 		BuildCol:        c.Database("rig").Collection("builds"),
 		RolloutCol:      c.Database("rig").Collection("rollouts"),
 		CapsuleEventCol: c.Database("rig").Collection("capsule_events"),

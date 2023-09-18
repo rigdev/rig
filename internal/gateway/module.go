@@ -6,9 +6,9 @@ import (
 	"github.com/rigdev/rig/internal/client/docker"
 	"github.com/rigdev/rig/internal/client/k8s"
 	"github.com/rigdev/rig/internal/client/minio"
+	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/gateway/storage"
-	"github.com/rigdev/rig/internal/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -38,20 +38,20 @@ type storageParams struct {
 	Logger      *zap.Logger
 }
 
-func NewCluster(p clusterParams) (cluster.Gateway, error) {
+func NewCluster(p clusterParams) (cluster.Gateway, cluster.ConfigGateway, cluster.StatusGateway, error) {
 	switch p.Cfg.Cluster.Type {
 	case "docker":
 		if p.DockerClient == nil {
-			return nil, fmt.Errorf("no docker client provided")
+			return nil, nil, nil, fmt.Errorf("no docker client provided")
 		}
-		return p.DockerClient, nil
+		return p.DockerClient, p.DockerClient, p.DockerClient, nil
 	case "k8s":
 		if p.K8SClient == nil {
-			return nil, fmt.Errorf("no k8s client provided")
+			return nil, nil, nil, fmt.Errorf("no k8s client provided")
 		}
-		return p.K8SClient, nil
+		return p.K8SClient, p.K8SClient, nil, nil
 	default:
-		return nil, fmt.Errorf("invalid cluster gateway '%v'", p.Cfg.Cluster.Type)
+		return nil, nil, nil, fmt.Errorf("invalid cluster gateway '%v'", p.Cfg.Cluster.Type)
 	}
 }
 

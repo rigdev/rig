@@ -10,7 +10,6 @@ import (
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -36,13 +35,13 @@ func (c *MongoRepository) ListMetrics(
 	ctx context.Context,
 	pagination *model.Pagination,
 ) (iterator.Iterator[*capsule.InstanceMetrics], error) {
-	return c.GetInstanceMetrics(ctx, pagination, uuid.Nil, "")
+	return c.GetInstanceMetrics(ctx, pagination, "", "")
 }
 
 func (c *MongoRepository) GetMetrics(
 	ctx context.Context,
 	pagination *model.Pagination,
-	capsuleID uuid.UUID,
+	capsuleID string,
 ) (iterator.Iterator[*capsule.InstanceMetrics], error) {
 	return c.GetInstanceMetrics(ctx, pagination, capsuleID, "")
 }
@@ -50,7 +49,7 @@ func (c *MongoRepository) GetMetrics(
 func (c *MongoRepository) GetInstanceMetrics(
 	ctx context.Context,
 	pagination *model.Pagination,
-	capsuleID uuid.UUID,
+	capsuleID string,
 	instanceID string,
 ) (iterator.Iterator[*capsule.InstanceMetrics], error) {
 	projectID, err := auth.GetProjectID(ctx)
@@ -59,7 +58,7 @@ func (c *MongoRepository) GetInstanceMetrics(
 	}
 
 	filter := bson.M{"project_id": projectID}
-	if capsuleID != uuid.Nil {
+	if capsuleID != "" {
 		filter["capsule_id"] = capsuleID
 	}
 	if instanceID != "" {

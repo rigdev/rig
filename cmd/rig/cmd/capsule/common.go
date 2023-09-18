@@ -12,7 +12,7 @@ import (
 
 func getCurrentContainerSettings(ctx context.Context, capsuleID CapsuleID, client rig.Client) (*capsule.ContainerSettings, error) {
 	resp, err := client.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
-		CapsuleId: capsuleID.String(),
+		CapsuleId: capsuleID,
 		Pagination: &model.Pagination{
 			Offset:     0,
 			Limit:      1,
@@ -28,7 +28,7 @@ func getCurrentContainerSettings(ctx context.Context, capsuleID CapsuleID, clien
 	}
 
 	r, err := client.Capsule().GetRollout(ctx, connect.NewRequest(&capsule.GetRolloutRequest{
-		CapsuleId: capsuleID.String(),
+		CapsuleId: capsuleID,
 		RolloutId: resp.Msg.Rollouts[0].RolloutId,
 	}))
 	if err != nil {

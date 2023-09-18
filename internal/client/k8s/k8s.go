@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/rigdev/rig/internal/gateway/cluster"
+	"github.com/rigdev/rig/internal/repository"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -18,11 +19,12 @@ type Client struct {
 	logger *zap.Logger
 	cs     *kubernetes.Clientset
 	mcs    *metricsclient.Clientset
+	rcc    repository.ClusterConfig
 }
 
 var _ cluster.Gateway = &Client{}
 
-func New(logger *zap.Logger) (*Client, error) {
+func New(logger *zap.Logger, rcc repository.ClusterConfig) (*Client, error) {
 	var (
 		restCfg *rest.Config
 		err     error
@@ -50,6 +52,7 @@ func New(logger *zap.Logger) (*Client, error) {
 		logger: logger,
 		cs:     cs,
 		mcs:    mcs,
+		rcc:    rcc,
 	}, nil
 }
 

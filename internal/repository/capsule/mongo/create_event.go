@@ -6,10 +6,9 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
-	"github.com/rigdev/rig/pkg/uuid"
 )
 
-func (m *MongoRepository) CreateEvent(ctx context.Context, capsuleID uuid.UUID, e *capsule.Event) error {
+func (m *MongoRepository) CreateEvent(ctx context.Context, capsuleID string, e *capsule.Event) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err

@@ -12,7 +12,7 @@ import (
 func CapsuleAbort(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
 	c, err := nc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 		},
 	})
 	if err != nil {
@@ -21,7 +21,7 @@ func CapsuleAbort(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 
 	if _, err := nc.Capsule().AbortRollout(ctx, &connect.Request[capsule.AbortRolloutRequest]{
 		Msg: &capsule.AbortRolloutRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			RolloutId: c.Msg.GetCapsule().GetCurrentRollout(),
 		},
 	}); err != nil {

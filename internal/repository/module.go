@@ -6,6 +6,7 @@ import (
 
 	"github.com/rigdev/rig/internal/config"
 	capsule_mongo "github.com/rigdev/rig/internal/repository/capsule/mongo"
+	cluster_config_mongo "github.com/rigdev/rig/internal/repository/cluster_config/mongo"
 	database_mongo "github.com/rigdev/rig/internal/repository/database/mongo"
 	group_mongo "github.com/rigdev/rig/internal/repository/group/mongo"
 	project_mongo "github.com/rigdev/rig/internal/repository/project/mongo"
@@ -34,6 +35,7 @@ var Module = fx.Module(
 		NewCapsule,
 		NewStorage,
 		NewSecret,
+		NewClusterConfig,
 	),
 )
 
@@ -172,6 +174,19 @@ func NewSecret(p params) (Secret, error) {
 			return nil, errNoMongoDBClient
 		}
 		return secret_mongo.NewRepository(p.MongoClient, p.Cfg.Repository.Secret.MongoDB.Key)
+	default:
+		return nil, errInvalidStore("secret", s)
+	}
+}
+
+func NewClusterConfig(p params) (ClusterConfig, error) {
+	s := p.Cfg.Repository.ClusterConfig.Store
+	switch s {
+	case storeTypeMongoDB:
+		if p.MongoClient == nil {
+			return nil, errNoMongoDBClient
+		}
+		return cluster_config_mongo.NewRepository(p.MongoClient)
 	default:
 		return nil, errInvalidStore("secret", s)
 	}

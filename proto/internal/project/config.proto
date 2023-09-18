@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package project;
+
+message Config {
+  string name = 1;
+  map<string, string> registry_auth = 2;
+}

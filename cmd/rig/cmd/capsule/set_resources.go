@@ -58,7 +58,7 @@ func SetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 	}
 
 	_, err = client.Capsule().Deploy(ctx, connect.NewRequest(&capsule.DeployRequest{
-		CapsuleId: capsuleID.String(),
+		CapsuleId: capsuleID,
 		Changes: []*capsule.Change{{
 			Field: &capsule.Change_ContainerSettings{
 				ContainerSettings: container,
@@ -210,5 +210,4 @@ func parseBytes(s string) (uint64, error) {
 
 func allFlagsEmpty() bool {
 	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == ""
-
 }

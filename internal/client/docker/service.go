@@ -15,8 +15,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func (c *Client) upsertService(ctx context.Context, capsuleName string, pc *proxy.Config) error {
-	containerID := fmt.Sprint(capsuleName, "-service")
+func (c *Client) upsertService(ctx context.Context, capsuleID string, pc *proxy.Config) error {
+	containerID := fmt.Sprint(capsuleID, "-service")
 
 	bs, err := protojson.Marshal(pc)
 	if err != nil {
@@ -53,7 +53,7 @@ func (c *Client) upsertService(ctx context.Context, capsuleName string, pc *prox
 	nc := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
 			netID: {
-				Aliases: []string{capsuleName, fmt.Sprint(capsuleName, ".local")},
+				Aliases: []string{capsuleID, fmt.Sprint(capsuleID, ".local")},
 			},
 		},
 	}
@@ -73,8 +73,8 @@ func (c *Client) upsertService(ctx context.Context, capsuleName string, pc *prox
 	return nil
 }
 
-func (c *Client) deleteService(ctx context.Context, capsuleName string) error {
-	containerID := fmt.Sprint(capsuleName, "-service")
+func (c *Client) deleteService(ctx context.Context, capsuleID string) error {
+	containerID := fmt.Sprint(capsuleID, "-service")
 	if err := c.dc.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{
 		Force: true,
 	}); client.IsErrNotFound(err) {

@@ -18,7 +18,7 @@ import (
 func CapsuleListRollouts(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
 	resp, err := nc.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
 		Msg: &capsule.ListRolloutsRequest{
-			CapsuleId: capsuleID.String(),
+			CapsuleId: capsuleID,
 			Pagination: &model.Pagination{
 				Offset:     uint32(offset),
 				Limit:      uint32(limit),

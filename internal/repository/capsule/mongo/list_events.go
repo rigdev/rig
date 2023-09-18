@@ -9,11 +9,10 @@ import (
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (m *MongoRepository) ListEvents(ctx context.Context, pagination *model.Pagination, capsuleID uuid.UUID, rolloutID uint64) (iterator.Iterator[*capsule.Event], uint64, error) {
+func (m *MongoRepository) ListEvents(ctx context.Context, pagination *model.Pagination, capsuleID string, rolloutID uint64) (iterator.Iterator[*capsule.Event], uint64, error) {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return nil, 0, err
