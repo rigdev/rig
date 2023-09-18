@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
+	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
@@ -15,6 +16,7 @@ import (
 	"github.com/rigdev/rig/pkg/iterator"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
+	v1 "k8s.io/api/core/v1"
 )
 
 func (c *Client) CreateCapsuleConfig(ctx context.Context, cfg *v1alpha1.Capsule) error {
@@ -125,6 +127,21 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error
 		return err
 	}
 
+	var cf []*capsule.ConfigFile
+	for _, f := range cfg.Spec.Files {
+		if f.ConfigMap != nil {
+			cm, err := c.GetFile(ctx, capsuleID, f.ConfigMap.Name, cfg.Namespace)
+			if err != nil {
+				return err
+			}
+
+			cf = append(cf, &capsule.ConfigFile{
+				Path:    f.Path,
+				Content: cm.BinaryData[f.ConfigMap.Key],
+			})
+		}
+	}
+
 	for i := 0; i < int(cfg.Spec.Replicas); i++ {
 		containerID := fmt.Sprint(cfg.GetName(), "-instance-", i)
 
@@ -135,7 +152,7 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error
 			return err
 		}
 
-		if err := c.createAndStartContainer(ctx, containerID, dcc, dhc, dnc, cfg.Spec.Files); err != nil {
+		if err := c.createAndStartContainer(ctx, containerID, dcc, dhc, dnc, cf); err != nil {
 			return err
 		}
 
@@ -228,5 +245,74 @@ func (c *Client) DeleteEnvironmentVariable(ctx context.Context, capsuleID, name 
 		return err
 	}
 
+	return nil
+}
+
+func (c *Client) GetFile(ctx context.Context, capsuleID, name, namespace string) (*v1.ConfigMap, error) {
+	fs, err := c.rcc.GetFiles(ctx, capsuleID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range fs {
+		if f.Name == name && f.Namespace == namespace {
+			return f, nil
+		}
+	}
+
+	return nil, errors.NotFoundErrorf("file not found")
+}
+
+func (c *Client) SetFile(ctx context.Context, capsuleID string, file *v1.ConfigMap) error {
+	fs, err := c.rcc.GetFiles(ctx, capsuleID)
+	if err != nil {
+		return err
+	}
+
+	found := false
+	for i, f := range fs {
+		if f.Name == file.Name && f.Namespace == file.Namespace {
+			fs[i] = file
+			found = true
+			break
+		}
+	}
+	if !found {
+		fs = append(fs, file)
+	}
+
+	if err := c.rcc.SetFiles(ctx, capsuleID, fs); err != nil {
+		return err
+	}
+
 	return c.applyCapsuleConfig(ctx, capsuleID)
+}
+
+func (c *Client) ListFiles(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*v1.ConfigMap], int64, error) {
+	fs, err := c.rcc.GetFiles(ctx, capsuleID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return iterator.FromList(fs), int64(len(fs)), nil
+}
+
+func (c *Client) DeleteFile(ctx context.Context, capsuleID, name, namespace string) error {
+	fs, err := c.rcc.GetFiles(ctx, capsuleID)
+	if err != nil {
+		return err
+	}
+
+	for i, f := range fs {
+		if f.Name == name && f.Namespace == namespace {
+			fs = append(fs[:i], fs[i+1:]...)
+			break
+		}
+	}
+
+	if err := c.rcc.SetFiles(ctx, capsuleID, fs); err != nil {
+		return err
+	}
+
+	return nil
 }

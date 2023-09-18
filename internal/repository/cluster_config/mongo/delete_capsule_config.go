@@ -14,7 +14,7 @@ func (c *MongoRepository) DeleteCapsuleConfig(ctx context.Context, capsuleID str
 		return err
 	}
 
-	filter := bson.M{"project_id": projectID, "name": capsuleID}
+	filter := bson.M{"project_id": projectID, "capsule_id": capsuleID}
 	result, err := c.CapsuleConfigCol.DeleteOne(ctx, filter)
 	if err != nil {
 		return err

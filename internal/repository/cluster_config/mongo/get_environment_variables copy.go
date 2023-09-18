@@ -17,7 +17,7 @@ func (r *MongoRepository) GetEnvironmentVariables(ctx context.Context, capsuleID
 	}
 
 	cp := schema.CapsuleConfig{}
-	filter := bson.M{"project_id": projectID, "name": capsuleID}
+	filter := bson.M{"project_id": projectID, "capsule_id": capsuleID}
 	if err := r.CapsuleConfigCol.FindOne(ctx, filter).Decode(&cp); err == mongo.ErrNoDocuments {
 		return nil, errors.NotFoundErrorf("capsule not found")
 	} else if err != nil {
