@@ -8,41 +8,50 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
-	api_capsule "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/gen/go/capsule"
-	"github.com/rigdev/rig/gen/go/registry"
 	"github.com/rigdev/rig/internal/gateway/cluster"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
 
-func (c *Client) CreateCapsuleConfig(ctx context.Context, cfg *capsule.Config) error {
+func (c *Client) CreateCapsuleConfig(ctx context.Context, cfg *v1alpha1.Capsule) error {
 	if err := c.rcc.CreateCapsuleConfig(ctx, cfg); err != nil {
 		return err
 	}
 
-	return c.applyCapsuleConfig(ctx, cfg)
+	return c.applyCapsuleConfig(ctx, cfg.Name)
 }
 
-func (c *Client) UpdateCapsuleConfig(ctx context.Context, cfg *capsule.Config) error {
+func (c *Client) UpdateCapsuleConfig(ctx context.Context, cfg *v1alpha1.Capsule) error {
 	if err := c.rcc.UpdateCapsuleConfig(ctx, cfg); err != nil {
 		return err
 	}
 
-	return c.applyCapsuleConfig(ctx, cfg)
+	return c.applyCapsuleConfig(ctx, cfg.Name)
 }
 
-func (c *Client) ListCapsuleConfigs(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*capsule.Config], int64, error) {
+func (c *Client) ListCapsuleConfigs(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*v1alpha1.Capsule], int64, error) {
 	return c.rcc.ListCapsuleConfigs(ctx, pagination)
 }
 
-func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) error {
-	c.logger.Debug("creating docker capsule", zap.String("capsuleName", cfg.GetName()))
+func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleName string) error {
+	c.logger.Debug("creating docker capsule", zap.String("capsuleName", capsuleName))
 
-	if cfg.GetImage() == "" {
+	cfg, err := c.rcc.GetCapsuleConfig(ctx, capsuleName)
+	if err != nil {
+		return err
+	}
+
+	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+	if err != nil {
+		return err
+	}
+
+	image := cfg.Spec.Image
+	if image == "" {
 		return nil
 	}
 
@@ -52,24 +61,23 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 	}
 
 	var regAuth *cluster.RegistryAuth
-	if cfg.GetRegistryAuth() != nil {
-		regAuth = &cluster.RegistryAuth{
-			Host: cfg.GetRegistryAuth().GetHost(),
-			RegistrySecret: &registry.Secret{
-				Username: cfg.GetRegistryAuth().GetUsername(),
-				Password: cfg.GetRegistryAuth().GetPassword(),
-			},
-		}
-	}
+	// if cfg.GetRegistryAuth() != nil {
+	// 	regAuth = &cluster.RegistryAuth{
+	// 		Host: cfg.GetRegistryAuth().GetHost(),
+	// 		RegistrySecret: &registry.Secret{
+	// 			Username: cfg.GetRegistryAuth().GetUsername(),
+	// 			Password: cfg.GetRegistryAuth().GetPassword(),
+	// 		},
+	// 	}
+	// }
 
-	image := cfg.GetImage()
 	if err := c.ensureImage(ctx, image, regAuth); err != nil {
 		return err
 	}
 
 	var cmd []string
-	if cfg.GetContainerSettings().GetCommand() != "" {
-		cmd = append([]string{cfg.GetContainerSettings().GetCommand()}, cfg.GetContainerSettings().GetArgs()...)
+	if cfg.Spec.Command != "" {
+		cmd = append([]string{cfg.Spec.Image}, cfg.Spec.Args...)
 	}
 
 	dcc := &container.Config{
@@ -85,7 +93,7 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 			"RIG_HOST=http://rig:4747",
 		},
 	}
-	for k, v := range cfg.GetContainerSettings().GetEnvironmentVariables() {
+	for k, v := range envs {
 		dcc.Env = append(dcc.Env, fmt.Sprint(k, "=", v))
 	}
 
@@ -101,11 +109,11 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 		EndpointsConfig: map[string]*network.EndpointSettings{},
 	}
 
-	for _, e := range cfg.GetNetwork().GetInterfaces() {
-		if e.GetPublic().GetEnabled() {
-			switch v := e.GetPublic().GetMethod().GetKind().(type) {
-			case *api_capsule.RoutingMethod_LoadBalancer_:
-				dcc.ExposedPorts[nat.Port(fmt.Sprint(v.LoadBalancer.GetPort(), "/tcp"))] = struct{}{}
+	for _, i := range cfg.Spec.Interfaces {
+		if i.Public != nil {
+			switch {
+			case i.Public.LoadBalancer != nil:
+				dcc.ExposedPorts[nat.Port(fmt.Sprint(i.Public.LoadBalancer.Port, "/tcp"))] = struct{}{}
 			default:
 				return errors.InvalidArgumentErrorf("docker only supports LoadBalancer as routing method for public interfaces")
 			}
@@ -117,7 +125,7 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 		return err
 	}
 
-	for i := 0; i < int(cfg.GetReplicas()); i++ {
+	for i := 0; i < int(cfg.Spec.Replicas); i++ {
 		containerID := fmt.Sprint(cfg.GetName(), "-instance-", i)
 
 		dnc.EndpointsConfig[netID] = &network.EndpointSettings{
@@ -127,7 +135,7 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 			return err
 		}
 
-		if err := c.createAndStartContainer(ctx, containerID, dcc, dhc, dnc, cfg.GetConfigFiles()); err != nil {
+		if err := c.createAndStartContainer(ctx, containerID, dcc, dhc, dnc, cfg.Spec.Files); err != nil {
 			return err
 		}
 
@@ -147,7 +155,7 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, cfg *capsule.Config) er
 	return nil
 }
 
-func (c *Client) GetCapsuleConfig(ctx context.Context, capsuleName string) (*capsule.Config, error) {
+func (c *Client) GetCapsuleConfig(ctx context.Context, capsuleName string) (*v1alpha1.Capsule, error) {
 	return c.rcc.GetCapsuleConfig(ctx, capsuleName)
 }
 
@@ -166,4 +174,59 @@ func (c *Client) DeleteCapsuleConfig(ctx context.Context, capsuleName string) er
 	}
 
 	return c.rcc.DeleteCapsuleConfig(ctx, capsuleName)
+}
+
+func (c *Client) SetEnvironmentVariables(ctx context.Context, capsuleName string, envs map[string]string) error {
+	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleName, envs); err != nil {
+		return err
+	}
+
+	return c.applyCapsuleConfig(ctx, capsuleName)
+}
+
+func (c *Client) GetEnvironmentVariables(ctx context.Context, capsuleName string) (map[string]string, error) {
+	return c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+}
+
+func (c *Client) SetEnvironmentVariable(ctx context.Context, capsuleName, name, value string) error {
+	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+	if err != nil {
+		return err
+	}
+
+	envs[name] = value
+
+	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleName, envs); err != nil {
+		return err
+	}
+
+	return c.applyCapsuleConfig(ctx, capsuleName)
+}
+
+func (c *Client) GetEnvironmentVariable(ctx context.Context, capsuleName, name string) (value string, ok bool, err error) {
+	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+	if err != nil {
+		return "", false, err
+	}
+
+	if v, ok := envs[name]; ok {
+		return v, ok, nil
+	}
+
+	return "", false, nil
+}
+
+func (c *Client) DeleteEnvironmentVariable(ctx context.Context, capsuleName, name string) error {
+	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+	if err != nil {
+		return err
+	}
+
+	delete(envs, name)
+
+	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleName, envs); err != nil {
+		return err
+	}
+
+	return c.applyCapsuleConfig(ctx, capsuleName)
 }

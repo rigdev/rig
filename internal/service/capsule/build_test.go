@@ -6,11 +6,13 @@ import (
 
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_CreateBuild_InvalidArguments(t *testing.T) {
@@ -35,7 +37,7 @@ func Test_CreateBuild_ValidArguments(t *testing.T) {
 	cr := repository.NewMockCapsule(t)
 	ccg := cluster.NewMockConfigGateway(t)
 
-	ccg.EXPECT().GetCapsuleConfig(mock.Anything, mock.Anything).Return(nil, nil)
+	ccg.EXPECT().GetCapsuleConfig(mock.Anything, mock.Anything).Return(&v1alpha1.Capsule{ObjectMeta: v1.ObjectMeta{Name: capsuleID}}, nil)
 	cr.EXPECT().GetCurrentRollout(mock.Anything, mock.Anything).Return(0, nil, nil, 0, nil)
 	cr.EXPECT().CreateBuild(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 

@@ -10,8 +10,8 @@ import (
 	"github.com/distribution/distribution/v3/reference"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	pb_capsule "github.com/rigdev/rig/gen/go/capsule"
 	"github.com/rigdev/rig/gen/go/rollout"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
@@ -318,7 +318,7 @@ func (j *rolloutJob) updateError(ctx context.Context, rc *capsule.RolloutConfig,
 
 func (j *rolloutJob) run(
 	ctx context.Context,
-	cfg *pb_capsule.Config,
+	cfg *v1alpha1.Capsule,
 	rc *capsule.RolloutConfig,
 	rs *rollout.Status,
 	version uint64,
@@ -437,11 +437,36 @@ func (j *rolloutJob) run(
 			return err
 		}
 
-		cfg.Image = rc.GetBuildId()
-		cfg.ContainerSettings = rc.GetContainerSettings()
-		cfg.Replicas = rc.GetReplicas()
-		cfg.Network = rc.GetNetwork()
-		cfg.ConfigFiles = rc.GetConfigFiles()
+		cfg.Spec.Image = rc.GetBuildId()
+		cfg.Spec.Command = rc.GetContainerSettings().GetCommand()
+		cfg.Spec.Args = rc.GetContainerSettings().GetArgs()
+		cfg.Spec.Replicas = int32(rc.GetReplicas())
+		// TODO(anders): fix
+		// cfg.ConfigFiles = rc.GetConfigFiles()
+
+		for _, i := range rc.GetNetwork().GetInterfaces() {
+			capIf := v1alpha1.CapsuleInterface{
+				Name: i.GetName(),
+				Port: int32(i.GetPort()),
+			}
+			if i.GetPublic().GetEnabled() {
+				switch v := i.GetPublic().GetMethod().GetKind().(type) {
+				case *capsule.RoutingMethod_Ingress_:
+					capIf.Public = &v1alpha1.CapsulePublicInterface{
+						Ingress: &v1alpha1.CapsuleInterfaceIngress{
+							Host: v.Ingress.GetHost(),
+						},
+					}
+				case *capsule.RoutingMethod_LoadBalancer_:
+					capIf.Public = &v1alpha1.CapsulePublicInterface{
+						LoadBalancer: &v1alpha1.CapsuleInterfaceLoadBalancer{
+							Port: int32(v.LoadBalancer.GetPort()),
+						},
+					}
+				}
+			}
+			cfg.Spec.Interfaces = append(cfg.Spec.Interfaces, capIf)
+		}
 
 		ref, err := reference.ParseDockerRef(b.GetBuildId())
 		if err != nil {
@@ -449,25 +474,23 @@ func (j *rolloutJob) run(
 		}
 
 		host := reference.Domain(ref)
-		if ds, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
+		if _, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
 		} else if err != nil {
 			return err
 		} else {
-			cfg.RegistryAuth = &pb_capsule.Auth{
-				Host:     host,
-				Username: ds.GetUsername(),
-				Password: ds.GetPassword(),
-			}
+			// TODO(anders): fix
+			// cfg.RegistryAuth = &pb_capsule.Auth{
+			// 	Host:     host,
+			// 	Username: ds.GetUsername(),
+			// 	Password: ds.GetPassword(),
+			// }
 		}
 
-		if cfg.ContainerSettings == nil {
-			cfg.ContainerSettings = &capsule.ContainerSettings{}
+		envs := rc.GetContainerSettings().GetEnvironmentVariables()
+		if envs == nil {
+			envs = map[string]string{}
 		}
-		if cfg.ContainerSettings.EnvironmentVariables == nil {
-			cfg.ContainerSettings.EnvironmentVariables = map[string]string{}
-		}
-
-		cfg.ContainerSettings.EnvironmentVariables["RIG_PROJECT_ID"] = j.projectID.String()
+		envs["RIG_PROJECT_ID"] = j.projectID.String()
 		if rc.GetAutoAddRigServiceAccounts() {
 			sid := uuid.UUID(rs.GetRigServiceAccount().GetClientSecretKey())
 
@@ -476,8 +499,8 @@ func (j *rolloutJob) run(
 				return err
 			}
 
-			cfg.ContainerSettings.EnvironmentVariables["RIG_CLIENT_ID"] = rs.GetRigServiceAccount().GetClientId()
-			cfg.ContainerSettings.EnvironmentVariables["RIG_CLIENT_SECRET"] = string(secretKey)
+			envs["RIG_CLIENT_ID"] = rs.GetRigServiceAccount().GetClientId()
+			envs["RIG_CLIENT_SECRET"] = string(secretKey)
 		}
 
 		if err := j.s.CreateEvent(ctx, j.capsuleID, j.rolloutID, "configuring cluster resources", &capsule.EventData{Kind: &capsule.EventData_Rollout{Rollout: &capsule.RolloutEvent{}}}); err != nil {
@@ -485,6 +508,10 @@ func (j *rolloutJob) run(
 		}
 
 		// Upsert the capsule.
+		if err := j.s.ccg.SetEnvironmentVariables(ctx, cfg.Name, envs); err != nil {
+			return err
+		}
+
 		if err := j.s.ccg.UpdateCapsuleConfig(ctx, cfg); err != nil {
 			return err
 		}

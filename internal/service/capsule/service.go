@@ -5,17 +5,18 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	pb_capsule "github.com/rigdev/rig/gen/go/capsule"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/repository"
 	service_auth "github.com/rigdev/rig/internal/service/auth"
 	"github.com/rigdev/rig/internal/service/project"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
 	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/zap"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Service struct {
@@ -31,7 +32,7 @@ type Service struct {
 	cfg    config.Config
 }
 
-func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, ccg cluster.ConfigGateway, csg cluster.StatusGateway, as *auth.Service, ps project.Service, cfg config.Config, logger *zap.Logger) *Service {
+func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, ccg cluster.ConfigGateway, csg cluster.StatusGateway, as *service_auth.Service, ps project.Service, cfg config.Config, logger *zap.Logger) *Service {
 	s := &Service{
 		cr:     cr,
 		sr:     sr,
@@ -56,9 +57,15 @@ func (s *Service) CreateCapsule(ctx context.Context, name string, is []*capsule.
 		return "", err
 	}
 
-	cfg := &pb_capsule.Config{
-		Name:      name,
-		Namespace: projectID.String(),
+	cfg := &v1alpha1.Capsule{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: v1alpha1.GroupVersion.String(),
+			Kind:       "Capsule",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: projectID.String(),
+		},
 	}
 	if err := s.ccg.CreateCapsuleConfig(ctx, cfg); err != nil {
 		return "", err
@@ -76,7 +83,7 @@ func (s *Service) GetCapsule(ctx context.Context, capsuleID string) (*capsule.Ca
 	return s.toCapsule(ctx, cfg)
 }
 
-func (s *Service) toCapsule(ctx context.Context, cfg *pb_capsule.Config) (*capsule.Capsule, error) {
+func (s *Service) toCapsule(ctx context.Context, cfg *v1alpha1.Capsule) (*capsule.Capsule, error) {
 	rolloutID, rc, rs, _, err := s.cr.GetCurrentRollout(ctx, cfg.GetName())
 	if errors.IsNotFound(err) {
 	} else if err != nil {
@@ -123,7 +130,7 @@ func (s *Service) ListCapsules(ctx context.Context, pagination *model.Pagination
 		return nil, 0, err
 	}
 
-	it2 := iterator.Map(it, func(cfg *pb_capsule.Config) (*capsule.Capsule, error) {
+	it2 := iterator.Map(it, func(cfg *v1alpha1.Capsule) (*capsule.Capsule, error) {
 		return s.toCapsule(ctx, cfg)
 	})
 

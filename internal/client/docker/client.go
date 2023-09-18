@@ -26,6 +26,7 @@ import (
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
@@ -180,7 +181,7 @@ func (c *Client) copyFileToContainer(ctx context.Context, containerID string, fi
 	return c.dc.CopyToContainer(ctx, containerID, dir, bufio.NewReader(&buffer), types.CopyToContainerOptions{})
 }
 
-func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, configFiles []*capsule.ConfigFile) error {
+func (c *Client) createAndStartContainer(ctx context.Context, containerID string, cc *container.Config, hc *container.HostConfig, nc *network.NetworkingConfig, files []v1alpha1.File) error {
 	id, err := c.lookupContainer(ctx, containerID)
 	if errors.IsNotFound(err) {
 		// Already ready to create.
@@ -198,11 +199,11 @@ func (c *Client) createAndStartContainer(ctx context.Context, containerID string
 		return err
 	}
 
-	for _, f := range configFiles {
-		if err := c.copyFileToContainer(ctx, containerID, f); err != nil {
-			return err
-		}
-	}
+	// for _, f := range files {
+	// 	if err := c.copyFileToContainer(ctx, containerID, f); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	if err := c.dc.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
 		c.logger.Info("error starting container", zap.Error(err), zap.String("instance_id", containerID))
