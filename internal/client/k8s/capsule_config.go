@@ -2,9 +2,13 @@ package k8s
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"strings"
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
+	"github.com/rigdev/rig/gen/go/registry"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/errors"
@@ -50,16 +54,42 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error
 		return nil
 	}
 
-	var auth *cluster.RegistryAuth
-	// if cfg.GetRegistryAuth() != nil {
-	// 	auth = &cluster.RegistryAuth{
-	// 		Host: cfg.GetRegistryAuth().GetHost(),
-	// 		RegistrySecret: &registry.Secret{
-	// 			Username: cfg.GetRegistryAuth().GetUsername(),
-	// 			Password: cfg.GetRegistryAuth().GetPassword(),
-	// 		},
-	// 	}
-	// }
+	var regAuth *cluster.RegistryAuth
+	if cfg.Spec.ImagePullSecret != nil {
+		s, err := c.GetSecret(ctx, capsuleID, cfg.Spec.ImagePullSecret.Name, cfg.Namespace)
+		if err != nil {
+			return err
+		}
+
+		var out struct {
+			Auths map[string]struct {
+				Auth string
+			}
+		}
+		if err := json.Unmarshal(s.Data[".dockerconfigjson"], &out); err != nil {
+			return err
+		}
+
+		for host, a := range out.Auths {
+			auth, err := base64.StdEncoding.DecodeString(a.Auth)
+			if err != nil {
+				return err
+			}
+
+			parts := strings.SplitN(string(auth), ":", 2)
+			if len(parts) != 2 {
+				return errors.InvalidArgumentErrorf("invalid .dockerconfigjson auth")
+			}
+
+			regAuth = &cluster.RegistryAuth{
+				Host: host,
+				RegistrySecret: &registry.Secret{
+					Username: parts[0],
+					Password: parts[1],
+				},
+			}
+		}
+	}
 
 	network := &capsule.Network{}
 	for _, i := range cfg.Spec.Interfaces {
@@ -118,7 +148,7 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error
 		Network:      network,
 		Replicas:     uint32(cfg.Spec.Replicas),
 		Namespace:    cfg.GetNamespace(),
-		RegistryAuth: auth,
+		RegistryAuth: regAuth,
 		ConfigFiles:  cf,
 	})
 }
@@ -253,6 +283,75 @@ func (c *Client) DeleteFile(ctx context.Context, capsuleID, name, namespace stri
 	}
 
 	if err := c.rcc.SetFiles(ctx, capsuleID, fs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) GetSecret(ctx context.Context, capsuleID, name, namespace string) (*v1.Secret, error) {
+	ss, err := c.rcc.GetSecrets(ctx, capsuleID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, s := range ss {
+		if s.Name == name && s.Namespace == namespace {
+			return s, nil
+		}
+	}
+
+	return nil, errors.NotFoundErrorf("secret not found")
+}
+
+func (c *Client) SetSecret(ctx context.Context, capsuleID string, secret *v1.Secret) error {
+	ss, err := c.rcc.GetSecrets(ctx, capsuleID)
+	if err != nil {
+		return err
+	}
+
+	found := false
+	for i, s := range ss {
+		if s.Name == secret.Name && s.Namespace == secret.Namespace {
+			ss[i] = secret
+			found = true
+			break
+		}
+	}
+	if !found {
+		ss = append(ss, secret)
+	}
+
+	if err := c.rcc.SetSecrets(ctx, capsuleID, ss); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) ListSecrets(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*v1.Secret], int64, error) {
+	ss, err := c.rcc.GetSecrets(ctx, capsuleID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return iterator.FromList(ss), int64(len(ss)), nil
+}
+
+func (c *Client) DeleteSecret(ctx context.Context, capsuleID, name, namespace string) error {
+	ss, err := c.rcc.GetSecrets(ctx, capsuleID)
+	if err != nil {
+		return err
+	}
+
+	for i, s := range ss {
+		if s.Name == name && s.Namespace == namespace {
+			ss = append(ss[:i], ss[i+1:]...)
+			break
+		}
+	}
+
+	if err := c.rcc.SetSecrets(ctx, capsuleID, ss); err != nil {
 		return err
 	}
 

@@ -7,13 +7,14 @@ import (
 
 // CapsuleSpec defines the desired state of Capsule
 type CapsuleSpec struct {
-	Replicas   int32                    `json:"replicas"`
-	Image      string                   `json:"image"`
-	Command    string                   `json:"command,omitempty"`
-	Args       []string                 `json:"args,omitempty"`
-	Interfaces []CapsuleInterface       `json:"interfaces,omitempty"`
-	Files      []File                   `json:"files,omitempty"`
-	Resources  *v1.ResourceRequirements `json:"resources,omitempty"`
+	Replicas        int32                    `json:"replicas"`
+	Image           string                   `json:"image"`
+	Command         string                   `json:"command,omitempty"`
+	Args            []string                 `json:"args,omitempty"`
+	Interfaces      []CapsuleInterface       `json:"interfaces,omitempty"`
+	Files           []File                   `json:"files,omitempty"`
+	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
+	ImagePullSecret *v1.LocalObjectReference `json:"imagePullSecret,omitempty"`
 }
 
 // CapsuleInterface defines an interface for a capsule
