@@ -42,7 +42,7 @@ email:
 {{- with .Values.rig.registry }}
 registry:
   enabled: {{ .enabled }}
-  port: {{ .registry_port }}
+  port: {{ .port }}
   log_level: {{ .log_level }}
 {{- end }}
 {{- end -}}

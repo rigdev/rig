@@ -162,7 +162,7 @@ kind-clean: ## 🧹 Clean kind cluster
 	$(KIND) delete clusters rig
 
 .PHONY: kind-registry
-kind-registry: ## 🧹 Clean kind cluster
+kind-registry: ## 🐋 Install docker registry in
 	$(KUBECTL) apply -f ./deploy/registry/registry.yaml -n rig-system
 
 ##@ Release

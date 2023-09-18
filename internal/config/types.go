@@ -143,8 +143,7 @@ const (
 )
 
 type Registry struct {
-	Enabled bool `mapstructure:"enabled"`
-	// Naming the port 'port' leads to a clash
-	Port     int           `mapstructure:"registry_port"`
+	Enabled  bool          `mapstructure:"enabled"`
+	Port     int           `mapstructure:"port"`
 	LogLevel zapcore.Level `mapstructure:"log_level"`
 }
