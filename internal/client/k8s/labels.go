@@ -10,15 +10,15 @@ const (
 	labelRigCapsuleID = "rig.dev/capsule-id"
 )
 
-func selectorLabels(capsuleName string) map[string]string {
+func selectorLabels(capsuleID string) map[string]string {
 	return map[string]string{
-		labelName:     capsuleName,
-		labelInstance: capsuleName,
+		labelName:     capsuleID,
+		labelInstance: capsuleID,
 	}
 }
 
-func commonLabels(capsuleName string, c *cluster.Capsule) map[string]string {
-	ls := selectorLabels(capsuleName)
+func commonLabels(capsuleID string, c *cluster.Capsule) map[string]string {
+	ls := selectorLabels(capsuleID)
 	ls[labelManagedBy] = labelManagedByRig
 	ls[labelRigCapsuleID] = c.CapsuleID
 	return ls

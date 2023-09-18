@@ -30,7 +30,7 @@ import (
 )
 
 // UpsertCapsule implements cluster.Gateway.
-func (c *Client) upsertCapsule(ctx context.Context, capsuleName string, cc *cluster.Capsule) error {
+func (c *Client) upsertCapsule(ctx context.Context, capsuleID string, cc *cluster.Capsule) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err
@@ -45,25 +45,25 @@ func (c *Client) upsertCapsule(ctx context.Context, capsuleName string, cc *clus
 		return err
 	}
 
-	if err := c.reconcileProxyEnvSecret(ctx, capsuleName, ns, cc); err != nil {
+	if err := c.reconcileProxyEnvSecret(ctx, capsuleID, ns, cc); err != nil {
 		return err
 	}
-	if err := c.reconcileLoadBalancer(ctx, capsuleName, ns, cc); err != nil {
+	if err := c.reconcileLoadBalancer(ctx, capsuleID, ns, cc); err != nil {
 		return err
 	}
-	if err := c.reconcileIngress(ctx, capsuleName, ns, cc); err != nil {
+	if err := c.reconcileIngress(ctx, capsuleID, ns, cc); err != nil {
 		return err
 	}
-	if err := c.reconcileService(ctx, capsuleName, ns, cc); err != nil {
+	if err := c.reconcileService(ctx, capsuleID, ns, cc); err != nil {
 		return err
 	}
-	if err := c.reconcileEnvSecret(ctx, capsuleName, ns, cc); err != nil {
+	if err := c.reconcileEnvSecret(ctx, capsuleID, ns, cc); err != nil {
 		return err
 	}
-	if err := c.reconcileConfigFileMount(ctx, capsuleName, ns, cc); err != nil {
+	if err := c.reconcileConfigFileMount(ctx, capsuleID, ns, cc); err != nil {
 		return err
 	}
-	if err := c.reconcileDeployment(ctx, capsuleName, ns, cc.RegistryAuth != nil, cc); err != nil {
+	if err := c.reconcileDeployment(ctx, capsuleID, ns, cc.RegistryAuth != nil, cc); err != nil {
 		return err
 	}
 
@@ -148,12 +148,12 @@ func createProxyConfig(ctx context.Context, cc *cluster.Capsule) (map[string]str
 
 func (c *Client) reconcileProxyEnvSecret(
 	ctx context.Context,
-	capsuleName,
+	capsuleID,
 	namespace string,
 	cc *cluster.Capsule,
 ) error {
 	if !hasInterfaces(cc) {
-		return c.deleteProxyEnvSecret(ctx, capsuleName, namespace)
+		return c.deleteProxyEnvSecret(ctx, capsuleID, namespace)
 	}
 
 	cfg, err := createProxyConfig(ctx, cc)
@@ -161,8 +161,8 @@ func (c *Client) reconcileProxyEnvSecret(
 		return err
 	}
 
-	s := acsv1.Secret(fmt.Sprintf("%s-proxy", capsuleName), namespace).
-		WithLabels(commonLabels(capsuleName, cc)).
+	s := acsv1.Secret(fmt.Sprintf("%s-proxy", capsuleID), namespace).
+		WithLabels(commonLabels(capsuleID, cc)).
 		WithStringData(cfg)
 
 	_, err = c.cs.CoreV1().
@@ -174,9 +174,9 @@ func (c *Client) reconcileProxyEnvSecret(
 	return nil
 }
 
-func (c *Client) reconcileLoadBalancer(ctx context.Context, capsuleName, namespace string, cc *cluster.Capsule) error {
+func (c *Client) reconcileLoadBalancer(ctx context.Context, capsuleID, namespace string, cc *cluster.Capsule) error {
 	if !hasLoadBalancer(cc) {
-		return c.deleteLoadBalancer(ctx, capsuleName, namespace)
+		return c.deleteLoadBalancer(ctx, capsuleID, namespace)
 	}
 
 	var ports []*acsv1.ServicePortApplyConfiguration
@@ -194,10 +194,10 @@ func (c *Client) reconcileLoadBalancer(ctx context.Context, capsuleName, namespa
 		}
 	}
 
-	s := acsv1.Service(fmt.Sprintf("%s-lb", capsuleName), namespace).
-		WithLabels(commonLabels(capsuleName, cc)).
+	s := acsv1.Service(fmt.Sprintf("%s-lb", capsuleID), namespace).
+		WithLabels(commonLabels(capsuleID, cc)).
 		WithSpec(acsv1.ServiceSpec().
-			WithSelector(selectorLabels(capsuleName)).
+			WithSelector(selectorLabels(capsuleID)).
 			WithPorts(ports...).
 			WithType(v1.ServiceTypeLoadBalancer),
 		)
@@ -210,9 +210,9 @@ func (c *Client) reconcileLoadBalancer(ctx context.Context, capsuleName, namespa
 	return nil
 }
 
-func (c *Client) reconcileIngress(ctx context.Context, capsuleName, namespace string, cc *cluster.Capsule) error {
+func (c *Client) reconcileIngress(ctx context.Context, capsuleID, namespace string, cc *cluster.Capsule) error {
 	if !hasIngress(cc) {
-		return c.deleteIngress(ctx, capsuleName, namespace)
+		return c.deleteIngress(ctx, capsuleID, namespace)
 	}
 
 	var rules []*acsnetv1.IngressRuleApplyConfiguration
@@ -229,7 +229,7 @@ func (c *Client) reconcileIngress(ctx context.Context, capsuleName, namespace st
 							WithPath("/").
 							WithBackend(acsnetv1.IngressBackend().
 								WithService(acsnetv1.IngressServiceBackend().
-									WithName(capsuleName).
+									WithName(capsuleID).
 									WithPort(acsnetv1.ServiceBackendPort().
 										WithName(inf.GetName()),
 									),
@@ -242,8 +242,8 @@ func (c *Client) reconcileIngress(ctx context.Context, capsuleName, namespace st
 		}
 	}
 
-	ing := acsnetv1.Ingress(capsuleName, namespace).
-		WithLabels(commonLabels(capsuleName, cc)).
+	ing := acsnetv1.Ingress(capsuleID, namespace).
+		WithLabels(commonLabels(capsuleID, cc)).
 		WithSpec(acsnetv1.IngressSpec().
 			WithRules(rules...),
 		)
@@ -255,9 +255,9 @@ func (c *Client) reconcileIngress(ctx context.Context, capsuleName, namespace st
 	return nil
 }
 
-func (c *Client) reconcileService(ctx context.Context, capsuleName, namespace string, cc *cluster.Capsule) error {
+func (c *Client) reconcileService(ctx context.Context, capsuleID, namespace string, cc *cluster.Capsule) error {
 	if !hasInterfaces(cc) {
-		return c.deleteService(ctx, capsuleName, namespace)
+		return c.deleteService(ctx, capsuleID, namespace)
 	}
 
 	infs := cc.Network.GetInterfaces()
@@ -270,10 +270,10 @@ func (c *Client) reconcileService(ctx context.Context, capsuleName, namespace st
 			WithTargetPort(intstr.FromString(inf.GetName()))
 	}
 
-	s := acsv1.Service(capsuleName, namespace).
-		WithLabels(commonLabels(capsuleName, cc)).
+	s := acsv1.Service(capsuleID, namespace).
+		WithLabels(commonLabels(capsuleID, cc)).
 		WithSpec(acsv1.ServiceSpec().
-			WithSelector(selectorLabels(capsuleName)).
+			WithSelector(selectorLabels(capsuleID)).
 			WithPorts(ports...).
 			WithType(v1.ServiceTypeClusterIP),
 		)
@@ -285,13 +285,13 @@ func (c *Client) reconcileService(ctx context.Context, capsuleName, namespace st
 	return nil
 }
 
-func (c *Client) reconcileEnvSecret(ctx context.Context, capsuleName, namespace string, cc *cluster.Capsule) error {
+func (c *Client) reconcileEnvSecret(ctx context.Context, capsuleID, namespace string, cc *cluster.Capsule) error {
 	if len(cc.ContainerSettings.GetEnvironmentVariables()) == 0 {
-		return c.deleteEnvSecret(ctx, capsuleName, namespace)
+		return c.deleteEnvSecret(ctx, capsuleID, namespace)
 	}
 
-	s := acsv1.Secret(capsuleName, namespace).
-		WithLabels(commonLabels(capsuleName, cc)).
+	s := acsv1.Secret(capsuleID, namespace).
+		WithLabels(commonLabels(capsuleID, cc)).
 		WithStringData(cc.ContainerSettings.GetEnvironmentVariables())
 
 	_, err := c.cs.CoreV1().
@@ -303,9 +303,9 @@ func (c *Client) reconcileEnvSecret(ctx context.Context, capsuleName, namespace 
 	return nil
 }
 
-func (c *Client) reconcileConfigFileMount(ctx context.Context, capsuleName, namespace string, cc *cluster.Capsule) error {
+func (c *Client) reconcileConfigFileMount(ctx context.Context, capsuleID, namespace string, cc *cluster.Capsule) error {
 	if len(cc.ConfigFiles) == 0 {
-		return c.deleteConfigMap(ctx, capsuleName, namespace)
+		return c.deleteConfigMap(ctx, capsuleID, namespace)
 	}
 
 	for _, cf := range cc.ConfigFiles {
@@ -332,13 +332,13 @@ func (c *Client) reconcileConfigFileMount(ctx context.Context, capsuleName, name
 	return nil
 }
 
-func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace string, usePullSecret bool, cc *cluster.Capsule) error {
+func (c *Client) reconcileDeployment(ctx context.Context, capsuleID, namespace string, usePullSecret bool, cc *cluster.Capsule) error {
 	cons := []*acsv1.ContainerApplyConfiguration{
-		createContainer(capsuleName, cc),
+		createContainer(capsuleID, cc),
 	}
 
 	if hasInterfaces(cc) {
-		con, err := createProxyContainer(capsuleName, cc)
+		con, err := createProxyContainer(capsuleID, cc)
 		if err != nil {
 			return err
 		}
@@ -359,15 +359,15 @@ func (c *Client) reconcileDeployment(ctx context.Context, capsuleName, namespace
 		}
 	}
 
-	d := acsappsv1.Deployment(capsuleName, namespace).
-		WithLabels(commonLabels(capsuleName, cc)).
+	d := acsappsv1.Deployment(capsuleID, namespace).
+		WithLabels(commonLabels(capsuleID, cc)).
 		WithSpec(acsappsv1.DeploymentSpec().
 			WithReplicas(int32(cc.Replicas)).
 			WithSelector(acsmetav1.LabelSelector().
-				WithMatchLabels(selectorLabels(capsuleName)),
+				WithMatchLabels(selectorLabels(capsuleID)),
 			).
 			WithTemplate(acsv1.PodTemplateSpec().
-				WithLabels(commonLabels(capsuleName, cc)).
+				WithLabels(commonLabels(capsuleID, cc)).
 				WithSpec(acsv1.PodSpec().
 					WithContainers(cons...).
 					WithVolumes(volumes...),
@@ -441,9 +441,9 @@ func fillResourceList(r *capsule.ResourceList, list v1.ResourceList) {
 	}
 }
 
-func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerApplyConfiguration {
+func createContainer(capsuleID string, cc *cluster.Capsule) *acsv1.ContainerApplyConfiguration {
 	con := acsv1.Container().
-		WithName(capsuleName).
+		WithName(capsuleID).
 		WithImage(cc.Image).
 		WithArgs(cc.ContainerSettings.GetArgs()...).
 		WithResources(makeResources(cc)).
@@ -457,7 +457,7 @@ func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerAp
 	if hasEnvSecret(cc) {
 		con.WithEnvFrom(acsv1.EnvFromSource().
 			WithSecretRef(acsv1.SecretEnvSource().
-				WithName(capsuleName),
+				WithName(capsuleID),
 			),
 		)
 	}
@@ -492,7 +492,7 @@ func createContainer(capsuleName string, cc *cluster.Capsule) *acsv1.ContainerAp
 
 const proxyContainerName = "rig-proxy"
 
-func createProxyContainer(capsuleName string, cc *cluster.Capsule) (*acsv1.ContainerApplyConfiguration, error) {
+func createProxyContainer(capsuleID string, cc *cluster.Capsule) (*acsv1.ContainerApplyConfiguration, error) {
 	rl := v1.ResourceList{
 		v1.ResourceCPU: resource.MustParse("100m"),
 		// TODO: validate that this limit is okay with regards to mounting configmaps and secrets as files.
@@ -505,7 +505,7 @@ func createProxyContainer(capsuleName string, cc *cluster.Capsule) (*acsv1.Conta
 		WithCommand("rig-proxy").
 		WithEnvFrom(acsv1.EnvFromSource().
 			WithSecretRef(acsv1.SecretEnvSource().
-				WithName(fmt.Sprintf("%s-proxy", capsuleName)),
+				WithName(fmt.Sprintf("%s-proxy", capsuleID)),
 			),
 		).
 		WithResources(acsv1.ResourceRequirements().WithRequests(rl))

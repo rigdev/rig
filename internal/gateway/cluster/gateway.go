@@ -31,10 +31,10 @@ type RegistryAuth struct {
 }
 
 type Gateway interface {
-	ListInstances(ctx context.Context, capsuleName string) (iterator.Iterator[*capsule.Instance], uint64, error)
-	RestartInstance(ctx context.Context, capsuleName, instanceID string) error
+	ListInstances(ctx context.Context, capsuleID string) (iterator.Iterator[*capsule.Instance], uint64, error)
+	RestartInstance(ctx context.Context, capsuleID, instanceID string) error
 
-	Logs(ctx context.Context, capsuleName, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error)
+	Logs(ctx context.Context, capsuleID, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error)
 
 	ListCapsuleMetrics(ctx context.Context) (iterator.Iterator[*capsule.InstanceMetrics], error)
 

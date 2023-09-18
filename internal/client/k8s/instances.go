@@ -17,14 +17,14 @@ import (
 // ListInstances implements cluster.Gateway.
 func (c *Client) ListInstances(
 	ctx context.Context,
-	capsuleName string,
+	capsuleID string,
 ) (iterator.Iterator[*capsule.Instance], uint64, error) {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	selector, err := labels.ValidatedSelectorFromSet(selectorLabels(capsuleName))
+	selector, err := labels.ValidatedSelectorFromSet(selectorLabels(capsuleID))
 	if err != nil {
 		return nil, 0, fmt.Errorf("could not create selector: %w", err)
 	}
@@ -48,7 +48,7 @@ func (c *Client) ListInstances(
 			}
 
 			for _, pod := range pl.Items {
-				instance, err := podToInstance(pod, capsuleName)
+				instance, err := podToInstance(pod, capsuleID)
 				if err != nil {
 					p.Error(err)
 					return
@@ -71,7 +71,7 @@ func (c *Client) ListInstances(
 }
 
 // RestartInstance implements cluster.Gateway.
-func (c *Client) RestartInstance(ctx context.Context, capsuleName string, instanceID string) error {
+func (c *Client) RestartInstance(ctx context.Context, capsuleID string, instanceID string) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err
@@ -89,15 +89,15 @@ func (c *Client) RestartInstance(ctx context.Context, capsuleName string, instan
 	return nil
 }
 
-func podToInstance(pod v1.Pod, capsuleName string) (*capsule.Instance, error) {
+func podToInstance(pod v1.Pod, capsuleID string) (*capsule.Instance, error) {
 	i := &capsule.Instance{
 		InstanceId: pod.Name,
-		BuildId:    podGetContainerImage(pod, capsuleName),
+		BuildId:    podGetContainerImage(pod, capsuleID),
 		State:      podStatusToCapsuleState(pod.Status),
 		CreatedAt:  timestamppb.New(pod.ObjectMeta.CreationTimestamp.Time),
 	}
 
-	if cs := podGetContainerStatus(pod, capsuleName); cs != nil {
+	if cs := podGetContainerStatus(pod, capsuleID); cs != nil {
 		i.RestartCount = uint32(cs.RestartCount)
 
 		if cs.State.Running != nil {

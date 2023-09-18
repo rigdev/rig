@@ -8,10 +8,10 @@ import (
 	"github.com/rigdev/rig/pkg/iterator"
 )
 
-func (c *Client) GetCapsuleStatus(ctx context.Context, namespace, capsuleName string) (*capsule.Status, error) {
+func (c *Client) GetCapsuleStatus(ctx context.Context, namespace, capsuleID string) (*capsule.Status, error) {
 	return nil, errors.UnimplementedErrorf("GetCapsuleStatus not implemented")
 }
 
-func (c *Client) ListInstanceStatuses(ctx context.Context, namespace, capsuleName string) (iterator.Iterator[*capsule.Instance], uint64, error) {
+func (c *Client) ListInstanceStatuses(ctx context.Context, namespace, capsuleID string) (iterator.Iterator[*capsule.Instance], uint64, error) {
 	return nil, 0, errors.UnimplementedErrorf("ListInstanceStatuses not implemented")
 }

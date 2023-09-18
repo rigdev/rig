@@ -10,14 +10,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func (r *MongoRepository) GetEnvironmentVariables(ctx context.Context, capsuleName string) (map[string]string, error) {
+func (r *MongoRepository) GetEnvironmentVariables(ctx context.Context, capsuleID string) (map[string]string, error) {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	cp := schema.CapsuleConfig{}
-	filter := bson.M{"project_id": projectID, "name": capsuleName}
+	filter := bson.M{"project_id": projectID, "name": capsuleID}
 	if err := r.CapsuleConfigCol.FindOne(ctx, filter).Decode(&cp); err == mongo.ErrNoDocuments {
 		return nil, errors.NotFoundErrorf("capsule not found")
 	} else if err != nil {

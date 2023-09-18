@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (r *MongoRepository) SetEnvironmentVariables(ctx context.Context, capsuleName string, envs map[string]string) error {
+func (r *MongoRepository) SetEnvironmentVariables(ctx context.Context, capsuleID string, envs map[string]string) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err
@@ -17,7 +17,7 @@ func (r *MongoRepository) SetEnvironmentVariables(ctx context.Context, capsuleNa
 		ctx,
 		bson.M{
 			"project_id": projectID,
-			"name":       capsuleName,
+			"name":       capsuleID,
 		},
 		bson.M{
 			"$set": bson.M{

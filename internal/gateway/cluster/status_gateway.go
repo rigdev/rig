@@ -8,12 +8,12 @@ import (
 )
 
 type StatusGateway interface {
-	GetCapsuleStatus(ctx context.Context, namespace, capsuleName string) (*capsule.Status, error)
+	GetCapsuleStatus(ctx context.Context, namespace, capsuleID string) (*capsule.Status, error)
 
-	ListInstanceStatuses(ctx context.Context, namespace, capsuleName string) (iterator.Iterator[*capsule.Instance], uint64, error)
-	RestartInstance(ctx context.Context, capsuleName, instanceID string) error
+	ListInstanceStatuses(ctx context.Context, namespace, capsuleID string) (iterator.Iterator[*capsule.Instance], uint64, error)
+	RestartInstance(ctx context.Context, capsuleID, instanceID string) error
 
-	// Logs(ctx context.Context, capsuleName, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error)
+	// Logs(ctx context.Context, capsuleID, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error)
 
 	// ListCapsuleMetrics(ctx context.Context) (iterator.Iterator[*capsule.InstanceMetrics], error)
 

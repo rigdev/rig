@@ -58,8 +58,8 @@ func New(cfg config.Config, logger *zap.Logger, rcc repository.ClusterConfig) (*
 	}, nil
 }
 
-func (c *Client) Logs(ctx context.Context, capsuleName string, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error) {
-	c.logger.Debug("reading docker logs", zap.String("deployment_id", capsuleName), zap.String("instance_id", instanceID))
+func (c *Client) Logs(ctx context.Context, capsuleID string, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error) {
+	c.logger.Debug("reading docker logs", zap.String("deployment_id", capsuleID), zap.String("instance_id", instanceID))
 
 	ls, err := c.dc.ContainerLogs(ctx, instanceID, types.ContainerLogsOptions{
 		ShowStdout: true,

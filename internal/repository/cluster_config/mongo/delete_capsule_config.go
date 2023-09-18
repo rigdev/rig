@@ -8,13 +8,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (c *MongoRepository) DeleteCapsuleConfig(ctx context.Context, capsuleName string) error {
+func (c *MongoRepository) DeleteCapsuleConfig(ctx context.Context, capsuleID string) error {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return err
 	}
 
-	filter := bson.M{"project_id": projectID, "name": capsuleName}
+	filter := bson.M{"project_id": projectID, "name": capsuleID}
 	result, err := c.CapsuleConfigCol.DeleteOne(ctx, filter)
 	if err != nil {
 		return err

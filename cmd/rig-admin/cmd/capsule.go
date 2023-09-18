@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	capsuleName string
-	buildImage  string
+	capsuleID  string
+	buildImage string
 
 	listOffset int
 	listLimit  int
@@ -47,7 +47,7 @@ func init() {
 		Args: cobra.ExactArgs(1),
 		RunE: register(CapsuleUpdate),
 	}
-	update.PersistentFlags().StringVarP(&capsuleName, "name", "n", "", "name of the capsule")
+	update.PersistentFlags().StringVarP(&capsuleID, "name", "n", "", "name of the capsule")
 	capsule.AddCommand(update)
 
 	list := &cobra.Command{
@@ -177,7 +177,7 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 }
 
 func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, args []string, cs *capsule_service.Service, logger *zap.Logger) error {
-	capsuleID:= args[0]
+	capsuleID := args[0]
 
 	it, total, err := cs.ListBuilds(ctx, capsuleID, &model.Pagination{
 		Offset: uint32(listOffset),
@@ -216,7 +216,7 @@ func CapsuleDeleteBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 }
 
 func CapsuleDeployBuild(ctx context.Context, cmd *cobra.Command, args []string, cs *capsule_service.Service, logger *zap.Logger) error {
-	capsuleID:= args[0]
+	capsuleID := args[0]
 	buildID := args[1]
 	cgs := []*capsule.Change{{
 		Field: &capsule.Change_BuildId{BuildId: buildID},

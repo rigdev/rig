@@ -214,26 +214,26 @@ func Setup(parent *cobra.Command) {
 type CapsuleID = string
 
 func provideCapsuleID(ctx context.Context, nc rig.Client, args []string) (CapsuleID, error) {
-	var capsuleName string
+	var capsuleID string
 	var err error
 	if len(args) == 0 {
-		capsuleName, err = common.PromptInput("Enter Capsule name:", common.ValidateNonEmptyOpt)
+		capsuleID, err = common.PromptInput("Enter Capsule name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return "", err
 		}
 	} else {
-		capsuleName = args[0]
+		capsuleID = args[0]
 	}
 
 	if _, err := nc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
-			CapsuleId: capsuleName,
+			CapsuleId: capsuleID,
 		},
 	}); err != nil {
 		return "", err
 	}
 
-	return capsuleName, nil
+	return capsuleID, nil
 }
 
 type InstanceID = string

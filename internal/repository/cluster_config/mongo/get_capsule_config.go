@@ -12,14 +12,14 @@ import (
 )
 
 // Get returns the requested Project (document) from the database.
-func (c *MongoRepository) GetCapsuleConfig(ctx context.Context, capsuleName string) (*v1alpha1.Capsule, error) {
+func (c *MongoRepository) GetCapsuleConfig(ctx context.Context, capsuleID string) (*v1alpha1.Capsule, error) {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	cp := schema.CapsuleConfig{}
-	filter := bson.M{"project_id": projectID, "name": capsuleName}
+	filter := bson.M{"project_id": projectID, "name": capsuleID}
 	if err := c.CapsuleConfigCol.FindOne(ctx, filter).Decode(&cp); err == mongo.ErrNoDocuments {
 		return nil, errors.NotFoundErrorf("capsule not found")
 	} else if err != nil {

@@ -15,7 +15,7 @@ import (
 )
 
 // Logs implements cluster.Gateway.
-func (c *Client) Logs(ctx context.Context, capsuleName string, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error) {
+func (c *Client) Logs(ctx context.Context, capsuleID string, instanceID string, follow bool) (iterator.Iterator[*capsule.Log], error) {
 	projectID, err := auth.GetProjectID(ctx)
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func (c *Client) Logs(ctx context.Context, capsuleName string, instanceID string
 	req := c.cs.CoreV1().
 		Pods(projectID.String()).
 		GetLogs(instanceID, &v1.PodLogOptions{
-			Container:  capsuleName,
+			Container:  capsuleID,
 			Timestamps: true,
 			Follow:     follow,
 		})

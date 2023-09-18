@@ -21,10 +21,10 @@ const (
 	_rigProjectIDLabel = "io.rig.project-id"
 )
 
-func (c *Client) ListInstances(ctx context.Context, capsuleName string) (iterator.Iterator[*capsule.Instance], uint64, error) {
-	c.logger.Debug("looking up capsule instances", zap.String("capsule_name", capsuleName))
+func (c *Client) ListInstances(ctx context.Context, capsuleID string) (iterator.Iterator[*capsule.Instance], uint64, error) {
+	c.logger.Debug("looking up capsule instances", zap.String("capsule_name", capsuleID))
 
-	cs, err := c.getInstances(ctx, capsuleName)
+	cs, err := c.getInstances(ctx, capsuleID)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -94,10 +94,10 @@ func (c *Client) RestartInstance(ctx context.Context, deploymentID, instanceID s
 	return nil
 }
 
-func (c *Client) deleteCapsule(ctx context.Context, capsuleName string) error {
-	c.logger.Debug("delete docker capsule", zap.String("capsule_name", capsuleName))
+func (c *Client) deleteCapsule(ctx context.Context, capsuleID string) error {
+	c.logger.Debug("delete docker capsule", zap.String("capsule_name", capsuleID))
 
-	cs, err := c.getInstances(ctx, capsuleName)
+	cs, err := c.getInstances(ctx, capsuleID)
 	if err != nil {
 		return err
 	}
@@ -113,10 +113,10 @@ func (c *Client) deleteCapsule(ctx context.Context, capsuleName string) error {
 	return nil
 }
 
-func (c *Client) getInstances(ctx context.Context, capsuleName string) ([]types.Container, error) {
-	c.logger.Debug("looking up capsule containers", zap.String("capsule_name", capsuleName))
+func (c *Client) getInstances(ctx context.Context, capsuleID string) ([]types.Container, error) {
+	c.logger.Debug("looking up capsule containers", zap.String("capsule_name", capsuleID))
 
-	return c.getContainers(ctx, fmt.Sprint(capsuleName, "-instance-"))
+	return c.getContainers(ctx, fmt.Sprint(capsuleID, "-instance-"))
 }
 
 func containerName(c types.Container) string {

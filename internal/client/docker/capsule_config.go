@@ -37,15 +37,15 @@ func (c *Client) ListCapsuleConfigs(ctx context.Context, pagination *model.Pagin
 	return c.rcc.ListCapsuleConfigs(ctx, pagination)
 }
 
-func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleName string) error {
-	c.logger.Debug("creating docker capsule", zap.String("capsuleName", capsuleName))
+func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error {
+	c.logger.Debug("creating docker capsule", zap.String("capsuleID", capsuleID))
 
-	cfg, err := c.rcc.GetCapsuleConfig(ctx, capsuleName)
+	cfg, err := c.rcc.GetCapsuleConfig(ctx, capsuleID)
 	if err != nil {
 		return err
 	}
 
-	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleID)
 	if err != nil {
 		return err
 	}
@@ -155,12 +155,12 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleName string) err
 	return nil
 }
 
-func (c *Client) GetCapsuleConfig(ctx context.Context, capsuleName string) (*v1alpha1.Capsule, error) {
-	return c.rcc.GetCapsuleConfig(ctx, capsuleName)
+func (c *Client) GetCapsuleConfig(ctx context.Context, capsuleID string) (*v1alpha1.Capsule, error) {
+	return c.rcc.GetCapsuleConfig(ctx, capsuleID)
 }
 
-func (c *Client) DeleteCapsuleConfig(ctx context.Context, capsuleName string) error {
-	cs, err := c.getInstances(ctx, capsuleName)
+func (c *Client) DeleteCapsuleConfig(ctx context.Context, capsuleID string) error {
+	cs, err := c.getInstances(ctx, capsuleID)
 	if err != nil {
 		return err
 	}
@@ -173,38 +173,38 @@ func (c *Client) DeleteCapsuleConfig(ctx context.Context, capsuleName string) er
 		}
 	}
 
-	return c.rcc.DeleteCapsuleConfig(ctx, capsuleName)
+	return c.rcc.DeleteCapsuleConfig(ctx, capsuleID)
 }
 
-func (c *Client) SetEnvironmentVariables(ctx context.Context, capsuleName string, envs map[string]string) error {
-	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleName, envs); err != nil {
+func (c *Client) SetEnvironmentVariables(ctx context.Context, capsuleID string, envs map[string]string) error {
+	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleID, envs); err != nil {
 		return err
 	}
 
-	return c.applyCapsuleConfig(ctx, capsuleName)
+	return c.applyCapsuleConfig(ctx, capsuleID)
 }
 
-func (c *Client) GetEnvironmentVariables(ctx context.Context, capsuleName string) (map[string]string, error) {
-	return c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+func (c *Client) GetEnvironmentVariables(ctx context.Context, capsuleID string) (map[string]string, error) {
+	return c.rcc.GetEnvironmentVariables(ctx, capsuleID)
 }
 
-func (c *Client) SetEnvironmentVariable(ctx context.Context, capsuleName, name, value string) error {
-	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+func (c *Client) SetEnvironmentVariable(ctx context.Context, capsuleID, name, value string) error {
+	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleID)
 	if err != nil {
 		return err
 	}
 
 	envs[name] = value
 
-	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleName, envs); err != nil {
+	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleID, envs); err != nil {
 		return err
 	}
 
-	return c.applyCapsuleConfig(ctx, capsuleName)
+	return c.applyCapsuleConfig(ctx, capsuleID)
 }
 
-func (c *Client) GetEnvironmentVariable(ctx context.Context, capsuleName, name string) (value string, ok bool, err error) {
-	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+func (c *Client) GetEnvironmentVariable(ctx context.Context, capsuleID, name string) (value string, ok bool, err error) {
+	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleID)
 	if err != nil {
 		return "", false, err
 	}
@@ -216,17 +216,17 @@ func (c *Client) GetEnvironmentVariable(ctx context.Context, capsuleName, name s
 	return "", false, nil
 }
 
-func (c *Client) DeleteEnvironmentVariable(ctx context.Context, capsuleName, name string) error {
-	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleName)
+func (c *Client) DeleteEnvironmentVariable(ctx context.Context, capsuleID, name string) error {
+	envs, err := c.rcc.GetEnvironmentVariables(ctx, capsuleID)
 	if err != nil {
 		return err
 	}
 
 	delete(envs, name)
 
-	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleName, envs); err != nil {
+	if err := c.rcc.SetEnvironmentVariables(ctx, capsuleID, envs); err != nil {
 		return err
 	}
 
-	return c.applyCapsuleConfig(ctx, capsuleName)
+	return c.applyCapsuleConfig(ctx, capsuleID)
 }
