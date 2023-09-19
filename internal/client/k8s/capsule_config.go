@@ -189,7 +189,7 @@ func (c *Client) SetEnvironmentVariable(ctx context.Context, capsuleID, name, va
 		return err
 	}
 
-	return c.applyCapsuleConfig(ctx, capsuleID)
+	return nil
 }
 
 func (c *Client) GetEnvironmentVariable(ctx context.Context, capsuleID, name string) (value string, ok bool, err error) {
@@ -217,7 +217,7 @@ func (c *Client) DeleteEnvironmentVariable(ctx context.Context, capsuleID, name 
 		return err
 	}
 
-	return c.applyCapsuleConfig(ctx, capsuleID)
+	return nil
 }
 
 func (c *Client) GetFile(ctx context.Context, capsuleID, name, namespace string) (*v1.ConfigMap, error) {
