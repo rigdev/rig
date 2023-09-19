@@ -19,6 +19,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
@@ -30,7 +31,7 @@ type imageInfo struct {
 	created time.Time
 }
 
-func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, rc rig.Client) error {
+func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, args []string, rc rig.Client) error {
 	var err error
 	if buildID == "" {
 		dc, err := getDockerClient()
@@ -84,7 +85,7 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 			return err
 		}
 		for _, event := range eventRes.Msg.GetEvents() {
-			cmd.Printf("[%v] %v\n", event.GetCreatedAt().AsTime().Format(time.RFC822), event.GetMessage())
+			cmd.Printf("[%v] %v\n", event.GetCreatedAt().AsTime().Format(base.RFC3339MilliFixed), event.GetMessage())
 		}
 		eventCount += len(eventRes.Msg.GetEvents())
 
@@ -165,7 +166,16 @@ func getImagePrompts(ctx context.Context, dc *client.Client, filter string) ([]i
 		if idx >= 50 {
 			break
 		}
-		prompts = append(prompts, fmt.Sprintf("%s [age: %v]", image.tag, time.Since(image.created).Round(time.Second)))
+		t := time.Since(image.created).Round(time.Second)
+		var timeString string
+		if t.Hours() > 24 {
+			days := int(t.Hours() / 24)
+			timeString = fmt.Sprintf("%vd", days)
+			t = t - time.Duration(days*24)*time.Hour
+		}
+		timeString = fmt.Sprintf("%s%v", timeString, t)
+
+		prompts = append(prompts, fmt.Sprintf("%s [age: %v]", image.tag, timeString))
 	}
 	return images, prompts, nil
 }
