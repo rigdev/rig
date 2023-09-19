@@ -38,13 +38,12 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, capsuleID Capsul
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Builds (%d)", resp.Msg.GetTotal()), "Created At", "Repository", "Tag", "Created By"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Builds (%d)", resp.Msg.GetTotal()), "Tag", "Digest", "Age", "Created By"})
 	for _, b := range resp.Msg.GetBuilds() {
 		t.AppendRow(table.Row{
-			b.GetBuildId(),
-			b.GetCreatedAt().AsTime().Format(time.RFC822),
-			truncated(b.GetRepository(), 64),
-			truncated(b.GetTag(), 64),
+			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
+			truncatedFixed(b.GetDigest(), 19),
+			time.Since(b.GetCreatedAt().AsTime()).Truncate(time.Second),
 			b.GetCreatedBy().GetPrintableName(),
 		})
 	}
@@ -56,6 +55,14 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, capsuleID Capsul
 func truncated(str string, max int) string {
 	if len(str) > max {
 		return str[:strings.LastIndexAny(str[:max], " .,:;-")] + "..."
+	}
+
+	return str
+}
+
+func truncatedFixed(str string, max int) string {
+	if len(str) > max {
+		return str[:max] + "..."
 	}
 
 	return str

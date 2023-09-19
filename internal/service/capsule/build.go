@@ -2,6 +2,7 @@ package capsule
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -17,6 +18,10 @@ import (
 func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, digest string, origin *capsule.Origin, labels map[string]string, validateImage bool) (string, error) {
 	if image == "" {
 		return "", errors.InvalidArgumentErrorf("missing image")
+	}
+
+	if _, err := s.GetCapsule(ctx, capsuleID); err != nil {
+		return "", err
 	}
 
 	ref, err := name.ParseReference(image)
@@ -37,19 +42,23 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, dige
 		digest = d
 	}
 
-	if _, err := s.GetCapsule(ctx, capsuleID); err != nil {
-		return "", err
-	}
-
 	by, err := s.as.GetAuthor(ctx)
 	if err != nil {
 		return "", err
 	}
 
+	idRef := ref
+	if digest != "" {
+		idRef, err = name.NewDigest(fmt.Sprintf("%s@%s", ref.Context().String(), digest))
+		if err != nil {
+			return "", err
+		}
+	}
+
 	b := &capsule.Build{
-		BuildId:    ref.Name(),
+		BuildId:    idRef.Name(),
 		Digest:     digest,
-		Repository: ref.Context().RepositoryStr(),
+		Repository: ref.Context().String(),
 		Tag:        ref.Identifier(),
 		CreatedBy:  by,
 		CreatedAt:  timestamppb.Now(),
@@ -61,7 +70,7 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, dige
 		return "", err
 	}
 
-	return ref.Name(), nil
+	return idRef.Name(), nil
 }
 
 func (s *Service) ListBuilds(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*capsule.Build], uint64, error) {
