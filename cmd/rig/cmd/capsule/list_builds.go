@@ -38,7 +38,7 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, capsuleID Capsul
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Builds (%d)", resp.Msg.GetTotal()), "Tag", "Digest", "Age", "Created By"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Builds (%d)", resp.Msg.GetTotal()), "Digest", "Age", "Created By"})
 	for _, b := range resp.Msg.GetBuilds() {
 		t.AppendRow(table.Row{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
