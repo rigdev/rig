@@ -130,8 +130,8 @@ docker-compose-down: ## 🐳 Stop docker-compose
 	docker compose -f ./deploy/docker-compose/docker-compose.yaml down
 
 KUBECTX ?= kind-rig
-KUBECTL ?= kubectl --context $(KUBECTX)
-HELM ?= helm --kube-context $(KUBECTX)
+export KUBECTL ?= kubectl --context $(KUBECTX)
+export HELM ?= helm --kube-context $(KUBECTX)
 
 .PHONY: deploy
 deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
@@ -147,8 +147,7 @@ deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
 
 .PHONY: kind-create
 kind-create: kind ## 🐋 Create kind cluster with rig dependencies
-	$(KIND) get clusters | grep '^rig$$' || \
-		./deploy/kind/create.sh $(KIND)
+	./deploy/kind/create.sh
 
 .PHONY: kind-load
 kind-load: kind docker ## 🐋 Load docker image into kind cluster
@@ -235,7 +234,7 @@ goreleaser: ## 📦 Download goreleaser locally if necessary.
 	(test -s $(GORELEASER) && $(GORELEASER) --version | grep "$(GORELEASER_GO_MOD_VERSION)") || \
 	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/goreleaser/goreleaser)
 
-KIND ?= $(TOOLSBIN)/kind
+export KIND ?= $(TOOLSBIN)/kind
 KIND_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "sigs.k8s.io/kind" | cut -d ' ' -f2)
 
 .PHONY: kind

@@ -30,6 +30,11 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            {{- if .Values.webhooks.enabled }}
+            - name: webhooks
+              containerPort: 9443
+              protocol: TCP
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /api/v1/status
@@ -45,10 +50,20 @@ spec:
             - name: config
               mountPath: /etc/rig
               readOnly: true
+            {{- if .Values.webhooks.enabled }}
+            - name: webhook-cert
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+            {{- end }}
       volumes:
         - name: config
           secret:
             secretName: {{ include "rig.secretName" . }}
+        {{- if .Values.webhooks.enabled }}
+        - name: webhook-cert
+          secret:
+            defaultMode: 420
+            secretName: {{ include "rig.fullname" . }}-webhook-cert
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector: {{ toYaml . | nindent 8 }}
       {{- end }}

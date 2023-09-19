@@ -34,6 +34,9 @@ func newDefault() Config {
 			Docker: ClientDocker{
 				Host: "",
 			},
+			Kubernetes: ClientKubernetes{
+				WebhooksEnabled: true,
+			},
 			Mailjet: ClientMailjet{
 				From:      "",
 				APIKey:    "",
