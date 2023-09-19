@@ -20,10 +20,6 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, dige
 		return "", errors.InvalidArgumentErrorf("missing image")
 	}
 
-	if _, err := s.GetCapsule(ctx, capsuleID); err != nil {
-		return "", err
-	}
-
 	ref, err := name.ParseReference(image)
 	if err != nil {
 		return "", errors.InvalidArgumentErrorf("%v", err)
@@ -40,6 +36,10 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, dige
 		}
 
 		digest = d
+	}
+
+	if _, err := s.GetCapsule(ctx, capsuleID); err != nil {
+		return "", err
 	}
 
 	by, err := s.as.GetAuthor(ctx)
