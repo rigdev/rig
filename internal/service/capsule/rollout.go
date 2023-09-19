@@ -537,7 +537,8 @@ func (j *rolloutJob) run(
 		host := reference.Domain(ref)
 		pullSecretName := fmt.Sprintf("%s-pull", j.capsuleID)
 		if ds, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
-			if err := j.s.ccg.DeleteSecret(ctx, j.capsuleID, pullSecretName, j.projectID.String()); err != nil {
+			if err := j.s.ccg.DeleteSecret(ctx, j.capsuleID, pullSecretName, j.projectID.String()); errors.IsNotFound(err) {
+			} else if err != nil {
 				return err
 			}
 
