@@ -1,0 +1,23 @@
+{{- if .Values.webhooks.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "rig.fullname" . }}
+  labels: {{ include "rig.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "rig.fullname" . }}-webhook
+  labels: {{ include "rig.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+  - {{ include "rig.fullname" . }}-svc.{{ .Release.Namespace }}.svc
+  - {{ include "rig.fullname" . }}-svc.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ include "rig.fullname" . }}
+  secretName: {{ include "rig.fullname" . }}-webhook-cert
+{{- end }}

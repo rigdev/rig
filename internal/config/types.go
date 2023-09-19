@@ -30,12 +30,13 @@ type AuthJWT struct {
 }
 
 type Client struct {
-	Postgres ClientPostgres `mapstructure:"postgres"`
-	Mongo    ClientMongo    `mapstructure:"mongo"`
-	Minio    ClientMinio    `mapstructure:"minio"`
-	Docker   ClientDocker   `mapstructure:"docker"`
-	Mailjet  ClientMailjet  `mapstructure:"mailjet"`
-	SMTP     ClientSMTP     `mapstructure:"smtp"`
+	Postgres   ClientPostgres   `mapstructure:"postgres"`
+	Mongo      ClientMongo      `mapstructure:"mongo"`
+	Minio      ClientMinio      `mapstructure:"minio"`
+	Docker     ClientDocker     `mapstructure:"docker"`
+	Kubernetes ClientKubernetes `mapstructure:"kubernetes"`
+	Mailjet    ClientMailjet    `mapstructure:"mailjet"`
+	SMTP       ClientSMTP       `mapstructure:"smtp"`
 }
 
 type ClientSMTP struct {
@@ -66,6 +67,10 @@ type ClientMinio struct {
 
 type ClientDocker struct {
 	Host string `mapstructure:"host"`
+}
+
+type ClientKubernetes struct {
+	WebhooksEnabled bool `mapstructure:"webhooksEnabled"`
 }
 
 type ClientMailjet struct {

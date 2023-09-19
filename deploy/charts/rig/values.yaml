@@ -98,6 +98,9 @@ mongodb:
     className: ""
     size: 10Gi
 
+webhooks:
+  enabled: true
+
 # Rig holds configuration for the rig server. This is used for generating
 # the rig-server config file.
 rig:
