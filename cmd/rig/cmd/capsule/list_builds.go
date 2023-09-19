@@ -43,7 +43,7 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, capsuleID Capsul
 		t.AppendRow(table.Row{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
 			truncatedFixed(b.GetDigest(), 19),
-			time.Since(b.GetCreatedAt().AsTime()).Truncate(time.Second),
+			common.FormatDuration(time.Since(b.GetCreatedAt().AsTime())),
 			b.GetCreatedBy().GetPrintableName(),
 		})
 	}

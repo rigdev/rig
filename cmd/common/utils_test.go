@@ -2,6 +2,7 @@ package common
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -144,6 +145,52 @@ func Test_ToStringWithSignificantDigits(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ss := ToStringWithSignificantDigits(tt.f, tt.d)
 			assert.Equal(t, tt.s, ss)
+		})
+	}
+}
+
+func Test_FormatDuration(t *testing.T) {
+	tests := []struct {
+		name string
+		d    time.Duration
+		res  string
+	}{
+		{
+			name: "short",
+			d:    time.Millisecond,
+			res:  "0s",
+		},
+		{
+			name: "seconds",
+			d:    time.Second*26 + time.Millisecond*100,
+			res:  "26s",
+		},
+		{
+			name: "minutes",
+			d:    time.Minute*34 + time.Second*26 + time.Millisecond*100,
+			res:  "34m 26s",
+		},
+		{
+			name: "hours",
+			d:    time.Hour*17 + time.Minute*34 + time.Second*26 + time.Millisecond*100,
+			res:  "17h 34m",
+		},
+		{
+			name: "one day",
+			d:    time.Hour*24 + time.Hour*17 + time.Minute*34 + time.Second*26 + time.Millisecond*100,
+			res:  "41h 34m",
+		},
+		{
+			name: "days",
+			d:    time.Hour*24*4 + time.Hour*17 + time.Minute*34 + time.Second*26 + time.Millisecond*100,
+			res:  "4d 17h",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := FormatDuration(tt.d)
+			assert.Equal(t, tt.res, s)
 		})
 	}
 }

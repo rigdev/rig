@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/mail"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/docker/distribution/reference"
@@ -329,4 +331,23 @@ func ToStringWithSignificantDigits(f float64, digits int) string {
 	}
 
 	return sign + integerPart + fractionalPart
+}
+
+func FormatDuration(d time.Duration) string {
+	if d < time.Minute {
+		return fmt.Sprint(d.Truncate(time.Second))
+	}
+	if d < time.Hour {
+		minutes := int(math.Floor(d.Minutes()))
+		seconds := int(math.Floor(d.Seconds())) % 60
+		return fmt.Sprintf("%vm %vs", minutes, seconds)
+	}
+	if d < 48*time.Hour { // Just to have a bit more precision between 24 and 48 hours
+		hours := int(math.Floor(d.Hours()))
+		minutes := int(math.Floor(d.Minutes())) % 60
+		return fmt.Sprintf("%vh %vm", hours, minutes)
+	}
+	days := int(math.Floor(d.Hours())) / 24
+	hours := int(math.Floor(d.Hours())) % 24
+	return fmt.Sprintf("%vd %vh", days, hours)
 }
