@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/internal/repository/capsule/mongo/schema"
@@ -18,7 +19,7 @@ func (m *MongoRepository) GetBuild(ctx context.Context, capsuleID string, buildI
 	}
 
 	var b schema.Build
-
+	fmt.Println("get build, project", projectID, "capsule", capsuleID, "build", buildID)
 	if err := m.BuildCol.FindOne(ctx, bson.M{
 		"project_id": projectID,
 		"capsule_id": capsuleID,

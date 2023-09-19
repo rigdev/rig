@@ -21,6 +21,7 @@ import (
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/opencontainers/go-digest"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/internal/config"
@@ -256,21 +257,47 @@ func (c *Client) ensureNetwork(ctx context.Context) (string, error) {
 	return projectID.String(), nil
 }
 
+func (c *Client) isLocalImage(ctx context.Context, image string) (bool, error) {
+	_, err := digest.Parse(image)
+	if err != nil {
+		// image images not a digets
+		images, err := c.dc.ImageList(ctx, types.ImageListOptions{
+			Filters: filters.NewArgs(filters.KeyValuePair{
+				Key:   "reference",
+				Value: image,
+			}),
+		})
+		if err != nil {
+			return false, err
+		}
+
+		return len(images) > 0, nil
+	}
+
+	// image is a digest
+	// TODO find a better way than listing all local images
+	images, err := c.dc.ImageList(ctx, types.ImageListOptions{})
+	if err != nil {
+		return false, err
+	}
+	for _, img := range images {
+		if img.ID == image {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.RegistryAuth) error {
 	image = strings.TrimPrefix(image, "docker.io/library/")
 	image = strings.TrimPrefix(image, "index.docker.io/library/")
 
-	is, err := c.dc.ImageList(ctx, types.ImageListOptions{
-		Filters: filters.NewArgs(filters.KeyValuePair{
-			Key:   "reference",
-			Value: image,
-		}),
-	})
+	isLocal, err := c.isLocalImage(ctx, image)
 	if err != nil {
 		return err
 	}
-
-	if len(is) != 0 {
+	if isLocal {
 		return nil
 	}
 

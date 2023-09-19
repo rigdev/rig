@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -463,4 +464,8 @@ func FromHTTP(status int, msg string) error {
 	default:
 		return InternalErrorf(msg)
 	}
+}
+
+func New(s string) error {
+	return errors.New(s)
 }

@@ -49,9 +49,9 @@ func Test_CreateBuild_ValidArguments(t *testing.T) {
 
 	buildID, err := s.CreateBuild(ctx, capsuleID, "foobar", "", nil, nil, false)
 	require.NoError(t, err)
-	require.Equal(t, "index.docker.io/library/foobar:latest", buildID)
+	require.Equal(t, "index.docker.io/library/foobar:latest", buildID.BuildID)
 
 	buildID, err = s.CreateBuild(ctx, capsuleID, "foobar:hattehat", "", nil, nil, false)
 	require.NoError(t, err)
-	require.Equal(t, "index.docker.io/library/foobar:hattehat", buildID)
+	require.Equal(t, "index.docker.io/library/foobar:hattehat", buildID.BuildID)
 }

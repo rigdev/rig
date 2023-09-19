@@ -2,7 +2,10 @@ package capsule
 
 import (
 	"context"
+	"strings"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/internal/config"
@@ -17,33 +20,47 @@ import (
 	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/zap"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 )
 
 type Service struct {
-	logger *zap.Logger
-	cr     repository.Capsule
-	sr     repository.Secret
-	cg     cluster.Gateway
-	ccg    cluster.ConfigGateway
-	csg    cluster.StatusGateway
-	as     *service_auth.Service
-	ps     project.Service
-	q      *Queue[Job]
-	cfg    config.Config
+	logger       *zap.Logger
+	cr           repository.Capsule
+	sr           repository.Secret
+	cg           cluster.Gateway
+	ccg          cluster.ConfigGateway
+	csg          cluster.StatusGateway
+	as           *service_auth.Service
+	ps           project.Service
+	q            *Queue[Job]
+	cfg          config.Config
+	dockerClient *client.Client
 }
 
-func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, ccg cluster.ConfigGateway, csg cluster.StatusGateway, as *service_auth.Service, ps project.Service, cfg config.Config, logger *zap.Logger) *Service {
+func NewService(
+	cr repository.Capsule,
+	sr repository.Secret,
+	cg cluster.Gateway,
+	ccg cluster.ConfigGateway,
+	csg cluster.StatusGateway,
+	as *service_auth.Service,
+	ps project.Service,
+	cfg config.Config,
+	dockerClient *client.Client,
+	logger *zap.Logger,
+) *Service {
 	s := &Service{
-		cr:     cr,
-		sr:     sr,
-		cg:     cg,
-		ccg:    ccg,
-		csg:    csg,
-		as:     as,
-		ps:     ps,
-		q:      NewQueue[Job](),
-		cfg:    cfg,
-		logger: logger,
+		cr:           cr,
+		sr:           sr,
+		cg:           cg,
+		ccg:          ccg,
+		csg:          csg,
+		as:           as,
+		ps:           ps,
+		q:            NewQueue[Job](),
+		cfg:          cfg,
+		dockerClient: dockerClient,
+		logger:       logger,
 	}
 
 	go s.run()
@@ -196,4 +213,51 @@ func applyUpdates(d *capsule.Capsule, us []*capsule.Update) error {
 		return errors.InvalidArgumentErrorf("unknown update field type")
 	}
 	return nil
+}
+
+// ImageFromBuildID returns a usable image path from a buildID
+// The trouble is when running in Docker, then you cannot (for some reason...)
+// reference a local image by both repository and digest, but only digest if
+// it is provided.
+// E.g. for a local image 'test', test:tag@sha256:abc... does not work, but
+// sha256:abc... does.
+// For non-local images, just giving the digest does not work, but you need both
+// repository and digest.
+func (s *Service) ImageFromBuild(ctx context.Context, build *capsule.Build) (string, error) {
+	if s.cfg.Cluster.Type == config.ClusterTypeKubernetes {
+		// In kubernetes we never deploy images local to the node
+		return build.GetBuildId(), nil
+	}
+
+	if build.GetDigest() == "" {
+		return build.GetBuildId(), nil
+	}
+
+	if s.dockerClient == nil {
+		return "", errors.New("docker client was nil, expected it to be initialized")
+	}
+
+	// TODO Find a more efficient way than listing all images and checking for a digest
+	images, err := s.dockerClient.ImageList(ctx, types.ImageListOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	repoTag := build.GetRepository() + ":" + build.GetTag()
+	repoTag = strings.TrimPrefix(repoTag, "docker.io/library/")
+	repoTag = strings.TrimPrefix(repoTag, "index.docker.io/library/")
+	found := false
+	for _, img := range images {
+		if img.ID == build.GetDigest() {
+			found = true
+			if slices.Contains(img.RepoTags, repoTag) {
+				return repoTag, nil
+			}
+		}
+	}
+	if found {
+		return build.GetDigest(), nil
+	}
+
+	return build.GetBuildId(), nil
 }

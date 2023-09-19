@@ -469,7 +469,11 @@ func (j *rolloutJob) run(
 			return err
 		}
 
-		cfg.Spec.Image = rc.GetBuildId()
+		image, err := j.s.ImageFromBuild(ctx, b)
+		if err != nil {
+			return err
+		}
+		cfg.Spec.Image = image
 		cfg.Spec.Command = rc.GetContainerSettings().GetCommand()
 		cfg.Spec.Args = rc.GetContainerSettings().GetArgs()
 		cfg.Spec.Replicas = int32(rc.GetReplicas())
@@ -631,7 +635,7 @@ func (j *rolloutJob) run(
 				return err
 			}
 
-			if i.GetBuildId() != rc.GetBuildId() {
+			if i.GetBuildId() != cfg.Spec.Image {
 				return errors.UnavailableErrorf("instance '%s' is wrong build", i.GetInstanceId())
 			}
 

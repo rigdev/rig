@@ -49,9 +49,10 @@ require (
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/color v1.15.0
 	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-logr/zapr v1.2.4
 	github.com/google/go-containerregistry v0.16.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/rigdev/rig-go-api v0.0.0-20230918113547-85aa906e5160
+	github.com/rigdev/rig-go-api v0.0.0-20230920122749-0471626a4cc0
 	github.com/rigdev/rig-go-sdk v0.0.0-20230918110956-2301fcd9da11
 	k8s.io/metrics v0.28.0
 	sigs.k8s.io/controller-runtime v0.16.1
@@ -71,8 +72,8 @@ require (
 	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
-	github.com/go-logr/zapr v1.2.4 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
+	github.com/lithammer/fuzzysearch v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
