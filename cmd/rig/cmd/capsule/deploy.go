@@ -2,19 +2,25 @@ package capsule
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	container_name "github.com/google/go-containerregistry/pkg/name"
+	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 )
@@ -27,7 +33,11 @@ type imageInfo struct {
 func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, rc rig.Client) error {
 	var err error
 	if buildID == "" {
-		buildID, err = createBuild(ctx, rc, capsuleID)
+		dc, err := getDockerClient()
+		if err != nil {
+			return err
+		}
+		buildID, err = createBuild(ctx, rc, capsuleID, dc)
 		if err != nil {
 			return err
 		}
@@ -98,15 +108,15 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 	}
 }
 
-func getDaemonImage(ctx context.Context) (*imageInfo, error) {
+// TODO Should be supplied by FX instead
+func getDockerClient() (*client.Client, error) {
 	var opts []client.Opt
 	opts = append(opts, client.WithHostFromEnv())
 	opts = append(opts, client.WithAPIVersionNegotiation())
-	dc, err := client.NewClientWithOpts(opts...)
-	if err != nil {
-		return nil, err
-	}
+	return client.NewClientWithOpts(opts...)
+}
 
+func getDaemonImage(ctx context.Context, dc *client.Client) (*imageInfo, error) {
 	images, prompts, err := getImagePrompts(ctx, dc, "")
 	if err != nil {
 		return nil, err
@@ -151,41 +161,25 @@ func getImagePrompts(ctx context.Context, dc *client.Client, filter string) ([]i
 		return i.created.After(j.created)
 	})
 
-	c := 0
-	for _, image := range images {
-		if c >= 50 {
+	for idx, image := range images {
+		if idx >= 50 {
 			break
 		}
 		prompts = append(prompts, fmt.Sprintf("%s [age: %v]", image.tag, time.Since(image.created).Round(time.Second)))
-		c++
 	}
 	return images, prompts, nil
 }
 
-func createBuild(ctx context.Context, rc rig.Client, capsuleID string) (string, error) {
-	if image == "" {
-		ok, err := common.PromptConfirm("Deploy a local image?", true)
-		if err != nil {
-			return "", err
-		}
-		if ok {
-			img, err := getDaemonImage(ctx)
-			if err != nil {
-				return "", err
-			}
-			image = img.tag
-		} else {
-			image, err = common.PromptInput("Enter image:", common.ValidateImageOpt)
-			if err != nil {
-				return "", err
-			}
-		}
+func createBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *client.Client) (string, error) {
+	image, digest, err := getImageAndDigest(ctx, rc, dc)
+	if err != nil {
+		return "", err
 	}
-
 	res, err := rc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
 			CapsuleId: capsuleID,
 			Image:     image,
+			Digest:    digest,
 		},
 	})
 	if errors.IsAlreadyExists(err) {
@@ -197,9 +191,160 @@ func createBuild(ctx context.Context, rc rig.Client, capsuleID string) (string, 
 		return imgRef.Name(), nil
 	}
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create build: %q", err)
 	}
 
 	fmt.Println("Created build: ", buildID)
 	return res.Msg.GetBuildId(), nil
+}
+
+func getImageAndDigest(ctx context.Context, rigClient rig.Client, dc *client.Client) (string, string, error) {
+	if image != "" {
+		return image, "", nil
+	}
+
+	isLocalImage := false
+	ok, err := common.PromptConfirm("Deploy a local image?", true)
+	if err != nil {
+		return "", "", err
+	}
+	if ok {
+		img, err := getDaemonImage(ctx, dc)
+		if err != nil {
+			return "", "", err
+		}
+		image = img.tag
+		isLocalImage = true
+	} else {
+		image, err = common.PromptInput("Enter image:", common.ValidateImageOpt)
+		if err != nil {
+			return "", "", err
+		}
+		isLocalImage, _, err = utils.ImageExistsNatively(ctx, dc, image)
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	if isLocalImage {
+		return pushLocalImageToDevRegistry(ctx, image, rigClient, dc)
+	}
+
+	return image, "", nil
+}
+
+func pushLocalImageToDevRegistry(ctx context.Context, image string, client rig.Client, dc *client.Client) (string, string, error) {
+	resp, err := client.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{}))
+	if err != nil {
+		return "", "", err
+	}
+	config := resp.Msg
+
+	switch config.GetDevRegistry().(type) {
+	case *cluster.GetConfigResponse_Docker:
+		return "", "", nil
+	}
+	devRegistry := config.GetRegistry()
+	if devRegistry == nil {
+		return "", "", fmt.Errorf("no dev-registry configured.") // TODO Help the user with fixing this
+	}
+
+	newImageName, err := makeDevRegistryImageName(image, devRegistry.Host)
+	if err != nil {
+		return "", "", err
+	}
+
+	fmt.Printf("Pushing the image to the dev docker registry under the new name %q\n", newImageName)
+
+	if err := dc.ImageTag(ctx, image, newImageName); err != nil {
+		return "", "", err
+	}
+
+	digest, err := pushToDevRegistry(ctx, dc, newImageName, devRegistry.Host)
+	if err != nil {
+		return "", "", err
+	}
+
+	return newImageName, digest, nil
+}
+
+func makeDevRegistryImageName(image string, devRegistryHost string) (string, error) {
+	r, err := container_name.NewRegistry(devRegistryHost, container_name.Insecure)
+	if err != nil {
+		return "", err
+	}
+	ref, err := container_name.ParseReference(image)
+	if err != nil {
+		return "", err
+	}
+	repo := r.Repo(ref.Context().RepositoryStr())
+	tag := repo.Tag(ref.Identifier())
+	return tag.String(), nil
+}
+
+func pushToDevRegistry(ctx context.Context, dc *client.Client, image string, host string) (string, error) {
+	ac := registry.AuthConfig{
+		ServerAddress: host,
+	}
+	secret, err := json.Marshal(ac)
+	if err != nil {
+		return "", err
+	}
+
+	rc, err := dc.ImagePush(ctx, image, types.ImagePushOptions{
+		RegistryAuth: base64.StdEncoding.EncodeToString(secret),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	defer rc.Close()
+
+	decoder := json.NewDecoder(rc)
+	progressWriter := progress.NewWriter()
+	progressWriter.SetAutoStop(true)
+	trackers := map[string]*progress.Tracker{}
+
+	go progressWriter.Render()
+	var digest string
+	for decoder.More() {
+		var p dockerProgress
+		if err := decoder.Decode(&p); err != nil {
+			return "", err
+		}
+		if p.ID == "" || p.ProgressDetail.Total == 0 {
+			continue
+		}
+		tracker, ok := trackers[p.ID]
+		if !ok {
+			tracker = &progress.Tracker{
+				Message: p.ID,
+				Total:   int64(p.ProgressDetail.Total),
+				Units:   progress.UnitsBytes,
+			}
+			trackers[p.ID] = tracker
+			progressWriter.AppendTracker(tracker)
+		}
+		if p.ProgressDetail.Current != 0 {
+			tracker.SetValue(int64(p.ProgressDetail.Current))
+		}
+		if p.Aux.Digest != "" {
+			digest = p.Aux.Digest
+		}
+	}
+
+	return digest, nil
+}
+
+type dockerProgress struct {
+	Status         string
+	ID             string
+	ProgressDetail struct {
+		Current uint64
+		Total   uint64
+	}
+	Aux struct {
+		Tag    string
+		Digest string
+	}
 }
