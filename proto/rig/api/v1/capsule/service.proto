@@ -127,6 +127,7 @@ message CreateBuildRequest {
 
 message CreateBuildResponse {
   string build_id = 1;
+  bool created_new_build = 2;
 }
 
 message ListBuildsRequest {
