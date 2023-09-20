@@ -13,14 +13,16 @@ import (
 
 func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client, cfg *cmd_config.Config, dockerClient *client.Client) error {
 	var err error
+
+	imageRef := imageRefFromFlags()
 	if image == "" {
-		image, err = promptForImage(ctx, dockerClient)
+		imageRef, err = promptForImage(ctx, dockerClient)
 		if err != nil {
 			return err
 		}
 	}
 
-	buildID, err := createBuild(ctx, nc, capsuleID, dockerClient, image)
+	buildID, err := createBuild(ctx, nc, capsuleID, dockerClient, imageRef)
 	if err != nil {
 		return err
 	}
