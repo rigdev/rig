@@ -9,10 +9,11 @@ import (
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/pkg/middleware"
 	"go.uber.org/zap"
+	k8s_zap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 func NewLogger(cfg config.Config) (*zap.Logger, error) {
-	return zap.NewDevelopment()
+	return k8s_zap.NewRaw(k8s_zap.UseDevMode(true)), nil
 }
 
 type loggingMiddleware struct {

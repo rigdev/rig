@@ -130,8 +130,9 @@ type DevRegistry struct {
 type ClusterType string
 
 const (
-	ClusterTypeDocker     ClusterType = "docker"
-	ClusterTypeKubernetes ClusterType = "k8s"
+	ClusterTypeDocker           ClusterType = "docker"
+	ClusterTypeKubernetes       ClusterType = "k8s"
+	ClusterTypeKubernetesNative ClusterType = "k8s-native"
 )
 
 type Email struct {

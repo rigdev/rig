@@ -7,7 +7,7 @@ const (
 	labelInstance     = "app.kubernetes.io/instance"
 	labelManagedBy    = "app.kubernetes.io/managed-by"
 	labelManagedByRig = "rig"
-	labelRigCapsuleID = "rig.dev/capsule-id"
+	labelRigCapsuleID = "rig.dev/capsule"
 )
 
 func selectorLabels(capsuleID string) map[string]string {
@@ -22,6 +22,12 @@ func commonLabels(capsuleID string, c *cluster.Capsule) map[string]string {
 	ls[labelManagedBy] = labelManagedByRig
 	ls[labelRigCapsuleID] = c.CapsuleID
 	return ls
+}
+
+func instanceLabels(capsuleID string) map[string]string {
+	return map[string]string{
+		labelRigCapsuleID: capsuleID,
+	}
 }
 
 func capsuleIDFromLabels(labels map[string]string) string {

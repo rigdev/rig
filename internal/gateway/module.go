@@ -40,16 +40,21 @@ type storageParams struct {
 
 func NewCluster(p clusterParams) (cluster.Gateway, cluster.ConfigGateway, cluster.StatusGateway, error) {
 	switch p.Cfg.Cluster.Type {
-	case "docker":
+	case config.ClusterTypeDocker:
 		if p.DockerClient == nil {
 			return nil, nil, nil, fmt.Errorf("no docker client provided")
 		}
 		return p.DockerClient, p.DockerClient, p.DockerClient, nil
-	case "k8s":
+	case config.ClusterTypeKubernetes:
 		if p.K8SClient == nil {
 			return nil, nil, nil, fmt.Errorf("no k8s client provided")
 		}
 		return p.K8SClient, p.K8SClient, nil, nil
+	case config.ClusterTypeKubernetesNative:
+		if p.K8SClient == nil {
+			return nil, nil, nil, fmt.Errorf("no k8s client provided")
+		}
+		return p.K8SClient, p.K8SClient.ConfigGateway(), nil, nil
 	default:
 		return nil, nil, nil, fmt.Errorf("invalid cluster gateway '%v'", p.Cfg.Cluster.Type)
 	}

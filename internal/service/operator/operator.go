@@ -3,14 +3,15 @@ package operator
 import (
 	"context"
 
+	"github.com/go-logr/zapr"
+	"github.com/rigdev/rig/internal/controller"
 	"go.uber.org/fx"
-	zapcore "go.uber.org/zap"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/rigdev/rig/internal/config"
@@ -20,7 +21,7 @@ import (
 type Service interface{}
 
 type service struct {
-	log    *zapcore.Logger
+	log    *zap.Logger
 	cfg    config.Config
 	cancel context.CancelFunc
 }
@@ -29,7 +30,7 @@ type NewParams struct {
 	fx.In
 	Lifecycle fx.Lifecycle
 
-	Logger *zapcore.Logger
+	Logger *zap.Logger
 	Config config.Config
 }
 
@@ -48,47 +49,55 @@ func (s *service) start() {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
 
-	// TODO use the logger from s.log but add the KubeAwareEncoder from sigs.k8s.io/controller-runtime/pkg/log/zap
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	ctrl.SetLogger(zapr.NewLogger(s.log.Named("operator")))
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(rigdevv1alpha1.AddToScheme(scheme))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: ":8080"},
-		HealthProbeBindAddress: ":8081",
-		LeaderElection:         true,
-		LeaderElectionID:       "3d9f417a.rig.dev",
+		Scheme:                  scheme,
+		Metrics:                 metricsserver.Options{BindAddress: ":8080"},
+		HealthProbeBindAddress:  ":8081",
+		LeaderElection:          true,
+		LeaderElectionID:        "3d9f417a.rig.dev",
+		LeaderElectionNamespace: "rig-system",
 	})
 	if err != nil {
-		s.log.Error("unable to start manager", zapcore.Error(err))
+		s.log.Error("unable to start manager", zap.Error(err))
 		return
 	}
 
 	//+kubebuilder:scaffold:builder
+	cr := &controller.CapsuleReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}
+	if err := cr.SetupWithManager(mgr); err != nil {
+		s.log.Error("unable to setup controller", zap.Error(err))
+		return
+	}
 
 	if s.cfg.Client.Kubernetes.WebhooksEnabled {
 		if err := (&rigdevv1alpha1.Capsule{}).SetupWebhookWithManager(mgr); err != nil {
-			s.log.Error("could not setup webhook with manager", zapcore.Error(err))
+			s.log.Error("could not setup webhook with manager", zap.Error(err))
 			return
 		}
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		s.log.Error("unable to set up health check", zapcore.Error(err))
+		s.log.Error("unable to set up health check", zap.Error(err))
 		return
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		s.log.Error("unable to set up ready check", zapcore.Error(err))
+		s.log.Error("unable to set up ready check", zap.Error(err))
 		return
 	}
 
 	go func() {
 		s.log.Info("starting operator service")
 		if err := mgr.Start(ctx); err != nil {
-			s.log.Error("problem running manager", zapcore.Error(err))
+			s.log.Error("problem running manager", zap.Error(err))
 			return
 		}
 	}()
