@@ -34,7 +34,7 @@ func typeToProto(c config.ClusterType) cluster.ClusterType {
 	switch c {
 	case config.ClusterTypeDocker:
 		return cluster.ClusterType_CLUSTER_TYPE_DOCKER
-	case config.ClusterTypeKubernetes:
+	case config.ClusterTypeKubernetes, config.ClusterTypeKubernetesNative:
 		return cluster.ClusterType_CLUSTER_TYPE_KUBERNETES
 	default:
 		return cluster.ClusterType_CLUSTER_TYPE_UNSPECIFIED

@@ -505,6 +505,7 @@ func (j *rolloutJob) run(
 			})
 		}
 
+		cfg.Spec.Interfaces = nil
 		for _, i := range rc.GetNetwork().GetInterfaces() {
 			capIf := v1alpha1.CapsuleInterface{
 				Name: i.GetName(),

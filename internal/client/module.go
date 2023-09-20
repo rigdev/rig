@@ -22,7 +22,8 @@ func GetModule(cfg config.Config) fx.Option {
 	switch cfg.Cluster.Type {
 	case config.ClusterTypeDocker:
 		opts = append(opts, fx.Provide(docker.New))
-	case config.ClusterTypeKubernetes:
+	case config.ClusterTypeKubernetes,
+		config.ClusterTypeKubernetesNative:
 		opts = append(opts, fx.Provide(k8s.New))
 	}
 	return fx.Module(
