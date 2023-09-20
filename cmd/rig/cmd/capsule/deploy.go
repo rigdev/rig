@@ -21,6 +21,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
@@ -74,7 +75,7 @@ func getBuildID(ctx context.Context, capsuleID string, rc rig.Client, dc *client
 	}
 
 	if image != "" {
-		return createBuild(ctx, rc, capsuleID, dc, image)
+		return createBuild(ctx, rc, capsuleID, dc, imageRefFromFlags())
 	}
 
 	return promptForImageOrBuild(ctx, capsuleID, rc, dc)
@@ -169,19 +170,44 @@ func isHexString(s string) bool {
 	return true
 }
 
-func createBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *client.Client, image string) (string, error) {
-	if strings.Contains(image, "@") {
+type imageRef struct {
+	image string
+	// &true: we know it's local
+	// &false: we know it's remote
+	// nil: we don't know
+	isKnownLocal *bool
+}
+
+func imageRefFromFlags() imageRef {
+	imageRef := imageRef{
+		image:        image,
+		isKnownLocal: nil,
+	}
+	if remote {
+		imageRef.isKnownLocal = ptr.New(false)
+	}
+	return imageRef
+}
+
+func createBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *client.Client, imageRef imageRef) (string, error) {
+	if strings.Contains(imageRef.image, "@") {
 		return "", errors.UnimplementedErrorf("referencing images by digest is not yet supported")
 	}
 
-	isLocalImage, _, err := utils.ImageExistsNatively(ctx, dc, image)
-	if err != nil {
-		return "", err
+	var err error
+	var isLocalImage bool
+	if imageRef.isKnownLocal == nil {
+		isLocalImage, _, err = utils.ImageExistsNatively(ctx, dc, imageRef.image)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		isLocalImage = *imageRef.isKnownLocal
 	}
 
 	var digest string
 	if isLocalImage {
-		image, digest, err = pushLocalImageToDevRegistry(ctx, image, rc, dc)
+		imageRef.image, digest, err = pushLocalImageToDevRegistry(ctx, imageRef.image, rc, dc)
 		if err != nil {
 			return "", err
 		}
@@ -190,7 +216,7 @@ func createBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *clien
 	res, err := rc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
 			CapsuleId: capsuleID,
-			Image:     image,
+			Image:     imageRef.image,
 			Digest:    digest,
 		},
 	})
@@ -204,11 +230,6 @@ func createBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *clien
 		fmt.Println("Build already exists, using existing build")
 	}
 
-	isLocalImage, _, err = utils.ImageExistsNatively(ctx, dc, res.Msg.BuildId)
-	if err != nil {
-		return "", err
-	}
-
 	return res.Msg.GetBuildId(), nil
 }
 
@@ -219,11 +240,11 @@ func promptForImageOrBuild(ctx context.Context, capsuleID string, rc rig.Client,
 	}
 	switch i {
 	case 0:
-		image, err := promptForImage(ctx, dc)
+		imgRef, err := promptForImage(ctx, dc)
 		if err != nil {
 			return "", err
 		}
-		return createBuild(ctx, rc, capsuleID, dc, image)
+		return createBuild(ctx, rc, capsuleID, dc, imgRef)
 	case 1:
 		return promptForExistingBuild(ctx, capsuleID, rc)
 	default:
@@ -231,25 +252,33 @@ func promptForImageOrBuild(ctx context.Context, capsuleID string, rc rig.Client,
 	}
 }
 
-func promptForImage(ctx context.Context, dc *client.Client) (string, error) {
+func promptForImage(ctx context.Context, dc *client.Client) (imageRef, error) {
+	var empty imageRef
+
 	ok, err := common.PromptConfirm("Use a local image?", true)
 	if err != nil {
-		return "", err
+		return empty, err
 	}
 
 	if ok {
 		img, err := getDaemonImage(ctx, dc)
 		if err != nil {
-			return "", err
+			return empty, err
 		}
-		return img.tag, nil
+		return imageRef{
+			image:        img.tag,
+			isKnownLocal: ptr.New(true),
+		}, nil
 	}
 
 	image, err = common.PromptInput("Enter image:", common.ValidateImageOpt)
 	if err != nil {
-		return "", err
+		return empty, nil
 	}
-	return image, nil
+	return imageRef{
+		image:        image,
+		isKnownLocal: ptr.New(false),
+	}, nil
 }
 
 func getDaemonImage(ctx context.Context, dc *client.Client) (*imageInfo, error) {

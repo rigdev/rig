@@ -26,6 +26,7 @@ var (
 	interactive    bool
 	outputJSON     bool
 	skipImageCheck bool
+	remote         bool
 )
 
 var (
@@ -71,6 +72,7 @@ func Setup(parent *cobra.Command) {
 	createBuild.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
 	createBuild.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy build after successful creation")
 	createBuild.Flags().BoolVarP(&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists")
+	createBuild.Flags().BoolVarP(&remote, "remote", "r", false, "Rig will not look for the image locally but assumes it from a remote registry. If not set, Rig will search locally and then remotely")
 	capsule.AddCommand(createBuild)
 
 	deploy := &cobra.Command{
@@ -85,6 +87,7 @@ Not both --build-id and --image can be given`,
 	}
 	deploy.Flags().StringVarP(&buildID, "build-id", "b", "", "rig build id to deploy")
 	deploy.Flags().StringVarP(&image, "image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist")
+	deploy.Flags().BoolVarP(&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote registry. If not set, Rig will search locally and then remotely")
 	capsule.AddCommand(deploy)
 
 	scale := &cobra.Command{
