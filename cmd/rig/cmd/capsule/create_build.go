@@ -4,53 +4,45 @@ import (
 	"context"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/docker/docker/client"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 )
 
-func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client, cfg *cmd_config.Config) error {
+func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client, cfg *cmd_config.Config, dockerClient *client.Client) error {
 	var err error
 	if image == "" {
-		image, err = common.PromptInput("Enter image:", common.ValidateImageOpt)
+		image, err = promptForImage(ctx, dockerClient)
 		if err != nil {
 			return err
 		}
 	}
 
-	var buildID string
-	if res, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
-		Msg: &capsule.CreateBuildRequest{
-			CapsuleId:      capsuleID,
-			Image:          image,
-			SkipImageCheck: skipImageCheck,
+	buildID, err := createBuild(ctx, nc, capsuleID, dockerClient, image)
+	if err != nil {
+		return err
+	}
+
+	if !deploy {
+		return nil
+	}
+
+	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+		Msg: &capsule.DeployRequest{
+			CapsuleId: capsuleID,
+			Changes: []*capsule.Change{{
+				Field: &capsule.Change_BuildId{
+					BuildId: buildID,
+				},
+			}},
 		},
 	}); err != nil {
 		return err
-	} else {
-		buildID = res.Msg.GetBuildId()
 	}
 
-	if deploy {
-		if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
-			Msg: &capsule.DeployRequest{
-				CapsuleId: capsuleID,
-				Changes: []*capsule.Change{{
-					Field: &capsule.Change_BuildId{
-						BuildId: buildID,
-					},
-				}},
-			},
-		}); err != nil {
-			return err
-		}
-
-		cmd.Printf("Deployed build %v \n", buildID)
-	} else {
-		cmd.Printf("Image available as build %v\n", buildID)
-	}
+	cmd.Printf("Deployed build %v \n", buildID)
 
 	return nil
 }
