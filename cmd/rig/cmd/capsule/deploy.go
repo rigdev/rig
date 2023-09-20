@@ -266,14 +266,14 @@ func getDaemonImage(ctx context.Context, dc *client.Client) (*imageInfo, error) 
 	if len(images) == 0 {
 		return nil, errors.New("no local docker images found")
 	}
-	idx, _, err := common.PromptSelect("Select image:", prompts, common.SelectEnableFilterOpt)
+	idx, err := common.PromptTableSelect("Select image:", prompts, []string{"Image name", "Age"}, common.SelectEnableFilterOpt)
 	if err != nil {
 		return nil, err
 	}
 	return &images[idx], nil
 }
 
-func getImagePrompts(ctx context.Context, dc *client.Client, filter string) ([]imageInfo, []string, error) {
+func getImagePrompts(ctx context.Context, dc *client.Client, filter string) ([]imageInfo, [][]string, error) {
 	res, err := dc.ImageList(ctx, types.ImageListOptions{
 		Filters: filters.NewArgs(filters.Arg("dangling", "false")),
 	})
@@ -282,7 +282,7 @@ func getImagePrompts(ctx context.Context, dc *client.Client, filter string) ([]i
 	}
 
 	var images []imageInfo
-	var prompts []string
+	var prompts [][]string
 
 	for _, image := range res {
 		for _, tag := range image.RepoTags {
@@ -309,16 +309,8 @@ func getImagePrompts(ctx context.Context, dc *client.Client, filter string) ([]i
 		if idx >= 50 {
 			break
 		}
-		t := time.Since(image.created).Round(time.Second)
-		var timeString string
-		if t.Hours() > 24 {
-			days := int(t.Hours() / 24)
-			timeString = fmt.Sprintf("%vd", days)
-			t = t - time.Duration(days*24)*time.Hour
-		}
-		timeString = fmt.Sprintf("%s%v", timeString, t)
-
-		prompts = append(prompts, fmt.Sprintf("%s [age: %v]", image.tag, timeString))
+		t := time.Since(image.created)
+		prompts = append(prompts, []string{image.tag, common.FormatDuration(t)})
 	}
 	return images, prompts, nil
 }
@@ -332,13 +324,16 @@ func promptForExistingBuild(ctx context.Context, capsuleID string, rc rig.Client
 		return "", err
 	}
 	builds := resp.Msg.GetBuilds()
+	slices.SortFunc(builds, func(b1, b2 *capsule.Build) bool {
+		return b1.CreatedAt.AsTime().After(b2.CreatedAt.AsTime())
+	})
 
 	var rows [][]string
 	for _, b := range builds {
 		rows = append(rows, []string{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
 			truncatedFixed(b.GetDigest(), 19),
-			fmt.Sprint(time.Since(b.GetCreatedAt().AsTime()).Truncate(time.Second)),
+			common.FormatDuration(time.Since(b.GetCreatedAt().AsTime())),
 		})
 	}
 

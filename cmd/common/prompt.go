@@ -193,10 +193,13 @@ func PromptTableSelect(label string, choices [][]string, columnHeaders []string,
 	}
 	headerBorder := strings.Repeat("-", len(header))
 
-	opts = append(opts, SelectExtendTemplateOpt(map[string]any{
-		"header":       func() string { return header },
-		"headerBorder": func() string { return headerBorder },
-	}))
+	opts = append(opts,
+		SelectExtendTemplateOpt(map[string]any{
+			"header":       func() string { return header },
+			"headerBorder": func() string { return headerBorder },
+		}),
+		SelectTemplateOpt(tableSelectTemplate),
+	)
 	idx, _, err := PromptSelect(label, rows, opts...)
 	return idx, err
 }
