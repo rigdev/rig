@@ -70,7 +70,7 @@ type ClientDocker struct {
 }
 
 type ClientKubernetes struct {
-	WebhooksEnabled bool `mapstructure:"webhooksEnabled"`
+	WebhooksEnabled bool `mapstructure:"webhooks_enabled"`
 }
 
 type ClientMailjet struct {

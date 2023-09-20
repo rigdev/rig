@@ -43,7 +43,7 @@ func createRootCMD() *cobra.Command {
 				opts = append(opts, fx.Invoke(func(_ *registry.Server) {}))
 			}
 
-			if cfg.Cluster.Type == config.ClusterTypeKubernetes {
+			if cfg.Cluster.Type == config.ClusterTypeKubernetesNative {
 				opts = append(opts, fx.Invoke(func(_ operator.Service) {}))
 			}
 

@@ -45,7 +45,7 @@ func New(p NewParams) Service {
 	return s
 }
 
-func (s *service) start() {
+func (s *service) start() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
 
@@ -65,7 +65,7 @@ func (s *service) start() {
 	})
 	if err != nil {
 		s.log.Error("unable to start manager", zap.Error(err))
-		return
+		return err
 	}
 
 	//+kubebuilder:scaffold:builder
@@ -75,32 +75,34 @@ func (s *service) start() {
 	}
 	if err := cr.SetupWithManager(mgr); err != nil {
 		s.log.Error("unable to setup controller", zap.Error(err))
-		return
+		return err
 	}
 
 	if s.cfg.Client.Kubernetes.WebhooksEnabled {
 		if err := (&rigdevv1alpha1.Capsule{}).SetupWebhookWithManager(mgr); err != nil {
 			s.log.Error("could not setup webhook with manager", zap.Error(err))
-			return
+			return err
 		}
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		s.log.Error("unable to set up health check", zap.Error(err))
-		return
+		return err
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		s.log.Error("unable to set up ready check", zap.Error(err))
-		return
+		return err
 	}
 
 	go func() {
 		s.log.Info("starting operator service")
 		if err := mgr.Start(ctx); err != nil {
-			s.log.Error("problem running manager", zap.Error(err))
+			s.log.Fatal("problem running manager", zap.Error(err))
 			return
 		}
 	}()
+
+	return nil
 }
 
 func (s *service) stop() {

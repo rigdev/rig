@@ -43,10 +43,6 @@ func newConfigGateway(logger *zap.Logger, restCfg *rest.Config, cs *kubernetes.C
 }
 
 func (g *configGateway) CreateCapsuleConfig(ctx context.Context, cfg *v1alpha1.Capsule) error {
-	if cfg.Spec.Image == "" {
-		return nil
-	}
-
 	if err := g.cc.Create(ctx, &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: cfg.Namespace}}); err != nil {
 		return checkError(err)
 	}
@@ -67,28 +63,12 @@ func (g *configGateway) UpdateCapsuleConfig(ctx context.Context, cfg *v1alpha1.C
 }
 
 func (g *configGateway) ListCapsuleConfigs(ctx context.Context, pagination *model.Pagination) (iterator.Iterator[*v1alpha1.Capsule], int64, error) {
-	res := &v1alpha1.CapsuleList{}
-	if err := g.cc.List(ctx, res); err != nil {
-		return nil, 0, checkError(err)
+	ls, err := getList(ctx, pagination, g.cc, &v1alpha1.CapsuleList{})
+	if err != nil {
+		return nil, 0, err
 	}
 
-	p := iterator.NewProducer[*v1alpha1.Capsule]()
-	go func() {
-		defer p.Done()
-		for _, r := range res.Items {
-			v := r
-			if err := p.Value(&v); err != nil {
-				p.Error(err)
-				return
-			}
-		}
-	}()
-
-	var c int64 = int64(len(res.Items))
-	if res.GetRemainingItemCount() != nil {
-		c += *res.GetRemainingItemCount()
-	}
-	return p, c, nil
+	return toIterator(ctx, pagination, ls, ls.Items)
 }
 
 func (g *configGateway) GetCapsuleConfig(ctx context.Context, capsuleID string) (*v1alpha1.Capsule, error) {
@@ -106,7 +86,23 @@ func (g *configGateway) GetCapsuleConfig(ctx context.Context, capsuleID string) 
 }
 
 func (g *configGateway) DeleteCapsuleConfig(ctx context.Context, capsuleID string) error {
-	return errors.UnimplementedErrorf("unimplemented DeleteCapsuleConfig")
+	projectID, err := auth.GetProjectID(ctx)
+	if err != nil {
+		return err
+	}
+
+	g.logger.Debug("delete capsule", zap.String("name", capsuleID), zap.String("namespace", projectID.String()))
+
+	if err := g.cc.Delete(ctx, &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      capsuleID,
+			Namespace: projectID.String(),
+		},
+	}); err != nil {
+		return checkError(err)
+	}
+
+	return nil
 }
 
 func (g *configGateway) SetEnvironmentVariables(ctx context.Context, capsuleID string, envs map[string]string) error {
@@ -127,7 +123,17 @@ func (g *configGateway) SetEnvironmentVariables(ctx context.Context, capsuleID s
 }
 
 func (g *configGateway) GetEnvironmentVariables(ctx context.Context, capsuleID string) (map[string]string, error) {
-	return nil, errors.UnimplementedErrorf("unimplemented GetEnvironmentVariables")
+	projectID, err := auth.GetProjectID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cf, err := g.GetFile(ctx, capsuleID, capsuleID, projectID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return cf.Data, nil
 }
 
 func (g *configGateway) SetEnvironmentVariable(ctx context.Context, capsuleID, name, value string) error {
@@ -143,31 +149,61 @@ func (g *configGateway) DeleteEnvironmentVariable(ctx context.Context, capsuleID
 }
 
 func (g *configGateway) GetFile(ctx context.Context, capsuleID, name, namespace string) (*v1.ConfigMap, error) {
-	return nil, errors.UnimplementedErrorf("unimplemented GetFile")
+	res := &v1.ConfigMap{}
+	if err := g.cc.Get(ctx, client.ObjectKey{Name: capsuleID, Namespace: namespace}, res); err != nil {
+		return nil, checkError(err)
+	}
+
+	return res, nil
 }
 
 func (g *configGateway) SetFile(ctx context.Context, capsuleID string, file *v1.ConfigMap) error {
-	return checkError(g.cc.Update(ctx, file))
+	return g.upsert(ctx, capsuleID, file)
 }
 
 func (g *configGateway) ListFiles(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*v1.ConfigMap], int64, error) {
-	return nil, 0, errors.UnimplementedErrorf("unimplemented ListFiles")
+	ls, err := getList(ctx, pagination, g.cc, &v1.ConfigMapList{})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return toIterator(ctx, pagination, ls, ls.Items)
 }
 
 func (g *configGateway) DeleteFile(ctx context.Context, capsuleID, name, namespace string) error {
-	return errors.UnimplementedErrorf("unimplemented DeleteFile")
+	g.logger.Debug("delete file", zap.String("name", name), zap.String("namespace", namespace))
+	if err := g.cc.Delete(ctx, &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}); err != nil {
+		return checkError(err)
+	}
+
+	return nil
 }
 
 func (g *configGateway) GetSecret(ctx context.Context, capsuleID, name, namespace string) (*v1.Secret, error) {
-	return nil, errors.UnimplementedErrorf("unimplemented GetSecret")
+	res := &v1.Secret{}
+	if err := g.cc.Get(ctx, client.ObjectKey{Name: capsuleID, Namespace: namespace}, res); err != nil {
+		return nil, checkError(err)
+	}
+
+	return res, nil
 }
 
 func (g *configGateway) SetSecret(ctx context.Context, capsuleID string, secret *v1.Secret) error {
-	return checkError(g.cc.Update(ctx, secret))
+	return g.upsert(ctx, capsuleID, secret)
 }
 
 func (g *configGateway) ListSecrets(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*v1.Secret], int64, error) {
-	return nil, 0, errors.UnimplementedErrorf("unimplemented ListSecrets")
+	ls, err := getList(ctx, pagination, g.cc, &v1.SecretList{})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return toIterator(ctx, pagination, ls, ls.Items)
 }
 
 func (g *configGateway) DeleteSecret(ctx context.Context, capsuleID, name, namespace string) error {
@@ -182,6 +218,44 @@ func (g *configGateway) DeleteSecret(ctx context.Context, capsuleID, name, names
 	}
 
 	return nil
+}
+
+func (g *configGateway) upsert(ctx context.Context, capsuleID string, file client.Object) error {
+	f := file.DeepCopyObject().(client.Object)
+	if err := checkError(g.cc.Get(ctx, client.ObjectKeyFromObject(file), f)); errors.IsNotFound(err) {
+		return checkError(g.cc.Create(ctx, file))
+	} else if err != nil {
+		return err
+	}
+
+	return checkError(g.cc.Update(ctx, file))
+}
+
+func getList[L client.ObjectList](ctx context.Context, pagination *model.Pagination, cc client.Client, l L) (L, error) {
+	projectID, err := auth.GetProjectID(ctx)
+	if err != nil {
+		return l, err
+	}
+
+	if err := cc.List(ctx, l, client.InNamespace(projectID.String())); err != nil {
+		return l, checkError(err)
+	}
+	return l, nil
+}
+
+func toIterator[T any](ctx context.Context, pagination *model.Pagination, ol client.ObjectList, ls []T) (iterator.Iterator[*T], int64, error) {
+	var ts []*T
+	for _, i := range ls {
+		v := i
+		ts = append(ts, &v)
+	}
+
+	var c int64 = int64(len(ls))
+	if ol.GetRemainingItemCount() != nil {
+		c += *ol.GetRemainingItemCount()
+	}
+
+	return iterator.FromList[*T](ts), c, nil
 }
 
 func checkError(err error) error {
