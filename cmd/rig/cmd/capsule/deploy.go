@@ -31,13 +31,8 @@ type imageInfo struct {
 	created time.Time
 }
 
-func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, rc rig.Client) error {
-	dc, err := getDockerClient()
-	if err != nil {
-		return err
-	}
-
-	buildID, err = getBuildID(ctx, capsuleID, rc, dc)
+func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, rc rig.Client, dc *client.Client) error {
+	buildID, err := getBuildID(ctx, capsuleID, rc, dc)
 	if err != nil {
 		return err
 	}
@@ -204,9 +199,9 @@ func createBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *clien
 	}
 
 	if res.Msg.GetCreatedNewBuild() {
-		fmt.Println("created new build:", res.Msg.GetBuildId())
+		fmt.Println("Created new build:", res.Msg.GetBuildId())
 	} else {
-		fmt.Println("build already exists, deploying existing build")
+		fmt.Println("Build already exists, using existing build")
 	}
 
 	isLocalImage, _, err = utils.ImageExistsNatively(ctx, dc, res.Msg.BuildId)
@@ -237,7 +232,7 @@ func promptForImageOrBuild(ctx context.Context, capsuleID string, rc rig.Client,
 }
 
 func promptForImage(ctx context.Context, dc *client.Client) (string, error) {
-	ok, err := common.PromptConfirm("Deploy a local image?", true)
+	ok, err := common.PromptConfirm("Use a local image?", true)
 	if err != nil {
 		return "", err
 	}
@@ -398,15 +393,6 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 
 		time.Sleep(1 * time.Second)
 	}
-}
-
-// TODO Should be supplied by FX instead
-// TODO Currently we can't read from protected repositories as we don't properly read the credentials which the local docker CLI uses
-func getDockerClient() (*client.Client, error) {
-	return client.NewClientWithOpts(
-		client.WithHostFromEnv(),
-		client.WithAPIVersionNegotiation(),
-	)
 }
 
 func pushLocalImageToDevRegistry(ctx context.Context, image string, client rig.Client, dc *client.Client) (string, string, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/docker/docker/client"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 	"go.uber.org/dig"
@@ -39,6 +40,12 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 			}),
 			fx.Provide(func() context.Context { return context.Background() }),
 			fx.Options(_options...),
+			fx.Provide(func() (*client.Client, error) {
+				return client.NewClientWithOpts(
+					client.WithHostFromEnv(),
+					client.WithAPIVersionNegotiation(),
+				)
+			}),
 			fx.Invoke(CheckAuth),
 			fx.Invoke(f),
 			fx.NopLogger,
