@@ -34,4 +34,11 @@ rules:
     - pods
   verbs:
     - list
+- apiGroups:
+    - rig.dev
+  resources:
+    - capsules
+  verbs:
+    - "*"
+
 {{- end -}}

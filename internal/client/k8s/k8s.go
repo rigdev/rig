@@ -16,10 +16,11 @@ import (
 )
 
 type Client struct {
-	logger *zap.Logger
-	cs     *kubernetes.Clientset
-	mcs    *metricsclient.Clientset
-	rcc    repository.ClusterConfig
+	logger  *zap.Logger
+	cs      *kubernetes.Clientset
+	restCfg *rest.Config
+	mcs     *metricsclient.Clientset
+	rcc     repository.ClusterConfig
 }
 
 var _ cluster.Gateway = &Client{}
@@ -49,11 +50,16 @@ func New(logger *zap.Logger, rcc repository.ClusterConfig) (*Client, error) {
 	}
 
 	return &Client{
-		logger: logger,
-		cs:     cs,
-		mcs:    mcs,
-		rcc:    rcc,
+		logger:  logger,
+		cs:      cs,
+		mcs:     mcs,
+		rcc:     rcc,
+		restCfg: restCfg,
 	}, nil
+}
+
+func (c *Client) ConfigGateway() cluster.ConfigGateway {
+	return newConfigGateway(c.logger, c.restCfg, c.cs)
 }
 
 // CreateVolume implements cluster.Gateway.

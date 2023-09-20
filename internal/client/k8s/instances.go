@@ -24,7 +24,7 @@ func (c *Client) ListInstances(
 		return nil, 0, err
 	}
 
-	selector, err := labels.ValidatedSelectorFromSet(selectorLabels(capsuleID))
+	selector, err := labels.ValidatedSelectorFromSet(instanceLabels(capsuleID))
 	if err != nil {
 		return nil, 0, fmt.Errorf("could not create selector: %w", err)
 	}
