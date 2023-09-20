@@ -32,7 +32,17 @@ type Service struct {
 	cfg    config.Config
 }
 
-func NewService(cr repository.Capsule, sr repository.Secret, cg cluster.Gateway, ccg cluster.ConfigGateway, csg cluster.StatusGateway, as *service_auth.Service, ps project.Service, cfg config.Config, logger *zap.Logger) *Service {
+func NewService(
+	cr repository.Capsule,
+	sr repository.Secret,
+	cg cluster.Gateway,
+	ccg cluster.ConfigGateway,
+	csg cluster.StatusGateway,
+	as *service_auth.Service,
+	ps project.Service,
+	cfg config.Config,
+	logger *zap.Logger,
+) *Service {
 	s := &Service{
 		cr:     cr,
 		sr:     sr,

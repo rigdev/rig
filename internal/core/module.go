@@ -1,6 +1,7 @@
 package core
 
 import (
+	docker_client "github.com/docker/docker/client"
 	"github.com/rigdev/rig/internal/client"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway"
@@ -22,5 +23,14 @@ func GetModule(cfg config.Config) fx.Option {
 		repository.Module,
 		gateway.Module,
 		telemetry.Module,
+		fx.Provide(func(cfg config.Config) (*docker_client.Client, error) {
+			if cfg.Cluster.Type != config.ClusterTypeDocker {
+				return nil, nil
+			}
+			return docker_client.NewClientWithOpts(
+				docker_client.WithHostFromEnv(),
+				docker_client.WithAPIVersionNegotiation(),
+			)
+		}),
 	)
 }

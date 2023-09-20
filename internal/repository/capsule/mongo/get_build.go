@@ -18,7 +18,6 @@ func (m *MongoRepository) GetBuild(ctx context.Context, capsuleID string, buildI
 	}
 
 	var b schema.Build
-
 	if err := m.BuildCol.FindOne(ctx, bson.M{
 		"project_id": projectID,
 		"capsule_id": capsuleID,

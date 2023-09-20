@@ -78,8 +78,13 @@ func Setup(parent *cobra.Command) {
 		Short: "Deploy the given build to a capsule",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  base.Register(CapsuleDeploy),
+		Long: `Deploy either the given rig-build or docker image to a capsule.
+If --build-id is given rig tries to find a matching existing rig-build to deploy.
+If --image is given rig tries to create a new rig-build from the docker image (if it doesn't already exist)
+Not both --build-id and --image can be given`,
 	}
-	deploy.Flags().StringVarP(&buildID, "build-id", "b", "", "build id to deploy")
+	deploy.Flags().StringVarP(&buildID, "build-id", "b", "", "rig build id to deploy")
+	deploy.Flags().StringVarP(&image, "image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist")
 	capsule.AddCommand(deploy)
 
 	scale := &cobra.Command{

@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handler) CreateBuild(ctx context.Context, req *connect.Request[capsule.CreateBuildRequest]) (*connect.Response[capsule.CreateBuildResponse], error) {
-	buildID, err := h.cs.CreateBuild(
+	resp, err := h.cs.CreateBuild(
 		ctx,
 		req.Msg.GetCapsuleId(),
 		req.Msg.GetImage(),
@@ -23,7 +23,8 @@ func (h *Handler) CreateBuild(ctx context.Context, req *connect.Request[capsule.
 
 	return &connect.Response[capsule.CreateBuildResponse]{
 		Msg: &capsule.CreateBuildResponse{
-			BuildId: buildID,
+			BuildId:         resp.BuildID,
+			CreatedNewBuild: resp.CreatedNewBuild,
 		},
 	}, nil
 }

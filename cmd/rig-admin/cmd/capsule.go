@@ -171,7 +171,7 @@ func CapsuleCreateBuild(ctx context.Context, cmd *cobra.Command, args []string, 
 		return err
 	}
 
-	logger.Info("build created", zap.String("build_id", buildID))
+	logger.Info("build created", zap.String("build_id", buildID.BuildID))
 
 	return nil
 }

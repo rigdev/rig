@@ -631,7 +631,7 @@ func (j *rolloutJob) run(
 				return err
 			}
 
-			if i.GetBuildId() != rc.GetBuildId() {
+			if i.GetBuildId() != cfg.Spec.Image {
 				return errors.UnavailableErrorf("instance '%s' is wrong build", i.GetInstanceId())
 			}
 

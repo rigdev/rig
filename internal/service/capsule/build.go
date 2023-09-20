@@ -15,48 +15,51 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, digest string, origin *capsule.Origin, labels map[string]string, validateImage bool) (string, error) {
-	if image == "" {
-		return "", errors.InvalidArgumentErrorf("missing image")
-	}
+func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, digest string, origin *capsule.Origin, labels map[string]string, validateImage bool) (CreateBuildResponse, error) {
+	var emptyRes CreateBuildResponse
 
+	if image == "" {
+		return emptyRes, errors.InvalidArgumentErrorf("missing image")
+	}
 	ref, err := name.ParseReference(image)
 	if err != nil {
-		return "", errors.InvalidArgumentErrorf("%v", err)
+		return emptyRes, errors.InvalidArgumentErrorf("%v", err)
 	}
 
 	if validateImage {
 		d, err := s.validateImage(ctx, ref)
 		if err != nil {
-			return "", err
+			return emptyRes, err
 		}
 
 		if digest != "" && digest != d {
-			return "", errors.InvalidArgumentErrorf("provided digest doesn't match image")
+			return emptyRes, errors.InvalidArgumentErrorf("provided digest doesn't match image")
 		}
 
 		digest = d
 	}
 
 	if _, err := s.GetCapsule(ctx, capsuleID); err != nil {
-		return "", err
+		return emptyRes, err
 	}
 
 	by, err := s.as.GetAuthor(ctx)
 	if err != nil {
-		return "", err
+		return emptyRes, err
 	}
 
-	idRef := ref
+	buildID := ref.Name()
 	if digest != "" {
-		idRef, err = name.NewDigest(fmt.Sprintf("%s@%s", ref.Context().String(), digest))
+		id := fmt.Sprintf("%s@%s", ref.Name(), digest)
+		_, err := name.NewDigest(id)
 		if err != nil {
-			return "", err
+			return emptyRes, err
 		}
+		buildID = id
 	}
 
 	b := &capsule.Build{
-		BuildId:    idRef.Name(),
+		BuildId:    buildID,
 		Digest:     digest,
 		Repository: ref.Context().String(),
 		Tag:        ref.Identifier(),
@@ -66,11 +69,23 @@ func (s *Service) CreateBuild(ctx context.Context, capsuleID string, image, dige
 		Labels:     labels,
 	}
 
-	if err := s.cr.CreateBuild(ctx, capsuleID, b); err != nil {
-		return "", err
+	createdNew := true
+	err = s.cr.CreateBuild(ctx, capsuleID, b)
+	if errors.IsAlreadyExists(err) {
+		createdNew = false
+	} else if err != nil {
+		return emptyRes, err
 	}
 
-	return idRef.Name(), nil
+	return CreateBuildResponse{
+		BuildID:         buildID,
+		CreatedNewBuild: createdNew,
+	}, nil
+}
+
+type CreateBuildResponse struct {
+	BuildID         string
+	CreatedNewBuild bool
 }
 
 func (s *Service) ListBuilds(ctx context.Context, capsuleID string, pagination *model.Pagination) (iterator.Iterator[*capsule.Build], uint64, error) {
