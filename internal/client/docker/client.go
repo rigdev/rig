@@ -293,11 +293,18 @@ func (c *Client) ensureImage(ctx context.Context, image string, auth *cluster.Re
 	image = strings.TrimPrefix(image, "docker.io/library/")
 	image = strings.TrimPrefix(image, "index.docker.io/library/")
 
-	isLocal, err := c.isLocalImage(ctx, image)
+	images, err := c.dc.ImageList(ctx, types.ImageListOptions{
+		Filters: filters.NewArgs(filters.KeyValuePair{
+			Key:   "reference",
+			Value: image,
+		}),
+	})
 	if err != nil {
 		return err
 	}
-	if isLocal {
+
+	if len(images) > 0 {
+		// Image is local
 		return nil
 	}
 

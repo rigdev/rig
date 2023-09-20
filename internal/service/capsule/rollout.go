@@ -469,11 +469,7 @@ func (j *rolloutJob) run(
 			return err
 		}
 
-		image, err := j.s.ImageFromBuild(ctx, b)
-		if err != nil {
-			return err
-		}
-		cfg.Spec.Image = image
+		cfg.Spec.Image = rc.GetBuildId()
 		cfg.Spec.Command = rc.GetContainerSettings().GetCommand()
 		cfg.Spec.Args = rc.GetContainerSettings().GetArgs()
 		cfg.Spec.Replicas = int32(rc.GetReplicas())
