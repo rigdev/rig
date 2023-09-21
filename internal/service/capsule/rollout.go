@@ -636,8 +636,12 @@ func (j *rolloutJob) run(
 				return errors.UnavailableErrorf("instance '%s' is wrong build", i.GetInstanceId())
 			}
 
+			if i.GetState() == capsule.State_STATE_PENDING && i.GetMessage() != "" {
+				return errors.UnavailableErrorf("instance '%s' not running: %s", i.GetInstanceId(), i.GetMessage())
+			}
+
 			if i.GetState() != capsule.State_STATE_RUNNING {
-				return errors.UnavailableErrorf("instance '%s' is running", i.GetInstanceId())
+				return errors.UnavailableErrorf("instance '%s' is not running", i.GetInstanceId())
 			}
 
 			c++

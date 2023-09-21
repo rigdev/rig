@@ -406,18 +406,14 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 
 		switch res.Msg.GetRollout().GetStatus().GetState() {
 		case capsule.RolloutState_ROLLOUT_STATE_DONE:
-			cmd.Println("Deployment complete")
+			cmd.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment complete")
 			return nil
 		case capsule.RolloutState_ROLLOUT_STATE_FAILED:
-			cmd.Println("Deployment failed")
+			cmd.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment failed")
 			return nil
 		case capsule.RolloutState_ROLLOUT_STATE_ABORTED:
-			cmd.Println("Deployment aborted")
+			cmd.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment aborted")
 			return nil
-		}
-
-		if len(eventRes.Msg.GetEvents()) == 0 {
-			cmd.Println("Deploying build...")
 		}
 
 		time.Sleep(1 * time.Second)
