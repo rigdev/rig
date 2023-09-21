@@ -70,7 +70,7 @@ func getContext(cfg *cmd_config.Config, cmd *cobra.Command) (*cmd_config.Context
 			}
 		} else {
 			cmd.Println("No context available, please create one")
-			if err := cmd_config.CreateContext(cfg); err != nil {
+			if err := cmd_config.CreateDefaultContext(cfg); err != nil {
 				return nil, err
 			}
 		}

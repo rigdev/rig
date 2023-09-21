@@ -208,3 +208,6 @@ Temporary Items
 # End of https://www.toptal.com/developers/gitignore/api/goland,go,visualstudiocode,macos
 
 mock_*.go
+
+# Config files copied by go:generate into the dev/kind CLI package so they're embeddable by go:embed
+cmd/rig/cmd/dev/kind/*.yaml

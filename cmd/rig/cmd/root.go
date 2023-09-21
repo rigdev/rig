@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/cluster"
 	"github.com/rigdev/rig/cmd/rig/cmd/config"
+	"github.com/rigdev/rig/cmd/rig/cmd/dev"
 	"github.com/rigdev/rig/cmd/rig/cmd/group"
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
 	"github.com/rigdev/rig/cmd/rig/cmd/service_account"
@@ -39,6 +40,7 @@ func Execute() error {
 	project.Setup(rootCmd)
 	config.Setup(rootCmd)
 	cluster.Setup(rootCmd)
+	dev.Setup(rootCmd)
 
 	capsuleCmd := capsule.Setup(rootCmd)
 	resource.Setup(capsuleCmd)

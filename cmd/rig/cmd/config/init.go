@@ -17,5 +17,5 @@ func ConfigInit(ctx context.Context, cmd *cobra.Command, cfg *cmd_config.Config,
 		return fmt.Errorf("aborted")
 	}
 
-	return cmd_config.CreateContext(cfg)
+	return cmd_config.CreateDefaultContext(cfg)
 }
