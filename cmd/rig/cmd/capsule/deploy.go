@@ -20,6 +20,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
@@ -32,14 +33,14 @@ type imageInfo struct {
 	created time.Time
 }
 
-func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, rc rig.Client, dc *client.Client) error {
-	buildID, err := getBuildID(ctx, capsuleID, rc, dc)
+func deploy(ctx context.Context, cmd *cobra.Command, args []string, rc rig.Client, dc *client.Client) error {
+	buildID, err := getBuildID(ctx, CapsuleID, rc, dc)
 	if err != nil {
 		return err
 	}
 	res, err := rc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: CapsuleID,
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_BuildId{BuildId: buildID},
 			}},
@@ -49,7 +50,7 @@ func CapsuleDeploy(ctx context.Context, cmd *cobra.Command, args []string, capsu
 		return err
 	}
 	cmd.Printf("Deploying build %v in rollout %v \n", buildID, res.Msg.GetRolloutId())
-	return listenForEvents(ctx, res.Msg.GetRolloutId(), rc, capsuleID, cmd)
+	return listenForEvents(ctx, res.Msg.GetRolloutId(), rc, CapsuleID, cmd)
 }
 
 func getBuildID(ctx context.Context, capsuleID string, rc rig.Client, dc *client.Client) (string, error) {
@@ -75,7 +76,7 @@ func getBuildID(ctx context.Context, capsuleID string, rc rig.Client, dc *client
 	}
 
 	if image != "" {
-		return createBuild(ctx, rc, capsuleID, dc, imageRefFromFlags())
+		return CreateBuild(ctx, rc, capsuleID, dc, ImageRefFromFlags())
 	}
 
 	return promptForImageOrBuild(ctx, capsuleID, rc, dc)
@@ -170,7 +171,7 @@ func isHexString(s string) bool {
 	return true
 }
 
-type imageRef struct {
+type ImageRef struct {
 	image string
 	// &true: we know it's local
 	// &false: we know it's remote
@@ -178,8 +179,8 @@ type imageRef struct {
 	isKnownLocal *bool
 }
 
-func imageRefFromFlags() imageRef {
-	imageRef := imageRef{
+func ImageRefFromFlags() ImageRef {
+	imageRef := ImageRef{
 		image:        image,
 		isKnownLocal: nil,
 	}
@@ -189,7 +190,7 @@ func imageRefFromFlags() imageRef {
 	return imageRef
 }
 
-func createBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *client.Client, imageRef imageRef) (string, error) {
+func CreateBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *client.Client, imageRef ImageRef) (string, error) {
 	if strings.Contains(imageRef.image, "@") {
 		return "", errors.UnimplementedErrorf("referencing images by digest is not yet supported")
 	}
@@ -240,11 +241,11 @@ func promptForImageOrBuild(ctx context.Context, capsuleID string, rc rig.Client,
 	}
 	switch i {
 	case 0:
-		imgRef, err := promptForImage(ctx, dc)
+		imgRef, err := PromptForImage(ctx, dc)
 		if err != nil {
 			return "", err
 		}
-		return createBuild(ctx, rc, capsuleID, dc, imgRef)
+		return CreateBuild(ctx, rc, capsuleID, dc, imgRef)
 	case 1:
 		return promptForExistingBuild(ctx, capsuleID, rc)
 	default:
@@ -252,8 +253,8 @@ func promptForImageOrBuild(ctx context.Context, capsuleID string, rc rig.Client,
 	}
 }
 
-func promptForImage(ctx context.Context, dc *client.Client) (imageRef, error) {
-	var empty imageRef
+func PromptForImage(ctx context.Context, dc *client.Client) (ImageRef, error) {
+	var empty ImageRef
 
 	ok, err := common.PromptConfirm("Use a local image?", true)
 	if err != nil {
@@ -265,7 +266,7 @@ func promptForImage(ctx context.Context, dc *client.Client) (imageRef, error) {
 		if err != nil {
 			return empty, err
 		}
-		return imageRef{
+		return ImageRef{
 			image:        img.tag,
 			isKnownLocal: ptr.New(true),
 		}, nil
@@ -275,7 +276,7 @@ func promptForImage(ctx context.Context, dc *client.Client) (imageRef, error) {
 	if err != nil {
 		return empty, nil
 	}
-	return imageRef{
+	return ImageRef{
 		image:        image,
 		isKnownLocal: ptr.New(false),
 	}, nil
@@ -356,7 +357,7 @@ func promptForExistingBuild(ctx context.Context, capsuleID string, rc rig.Client
 	for _, b := range builds {
 		rows = append(rows, []string{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
-			truncatedFixed(b.GetDigest(), 19),
+			TruncatedFixed(b.GetDigest(), 19),
 			common.FormatDuration(time.Since(b.GetCreatedAt().AsTime())),
 		})
 	}
@@ -400,7 +401,7 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 			return err
 		}
 		for _, event := range eventRes.Msg.GetEvents() {
-			cmd.Printf("[%v] %v\n", event.GetCreatedAt().AsTime().Format(time.RFC822), event.GetMessage())
+			cmd.Printf("[%v] %v\n", event.GetCreatedAt().AsTime().Format(base.RFC3339MilliFixed), event.GetMessage())
 		}
 		eventCount += len(eventRes.Msg.GetEvents())
 
@@ -433,7 +434,7 @@ func pushLocalImageToDevRegistry(ctx context.Context, image string, client rig.C
 	}
 	devRegistry := config.GetRegistry()
 	if devRegistry == nil {
-		return "", "", fmt.Errorf("no dev-registry configured.") // TODO Help the user with fixing this
+		return "", "", fmt.Errorf("no dev-registry configured") // TODO Help the user with fixing this
 	}
 
 	newImageName, err := makeDevRegistryImageName(image, devRegistry.Host)

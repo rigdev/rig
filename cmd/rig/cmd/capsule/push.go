@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsuleID CapsuleID, nc rig.Client, cfg *cmd_config.Config) error {
+func push(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
 	var err error
 	if image == "" {
 		image, err = common.PromptInput("Enter Image:", common.ValidateNonEmptyOpt)
@@ -79,7 +79,7 @@ func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsule
 
 	if _, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: CapsuleID,
 			Image:     rigRef.Name(),
 			Digest:    digest,
 		},
@@ -87,10 +87,10 @@ func CapsulePush(ctx context.Context, cmd *cobra.Command, args []string, capsule
 		return err
 	}
 
-	if deploy {
+	if deployBool {
 		if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 			Msg: &capsule.DeployRequest{
-				CapsuleId: capsuleID,
+				CapsuleId: CapsuleID,
 				Changes: []*capsule.Change{{
 					Field: &capsule.Change_BuildId{
 						BuildId: buildID,

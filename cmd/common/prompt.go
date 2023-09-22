@@ -38,6 +38,10 @@ var ValidateAbsPathOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateAbsolutePath
 }
 
+var ValidateFilePathOpt = func(inp *textinput.TextInput) {
+	inp.Validate = ValidateFilePath
+}
+
 var ValidateEmailOpt = func(inp *textinput.TextInput) {
 	inp.Validate = ValidateEmail
 }

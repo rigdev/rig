@@ -20,7 +20,8 @@ var (
 
 func Setup(parent *cobra.Command) {
 	group := &cobra.Command{
-		Use: "group",
+		Use:   "group",
+		Short: "Manage user groups",
 	}
 
 	create := &cobra.Command{

@@ -1,8 +1,9 @@
-package capsule
+package rollout
 
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,13 +13,15 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func CapsuleListRollouts(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
+func get(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
 	resp, err := nc.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
 		Msg: &capsule.ListRolloutsRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: capsule_cmd.CapsuleID,
 			Pagination: &model.Pagination{
 				Offset:     uint32(offset),
 				Limit:      uint32(limit),
@@ -30,8 +33,27 @@ func CapsuleListRollouts(ctx context.Context, cmd *cobra.Command, capsuleID Caps
 		return err
 	}
 
-	if outputJSON {
+	rollouts := resp.Msg.GetRollouts()
+	if len(args) > 0 {
+		found := false
 		for _, r := range resp.Msg.GetRollouts() {
+			id, err := strconv.ParseUint(args[0], 10, 32)
+			if err != nil {
+				return errors.InvalidArgumentErrorf("invalid rollout id - %v", err)
+			}
+			if r.GetRolloutId() == id {
+				rollouts = []*capsule.Rollout{r}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return errors.NotFoundErrorf("rollout %s not found", args[0])
+		}
+	}
+
+	if outputJSON {
+		for _, r := range rollouts {
 			cmd.Println(common.ProtoToPrettyJson(r))
 		}
 		return nil
@@ -39,7 +61,7 @@ func CapsuleListRollouts(ctx context.Context, cmd *cobra.Command, capsuleID Caps
 
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{fmt.Sprintf("Rollouts (%d)", resp.Msg.GetTotal()), "Deployed At", "Replicas", "State", "Created By"})
-	for i, r := range resp.Msg.GetRollouts() {
+	for i, r := range rollouts {
 		id := fmt.Sprint("#", r.GetRolloutId())
 		if i == 0 {
 			id = fmt.Sprint(id, " (current)")

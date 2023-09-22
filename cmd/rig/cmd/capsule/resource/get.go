@@ -1,4 +1,4 @@
-package capsule
+package resource
 
 import (
 	"context"
@@ -7,24 +7,12 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func setupGetResources(parent *cobra.Command) {
-	getResources := &cobra.Command{
-		Use:   "get-resources",
-		Short: "Displays the resource (container size) of the capsule",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(GetResources),
-	}
-	getResources.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-
-	parent.AddCommand(getResources)
-}
-
-func GetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, client rig.Client) error {
-	containerSettings, err := getCurrentContainerSettings(ctx, capsuleID, client)
+func get(ctx context.Context, cmd *cobra.Command, client rig.Client) error {
+	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, client)
 	if err != nil {
 		return err
 	}
@@ -35,6 +23,7 @@ func GetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 
 	if outputJSON {
 		cmd.Println(common.ProtoToPrettyJson(containerSettings.Resources))
+		cmd.Println("{replicas: ", replicas, "}")
 		return nil
 	}
 
@@ -42,12 +31,14 @@ func GetResources(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, 
 	requests := containerSettings.Resources.Requests
 
 	t := table.NewWriter()
-	t.AppendRows([]table.Row{{"", "Requests", "Limits"}})
+	t.AppendRow(table.Row{"", "Requests", "Limits"})
 	t.AppendSeparator()
 	t.AppendRows([]table.Row{
 		{"CPU", milliIntToString(uint64(requests.CpuMillis)), formatLimitString(milliIntToString, uint64(limits.CpuMillis))},
 		{"Memory", intToByteString(requests.MemoryBytes), formatLimitString(intToByteString, limits.MemoryBytes)},
 	})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Replicas", replicas})
 	cmd.Println(t.Render())
 
 	return nil

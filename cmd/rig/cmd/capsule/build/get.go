@@ -1,9 +1,8 @@
-package capsule
+package build
 
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -12,13 +11,14 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, capsuleID CapsuleID, nc rig.Client) error {
+func get(ctx context.Context, cmd *cobra.Command, nc rig.Client) error {
 	resp, err := nc.Capsule().ListBuilds(ctx, &connect.Request[capsule.ListBuildsRequest]{
 		Msg: &capsule.ListBuildsRequest{
-			CapsuleId: capsuleID,
+			CapsuleId: capsule_cmd.CapsuleID,
 			Pagination: &model.Pagination{
 				Offset:     uint32(offset),
 				Limit:      uint32(limit),
@@ -42,7 +42,7 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, capsuleID Capsul
 	for _, b := range resp.Msg.GetBuilds() {
 		t.AppendRow(table.Row{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
-			truncatedFixed(b.GetDigest(), 19),
+			capsule_cmd.TruncatedFixed(b.GetDigest(), 19),
 			common.FormatDuration(time.Since(b.GetCreatedAt().AsTime())),
 			b.GetCreatedBy().GetPrintableName(),
 		})
@@ -50,20 +50,4 @@ func CapsuleListBuilds(ctx context.Context, cmd *cobra.Command, capsuleID Capsul
 	cmd.Println(t.Render())
 
 	return nil
-}
-
-func truncated(str string, max int) string {
-	if len(str) > max {
-		return str[:strings.LastIndexAny(str[:max], " .,:;-")] + "..."
-	}
-
-	return str
-}
-
-func truncatedFixed(str string, max int) string {
-	if len(str) > max {
-		return str[:max] + "..."
-	}
-
-	return str
 }

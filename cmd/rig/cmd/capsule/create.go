@@ -14,10 +14,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
+func create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
 	var err error
-	if name == "" {
-		name, err = common.PromptInput("Capsule name:", common.ValidateSystemNameOpt)
+	if CapsuleID == "" {
+		CapsuleID, err = common.PromptInput("Capsule name:", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
@@ -218,7 +218,7 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 
 	res, err := nc.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
 		Msg: &capsule.CreateRequest{
-			Name: name,
+			Name: CapsuleID,
 		},
 	})
 	if err != nil {
@@ -266,6 +266,6 @@ func CapsuleCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 		}
 	}
 
-	cmd.Printf("Created new capsule '%v'\n", name)
+	cmd.Printf("Created new capsule '%v'\n", CapsuleID)
 	return nil
 }

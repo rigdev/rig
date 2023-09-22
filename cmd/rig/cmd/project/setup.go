@@ -23,7 +23,8 @@ var (
 
 func Setup(parent *cobra.Command) {
 	project := &cobra.Command{
-		Use: "project",
+		Use:   "project",
+		Short: "Manage Rig projects",
 	}
 
 	getSettings := &cobra.Command{
