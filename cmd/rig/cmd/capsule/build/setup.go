@@ -44,6 +44,7 @@ func Setup(parent *cobra.Command) *cobra.Command {
 	buildCreate.RegisterFlagCompletionFunc("image", common.NoCompletions)
 	buildCreate.RegisterFlagCompletionFunc("deploy", common.BoolCompletions)
 	buildCreate.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions)
+	buildCreate.RegisterFlagCompletionFunc("remote", common.BoolCompletions)
 	build.AddCommand(buildCreate)
 
 	buildGet := &cobra.Command{

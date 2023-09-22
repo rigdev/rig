@@ -12,12 +12,9 @@ var (
 )
 
 var (
-	deployBool     bool
-	follow         bool
-	interactive    bool
-	outputJSON     bool
-	skipImageCheck bool
-	remote         bool
+	interactive bool
+	outputJSON  bool
+	remote      bool
 )
 
 var (
@@ -70,23 +67,10 @@ func Setup(parent *cobra.Command) *cobra.Command {
 
 	capsuleCmd.AddCommand(capsuleCreate)
 
-	capsulePush := &cobra.Command{
-		Use:               "push",
-		Short:             "Push a local image to a Capsule",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              base.Register(push),
-		ValidArgsFunction: common.NoCompletions,
-	}
-	capsulePush.Flags().StringVarP(&image, "image", "i", "", "image to push")
-	capsulePush.Flags().BoolVarP(&deployBool, "deploy", "d", false, "deploy build after successful push")
-	capsulePush.RegisterFlagCompletionFunc("deploy", common.BoolCompletions)
-	capsulePush.RegisterFlagCompletionFunc("image", common.NoCompletions)
-	capsuleCmd.AddCommand(capsulePush)
-
 	capsuleDeploy := &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy the given build to a capsule",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  cobra.NoArgs,
 		RunE:  base.Register(deploy),
 		Long: `Deploy either the given rig-build or docker image to a capsule.
 If --build-id is given rig tries to find a matching existing rig-build to deploy.
@@ -97,6 +81,8 @@ Not both --build-id and --image can be given`,
 	capsuleDeploy.Flags().StringVarP(&image, "image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist")
 	capsuleDeploy.Flags().BoolVarP(&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote registry. If not set, Rig will search locally and then remotely")
 	capsuleDeploy.RegisterFlagCompletionFunc("build-id", BuildCompletions)
+	capsuleDeploy.RegisterFlagCompletionFunc("image", common.NoCompletions)
+	capsuleDeploy.RegisterFlagCompletionFunc("remote", common.BoolCompletions)
 	capsuleCmd.AddCommand(capsuleDeploy)
 
 	capsuleAbort := &cobra.Command{
