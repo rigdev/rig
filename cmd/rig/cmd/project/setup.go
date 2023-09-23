@@ -1,8 +1,13 @@
 package project
 
 import (
+	"context"
+
+	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 )
 
 var (
@@ -21,7 +26,15 @@ var (
 	useProject bool
 )
 
-func Setup(parent *cobra.Command) {
+type Cmd struct {
+	fx.In
+
+	Ctx context.Context
+	Rig rig.Client
+	Cfg *cmd_config.Config
+}
+
+func (c Cmd) Setup(parent *cobra.Command) {
 	project := &cobra.Command{
 		Use:   "project",
 		Short: "Manage Rig projects",
@@ -30,7 +43,7 @@ func Setup(parent *cobra.Command) {
 	getSettings := &cobra.Command{
 		Use:  "get-settings",
 		Args: cobra.NoArgs,
-		RunE: base.Register(ProjectGetSettings),
+		RunE: c.getSettings,
 	}
 	getSettings.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	project.AddCommand(getSettings)
@@ -38,7 +51,7 @@ func Setup(parent *cobra.Command) {
 	updateSettings := &cobra.Command{
 		Use:  "update-settings",
 		Args: cobra.NoArgs,
-		RunE: base.Register(ProjectUpdateSettings),
+		RunE: c.updateSettings,
 	}
 	updateSettings.Flags().StringVarP(&field, "field", "f", "", "Field to update")
 	updateSettings.Flags().StringVarP(&value, "value", "v", "", "Value to set")
@@ -66,7 +79,7 @@ func Setup(parent *cobra.Command) {
 	createProject := &cobra.Command{
 		Use:  "create",
 		Args: cobra.NoArgs,
-		RunE: base.Register(ProjectCreate),
+		RunE: c.create,
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
@@ -78,14 +91,14 @@ func Setup(parent *cobra.Command) {
 	deleteProject := &cobra.Command{
 		Use:  "delete",
 		Args: cobra.NoArgs,
-		RunE: base.Register(ProjectDelete),
+		RunE: c.delete,
 	}
 	project.AddCommand(deleteProject)
 
 	getProject := &cobra.Command{
 		Use:  "get ",
 		Args: cobra.NoArgs,
-		RunE: base.Register(ProjectGet),
+		RunE: c.get,
 	}
 	getProject.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	project.AddCommand(getProject)
@@ -93,7 +106,7 @@ func Setup(parent *cobra.Command) {
 	updateProject := &cobra.Command{
 		Use:  "update",
 		Args: cobra.NoArgs,
-		RunE: base.Register(ProjectUpdate),
+		RunE: c.update,
 	}
 	updateProject.Flags().StringVarP(&field, "field", "f", "", "Field to update")
 	updateProject.Flags().StringVarP(&value, "value", "v", "", "Value to set")
@@ -118,7 +131,7 @@ func Setup(parent *cobra.Command) {
 	listProjects := &cobra.Command{
 		Use:  "list",
 		Args: cobra.NoArgs,
-		RunE: base.Register(ProjectList),
+		RunE: c.list,
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
@@ -132,7 +145,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "use [project-id | project-name]",
 		Short: "Set the project to query for project-scoped resources",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(ProjectUse),
+		RunE:  c.use,
 	}
 	project.AddCommand(use)
 

@@ -1,21 +1,21 @@
-package capsule
+package root
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func get(ctx context.Context, cmd *cobra.Command, rc rig.Client, args []string) error {
-	resp, err := rc.Capsule().List(ctx, &connect.Request[capsule.ListRequest]{
+func (c Cmd) get(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	resp, err := c.Rig.Capsule().List(ctx, &connect.Request[capsule.ListRequest]{
 		Msg: &capsule.ListRequest{
 			Pagination: &model.Pagination{
 				Offset: uint32(offset),
@@ -29,25 +29,26 @@ func get(ctx context.Context, cmd *cobra.Command, rc rig.Client, args []string) 
 
 	capsules := resp.Msg.GetCapsules()
 
-	if CapsuleID != "" {
+	if capsule_cmd.CapsuleID != "" {
 		found := false
 		for _, c := range resp.Msg.GetCapsules() {
-			if c.GetCapsuleId() == CapsuleID {
+			if c.GetCapsuleId() == capsule_cmd.CapsuleID {
 				capsules = []*capsule.Capsule{c}
+				found = true
 				break
 			}
 		}
 		if !found {
-			return errors.NotFoundErrorf("capsule %s not found", CapsuleID)
+			return errors.NotFoundErrorf("capsule %s not found", capsule_cmd.CapsuleID)
 		}
 	}
 
 	if outputJSON {
-		for _, c := range capsules {
-			r, err := rc.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
+		for _, cc := range capsules {
+			r, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
 				Msg: &capsule.GetRolloutRequest{
-					CapsuleId: c.GetCapsuleId(),
-					RolloutId: c.GetCurrentRollout(),
+					CapsuleId: cc.GetCapsuleId(),
+					RolloutId: cc.GetCurrentRollout(),
 				},
 			})
 			if errors.IsNotFound(err) {
@@ -57,7 +58,7 @@ func get(ctx context.Context, cmd *cobra.Command, rc rig.Client, args []string) 
 				return err
 			}
 
-			cmd.Println(common.ProtoToPrettyJson(c))
+			cmd.Println(common.ProtoToPrettyJson(cc))
 			if r.Msg.GetRollout() != nil {
 				cmd.Println(common.ProtoToPrettyJson(r.Msg.GetRollout()))
 			}
@@ -67,11 +68,11 @@ func get(ctx context.Context, cmd *cobra.Command, rc rig.Client, args []string) 
 
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{fmt.Sprintf("Capsules (%d)", resp.Msg.GetTotal()), "Replicas", "Build ID"})
-	for _, c := range capsules {
-		r, err := rc.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
+	for _, cc := range capsules {
+		r, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
 			Msg: &capsule.GetRolloutRequest{
-				CapsuleId: c.GetCapsuleId(),
-				RolloutId: c.GetCurrentRollout(),
+				CapsuleId: cc.GetCapsuleId(),
+				RolloutId: cc.GetCurrentRollout(),
 			},
 		})
 		if errors.IsNotFound(err) {
@@ -82,7 +83,7 @@ func get(ctx context.Context, cmd *cobra.Command, rc rig.Client, args []string) 
 		}
 
 		t.AppendRow(table.Row{
-			c.GetCapsuleId(),
+			cc.GetCapsuleId(),
 			r.Msg.GetRollout().GetConfig().GetReplicas(),
 			r.Msg.GetRollout().GetConfig().GetBuildId(),
 		})

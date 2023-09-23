@@ -1,29 +1,28 @@
 package database
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func ListTables(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) listTables(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := common.GetDatabase(ctx, identifier, nc)
+	_, id, err := common.GetDatabase(ctx, identifier, c.Rig)
 	if err != nil {
 		return err
 	}
 
-	res, err := nc.Database().ListTables(ctx, &connect.Request[database.ListTablesRequest]{
+	res, err := c.Rig.Database().ListTables(ctx, &connect.Request[database.ListTablesRequest]{
 		Msg: &database.ListTablesRequest{
 			DatabaseId: id,
 			Pagination: &model.Pagination{

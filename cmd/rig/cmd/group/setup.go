@@ -1,8 +1,11 @@
 package group
 
 import (
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"context"
+
+	"github.com/rigdev/rig-go-sdk"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 )
 
 var (
@@ -18,7 +21,14 @@ var (
 	name string
 )
 
-func Setup(parent *cobra.Command) {
+type Cmd struct {
+	fx.In
+
+	Ctx context.Context
+	Rig rig.Client
+}
+
+func (c Cmd) Setup(parent *cobra.Command) {
 	group := &cobra.Command{
 		Use:   "group",
 		Short: "Manage user groups",
@@ -26,7 +36,7 @@ func Setup(parent *cobra.Command) {
 
 	create := &cobra.Command{
 		Use:  "create",
-		RunE: base.Register(GroupCreate),
+		RunE: c.create,
 		Args: cobra.NoArgs,
 	}
 	create.Flags().StringVarP(&name, "name", "n", "", "name of the group")
@@ -34,7 +44,7 @@ func Setup(parent *cobra.Command) {
 
 	delete := &cobra.Command{
 		Use:  "delete [group-id | group-name]",
-		RunE: base.Register(GroupDelete),
+		RunE: c.delete,
 		Args: cobra.MaximumNArgs(1),
 	}
 	group.AddCommand(delete)
@@ -42,14 +52,14 @@ func Setup(parent *cobra.Command) {
 	update := &cobra.Command{
 		Use:  "update [group-id | group-name]",
 		Args: cobra.MaximumNArgs(1),
-		RunE: base.Register(GroupUpdate),
+		RunE: c.update,
 	}
 	group.AddCommand(update)
 
 	get := &cobra.Command{
 		Use:  "get [group-id | group-name]",
 		Args: cobra.MaximumNArgs(1),
-		RunE: base.Register(GroupGet),
+		RunE: c.get,
 	}
 	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	group.AddCommand(get)
@@ -58,7 +68,7 @@ func Setup(parent *cobra.Command) {
 		Use:     "list [search...]",
 		Args:    cobra.MinimumNArgs(0),
 		Aliases: []string{"ls"},
-		RunE:    base.Register(GroupList),
+		RunE:    c.list,
 	}
 	list.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	list.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
@@ -67,7 +77,7 @@ func Setup(parent *cobra.Command) {
 
 	listMembers := &cobra.Command{
 		Use:  "list-members [group-id | group-name]",
-		RunE: base.Register(GroupListMembers),
+		RunE: c.listMembers,
 		Args: cobra.MaximumNArgs(1),
 	}
 	listMembers.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
@@ -77,7 +87,7 @@ func Setup(parent *cobra.Command) {
 
 	listGroupsForUser := &cobra.Command{
 		Use:  "list-groups-for-user [user-id | {email|username|phone}]",
-		RunE: base.Register(GroupListGroupsForUser),
+		RunE: c.listGroupsForUser,
 		Args: cobra.MaximumNArgs(1),
 	}
 	listGroupsForUser.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")

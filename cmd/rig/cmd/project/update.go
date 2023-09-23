@@ -1,12 +1,10 @@
 package project
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -30,8 +28,9 @@ func (p projectField) String() string {
 	}
 }
 
-func ProjectUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
-	resp, err := nc.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: &project.GetRequest{}})
+func (c Cmd) update(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: &project.GetRequest{}})
 	if err != nil {
 		return err
 	}
@@ -42,7 +41,7 @@ func ProjectUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			return err
 		}
 
-		_, err = nc.Project().Update(ctx, &connect.Request[project.UpdateRequest]{
+		_, err = c.Rig.Project().Update(ctx, &connect.Request[project.UpdateRequest]{
 			Msg: &project.UpdateRequest{
 				Updates: []*project.Update{u},
 			},
@@ -79,7 +78,7 @@ func ProjectUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 		}
 	}
 
-	_, err = nc.Project().Update(ctx, connect.NewRequest(&project.UpdateRequest{
+	_, err = c.Rig.Project().Update(ctx, connect.NewRequest(&project.UpdateRequest{
 		Updates: updates,
 	}))
 	if err != nil {

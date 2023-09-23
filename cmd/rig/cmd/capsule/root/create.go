@@ -1,23 +1,22 @@
-package capsule
+package root
 
 import (
-	"context"
 	"os"
 	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
+func (c *Cmd) create(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var err error
-	if CapsuleID == "" {
-		CapsuleID, err = common.PromptInput("Capsule name:", common.ValidateSystemNameOpt)
+	if capsule_cmd.CapsuleID == "" {
+		capsule_cmd.CapsuleID, err = common.PromptInput("Capsule name:", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
@@ -216,9 +215,9 @@ func create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Clien
 		}
 	}
 
-	res, err := nc.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
+	res, err := c.Rig.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
 		Msg: &capsule.CreateRequest{
-			Name: CapsuleID,
+			Name: capsule_cmd.CapsuleID,
 		},
 	})
 	if err != nil {
@@ -229,7 +228,7 @@ func create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Clien
 
 	if image != "" {
 		var buildID string
-		if res, err := nc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
+		if res, err := c.Rig.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 			Msg: &capsule.CreateBuildRequest{
 				CapsuleId: capsuleID,
 				Image:     image,
@@ -256,7 +255,7 @@ func create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Clien
 	}
 
 	if len(init) > 0 {
-		if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+		if _, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 			Msg: &capsule.DeployRequest{
 				CapsuleId: capsuleID,
 				Changes:   init,
@@ -266,6 +265,6 @@ func create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Clien
 		}
 	}
 
-	cmd.Printf("Created new capsule '%v'\n", CapsuleID)
+	cmd.Printf("Created new capsule '%v'\n", capsule_cmd.CapsuleID)
 	return nil
 }

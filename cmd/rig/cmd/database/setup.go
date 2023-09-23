@@ -1,12 +1,15 @@
 package database
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/rigdev/rig-go-api/api/v1/database"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 )
 
 var (
@@ -25,14 +28,22 @@ var (
 	clientSecret string
 )
 
-func Setup(parent *cobra.Command) {
+type Cmd struct {
+	fx.In
+
+	Ctx context.Context
+	Rig rig.Client
+	Cfg *cmd_config.Config
+}
+
+func (c Cmd) Setup(parent *cobra.Command) {
 	database := &cobra.Command{
 		Use: "database",
 	}
 
 	createDatabase := &cobra.Command{
 		Use:  "create",
-		RunE: base.Register(Create),
+		RunE: c.create,
 		Args: cobra.NoArgs,
 	}
 	createDatabase.Flags().StringVarP(&name, "name", "n", "", "name of the database")
@@ -41,7 +52,7 @@ func Setup(parent *cobra.Command) {
 
 	createDatabaseCredential := &cobra.Command{
 		Use:  "create-credentials [id | db-name]",
-		RunE: base.Register(CreateCredential),
+		RunE: c.createCredentials,
 		Args: cobra.MaximumNArgs(1),
 	}
 	createDatabaseCredential.Flags().StringVarP(&name, "name", "n", "", "name of the credentials")
@@ -49,7 +60,7 @@ func Setup(parent *cobra.Command) {
 
 	deleteCredential := &cobra.Command{
 		Use:  "delete-credentials [id | db-name]",
-		RunE: base.Register(DeleteCredential),
+		RunE: c.deleteCredential,
 		Args: cobra.MaximumNArgs(1),
 	}
 	deleteCredential.Flags().StringVarP(&name, "name", "n", "", "name of the credentials")
@@ -57,7 +68,7 @@ func Setup(parent *cobra.Command) {
 
 	getDatabase := &cobra.Command{
 		Use:  "get [id | name]",
-		RunE: base.Register(Get),
+		RunE: c.get,
 		Args: cobra.MaximumNArgs(1),
 	}
 	getDatabase.Flags().BoolVar(&outputJSON, "json", false, "output as json")
@@ -65,7 +76,7 @@ func Setup(parent *cobra.Command) {
 
 	connect := &cobra.Command{
 		Use:  "connect [id | name]",
-		RunE: base.Register(Connect),
+		RunE: c.connect,
 		Args: cobra.MaximumNArgs(1),
 	}
 	connect.Flags().StringVarP(&clientID, "client-id", "i", "", "client id")
@@ -74,7 +85,7 @@ func Setup(parent *cobra.Command) {
 
 	delete := &cobra.Command{
 		Use:  "delete [id | name]",
-		RunE: base.Register(Delete),
+		RunE: c.delete,
 		Args: cobra.MaximumNArgs(1),
 	}
 	database.AddCommand(delete)
@@ -82,7 +93,7 @@ func Setup(parent *cobra.Command) {
 	list := &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
-		RunE:    base.Register(List),
+		RunE:    c.list,
 		Args:    cobra.NoArgs,
 	}
 	list.Flags().BoolVar(&outputJSON, "json", false, "output as json")
@@ -92,7 +103,7 @@ func Setup(parent *cobra.Command) {
 
 	createTable := &cobra.Command{
 		Use:  "create-table [id | db-name]",
-		RunE: base.Register(CreateTable),
+		RunE: c.createTable,
 		Args: cobra.MaximumNArgs(1),
 	}
 	createTable.Flags().StringVarP(&name, "name", "n", "", "name of the table")
@@ -100,7 +111,7 @@ func Setup(parent *cobra.Command) {
 
 	listTables := &cobra.Command{
 		Use:  "list-tables [id | name]",
-		RunE: base.Register(ListTables),
+		RunE: c.listTables,
 		Args: cobra.MaximumNArgs(1),
 	}
 	listTables.Flags().BoolVar(&outputJSON, "json", false, "output as json")
@@ -110,7 +121,7 @@ func Setup(parent *cobra.Command) {
 
 	deleteTable := &cobra.Command{
 		Use:  "delete-table [id | db-name]",
-		RunE: base.Register(DeleteTable),
+		RunE: c.deleteTable,
 		Args: cobra.MaximumNArgs(1),
 	}
 	deleteTable.Flags().StringVarP(&name, "name", "n", "", "name of the table")

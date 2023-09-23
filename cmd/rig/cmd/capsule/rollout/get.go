@@ -1,7 +1,6 @@
 package rollout
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,15 +10,15 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func get(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
-	resp, err := nc.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
+func (c Cmd) get(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
 		Msg: &capsule.ListRolloutsRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Pagination: &model.Pagination{

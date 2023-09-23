@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -10,12 +9,12 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) createProvider(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var err error
 	if name == "" {
 		name, err = common.PromptInput("Provider identifier:", common.ValidateNonEmptyOpt)
@@ -143,7 +142,7 @@ func StorageCreateProvider(ctx context.Context, cmd *cobra.Command, args []strin
 		}
 	}
 
-	_, err = nc.Storage().CreateProvider(ctx, &connect.Request[storage.CreateProviderRequest]{
+	_, err = c.Rig.Storage().CreateProvider(ctx, &connect.Request[storage.CreateProviderRequest]{
 		Msg: &storage.CreateProviderRequest{
 			Name:        name,
 			Config:      config,

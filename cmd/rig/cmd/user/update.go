@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -9,7 +8,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -86,12 +84,13 @@ func (f userProfileField) String() string {
 	}
 }
 
-func UserUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) update(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	u, id, err := common.GetUser(ctx, identifier, nc)
+	u, id, err := common.GetUser(ctx, identifier, c.Rig)
 	if err != nil {
 		return err
 	}
@@ -102,7 +101,7 @@ func UserUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 			return err
 		}
 
-		_, err = nc.User().Update(ctx, &connect.Request[user.UpdateRequest]{
+		_, err = c.Rig.User().Update(ctx, &connect.Request[user.UpdateRequest]{
 			Msg: &user.UpdateRequest{
 				UserId:  id,
 				Updates: []*user.Update{u},
@@ -149,7 +148,7 @@ func UserUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.C
 		}
 	}
 
-	_, err = nc.User().Update(ctx, connect.NewRequest(&user.UpdateRequest{
+	_, err = c.Rig.User().Update(ctx, connect.NewRequest(&user.UpdateRequest{
 		UserId:  id,
 		Updates: updates,
 	}))

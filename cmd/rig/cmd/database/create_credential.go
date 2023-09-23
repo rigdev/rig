@@ -1,21 +1,19 @@
 package database
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/database"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func CreateCredential(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) createCredentials(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := common.GetDatabase(ctx, identifier, nc)
+	_, id, err := common.GetDatabase(ctx, identifier, c.Rig)
 	if err != nil {
 		return err
 	}
@@ -26,7 +24,7 @@ func CreateCredential(ctx context.Context, cmd *cobra.Command, args []string, nc
 			return err
 		}
 	}
-	res, err := nc.Database().CreateCredential(ctx, &connect.Request[database.CreateCredentialRequest]{
+	res, err := c.Rig.Database().CreateCredential(ctx, &connect.Request[database.CreateCredentialRequest]{
 		Msg: &database.CreateCredentialRequest{
 			DatabaseId: id,
 			Name:       name,

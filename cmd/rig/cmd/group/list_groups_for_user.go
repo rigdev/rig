@@ -1,29 +1,28 @@
 package group
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func GroupListGroupsForUser(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) listGroupsForUser(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, uid, err := common.GetUser(ctx, identifier, nc)
+	_, uid, err := common.GetUser(ctx, identifier, c.Rig)
 	if err != nil {
 		return err
 	}
 
-	resp, err := nc.Group().ListGroupsForUser(ctx, &connect.Request[group.ListGroupsForUserRequest]{
+	resp, err := c.Rig.Group().ListGroupsForUser(ctx, &connect.Request[group.ListGroupsForUserRequest]{
 		Msg: &group.ListGroupsForUserRequest{
 			UserId: uid,
 			Pagination: &model.Pagination{

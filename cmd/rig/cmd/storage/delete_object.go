@@ -1,18 +1,15 @@
 package storage
 
 import (
-	"context"
-
-	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/errors"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
+	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func StorageDeleteObject(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) deleteObject(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var path string
 	var err error
 	if len(args) < 1 {
@@ -28,7 +25,7 @@ func StorageDeleteObject(ctx context.Context, cmd *cobra.Command, args []string,
 		if err != nil {
 			return err
 		}
-		_, err = nc.Storage().DeleteObject(ctx, &connect.Request[storage.DeleteObjectRequest]{
+		_, err = c.Rig.Storage().DeleteObject(ctx, &connect.Request[storage.DeleteObjectRequest]{
 			Msg: &storage.DeleteObjectRequest{
 				Bucket: bucket,
 				Path:   prefix,

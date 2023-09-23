@@ -1,28 +1,27 @@
 package group
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/group"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func GroupListMembers(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) listMembers(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, uid, err := common.GetGroup(ctx, identifier, nc)
+	_, uid, err := common.GetGroup(ctx, identifier, c.Rig)
 	if err != nil {
 		return err
 	}
 
-	resp, err := nc.Group().ListMembers(ctx, &connect.Request[group.ListMembersRequest]{
+	resp, err := c.Rig.Group().ListMembers(ctx, &connect.Request[group.ListMembersRequest]{
 		Msg: &group.ListMembersRequest{
 			GroupId: uid,
 		},

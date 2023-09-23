@@ -1,20 +1,18 @@
 package project
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 )
 
-func ProjectList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
+func (c Cmd) list(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	req := &project.ListRequest{
 		Pagination: &model.Pagination{
 			Offset: uint32(offset),
@@ -22,7 +20,7 @@ func ProjectList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 		},
 	}
 
-	resp, err := nc.Project().List(ctx, &connect.Request[project.ListRequest]{Msg: req})
+	resp, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{Msg: req})
 	if err != nil {
 		return err
 	}

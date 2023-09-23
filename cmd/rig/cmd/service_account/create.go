@@ -1,16 +1,14 @@
 package service_account
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func ServiceAccountCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) create(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var name string
 	var err error
 
@@ -21,7 +19,7 @@ func ServiceAccountCreate(ctx context.Context, cmd *cobra.Command, args []string
 		}
 	}
 
-	resp, err := nc.ServiceAccount().Create(ctx, &connect.Request[service_account.CreateRequest]{
+	resp, err := c.Rig.ServiceAccount().Create(ctx, &connect.Request[service_account.CreateRequest]{
 		Msg: &service_account.CreateRequest{
 			Name: name,
 		},

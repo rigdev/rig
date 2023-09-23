@@ -1,20 +1,19 @@
 package database
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func List(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
-	res, err := nc.Database().List(ctx, &connect.Request[database.ListRequest]{
+func (c Cmd) list(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	res, err := c.Rig.Database().List(ctx, &connect.Request[database.ListRequest]{
 		Msg: &database.ListRequest{
 			Pagination: &model.Pagination{
 				Offset: uint32(offset),

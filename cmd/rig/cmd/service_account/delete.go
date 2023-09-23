@@ -1,17 +1,15 @@
 package service_account
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
-func ServiceAccountDelete(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) delete(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var id string
 	var err error
 
@@ -31,7 +29,7 @@ func ServiceAccountDelete(ctx context.Context, cmd *cobra.Command, args []string
 		return err
 	}
 
-	_, err = nc.ServiceAccount().Delete(ctx, &connect.Request[service_account.DeleteRequest]{
+	_, err = c.Rig.ServiceAccount().Delete(ctx, &connect.Request[service_account.DeleteRequest]{
 		Msg: &service_account.DeleteRequest{
 			ServiceAccountId: id,
 		},

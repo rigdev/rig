@@ -16,9 +16,9 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
@@ -33,7 +33,8 @@ var config string
 //go:embed registry.yaml
 var registry string
 
-func Create(ctx context.Context, dc *client.Client, cfg *cmd_config.Config) error {
+func (c Cmd) create(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	if err := checkBinaries(kubectl, kind, helm); err != nil {
 		return err
 	}
@@ -50,11 +51,11 @@ func Create(ctx context.Context, dc *client.Client, cfg *cmd_config.Config) erro
 		return err
 	}
 
-	if err := Deploy(ctx, dc); err != nil {
+	if err := c.deploy(cmd, args); err != nil {
 		return err
 	}
 
-	if err := setupKindContext(ctx, cfg); err != nil {
+	if err := c.setupKindContext(ctx); err != nil {
 		return err
 	}
 
@@ -66,7 +67,8 @@ func Create(ctx context.Context, dc *client.Client, cfg *cmd_config.Config) erro
 	return nil
 }
 
-func Deploy(ctx context.Context, dc *client.Client) error {
+func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	if err := checkBinaries(kind, kubectl, helm, docker); err != nil {
 		return err
 	}
@@ -80,7 +82,7 @@ func Deploy(ctx context.Context, dc *client.Client) error {
 	}
 	dockerTag = strings.TrimPrefix(dockerTag, "v")
 	rigImage := fmt.Sprintf("ghcr.io/rigdev/rig:%s", dockerTag)
-	res, err := dc.ImageList(ctx, types.ImageListOptions{
+	res, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "reference",
 			Value: rigImage,
@@ -110,7 +112,7 @@ func Deploy(ctx context.Context, dc *client.Client) error {
 	if chartPath != "" {
 		chart = chartPath
 	}
-	args := []string{
+	cArgs := []string{
 		"--kube-context", "kind-rig",
 		"upgrade", "--install", "rig", chart,
 		"--namespace", "rig-system",
@@ -124,11 +126,11 @@ func Deploy(ctx context.Context, dc *client.Client) error {
 		"--create-namespace",
 	}
 	if chartPath == "" {
-		args = append(args, "--repo", "https://charts.rig.dev")
+		cArgs = append(args, "--repo", "https://charts.rig.dev")
 	}
 
 	if err := runCmd(
-		"helm", args...,
+		"helm", cArgs...,
 	); err != nil {
 		return err
 	}
@@ -140,7 +142,7 @@ func Deploy(ctx context.Context, dc *client.Client) error {
 	return nil
 }
 
-func Clean() error {
+func (c Cmd) clean(cmd *cobra.Command, args []string) error {
 	if err := checkBinaries(kind); err != nil {
 		return err
 	}
@@ -281,7 +283,7 @@ func helmInstall() error {
 	return nil
 }
 
-func setupKindContext(ctx context.Context, cfg *cmd_config.Config) error {
+func (c Cmd) setupKindContext(ctx context.Context) error {
 	fmt.Println("")
 	fmt.Println("Rig on the Kind cluster listens on the port 30047. This requires you to use a different context than the default one which uses port 4747.")
 	ok, err := common.PromptConfirm("Create a new context which uses port 30047?", true)
@@ -289,7 +291,7 @@ func setupKindContext(ctx context.Context, cfg *cmd_config.Config) error {
 		return err
 	}
 	if ok {
-		if err := cmd_config.CreateContext(cfg, "kind", "http://localhost:30047/"); err != nil {
+		if err := cmd_config.CreateContext(c.Cfg, "kind", "http://localhost:30047/"); err != nil {
 			return err
 		}
 		return nil
@@ -302,7 +304,7 @@ func setupKindContext(ctx context.Context, cfg *cmd_config.Config) error {
 	if !ok {
 		return nil
 	}
-	return cmd_config.SelectContext(cfg)
+	return cmd_config.SelectContext(c.Cfg)
 }
 
 type binary struct {

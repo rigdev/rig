@@ -1,7 +1,6 @@
-package build
+package builddeploy
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -9,14 +8,14 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func get(ctx context.Context, cmd *cobra.Command, nc rig.Client) error {
-	resp, err := nc.Capsule().ListBuilds(ctx, &connect.Request[capsule.ListBuildsRequest]{
+func (c Cmd) getBuild(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	resp, err := c.Rig.Capsule().ListBuilds(ctx, &connect.Request[capsule.ListBuildsRequest]{
 		Msg: &capsule.ListBuildsRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Pagination: &model.Pagination{

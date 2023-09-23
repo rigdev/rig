@@ -1,20 +1,19 @@
 package network
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 
 	"github.com/spf13/cobra"
 )
 
-func get(ctx context.Context, cmd *cobra.Command, args []string, client rig.Client) error {
-	n, err := capsule_cmd.GetCurrentNetwork(ctx, client)
+func (c Cmd) get(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	n, err := capsule_cmd.GetCurrentNetwork(ctx, c.Rig)
 	if err != nil {
 		return err
 	}

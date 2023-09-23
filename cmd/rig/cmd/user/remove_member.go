@@ -1,28 +1,26 @@
 package user
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func UserRemoveMember(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) removeMember(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	uidentifier := ""
 	if len(args) > 1 {
 		uidentifier = args[1]
 	}
-	_, uuid, err := common.GetUser(ctx, uidentifier, nc)
+	_, uuid, err := common.GetUser(ctx, uidentifier, c.Rig)
 	if err != nil {
 		return err
 	}
 	var guid string
 	var gname string
 	if groupIdentifier == "" {
-		res, err := nc.Group().ListGroupsForUser(ctx, &connect.Request[group.ListGroupsForUserRequest]{
+		res, err := c.Rig.Group().ListGroupsForUser(ctx, &connect.Request[group.ListGroupsForUserRequest]{
 			Msg: &group.ListGroupsForUserRequest{
 				UserId: uuid,
 			},
@@ -43,7 +41,7 @@ func UserRemoveMember(ctx context.Context, cmd *cobra.Command, args []string, nc
 
 		guid = res.Msg.GetGroups()[i].GetGroupId()
 	} else {
-		g, id, err := common.GetGroup(ctx, groupIdentifier, nc)
+		g, id, err := common.GetGroup(ctx, groupIdentifier, c.Rig)
 		if err != nil {
 			return err
 		}
@@ -51,7 +49,7 @@ func UserRemoveMember(ctx context.Context, cmd *cobra.Command, args []string, nc
 		gname = g.GetName()
 	}
 
-	_, err = nc.Group().RemoveMember(ctx, &connect.Request[group.RemoveMemberRequest]{
+	_, err = c.Rig.Group().RemoveMember(ctx, &connect.Request[group.RemoveMemberRequest]{
 		Msg: &group.RemoveMemberRequest{
 			GroupId: guid,
 			UserId:  uuid,

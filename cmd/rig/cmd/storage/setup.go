@@ -1,10 +1,13 @@
 package storage
 
 import (
+	"context"
+
 	"github.com/erikgeiser/promptkit/textinput"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 )
 
 var (
@@ -32,7 +35,14 @@ var (
 	providerBucketName string
 )
 
-func Setup(parent *cobra.Command) {
+type Cmd struct {
+	fx.In
+
+	Ctx context.Context
+	Rig rig.Client
+}
+
+func (c Cmd) Setup(parent *cobra.Command) {
 	storage := &cobra.Command{
 		Use: "storage",
 	}
@@ -42,7 +52,7 @@ func Setup(parent *cobra.Command) {
 		Aliases: []string{"cp"},
 		Short:   "Copy files to and from buckets",
 		Args:    cobra.ExactArgs(2),
-		RunE:    base.Register(StorageCp),
+		RunE:    c.cp,
 	}
 	cp.PersistentFlags().BoolVarP(&storageRecursive, "recursive", "r", false, "if copy should be recursive")
 	storage.AddCommand(cp)
@@ -52,7 +62,7 @@ func Setup(parent *cobra.Command) {
 		Aliases: []string{"ls"},
 		Short:   "List buckets and objects",
 		Args:    cobra.MaximumNArgs(1),
-		RunE:    base.Register(StorageLs),
+		RunE:    c.ls,
 	}
 	ls.PersistentFlags().BoolVarP(&storageRecursive, "recursive", "r", false, "if listing should be recursive. Does only work for listing within a single bucket")
 	ls.Flags().BoolVar(&outputJson, "json", false, "output as json")
@@ -62,7 +72,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "create-bucket [provider-name]",
 		Short: "Create a new bucket",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageCreateBucket),
+		RunE:  c.createBucket,
 	}
 	createBucket.Flags().StringVarP(&name, "name", "n", "", "name of the bucket")
 	createBucket.Flags().StringVarP(&providerBucketName, "provider-bucket-name", "p", "", "name of the bucket on the provider")
@@ -73,7 +83,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "delete-bucket [bucket-name]",
 		Short: "Delete a bucket",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageDeleteBucket),
+		RunE:  c.deleteBucket,
 	}
 	storage.AddCommand(deleteBucket)
 
@@ -81,7 +91,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "unlink-bucket [bucket-name]",
 		Short: "Unlink a bucket",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageUnlinkBucket),
+		RunE:  c.unlinkBucket,
 	}
 	storage.AddCommand(unlinkBucket)
 
@@ -89,7 +99,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "get-object [path]",
 		Short: "Get an object",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageGetObject),
+		RunE:  c.getObject,
 	}
 	getObject.Flags().BoolVar(&outputJson, "json", false, "output as json")
 	storage.AddCommand(getObject)
@@ -98,7 +108,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "get-bucket [bucket]",
 		Short: "Get a bucket",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageGetBucket),
+		RunE:  c.getBucket,
 	}
 	getBucket.Flags().BoolVar(&outputJson, "json", false, "output as json")
 	storage.AddCommand(getBucket)
@@ -107,7 +117,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "delete-object [path]",
 		Short: "Delete an object",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageDeleteObject),
+		RunE:  c.deleteObject,
 	}
 	storage.AddCommand(deleteObject)
 
@@ -115,7 +125,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "create-provider",
 		Short: "Create a new provider",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageCreateProvider),
+		RunE:  c.createProvider,
 	}
 	createProvider.Flags().StringVarP(&name, "name", "n", "", "name of the provider")
 
@@ -143,7 +153,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "list-providers",
 		Short: "List all providers",
 		Args:  cobra.NoArgs,
-		RunE:  base.Register(StorageListProviders),
+		RunE:  c.listProviders,
 	}
 	listProviders.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
 	listProviders.Flags().IntVarP(&offset, "offset", "o", 0, "offset the number of groups to return")
@@ -156,7 +166,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "get-provider [id | name]",
 		Short: "Get a provider",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageGetProvider),
+		RunE:  c.getProvider,
 	}
 	GetProvider.Flags().BoolVar(&outputJson, "json", false, "output as json")
 	storage.AddCommand(GetProvider)
@@ -165,7 +175,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "delete-provider [id | name]",
 		Short: "Delete a provider",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(StorageDeleteProvider),
+		RunE:  c.deleteProvider,
 	}
 	storage.AddCommand(DeleteProvider)
 }

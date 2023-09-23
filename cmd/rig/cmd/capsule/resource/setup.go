@@ -1,9 +1,12 @@
 package resource
 
 import (
+	"context"
+
+	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 )
 
 var (
@@ -21,7 +24,14 @@ var (
 	replicas int
 )
 
-func Setup(parent *cobra.Command) *cobra.Command {
+type Cmd struct {
+	fx.In
+
+	Ctx context.Context
+	Rig rig.Client
+}
+
+func (r Cmd) Setup(parent *cobra.Command) {
 	resource := &cobra.Command{
 		Use:   "resource",
 		Short: "Scale and inspect the resources of the capsule",
@@ -31,7 +41,7 @@ func Setup(parent *cobra.Command) *cobra.Command {
 		Use:               "get",
 		Short:             "Displays the resources (container size) and replicas of the capsule",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(get),
+		RunE:              r.get,
 		ValidArgsFunction: common.NoCompletions,
 	}
 	resourcesGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
@@ -42,7 +52,7 @@ func Setup(parent *cobra.Command) *cobra.Command {
 		Use:               "scale",
 		Short:             "Sets the container resources for the capsule",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(scale),
+		RunE:              r.scale,
 		ValidArgsFunction: common.NoCompletions,
 	}
 	resourcesScale.Flags().StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
@@ -60,6 +70,4 @@ func Setup(parent *cobra.Command) *cobra.Command {
 	resource.AddCommand(resourcesScale)
 
 	parent.AddCommand(resource)
-
-	return resource
 }

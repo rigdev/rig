@@ -1,16 +1,14 @@
 package database
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/database"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func Create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) create(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var err error
 	if name == "" {
 		name, err = common.PromptInput("Database name:", common.ValidateNonEmptyOpt)
@@ -31,7 +29,7 @@ func Create(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Clien
 		return err
 	}
 
-	res, err := nc.Database().Create(ctx, &connect.Request[database.CreateRequest]{Msg: &database.CreateRequest{
+	res, err := c.Rig.Database().Create(ctx, &connect.Request[database.CreateRequest]{Msg: &database.CreateRequest{
 		Initializers: []*database.Update{
 			{Field: &database.Update_Name{Name: name}},
 		},

@@ -16,7 +16,6 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 var (
@@ -24,7 +23,7 @@ var (
 	OmitProject = "OMIT_PROJECT"
 )
 
-func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
+func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
 	ctx := context.Background()
 	if _, ok := cmd.Annotations[OmitUser]; ok {
 		return nil

@@ -1,21 +1,19 @@
 package user
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func UserAddMember(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) addMember(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	uidentifier := ""
 	if len(args) > 1 {
 		uidentifier = args[0]
 	}
-	u, uuid, err := common.GetUser(ctx, uidentifier, nc)
+	u, uuid, err := common.GetUser(ctx, uidentifier, c.Rig)
 	if err != nil {
 		return err
 	}
@@ -23,7 +21,7 @@ func UserAddMember(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 	var guid string
 	var gname string
 	if groupIdentifier == "" {
-		groupsRes, err := nc.Group().List(ctx, connect.NewRequest(&group.ListRequest{}))
+		groupsRes, err := c.Rig.Group().List(ctx, connect.NewRequest(&group.ListRequest{}))
 		if err != nil {
 			return err
 		}
@@ -60,7 +58,7 @@ func UserAddMember(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			return nil
 		}
 	} else {
-		g, id, err := common.GetGroup(ctx, groupIdentifier, nc)
+		g, id, err := common.GetGroup(ctx, groupIdentifier, c.Rig)
 		if err != nil {
 			return err
 		}
@@ -68,7 +66,7 @@ func UserAddMember(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 		gname = g.GetName()
 	}
 
-	_, err = nc.Group().AddMember(ctx, &connect.Request[group.AddMemberRequest]{
+	_, err = c.Rig.Group().AddMember(ctx, &connect.Request[group.AddMemberRequest]{
 		Msg: &group.AddMemberRequest{
 			GroupId: guid,
 			UserIds: []string{uuid},

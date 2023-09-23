@@ -1,8 +1,11 @@
 package user
 
 import (
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"context"
+
+	"github.com/rigdev/rig-go-sdk"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 )
 
 var (
@@ -31,7 +34,14 @@ var (
 	outputJson bool
 )
 
-func Setup(parent *cobra.Command) {
+type Cmd struct {
+	fx.In
+
+	Ctx context.Context
+	Rig rig.Client
+}
+
+func (c Cmd) Setup(parent *cobra.Command) {
 	user := &cobra.Command{
 		Use:   "user",
 		Short: "Manage users in your projects",
@@ -39,7 +49,7 @@ func Setup(parent *cobra.Command) {
 
 	create := &cobra.Command{
 		Use:  "create",
-		RunE: base.Register(UserCreate),
+		RunE: c.create,
 		Args: cobra.NoArgs,
 	}
 	create.Flags().StringVarP(&email, "email", "e", "", "email of the user")
@@ -50,7 +60,7 @@ func Setup(parent *cobra.Command) {
 
 	update := &cobra.Command{
 		Use:  "update [user-id | {email|username|phone}]",
-		RunE: base.Register(UserUpdate),
+		RunE: c.update,
 		Args: cobra.MaximumNArgs(1),
 	}
 	update.Flags().StringVarP(&field, "field", "f", "", "field to update")
@@ -83,7 +93,7 @@ func Setup(parent *cobra.Command) {
 
 	get := &cobra.Command{
 		Use:  "get [user-id | {email|username|phone}]",
-		RunE: base.Register(UserLookup),
+		RunE: c.lookup,
 		Args: cobra.MaximumNArgs(1),
 	}
 	get.Flags().BoolVar(&outputJson, "json", false, "output as json")
@@ -91,7 +101,7 @@ func Setup(parent *cobra.Command) {
 
 	list := &cobra.Command{
 		Use:  "list [search...]",
-		RunE: base.Register(UserList),
+		RunE: c.list,
 	}
 	list.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
 	list.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
@@ -100,14 +110,14 @@ func Setup(parent *cobra.Command) {
 
 	delete := &cobra.Command{
 		Use:  "delete [user-id | {email|username|phone}]",
-		RunE: base.Register(UserDelete),
+		RunE: c.delete,
 		Args: cobra.MaximumNArgs(1),
 	}
 	user.AddCommand(delete)
 
 	listSessions := &cobra.Command{
 		Use:  "list-sessions [user-id | {email|username|phone}]",
-		RunE: base.Register(UserListSessions),
+		RunE: c.listSessions,
 		Args: cobra.MaximumNArgs(1),
 	}
 	listSessions.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
@@ -117,7 +127,7 @@ func Setup(parent *cobra.Command) {
 
 	getSettings := &cobra.Command{
 		Use:  "get-settings",
-		RunE: base.Register(UserGetSettings),
+		RunE: c.getSettings,
 		Args: cobra.NoArgs,
 	}
 	getSettings.Flags().BoolVar(&outputJson, "json", false, "output as json")
@@ -125,7 +135,7 @@ func Setup(parent *cobra.Command) {
 
 	updateSettings := &cobra.Command{
 		Use:  "update-settings",
-		RunE: base.Register(UserUpdateSettings),
+		RunE: c.updateSettings,
 		Args: cobra.NoArgs,
 	}
 	updateSettings.Flags().StringVarP(&field, "field", "f", "", "field to update")
@@ -162,7 +172,7 @@ func Setup(parent *cobra.Command) {
 
 	migrate := &cobra.Command{
 		Use:  "migrate",
-		RunE: base.Register(UserMigrate),
+		RunE: c.migrate,
 		Args: cobra.NoArgs,
 	}
 	migrate.Flags().StringVarP(&platform, "platform", "p", "Firebase", "platform to migrate from")
@@ -193,7 +203,7 @@ func Setup(parent *cobra.Command) {
 
 	addUser := &cobra.Command{
 		Use:  "add-member [user-id | {email|username|phone}]",
-		RunE: base.Register(UserAddMember),
+		RunE: c.addMember,
 		Args: cobra.MaximumNArgs(1),
 	}
 	addUser.Flags().StringVarP(&groupIdentifier, "group", "g", "", "group to add the user to")
@@ -201,7 +211,7 @@ func Setup(parent *cobra.Command) {
 
 	removeUser := &cobra.Command{
 		Use:  "remove-member [user-id | {email|username|phone}]",
-		RunE: base.Register(UserRemoveMember),
+		RunE: c.removeMember,
 		Args: cobra.MaximumNArgs(1),
 	}
 	removeUser.Flags().StringVarP(&groupIdentifier, "group", "g", "", "group to remove the user from")

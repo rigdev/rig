@@ -16,6 +16,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+func (r Cmd) scale(cmd *cobra.Command, args []string) error {
+	return scale(r.Ctx, cmd, r.Rig, args)
+}
+
 func scale(ctx context.Context, cmd *cobra.Command, client rig.Client, args []string) error {
 	container, r, err := capsule_cmd.GetCurrentContainerResources(ctx, client)
 	if err != nil {

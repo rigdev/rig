@@ -15,7 +15,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
 	"github.com/spf13/cobra"
@@ -27,7 +26,8 @@ var excludeList = []string{
 	".DS_Store",
 }
 
-func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) cp(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	rawFrom := args[0]
 	rawTo := args[1]
 
@@ -48,7 +48,7 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 			base = filepath.Base(prefix)
 		}
 		if !strings.Contains(base, ".") {
-			res, err := nc.Storage().ListObjects(ctx, &connect.Request[storage.ListObjectsRequest]{
+			res, err := c.Rig.Storage().ListObjects(ctx, &connect.Request[storage.ListObjectsRequest]{
 				Msg: &storage.ListObjectsRequest{
 					Bucket:    bucket,
 					Prefix:    prefix,
@@ -65,7 +65,7 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 				rawTo = path.Join(rawTo, base)
 			}
 
-			res, err := nc.Storage().GetObject(ctx, &connect.Request[storage.GetObjectRequest]{
+			res, err := c.Rig.Storage().GetObject(ctx, &connect.Request[storage.GetObjectRequest]{
 				Msg: &storage.GetObjectRequest{
 					Bucket: bucket,
 					Path:   prefix,
@@ -105,7 +105,7 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 					}
 					pw.AppendTracker(t)
 
-					if _, err := nc.Storage().CopyObject(ctx, &connect.Request[storage.CopyObjectRequest]{
+					if _, err := c.Rig.Storage().CopyObject(ctx, &connect.Request[storage.CopyObjectRequest]{
 						Msg: &storage.CopyObjectRequest{
 							FromBucket: bucket,
 							FromPath:   obj.GetPath(),
@@ -142,7 +142,7 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 					}
 					pw.AppendTracker(t)
 
-					if err := downloadFile(ctx, cmd, t, bucket, path.Join(rawTo, p), nc); err != nil {
+					if err := c.downloadFile(ctx, cmd, t, bucket, path.Join(rawTo, p)); err != nil {
 						log.Fatal(err)
 					}
 
@@ -211,7 +211,7 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 			sem.Acquire(ctx, 1)
 
 			go func() {
-				if err := uploadFile(ctx, cmd, t, bucket, path.Join(prefix, p), nc); err != nil {
+				if err := c.uploadFile(ctx, cmd, t, bucket, path.Join(prefix, p)); err != nil {
 					log.Fatal(err)
 				}
 
@@ -227,7 +227,7 @@ func StorageCp(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 	}
 }
 
-func uploadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bucket, path string, nc rig.Client) error {
+func (c Cmd) uploadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bucket, path string) error {
 	from := t.Message
 
 	f, err := os.Open(from)
@@ -264,8 +264,8 @@ func uploadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bu
 	}
 
 	// Upload.
-	c := nc.Storage().UploadObject(ctx)
-	if err := c.Send(&storage.UploadObjectRequest{Request: &storage.UploadObjectRequest_Metadata_{Metadata: m}}); err != nil {
+	cc := c.Rig.Storage().UploadObject(ctx)
+	if err := cc.Send(&storage.UploadObjectRequest{Request: &storage.UploadObjectRequest_Metadata_{Metadata: m}}); err != nil {
 		return err
 	}
 
@@ -273,7 +273,7 @@ func uploadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bu
 	for {
 		n, err := f.Read(buffer)
 		if err == io.EOF {
-			_, err := c.CloseAndReceive()
+			_, err := cc.CloseAndReceive()
 			if err != nil {
 				return err
 			}
@@ -283,7 +283,7 @@ func uploadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bu
 			return err
 		}
 
-		if err := c.Send(&storage.UploadObjectRequest{Request: &storage.UploadObjectRequest_Chunk{Chunk: buffer[:n]}}); err != nil {
+		if err := cc.Send(&storage.UploadObjectRequest{Request: &storage.UploadObjectRequest_Chunk{Chunk: buffer[:n]}}); err != nil {
 			return err
 		}
 
@@ -291,7 +291,7 @@ func uploadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bu
 	}
 }
 
-func downloadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bucket, path string, nc rig.Client) error {
+func (c Cmd) downloadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, bucket, path string) error {
 	from := t.Message
 	// Create the directories if they don't exist.
 	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
@@ -306,7 +306,7 @@ func downloadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, 
 	defer f.Close()
 
 	// Download.
-	c, err := nc.Storage().DownloadObject(ctx, &connect.Request[storage.DownloadObjectRequest]{
+	cc, err := c.Rig.Storage().DownloadObject(ctx, &connect.Request[storage.DownloadObjectRequest]{
 		Msg: &storage.DownloadObjectRequest{
 			Bucket: bucket,
 			Path:   from,
@@ -315,10 +315,10 @@ func downloadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, 
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+	defer cc.Close()
 
-	for c.Receive() {
-		res := c.Msg()
+	for cc.Receive() {
+		res := cc.Msg()
 		n, err := f.Write(res.GetChunk())
 		if err != nil {
 			return err
@@ -326,13 +326,13 @@ func downloadFile(ctx context.Context, cmd *cobra.Command, t *progress.Tracker, 
 		t.Increment(int64(n))
 	}
 	// For some reason the EOF error does not match io.EOF, but instead is unknown at just says unknown: EOF
-	if c.Err() == io.EOF {
+	if cc.Err() == io.EOF {
 		return nil
 	}
-	if errors.IsUnknown(c.Err()) {
+	if errors.IsUnknown(cc.Err()) {
 		return nil
-	} else if c.Err() != nil {
-		return c.Err()
+	} else if cc.Err() != nil {
+		return cc.Err()
 	} else {
 		return nil
 	}
