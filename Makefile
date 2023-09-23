@@ -20,7 +20,7 @@ DEVENVS = RIG_TELEMETRY_ENABLED=false
 
 .PHONY: build-rig
 build-rig: ## 🔨 Build rig binary
-	(cd cmd/rig/ && $(GOBUILD) -o ../../bin/rig ./)
+	(cd cmd/rig/ && $(GO) generate ./... && $(GOBUILD) -o ../../bin/rig ./)
 
 .PHONY: build-rig-server
 build-rig-server: ## 🔨 Build rig-server binary

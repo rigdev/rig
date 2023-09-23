@@ -39,13 +39,17 @@ func SelectContext(cfg *Config) error {
 	return cfg.Save()
 }
 
-func CreateContext(cfg *Config) error {
-	name, err := common.PromptInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt("local"))
+func CreateDefaultContext(cfg *Config) error {
+	return CreateContext(cfg, "local", "http://localhost:4747/")
+}
+
+func CreateContext(cfg *Config, name, url string) error {
+	name, err := common.PromptInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt(name))
 	if err != nil {
 		return err
 	}
 
-	server, err := common.PromptInput("Server:", common.ValidateURLOpt, common.InputDefaultOpt("http://localhost:4747/"))
+	server, err := common.PromptInput("Server:", common.ValidateURLOpt, common.InputDefaultOpt(url))
 	if err != nil {
 		return err
 	}
@@ -91,5 +95,5 @@ func ConfigInit(cfg *Config) error {
 		return nil
 	}
 
-	return CreateContext(cfg)
+	return CreateDefaultContext(cfg)
 }

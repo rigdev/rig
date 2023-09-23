@@ -4,7 +4,7 @@ set -e
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 
 KIND="${KIND:=kind}"
-KUBECTL="${KUBECTL:=kubectl --context kind-rig}"
+KUBECT="${KUBECTL:=kubectl --context kind-rig}"
 HELM="${HELM:=helm --kube-context kind-rig}"
 
 # Create kind cluster
