@@ -16,6 +16,7 @@ type CapsuleSpec struct {
 	Files           []File                   `json:"files,omitempty"`
 	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
 	ImagePullSecret *v1.LocalObjectReference `json:"imagePullSecret,omitempty"`
+	HorizontalScale HorizontalScale          `json:"scale,omitempty"`
 }
 
 // CapsuleInterface defines an interface for a capsule
@@ -60,6 +61,20 @@ type File struct {
 type FileContentRef struct {
 	Name string `json:"name"`
 	Key  string `json:"key"`
+}
+
+// HorizontalScale defines the policy for the number of replicas of the capsule
+// It can both be configured with autoscaling and with a static number of replicas
+type HorizontalScale struct {
+	MinReplicas uint32    `json:"minReplicas"`
+	MaxReplicas uint32    `json:"maxReplicas"`
+	CPUTarget   CPUTarget `json:"cpuTarget"`
+}
+
+// CPUTarget defines an autoscaler target for the CPU metric
+// If empty, no autoscaling will be done
+type CPUTarget struct {
+	AverageUtilizationPercentage uint32 `json:"averageUtilization"`
 }
 
 // CapsuleStatus defines the observed state of Capsule

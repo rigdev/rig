@@ -259,3 +259,64 @@ func TestValidateFiles(t *testing.T) {
 		})
 	}
 }
+
+func Test_HorizontalScaleValidate(t *testing.T) {
+	t.Parallel()
+	path := field.NewPath("spec").Child("horizontalScale")
+	tests := []struct {
+		name         string
+		h            HorizontalScale
+		expectedErrs field.ErrorList
+	}{
+		{
+			name: "max < min",
+			h: HorizontalScale{
+				MinReplicas: 10,
+				MaxReplicas: 1,
+			},
+			expectedErrs: []*field.Error{
+				field.Invalid(path.Child("maxReplicas"), uint32(1), "maxReplicas cannot be smaller than minReplicas"),
+			},
+		},
+		{
+			name: "utilization percentage > 100",
+			h: HorizontalScale{
+				MinReplicas: 1,
+				MaxReplicas: 1,
+				CPUTarget: CPUTarget{
+					AverageUtilizationPercentage: 110,
+				},
+			},
+			expectedErrs: []*field.Error{
+				field.Invalid(
+					path.Child("cpuTarget").Child("averageUtilizationPercentage"),
+					uint32(110),
+					"cannot be larger than 100",
+				),
+			},
+		},
+		{
+			name: "good, no autoscaling",
+			h: HorizontalScale{
+				MinReplicas: 10,
+			},
+		},
+		{
+			name: "good, with autoscaling",
+			h: HorizontalScale{
+				MinReplicas: 10,
+				MaxReplicas: 30,
+				CPUTarget: CPUTarget{
+					AverageUtilizationPercentage: 50,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.h.validate(field.NewPath("spec").Child("horizontalScale"))
+			assert.Equal(t, tt.expectedErrs, err)
+		})
+	}
+}
