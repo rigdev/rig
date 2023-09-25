@@ -27,6 +27,7 @@ service Service {
 // The request of a Namespace.Create RPC
 message CreateRequest {
   repeated api.v1.project.Update initializers = 1;
+  string project_id = 2;
 }
 
 // The response of a Namespace.Create RPC
