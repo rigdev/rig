@@ -1,14 +1,10 @@
-package controller_test
+package k8s_test
 
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-	"runtime"
 	"testing"
-	"time"
 
-	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -16,103 +12,21 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/rigdev/rig/internal/controller"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/ptr"
-
-	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
-
-const (
-	waitFor = time.Second * 10
-	tick    = time.Millisecond * 200
-)
-
-var (
-	cfg           *rest.Config
-	k8sClient     client.Client
-	testEnv       *envtest.Environment
-	managerCancel context.CancelFunc
-)
-
-func setupTest(t *testing.T) {
-	logf.SetLogger(testr.New(t))
-	// TODO: find a way to use the improved implementation from controller-runtime zap
-	//logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-
-	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases")},
-		ErrorIfCRDPathMissing: true,
-
-		// The BinaryAssetsDirectory is only required if you want to run the tests directly
-		// without call the makefile target test. If not informed it will look for the
-		// default path defined in controller-runtime which is /usr/local/kubebuilder/.
-		// Note that you must have the required binaries setup under the bin directory to perform
-		// the tests directly. When we run make test it will be setup and used automatically.
-		BinaryAssetsDirectory: filepath.Join("..", "..", "..", "tools", "bin", "k8s",
-			fmt.Sprintf("1.28.0-%s-%s", runtime.GOOS, runtime.GOARCH)),
-	}
-
-	var err error
-	cfg, err = testEnv.Start()
-	assert.NoError(t, err)
-	assert.NotNil(t, cfg)
-
-	err = rigdevv1alpha1.AddToScheme(scheme.Scheme)
-	assert.NoError(t, err)
-
-	//+kubebuilder:scaffold:scheme
-
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	assert.NoError(t, err)
-	assert.NotNil(t, k8sClient)
-
-	manager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:  scheme.Scheme,
-		Metrics: server.Options{BindAddress: "0"},
-	})
-	assert.NoError(t, err)
-
-	capsuleReconciler := &controller.CapsuleReconciler{
-		Client: k8sClient,
-		Scheme: manager.GetScheme(),
-	}
-
-	assert.NoError(t, capsuleReconciler.SetupWithManager(manager))
-
-	var managerCtx context.Context
-	managerCtx, managerCancel = context.WithCancel(context.Background())
-	go func() {
-		assert.NoError(t, manager.Start(managerCtx))
-	}()
-}
-
-func tearDownTest(t *testing.T) {
-	if managerCancel != nil {
-		managerCancel()
-	}
-	if testEnv != nil {
-		err := testEnv.Stop()
-		assert.NoError(t, err)
-	}
-}
 
 func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
+	t.Parallel()
 
-	setupTest(t)
-	defer tearDownTest(t)
+	env := setupTest(t, options{runManager: true})
+	defer env.cancel()
+	k8sClient := env.k8sClient
 
 	ctx := context.Background()
 	nsName := types.NamespacedName{

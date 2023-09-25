@@ -139,6 +139,11 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error
 		}
 	}
 
+	replicas := int32(1)
+	if cfg.Spec.Replicas != nil {
+		replicas = *cfg.Spec.Replicas
+	}
+
 	return c.upsertCapsule(ctx, cfg.GetName(), &cluster.Capsule{
 		CapsuleID: cfg.GetName(),
 		Image:     cfg.Spec.Image,
@@ -146,7 +151,7 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error
 			EnvironmentVariables: envs,
 		},
 		Network:      network,
-		Replicas:     uint32(cfg.Spec.Replicas),
+		Replicas:     uint32(replicas),
 		Namespace:    cfg.GetNamespace(),
 		RegistryAuth: regAuth,
 		ConfigFiles:  cf,

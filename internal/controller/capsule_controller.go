@@ -140,7 +140,7 @@ func createDeployment(
 					labelRigDevCapsule: capsule.Name,
 				},
 			},
-			Replicas: &capsule.Spec.Replicas,
+			Replicas: capsule.Spec.Replicas,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{

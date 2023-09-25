@@ -18,6 +18,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
+	"github.com/rigdev/rig/pkg/ptr"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 	v1 "k8s.io/api/core/v1"
@@ -109,7 +110,7 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error
 
 	var cmd []string
 	if cfg.Spec.Command != "" {
-		cmd = append([]string{cfg.Spec.Image}, cfg.Spec.Args...)
+		cmd = append([]string{image}, cfg.Spec.Args...)
 	}
 
 	dcc := &container.Config{
@@ -172,7 +173,10 @@ func (c *Client) applyCapsuleConfig(ctx context.Context, capsuleID string) error
 		}
 	}
 
-	for i := 0; i < int(cfg.Spec.Replicas); i++ {
+	if cfg.Spec.Replicas == nil {
+		cfg.Spec.Replicas = ptr.New(int32(1))
+	}
+	for i := 0; i < int(*cfg.Spec.Replicas); i++ {
 		containerID := fmt.Sprint(cfg.GetName(), "-instance-", i)
 
 		dnc.EndpointsConfig[netID] = &network.EndpointSettings{

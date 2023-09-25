@@ -17,6 +17,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/zap"
@@ -472,7 +473,7 @@ func (j *rolloutJob) run(
 		cfg.Spec.Image = rc.GetBuildId()
 		cfg.Spec.Command = rc.GetContainerSettings().GetCommand()
 		cfg.Spec.Args = rc.GetContainerSettings().GetArgs()
-		cfg.Spec.Replicas = int32(rc.GetReplicas())
+		cfg.Spec.Replicas = ptr.New(int32(rc.GetReplicas()))
 
 	addNext:
 		for _, cf := range rc.GetConfigFiles() {
