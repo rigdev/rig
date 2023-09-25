@@ -23,7 +23,7 @@ func Test_Login_Oauth2_User_Not_Exists_Success(t *testing.T) {
 	us := user_serv.NewMockService(t)
 	ps := project.NewMockService(t)
 	sr := repository.NewMockSession(t)
-	projectID := uuid.New()
+	projectID := uuid.New().String()
 	ctx := auth.WithProjectID(context.Background(), projectID)
 
 	s, err := NewService(newServiceParams{

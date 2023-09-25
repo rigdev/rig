@@ -40,7 +40,7 @@ func (c *Client) ListInstances(
 
 		for {
 			pl, err := c.cs.CoreV1().
-				Pods(projectID.String()).
+				Pods(projectID).
 				List(ctx, lopts)
 			if err != nil {
 				p.Error(err)
@@ -78,7 +78,7 @@ func (c *Client) RestartInstance(ctx context.Context, capsuleID string, instance
 	}
 
 	err = c.cs.CoreV1().
-		Pods(projectID.String()).
+		Pods(projectID).
 		Delete(ctx, instanceID, metav1.DeleteOptions{})
 	if err != nil {
 		if kerrors.IsNotFound(err) {

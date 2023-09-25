@@ -244,8 +244,8 @@ func (c *Client) ensureNetwork(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	if _, err := c.dc.NetworkInspect(ctx, projectID.String(), types.NetworkInspectOptions{}); client.IsErrNotFound(err) {
-		if _, err := c.dc.NetworkCreate(ctx, projectID.String(), types.NetworkCreate{
+	if _, err := c.dc.NetworkInspect(ctx, projectID, types.NetworkInspectOptions{}); client.IsErrNotFound(err) {
+		if _, err := c.dc.NetworkCreate(ctx, projectID, types.NetworkCreate{
 			CheckDuplicate: true,
 		}); err != nil {
 			return "", err
@@ -254,7 +254,7 @@ func (c *Client) ensureNetwork(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return projectID.String(), nil
+	return projectID, nil
 }
 
 func (c *Client) isLocalImage(ctx context.Context, image string) (bool, error) {

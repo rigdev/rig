@@ -247,7 +247,7 @@ func (s *Service) runJob(ctx context.Context, job Job) {
 
 type rolloutJob struct {
 	s         *Service
-	projectID uuid.UUID
+	projectID string
 	capsuleID string
 	rolloutID uint64
 }
@@ -256,7 +256,7 @@ func (j *rolloutJob) Run(ctx context.Context) error {
 	ctx = auth.WithProjectID(ctx, j.projectID)
 
 	logger := j.s.logger.With(
-		zap.Stringer("project_id", j.projectID),
+		zap.String("project_id", j.projectID),
 		zap.String("capsule_id", j.capsuleID),
 		zap.Uint64("rollout_id", j.rolloutID),
 	)
@@ -452,7 +452,7 @@ func (j *rolloutJob) run(
 			}
 
 			// Unused file, remove.
-			if err := j.s.ccg.DeleteFile(ctx, j.capsuleID, "file-"+strings.ReplaceAll(f.Path, "/", "-"), j.projectID.String()); errors.IsNotFound(err) {
+			if err := j.s.ccg.DeleteFile(ctx, j.capsuleID, "file-"+strings.ReplaceAll(f.Path, "/", "-"), j.projectID); errors.IsNotFound(err) {
 			} else if err != nil {
 				return err
 			}
@@ -487,7 +487,7 @@ func (j *rolloutJob) run(
 			cm := &v1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "file-" + strings.ReplaceAll(cf.GetPath(), "/", "-"),
-					Namespace: j.projectID.String(),
+					Namespace: j.projectID,
 				},
 				BinaryData: map[string][]byte{
 					"content": cf.GetContent(),
@@ -539,7 +539,7 @@ func (j *rolloutJob) run(
 		host := reference.Domain(ref)
 		pullSecretName := fmt.Sprintf("%s-pull", j.capsuleID)
 		if ds, err := j.s.ps.GetProjectDockerSecret(ctx, host); errors.IsNotFound(err) {
-			if err := j.s.ccg.DeleteSecret(ctx, j.capsuleID, pullSecretName, j.projectID.String()); errors.IsNotFound(err) {
+			if err := j.s.ccg.DeleteSecret(ctx, j.capsuleID, pullSecretName, j.projectID); errors.IsNotFound(err) {
 			} else if err != nil {
 				return err
 			}
@@ -568,7 +568,7 @@ func (j *rolloutJob) run(
 			ds := &v1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      pullSecretName,
-					Namespace: j.projectID.String(),
+					Namespace: j.projectID,
 				},
 				Type: v1.SecretTypeDockerConfigJson,
 				Data: map[string][]byte{
@@ -588,7 +588,7 @@ func (j *rolloutJob) run(
 		if envs == nil {
 			envs = map[string]string{}
 		}
-		envs["RIG_PROJECT_ID"] = j.projectID.String()
+		envs["RIG_PROJECT_ID"] = j.projectID
 		if rc.GetAutoAddRigServiceAccounts() {
 			sid := uuid.UUID(rs.GetRigServiceAccount().GetClientSecretKey())
 

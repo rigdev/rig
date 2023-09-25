@@ -38,7 +38,7 @@ type Claims interface {
 	jwt.Claims
 
 	GetIssuer() string
-	GetProjectID() uuid.UUID
+	GetProjectID() string
 	GetSubject() uuid.UUID
 	GetSubjectType() SubjectType
 	GetSessionID() uuid.UUID
@@ -98,7 +98,7 @@ type Oauth2Claims struct {
 
 type State struct {
 	Rand         string
-	ProjectId    uuid.UUID
+	ProjectId    string
 	AppRedirect  string
 	ProviderType model.OauthProvider
 }

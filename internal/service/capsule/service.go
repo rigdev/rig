@@ -74,7 +74,7 @@ func (s *Service) CreateCapsule(ctx context.Context, name string, is []*capsule.
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
-			Namespace: projectID.String(),
+			Namespace: projectID,
 		},
 	}
 	if err := s.ccg.CreateCapsuleConfig(ctx, cfg); err != nil {

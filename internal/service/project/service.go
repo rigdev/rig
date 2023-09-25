@@ -29,7 +29,7 @@ import (
 type Service interface {
 	CreateProject(ctx context.Context, initializers []*project.Update) (*project.Project, error)
 	GetProject(ctx context.Context) (*project.Project, error)
-	UpdateProject(ctx context.Context, projectID uuid.UUID, us []*project.Update) error
+	UpdateProject(ctx context.Context, projectID string, us []*project.Update) error
 	List(ctx context.Context, query *model.Pagination) (iterator.Iterator[*project.Project], int64, error)
 	DeleteProject(ctx context.Context) error
 
@@ -71,11 +71,11 @@ func NewService(cfg config.Config, rp repository.Project, ru repository.User, rs
 }
 
 func (s *service) CreateProject(ctx context.Context, initializers []*project.Update) (*project.Project, error) {
-	projectID := uuid.New()
+	projectID := uuid.New().String()
 
 	// Set some some defaults.
 	p := DefaultProject()
-	p.ProjectId = projectID.String()
+	p.ProjectId = projectID
 	ps := DefaultProjectSettings()
 	us := DefaultUserSettings()
 	ss := DefaultStorageSettings()
@@ -187,7 +187,7 @@ func (s *service) CreateProject(ctx context.Context, initializers []*project.Upd
 
 func (s *service) List(ctx context.Context, query *model.Pagination) (iterator.Iterator[*project.Project], int64, error) {
 	// Filter out the Rig project.
-	return s.rp.List(ctx, query, []uuid.UUID{auth.RigProjectID})
+	return s.rp.List(ctx, query, []string{auth.RigProjectID})
 }
 
 func (s *service) GetProject(ctx context.Context) (*project.Project, error) {
@@ -219,7 +219,7 @@ func (s *service) DeleteProject(ctx context.Context) error {
 	return s.rp.Delete(ctx, projectID)
 }
 
-func (s *service) UpdateProject(ctx context.Context, projectID uuid.UUID, us []*project.Update) error {
+func (s *service) UpdateProject(ctx context.Context, projectID string, us []*project.Update) error {
 	p, err := s.rp.Get(ctx, projectID)
 	if err != nil {
 		return err
@@ -342,7 +342,7 @@ func (s *service) ensureRigProjectExists() (uuid.UUID, error) {
 	p, err := s.rp.Get(ctx, auth.RigProjectID)
 	if errors.IsNotFound(err) {
 		p = DefaultProject()
-		p.ProjectId = auth.RigProjectID.String()
+		p.ProjectId = auth.RigProjectID
 		p.Name = "Rig"
 		p.InstallationId = uuid.New().String()
 

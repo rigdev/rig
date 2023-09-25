@@ -51,7 +51,7 @@ func CreateProxyConfig(ctx context.Context, cn *capsule.Network, jm *proxy.JWTMe
 	}
 
 	pc := &proxy.Config{
-		ProjectId: projectID.String(),
+		ProjectId: projectID,
 		JwtMethod: jm,
 	}
 

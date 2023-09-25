@@ -31,7 +31,7 @@ func Test_CreateBuild_InvalidArguments(t *testing.T) {
 }
 
 func Test_CreateBuild_ValidArguments(t *testing.T) {
-	ctx := auth.WithProjectID(context.Background(), uuid.New())
+	ctx := auth.WithProjectID(context.Background(), uuid.New().String())
 	capsuleID := uuid.New().String()
 
 	cr := repository.NewMockCapsule(t)

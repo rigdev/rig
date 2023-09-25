@@ -8,7 +8,7 @@ import (
 )
 
 type Session struct {
-	ProjectID uuid.UUID `bson:"project_id" json:"project_id"`
+	ProjectID string    `bson:"project_id" json:"project_id"`
 	UserID    uuid.UUID `bson:"user_id" json:"user_id"`
 	SessionID uuid.UUID `bson:"session_id" json:"session_id"`
 	ExpiresAt int64     `bson:"expires_at" json:"expires_at"`
@@ -24,7 +24,7 @@ func (p Session) ToProto() (*user.Session, error) {
 	return pr, nil
 }
 
-func SessionFromProto(projectID, userID, sessionID uuid.UUID, p *user.Session) (Session, error) {
+func SessionFromProto(projectID string, userID, sessionID uuid.UUID, p *user.Session) (Session, error) {
 	bs, err := proto.Marshal(p)
 	if err != nil {
 		return Session{}, err
@@ -39,7 +39,7 @@ func SessionFromProto(projectID, userID, sessionID uuid.UUID, p *user.Session) (
 	}, nil
 }
 
-func GetSessionIDFilter(projectID, userID, sessionID uuid.UUID) bson.M {
+func GetSessionIDFilter(projectID string, userID, sessionID uuid.UUID) bson.M {
 	return bson.M{
 		"project_id": projectID,
 		"user_id":    userID,

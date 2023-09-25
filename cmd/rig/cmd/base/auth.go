@@ -123,7 +123,7 @@ func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *
 			return err
 		}
 
-		cfg.GetCurrentContext().Project.ProjectID = uuid.UUID(p.GetProjectId())
+		cfg.GetCurrentContext().Project.ProjectID = p.GetProjectId()
 		cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
 		if err := cfg.Save(); err != nil {
 			return err
@@ -167,7 +167,7 @@ func login(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
 				UserPassword: &authentication.UserPassword{
 					Identifier: id,
 					Password:   pw,
-					ProjectId:  auth.RigProjectID.String(),
+					ProjectId:  auth.RigProjectID,
 				},
 			},
 		},
@@ -193,7 +193,7 @@ func login(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
 }
 
 func useProject(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
-	var projectID uuid.UUID
+	var projectID string
 	var err error
 	list_res, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
@@ -210,14 +210,11 @@ func useProject(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) erro
 		return err
 	}
 
-	projectID, err = uuid.Parse(list_res.Msg.GetProjects()[i].GetProjectId())
-	if err != nil {
-		return err
-	}
+	projectID = list_res.Msg.GetProjects()[i].GetProjectId()
 
 	res, err := rc.Project().Use(ctx, &connect.Request[project.UseRequest]{
 		Msg: &project.UseRequest{
-			ProjectId: projectID.String(),
+			ProjectId: projectID,
 		},
 	})
 	if err != nil {

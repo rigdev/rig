@@ -21,7 +21,6 @@ import (
 	"github.com/rigdev/rig/internal/service/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/proxy"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -94,10 +93,7 @@ func main() {
 
 			var h http.Handler = p
 
-			pid, err := uuid.Parse(pc.GetProjectId())
-			if err != nil {
-				logger.Fatal("invalid project ID", zap.String("project_id", pc.GetProjectId()), zap.Error(err))
-			}
+			pid := pc.GetProjectId()
 
 			for _, m := range e.GetMiddlewares() {
 				switch v := m.Kind.(type) {
@@ -137,7 +133,7 @@ func main() {
 
 type authenticationMiddleware struct {
 	a         *capsule.Authentication
-	projectID uuid.UUID
+	projectID string
 	publicKey interface{}
 	issuer    string
 	next      http.Handler
@@ -216,7 +212,7 @@ func (m *authenticationMiddleware) handleJWTAuth(h http.Header) (http.Header, er
 	}
 
 	if c.GetProjectID() != m.projectID {
-		m.logger.Info("invalid project ID", zap.Stringer("claims_project_id", c.GetProjectID()), zap.Stringer("service_project_id", m.projectID))
+		m.logger.Info("invalid project ID", zap.String("claims_project_id", c.GetProjectID()), zap.String("service_project_id", m.projectID))
 		return h, errors.UnauthenticatedErrorf("invalid JWT token")
 	}
 

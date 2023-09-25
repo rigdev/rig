@@ -69,13 +69,9 @@ func ProjectsCreate(ctx context.Context, cmd *cobra.Command, ps project_service.
 }
 
 func ProjectsDelete(ctx context.Context, cmd *cobra.Command, args []string, ps project_service.Service, logger *zap.Logger) error {
-	str := args[0]
-	if str == "rig" {
-		str = auth.RigProjectID.String()
-	}
-	projectID, err := uuid.Parse(str)
-	if err != nil {
-		return err
+	projectID := args[0]
+	if projectID == "rig" {
+		projectID = auth.RigProjectID
 	}
 
 	ctx = auth.WithProjectID(ctx, projectID)
@@ -83,7 +79,7 @@ func ProjectsDelete(ctx context.Context, cmd *cobra.Command, args []string, ps p
 		return err
 	}
 
-	logger.Info("deleted project", zap.Stringer("project_id", projectID))
+	logger.Info("deleted project", zap.String("project_id", projectID))
 
 	return nil
 }
@@ -107,13 +103,9 @@ func ProjectsList(ctx context.Context, cmd *cobra.Command, ps project_service.Se
 }
 
 func ProjectsUse(ctx context.Context, cmd *cobra.Command, args []string, as *auth_service.Service, logger *zap.Logger) error {
-	str := args[0]
-	if str == "rig" {
-		str = auth.RigProjectID.String()
-	}
-	projectID, err := uuid.Parse(str)
-	if err != nil {
-		return err
+	projectID := args[0]
+	if projectID == "rig" {
+		projectID = auth.RigProjectID
 	}
 
 	userID, err := uuid.Parse(args[1])
@@ -131,7 +123,7 @@ func ProjectsUse(ctx context.Context, cmd *cobra.Command, args []string, as *aut
 		return err
 	}
 
-	logger.Info("using project", zap.Stringer("project_id", projectID), zap.String("project_token", t))
+	logger.Info("using project", zap.String("project_id", projectID), zap.String("project_token", t))
 
 	return nil
 }

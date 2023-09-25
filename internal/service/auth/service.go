@@ -187,8 +187,8 @@ func (s *Service) RefreshToken(ctx context.Context, oldRefreshToken string) (*au
 	return s.generateToken(ctx, c.SessionID, ss, c.GetProjectID(), c.GetSubject(), c.GetSubjectType(), nil, set)
 }
 
-func (s *Service) UseProject(ctx context.Context, projectID uuid.UUID) (string, error) {
-	s.logger.Debug("authenticating for project", zap.Stringer("project_id", projectID))
+func (s *Service) UseProject(ctx context.Context, projectID string) (string, error) {
+	s.logger.Debug("authenticating for project", zap.String("project_id", projectID))
 	ctx = auth.WithProjectID(ctx, projectID)
 	_, err := s.ps.GetProject(ctx)
 	if err != nil {
@@ -242,7 +242,7 @@ func (s *Service) ValidateProjectToken(ctx context.Context, jwtToken string) (*P
 	return t, s.validateToken(ctx, jwtToken, t)
 }
 
-func (s *Service) generateToken(ctx context.Context, sessionID uuid.UUID, ss *api_user.Session, projectID, subject uuid.UUID, subjectType auth.SubjectType, gs []uuid.UUID, set *settings.Settings) (*authentication.Token, error) {
+func (s *Service) generateToken(ctx context.Context, sessionID uuid.UUID, ss *api_user.Session, projectID string, subject uuid.UUID, subjectType auth.SubjectType, gs []uuid.UUID, set *settings.Settings) (*authentication.Token, error) {
 	expiresAt := time.Now().Add(set.GetRefreshTokenTtl().AsDuration())
 	refreshToken, err := s.generateRefreshToken(ctx, sessionID, projectID, subject, subjectType, gs, expiresAt)
 	if err != nil {
@@ -291,7 +291,7 @@ func (s *Service) validateToken(ctx context.Context, jwtToken string, c auth.Cla
 	return nil
 }
 
-func (s *Service) generateAccessToken(ctx context.Context, sessionID, projectID, subject uuid.UUID, subjectType auth.SubjectType, groups []uuid.UUID, expiresAt time.Time) (string, error) {
+func (s *Service) generateAccessToken(ctx context.Context, sessionID uuid.UUID, projectID string, subject uuid.UUID, subjectType auth.SubjectType, groups []uuid.UUID, expiresAt time.Time) (string, error) {
 	claims := &AccessClaims{
 		RigClaims: RigClaims{
 			ProjectID:   projectID,
@@ -308,7 +308,7 @@ func (s *Service) generateAccessToken(ctx context.Context, sessionID, projectID,
 	return s.generateTokenClaims(ctx, claims)
 }
 
-func (s *Service) generateRefreshToken(ctx context.Context, sessionID, projectID, subject uuid.UUID, subjectType auth.SubjectType, groups []uuid.UUID, expiresAt time.Time) (string, error) {
+func (s *Service) generateRefreshToken(ctx context.Context, sessionID uuid.UUID, projectID string, subject uuid.UUID, subjectType auth.SubjectType, groups []uuid.UUID, expiresAt time.Time) (string, error) {
 	claims := &RefreshClaims{
 		RigClaims: RigClaims{
 			ProjectID:   projectID,
@@ -328,7 +328,7 @@ func (s *Service) generateRefreshToken(ctx context.Context, sessionID, projectID
 }
 
 func (s *Service) generateTokenClaims(ctx context.Context, c auth.Claims) (string, error) {
-	if c.GetProjectID().IsNil() {
+	if c.GetProjectID() == "" {
 		return "", fmt.Errorf("invalid token subject")
 	}
 

@@ -8,7 +8,7 @@ import (
 )
 
 type ServiceAccount struct {
-	ProjectID        uuid.UUID `bson:"project_id" json:"project_id"`
+	ProjectID        string    `bson:"project_id" json:"project_id"`
 	ServiceAccountID uuid.UUID `bson:"service_account_id" json:"service_account_id"`
 	Name             string    `bson:"name" json:"name"`
 	Data             []byte    `bson:"data" json:"data"`
@@ -23,7 +23,7 @@ func (c ServiceAccount) ToProto() (*service_account.ServiceAccount, error) {
 	return p, nil
 }
 
-func ServiceAccountFromProto(projectID, serviceAccountID uuid.UUID, c *service_account.ServiceAccount) (ServiceAccount, error) {
+func ServiceAccountFromProto(projectID string, serviceAccountID uuid.UUID, c *service_account.ServiceAccount) (ServiceAccount, error) {
 	bs, err := proto.Marshal(c)
 	if err != nil {
 		return ServiceAccount{}, err
@@ -37,7 +37,7 @@ func ServiceAccountFromProto(projectID, serviceAccountID uuid.UUID, c *service_a
 	}, nil
 }
 
-func GetServiceAccountIDFilter(projectID, serviceAccountID uuid.UUID) bson.M {
+func GetServiceAccountIDFilter(projectID string, serviceAccountID uuid.UUID) bson.M {
 	return bson.M{
 		"project_id":         projectID,
 		"service_account_id": serviceAccountID,

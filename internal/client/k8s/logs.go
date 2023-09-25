@@ -22,7 +22,7 @@ func (c *Client) Logs(ctx context.Context, capsuleID string, instanceID string, 
 	}
 
 	req := c.cs.CoreV1().
-		Pods(projectID.String()).
+		Pods(projectID).
 		GetLogs(instanceID, &v1.PodLogOptions{
 			Container:  capsuleID,
 			Timestamps: true,

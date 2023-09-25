@@ -7,7 +7,6 @@ import (
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/core"
 	"github.com/rigdev/rig/pkg/auth"
-	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -29,7 +28,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&configFileFlag, "config", "c", "", "config file to use")
 }
 
-type ProjectID uuid.UUID
+type ProjectID string
 
 var options []fx.Option
 
@@ -51,23 +50,18 @@ func register(f interface{}) func(cmd *cobra.Command, args []string) error {
 
 		f := fx.New(
 			fx.Decorate(func(ctx context.Context, pID ProjectID) context.Context {
-				return auth.WithProjectID(ctx, uuid.UUID(pID))
+				return auth.WithProjectID(ctx, string(pID))
 			}),
 			core.GetModule(cfg),
 			fx.Supply(cmd),
 			fx.Supply(args),
 			fx.Provide(func() context.Context { return context.Background() }),
 			fx.Provide(func() (ProjectID, error) {
-				var pID uuid.UUID
+				var pID string
 				if projectFlag == "rig" {
 					pID = auth.RigProjectID
 				} else {
-					id, err := uuid.Parse(projectFlag)
-					if err != nil {
-						return "", err
-					}
-
-					pID = id
+					pID = projectFlag
 				}
 
 				return ProjectID(pID), nil

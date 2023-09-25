@@ -7,7 +7,7 @@ import (
 )
 
 type RigClaims struct {
-	ProjectID   uuid.UUID        `json:"pid"`
+	ProjectID   string           `json:"pid"`
 	Subject     uuid.UUID        `json:"sub"`
 	SubjectType auth.SubjectType `json:"sty"`
 	SessionID   uuid.UUID        `json:"jti,omitempty"`
@@ -16,7 +16,7 @@ type RigClaims struct {
 }
 
 func (c RigClaims) GetIssuer() string                { return c.Issuer }
-func (c RigClaims) GetProjectID() uuid.UUID          { return c.ProjectID }
+func (c RigClaims) GetProjectID() string             { return c.ProjectID }
 func (c RigClaims) GetSubject() uuid.UUID            { return c.Subject }
 func (c RigClaims) GetSubjectType() auth.SubjectType { return c.SubjectType }
 func (c RigClaims) GetSessionID() uuid.UUID          { return c.SessionID }
@@ -37,7 +37,7 @@ type RefreshClaims struct {
 }
 
 type ProjectClaims struct {
-	UseProjectID uuid.UUID `json:"aid"`
+	UseProjectID string `json:"aid"`
 
 	RigClaims
 }

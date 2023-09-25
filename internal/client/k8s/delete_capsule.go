@@ -15,7 +15,7 @@ func (c *Client) deleteCapsule(ctx context.Context, capsuleID string) error {
 	if err != nil {
 		return err
 	}
-	ns := projectID.String()
+	ns := projectID
 
 	if err := c.deleteProxyEnvSecret(ctx, capsuleID, ns); err != nil {
 		return err

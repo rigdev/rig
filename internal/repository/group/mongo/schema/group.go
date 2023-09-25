@@ -8,7 +8,7 @@ import (
 )
 
 type Group struct {
-	ProjectID uuid.UUID `bson:"project_id" json:"project_id"`
+	ProjectID string    `bson:"project_id" json:"project_id"`
 	GroupID   uuid.UUID `bson:"group_id" json:"group_id"`
 	Name      string    `bson:"name" json:"name"`
 	Search    []string  `bson:"search" json:"search"`
@@ -24,7 +24,7 @@ func (g Group) ToProto() (*group.Group, error) {
 	return gr, nil
 }
 
-func GroupFromProto(projectID uuid.UUID, g *group.Group) (Group, error) {
+func GroupFromProto(projectID string, g *group.Group) (Group, error) {
 	bs, err := proto.Marshal(g)
 	if err != nil {
 		return Group{}, err
@@ -42,7 +42,7 @@ func GroupFromProto(projectID uuid.UUID, g *group.Group) (Group, error) {
 	}, nil
 }
 
-func GetGroupIDFilter(projectID uuid.UUID, groupID string) bson.M {
+func GetGroupIDFilter(projectID string, groupID string) bson.M {
 	return bson.M{
 		"project_id": projectID,
 		"group_id":   groupID,

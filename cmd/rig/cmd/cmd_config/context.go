@@ -59,10 +59,10 @@ func CreateContext(cfg *Config, name, url string) error {
 		ServiceName: name,
 		UserName:    name,
 		Project: struct {
-			ProjectID    uuid.UUID `yaml:"project_id"`
-			ProjectToken string    `yaml:"project_token"`
+			ProjectID    string `yaml:"project_id"`
+			ProjectToken string `yaml:"project_token"`
 		}{
-			ProjectID:    uuid.Nil,
+			ProjectID:    "",
 			ProjectToken: "",
 		},
 	})

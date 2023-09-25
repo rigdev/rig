@@ -10,13 +10,13 @@ import (
 )
 
 // Get fetches a specific token from the database.
-func (t *MongoRepository) Get(ctx context.Context, serviceAccountID uuid.UUID) (uuid.UUID, *service_account.ServiceAccount, error) {
+func (t *MongoRepository) Get(ctx context.Context, serviceAccountID uuid.UUID) (string, *service_account.ServiceAccount, error) {
 	filter := &bson.M{
 		"service_account_id": serviceAccountID,
 	}
 	c := schema.ServiceAccount{}
 	if err := t.Collection.FindOne(ctx, filter).Decode(&c); err != nil {
-		return uuid.Nil, nil, err
+		return "", nil, err
 	}
 
 	p, err := c.ToProto()

@@ -23,7 +23,7 @@ func Test_Login_UserPassword_Success(t *testing.T) {
 	us := user.NewMockService(t)
 	ps := project.NewMockService(t)
 	sr := repository.NewMockSession(t)
-	projectID := uuid.New()
+	projectID := uuid.New().String()
 	ctx := auth.WithProjectID(context.Background(), projectID)
 
 	s, err := NewService(newServiceParams{

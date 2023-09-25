@@ -21,8 +21,8 @@ type Context struct {
 	ServiceName string `yaml:"service"`
 	UserName    string `yaml:"user"`
 	Project     struct {
-		ProjectID    uuid.UUID `yaml:"project_id"`
-		ProjectToken string    `yaml:"project_token"`
+		ProjectID    string `yaml:"project_id"`
+		ProjectToken string `yaml:"project_token"`
 	} `yaml:"project"`
 
 	service *Service

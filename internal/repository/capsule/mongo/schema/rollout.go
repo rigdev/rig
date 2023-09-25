@@ -6,13 +6,12 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/gen/go/rollout"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"google.golang.org/protobuf/proto"
 )
 
 type Rollout struct {
-	ProjectID   uuid.UUID  `bson:"project_id" json:"project_id"`
+	ProjectID   string     `bson:"project_id" json:"project_id"`
 	CapsuleID   string     `bson:"capsule_id" json:"capsule_id"`
 	RolloutID   uint64     `bson:"rollout_id" json:"rollout_id"`
 	Version     uint64     `bson:"version" json:"version"`
@@ -22,7 +21,7 @@ type Rollout struct {
 }
 
 type CapsuleMetric struct {
-	ProjectID  uuid.UUID `bson:"project_id" json:"project_id"`
+	ProjectID  string    `bson:"project_id" json:"project_id"`
 	Timestamp  time.Time `bson:"timestamp" json:"timestamp"`
 	CapsuleID  string    `bson:"capsule_id" json:"capsule_id"`
 	InstanceID string    `bson:"instance_id" json:"instance_id"`
@@ -65,7 +64,7 @@ func (r Rollout) ToProto() (*capsule.Rollout, error) {
 	}, nil
 }
 
-func RolloutFromProto(projectID uuid.UUID, capsuleID string, rolloutID, version uint64, rc *capsule.RolloutConfig, rs *rollout.Status) (Rollout, error) {
+func RolloutFromProto(projectID string, capsuleID string, rolloutID, version uint64, rc *capsule.RolloutConfig, rs *rollout.Status) (Rollout, error) {
 	bsCfg, err := proto.Marshal(rc)
 	if err != nil {
 		return Rollout{}, err
@@ -116,7 +115,7 @@ func RolloutStatusFromProto(version uint64, rs *rollout.Status) (bson.M, error) 
 	}, nil
 }
 
-func MetricFromProto(projectID uuid.UUID, p *capsule.InstanceMetrics) (CapsuleMetric, error) {
+func MetricFromProto(projectID string, p *capsule.InstanceMetrics) (CapsuleMetric, error) {
 	bs, err := proto.Marshal(p)
 	if err != nil {
 		return CapsuleMetric{}, fmt.Errorf("could not marshal metric to proto: %w", err)

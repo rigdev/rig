@@ -23,7 +23,7 @@ func (s *Service) GetOauth2Providers(ctx context.Context, redirect string) ([]*a
 	if err != nil {
 		return nil, err
 	}
-	s.logger.Debug("GetOauth2Providers", zap.String("project_id", pID.String()))
+	s.logger.Debug("GetOauth2Providers", zap.String("project_id", pID))
 
 	us, err := s.us.GetSettings(ctx)
 	if err != nil {

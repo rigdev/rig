@@ -11,7 +11,6 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/crypto"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 )
@@ -94,7 +93,7 @@ func (f *Provider) Test(ctx context.Context, privateKey, publicKey, redirectUrl 
 	return errors.New("not implemented")
 }
 
-func (f *Provider) RedirectUrl(redirectUrl, appRedirect string, projectId uuid.UUID, creds *model.ProviderCredentials) (string, error) {
+func (f *Provider) RedirectUrl(redirectUrl, appRedirect string, projectID string, creds *model.ProviderCredentials) (string, error) {
 	if creds == nil {
 		return "", errors.New("missing required credentials")
 	}
@@ -114,7 +113,7 @@ func (f *Provider) RedirectUrl(redirectUrl, appRedirect string, projectId uuid.U
 	}
 	state := &auth.State{
 		Rand:         rand,
-		ProjectId:    projectId,
+		ProjectId:    projectID,
 		AppRedirect:  appRedirect,
 		ProviderType: model.OauthProvider_OAUTH_PROVIDER_FACEBOOK,
 	}

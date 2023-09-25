@@ -4,7 +4,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -48,7 +47,7 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		c.Cfg.GetCurrentContext().Project.ProjectID = uuid.UUID(p.GetProjectId())
+		c.Cfg.GetCurrentContext().Project.ProjectID = p.GetProjectId()
 		c.Cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
 		if err := c.Cfg.Save(); err != nil {
 			return err
