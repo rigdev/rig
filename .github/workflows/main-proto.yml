@@ -79,3 +79,15 @@ jobs:
           git commit -am "push latest version of APIs" && git push || true
         env:
           GITHUB_TOKEN: "${{ secrets.RIGBOT_GITHUB_TOKEN }}"
+
+  publish-buf-build:
+    name: Publish API to buf.build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-push-action@v1
+        with:
+          input: proto/rig
+          buf_token: ${{ secrets.BUF_TOKEN }}
