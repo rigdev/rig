@@ -45,10 +45,8 @@ func newDefault() Config {
 		},
 
 		Repository: Repository{
-			Storage:        defaultRepositoryStore(),
 			Capsule:        defaultRepositoryStore(),
 			ClusterConfig:  defaultRepositoryStore(),
-			Database:       defaultRepositoryStore(),
 			ServiceAccount: defaultRepositoryStore(),
 			Group:          defaultRepositoryStore(),
 			Project:        defaultRepositoryStore(),

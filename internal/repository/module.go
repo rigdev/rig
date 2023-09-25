@@ -7,13 +7,11 @@ import (
 	"github.com/rigdev/rig/internal/config"
 	capsule_mongo "github.com/rigdev/rig/internal/repository/capsule/mongo"
 	cluster_config_mongo "github.com/rigdev/rig/internal/repository/cluster_config/mongo"
-	database_mongo "github.com/rigdev/rig/internal/repository/database/mongo"
 	group_mongo "github.com/rigdev/rig/internal/repository/group/mongo"
 	project_mongo "github.com/rigdev/rig/internal/repository/project/mongo"
 	secret_mongo "github.com/rigdev/rig/internal/repository/secret/mongo"
 	service_account_mongo "github.com/rigdev/rig/internal/repository/service_account/mongo"
 	session_mongo "github.com/rigdev/rig/internal/repository/session/mongo"
-	storage_mongo "github.com/rigdev/rig/internal/repository/storage/mongo"
 	user_mongo "github.com/rigdev/rig/internal/repository/user/mongo"
 	verification_code_mongo "github.com/rigdev/rig/internal/repository/verification_code/mongo"
 	"github.com/uptrace/bun"
@@ -31,9 +29,7 @@ var Module = fx.Module(
 		NewUser,
 		NewVerificationCode,
 		NewServiceAccount,
-		NewDatabase,
 		NewCapsule,
-		NewStorage,
 		NewSecret,
 		NewClusterConfig,
 	),
@@ -47,19 +43,6 @@ type params struct {
 
 	MongoClient *mongo.Client `optional:"true"`
 	Postgres    *bun.DB       `optional:"true"`
-}
-
-func NewDatabase(p params) (Database, error) {
-	s := p.Cfg.Repository.Database.Store
-	switch s {
-	case storeTypeMongoDB:
-		if p.MongoClient == nil {
-			return nil, errNoMongoDBClient
-		}
-		return database_mongo.NewRepository(p.MongoClient)
-	default:
-		return nil, errInvalidStore("database", s)
-	}
 }
 
 func NewGroup(p params) (Group, error) {
@@ -150,19 +133,6 @@ func NewCapsule(p params) (Capsule, error) {
 		return capsule_mongo.NewRepository(p.MongoClient)
 	default:
 		return nil, errInvalidStore("capsule", s)
-	}
-}
-
-func NewStorage(p params) (Storage, error) {
-	s := p.Cfg.Repository.Storage.Store
-	switch s {
-	case storeTypeMongoDB:
-		if p.MongoClient == nil {
-			return nil, errNoMongoDBClient
-		}
-		return storage_mongo.NewRepository(p.MongoClient)
-	default:
-		return nil, errInvalidStore("storage", s)
 	}
 }
 
