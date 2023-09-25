@@ -61,7 +61,11 @@ mocks: mockery mocks-clean ## 🪄 Generate mocks
 
 .PHONY: manifests
 manifests: controller-gen ## 🪄 Clean mocks
-	$(CONTROLLER_GEN) rbac:roleName=rig crd webhook paths="./pkg/api/..." output:dir=deploy/kustomize output:crd:dir=deploy/kustomize/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=rig crd webhook \
+		paths="./pkg/api/..." \
+		output:dir=deploy/kustomize \
+		output:webhook:dir=deploy/kustomize/webhook \
+		output:crd:dir=deploy/kustomize/crd/bases
 
 .PHONY: generate-k8s
 generate-k8s: controller-gen ## 🪄 Generate runtime.Object implementations.
@@ -86,15 +90,17 @@ test-all: gotestsum setup-envtest ## ✅ Run all tests
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" \
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
-		--junitfile test-result.xml
+		--junitfile test-result.xml && \
+	killall etcd || true
 
 .PHONY: test-integration
 test-integration: gotestsum setup-envtest ## ✅ Run integration tests
-	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" \
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" && \
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
 		--junitfile test-result.xml -- \
-		-run "^TestIntegration" ./...
+		-run "^TestIntegration" ./... && \
+	killall etcd || true
 
 .PHONY: run
 run: build-rig-server ## 🏃 Run rig-server

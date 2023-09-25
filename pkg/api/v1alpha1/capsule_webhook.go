@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/rigdev/rig/pkg/ptr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -25,6 +26,10 @@ var _ webhook.Defaulter = &Capsule{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *Capsule) Default() {
 	capsulelog.Info("default", "name", r.Name)
+
+	if r.Spec.Replicas == nil {
+		r.Spec.Replicas = ptr.New(int32(1))
+	}
 }
 
 //+kubebuilder:webhook:path=/validate-rig-dev-v1alpha1-capsule,mutating=false,failurePolicy=fail,sideEffects=None,groups=rig.dev,resources=capsules,verbs=create;update,versions=v1alpha1,name=vcapsule.kb.io,admissionReviewVersions=v1
@@ -56,6 +61,10 @@ func (r *Capsule) validate() (admission.Warnings, error) {
 		errs     field.ErrorList
 	)
 
+	warns, errs = r.validateSpec()
+	allWarns = append(allWarns, warns...)
+	allErrs = append(allErrs, errs...)
+
 	warns, errs = r.validateInterfaces()
 	allWarns = append(allWarns, warns...)
 	allErrs = append(allErrs, errs...)
@@ -65,6 +74,15 @@ func (r *Capsule) validate() (admission.Warnings, error) {
 	allErrs = append(allErrs, errs...)
 
 	return allWarns, allErrs.ToAggregate()
+}
+
+func (r *Capsule) validateSpec() (admission.Warnings, field.ErrorList) {
+	var errs field.ErrorList
+
+	if r.Spec.Image == "" {
+		errs = append(errs, field.Required(field.NewPath("spec").Child("image"), ""))
+	}
+	return nil, errs
 }
 
 func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
@@ -79,6 +97,10 @@ func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
 	infsPath := field.NewPath("spec").Child("interfaces")
 	for i, inf := range r.Spec.Interfaces {
 		infPath := infsPath.Index(i)
+
+		if inf.Name == "" {
+			errs = append(errs, field.Required(infPath.Child("name"), ""))
+		}
 
 		if _, ok := names[inf.Name]; ok {
 			errs = append(errs, field.Duplicate(infPath.Child("name"), inf.Name))
@@ -101,6 +123,9 @@ func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
 			if public.Ingress != nil && public.LoadBalancer != nil {
 				errs = append(errs, field.Invalid(publicPath, public, "ingress and loadBalancer are mutually exclusive"))
 			}
+			if public.Ingress != nil && public.Ingress.Host == "" {
+				errs = append(errs, field.Required(publicPath.Child("ingress").Child("host"), ""))
+			}
 		}
 	}
 
@@ -115,6 +140,10 @@ func (r *Capsule) validateFiles() (admission.Warnings, field.ErrorList) {
 	for i, f := range r.Spec.Files {
 		fPath := filesPath.Index(i)
 
+		if f.Path == "" {
+			errs = append(errs, field.Required(fPath.Child("path"), ""))
+		}
+
 		if _, ok := paths[f.Path]; ok {
 			errs = append(errs, field.Duplicate(fPath.Child("path"), f.Path))
 		} else {
@@ -126,6 +155,24 @@ func (r *Capsule) validateFiles() (admission.Warnings, field.ErrorList) {
 		}
 		if f.Secret == nil && f.ConfigMap == nil {
 			errs = append(errs, field.Required(fPath, "one of configMap or secret is required"))
+		}
+
+		if f.Secret != nil {
+			if f.Secret.Name == "" {
+				errs = append(errs, field.Required(fPath.Child("secret").Child("name"), ""))
+			}
+			if f.Secret.Key == "" {
+				errs = append(errs, field.Required(fPath.Child("secret").Child("key"), ""))
+			}
+		}
+
+		if f.ConfigMap != nil {
+			if f.ConfigMap.Name == "" {
+				errs = append(errs, field.Required(fPath.Child("configMap").Child("name"), ""))
+			}
+			if f.ConfigMap.Key == "" {
+				errs = append(errs, field.Required(fPath.Child("configMap").Child("key"), ""))
+			}
 		}
 	}
 

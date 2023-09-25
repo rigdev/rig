@@ -7,8 +7,9 @@ import (
 
 // CapsuleSpec defines the desired state of Capsule
 type CapsuleSpec struct {
-	Replicas        int32                    `json:"replicas"`
-	Image           string                   `json:"image"`
+	Replicas *int32 `json:"replicas,omitempty"`
+	Image    string `json:"image"`
+
 	Command         string                   `json:"command,omitempty"`
 	Args            []string                 `json:"args,omitempty"`
 	Interfaces      []CapsuleInterface       `json:"interfaces,omitempty"`
@@ -19,8 +20,11 @@ type CapsuleSpec struct {
 
 // CapsuleInterface defines an interface for a capsule
 type CapsuleInterface struct {
-	Port   int32                   `json:"port"`
-	Name   string                  `json:"name"`
+	Name string `json:"name"`
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	Port int32 `json:"port"`
+
 	Public *CapsulePublicInterface `json:"public,omitempty"`
 }
 
@@ -39,6 +43,8 @@ type CapsuleInterfaceIngress struct {
 // CapsuleInterfaceLoadBalancer defines that the interface should be exposed as
 // a L4 loadbalancer
 type CapsuleInterfaceLoadBalancer struct {
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port"`
 }
 
