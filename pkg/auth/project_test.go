@@ -23,6 +23,6 @@ func Test_ProjectID_Missing(t *testing.T) {
 	ctx := context.TODO()
 
 	pID1, err := GetProjectID(ctx)
-	require.Equal(t, uuid.Nil, pID1)
+	require.Equal(t, "", pID1)
 	require.EqualError(t, err, "permission_denied: no project selected")
 }
