@@ -7,7 +7,7 @@ import (
 )
 
 type Oauth2Link struct {
-	ProjectID uuid.UUID `bson:"project_id" json:"project_id"`
+	ProjectID string    `bson:"project_id" json:"project_id"`
 	UserID    uuid.UUID `bson:"user_id" json:"user_id"`
 	Issuer    string    `bson:"iss" json:"iss"`
 	Subject   string    `bson:"sub" json:"sub"`
@@ -23,7 +23,7 @@ func (u Oauth2Link) ToProto() (*oauth2.ProviderLink, error) {
 	return p, nil
 }
 
-func Oauth2LinkFromProto(projectID, userID uuid.UUID, p *oauth2.ProviderLink) (Oauth2Link, error) {
+func Oauth2LinkFromProto(projectID string, userID uuid.UUID, p *oauth2.ProviderLink) (Oauth2Link, error) {
 	bs, err := proto.Marshal(p)
 	if err != nil {
 		return Oauth2Link{}, err

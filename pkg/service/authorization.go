@@ -89,7 +89,7 @@ func (a *Authorization) handleAuth(ctx context.Context, path string, h http.Head
 		return ctx, errors.UnauthenticatedErrorf("%v", err)
 	}
 
-	if c.GetProjectID().IsNil() || c.GetSubject().IsNil() || c.GetSubjectType() == auth.SubjectTypeInvalid {
+	if c.GetProjectID() == "" || c.GetSubject().IsNil() || c.GetSubjectType() == auth.SubjectTypeInvalid {
 		logger.Debug("auth token missing essential properties")
 		return nil, errors.UnauthenticatedErrorf("invalid auth token content")
 	}
@@ -112,7 +112,7 @@ func (a *Authorization) handleAuth(ctx context.Context, path string, h http.Head
 					return nil, err
 				}
 
-				logger = logger.With(zap.Stringer("project_id", pc.UseProjectID))
+				logger = logger.With(zap.String("project_id", pc.UseProjectID))
 
 				if c.GetProjectID() != pc.ProjectID || c.GetSubject() != pc.GetSubject() {
 					logger.Debug("project token claims doesn't match user access token claims")

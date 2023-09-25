@@ -8,13 +8,12 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
 func (c Cmd) getAuthConfig(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
-	var projectID uuid.UUID
+	var projectID string
 	var err error
 	if len(args) != 1 {
 		res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
@@ -23,7 +22,7 @@ func (c Cmd) getAuthConfig(cmd *cobra.Command, args []string) error {
 		}
 
 		ps := []string{"Rig"}
-		psIds := []string{auth.RigProjectID.String()}
+		psIds := []string{auth.RigProjectID}
 		for _, p := range res.Msg.GetProjects() {
 			ps = append(ps, p.GetName())
 			psIds = append(psIds, p.GetProjectId())
@@ -34,32 +33,13 @@ func (c Cmd) getAuthConfig(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		projectID, err = uuid.Parse(psIds[i])
-		if err != nil {
-			return err
-		}
-	} else {
-		if id, err := uuid.Parse(args[0]); err == nil {
-			projectID = id
-		} else {
-			res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
-			if err != nil {
-				return err
-			}
+		projectID = psIds[i]
 
-			for _, p := range res.Msg.GetProjects() {
-				if p.GetName() == args[0] {
-					projectID, err = uuid.Parse(p.GetProjectId())
-					if err != nil {
-						return err
-					}
-					break
-				}
-			}
-		}
+	} else {
+		projectID = args[0]
 	}
 
-	if projectID == uuid.Nil {
+	if projectID == "" {
 		return errors.NotFoundErrorf("project '%v' not found", args[0])
 	}
 
@@ -73,7 +53,7 @@ func (c Cmd) getAuthConfig(cmd *cobra.Command, args []string) error {
 	res, err := c.Rig.Authentication().GetAuthConfig(ctx, &connect.Request[authentication.GetAuthConfigRequest]{
 		Msg: &authentication.GetAuthConfigRequest{
 			RedirectAddr: redirectAddr,
-			ProjectId:    projectID.String(),
+			ProjectId:    projectID,
 		},
 	})
 	if err != nil {

@@ -9,17 +9,13 @@ import (
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/telemetry"
-	"github.com/rigdev/rig/pkg/uuid"
 )
 
 // Login validates a user credentials and issues a access/refresh token pair used to validate requests.
 func (h *Handler) Login(ctx context.Context, req *connect.Request[authentication.LoginRequest]) (*connect.Response[authentication.LoginResponse], error) {
 	switch v := req.Msg.GetMethod().(type) {
 	case *authentication.LoginRequest_UserPassword:
-		pID, err := uuid.Parse(v.UserPassword.GetProjectId())
-		if err != nil {
-			return nil, errors.InvalidArgumentErrorf("invalid project ID")
-		}
+		pID := v.UserPassword.GetProjectId()
 		ctx = auth.WithProjectID(ctx, pID)
 		userID, u, t, err := h.as.LoginUserPassword(ctx, v.UserPassword.GetIdentifier(), v.UserPassword.GetPassword())
 		if err != nil {

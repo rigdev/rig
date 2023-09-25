@@ -32,7 +32,7 @@ func (c *Client) ListCapsuleMetrics(ctx context.Context) (iterator.Iterator[*cap
 		}
 
 		for _, cc := range cs {
-			if pidLabel, ok := cc.Labels[_rigProjectIDLabel]; !ok || pidLabel != pid.String() {
+			if pidLabel, ok := cc.Labels[_rigProjectIDLabel]; !ok || pidLabel != pid {
 				// ignore non project containers
 				continue
 			}

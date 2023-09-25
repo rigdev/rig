@@ -7,13 +7,12 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
 func (c Cmd) use(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
-	var projectID uuid.UUID
+	var projectID string
 	var err error
 	if len(args) == 0 {
 		projectID, err = c.promptForProjectID(ctx)
@@ -23,7 +22,7 @@ func (c Cmd) use(cmd *cobra.Command, args []string) error {
 
 	res, err := c.Rig.Project().Use(ctx, &connect.Request[project.UseRequest]{
 		Msg: &project.UseRequest{
-			ProjectId: projectID.String(),
+			ProjectId: projectID,
 		},
 	})
 	if err != nil {
@@ -41,10 +40,10 @@ func (c Cmd) use(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c Cmd) promptForProjectID(ctx context.Context) (uuid.UUID, error) {
+func (c Cmd) promptForProjectID(ctx context.Context) (string, error) {
 	res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
 
 	var ps []string
@@ -54,36 +53,29 @@ func (c Cmd) promptForProjectID(ctx context.Context) (uuid.UUID, error) {
 
 	i, _, err := common.PromptSelect("Project: ", ps)
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
 
-	projectID, err := uuid.Parse(res.Msg.GetProjects()[i].GetProjectId())
-	if err != nil {
-		return uuid.Nil, err
-	}
-
+	projectID := res.Msg.GetProjects()[i].GetProjectId()
 	return projectID, nil
 }
 
-func (c Cmd) projectIDFromArg(ctx context.Context, projectArg string) (uuid.UUID, error) {
-	if id, err := uuid.Parse(projectArg); err == nil {
-		return id, nil
+func (c Cmd) projectIDFromArg(ctx context.Context, projectArg string) (string, error) {
+	if projectArg != "" {
+		return projectArg, nil
 	}
+
 	res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
 
 	for _, p := range res.Msg.GetProjects() {
 		if p.GetName() != projectArg {
 			continue
 		}
-		projectID, err := uuid.Parse(p.GetProjectId())
-		if err != nil {
-			return uuid.Nil, err
-		}
-		return projectID, nil
+		return p.GetProjectId(), nil
 	}
 
-	return uuid.Nil, errors.NotFoundErrorf("project '%v' not found", projectArg)
+	return "", errors.NotFoundErrorf("project '%v' not found", projectArg)
 }

@@ -14,7 +14,7 @@ import (
 )
 
 type User struct {
-	ProjectID   uuid.UUID `bson:"project_id" json:"project_id"`
+	ProjectID   string    `bson:"project_id" json:"project_id"`
 	UserID      uuid.UUID `bson:"user_id" json:"user_id"`
 	Username    string    `bson:"username,omitempty" json:"username,omitempty"`
 	Email       string    `bson:"email,omitempty" json:"email,omitempty"`
@@ -59,7 +59,7 @@ func (u User) ToProtoEntry(settings *user_settings.Settings) (*model.UserEntry, 
 	return e, nil
 }
 
-func UserFromProto(projectID uuid.UUID, p *user.User) (User, error) {
+func UserFromProto(projectID string, p *user.User) (User, error) {
 	bs, err := proto.Marshal(p)
 	if err != nil {
 		return User{}, err
@@ -83,14 +83,14 @@ func UserFromProto(projectID uuid.UUID, p *user.User) (User, error) {
 	}, nil
 }
 
-func GetUserIDFilter(projectID, userID uuid.UUID) bson.M {
+func GetUserIDFilter(projectID string, userID uuid.UUID) bson.M {
 	return bson.M{
 		"project_id": projectID,
 		"user_id":    userID,
 	}
 }
 
-func GetOauth2UserFilter(projectID uuid.UUID, issuer, sub string) bson.M {
+func GetOauth2UserFilter(projectID string, issuer, sub string) bson.M {
 	return bson.M{
 		"project_id": projectID,
 		"iss":        issuer,
@@ -98,7 +98,7 @@ func GetOauth2UserFilter(projectID uuid.UUID, issuer, sub string) bson.M {
 	}
 }
 
-func GetUserIdentifierFilter(projectID uuid.UUID, id *model.UserIdentifier) (bson.M, error) {
+func GetUserIdentifierFilter(projectID string, id *model.UserIdentifier) (bson.M, error) {
 	switch v := id.GetIdentifier().(type) {
 	case *model.UserIdentifier_Email:
 		return bson.M{

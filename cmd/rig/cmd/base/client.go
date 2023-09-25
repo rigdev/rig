@@ -12,7 +12,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/fx"
 )
 
@@ -126,10 +125,10 @@ func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
 		return
 	}
 
-	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) && i.cfg.GetCurrentContext().Project.ProjectID != uuid.Nil {
+	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) && i.cfg.GetCurrentContext().Project.ProjectID != "" {
 		res, err := i.nc.Project().Use(ctx, &connect.Request[project.UseRequest]{
 			Msg: &project.UseRequest{
-				ProjectId: i.cfg.GetCurrentContext().Project.ProjectID.String(),
+				ProjectId: i.cfg.GetCurrentContext().Project.ProjectID,
 			},
 		})
 		if err == nil {

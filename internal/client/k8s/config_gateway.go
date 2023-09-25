@@ -78,7 +78,7 @@ func (g *configGateway) GetCapsuleConfig(ctx context.Context, capsuleID string) 
 	}
 
 	res := &v1alpha1.Capsule{}
-	if err := g.cc.Get(ctx, client.ObjectKey{Name: capsuleID, Namespace: projectID.String()}, res); err != nil {
+	if err := g.cc.Get(ctx, client.ObjectKey{Name: capsuleID, Namespace: projectID}, res); err != nil {
 		return nil, checkError(err)
 	}
 
@@ -91,12 +91,12 @@ func (g *configGateway) DeleteCapsuleConfig(ctx context.Context, capsuleID strin
 		return err
 	}
 
-	g.logger.Debug("delete capsule", zap.String("name", capsuleID), zap.String("namespace", projectID.String()))
+	g.logger.Debug("delete capsule", zap.String("name", capsuleID), zap.String("namespace", projectID))
 
 	if err := g.cc.Delete(ctx, &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsuleID,
-			Namespace: projectID.String(),
+			Namespace: projectID,
 		},
 	}); err != nil {
 		return checkError(err)
@@ -114,7 +114,7 @@ func (g *configGateway) SetEnvironmentVariables(ctx context.Context, capsuleID s
 	envFile := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsuleID,
-			Namespace: projectID.String(),
+			Namespace: projectID,
 		},
 		Data: envs,
 	}
@@ -128,7 +128,7 @@ func (g *configGateway) GetEnvironmentVariables(ctx context.Context, capsuleID s
 		return nil, err
 	}
 
-	cf, err := g.GetFile(ctx, capsuleID, capsuleID, projectID.String())
+	cf, err := g.GetFile(ctx, capsuleID, capsuleID, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func getList[L client.ObjectList](ctx context.Context, pagination *model.Paginat
 		return l, err
 	}
 
-	if err := cc.List(ctx, l, client.InNamespace(projectID.String())); err != nil {
+	if err := cc.List(ctx, l, client.InNamespace(projectID)); err != nil {
 		return l, checkError(err)
 	}
 	return l, nil

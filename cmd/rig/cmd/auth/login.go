@@ -16,7 +16,7 @@ import (
 
 func (c Cmd) login(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
-	res, err := c.loginWithRetry(ctx, authUserIdentifier, authPassword, auth.RigProjectID.String())
+	res, err := c.loginWithRetry(ctx, authUserIdentifier, authPassword, auth.RigProjectID)
 	if err != nil {
 		return err
 	}

@@ -8,11 +8,10 @@ import (
 	"github.com/rigdev/rig/internal/client/mongo"
 	"github.com/rigdev/rig/internal/repository/project/mongo/schema"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (r *MongoRepository) List(ctx context.Context, pagination *model.Pagination, exclude []uuid.UUID) (iterator.Iterator[*project.Project], int64, error) {
+func (r *MongoRepository) List(ctx context.Context, pagination *model.Pagination, exclude []string) (iterator.Iterator[*project.Project], int64, error) {
 	filter := bson.M{
 		"project_id": bson.M{
 			"$nin": exclude,

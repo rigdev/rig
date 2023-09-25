@@ -10,7 +10,6 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 )
 
 // Register inserts new user in the namespace.
@@ -19,10 +18,7 @@ func (h *Handler) Register(ctx context.Context, req *connect.Request[authenticat
 
 	switch v := req.Msg.GetMethod().(type) {
 	case *authentication.RegisterRequest_UserPassword:
-		pID, err := uuid.Parse(v.UserPassword.GetProjectId())
-		if err != nil {
-			return nil, errors.InvalidArgumentErrorf("invalid project ID")
-		}
+		pID := v.UserPassword.GetProjectId()
 		ctx = auth.WithProjectID(ctx, pID)
 
 		inits = append(inits, &user.Update{

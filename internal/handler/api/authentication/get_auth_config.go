@@ -7,17 +7,12 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig/pkg/auth"
-	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/uuid"
 	"k8s.io/utils/strings/slices"
 )
 
 // GetAuthConfig this returns a config for a specific namespace together with urls to all OIDC providers.
 func (h *Handler) GetAuthConfig(ctx context.Context, req *connect.Request[authentication.GetAuthConfigRequest]) (resp *connect.Response[authentication.GetAuthConfigResponse], err error) {
-	pID, err := uuid.Parse(req.Msg.GetProjectId())
-	if err != nil {
-		return nil, errors.InvalidArgumentErrorf("invalid project ID")
-	}
+	pID := req.Msg.GetProjectId()
 	ctx = auth.WithProjectID(ctx, pID)
 
 	p, err := h.ps.GetProject(ctx)

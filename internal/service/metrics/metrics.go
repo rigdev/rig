@@ -13,7 +13,6 @@ import (
 	"github.com/rigdev/rig/internal/service/project"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
-	"github.com/rigdev/rig/pkg/uuid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -103,7 +102,7 @@ func (s *service) stop() {
 }
 
 func (s *service) update(ctx context.Context) error {
-	var pids []uuid.UUID
+	var pids []string
 	p := &model.Pagination{
 		Limit: 100,
 	}
@@ -121,7 +120,7 @@ func (s *service) update(ctx context.Context) error {
 				return err
 			}
 
-			pids = append(pids, uuid.UUID(e.GetProjectId()))
+			pids = append(pids, e.GetProjectId())
 		}
 
 		p.Offset = p.Offset + p.Limit
@@ -134,7 +133,7 @@ func (s *service) update(ctx context.Context) error {
 		projectCtx := auth.WithProjectID(ctx, pid)
 		iter, err := s.cluster.ListCapsuleMetrics(projectCtx)
 		if err != nil {
-			s.log.Info("failed to read metrics for project", zap.Stringer("project_id", pid), zap.Error(err))
+			s.log.Info("failed to read metrics for project", zap.String("project_id", pid), zap.Error(err))
 			continue
 		}
 
@@ -144,12 +143,12 @@ func (s *service) update(ctx context.Context) error {
 				break
 			}
 			if err != nil {
-				s.log.Info("failed to read metrics for project", zap.Stringer("project_id", pid), zap.Error(err))
+				s.log.Info("failed to read metrics for project", zap.String("project_id", pid), zap.Error(err))
 				break
 			}
 
 			if err := s.cr.CreateMetrics(projectCtx, cms); err != nil {
-				s.log.Info("failed to write metrics for project", zap.Stringer("project_id", pid), zap.Error(err))
+				s.log.Info("failed to write metrics for project", zap.String("project_id", pid), zap.Error(err))
 				break
 			}
 

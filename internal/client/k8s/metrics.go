@@ -17,7 +17,7 @@ func (c *Client) ListCapsuleMetrics(ctx context.Context) (iterator.Iterator[*cap
 	if err != nil {
 		return nil, err
 	}
-	ns := pid.String()
+	ns := pid
 
 	p := iterator.NewProducer[*capsule.InstanceMetrics]()
 

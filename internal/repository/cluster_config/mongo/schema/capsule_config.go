@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/uuid"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -26,14 +25,14 @@ func (c CapsuleConfig) ToAPI() (*v1alpha1.Capsule, error) {
 	return p, nil
 }
 
-func CapsuleConfigFromAPI(projectID uuid.UUID, p *v1alpha1.Capsule) (CapsuleConfig, error) {
+func CapsuleConfigFromAPI(projectID string, p *v1alpha1.Capsule) (CapsuleConfig, error) {
 	bs, err := json.Marshal(p)
 	if err != nil {
 		return CapsuleConfig{}, err
 	}
 
 	return CapsuleConfig{
-		ProjectID:            projectID.String(),
+		ProjectID:            projectID,
 		CapsuleID:            p.GetName(),
 		EnvironmentVariables: map[string]string{},
 		Data:                 bs,

@@ -11,7 +11,7 @@ import (
 func Test_ProjectID(t *testing.T) {
 	ctx := context.TODO()
 
-	pID1 := uuid.New()
+	pID1 := uuid.New().String()
 	ctx = WithProjectID(ctx, pID1)
 
 	pID2, err := GetProjectID(ctx)

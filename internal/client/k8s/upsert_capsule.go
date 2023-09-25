@@ -35,7 +35,7 @@ func (c *Client) upsertCapsule(ctx context.Context, capsuleID string, cc *cluste
 	if err != nil {
 		return err
 	}
-	ns := projectID.String()
+	ns := projectID
 
 	if err := c.reconcileProjectNamespace(ctx, ns); err != nil {
 		return err

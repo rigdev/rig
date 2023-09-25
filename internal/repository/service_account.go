@@ -12,7 +12,7 @@ import (
 type ServiceAccount interface {
 	Create(ctx context.Context, serviceAccountID uuid.UUID, c *service_account.ServiceAccount) error
 	List(ctx context.Context) (iterator.Iterator[*service_account.Entry], error)
-	Get(ctx context.Context, serviceAccountID uuid.UUID) (uuid.UUID, *service_account.ServiceAccount, error)
+	Get(ctx context.Context, serviceAccountID uuid.UUID) (string, *service_account.ServiceAccount, error)
 	GetClientSecret(ctx context.Context, serviceAccountID uuid.UUID) (*model.HashingInstance, error)
 	UpdateClientSecret(ctx context.Context, serviceAccountID uuid.UUID, pw *model.HashingInstance) error
 	Delete(ctx context.Context, serviceAccountID uuid.UUID) error
