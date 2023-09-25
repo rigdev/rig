@@ -80,9 +80,7 @@ type ClientMailjet struct {
 }
 
 type Repository struct {
-	Storage          RepositoryStore       `mapstructure:"storage"`
 	Capsule          RepositoryStore       `mapstructure:"capsule"`
-	Database         RepositoryStore       `mapstructure:"database"`
 	ServiceAccount   RepositoryStore       `mapstructure:"service_account"`
 	Group            RepositoryStore       `mapstructure:"group"`
 	Project          RepositoryStore       `mapstructure:"project"`
