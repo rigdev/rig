@@ -1,13 +1,11 @@
 package group
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
@@ -34,12 +32,13 @@ func (f groupField) String() string {
 	}
 }
 
-func GroupUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) update(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	g, uid, err := common.GetGroup(ctx, identifier, nc)
+	g, uid, err := common.GetGroup(ctx, identifier, c.Rig)
 	if err != nil {
 		return err
 	}
@@ -70,7 +69,7 @@ func GroupUpdate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 		}
 	}
 
-	_, err = nc.Group().Update(ctx, &connect.Request[group.UpdateRequest]{
+	_, err = c.Rig.Group().Update(ctx, &connect.Request[group.UpdateRequest]{
 		Msg: &group.UpdateRequest{
 			GroupId: uid,
 			Updates: updates,

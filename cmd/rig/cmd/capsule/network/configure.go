@@ -1,13 +1,11 @@
 package network
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
@@ -16,7 +14,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func configure(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) configure(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var err error
 	networkFile := ""
 	if len(args) == 0 {
@@ -47,7 +46,7 @@ func configure(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 		return err
 	}
 
-	if _, err := nc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+	if _, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Changes: []*capsule.Change{{

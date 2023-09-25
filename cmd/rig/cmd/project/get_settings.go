@@ -1,19 +1,17 @@
 package project
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func ProjectGetSettings(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) getSettings(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	req := &settings.GetSettingsRequest{}
-	resp, err := nc.ProjectSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{Msg: req})
+	resp, err := c.Rig.ProjectSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{Msg: req})
 	if err != nil {
 		return err
 	}

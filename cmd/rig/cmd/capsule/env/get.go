@@ -1,15 +1,13 @@
 package env
 
 import (
-	"context"
-
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func get(ctx context.Context, args []string, cmd *cobra.Command, rc rig.Client) error {
-	r, err := capsule.GetCurrentRollout(ctx, rc)
+func (c Cmd) get(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	r, err := capsule.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err
 	}

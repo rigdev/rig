@@ -1,18 +1,15 @@
 package project
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
-func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config) error {
+func (c Cmd) create(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	if name == "" {
 		var err error
 		name, err = common.PromptInput("Project name:", common.ValidateNonEmptyOpt)
@@ -29,7 +26,7 @@ func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 		},
 	}
 
-	res, err := nc.Project().Create(ctx, &connect.Request[project.CreateRequest]{
+	res, err := c.Rig.Project().Create(ctx, &connect.Request[project.CreateRequest]{
 		Msg: &project.CreateRequest{
 			Initializers: initializers,
 		},
@@ -42,7 +39,7 @@ func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 	cmd.Printf("Successfully created project %s with id %s \n", name, p.GetProjectId())
 
 	if useProject {
-		res, err := nc.Project().Use(ctx, &connect.Request[project.UseRequest]{
+		res, err := c.Rig.Project().Use(ctx, &connect.Request[project.UseRequest]{
 			Msg: &project.UseRequest{
 				ProjectId: p.GetProjectId(),
 			},
@@ -51,9 +48,9 @@ func ProjectCreate(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			return err
 		}
 
-		cfg.GetCurrentContext().Project.ProjectID = uuid.UUID(p.GetProjectId())
-		cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
-		if err := cfg.Save(); err != nil {
+		c.Cfg.GetCurrentContext().Project.ProjectID = uuid.UUID(p.GetProjectId())
+		c.Cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
+		if err := c.Cfg.Save(); err != nil {
 			return err
 		}
 

@@ -1,14 +1,12 @@
 package project
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -92,8 +90,9 @@ func (f settingsField) String() string {
 	}
 }
 
-func ProjectUpdateSettings(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
-	res, err := nc.ProjectSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
+func (c Cmd) updateSettings(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	res, err := c.Rig.ProjectSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err
 	}
@@ -107,7 +106,7 @@ func ProjectUpdateSettings(ctx context.Context, cmd *cobra.Command, args []strin
 			return err
 		}
 
-		_, err = nc.ProjectSettings().UpdateSettings(ctx, &connect.Request[settings.UpdateSettingsRequest]{
+		_, err = c.Rig.ProjectSettings().UpdateSettings(ctx, &connect.Request[settings.UpdateSettingsRequest]{
 			Msg: &settings.UpdateSettingsRequest{
 				Updates: []*settings.Update{u},
 			},
@@ -153,7 +152,7 @@ func ProjectUpdateSettings(ctx context.Context, cmd *cobra.Command, args []strin
 		return nil
 	}
 
-	_, err = nc.ProjectSettings().UpdateSettings(ctx, &connect.Request[settings.UpdateSettingsRequest]{
+	_, err = c.Rig.ProjectSettings().UpdateSettings(ctx, &connect.Request[settings.UpdateSettingsRequest]{
 		Msg: &settings.UpdateSettingsRequest{
 			Updates: updates,
 		},

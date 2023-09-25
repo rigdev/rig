@@ -12,7 +12,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
@@ -70,7 +69,8 @@ type firebaseUser struct {
 	CreatedAt     string `json:"createdAt"`
 }
 
-func UserMigrate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) migrate(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var err error
 	fields := []string{
 		platformFirebase.String(),
@@ -86,18 +86,18 @@ func UserMigrate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 	switch platform {
 	case platformFirebase.String():
 		if usersFilePath != "" {
-			return migrateFromFirebaseUsersFile(ctx, nc)
+			return c.migrateFromFirebaseUsersFile(ctx)
 		} else if credFilePath != "" {
-			return migrateFromFirebaseCredentials(ctx, nc)
+			return c.migrateFromFirebaseCredentials(ctx)
 		} else {
-			return migrateFromFirebase(ctx, nc)
+			return c.migrateFromFirebase(ctx)
 		}
 	default:
 		return fmt.Errorf("invalid migration platform")
 	}
 }
 
-func migrateFromFirebase(ctx context.Context, nc rig.Client) error {
+func (c Cmd) migrateFromFirebase(ctx context.Context) error {
 	fields := []string{
 		methodCredentials.String(),
 		methodUsersFile.String(),
@@ -110,15 +110,15 @@ func migrateFromFirebase(ctx context.Context, nc rig.Client) error {
 
 	switch migrationMethod(i + 1) {
 	case methodCredentials:
-		return migrateFromFirebaseCredentials(ctx, nc)
+		return c.migrateFromFirebaseCredentials(ctx)
 	case methodUsersFile:
-		return migrateFromFirebaseUsersFile(ctx, nc)
+		return c.migrateFromFirebaseUsersFile(ctx)
 	default:
 		return fmt.Errorf("invalid migration method")
 	}
 }
 
-func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
+func (c Cmd) migrateFromFirebaseCredentials(ctx context.Context) error {
 	var err error
 	if credFilePath == "" {
 		credFilePath, err = common.PromptInput("Credentials Path:", common.ValidateNonEmptyOpt)
@@ -137,12 +137,12 @@ func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 		return err
 	}
 
-	c := map[string]interface{}{}
-	if err := json.Unmarshal(bytevalue, &c); err != nil {
+	cc := map[string]interface{}{}
+	if err := json.Unmarshal(bytevalue, &cc); err != nil {
 		return err
 	}
 
-	projectID, ok := c["project_id"].(string)
+	projectID, ok := cc["project_id"].(string)
 	if !ok {
 		return fmt.Errorf("project_id not found in credentials")
 	}
@@ -237,7 +237,7 @@ func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 			})
 		}
 
-		_, err = nc.User().Create(ctx, &connect.Request[user.CreateRequest]{
+		_, err = c.Rig.User().Create(ctx, &connect.Request[user.CreateRequest]{
 			Msg: &user.CreateRequest{
 				Initializers: us,
 			},
@@ -259,7 +259,7 @@ func migrateFromFirebaseCredentials(ctx context.Context, nc rig.Client) error {
 	return nil
 }
 
-func migrateFromFirebaseUsersFile(ctx context.Context, nc rig.Client) error {
+func (c Cmd) migrateFromFirebaseUsersFile(ctx context.Context) error {
 	var err error
 	if usersFilePath == "" {
 		usersFilePath, err = common.PromptInput("users.json path:", common.ValidateNonEmptyOpt)
@@ -353,7 +353,7 @@ func migrateFromFirebaseUsersFile(ctx context.Context, nc rig.Client) error {
 			})
 		}
 
-		_, err = nc.User().Create(ctx, &connect.Request[user.CreateRequest]{
+		_, err = c.Rig.User().Create(ctx, &connect.Request[user.CreateRequest]{
 			Msg: &user.CreateRequest{
 				Initializers: us,
 			},

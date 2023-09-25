@@ -1,26 +1,25 @@
 package storage
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func StorageListProviders(ctx context.Context, cmd *cobra.Command, nc rig.Client) error {
+func (c Cmd) listProviders(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	Pagination := &model.Pagination{
 		Offset: uint32(offset),
 		Limit:  uint32(limit),
 	}
 
-	resp, err := nc.Storage().ListProviders(ctx, &connect.Request[storage.ListProvidersRequest]{
+	resp, err := c.Rig.Storage().ListProviders(ctx, &connect.Request[storage.ListProvidersRequest]{
 		Msg: &storage.ListProvidersRequest{
 			Pagination: Pagination,
 		},

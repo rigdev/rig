@@ -1,8 +1,11 @@
 package service_account
 
 import (
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"context"
+
+	"github.com/rigdev/rig-go-sdk"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 )
 
 var (
@@ -18,7 +21,14 @@ var (
 	name string
 )
 
-func Setup(parent *cobra.Command) {
+type Cmd struct {
+	fx.In
+
+	Ctx context.Context
+	Rig rig.Client
+}
+
+func (c Cmd) Setup(parent *cobra.Command) {
 	serviceAccount := &cobra.Command{
 		Use:   "service-account",
 		Short: "Manage service accounts",
@@ -26,7 +36,7 @@ func Setup(parent *cobra.Command) {
 
 	create := &cobra.Command{
 		Use:  "create",
-		RunE: base.Register(ServiceAccountCreate),
+		RunE: c.create,
 		Args: cobra.NoArgs,
 	}
 	create.Flags().StringVarP(&name, "name", "n", "", "name of the credential")
@@ -34,7 +44,7 @@ func Setup(parent *cobra.Command) {
 
 	list := &cobra.Command{
 		Use:  "list",
-		RunE: base.Register(ServiceAccountList),
+		RunE: c.list,
 		Args: cobra.NoArgs,
 	}
 	list.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
@@ -45,7 +55,7 @@ func Setup(parent *cobra.Command) {
 
 	delete := &cobra.Command{
 		Use:  "delete [id]",
-		RunE: base.Register(ServiceAccountDelete),
+		RunE: c.delete,
 		Args: cobra.MaximumNArgs(1),
 	}
 	serviceAccount.AddCommand(delete)

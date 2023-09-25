@@ -1,4 +1,4 @@
-package capsule
+package builddeploy
 
 import (
 	"context"
@@ -10,37 +10,29 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/registry"
-	"github.com/docker/docker/client"
 	container_name "github.com/google/go-containerregistry/pkg/name"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/ptr"
-	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 )
 
-type imageInfo struct {
-	tag     string
-	created time.Time
-}
-
-func deploy(ctx context.Context, cmd *cobra.Command, args []string, rc rig.Client, dc *client.Client) error {
-	buildID, err := getBuildID(ctx, CapsuleID, rc, dc)
+func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	buildID, err := c.getBuildID(ctx, capsule_cmd.CapsuleID)
 	if err != nil {
 		return err
 	}
-	res, err := rc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+	res, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: CapsuleID,
+			CapsuleId: capsule_cmd.CapsuleID,
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_BuildId{BuildId: buildID},
 			}},
@@ -50,17 +42,17 @@ func deploy(ctx context.Context, cmd *cobra.Command, args []string, rc rig.Clien
 		return err
 	}
 	cmd.Printf("Deploying build %v in rollout %v \n", buildID, res.Msg.GetRolloutId())
-	return listenForEvents(ctx, res.Msg.GetRolloutId(), rc, CapsuleID, cmd)
+	return c.listenForEvents(ctx, res.Msg.GetRolloutId(), capsule_cmd.CapsuleID)
 }
 
-func getBuildID(ctx context.Context, capsuleID string, rc rig.Client, dc *client.Client) (string, error) {
+func (c Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) {
 	if buildID != "" && image != "" {
 		return "", errors.New("not both --build-id and --image can be given")
 	}
 
 	if buildID != "" {
 		// TODO Figure out pagination
-		resp, err := rc.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
+		resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
 			CapsuleId: capsuleID,
 			Pagination: &model.Pagination{
 				Offset:     0,
@@ -76,10 +68,10 @@ func getBuildID(ctx context.Context, capsuleID string, rc rig.Client, dc *client
 	}
 
 	if image != "" {
-		return CreateBuild(ctx, rc, capsuleID, dc, ImageRefFromFlags())
+		return c.createBuildInner(ctx, capsuleID, imageRefFromFlags())
 	}
 
-	return promptForImageOrBuild(ctx, capsuleID, rc, dc)
+	return c.promptForImageOrBuild(ctx, capsuleID)
 }
 
 func expandBuildID(ctx context.Context, builds []*capsule.Build, buildID string) (string, error) {
@@ -171,177 +163,27 @@ func isHexString(s string) bool {
 	return true
 }
 
-type ImageRef struct {
-	image string
-	// &true: we know it's local
-	// &false: we know it's remote
-	// nil: we don't know
-	isKnownLocal *bool
-}
-
-func ImageRefFromFlags() ImageRef {
-	imageRef := ImageRef{
-		image:        image,
-		isKnownLocal: nil,
-	}
-	if remote {
-		imageRef.isKnownLocal = ptr.New(false)
-	}
-	return imageRef
-}
-
-func CreateBuild(ctx context.Context, rc rig.Client, capsuleID string, dc *client.Client, imageRef ImageRef) (string, error) {
-	if strings.Contains(imageRef.image, "@") {
-		return "", errors.UnimplementedErrorf("referencing images by digest is not yet supported")
-	}
-
-	var err error
-	var isLocalImage bool
-	if imageRef.isKnownLocal == nil {
-		isLocalImage, _, err = utils.ImageExistsNatively(ctx, dc, imageRef.image)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		isLocalImage = *imageRef.isKnownLocal
-	}
-
-	var digest string
-	if isLocalImage {
-		imageRef.image, digest, err = pushLocalImageToDevRegistry(ctx, imageRef.image, rc, dc)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	res, err := rc.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
-		Msg: &capsule.CreateBuildRequest{
-			CapsuleId: capsuleID,
-			Image:     imageRef.image,
-			Digest:    digest,
-		},
-	})
-	if err != nil {
-		return "", err
-	}
-
-	if res.Msg.GetCreatedNewBuild() {
-		fmt.Println("Created new build:", res.Msg.GetBuildId())
-	} else {
-		fmt.Println("Build already exists, using existing build")
-	}
-
-	return res.Msg.GetBuildId(), nil
-}
-
-func promptForImageOrBuild(ctx context.Context, capsuleID string, rc rig.Client, dc *client.Client) (string, error) {
+func (c Cmd) promptForImageOrBuild(ctx context.Context, capsuleID string) (string, error) {
 	i, _, err := common.PromptSelect("Deploy from docker image or existing rig build?", []string{"Image", "Build"})
 	if err != nil {
 		return "", err
 	}
 	switch i {
 	case 0:
-		imgRef, err := PromptForImage(ctx, dc)
+		imgRef, err := c.promptForImage(ctx)
 		if err != nil {
 			return "", err
 		}
-		return CreateBuild(ctx, rc, capsuleID, dc, imgRef)
+		return c.createBuildInner(ctx, capsuleID, imgRef)
 	case 1:
-		return promptForExistingBuild(ctx, capsuleID, rc)
+		return c.promptForExistingBuild(ctx, capsuleID)
 	default:
 		return "", errors.New("something went wrong")
 	}
 }
 
-func PromptForImage(ctx context.Context, dc *client.Client) (ImageRef, error) {
-	var empty ImageRef
-
-	ok, err := common.PromptConfirm("Use a local image?", true)
-	if err != nil {
-		return empty, err
-	}
-
-	if ok {
-		img, err := getDaemonImage(ctx, dc)
-		if err != nil {
-			return empty, err
-		}
-		return ImageRef{
-			image:        img.tag,
-			isKnownLocal: ptr.New(true),
-		}, nil
-	}
-
-	image, err = common.PromptInput("Enter image:", common.ValidateImageOpt)
-	if err != nil {
-		return empty, nil
-	}
-	return ImageRef{
-		image:        image,
-		isKnownLocal: ptr.New(false),
-	}, nil
-}
-
-func getDaemonImage(ctx context.Context, dc *client.Client) (*imageInfo, error) {
-	images, prompts, err := getImagePrompts(ctx, dc, "")
-	if err != nil {
-		return nil, err
-	}
-
-	if len(images) == 0 {
-		return nil, errors.New("no local docker images found")
-	}
-	idx, err := common.PromptTableSelect("Select image:", prompts, []string{"Image name", "Age"}, common.SelectEnableFilterOpt)
-	if err != nil {
-		return nil, err
-	}
-	return &images[idx], nil
-}
-
-func getImagePrompts(ctx context.Context, dc *client.Client, filter string) ([]imageInfo, [][]string, error) {
-	res, err := dc.ImageList(ctx, types.ImageListOptions{
-		Filters: filters.NewArgs(filters.Arg("dangling", "false")),
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var images []imageInfo
-	var prompts [][]string
-
-	for _, image := range res {
-		for _, tag := range image.RepoTags {
-			t := time.Unix(image.Created, 0)
-			ii, _, err := dc.ImageInspectWithRaw(ctx, tag)
-			if err != nil {
-				return nil, nil, err
-			}
-			if !ii.Metadata.LastTagTime.IsZero() {
-				t = ii.Metadata.LastTagTime
-			}
-			images = append(images, imageInfo{
-				tag:     tag,
-				created: t,
-			})
-		}
-	}
-
-	slices.SortFunc(images, func(i, j imageInfo) bool {
-		return i.created.After(j.created)
-	})
-
-	for idx, image := range images {
-		if idx >= 50 {
-			break
-		}
-		t := time.Since(image.created)
-		prompts = append(prompts, []string{image.tag, common.FormatDuration(t)})
-	}
-	return images, prompts, nil
-}
-
-func promptForExistingBuild(ctx context.Context, capsuleID string, rc rig.Client) (string, error) {
-	resp, err := rc.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
+func (c Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (string, error) {
+	resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
 		CapsuleId:  capsuleID,
 		Pagination: &model.Pagination{},
 	}))
@@ -353,11 +195,15 @@ func promptForExistingBuild(ctx context.Context, capsuleID string, rc rig.Client
 		return b1.CreatedAt.AsTime().After(b2.CreatedAt.AsTime())
 	})
 
+	if len(builds) == 0 {
+		return "", errors.New("capsule has no builds")
+	}
+
 	var rows [][]string
 	for _, b := range builds {
 		rows = append(rows, []string{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
-			TruncatedFixed(b.GetDigest(), 19),
+			capsule_cmd.TruncatedFixed(b.GetDigest(), 19),
 			common.FormatDuration(time.Since(b.GetCreatedAt().AsTime())),
 		})
 	}
@@ -375,10 +221,10 @@ func promptForExistingBuild(ctx context.Context, capsuleID string, rc rig.Client
 	return builds[idx].GetBuildId(), nil
 }
 
-func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsuleID string, cmd *cobra.Command) error {
+func (c Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID string) error {
 	eventCount := 0
 	for {
-		res, err := rc.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
+		res, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
 			Msg: &capsule.GetRolloutRequest{
 				CapsuleId: capsuleID,
 				RolloutId: rolloutID,
@@ -388,7 +234,7 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 			return err
 		}
 
-		eventRes, err := rc.Capsule().ListEvents(ctx, &connect.Request[capsule.ListEventsRequest]{
+		eventRes, err := c.Rig.Capsule().ListEvents(ctx, &connect.Request[capsule.ListEventsRequest]{
 			Msg: &capsule.ListEventsRequest{
 				CapsuleId: capsuleID,
 				RolloutId: rolloutID,
@@ -401,19 +247,19 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 			return err
 		}
 		for _, event := range eventRes.Msg.GetEvents() {
-			cmd.Printf("[%v] %v\n", event.GetCreatedAt().AsTime().Format(base.RFC3339MilliFixed), event.GetMessage())
+			fmt.Printf("[%v] %v\n", event.GetCreatedAt().AsTime().Format(base.RFC3339MilliFixed), event.GetMessage())
 		}
 		eventCount += len(eventRes.Msg.GetEvents())
 
 		switch res.Msg.GetRollout().GetStatus().GetState() {
 		case capsule.RolloutState_ROLLOUT_STATE_DONE:
-			cmd.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment complete")
+			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment complete")
 			return nil
 		case capsule.RolloutState_ROLLOUT_STATE_FAILED:
-			cmd.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment failed")
+			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment failed")
 			return nil
 		case capsule.RolloutState_ROLLOUT_STATE_ABORTED:
-			cmd.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment aborted")
+			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment aborted")
 			return nil
 		}
 
@@ -421,8 +267,8 @@ func listenForEvents(ctx context.Context, rolloutID uint64, rc rig.Client, capsu
 	}
 }
 
-func pushLocalImageToDevRegistry(ctx context.Context, image string, client rig.Client, dc *client.Client) (string, string, error) {
-	resp, err := client.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{}))
+func (c Cmd) pushLocalImageToDevRegistry(ctx context.Context, image string) (string, string, error) {
+	resp, err := c.Rig.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{}))
 	if err != nil {
 		return "", "", err
 	}
@@ -444,11 +290,11 @@ func pushLocalImageToDevRegistry(ctx context.Context, image string, client rig.C
 
 	fmt.Printf("Pushing the image to the dev docker registry under the new name %q\n", newImageName)
 
-	if err := dc.ImageTag(ctx, image, newImageName); err != nil {
+	if err := c.DockerClient.ImageTag(ctx, image, newImageName); err != nil {
 		return "", "", err
 	}
 
-	digest, err := pushToDevRegistry(ctx, dc, newImageName, devRegistry.Host)
+	digest, err := c.pushToDevRegistry(ctx, newImageName, devRegistry.Host)
 	if err != nil {
 		return "", "", err
 	}
@@ -470,7 +316,7 @@ func makeDevRegistryImageName(image string, devRegistryHost string) (string, err
 	return tag.String(), nil
 }
 
-func pushToDevRegistry(ctx context.Context, dc *client.Client, image string, host string) (string, error) {
+func (c Cmd) pushToDevRegistry(ctx context.Context, image string, host string) (string, error) {
 	ac := registry.AuthConfig{
 		ServerAddress: host,
 	}
@@ -479,7 +325,7 @@ func pushToDevRegistry(ctx context.Context, dc *client.Client, image string, hos
 		return "", err
 	}
 
-	rc, err := dc.ImagePush(ctx, image, types.ImagePushOptions{
+	rc, err := c.DockerClient.ImagePush(ctx, image, types.ImagePushOptions{
 		RegistryAuth: base64.StdEncoding.EncodeToString(secret),
 	})
 	if err != nil {

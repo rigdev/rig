@@ -5,25 +5,23 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
-func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, client rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
+func (c Cmd) use(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var projectID uuid.UUID
 	var err error
 	if len(args) == 0 {
-		projectID, err = promptForProjectID(ctx, client)
+		projectID, err = c.promptForProjectID(ctx)
 	} else {
-		projectID, err = projectIDFromArg(ctx, client, args[0])
+		projectID, err = c.projectIDFromArg(ctx, args[0])
 	}
 
-	res, err := client.Project().Use(ctx, &connect.Request[project.UseRequest]{
+	res, err := c.Rig.Project().Use(ctx, &connect.Request[project.UseRequest]{
 		Msg: &project.UseRequest{
 			ProjectId: projectID.String(),
 		},
@@ -32,9 +30,9 @@ func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, client r
 		return err
 	}
 
-	cfg.GetCurrentContext().Project.ProjectID = projectID
-	cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
-	if err := cfg.Save(); err != nil {
+	c.Cfg.GetCurrentContext().Project.ProjectID = projectID
+	c.Cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
+	if err := c.Cfg.Save(); err != nil {
 		return err
 	}
 
@@ -43,8 +41,8 @@ func ProjectUse(ctx context.Context, cmd *cobra.Command, args []string, client r
 	return nil
 }
 
-func promptForProjectID(ctx context.Context, client rig.Client) (uuid.UUID, error) {
-	res, err := client.Project().List(ctx, &connect.Request[project.ListRequest]{})
+func (c Cmd) promptForProjectID(ctx context.Context) (uuid.UUID, error) {
+	res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -67,11 +65,11 @@ func promptForProjectID(ctx context.Context, client rig.Client) (uuid.UUID, erro
 	return projectID, nil
 }
 
-func projectIDFromArg(ctx context.Context, client rig.Client, projectArg string) (uuid.UUID, error) {
+func (c Cmd) projectIDFromArg(ctx context.Context, projectArg string) (uuid.UUID, error) {
 	if id, err := uuid.Parse(projectArg); err == nil {
 		return id, nil
 	}
-	res, err := client.Project().List(ctx, &connect.Request[project.ListRequest]{})
+	res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return uuid.Nil, err
 	}

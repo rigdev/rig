@@ -1,7 +1,6 @@
 package rollout
 
 import (
-	"context"
 	"strconv"
 	"time"
 
@@ -9,13 +8,13 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func CapsuleEvents(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) capsuleEvents(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var rollout uint64
 	var err error
 	if len(args) > 0 {
@@ -24,7 +23,7 @@ func CapsuleEvents(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 			return errors.InvalidArgumentErrorf("invalid rollout id - %v", err)
 		}
 	} else {
-		resp, err := nc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
+		resp, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 			Msg: &capsule.GetRequest{
 				CapsuleId: capsule_cmd.CapsuleID,
 			},
@@ -36,7 +35,7 @@ func CapsuleEvents(ctx context.Context, cmd *cobra.Command, args []string, nc ri
 		rollout = resp.Msg.GetCapsule().GetCurrentRollout()
 	}
 
-	resp, err := nc.Capsule().ListEvents(ctx, &connect.Request[capsule.ListEventsRequest]{
+	resp, err := c.Rig.Capsule().ListEvents(ctx, &connect.Request[capsule.ListEventsRequest]{
 		Msg: &capsule.ListEventsRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Pagination: &model.Pagination{

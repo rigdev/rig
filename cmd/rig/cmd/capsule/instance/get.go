@@ -1,7 +1,6 @@
 package instance
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -9,14 +8,14 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func get(ctx context.Context, args []string, cmd *cobra.Command, nc rig.Client) error {
-	resp, err := nc.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
+func (c Cmd) get(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	resp, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
 			CapsuleId: cmd_capsule.CapsuleID,
 			Pagination: &model.Pagination{

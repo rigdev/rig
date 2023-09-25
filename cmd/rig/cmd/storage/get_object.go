@@ -1,18 +1,16 @@
 package storage
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func StorageGetObject(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) getObject(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var path string
 	var err error
 	if len(args) < 1 {
@@ -28,7 +26,7 @@ func StorageGetObject(ctx context.Context, cmd *cobra.Command, args []string, nc
 		if err != nil {
 			return err
 		}
-		res, err := nc.Storage().GetObject(ctx, &connect.Request[storage.GetObjectRequest]{
+		res, err := c.Rig.Storage().GetObject(ctx, &connect.Request[storage.GetObjectRequest]{
 			Msg: &storage.GetObjectRequest{
 				Bucket: bucket,
 				Path:   prefix,

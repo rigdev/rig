@@ -1,16 +1,14 @@
 package group
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func GroupCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) create(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var err error
 	if name == "" {
 		name, err = common.PromptInput("Name:", common.ValidateNonEmptyOpt)
@@ -27,7 +25,7 @@ func GroupCreate(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 		},
 	}
 
-	res, err := nc.Group().Create(ctx, &connect.Request[group.CreateRequest]{
+	res, err := c.Rig.Group().Create(ctx, &connect.Request[group.CreateRequest]{
 		Msg: &group.CreateRequest{
 			Initializers: updates,
 		},

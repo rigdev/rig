@@ -1,20 +1,18 @@
 package database
 
 import (
-	"context"
-
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func Get(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) get(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	db, id, err := common.GetDatabase(ctx, identifier, nc)
+	db, id, err := common.GetDatabase(ctx, identifier, c.Rig)
 	if err != nil {
 		return err
 	}

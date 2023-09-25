@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -9,12 +8,12 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func UserList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) list(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	search := strings.Join(args, " ")
 	req := &user.ListRequest{
 		Pagination: &model.Pagination{
@@ -23,7 +22,7 @@ func UserList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cli
 		},
 		Search: search,
 	}
-	resp, err := nc.User().List(ctx, &connect.Request[user.ListRequest]{Msg: req})
+	resp, err := c.Rig.User().List(ctx, &connect.Request[user.ListRequest]{Msg: req})
 	if err != nil {
 		return err
 	}

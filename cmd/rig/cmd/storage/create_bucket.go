@@ -1,19 +1,17 @@
 package storage
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/list"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
-func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) createBucket(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	l := list.NewWriter()
 	l.SetStyle(list.StyleConnectedRounded)
 
@@ -22,7 +20,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 	if len(args) == 1 {
 		id, err := uuid.Parse(args[0])
 		if err != nil {
-			res, err := nc.Storage().LookupProvider(ctx, &connect.Request[storage.LookupProviderRequest]{
+			res, err := c.Rig.Storage().LookupProvider(ctx, &connect.Request[storage.LookupProviderRequest]{
 				Msg: &storage.LookupProviderRequest{
 					Name: args[0],
 				},
@@ -35,7 +33,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 			pid = id.String()
 		}
 	} else {
-		res, err := nc.Storage().ListProviders(ctx, &connect.Request[storage.ListProvidersRequest]{
+		res, err := c.Rig.Storage().ListProviders(ctx, &connect.Request[storage.ListProvidersRequest]{
 			Msg: &storage.ListProvidersRequest{},
 		})
 		if err != nil {
@@ -81,7 +79,7 @@ func StorageCreateBucket(ctx context.Context, cmd *cobra.Command, args []string,
 		return err
 	}
 
-	_, err = nc.Storage().CreateBucket(ctx, &connect.Request[storage.CreateBucketRequest]{
+	_, err = c.Rig.Storage().CreateBucket(ctx, &connect.Request[storage.CreateBucketRequest]{
 		Msg: &storage.CreateBucketRequest{
 			Bucket:         name,
 			ProviderBucket: providerBucketName,

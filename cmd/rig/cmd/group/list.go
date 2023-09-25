@@ -1,7 +1,6 @@
 package group
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -9,12 +8,12 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func GroupList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) list(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	search := strings.Join(args, " ")
 	req := &group.ListRequest{
 		Pagination: &model.Pagination{
@@ -23,7 +22,7 @@ func GroupList(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 		},
 		Search: search,
 	}
-	resp, err := nc.Group().List(ctx, &connect.Request[group.ListRequest]{Msg: req})
+	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{Msg: req})
 	if err != nil {
 		return err
 	}

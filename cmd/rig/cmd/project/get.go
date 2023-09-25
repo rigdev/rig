@@ -1,19 +1,17 @@
 package project
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func ProjectGet(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) get(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	req := &project.GetRequest{}
-	resp, err := nc.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: req})
+	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: req})
 	if err != nil {
 		return err
 	}

@@ -1,17 +1,14 @@
 package user
 
 import (
-	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 
-	"encoding/json"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
@@ -111,8 +108,9 @@ func (f settingsField) String() string {
 	}
 }
 
-func UserUpdateSettings(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
-	res, err := nc.UserSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
+func (c Cmd) updateSettings(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	res, err := c.Rig.UserSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err
 	}
@@ -126,7 +124,7 @@ func UserUpdateSettings(ctx context.Context, cmd *cobra.Command, args []string, 
 			return err
 		}
 
-		_, err = nc.UserSettings().UpdateSettings(ctx, &connect.Request[settings.UpdateSettingsRequest]{
+		_, err = c.Rig.UserSettings().UpdateSettings(ctx, &connect.Request[settings.UpdateSettingsRequest]{
 			Msg: &settings.UpdateSettingsRequest{
 				Settings: []*settings.Update{u},
 			},
@@ -175,7 +173,7 @@ func UserUpdateSettings(ctx context.Context, cmd *cobra.Command, args []string, 
 		return nil
 	}
 
-	_, err = nc.UserSettings().UpdateSettings(ctx, &connect.Request[settings.UpdateSettingsRequest]{
+	_, err = c.Rig.UserSettings().UpdateSettings(ctx, &connect.Request[settings.UpdateSettingsRequest]{
 		Msg: &settings.UpdateSettingsRequest{
 			Settings: updates,
 		},

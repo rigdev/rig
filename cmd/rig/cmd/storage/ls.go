@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"fmt"
 	"path"
 	"strings"
@@ -10,12 +9,12 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/list"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func StorageLs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) ls(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	l := list.NewWriter()
 	l.SetStyle(list.StyleConnectedRounded)
 
@@ -23,7 +22,7 @@ func StorageLs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 		// List buckets.
 		token := ""
 		for {
-			res, err := nc.Storage().ListBuckets(ctx, &connect.Request[storage.ListBucketsRequest]{
+			res, err := c.Rig.Storage().ListBuckets(ctx, &connect.Request[storage.ListBucketsRequest]{
 				Msg: &storage.ListBucketsRequest{
 					Token: token,
 				},
@@ -66,7 +65,7 @@ func StorageLs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Cl
 	// List files.
 	token := ""
 	for {
-		res, err := nc.Storage().ListObjects(ctx, &connect.Request[storage.ListObjectsRequest]{
+		res, err := c.Rig.Storage().ListObjects(ctx, &connect.Request[storage.ListObjectsRequest]{
 			Msg: &storage.ListObjectsRequest{
 				Token:     token,
 				Bucket:    bucket,

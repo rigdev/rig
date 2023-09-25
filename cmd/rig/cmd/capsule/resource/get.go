@@ -11,6 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func (r Cmd) get(cmd *cobra.Command, args []string) error {
+	return get(r.Ctx, cmd, r.Rig)
+}
+
 func get(ctx context.Context, cmd *cobra.Command, client rig.Client) error {
 	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, client)
 	if err != nil {

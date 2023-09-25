@@ -7,17 +7,16 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
-func AuthLogin(ctx context.Context, cmd *cobra.Command, client rig.Client, cfg *cmd_config.Config) error {
-	res, err := loginWithRetry(ctx, client, authUserIdentifier, authPassword, auth.RigProjectID.String())
+func (c Cmd) login(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	res, err := c.loginWithRetry(ctx, authUserIdentifier, authPassword, auth.RigProjectID.String())
 	if err != nil {
 		return err
 	}
@@ -27,10 +26,10 @@ func AuthLogin(ctx context.Context, cmd *cobra.Command, client rig.Client, cfg *
 		return err
 	}
 
-	cfg.GetCurrentAuth().UserID = uid
-	cfg.GetCurrentAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
-	cfg.GetCurrentAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
-	if err := cfg.Save(); err != nil {
+	c.Cfg.GetCurrentAuth().UserID = uid
+	c.Cfg.GetCurrentAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
+	c.Cfg.GetCurrentAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
+	if err := c.Cfg.Save(); err != nil {
 		return err
 	}
 
@@ -39,7 +38,7 @@ func AuthLogin(ctx context.Context, cmd *cobra.Command, client rig.Client, cfg *
 	return nil
 }
 
-func loginWithRetry(ctx context.Context, client rig.Client, identifierStr, password, project string) (*connect.Response[authentication.LoginResponse], error) {
+func (c Cmd) loginWithRetry(ctx context.Context, identifierStr, password, project string) (*connect.Response[authentication.LoginResponse], error) {
 	shouldPromptIdentifier := identifierStr == ""
 	shouldPromptPassword := password == ""
 	var identifier *model.UserIdentifier
@@ -61,7 +60,7 @@ func loginWithRetry(ctx context.Context, client rig.Client, identifierStr, passw
 			}
 		}
 
-		res, err := client.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
+		res, err := c.Rig.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
 			Msg: &authentication.LoginRequest{
 				Method: &authentication.LoginRequest_UserPassword{
 					UserPassword: &authentication.UserPassword{

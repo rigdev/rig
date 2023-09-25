@@ -1,17 +1,15 @@
 package env
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func remove(ctx context.Context, args []string, cmd *cobra.Command, rc rig.Client) error {
+func (c Cmd) remove(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var key string
 	var err error
 	if len(args) > 0 {
@@ -23,7 +21,7 @@ func remove(ctx context.Context, args []string, cmd *cobra.Command, rc rig.Clien
 		}
 	}
 
-	r, err := cmd_capsule.GetCurrentRollout(ctx, rc)
+	r, err := cmd_capsule.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err
 	}
@@ -36,7 +34,7 @@ func remove(ctx context.Context, args []string, cmd *cobra.Command, rc rig.Clien
 
 	delete(cs.GetEnvironmentVariables(), key)
 
-	if _, err := rc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+	if _, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId: cmd_capsule.CapsuleID,
 			Changes: []*capsule.Change{

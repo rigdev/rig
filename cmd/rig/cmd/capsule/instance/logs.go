@@ -1,29 +1,28 @@
 package instance
 
 import (
-	"context"
 	"os"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-func logs(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) logs(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	arg := ""
 	if len(args) > 0 {
 		arg = args[0]
 	}
-	instanceID, err := provideInstanceID(ctx, nc, capsule_cmd.CapsuleID, arg)
+	instanceID, err := c.provideInstanceID(ctx, capsule_cmd.CapsuleID, arg)
 	if err != nil {
 		return err
 	}
 
-	s, err := nc.Capsule().Logs(ctx, &connect.Request[capsule.LogsRequest]{
+	s, err := c.Rig.Capsule().Logs(ctx, &connect.Request[capsule.LogsRequest]{
 		Msg: &capsule.LogsRequest{
 			CapsuleId:  capsule_cmd.CapsuleID,
 			InstanceId: instanceID,

@@ -1,18 +1,16 @@
 package user
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func UserGetSettings(ctx context.Context, cmd *cobra.Command, nc rig.Client) error {
-	res, err := nc.UserSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
+func (c Cmd) getSettings(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
+	res, err := c.Rig.UserSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err
 	}

@@ -1,27 +1,23 @@
 package auth
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
-func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client, cfg *cmd_config.Config, logger *zap.Logger) error {
+func (c Cmd) getAuthConfig(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	var projectID uuid.UUID
 	var err error
 	if len(args) != 1 {
-		res, err := nc.Project().List(ctx, &connect.Request[project.ListRequest]{})
+		res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 		if err != nil {
 			return err
 		}
@@ -46,7 +42,7 @@ func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, n
 		if id, err := uuid.Parse(args[0]); err == nil {
 			projectID = id
 		} else {
-			res, err := nc.Project().List(ctx, &connect.Request[project.ListRequest]{})
+			res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 			if err != nil {
 				return err
 			}
@@ -74,7 +70,7 @@ func AuthGetAuthConfig(ctx context.Context, cmd *cobra.Command, args []string, n
 		}
 	}
 
-	res, err := nc.Authentication().GetAuthConfig(ctx, &connect.Request[authentication.GetAuthConfigRequest]{
+	res, err := c.Rig.Authentication().GetAuthConfig(ctx, &connect.Request[authentication.GetAuthConfigRequest]{
 		Msg: &authentication.GetAuthConfigRequest{
 			RedirectAddr: redirectAddr,
 			ProjectId:    projectID.String(),

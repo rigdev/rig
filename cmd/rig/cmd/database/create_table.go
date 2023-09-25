@@ -1,21 +1,19 @@
 package database
 
 import (
-	"context"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/database"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func CreateTable(ctx context.Context, cmd *cobra.Command, args []string, nc rig.Client) error {
+func (c Cmd) createTable(cmd *cobra.Command, args []string) error {
+	ctx := c.Ctx
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := common.GetDatabase(ctx, identifier, nc)
+	_, id, err := common.GetDatabase(ctx, identifier, c.Rig)
 	if err != nil {
 		return err
 	}
@@ -27,7 +25,7 @@ func CreateTable(ctx context.Context, cmd *cobra.Command, args []string, nc rig.
 		}
 	}
 
-	if _, err := nc.Database().CreateTable(ctx, &connect.Request[database.CreateTableRequest]{
+	if _, err := c.Rig.Database().CreateTable(ctx, &connect.Request[database.CreateTableRequest]{
 		Msg: &database.CreateTableRequest{
 			DatabaseId: id,
 			TableName:  name,
