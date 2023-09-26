@@ -73,6 +73,8 @@ func (r *Capsule) validate() (admission.Warnings, error) {
 	allWarns = append(allWarns, warns...)
 	allErrs = append(allErrs, errs...)
 
+	errs = append(errs, r.Spec.HorizontalScale.validate(field.NewPath("horizontalScale"))...)
+
 	return allWarns, allErrs.ToAggregate()
 }
 
@@ -177,4 +179,19 @@ func (r *Capsule) validateFiles() (admission.Warnings, field.ErrorList) {
 	}
 
 	return nil, errs
+}
+
+func (h HorizontalScale) validate(fPath *field.Path) field.ErrorList {
+	var errs field.ErrorList
+
+	if h.MaxReplicas > 0 && h.MaxReplicas < h.MinReplicas {
+		errs = append(errs, field.Invalid(fPath.Child("maxReplicas"), h.MaxReplicas, "maxReplicas cannot be smaller than minReplicas"))
+	}
+
+	avg := h.CPUTarget.AverageUtilizationPercentage
+	if avg > 100 {
+		errs = append(errs, field.Invalid(fPath.Child("cpuTarget").Child("averageUtilizationPercentage"), avg, "cannot be larger than 100"))
+	}
+
+	return errs
 }

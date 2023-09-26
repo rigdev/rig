@@ -16,6 +16,7 @@ type CapsuleSpec struct {
 	Files           []File                   `json:"files,omitempty"`
 	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
 	ImagePullSecret *v1.LocalObjectReference `json:"imagePullSecret,omitempty"`
+	HorizontalScale HorizontalScale          `json:"horizontalScale,omitempty"`
 }
 
 // CapsuleInterface defines an interface for a capsule
@@ -62,11 +63,34 @@ type FileContentRef struct {
 	Key  string `json:"key"`
 }
 
+// HorizontalScale defines the policy for the number of replicas of the capsule
+// It can both be configured with autoscaling and with a static number of replicas
+type HorizontalScale struct {
+	MinReplicas uint32    `json:"minReplicas"`
+	MaxReplicas uint32    `json:"maxReplicas"`
+	CPUTarget   CPUTarget `json:"cpuTarget,omitempty"`
+}
+
+// CPUTarget defines an autoscaler target for the CPU metric
+// If empty, no autoscaling will be done
+type CPUTarget struct {
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:validation:Maximum=100
+	AverageUtilizationPercentage uint32 `json:"averageUtilizationPercentage"`
+}
+
 // CapsuleStatus defines the observed state of Capsule
-type CapsuleStatus struct{}
+type CapsuleStatus struct {
+	Replicas uint32 `json:"replicas"`
+}
+
+type Scale struct {
+	Replicas uint32 `json:"replicas"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
 
 // Capsule is the Schema for the capsules API
 type Capsule struct {
@@ -75,6 +99,7 @@ type Capsule struct {
 
 	Spec   CapsuleSpec   `json:"spec,omitempty"`
 	Status CapsuleStatus `json:"status,omitempty"`
+	Scale  Scale         `json:"scale,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -30,6 +30,7 @@ message Change {
     bool auto_add_rig_service_accounts = 5;
     ConfigFile set_config_file = 6;
     string remove_config_file = 7;
+    HorizontalScale horizontal_scale = 8;
   }
 }
 
@@ -172,4 +173,14 @@ message Auth {
     AllowAny allow_any = 1;
     AllowAuthorized allow_authorized = 2;
   }
+}
+
+message HorizontalScale {
+    uint32 max_replicas = 1;
+    uint32 min_replicas = 2;
+    CPUTarget cpu_target = 3;
+}
+
+message CPUTarget {
+    uint32 average_utilization_percentage  = 1;
 }

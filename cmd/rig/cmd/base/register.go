@@ -12,7 +12,6 @@ import (
 
 var Module = fx.Module(
 	"rig-cli",
-	fx.NopLogger,
 	clientModule,
 	fx.Provide(func() (*cmd_config.Config, error) {
 		return cmd_config.NewConfig("")
