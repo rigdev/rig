@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/rigdev/rig/internal/build"
 	"github.com/rigdev/rig/pkg/config"
 	"github.com/rigdev/rig/pkg/manager"
 	"github.com/spf13/cobra"
@@ -23,6 +24,8 @@ func main() {
 
 	flags := c.PersistentFlags()
 	flags.StringP(flagConfigFile, "c", "/etc/rig-operator/config.yaml", "path to rig-operator config file")
+
+	c.AddCommand(build.VersionCommand())
 
 	ctx := context.Background()
 	c.ExecuteContext(ctx)

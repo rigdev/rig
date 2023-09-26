@@ -65,6 +65,22 @@ builds:
       - -X github.com/rigdev/rig/internal/build.version={{ .Version }}
       - -X github.com/rigdev/rig/internal/build.commit={{ .Commit }}
       - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
+  - id: rig-operator
+    binary: rig-operator
+    main: ./cmd/rig-operator
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/rigdev/rig/internal/build.version={{ .Version }}
+      - -X github.com/rigdev/rig/internal/build.commit={{ .Commit }}
+      - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
 
 archives:
   - id: rig-server
@@ -90,6 +106,15 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+  - id: rig-operator
+    format: tar.gz
+    builds:
+      - rig-operator
+    name_template: >-
+      rig-operator_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
 
 checksum:
   name_template: 'checksums.txt'
@@ -106,6 +131,21 @@ dockers:
   - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
   goarch: arm64
   dockerfile: build/package/goreleaser/Dockerfile
+  use: buildx
+  build_flag_templates:
+  - "--platform=linux/arm64"
+
+- image_templates:
+  - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+  goarch: amd64
+  dockerfile: build/package/goreleaser/Dockerfile.core
+  use: buildx
+  build_flag_templates:
+  - "--platform=linux/amd64"
+- image_templates:
+  - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+  goarch: arm64
+  dockerfile: build/package/goreleaser/Dockerfile.core
   use: buildx
   build_flag_templates:
   - "--platform=linux/arm64"
@@ -127,6 +167,23 @@ docker_manifests:
     image_templates:
     - "ghcr.io/rigdev/rig:{{ .Version }}-amd64"
     - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
+
+  - name_template: "ghcr.io/rigdev/rig-core:latest"
+    image_templates:
+    - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+    - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-core:{{ .Major }}"
+    image_templates:
+    - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+    - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-core:{{ .Major }}.{{ .Minor }}"
+    image_templates:
+    - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+    - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-core:{{ .Version }}"
+    image_templates:
+    - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+    - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
 
 changelog:
   sort: asc
