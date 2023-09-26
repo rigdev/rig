@@ -1,0 +1,6 @@
+apiVersion: config.rig.dev/v1alpha1
+kind: OperatorConfig
+
+webhooksEnabled: true
+devModeEnabled: false
+leaderElectionEnabled: true

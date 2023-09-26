@@ -34,6 +34,10 @@ build-rig-proxy: ## 🔨 Build rig-proxy binary
 build-rig-admin: ## 🔨 Build rig-admin binary
 	$(GOBUILD) -o bin/rig-admin ./cmd/rig-admin
 
+.PHONY: build-rig-operator
+build-rig-operator: ## 🔨 Build rig-admin binary
+	$(GOBUILD) -o bin/rig-operator ./cmd/rig-operator
+
 .PHONY: gen
 gen: proto mocks manifests generate-k8s ## 🪄 Run code generation (proto and mocks)
 
