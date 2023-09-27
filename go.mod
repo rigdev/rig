@@ -53,7 +53,7 @@ require (
 	github.com/google/go-containerregistry v0.16.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/lithammer/fuzzysearch v1.1.8
-	github.com/rigdev/rig-go-api v0.0.0-20230920122749-0471626a4cc0
+	github.com/rigdev/rig-go-api v0.0.0-20230927105546-89bcfced9b22
 	github.com/rigdev/rig-go-sdk v0.0.0-20230918110956-2301fcd9da11
 	k8s.io/metrics v0.28.0
 	sigs.k8s.io/controller-runtime v0.16.1
