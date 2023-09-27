@@ -207,3 +207,7 @@ func applyUpdates(d *capsule.Capsule, us []*capsule.Update) error {
 	}
 	return nil
 }
+
+func (s *Service) Rollback(ctx context.Context, capsuleID string, rolloutID uint64) (uint64, error) {
+	return 0, nil
+}
