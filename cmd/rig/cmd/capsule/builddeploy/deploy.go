@@ -26,7 +26,7 @@ import (
 
 func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
-	buildID, err := c.getBuildID(ctx, capsule_cmd.CapsuleID)
+	buildID, err := c.getBuildID(ctx, cmd, CmdFlags.CapsuleID.Value)
 	if err != nil {
 		return err
 	}
@@ -45,12 +45,12 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 	return c.listenForEvents(ctx, res.Msg.GetRolloutId(), capsule_cmd.CapsuleID)
 }
 
-func (c Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) {
-	if buildID != "" && image != "" {
+func (c Cmd) getBuildID(ctx context.Context, cmd *cobra.Command, capsuleID string) (string, error) {
+	if CmdFlags.buildID.IsSet(cmd) && CmdFlags.image.IsSet(cmd) {
 		return "", errors.New("not both --build-id and --image can be given")
 	}
 
-	if buildID != "" {
+	if CmdFlags.buildID.IsSet(cmd) {
 		// TODO Figure out pagination
 		resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
 			CapsuleId: capsuleID,
@@ -64,10 +64,10 @@ func (c Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) {
 			return "", err
 		}
 		builds := resp.Msg.GetBuilds()
-		return expandBuildID(ctx, builds, buildID)
+		return expandBuildID(ctx, builds, CmdFlags.buildID.Value)
 	}
 
-	if image != "" {
+	if CmdFlags.image.IsSet(cmd) {
 		return c.createBuildInner(ctx, capsuleID, imageRefFromFlags())
 	}
 

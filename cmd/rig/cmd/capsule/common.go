@@ -9,8 +9,19 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/pkg/utils"
 )
+
+type Flags struct {
+	CapsuleID base.Flag[string]
+}
+
+var CmdFlags = &Flags{
+	CapsuleID: base.Flag[string]{
+		Name: "capsule-id",
+	},
+}
 
 var CapsuleID string
 

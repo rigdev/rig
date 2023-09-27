@@ -27,7 +27,7 @@ type imageRef struct {
 
 func imageRefFromFlags() imageRef {
 	imageRef := imageRef{
-		Image:        image,
+		Image:        CmdFlags.image.Value,
 		IsKnownLocal: nil,
 	}
 	if remote {
@@ -55,10 +55,11 @@ func (c Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 		}, nil
 	}
 
-	image, err = common.PromptInput("Enter image:", common.ValidateImageOpt)
+	image, err := common.PromptInput("Enter image:", common.ValidateImageOpt)
 	if err != nil {
 		return empty, nil
 	}
+	CmdFlags.image.Set(image)
 	return imageRef{
 		Image:        image,
 		IsKnownLocal: ptr.New(false),

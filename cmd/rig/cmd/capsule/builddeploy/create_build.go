@@ -12,7 +12,7 @@ func (c Cmd) createBuild(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
 
 	imageRef := imageRefFromFlags()
-	if image == "" {
+	if !CmdFlags.image.IsSet(cmd) {
 		imageRef, err = c.promptForImage(ctx)
 		if err != nil {
 			return err

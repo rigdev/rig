@@ -11,6 +11,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/builddeploy"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/env"
@@ -36,14 +37,30 @@ var (
 )
 
 var (
-	image   string
-	buildID string
 	command string
 	args    []string
 )
 
 var omitCapsuleIDAnnotation = map[string]string{
 	"OMIT_CAPSULE_ID": "true",
+}
+
+type Flags struct {
+	*capsule.Flags
+
+	offset base.Flag[int]
+	limit  base.Flag[int]
+
+	interactive base.Flag[bool]
+	outputJSON  base.Flag[bool]
+	remote      base.Flag[bool]
+
+	command base.Flag[string]
+	args    base.Flag[[]string]
+}
+
+var CmdFlags = &Flags{
+	Flags: capsule.CmdFlags,
 }
 
 type Cmd struct {
@@ -77,20 +94,21 @@ func (c Cmd) Setup(parent *cobra.Command) {
 				return nil
 			}
 
-			if capsule.CapsuleID != "" {
+			if CmdFlags.CapsuleID.IsSet(cmd) {
 				return nil
 			}
 
 			var err error
-			capsule.CapsuleID, err = common.PromptInput("Capsule id:", common.ValidateNonEmptyOpt)
+			c, err := common.PromptInput("Capsule id:", common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
+			CmdFlags.CapsuleID.Set(c)
 			return nil
 		},
 	}
-	capsuleCmd.PersistentFlags().StringVarP(&capsule.CapsuleID, "capsule-id", "c", "", "Id of the capsule")
-	capsuleCmd.RegisterFlagCompletionFunc("capsule-id", c.completions)
+	capsuleCmd.PersistentFlags().StringVarP(&CmdFlags.CapsuleID.Value, CmdFlags.CapsuleID.Name, "c", "", "Id of the capsule")
+	capsuleCmd.RegisterFlagCompletionFunc(CmdFlags.CapsuleID.Name, c.completions)
 
 	capsuleCreate := &cobra.Command{
 		Use:               "create",
