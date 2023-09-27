@@ -11,6 +11,8 @@ spec:
     matchLabels: {{ include "rig.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
       {{- with .Values.podAnnotations }}
       annotations: {{ toYaml . | nindent 8 }}
       {{- end }}
