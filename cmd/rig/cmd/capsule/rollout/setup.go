@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	offset int
-	limit  int
+	offset    int
+	limit     int
+	rolloutID int
 )
 
 var (
@@ -61,6 +62,16 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
 	}
 	rollout.AddCommand(events)
+
+	rollback := &cobra.Command{
+		Use:               "rollback [rollout-id]",
+		Short:             "Rollback the capsule to a previous rollout",
+		Args:              cobra.NoArgs,
+		RunE:              c.rollback,
+		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+	}
+	rollback.Flags().IntVarP(&rolloutID, "rollout-id", "r", -1, "The rollout to rollback to")
+	rollout.AddCommand(rollback)
 
 	parent.AddCommand(rollout)
 }
