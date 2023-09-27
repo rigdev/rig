@@ -44,6 +44,9 @@ type Flags struct {
 
 var CmdFlags = &Flags{
 	Flags: capsule.CmdFlags,
+
+	image:   base.Flag[string]{Name: "image"},
+	buildID: base.Flag[string]{Name: "build"},
 }
 
 type Cmd struct {
