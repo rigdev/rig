@@ -29,4 +29,10 @@ rules:
     - capsules
   verbs:
     - "*"
+- apiGroups:
+    - autoscaling
+  resources:
+    - horizontalpodautoscalers
+  verbs:
+    - "*"
 {{- end -}}

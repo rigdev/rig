@@ -31,6 +31,14 @@ spec:
             type: string
           metadata:
             type: object
+          scale:
+            properties:
+              replicas:
+                format: int32
+                type: integer
+            required:
+            - replicas
+            type: object
           spec:
             description: CapsuleSpec defines the desired state of Capsule
             properties:
@@ -75,6 +83,33 @@ spec:
                   - path
                   type: object
                 type: array
+              horizontalScale:
+                description: HorizontalScale defines the policy for the number of
+                  replicas of the capsule It can both be configured with autoscaling
+                  and with a static number of replicas
+                properties:
+                  cpuTarget:
+                    description: CPUTarget defines an autoscaler target for the CPU
+                      metric If empty, no autoscaling will be done
+                    properties:
+                      averageUtilizationPercentage:
+                        format: int32
+                        maximum: 100
+                        minimum: 0
+                        type: integer
+                    required:
+                    - averageUtilizationPercentage
+                    type: object
+                  maxReplicas:
+                    format: int32
+                    type: integer
+                  minReplicas:
+                    format: int32
+                    type: integer
+                required:
+                - maxReplicas
+                - minReplicas
+                type: object
               image:
                 type: string
               imagePullSecret:
@@ -95,6 +130,8 @@ spec:
                       type: string
                     port:
                       format: int32
+                      maximum: 65535
+                      minimum: 1
                       type: integer
                     public:
                       description: CapsulePublicInterface defines how to publicly
@@ -115,6 +152,8 @@ spec:
                           properties:
                             port:
                               format: int32
+                              maximum: 65535
+                              minimum: 1
                               type: integer
                           required:
                           - port
@@ -178,14 +217,22 @@ spec:
                 type: object
             required:
             - image
-            - replicas
             type: object
           status:
             description: CapsuleStatus defines the observed state of Capsule
+            properties:
+              replicas:
+                format: int32
+                type: integer
+            required:
+            - replicas
             type: object
         type: object
     served: true
     storage: true
     subresources:
+      scale:
+        specReplicasPath: .spec.replicas
+        statusReplicasPath: .status.replicas
       status: {}
 {{- end }}
