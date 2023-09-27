@@ -1,27 +1,20 @@
-package resource
+package scale
 
 import (
-	"context"
 	"fmt"
 	"math"
-	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func (r Cmd) scale(cmd *cobra.Command, args []string) error {
-	return scale(r.Ctx, cmd, r.Rig, args)
-}
-
-func scale(ctx context.Context, cmd *cobra.Command, client rig.Client, args []string) error {
-	container, r, err := capsule_cmd.GetCurrentContainerResources(ctx, client)
+func (r Cmd) vertical(cmd *cobra.Command, args []string) error {
+	ctx := r.Ctx
+	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, r.Rig)
 	if err != nil {
 		return nil
 	}
@@ -31,25 +24,20 @@ func scale(ctx context.Context, cmd *cobra.Command, client rig.Client, args []st
 	}
 
 	if allFlagsEmpty() {
-		err = setResourcesInteractive(container.Resources, &r)
+		err = setResourcesInteractive(container.Resources)
 	} else {
-		err = setResourcesFromFlags(container.Resources, &r)
+		err = setResourcesFromFlags(container.Resources)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = client.Capsule().Deploy(ctx, connect.NewRequest(&capsule.DeployRequest{
+	_, err = r.Rig.Capsule().Deploy(ctx, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{
 			{
 				Field: &capsule.Change_ContainerSettings{
 					ContainerSettings: container,
-				},
-			},
-			{
-				Field: &capsule.Change_Replicas{
-					Replicas: r,
 				},
 			},
 		},
@@ -61,9 +49,9 @@ func scale(ctx context.Context, cmd *cobra.Command, client rig.Client, args []st
 	return nil
 }
 
-func setResourcesInteractive(curResources *capsule.Resources, r *uint32) error {
+func setResourcesInteractive(curResources *capsule.Resources) error {
 	for {
-		i, _, err := common.PromptSelect("What to update", []string{"Requests", "Limits", "Replicas", "Done"})
+		i, _, err := common.PromptSelect("What to update", []string{"Requests", "Limits", "Done"})
 		if err != nil {
 			return err
 		}
@@ -78,18 +66,6 @@ func setResourcesInteractive(curResources *capsule.Resources, r *uint32) error {
 		case 1:
 			curR = curResources.Limits
 			name = "limit"
-		case 2:
-			replicasString, err := common.PromptInput("New replicas (current is "+fmt.Sprintf("%v", *r)+"):", common.ValidateNonEmptyOpt)
-			if err != nil {
-				return err
-			}
-			replicasCount, err := strconv.ParseUint(replicasString, 10, 32)
-			if err != nil {
-				return errors.InvalidArgumentErrorf("invalid replica count; %v", err)
-			}
-			*r = uint32(replicasCount)
-			continue
-
 		default:
 			done = true
 		}
@@ -155,7 +131,7 @@ func intToByteString(i uint64) string {
 	return common.FormatIntToSI(i, 3) + "B"
 }
 
-func setResourcesFromFlags(curResources *capsule.Resources, r *uint32) error {
+func setResourcesFromFlags(curResources *capsule.Resources) error {
 	if err := updateResources(curResources.Requests, requestCPU, requestMemory); err != nil {
 		return err
 	}
@@ -164,23 +140,6 @@ func setResourcesFromFlags(curResources *capsule.Resources, r *uint32) error {
 		return err
 	}
 
-	if err := updateReplicas(r); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func updateReplicas(r *uint32) error {
-	if replicas == -1 {
-		return nil
-	}
-
-	if replicas < 0 {
-		return errors.InvalidArgumentErrorf("replicas must be positive")
-	}
-
-	*r = uint32(replicas)
 	return nil
 }
 
@@ -227,5 +186,5 @@ func parseBytes(s string) (uint64, error) {
 }
 
 func allFlagsEmpty() bool {
-	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == "" && replicas == -1
+	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == ""
 }

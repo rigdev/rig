@@ -17,8 +17,8 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/instance"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/mount"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/network"
-	"github.com/rigdev/rig/cmd/rig/cmd/capsule/resource"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -54,7 +54,7 @@ type Cmd struct {
 	Cfg          *cmd_config.Config
 	DockerClient *client.Client
 
-	Resources   resource.Cmd
+	Scale       scale.Cmd
 	BuildDeploy builddeploy.Cmd
 	Instance    instance.Cmd
 	Network     network.Cmd
@@ -153,7 +153,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	capsuleConfig.RegisterFlagCompletionFunc("args", common.NoCompletions)
 	capsuleCmd.AddCommand(capsuleConfig)
 
-	c.Resources.Setup(capsuleCmd)
+	c.Scale.Setup(capsuleCmd)
 	c.BuildDeploy.Setup(capsuleCmd)
 	c.Instance.Setup(capsuleCmd)
 	c.Network.Setup(capsuleCmd)

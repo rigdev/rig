@@ -114,9 +114,9 @@ func (c Cmd) getImagePrompts(ctx context.Context, filter string) ([]imageInfo, [
 			return 0
 		}
 		if i.created.Before(j.created) {
-			return -1
+			return 1
 		}
-		return 1
+		return -1
 	})
 
 	for idx, image := range images {
