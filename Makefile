@@ -10,29 +10,16 @@ help: ## ❓ Display this help.
 ##@ Development
 
 .PHONY: build
-build: build-rig build-rig-server build-rig-proxy build-rig-admin ## 🔨 Build all binaries
+build: build-rig build-rig-operator ## 🔨 Build all binaries
 
 GOENVS ?= CGO_ENABLED=0
 GO ?= $(GOENVS) go
 LDFLAGS ?= -s -w
 GOBUILD = $(GO) build -ldflags "$(LDFLAGS)"
-DEVENVS = RIG_TELEMETRY_ENABLED=false
 
 .PHONY: build-rig
 build-rig: ## 🔨 Build rig binary
 	(cd cmd/rig/ && $(GO) generate ./... && $(GOBUILD) -o ../../bin/rig ./)
-
-.PHONY: build-rig-server
-build-rig-server: ## 🔨 Build rig-server binary
-	$(GOBUILD) -o bin/rig-server ./cmd/rig-server
-
-.PHONY: build-rig-proxy
-build-rig-proxy: ## 🔨 Build rig-proxy binary
-	$(GOBUILD) -o bin/rig-proxy ./cmd/rig-proxy
-
-.PHONY: build-rig-admin
-build-rig-admin: ## 🔨 Build rig-admin binary
-	$(GOBUILD) -o bin/rig-admin ./cmd/rig-admin
 
 .PHONY: build-rig-operator
 build-rig-operator: ## 🔨 Build rig-admin binary
@@ -106,34 +93,11 @@ test-integration: gotestsum setup-envtest ## ✅ Run integration tests
 		-run "^TestIntegration" ./... && \
 	killall etcd || true
 
-.PHONY: run
-run: build-rig-server ## 🏃 Run rig-server
-	$(DEVENVS) ./bin/rig-server -c ./configs/server-config.yaml
-
-.PHONY: watch
-watch: modd ## 👀 Run modd
-	$(MODD) -f ./build/modd.conf
-
-.PHONY: download-dashboard
-download-dashboard: ## ⬇️ Download latest dashboard to /pkg/service/web
-	gh release download --repo rigdev/dashboard -p public.tar.gz -O - | \
-		tar -xvz && \
-	rsync -a ./public/ ./pkg/service/web/ && \
-	rm -rf public
-
 TAG ?= dev
 
-.PHONY: docker-compose-up
-docker-compose-up: ## 🐳 Run docker-compose
-	@echo "$(DEVENVS)" | sed -e "s/ /\n/" > ./deploy/docker-compose/.env.dev
-	docker compose \
-		-f ./deploy/docker-compose/docker-compose.yaml \
-		--env-file ./deploy/docker-compose/.env.dev \
-		up --build -d
-
-.PHONY: docker-compose-down
-docker-compose-down: ## 🐳 Stop docker-compose
-	docker compose -f ./deploy/docker-compose/docker-compose.yaml down
+.PHONY: docker
+docker: ## 🐳 Build docker image
+	docker build -t ghcr.io/rigdev/rig-operator:$(TAG) -f ./build/package/Dockerfile .
 
 KUBECTX ?= kind-rig
 export KUBECTL ?= kubectl --context $(KUBECTX)
@@ -141,34 +105,27 @@ export HELM ?= helm --kube-context $(KUBECTX)
 
 .PHONY: deploy
 deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
-	$(HELM) upgrade --install rig ./deploy/charts/rig \
+	$(HELM) upgrade --install rig-operator ./deploy/charts/rig-operator \
   		--namespace rig-system \
 		--set image.tag=$(TAG) \
-		--set mongodb.enabled=true \
-		--set rig.telemetry.enabled=false \
-		--set rig.cluster.dev_registry.host="localhost:30000" \
-		--set rig.cluster.dev_registry.cluster_host="registry:5000" \
   		--create-namespace
-	$(KUBECTL) rollout restart deployment -n rig-system rig
 
 .PHONY: kind-create
 kind-create: kind ## 🐋 Create kind cluster with rig dependencies
+	## TODO: simplify this
 	./deploy/kind/create.sh
 
 .PHONY: kind-load
 kind-load: kind docker ## 🐋 Load docker image into kind cluster
-	$(KIND) load docker-image ghcr.io/rigdev/rig:$(TAG) -n rig
+	$(KIND) load docker-image ghcr.io/rigdev/rig-operator:$(TAG) -n rig
 
 .PHONY: kind-deploy
 kind-deploy: kind kind-load deploy ## 🐋 Deploy rig to kind cluster
+	$(KUBECTL) rollout restart deployment -n rig-system rig-operator
 
 .PHONY: kind-clean
 kind-clean: ## 🧹 Clean kind cluster
 	$(KIND) delete clusters rig
-
-.PHONY: kind-registry
-kind-registry: ## 🐋 Install docker registry in
-	$(KUBECTL) apply -f ./deploy/registry/registry.yaml -n rig-system
 
 ##@ Release
 
@@ -272,4 +229,3 @@ SETUP_ENVTEST ?= $(TOOLSBIN)/setup-envtest
 setup-envtest: ## 📦 Download setup-envtest locally if necessary.
 	(test -s $(SETUP_ENVTEST)) || \
 	(cd tools && GOBIN=$(TOOLSBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest)
-

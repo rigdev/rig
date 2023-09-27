@@ -1,0 +1,21 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "rig-operator.fullname" . }}
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+{{- end }}

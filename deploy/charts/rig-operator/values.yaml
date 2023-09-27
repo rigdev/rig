@@ -1,0 +1,59 @@
+config:
+  webhooksEnabled: true
+  devModeEnabled: false
+  leaderElectionEnabled: true
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/rigdev/rig-core
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Refers to an existing secret containing a rig-operator config file. If left
+# unset, we will generate a config based on the fields set under .Values.config
+secretName: ""
+
+rbac:
+  create: true
+
+installCRDs: true
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 15000
+  runAsGroup: 15000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

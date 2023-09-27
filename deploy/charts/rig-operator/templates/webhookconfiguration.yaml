@@ -1,0 +1,61 @@
+{{- if .Values.config.webhooksEnabled }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ include "rig-operator.fullname" . }}
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rig-operator.fullname" . }}-webhook
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "rig-operator.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-rig-dev-v1alpha1-capsule
+      port: 9443
+  failurePolicy: Fail
+  name: mcapsule.kb.io
+  rules:
+  - apiGroups:
+    - rig.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - capsules
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "rig-operator.fullname" . }}
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rig-operator.fullname" . }}-webhook
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "rig-operator.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      path: /validate-rig-dev-v1alpha1-capsule
+      port: 9443
+  failurePolicy: Fail
+  name: vcapsule.kb.io
+  rules:
+  - apiGroups:
+    - rig.dev
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - capsules
+  sideEffects: None
+{{- end }}
