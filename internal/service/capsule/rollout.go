@@ -52,6 +52,10 @@ func (s *Service) AbortRollout(ctx context.Context, capsuleID string, rolloutID 
 	return s.CreateEvent(ctx, capsuleID, rolloutID, "rollout aborted", &capsule.EventData{Kind: &capsule.EventData_Abort{}})
 }
 
+func (s *Service) constructNewRollout(ctx context.Context, capsuleId string, cs []*capsule.Change) (*capsule.Rollout, error) {
+	return nil, nil
+}
+
 func (s *Service) newRollout(ctx context.Context, capsuleID string, cs []*capsule.Change) (uint64, error) {
 	if _, err := s.ccg.GetCapsuleConfig(ctx, capsuleID); err != nil {
 		return 0, err
@@ -129,6 +133,8 @@ func (s *Service) newRollout(ctx context.Context, capsuleID string, cs []*capsul
 			}
 		case *capsule.Change_AutoAddRigServiceAccounts:
 			rc.AutoAddRigServiceAccounts = v.AutoAddRigServiceAccounts
+		case *capsule.Change_HorizontalScale:
+			rc.HorizontalScale = v.HorizontalScale
 		default:
 			return 0, errors.InvalidArgumentErrorf("unhandled change field '%v'", reflect.TypeOf(v))
 		}
