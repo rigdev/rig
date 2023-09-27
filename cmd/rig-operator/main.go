@@ -7,6 +7,8 @@ import (
 	"github.com/rigdev/rig/pkg/config"
 	"github.com/rigdev/rig/pkg/manager"
 	"github.com/spf13/cobra"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const (
@@ -43,6 +45,8 @@ func run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	ctrl.SetLogger(zap.New(zap.UseDevMode(cfg.DevModeEnabled)))
 
 	mgr, err := manager.NewManager(cfg, scheme)
 	if err != nil {

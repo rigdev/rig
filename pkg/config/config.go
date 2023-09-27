@@ -49,7 +49,7 @@ func deserialize(data []byte, scheme *runtime.Scheme) (*v1alpha1.OperatorConfig,
 		return nil, errors.New("unsupported api group")
 	}
 
-	if gvk.Kind != "Config" {
+	if gvk.Kind != "OperatorConfig" {
 		return nil, errors.New("unsupported api kind")
 	}
 

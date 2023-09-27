@@ -1,0 +1,23 @@
+{{- if .Values.config.webhooksEnabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "rig-operator.fullname" . }}-webhook
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "rig-operator.fullname" . }}-webhook
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+  - {{ include "rig-operator.fullname" . }}.{{ .Release.Namespace }}.svc
+  - {{ include "rig-operator.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ include "rig-operator.fullname" . }}-webhook
+  secretName: {{ include "rig-operator.fullname" . }}-webhook-tls
+{{- end }}

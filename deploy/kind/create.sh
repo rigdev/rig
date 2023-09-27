@@ -27,7 +27,7 @@ ${KUBECTL} get namespace rig-system || \
 
 # Install docker registry in rig-system namespace
 ${KUBECTL} apply -n rig-system \
-    -f "${parent_path}/../registry/registry.yaml"
+    -f "${parent_path}/../../cmd/rig/cmd/dev/kind/registry.yaml"
 
 # Ensure required repositories are available
 ${HELM} repo list | grep '^jetstack\s*https://charts.jetstack.io\s*$' || \

@@ -1,0 +1,20 @@
+# TODO: add condition for metrics
+{{- if .Values.config.webhooksEnabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rig-operator.fullname" . }}
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: webhooks
+      port: 9443
+      targetPort: webhooks
+      protocol: TCP
+    - name: metrics
+      port: 8080
+      targetPort: metrics
+      protocol: TCP
+  selector: {{ include "rig-operator.selectorLabels" . | nindent 4 }}
+{{- end }}

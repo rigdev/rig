@@ -1,0 +1,57 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "rig-platform.fullname" . }}-postgres
+  labels: {{ include "rig-platform.postgres.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{ include "rig-platform.postgres.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "rig-platform.fullname" . }}-postgres-headless
+  template:
+    metadata:
+      labels: {{ include "rig-platform.postgres.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext: {{ toYaml .Values.postgres.podSecurityContext | nindent 8 }}
+      containers:
+        - name: postgres
+          securityContext: {{ toYaml .Values.postgres.securityContext | nindent 12 }}
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+          {{- with .Values.postgres.resources }}
+          resources: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ include "rig-platform.fullname" . }}-postgres
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: init
+          configMap:
+            name: {{ include "rig-platform.fullname" . }}-postgres
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels: {{ include "rig-platform.postgres.selectorLabels" . | nindent 10 }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- with .Values.postgres.storage.className }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage.size | quote }}
+{{- end }}
