@@ -31,6 +31,7 @@ message Change {
     ConfigFile set_config_file = 6;
     string remove_config_file = 7;
     HorizontalScale horizontal_scale = 8;
+    Rollback rollback = 9;
   }
 }
 
@@ -184,4 +185,8 @@ message HorizontalScale {
 
 message CPUTarget {
     uint32 average_utilization_percentage  = 1;
+}
+
+message Rollback {
+    string rollback_id = 1;
 }

@@ -53,9 +53,6 @@ service Service {
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
   // Get metrics for a capsule
   rpc CapsuleMetrics(CapsuleMetricsRequest) returns (CapsuleMetricsResponse) {}
-
-  // Rolls the capsule back to a previous rollout
-  rpc Rollback(RollbackRequest) returns (RollbackResponse) {}
 }
 
 message CreateRequest {
@@ -223,13 +220,4 @@ message CapsuleMetricsRequest {
 
 message CapsuleMetricsResponse {
   repeated InstanceMetrics instance_metrics = 1;
-}
-
-message RollbackRequest {
-    string capsule_id = 1;
-    uint64 rollout_id = 2;
-}
-
-message RollbackResponse {
-    uint64 rollout_id = 1;
 }
