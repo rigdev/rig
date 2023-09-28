@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   mongodb:
@@ -31,14 +31,11 @@ services:
       - minio-data:/data
 
   rig:
-    container_name: "rig"
+    container_name: "rig-platform"
     depends_on:
       - mongodb
       - minio
-    image: ghcr.io/rigdev/rig:dev
-    build:
-      dockerfile: build/package/Dockerfile
-      context: ../../
+    image: ghcr.io/rigdev/rig-platform:dev
     ports:
       - "4747:4747"
       - "5001:5001"

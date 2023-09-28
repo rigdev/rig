@@ -6,7 +6,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 )
 
-var RigProjectID = "c10c947b-91f1-41ea-96df-ea13ee68a7fc"
+var RigProjectID = "rig"
 
 type projectIDKeyType string
 
