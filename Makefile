@@ -123,10 +123,6 @@ download-dashboard: ## ⬇️ Download latest dashboard to /pkg/service/web
 
 TAG ?= dev
 
-.PHONY: docker
-docker: ## 🐳 Build docker image
-	docker build -t ghcr.io/rigdev/rig:$(TAG) -f ./build/package/Dockerfile .
-
 .PHONY: docker-compose-up
 docker-compose-up: ## 🐳 Run docker-compose
 	@echo "$(DEVENVS)" | sed -e "s/ /\n/" > ./deploy/docker-compose/.env.dev
