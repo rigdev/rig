@@ -70,7 +70,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		RunE:              c.rollback,
 		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
 	}
-	rollback.Flags().IntVarP(&rolloutID, "rollout-id", "r", -1, "The rollout to rollback to")
+	rollback.Flags().IntVarP(&rolloutID, "rollout-id", "r", -1, "The rollout to rollback to. If not given, will roll back to the latest successful rollout.")
 	rollout.AddCommand(rollback)
 
 	parent.AddCommand(rollout)
