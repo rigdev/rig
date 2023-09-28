@@ -188,5 +188,5 @@ message CPUTarget {
 }
 
 message Rollback {
-    string rollback_id = 1;
+    uint64 rollback_id = 1;
 }
