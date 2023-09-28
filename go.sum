@@ -487,6 +487,10 @@ github.com/rigdev/rig-go-api v0.0.0-20230920122749-0471626a4cc0 h1:leFSeftwUA08p
 github.com/rigdev/rig-go-api v0.0.0-20230920122749-0471626a4cc0/go.mod h1:fraLUk9ekeQvvu5bOmUmpNAsBqG2QzqWU9wzGbPwB/w=
 github.com/rigdev/rig-go-api v0.0.0-20230927105546-89bcfced9b22 h1:cmx2uVBZ0soEZNV+GDzvIUwlNCdEYt/SJripKpVk8AE=
 github.com/rigdev/rig-go-api v0.0.0-20230927105546-89bcfced9b22/go.mod h1:fraLUk9ekeQvvu5bOmUmpNAsBqG2QzqWU9wzGbPwB/w=
+github.com/rigdev/rig-go-api v0.0.0-20230928082219-2938cafc0991 h1:DpktlJZVFH5L1G6czoMqMM0sztO5NGKV/tC2s5TNu88=
+github.com/rigdev/rig-go-api v0.0.0-20230928082219-2938cafc0991/go.mod h1:fraLUk9ekeQvvu5bOmUmpNAsBqG2QzqWU9wzGbPwB/w=
+github.com/rigdev/rig-go-api v0.0.0-20230928083412-68f9a89db6cc h1:7J5GkZvHlO2OqFgHMecQ6x+eXr7cN4k5nSfqFIvUSnQ=
+github.com/rigdev/rig-go-api v0.0.0-20230928083412-68f9a89db6cc/go.mod h1:fraLUk9ekeQvvu5bOmUmpNAsBqG2QzqWU9wzGbPwB/w=
 github.com/rigdev/rig-go-sdk v0.0.0-20230918110956-2301fcd9da11 h1:cdW4OYPgzr+iMzsqPCLDTRa37rpTRD2OUxhbPApzHss=
 github.com/rigdev/rig-go-sdk v0.0.0-20230918110956-2301fcd9da11/go.mod h1:CtN3BUZJfONEGNuVnoewrKHGSHF/XS5OsHxzkA9ToI4=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
