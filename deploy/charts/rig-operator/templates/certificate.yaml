@@ -14,8 +14,8 @@ metadata:
   labels: {{ include "rig-operator.labels" . | nindent 4 }}
 spec:
   dnsNames:
-  - {{ include "rig-operator.fullname" . }}-svc.{{ .Release.Namespace }}.svc
-  - {{ include "rig-operator.fullname" . }}-svc.{{ .Release.Namespace }}.svc.cluster.local
+  - {{ include "rig-operator.fullname" . }}.{{ .Release.Namespace }}.svc
+  - {{ include "rig-operator.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: {{ include "rig-operator.fullname" . }}-webhook
