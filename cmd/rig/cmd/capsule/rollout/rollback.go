@@ -3,6 +3,7 @@ package rollout
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -12,22 +13,26 @@ import (
 )
 
 func (c Cmd) rollback(cmd *cobra.Command, args []string) error {
-	// Add back in once we have rollback implemented as a Deploy change instead
-	// ctx := c.Ctx
+	ctx := c.Ctx
+	rolloutID, err := c.getRollback(ctx)
+	if err != nil {
+		return err
+	}
 
-	// rolloutID, err := c.getRollback(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// resp, err := c.Rig.Capsule().Rollback(ctx, connect.NewRequest(&capsule.RollbackRequest{
-	// 	CapsuleId: capsule_cmd.CapsuleID,
-	// 	RolloutId: uint64(rolloutID),
-	// }))
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Printf("rollback to %v initiated. New rollout has ID %v\n", rolloutID, resp.Msg.GetRolloutId())
+	resp, err := c.Rig.Capsule().Deploy(ctx, connect.NewRequest(&capsule.DeployRequest{
+		CapsuleId: capsule_cmd.CapsuleID,
+		Changes: []*capsule.Change{{
+			Field: &capsule.Change_Rollback{
+				Rollback: &capsule.Rollback{
+					RollbackId: rolloutID,
+				},
+			},
+		}},
+	}))
+	if err != nil {
+		return err
+	}
+	fmt.Printf("rollback to %v initiated. New rollout has ID %v\n", rolloutID, resp.Msg.GetRolloutId())
 
 	return nil
 }
