@@ -17,54 +17,6 @@ builds:
       - -X github.com/rigdev/rig/internal/build.version={{ .Version }}
       - -X github.com/rigdev/rig/internal/build.commit={{ .Commit }}
       - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
-  - id: rig-server
-    binary: rig-server
-    main: ./cmd/rig-server
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    ldflags:
-      - -s -w
-      - -X github.com/rigdev/rig/internal/build.version={{ .Version }}
-      - -X github.com/rigdev/rig/internal/build.commit={{ .Commit }}
-      - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
-  - id: rig-proxy
-    binary: rig-proxy
-    main: ./cmd/rig-proxy
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    ldflags:
-      - -s -w
-      - -X github.com/rigdev/rig/internal/build.version={{ .Version }}
-      - -X github.com/rigdev/rig/internal/build.commit={{ .Commit }}
-      - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
-  - id: rig-admin
-    binary: rig-admin
-    main: ./cmd/rig-admin
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    ldflags:
-      - -s -w
-      - -X github.com/rigdev/rig/internal/build.version={{ .Version }}
-      - -X github.com/rigdev/rig/internal/build.commit={{ .Commit }}
-      - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
   - id: rig-operator
     binary: rig-operator
     main: ./cmd/rig-operator
@@ -72,7 +24,6 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - darwin
     goarch:
       - amd64
       - arm64
@@ -83,17 +34,6 @@ builds:
       - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
 
 archives:
-  - id: rig-server
-    format: tar.gz
-    builds:
-      - rig-admin
-      - rig-server
-      - rig-proxy
-    name_template: >-
-      rig-server_
-      {{- .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else }}{{ .Arch }}{{ end }}
   - id: rig
     format: tar.gz
     builds:
@@ -117,73 +57,41 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 dockers:
-- image_templates:
-  - "ghcr.io/rigdev/rig:{{ .Version }}-amd64"
-  goarch: amd64
-  dockerfile: build/package/goreleaser/Dockerfile
-  use: buildx
-  build_flag_templates:
-  - "--platform=linux/amd64"
-- image_templates:
-  - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
-  goarch: arm64
-  dockerfile: build/package/goreleaser/Dockerfile
-  use: buildx
-  build_flag_templates:
-  - "--platform=linux/arm64"
-
-- image_templates:
-  - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-  goarch: amd64
-  dockerfile: build/package/goreleaser/Dockerfile.core
-  use: buildx
-  build_flag_templates:
-  - "--platform=linux/amd64"
-- image_templates:
-  - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
-  goarch: arm64
-  dockerfile: build/package/goreleaser/Dockerfile.core
-  use: buildx
-  build_flag_templates:
-  - "--platform=linux/arm64"
+  - image_templates:
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+    goarch: amd64
+    dockerfile: build/package/goreleaser/Dockerfile.core
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+    goarch: arm64
+    dockerfile: build/package/goreleaser/Dockerfile.core
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
 
 docker_manifests:
-  - name_template: "ghcr.io/rigdev/rig:latest"
-    image_templates:
-    - "ghcr.io/rigdev/rig:{{ .Version }}-amd64"
-    - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/rigdev/rig:{{ .Major }}"
-    image_templates:
-    - "ghcr.io/rigdev/rig:{{ .Version }}-amd64"
-    - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/rigdev/rig:{{ .Major }}.{{ .Minor }}"
-    image_templates:
-    - "ghcr.io/rigdev/rig:{{ .Version }}-amd64"
-    - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/rigdev/rig:{{ .Version }}"
-    image_templates:
-    - "ghcr.io/rigdev/rig:{{ .Version }}-amd64"
-    - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
-
   - name_template: "ghcr.io/rigdev/rig-core:latest"
     image_templates:
-    - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-    - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
   - name_template: "ghcr.io/rigdev/rig-core:{{ .Major }}"
     image_templates:
-    - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-    - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
   - name_template: "ghcr.io/rigdev/rig-core:{{ .Major }}.{{ .Minor }}"
     image_templates:
-    - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-    - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
   - name_template: "ghcr.io/rigdev/rig-core:{{ .Version }}"
     image_templates:
-    - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-    - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
 
 changelog:
   sort: asc
@@ -202,17 +110,6 @@ brews:
       name: homebrew-tap
       token: "{{ .Env.RIGBOT_GITHUB_TOKEN }}"
     install: bin.install "rig"
-  - name: rig-admin
-    ids:
-      - rig-server
-    commit_author:
-      name: rig-bot
-      email: shared@rig.dev
-    repository:
-      owner: rigdev
-      name: homebrew-tap
-      token: "{{ .Env.RIGBOT_GITHUB_TOKEN }}"
-    install: bin.install "rig-admin"
 
 release:
   github:
@@ -221,4 +118,4 @@ release:
   prerelease: auto
   footer: |
     ## Docker Image
-    - `ghcr.io/rigdev/rig:{{ .Version }}`
+    - `ghcr.io/rigdev/rig-core:{{ .Version }}`
