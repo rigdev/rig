@@ -12,8 +12,6 @@ COPY go.mod go.sum Makefile ./
 COPY tools tools
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    make gen/go/rig/go.mod && \
-    make buf protoc-gen-connect-go protoc-gen-go && \
     go mod download # && go mod verify
 
 COPY . .
