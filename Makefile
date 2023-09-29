@@ -156,8 +156,8 @@ kind-create: kind ## 🐋 Create kind cluster with rig dependencies
 	./deploy/kind/create.sh
 
 .PHONY: kind-load
-kind-load: kind docker ## 🐋 Load docker image into kind cluster
-	$(KIND) load docker-image ghcr.io/rigdev/rig:$(TAG) -n rig
+kind-load: ## 🐋 Load docker image into kind cluster
+	$(KIND) load docker-image ghcr.io/rigdev/rig-platform:$(TAG) -n rig
 
 .PHONY: kind-deploy
 kind-deploy: kind kind-load deploy ## 🐋 Deploy rig to kind cluster
