@@ -39,7 +39,7 @@ jobs:
           cd charts
           git config user.name "rig-bot"
           git config user.email "shared@rig.dev"
-          cr package ../main/deploy/charts/rig
+          cr package ../main/deploy/charts/rig-platform
           cr package ../main/deploy/charts/rig-operator
           cr upload --skip-existing
           cr index --index-path "." --push
