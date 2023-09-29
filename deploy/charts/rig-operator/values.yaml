@@ -6,7 +6,7 @@ config:
 replicaCount: 1
 
 image:
-  repository: ghcr.io/rigdev/rig-core
+  repository: ghcr.io/rigdev/rig-operator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
