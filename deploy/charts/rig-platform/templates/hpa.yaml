@@ -2,13 +2,13 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "rig.fullname" . }}
-  labels: {{ include "rig.labels" . | nindent 4 }}
+  name: {{ include "rig-platform.fullname" . }}
+  labels: {{ include "rig-platform.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "rig.fullname" . }}
+    name: {{ include "rig-platform.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "rig.fullname" . }}
-  labels: {{ include "rig.labels" . | nindent 4 }}
+  name: {{ include "rig-platform.fullname" . }}
+  labels: {{ include "rig-platform.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
-    matchLabels: {{ include "rig.selectorLabels" . | nindent 6 }}
+    matchLabels: {{ include "rig-platform.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
       annotations: {{ toYaml . | nindent 8 }}
       {{- end }}
-      labels: {{ include "rig.selectorLabels" . | nindent 8 }}
+      labels: {{ include "rig-platform.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{ toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "rig.serviceAccountName" . }}
+      serviceAccountName: {{ include "rig-platform.serviceAccountName" . }}
       securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
@@ -57,12 +57,12 @@ spec:
       volumes:
         - name: config
           secret:
-            secretName: {{ include "rig.secretName" . }}
+            secretName: {{ include "rig-platform.secretName" . }}
         {{- if .Values.webhooks.enabled }}
         - name: webhook-cert
           secret:
             defaultMode: 420
-            secretName: {{ include "rig.fullname" . }}-webhook-cert
+            secretName: {{ include "rig-platform.fullname" . }}-webhook-cert
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector: {{ toYaml . | nindent 8 }}

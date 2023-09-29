@@ -2,16 +2,16 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "rig.fullname" . }}-mongodb
-  labels: {{ include "rig.mongodb.labels" . | nindent 4 }}
+  name: {{ include "rig-platform.fullname" . }}-mongodb
+  labels: {{ include "rig-platform.mongodb.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
-    matchLabels: {{ include "rig.mongodb.selectorLabels" . | nindent 6 }}
-  serviceName: {{ include "rig.fullname" . }}-mongodb-headless
+    matchLabels: {{ include "rig-platform.mongodb.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "rig-platform.fullname" . }}-mongodb-headless
   template:
     metadata:
-      labels: {{ include "rig.mongodb.selectorLabels" . | nindent 8 }}
+      labels: {{ include "rig-platform.mongodb.selectorLabels" . | nindent 8 }}
     spec:
       securityContext: {{ toYaml .Values.mongodb.podSecurityContext | nindent 8 }}
       containers:
@@ -34,7 +34,7 @@ spec:
           {{- end }}
           envFrom:
             - secretRef:
-                name: {{ include "rig.fullname" . }}-mongodb
+                name: {{ include "rig-platform.fullname" . }}-mongodb
           volumeMounts:
             - name: init
               mountPath: /docker-entrypoint-initdb.d
@@ -44,11 +44,11 @@ spec:
       volumes:
         - name: init
           configMap:
-            name: {{ include "rig.fullname" . }}-mongodb
+            name: {{ include "rig-platform.fullname" . }}-mongodb
   volumeClaimTemplates:
     - metadata:
         name: data
-        labels: {{ include "rig.mongodb.selectorLabels" . | nindent 10 }}
+        labels: {{ include "rig-platform.mongodb.selectorLabels" . | nindent 10 }}
       spec:
         accessModes: [ "ReadWriteOnce" ]
         {{- with .Values.mongodb.storage.className }}

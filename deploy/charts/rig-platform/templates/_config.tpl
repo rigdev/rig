@@ -1,7 +1,7 @@
 {{/*
 Rig Server config file
 */}}
-{{- define "rig.config" -}}
+{{- define "rig-platform.config" -}}
 auth:
   jwt:
     secret: shhhdonotshare
@@ -13,7 +13,7 @@ client:
   {{- with .Values.rig.client.mongo }}
   mongo:
     {{- if $.Values.mongodb.enabled }}
-    host: "{{ include "rig.fullname" $ }}-mongodb:27017"
+    host: "{{ include "rig-platform.fullname" $ }}-mongodb:27017"
     {{- else }}
     host: {{ .host | quote }}
     {{- end }}
