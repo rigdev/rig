@@ -40,5 +40,4 @@ rules:
     - capsules
   verbs:
     - "*"
-
 {{- end -}}
