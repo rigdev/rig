@@ -23,3 +23,68 @@ message Instance {
   string message = 8;
   uint64 rollout_id = 9;
 }
+
+message InstanceStatus {
+    string instance_id = 1;
+    State state = 2;
+    PodCondition condition = 3;
+    ContainerState container_state = 4;
+}
+
+enum ConditionType {
+    UNSPECIFIED = 0;
+    CONTAINERS_READY = 1;
+    INSTANCE_INITIALIZED = 2;
+    INSTANCE_READY = 3;
+    INSTANCE_SCHEDULED = 4;
+    DISRUPTION_TARGET = 5;
+}
+
+message PodCondition {
+  google.protobuf.Timestamp start = 1;
+  ConditionType type = 2;
+  string pod_reason = 3;
+  string pod_message = 4;
+}
+
+
+message ContainerState {
+    oneof state {
+     ContainerStateWaiting waiting = 1;
+     ContainerStateRunning running = 2;
+     ContainerStateTerminated terminated = 3;
+    }
+}
+
+message ContainerStateWaiting {
+	string reason  = 1;
+	string message = 2;
+}
+
+message ContainerStateRunning {
+  google.protobuf.Timestamp started_at = 1;
+}
+
+message ContainerStateTerminated {
+	// Exit status from the last termination of the container
+	int32 exit_code	 = 1;
+	// Signal from the last termination of the container
+	// +optional
+	int32 signal  = 2;
+	// (brief) reason from the last termination of the container
+	// +optional
+    string reason  = 3;
+	// Message regarding the last termination of the container
+	// +optional
+	string message = 4;
+	// Time at which previous execution of the container started
+	// +optional
+    google.protobuf.Timestamp started_at = 5;
+	// Time at which the container last terminated
+	// +optional
+    google.protobuf.Timestamp finished_at = 6;
+	// Container's ID in the format '<type>://<container_id>'
+	// +optional
+	string container_id  = 7;
+}
+
