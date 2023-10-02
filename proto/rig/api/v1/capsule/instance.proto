@@ -10,8 +10,8 @@ enum State {
   STATE_RUNNING = 2;
   STATE_SUCCEEDED = 3;
   STATE_FAILED = 4;
-}
-
+ }
+ 
 message Instance {
   string instance_id = 1;
   string build_id = 2;
@@ -24,45 +24,79 @@ message Instance {
   uint64 rollout_id = 9;
 }
 
+
 message InstanceStatus {
-    string instance_id = 1;
-    State state = 2;
-    PodCondition condition = 3;
-    ContainerState container_state = 4;
+    string message = 1;
+
+    InstanceStatusScheduling schedule = 2;
+    InstanceStatusPreparing preparing = 3;
+    InstanceStatusRunning running = 4;
 }
 
-enum ConditionType {
-    UNSPECIFIED = 0;
-    CONTAINERS_READY = 1;
-    INSTANCE_INITIALIZED = 2;
-    INSTANCE_READY = 3;
-    INSTANCE_SCHEDULED = 4;
-    DISRUPTION_TARGET = 5;
+message InstanceStatusScheduling {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+
+    ScheduleState state = 3;
 }
 
-message PodCondition {
-  google.protobuf.Timestamp start = 1;
-  ConditionType type = 2;
-  string pod_reason = 3;
-  string pod_message = 4;
+enum ScheduleState {
+    SCHEDULE_STATE_UNSPECIFIED = 0;
+    SCHEDULE_STATE_CURRENTLY_UNSCHEDULEABLE = 1;
+    SCHEDULE_STATE_DONE = 2;
 }
 
+message InstanceStatusPreparing {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
 
-message ContainerState {
-    oneof state {
-     ContainerStateWaiting waiting = 1;
-     ContainerStateRunning running = 2;
-     ContainerStateTerminated terminated = 3;
-    }
+    ImagePulling pulling = 3;
 }
 
-message ContainerStateWaiting {
-	string reason  = 1;
-	string message = 2;
+message ImagePulling {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+
+    ImagePullingState state = 3;
 }
 
-message ContainerStateRunning {
-  google.protobuf.Timestamp started_at = 1;
+enum ImagePullingState {
+    IMAGE_PULLING_STATE_UNSPECIFIED = 0;
+    IMAGE_PULLING_STATE_PULLING = 1;
+    IMAGE_PULLING_STATE_ERROR = 2;
+    IMAGE_PULLING_STATE_PULL_BACKOFF = 3;
+    IMAGE_PULLING_STATE_DONE = 4;
+}
+
+message CrashLoopBackoff {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+    ContainerStateTerminated terminated = 3;
+    uint32 restarts = 4;
+}
+
+message InstanceStatusRunning {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+
+    CrashLoopBackoff crash_loop_backoff = 3;
+    InstanceRunningReady ready = 4;
+    Running running = 5;
+}
+
+message Running {
+    StatusTimestamps timestamps = 1;
+}
+
+message InstanceRunningReady {
+    StatusTimestamps timestamps = 1;
+    InstanceRunningReadyState state = 2;
+}
+
+enum InstanceRunningReadyState {
+    INSTANCE_RUNNING_READY_STATE_UNSPECIFIED = 0;
+    INSTANCE_RUNNING_READY_STATE_NOT_READY = 1;
+    INSTANCE_RUNNING_READY_STATE_READY = 2;
 }
 
 message ContainerStateTerminated {
@@ -88,3 +122,8 @@ message ContainerStateTerminated {
 	string container_id  = 7;
 }
 
+message StatusTimestamps {
+    google.protobuf.Timestamp entered = 1;
+    google.protobuf.Timestamp updated = 2;
+    google.protobuf.Timestamp exited = 3;
+}
