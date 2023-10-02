@@ -90,6 +90,7 @@ require (
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rodaine/table v1.1.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
