@@ -53,6 +53,8 @@ service Service {
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
   // Get metrics for a capsule
   rpc CapsuleMetrics(CapsuleMetricsRequest) returns (CapsuleMetricsResponse) {}
+  // Lists all instance statuses for the capsule.
+  rpc ListInstanceStatuses(ListInstancesRequest) returns (ListInstancesResponse) {}
 }
 
 message CreateRequest {
@@ -164,6 +166,16 @@ message ListInstancesRequest {
 
 message ListInstancesResponse {
   repeated api.v1.capsule.Instance instances = 1;
+  uint64 total = 2;
+}
+
+message ListInstanceStatusesRequest {
+  string capsule_id = 1;
+  model.Pagination pagination = 2;
+}
+
+message ListInstanceStatusesResponse {
+  repeated api.v1.capsule.InstanceStatus instances = 1;
   uint64 total = 2;
 }
 
