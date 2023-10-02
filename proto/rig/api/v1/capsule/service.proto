@@ -54,7 +54,7 @@ service Service {
   // Get metrics for a capsule
   rpc CapsuleMetrics(CapsuleMetricsRequest) returns (CapsuleMetricsResponse) {}
   // Lists all instance statuses for the capsule.
-  rpc ListInstanceStatuses(ListInstancesRequest) returns (ListInstancesResponse) {}
+  rpc ListInstanceStatuses(ListInstanceStatusesRequest) returns (ListInstanceStatusesResponse) {}
 }
 
 message CreateRequest {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
 )
 
@@ -25,4 +26,8 @@ func (h *Handler) ListInstances(ctx context.Context, req *connect.Request[capsul
 			Total:     total,
 		},
 	}, nil
+}
+
+func (h *Handler) ListInstanceStatuses(ctx context.Context, req *connect.Request[capsule.ListInstanceStatusesRequest]) (*connect.Response[capsule.ListInstanceStatusesResponse], error) {
+	return nil, errors.UnimplementedErrorf("not implemented")
 }
