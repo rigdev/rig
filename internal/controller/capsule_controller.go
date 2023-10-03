@@ -142,9 +142,10 @@ func createDeployment(
 	var volumes []v1.Volume
 	var volumeMounts []v1.VolumeMount
 	for _, f := range capsule.Spec.Files {
+		var name string
 		switch {
 		case f.ConfigMap != nil:
-			name := "volume-" + strings.ReplaceAll(f.ConfigMap.Name, ".", "-")
+			name = "volume-" + strings.ReplaceAll(f.ConfigMap.Name, ".", "-")
 			volumes = append(volumes, v1.Volume{
 				Name: name,
 				VolumeSource: v1.VolumeSource{
@@ -161,13 +162,8 @@ func createDeployment(
 					},
 				},
 			})
-			volumeMounts = append(volumeMounts, v1.VolumeMount{
-				Name:      name,
-				MountPath: f.Path,
-				SubPath:   path.Base(f.Path),
-			})
 		case f.Secret != nil:
-			name := "volume-" + strings.ReplaceAll(f.Secret.Name, ".", "-")
+			name = "volume-" + strings.ReplaceAll(f.Secret.Name, ".", "-")
 			volumes = append(volumes, v1.Volume{
 				Name: name,
 				VolumeSource: v1.VolumeSource{
@@ -182,12 +178,13 @@ func createDeployment(
 					},
 				},
 			})
+		}
+		if name != "" {
 			volumeMounts = append(volumeMounts, v1.VolumeMount{
 				Name:      name,
 				MountPath: f.Path,
 				SubPath:   path.Base(f.Path),
 			})
-
 		}
 	}
 
