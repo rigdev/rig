@@ -1,18 +1,14 @@
 package kind
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
-	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -58,7 +54,7 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	fmt.Println("Creating a new Rig cluster requries setting up an admin user and project")
 	fmt.Println("Run the following command once the new Rig server has finished starting up")
-	fmt.Println("kubectl", "exec", "--tty", "--stdin", "--namespace", "rig-system", "deploy/rig", "--", "rig-admin", "init")
+	fmt.Println("kubectl", "exec", "--tty", "--stdin", "--namespace", "rig-system", "deploy/rig-platform", "--", "rig-admin", "init")
 
 	return nil
 }
@@ -69,69 +65,98 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var err error
-	if dockerTag == "" {
-		dockerTag, err = getLatestTag("rig")
-		if err != nil {
-			return err
-		}
+	if platformDockerTag == "" {
+		platformDockerTag = "latest"
 	}
-	dockerTag = strings.TrimPrefix(dockerTag, "v")
-	rigImage := fmt.Sprintf("ghcr.io/rigdev/rig:%s", dockerTag)
+	if err := c.deployInner(ctx, deployParams{
+		dockerImage: "ghcr.io/rigdev/rig-platform",
+		dockerTag:   platformDockerTag,
+		chartName:   "rig-platform",
+		chartPath:   platformChartPath,
+		customArgs: []string{"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
+			"--set", "rig.telemetry.enabled=false",
+			"--set", "postgres.enabled=true",
+			"--set", "rig.cluster.dev_registry.host=localhost:30000",
+			"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
+			"--set", "service.type=NodePort"},
+	}); err != nil {
+		return err
+	}
+
+	if operatorDockerTag == "" {
+		operatorDockerTag = "latest"
+	}
+	if err := c.deployInner(ctx, deployParams{
+		dockerImage: "ghcr.io/rigdev/rig-operator",
+		dockerTag:   operatorDockerTag,
+		chartName:   "rig-operator",
+		chartPath:   operatorChartPath,
+		customArgs:  []string{"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag)},
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type deployParams struct {
+	dockerImage string
+	dockerTag   string
+	chartName   string
+	chartPath   string
+	customArgs  []string
+}
+
+func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
+	if err := c.loadImage(ctx, p.dockerImage, p.dockerTag); err != nil {
+		return err
+	}
+	chart := p.chartName
+	if p.chartPath != "" {
+		chart = p.chartPath
+	}
+	cArgs := []string{
+		"--kube-context", "kind-rig",
+		"upgrade", "--install", p.chartName, chart,
+		"--namespace", "rig-system",
+		"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag),
+		"--create-namespace",
+	}
+	cArgs = append(cArgs, p.customArgs...)
+	if operatorChartPath == "" {
+		cArgs = append(cArgs, "--repo", "https://charts.rig.dev")
+	}
+
+	fmt.Println(cArgs)
+	if err := runCmd("helm", cArgs...); err != nil {
+		return err
+	}
+
+	if err := runCmd("kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c Cmd) loadImage(ctx context.Context, image, tag string) error {
+	imageTag := fmt.Sprintf("%s:%s", image, tag)
 	res, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "reference",
-			Value: rigImage,
+			Value: imageTag,
 		}),
 	})
 	if err != nil {
 		return err
 	}
 	if len(res) == 0 {
-		if err := runCmd("docker", "pull", rigImage); err != nil {
+		if err := runCmd("docker", "pull", imageTag); err != nil {
 			return err
 		}
 	}
 
-	if err := runCmd("kind", "load", "docker-image", rigImage, "-n", "rig"); err != nil {
-		return err
-	}
-
-	if helmChartTag == "" {
-		helmChartTag, err = getLatestTag("charts")
-		if err != nil {
-			return err
-		}
-	}
-
-	chart := "rig"
-	if chartPath != "" {
-		chart = chartPath
-	}
-	cArgs := []string{
-		"--kube-context", "kind-rig",
-		"upgrade", "--install", "rig", chart,
-		"--namespace", "rig-system",
-		"--version", dockerTag,
-		"--set", fmt.Sprintf("image.tag=%s", dockerTag),
-		"--set", "mongodb.enabled=true",
-		"--set", "rig.telemetry.enabled=false",
-		"--set", "rig.cluster.dev_registry.host=localhost:30000",
-		"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
-		"--set", "service.type=NodePort",
-		"--create-namespace",
-	}
-	if chartPath == "" {
-		cArgs = append(args, "--repo", "https://charts.rig.dev")
-	}
-
-	if err := runCmd(
-		"helm", cArgs...,
-	); err != nil {
-		return err
-	}
-
-	if err := runCmd("kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", "rig"); err != nil {
+	if err := runCmd("kind", "load", "docker-image", imageTag, "-n", "rig"); err != nil {
 		return err
 	}
 
@@ -169,37 +194,6 @@ func setupKindRigCluster() error {
 	}
 
 	return nil
-}
-
-func getLatestTag(repo string) (string, error) {
-	client := http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://api.github.com/repos/rigdev/%s/releases/latest", repo), nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Add("Accept", "application/vnd.github+json")
-	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	var buffer bytes.Buffer
-	b := make([]byte, 1000)
-	n := 0
-	for !errors.Is(err, io.EOF) {
-		n, err = resp.Body.Read(b)
-		buffer.Write(b[:n])
-	}
-
-	tag := struct {
-		TagName string `json:"tag_name"`
-	}{}
-	if err := json.Unmarshal(buffer.Bytes(), &tag); err != nil {
-		return "", err
-	}
-
-	return tag.TagName, nil
 }
 
 func setupK8s() error {
