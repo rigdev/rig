@@ -3,6 +3,7 @@ package builddeploy
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
-	"golang.org/x/exp/slices"
 )
 
 type imageRef struct {
@@ -109,8 +109,14 @@ func (c Cmd) getImagePrompts(ctx context.Context, filter string) ([]imageInfo, [
 		}
 	}
 
-	slices.SortFunc(images, func(i, j imageInfo) bool {
-		return i.created.After(j.created)
+	slices.SortFunc(images, func(i, j imageInfo) int {
+		if i.created.Equal(j.created) {
+			return 0
+		}
+		if i.created.Before(j.created) {
+			return -1
+		}
+		return 1
 	})
 
 	for idx, image := range images {

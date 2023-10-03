@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -21,7 +22,6 @@ import (
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
-	"golang.org/x/exp/slices"
 )
 
 func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
@@ -191,8 +191,16 @@ func (c Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (stri
 		return "", err
 	}
 	builds := resp.Msg.GetBuilds()
-	slices.SortFunc(builds, func(b1, b2 *capsule.Build) bool {
-		return b1.CreatedAt.AsTime().After(b2.CreatedAt.AsTime())
+	slices.SortFunc(builds, func(b1, b2 *capsule.Build) int {
+		t1 := b1.CreatedAt.AsTime()
+		t2 := b2.CreatedAt.AsTime()
+		if t1.Equal(t2) {
+			return 0
+		}
+		if t1.Before(t2) {
+			return 1
+		}
+		return -1
 	})
 
 	if len(builds) == 0 {
