@@ -6,33 +6,89 @@ metadata:
   labels: {{ include "rig-operator.labels" . | nindent 4 }}
 rules:
 - apiGroups:
-    - ""
+  - ""
   resources:
-    - services
+  - services
   verbs:
-    - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
-    - apps
+  - apps
   resources:
-    - deployments
+  - deployments
   verbs:
-    - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
-    - networking.k8s.io
+  - autoscaling
   resources:
-    - ingresses
+  - horizontalpodautoscalers
   verbs:
-    - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
-    - rig.dev
+  - cert-manager.io
   resources:
-    - capsules
+  - certificates
   verbs:
-    - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
-    - autoscaling
+  - networking.k8s.io
   resources:
-    - horizontalpodautoscalers
+  - ingresses
   verbs:
-    - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rig.dev
+  resources:
+  - capsules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rig.dev
+  resources:
+  - capsules/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - rig.dev
+  resources:
+  - capsules/status
+  verbs:
+  - get
+  - patch
+  - update
 {{- end -}}

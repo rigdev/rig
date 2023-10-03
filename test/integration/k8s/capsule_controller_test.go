@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -13,9 +14,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/rigdev/rig/internal/controller"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/ptr"
+
 	//+kubebuilder:scaffold:imports
+
+	"github.com/rigdev/rig/pkg/ptr"
 )
 
 func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
@@ -134,6 +138,33 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 			assert.Equal(t, capsule.Name, path.Backend.Service.Name)
 			assert.Equal(t, capsule.Spec.Interfaces[0].Name, path.Backend.Service.Port.Name)
 		}
+	}
+
+	if assert.Len(t, ing.Spec.TLS, 1) {
+		tls := ing.Spec.TLS[0]
+		assert.Equal(t, fmt.Sprintf("%s-tls", capsule.Name), tls.SecretName)
+		if assert.Len(t, tls.Hosts, 1) {
+			assert.Equal(t, capsule.Spec.Interfaces[0].Public.Ingress.Host, tls.Hosts[0])
+		}
+	}
+
+	assert.True(t, controller.IsOwnedBy(&capsule, &ing))
+
+	var crt cmv1.Certificate
+	assert.Eventually(t, func() bool {
+		if err := k8sClient.Get(ctx, nsName, &crt); err != nil {
+			return false
+		}
+		return true
+	}, waitFor, tick)
+
+	assert.True(t, controller.IsOwnedBy(&capsule, &crt))
+	assert.Equal(t, fmt.Sprintf("%s-tls", capsule.Name), crt.Spec.SecretName)
+	assert.Equal(t, cmv1.ClusterIssuerKind, crt.Spec.IssuerRef.Kind)
+	assert.Equal(t, "test", crt.Spec.IssuerRef.Name)
+
+	if assert.Len(t, crt.Spec.DNSNames, 1) {
+		assert.Equal(t, capsule.Spec.Interfaces[0].Public.Ingress.Host, crt.Spec.DNSNames[0])
 	}
 
 	capsule.Spec.Interfaces[0].Public = &v1alpha1.CapsulePublicInterface{

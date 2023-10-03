@@ -53,8 +53,8 @@ mocks: mockery mocks-clean ## 🪄 Generate mocks
 .PHONY: manifests
 manifests: controller-gen ## 🪄 Clean mocks
 	$(CONTROLLER_GEN) rbac:roleName=rig crd webhook \
-		paths="./pkg/api/..." \
-		output:dir=deploy/kustomize \
+		paths="./pkg/api/...;./internal/controller" \
+		output:rbac:dir=deploy/kustomize/rbac \
 		output:webhook:dir=deploy/kustomize/webhook \
 		output:crd:dir=deploy/kustomize/crd/bases
 
@@ -81,8 +81,7 @@ test-all: gotestsum setup-envtest ## ✅ Run all tests
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" \
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
-		--junitfile test-result.xml && \
-	killall etcd || true
+		--junitfile test-result.xml
 
 .PHONY: test-integration
 test-integration: gotestsum setup-envtest ## ✅ Run integration tests
@@ -90,8 +89,7 @@ test-integration: gotestsum setup-envtest ## ✅ Run integration tests
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
 		--junitfile test-result.xml -- \
-		-run "^TestIntegration" ./... && \
-	killall etcd || true
+		-run "^TestIntegration" ./...
 
 TAG ?= dev
 
@@ -108,6 +106,7 @@ deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
 	$(HELM) upgrade --install rig-operator ./deploy/charts/rig-operator \
 			--namespace rig-system \
 			--set image.tag=$(TAG) \
+			--set config.devModeEnabled=true \
 			--create-namespace
 
 deploy-platform: ## 🚀 Deploy to platform to k8s defined by $KUBECTX (default: kind-rig)

@@ -2,6 +2,9 @@ config:
   webhooksEnabled: true
   devModeEnabled: false
   leaderElectionEnabled: true
+  certManager:
+    clusterIssuer: ""
+    createCertificateResources: false
 
 replicaCount: 1
 

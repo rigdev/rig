@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -19,7 +18,8 @@ import (
 
 	"github.com/rigdev/rig/internal/controller"
 
-	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
+	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/manager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -41,7 +41,10 @@ func setupTest(t *testing.T, opts options) *env {
 	logf.SetLogger(testr.New(t))
 
 	testEnv := &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases")},
+		CRDDirectoryPaths: []string{
+			filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases"),
+			filepath.Join("."),
+		},
 		ErrorIfCRDPathMissing: true,
 		BinaryAssetsDirectory: filepath.Join("..", "..", "..", "tools", "bin", "k8s",
 			fmt.Sprintf("1.28.0-%s-%s", runtime.GOOS, runtime.GOARCH)),
@@ -52,12 +55,9 @@ func setupTest(t *testing.T, opts options) *env {
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)
 
-	err = rigdevv1alpha1.AddToScheme(scheme.Scheme)
-	assert.NoError(t, err)
+	scheme := manager.NewScheme()
 
-	//+kubebuilder:scaffold:scheme
-
-	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme})
 	assert.NoError(t, err)
 	assert.NotNil(t, k8sClient)
 
@@ -65,14 +65,20 @@ func setupTest(t *testing.T, opts options) *env {
 
 	if opts.runManager {
 		manager, err := ctrl.NewManager(cfg, ctrl.Options{
-			Scheme:  scheme.Scheme,
+			Scheme:  scheme,
 			Metrics: server.Options{BindAddress: "0"},
 		})
 		assert.NoError(t, err)
 
 		capsuleReconciler := &controller.CapsuleReconciler{
 			Client: k8sClient,
-			Scheme: manager.GetScheme(),
+			Scheme: scheme,
+			Config: &configv1alpha1.OperatorConfig{
+				Certmanager: &configv1alpha1.CertManagerConfig{
+					ClusterIssuer:              "test",
+					CreateCertificateResources: true,
+				},
+			},
 		}
 
 		assert.NoError(t, capsuleReconciler.SetupWithManager(manager))

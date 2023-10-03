@@ -1,6 +1,7 @@
 package manager
 
 import (
+	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
@@ -21,6 +22,7 @@ func NewScheme() *runtime.Scheme {
 	utilruntime.Must(clientsetscheme.AddToScheme(s))
 	utilruntime.Must(configv1alpha1.AddToScheme(s))
 	utilruntime.Must(v1alpha1.AddToScheme(s))
+	utilruntime.Must(certv1.AddToScheme(s))
 	return s
 }
 
@@ -43,6 +45,7 @@ func NewManager(cfg *configv1alpha1.OperatorConfig, scheme *runtime.Scheme) (man
 	cr := &controller.CapsuleReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Config: cfg,
 	}
 	if err := cr.SetupWithManager(mgr); err != nil {
 		return nil, err
