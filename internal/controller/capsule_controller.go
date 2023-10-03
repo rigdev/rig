@@ -166,6 +166,28 @@ func createDeployment(
 				MountPath: f.Path,
 				SubPath:   path.Base(f.Path),
 			})
+		case f.Secret != nil:
+			name := "volume-" + strings.ReplaceAll(f.Secret.Name, ".", "-")
+			volumes = append(volumes, v1.Volume{
+				Name: name,
+				VolumeSource: v1.VolumeSource{
+					Secret: &v1.SecretVolumeSource{
+						SecretName: f.Secret.Name,
+						Items: []v1.KeyToPath{
+							{
+								Key:  f.Secret.Key,
+								Path: path.Base(f.Path),
+							},
+						},
+					},
+				},
+			})
+			volumeMounts = append(volumeMounts, v1.VolumeMount{
+				Name:      name,
+				MountPath: f.Path,
+				SubPath:   path.Base(f.Path),
+			})
+
 		}
 	}
 
