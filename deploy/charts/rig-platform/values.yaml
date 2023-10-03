@@ -60,8 +60,6 @@ ingress:
   tls:
     secretName: rig-platform-tls
     clusterIssuer: ""
-  #    hosts:
-  #      - chart-example.local
 
 resources:
   {}
