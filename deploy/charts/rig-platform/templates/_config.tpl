@@ -14,13 +14,15 @@ client:
   postgres:
     {{- if $.Values.postgres.enabled }}
     host: "{{ include "rig-platform.fullname" $ }}-postgres:5432"
+    insecure: true
     {{- else }}
     host: {{ .host | quote }}
+    insecure: {{ .insecure }}
     {{- end }}
     user: {{ .user | quote }}
     password: {{ .password | quote }}
   {{- end }}
-  {{- with .Values.rig.client.postgres }}
+  {{- with .Values.rig.client.mongo }}
   mongo:
     {{- if $.Values.mongodb.enabled }}
     host: "{{ include "rig-platform.fullname" $ }}-mongodb:27017"
