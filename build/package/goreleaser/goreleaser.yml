@@ -61,14 +61,14 @@ checksum:
 
 dockers:
   - image_templates:
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-amd64"
     goarch: amd64
     dockerfile: build/package/goreleaser/Dockerfile.core
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
   - image_templates:
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-arm64"
     goarch: arm64
     dockerfile: build/package/goreleaser/Dockerfile.core
     use: buildx
@@ -76,22 +76,22 @@ dockers:
       - "--platform=linux/arm64"
 
 docker_manifests:
-  - name_template: "ghcr.io/rigdev/rig-core:latest"
+  - name_template: "ghcr.io/rigdev/rig-operator:latest"
     image_templates:
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/rigdev/rig-core:{{ .Major }}"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-operator:{{ .Major }}"
     image_templates:
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/rigdev/rig-core:{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-operator:{{ .Major }}.{{ .Minor }}"
     image_templates:
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/rigdev/rig-core:{{ .Version }}"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-operator:{{ .Version }}"
     image_templates:
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-amd64"
-      - "ghcr.io/rigdev/rig-core:{{ .Version }}-arm64"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-operator:{{ .Version }}-arm64"
 
 changelog:
   sort: asc
@@ -118,4 +118,4 @@ release:
   prerelease: auto
   footer: |
     ## Docker Image
-    - `ghcr.io/rigdev/rig-core:{{ .Version }}`
+    - `ghcr.io/rigdev/rig-operator:{{ .Version }}`

@@ -1,0 +1,28 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rig-platform.fullname" . }}-postgres
+  labels: {{ include "rig-platform.postgres.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 5432
+      targetPort: postgres
+      protocol: TCP
+      name: postgres
+  selector: {{ include "rig-platform.postgres.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rig-platform.fullname" . }}-postgres-headless
+  labels: {{ include "rig-platform.postgres.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: 5432
+      targetPort: postgres
+      protocol: TCP
+      name: postgres
+  selector: {{ include "rig-platform.postgres.selectorLabels" . | nindent 4 }}
+{{- end }}

@@ -23,13 +23,9 @@ import (
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
-// embed cannot read a file not in the directory of this source file, so we need to copy it there first
-//
-//go:generate cp ../../../../../deploy/kind/config.yaml config.yaml
 //go:embed config.yaml
 var config string
 
-//go:generate cp ../../../../../deploy/registry/registry.yaml registry.yaml
 //go:embed registry.yaml
 var registry string
 

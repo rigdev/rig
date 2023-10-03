@@ -1,0 +1,60 @@
+{{- if .Values.mongodb.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "rig-platform.fullname" . }}-mongodb
+  labels: {{ include "rig-platform.mongodb.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{ include "rig-platform.mongodb.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "rig-platform.fullname" . }}-mongodb-headless
+  template:
+    metadata:
+      labels: {{ include "rig-platform.mongodb.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext: {{ toYaml .Values.mongodb.podSecurityContext | nindent 8 }}
+      containers:
+        - name: mongodb
+          securityContext: {{ toYaml .Values.mongodb.securityContext | nindent 12 }}
+          image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: mongodb
+              containerPort: 27017
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 27017
+          readinessProbe:
+            tcpSocket:
+              port: 27017
+          {{- with .Values.mongodb.resources }}
+          resources: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ include "rig-platform.fullname" . }}-mongodb
+          volumeMounts:
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+            - name: data
+              mountPath: /data/db
+      volumes:
+        - name: init
+          configMap:
+            name: {{ include "rig-platform.fullname" . }}-mongodb
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels: {{ include "rig-platform.mongodb.selectorLabels" . | nindent 10 }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- with .Values.mongodb.storage.className }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.mongodb.storage.size | quote }}
+{{- end }}
