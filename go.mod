@@ -1,6 +1,6 @@
 module github.com/rigdev/rig
 
-go 1.20
+go 1.21
 
 require (
 	cloud.google.com/go/storage v1.30.1
@@ -53,7 +53,7 @@ require (
 	github.com/google/go-containerregistry v0.16.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/lithammer/fuzzysearch v1.1.8
-	github.com/rigdev/rig-go-api v0.0.0-20231002064256-71702c3a7379
+	github.com/rigdev/rig-go-api v0.0.0-20231002140905-118e2e6c7793
 	github.com/rigdev/rig-go-sdk v0.0.0-20230918110956-2301fcd9da11
 	k8s.io/metrics v0.28.0
 	sigs.k8s.io/controller-runtime v0.16.1
