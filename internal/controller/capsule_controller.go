@@ -20,7 +20,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"reflect"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -137,6 +139,36 @@ func createDeployment(
 		})
 	}
 
+	var volumes []v1.Volume
+	var volumeMounts []v1.VolumeMount
+	for _, f := range capsule.Spec.Files {
+		switch {
+		case f.ConfigMap != nil:
+			name := "volume-" + strings.ReplaceAll(f.ConfigMap.Name, ".", "-")
+			volumes = append(volumes, v1.Volume{
+				Name: name,
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: f.ConfigMap.Name,
+						},
+						Items: []v1.KeyToPath{
+							{
+								Key:  f.ConfigMap.Key,
+								Path: path.Base(f.Path),
+							},
+						},
+					},
+				},
+			})
+			volumeMounts = append(volumeMounts, v1.VolumeMount{
+				Name:      name,
+				MountPath: f.Path,
+				SubPath:   path.Base(f.Path),
+			})
+		}
+	}
+
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsule.Name,
@@ -151,6 +183,7 @@ func createDeployment(
 			Replicas: capsule.Spec.Replicas,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
+					Annotations: capsule.Annotations,
 					Labels: map[string]string{
 						labelRigDevCapsule: capsule.Name,
 					},
@@ -178,11 +211,11 @@ func createDeployment(
 									},
 								},
 							},
-							VolumeMounts: []v1.VolumeMount{},
+							VolumeMounts: volumeMounts,
 							Ports:        ports,
 						},
 					},
-					Volumes: []v1.Volume{},
+					Volumes: volumes,
 				},
 			},
 		},
