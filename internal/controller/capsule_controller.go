@@ -129,6 +129,14 @@ func createDeployment(
 	capsule *rigdevv1alpha1.Capsule,
 	scheme *runtime.Scheme,
 ) (*appsv1.Deployment, error) {
+	var ports []v1.ContainerPort
+	for _, i := range capsule.Spec.Interfaces {
+		ports = append(ports, v1.ContainerPort{
+			Name:          i.Name,
+			ContainerPort: i.Port,
+		})
+	}
+
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsule.Name,
@@ -171,6 +179,7 @@ func createDeployment(
 								},
 							},
 							VolumeMounts: []v1.VolumeMount{},
+							Ports:        ports,
 						},
 					},
 					Volumes: []v1.Volume{},

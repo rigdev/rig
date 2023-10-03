@@ -121,6 +121,7 @@ rig:
     postgres:
       user: postgres
       password: postgres
+      insecure: false
 
     mongo:
       user: mongodb
