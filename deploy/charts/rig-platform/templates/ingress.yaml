@@ -5,26 +5,24 @@ metadata:
   name: {{ include "rig-platform.fullname" . }}
   labels: {{ include "rig-platform.labels" . | nindent 4 }}
   annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.className | quote }}
   {{- with .Values.ingress.annotations }}
-     {{ toYaml . | nindent 4 }}
+    {{ toYaml . | nindent 4 }}
   {{- end }}
-    cert-manager.io/cluster-issuer: "cloud-dns-issuer"
-    kubernetes.io/ingress.class: "nginx"
+  {{- if .Values.ingress.clusterIssuer -}}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
+  {{- end }}
 spec:
-  ingressClassName: {{ .Values.ingress.className }}
-  {{- if .Values.ingress.tls }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{- if .Values.ingress.tls.clusterIssuer }}
   tls:
-    {{- range .Values.ingress.tls }}
     - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName }}
-    {{- end }}
+      - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}
   rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    {{- if .Values.ingress.host }}
+    - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
           - path: /
