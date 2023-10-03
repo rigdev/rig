@@ -60,8 +60,10 @@ func (c *Cmd) Setup(parent *cobra.Command) {
 		},
 	}
 	kind.AddCommand(deploy)
-	deploy.Flags().StringVarP(&platformDockerTag, "docker-tag", "d", "", "The Rig docker image tag. Defaults to the latest one")
-	deploy.Flags().StringVarP(&operatorChartPath, "chart-path", "p", "", "If set, uses the helm chart at chart-path to build Rig.")
+	deploy.Flags().StringVarP(&platformDockerTag, "platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.")
+	deploy.Flags().StringVar(&platformChartPath, "platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.")
+	deploy.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "o", "", "The rig-operator docker image tag. Defaults to latest.")
+	deploy.Flags().StringVar(&operatorChartPath, "operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.")
 
 	clean := &cobra.Command{
 		Use:   "clean",
