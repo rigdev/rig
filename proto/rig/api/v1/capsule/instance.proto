@@ -26,11 +26,12 @@ message Instance {
 
 
 message InstanceStatus {
-    string message = 1;
+    string instance_id = 1;
+    string message = 2;
 
-    InstanceStatusScheduling schedule = 2;
-    InstanceStatusPreparing preparing = 3;
-    InstanceStatusRunning running = 4;
+    InstanceStatusScheduling schedule = 3;
+    InstanceStatusPreparing preparing = 4;
+    InstanceStatusRunning running = 5;
 }
 
 message InstanceStatusScheduling {
