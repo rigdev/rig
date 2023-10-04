@@ -9,8 +9,8 @@ metadata:
   {{- with .Values.ingress.annotations }}
     {{ toYaml . | nindent 4 }}
   {{- end }}
-  {{- if .Values.ingress.clusterIssuer -}}
-    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
+  {{- if .Values.ingress.tls.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuer | quote }}
   {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className | quote }}
