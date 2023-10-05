@@ -22,7 +22,7 @@ build-rig: ## 🔨 Build rig binary
 	(cd cmd/rig/ && $(GO) generate ./... && $(GOBUILD) -o ../../bin/rig ./)
 
 .PHONY: build-rig-operator
-build-rig-operator: ## 🔨 Build rig-admin binary
+build-rig-operator: ## 🔨 Build rig-operator binary
 	$(GOBUILD) -o bin/rig-operator ./cmd/rig-operator
 
 .PHONY: gen
@@ -153,7 +153,7 @@ $(TOOLSBIN):
 	mkdir -p $(TOOLSBIN)
 
 .PHONY: tools
-tools: buf mockery protoc-gen-go protoc-gen-connect-go modd goreleaser kind gotestsum ## 📦 Download all tools
+tools: buf mockery protoc-gen-go protoc-gen-connect-go goreleaser kind gotestsum ## 📦 Download all tools
 
 .PHONY: tools-ci
 tools-ci: buf mockery protoc-gen-go protoc-gen-connect-go goreleaser gotestsum controller-gen setup-envtest ## 📦 Download tools used in CI
@@ -189,14 +189,6 @@ PROTOC_GEN_CONNECT_GO_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "gith
 protoc-gen-connect-go: ## 📦 Download protoc-gen-connect-go locally if necessary.
 	(test -s $(PROTOC_GEN_CONNECT_GO) && $(PROTOC_GEN_CONNECT_GO) --version | grep "$(PROTOC_GEN_CONNECT_GO_GO_MOD_VERSION)") || \
 	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go)
-
-MODD ?= $(TOOLSBIN)/modd
-MODD_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "github.com/cortesi/modd " | cut -d ' ' -f2 | cut -c2- | cut -d. -f-2)
-
-.PHONY: modd
-modd: ## 📦 Download modd locally if necessary.
-	(test -s $(MODD) && $(MODD) --version 2>&1 | grep "$(MODD_GO_MOD_VERSION)") || \
-	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/cortesi/modd/cmd/modd)
 
 GORELEASER ?= $(TOOLSBIN)/goreleaser
 GORELEASER_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "github.com/goreleaser/goreleaser " | cut -d ' ' -f2)
