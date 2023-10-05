@@ -5,7 +5,7 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/internal/client/mongo"
+	"github.com/rigdev/rig/pkg/client/mongo"
 	"github.com/rigdev/rig/pkg/repository/project/mongo/schema"
 	"github.com/rigdev/rig/pkg/iterator"
 	"go.mongodb.org/mongo-driver/bson"

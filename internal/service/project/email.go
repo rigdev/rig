@@ -5,8 +5,8 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/internal/client/mailjet"
-	"github.com/rigdev/rig/internal/client/smtp"
+	"github.com/rigdev/rig/pkg/client/mailjet"
+	"github.com/rigdev/rig/pkg/client/smtp"
 	"github.com/rigdev/rig/internal/gateway/email"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"

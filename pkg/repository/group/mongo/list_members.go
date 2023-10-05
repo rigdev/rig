@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/internal/client/mongo"
+	"github.com/rigdev/rig/pkg/client/mongo"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"
 	"github.com/rigdev/rig/pkg/uuid"

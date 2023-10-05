@@ -5,7 +5,7 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/internal/client/mongo"
+	"github.com/rigdev/rig/pkg/client/mongo"
 	"github.com/rigdev/rig/pkg/repository/user/mongo/schema"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/iterator"

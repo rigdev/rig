@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/rigdev/rig/internal/client/segment"
+	"github.com/rigdev/rig/pkg/client/segment"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/middleware"

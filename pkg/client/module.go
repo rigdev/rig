@@ -1,12 +1,12 @@
 package client
 
 import (
-	"github.com/rigdev/rig/internal/client/docker"
-	"github.com/rigdev/rig/internal/client/k8s"
-	"github.com/rigdev/rig/internal/client/minio"
-	"github.com/rigdev/rig/internal/client/mongo"
-	"github.com/rigdev/rig/internal/client/postgres"
-	"github.com/rigdev/rig/internal/client/segment"
+	"github.com/rigdev/rig/pkg/client/docker"
+	"github.com/rigdev/rig/pkg/client/k8s"
+	"github.com/rigdev/rig/pkg/client/minio"
+	"github.com/rigdev/rig/pkg/client/mongo"
+	"github.com/rigdev/rig/pkg/client/postgres"
+	"github.com/rigdev/rig/pkg/client/segment"
 	"github.com/rigdev/rig/internal/config"
 	"go.uber.org/fx"
 )

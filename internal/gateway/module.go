@@ -3,9 +3,9 @@ package gateway
 import (
 	"fmt"
 
-	"github.com/rigdev/rig/internal/client/docker"
-	"github.com/rigdev/rig/internal/client/k8s"
-	"github.com/rigdev/rig/internal/client/minio"
+	"github.com/rigdev/rig/pkg/client/docker"
+	"github.com/rigdev/rig/pkg/client/k8s"
+	"github.com/rigdev/rig/pkg/client/minio"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
 	"github.com/rigdev/rig/internal/gateway/storage"
