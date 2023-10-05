@@ -10,7 +10,7 @@
 <p align="center"><b><a href="https://docs.rig.dev/">Documentation</a> | <a href="https://rig.dev/">Website</a></b></p>
 
 <p align="center">
-  The open-source application platform for Kubernetes
+  The application platform for Kubernetes
 </p>
 
 <p align="center">
@@ -28,18 +28,14 @@
 
 ## 🌟 What is Rig?
 
-Rig.dev offers an open-source application platform for Kubernetes. We empower developers with our developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging and scaling applications.
+Rig.dev offers an application platform for Kubernetes. We empower developers with our developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging, and scaling applications.
 
 ## 📦 Features
-
-Everything you need to get started with Cloud Development for Kubernetes infrastructures:
-
-- 🔥 Capsule abstraction for easy deployment of Container Images
-- 💻 Full Docker support for local development
-- 🔒 Authentication and User Management
-- 📈 Live metrics and overview of Capsule usage
-- 📚 gRPC-based APIs for all features
-- 🔨 Golang and Typescript/Javascript SDKs (more to come)
+Our core is open-source and features:
+- rig-operator - Our abstraction on top of Kubernetes
+- rig - The CLI for interacting with the rig-platform and its resources
+- Helm charts for installing rig-operator and rig-platform
+- The platform protobuf interfaces (allows for easy API-client generation)
 
 ## 🧑‍💻 Getting Started
 
