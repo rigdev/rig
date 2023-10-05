@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/go-logr/zapr"
+	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/controller"
+	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,9 +15,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-
-	"github.com/rigdev/rig/internal/config"
-	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
 )
 
 type Service interface{}

@@ -24,7 +24,11 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-logr/logr"
+	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,10 +40,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/go-logr/logr"
-	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/ptr"
 )
 
 // CapsuleReconciler reconciles a Capsule object
@@ -72,6 +72,8 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
+	log.Info("reconcile, hpa", capsule.Spec.HorizontalScale)
+
 	if result, err := r.reconcileDeployment(ctx, req, log, capsule); err != nil {
 		return result, err
 	}
@@ -82,6 +84,12 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return result, err
 	}
 	if result, err := r.reconcileLoadBalancer(ctx, req, log, capsule); err != nil {
+		return result, err
+	}
+	if result, err := r.reconcileLoadBalancer(ctx, req, log, capsule); err != nil {
+		return result, err
+	}
+	if result, err := r.reconcileHorizontalPodAutoscaler(ctx, req, log, capsule); err != nil {
 		return result, err
 	}
 
@@ -464,11 +472,11 @@ func (r *CapsuleReconciler) reconcileLoadBalancer(
 
 			log.Info("creating loadbalancer service")
 			if err := r.Create(ctx, svc); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not create ingress: %w", err)
+				return ctrl.Result{}, fmt.Errorf("could not create loadbalancer: %w", err)
 			}
 			existingSvc = svc
 		} else {
-			return ctrl.Result{}, fmt.Errorf("could not fetch ingress: %w", err)
+			return ctrl.Result{}, fmt.Errorf("could not fetch loadbalancer: %w", err)
 		}
 	}
 
@@ -546,4 +554,82 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&rigdevv1alpha1.Capsule{}).
 		Complete(r)
+}
+
+func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
+	ctx context.Context,
+	req ctrl.Request,
+	log logr.Logger,
+	capsule *rigdevv1alpha1.Capsule,
+) (ctrl.Result, error) {
+	hpa, err := createHPA(capsule, r.Scheme)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	existingHPA := &autoscalingv2.HorizontalPodAutoscaler{}
+	if err = r.Get(ctx, client.ObjectKeyFromObject(hpa), existingHPA); err != nil {
+		if kerrors.IsNotFound(err) {
+			log.Info("creating horizontal pod autoscaler")
+			if err := r.Create(ctx, hpa); err != nil {
+				return ctrl.Result{}, fmt.Errorf("could not create horizontal pod autoscaler: %w", err)
+			}
+			existingHPA = hpa
+		} else {
+			return ctrl.Result{}, fmt.Errorf("could not fetch horizontal pod autoscaler: %w", err)
+		}
+	}
+
+	if !IsOwnedBy(capsule, existingHPA) {
+		log.Info("Found existing horizontal pod autoscaler not owned by capsule. Will not update it.")
+		return ctrl.Result{}, errors.New("found existing horizontal pod autoscaler not owned by capsule")
+	}
+
+	if !reflect.DeepEqual(existingHPA.Spec, hpa.Spec) {
+		log.Info("updating hpa")
+		if err := r.Update(ctx, hpa); err != nil {
+			return ctrl.Result{}, fmt.Errorf("could not update deployment: %w", err)
+		}
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autoscalingv2.HorizontalPodAutoscaler, error) {
+	scale := capsule.Spec.HorizontalScale
+
+	var metrics []autoscalingv2.MetricSpec
+	if scale.CPUTarget != (rigdevv1alpha1.CPUTarget{}) {
+		metrics = append(metrics, autoscalingv2.MetricSpec{
+			Type: autoscalingv2.ResourceMetricSourceType,
+			Resource: &autoscalingv2.ResourceMetricSource{
+				Name: v1.ResourceCPU,
+				Target: autoscalingv2.MetricTarget{
+					Type:               autoscalingv2.UtilizationMetricType,
+					AverageUtilization: ptr.New(int32(scale.CPUTarget.AverageUtilizationPercentage)),
+				},
+			},
+		})
+	}
+
+	hpa := &autoscalingv2.HorizontalPodAutoscaler{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-autoscaler", capsule.Name),
+			Namespace: capsule.Namespace,
+		},
+		Spec: autoscalingv2.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
+				Kind:       capsule.Kind,
+				Name:       capsule.Name,
+				APIVersion: capsule.APIVersion,
+			},
+			MinReplicas: ptr.New(int32(scale.MinReplicas)),
+			MaxReplicas: int32(scale.MaxReplicas),
+			Metrics:     metrics,
+		},
+	}
+	if err := controllerutil.SetControllerReference(capsule, hpa, scheme); err != nil {
+		return nil, err
+	}
+
+	return hpa, nil
 }
