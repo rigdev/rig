@@ -7,9 +7,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/rigdev/rig/internal/oauth2/facebook"
-	"github.com/rigdev/rig/internal/oauth2/github"
-	"github.com/rigdev/rig/internal/oauth2/google"
+	"github.com/rigdev/rig/pkg/oauth2/facebook"
+	"github.com/rigdev/rig/pkg/oauth2/github"
+	"github.com/rigdev/rig/pkg/oauth2/google"
 	facebookOauth2 "golang.org/x/oauth2/facebook"
 	githubOauth2 "golang.org/x/oauth2/github"
 	googleOauth2 "golang.org/x/oauth2/google"

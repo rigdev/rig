@@ -13,7 +13,7 @@ import (
 	"github.com/rigdev/rig/gen/go/registry"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/email"
-	"github.com/rigdev/rig/internal/oauth2"
+	"github.com/rigdev/rig/pkg/oauth2"
 	"github.com/rigdev/rig/internal/repository"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"

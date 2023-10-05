@@ -5,7 +5,7 @@ import (
 	"github.com/rigdev/rig/internal/client"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway"
-	"github.com/rigdev/rig/internal/oauth2"
+	"github.com/rigdev/rig/pkg/oauth2"
 	"github.com/rigdev/rig/internal/repository"
 	"github.com/rigdev/rig/internal/service"
 	pkg_service "github.com/rigdev/rig/pkg/service"

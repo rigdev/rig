@@ -5,7 +5,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/authentication/authenticationconnect"
-	"github.com/rigdev/rig/internal/oauth2"
+	"github.com/rigdev/rig/pkg/oauth2"
 	"github.com/rigdev/rig/internal/service/auth"
 	"github.com/rigdev/rig/internal/service/project"
 	"github.com/rigdev/rig/internal/service/user"
