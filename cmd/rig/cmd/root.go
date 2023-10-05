@@ -15,7 +15,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
 	"github.com/rigdev/rig/cmd/rig/cmd/service_account"
 	"github.com/rigdev/rig/cmd/rig/cmd/user"
-	"github.com/rigdev/rig/internal/build"
+	"github.com/rigdev/rig/pkg/build"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

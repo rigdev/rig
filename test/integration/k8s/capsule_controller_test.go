@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/rigdev/rig/internal/controller"
+	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 
 	//+kubebuilder:scaffold:imports

@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/rigdev/rig/internal/controller"
+	"github.com/rigdev/rig/pkg/controller"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
