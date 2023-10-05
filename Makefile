@@ -53,7 +53,7 @@ mocks: mockery mocks-clean ## 🪄 Generate mocks
 .PHONY: manifests
 manifests: controller-gen ## 🪄 Clean mocks
 	$(CONTROLLER_GEN) rbac:roleName=rig crd webhook \
-		paths="./pkg/api/...;./internal/controller" \
+		paths="./pkg/api/...;./pkg/controller" \
 		output:rbac:dir=deploy/kustomize/rbac \
 		output:webhook:dir=deploy/kustomize/webhook \
 		output:crd:dir=deploy/kustomize/crd/bases

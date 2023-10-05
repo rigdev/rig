@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-logr/zapr"
 	"github.com/rigdev/rig/internal/config"
-	"github.com/rigdev/rig/internal/controller"
+	"github.com/rigdev/rig/pkg/controller"
 	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
