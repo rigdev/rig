@@ -65,6 +65,19 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if operatorDockerTag == "" {
+		operatorDockerTag = "latest"
+	}
+	if err := c.deployInner(ctx, deployParams{
+		dockerImage: "ghcr.io/rigdev/rig-operator",
+		dockerTag:   operatorDockerTag,
+		chartName:   "rig-operator",
+		chartPath:   operatorChartPath,
+		customArgs:  []string{"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag)},
+	}); err != nil {
+		return err
+	}
+
 	if platformDockerTag == "" {
 		platformDockerTag = "latest"
 	}
@@ -79,19 +92,6 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 			"--set", "rig.cluster.dev_registry.host=localhost:30000",
 			"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
 			"--set", "service.type=NodePort"},
-	}); err != nil {
-		return err
-	}
-
-	if operatorDockerTag == "" {
-		operatorDockerTag = "latest"
-	}
-	if err := c.deployInner(ctx, deployParams{
-		dockerImage: "ghcr.io/rigdev/rig-operator",
-		dockerTag:   operatorDockerTag,
-		chartName:   "rig-operator",
-		chartPath:   operatorChartPath,
-		customArgs:  []string{"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag)},
 	}); err != nil {
 		return err
 	}
