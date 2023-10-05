@@ -54,7 +54,7 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	fmt.Println("Creating a new Rig cluster requries setting up an admin user and project")
 	fmt.Println("Run the following command once the new Rig server has finished starting up")
-	fmt.Println("kubectl", "exec", "--tty", "--stdin", "--namespace", "rig-system", "deploy/rig-platform", "--", "rig-admin", "init")
+	fmt.Println("kubectl exec --tty --stdin --namespace rig-system deploy/rig-platform -- rig-admin init")
 
 	return nil
 }
@@ -123,7 +123,7 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 		"--create-namespace",
 	}
 	cArgs = append(cArgs, p.customArgs...)
-	if operatorChartPath == "" {
+	if p.chartPath == "" {
 		cArgs = append(cArgs, "--repo", "https://charts.rig.dev")
 	}
 
