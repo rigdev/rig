@@ -28,10 +28,11 @@ message Instance {
 message InstanceStatus {
     string instance_id = 1;
     string message = 2;
+    google.protobuf.Timestamp timestamp = 3;
 
-    InstanceStatusScheduling schedule = 3;
-    InstanceStatusPreparing preparing = 4;
-    InstanceStatusRunning running = 5;
+    InstanceStatusScheduling schedule = 4;
+    InstanceStatusPreparing preparing = 5;
+    InstanceStatusRunning running = 6;
 }
 
 message InstanceStatusScheduling {
