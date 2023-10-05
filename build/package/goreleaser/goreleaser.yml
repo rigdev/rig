@@ -14,9 +14,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/rigdev/rig/internal/build.version={{ .Version }}
-      - -X github.com/rigdev/rig/internal/build.commit={{ .Commit }}
-      - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
+      - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
+      - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
+      - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: rig-operator
     binary: rig-operator
     main: ./cmd/rig-operator
@@ -29,9 +29,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/rigdev/rig/internal/build.version={{ .Version }}
-      - -X github.com/rigdev/rig/internal/build.commit={{ .Commit }}
-      - -X github.com/rigdev/rig/internal/build.date={{ .Date }}
+      - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
+      - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
+      - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
 
 archives:
   - id: rig

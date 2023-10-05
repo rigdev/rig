@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/rigdev/rig/internal/build"
+	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/config"
 	"github.com/rigdev/rig/pkg/manager"
 	"github.com/spf13/cobra"
