@@ -11,7 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/gen/go/oauth2"
-	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/repository"
 	group_service "github.com/rigdev/rig/internal/service/group"
 	project_service "github.com/rigdev/rig/internal/service/project"
 	"github.com/rigdev/rig/pkg/auth"

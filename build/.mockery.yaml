@@ -11,7 +11,7 @@ packages:
   github.com/rigdev/rig/internal/service/project:
     interfaces:
       Service:
-  github.com/rigdev/rig/internal/repository:
+  github.com/rigdev/rig/pkg/repository:
     interfaces:
       Session:
       Capsule:

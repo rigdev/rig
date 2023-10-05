@@ -6,7 +6,7 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/repository"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/iterator"
 	"github.com/rigdev/rig/pkg/utils"

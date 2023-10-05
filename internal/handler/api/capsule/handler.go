@@ -5,7 +5,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule/capsuleconnect"
-	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/repository"
 	"github.com/rigdev/rig/internal/service/capsule"
 	"github.com/rigdev/rig/internal/service/metrics"
 )

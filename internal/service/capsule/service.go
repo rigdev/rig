@@ -7,7 +7,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/gateway/cluster"
-	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/repository"
 	service_auth "github.com/rigdev/rig/internal/service/auth"
 	"github.com/rigdev/rig/internal/service/project"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"

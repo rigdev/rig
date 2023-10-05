@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/gen/go/oauth2"
 	"github.com/rigdev/rig/internal/config"
-	"github.com/rigdev/rig/internal/repository"
+	"github.com/rigdev/rig/pkg/repository"
 	"github.com/rigdev/rig/internal/service/project"
 	user_serv "github.com/rigdev/rig/internal/service/user"
 	"github.com/rigdev/rig/pkg/auth"
