@@ -17,7 +17,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	proto_proxy "github.com/rigdev/rig/gen/go/proxy"
-	"github.com/rigdev/rig/internal/build"
+	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/internal/service/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/proxy"

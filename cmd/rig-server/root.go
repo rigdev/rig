@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rigdev/rig/internal/build"
+	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/internal/core"
 	"github.com/rigdev/rig/internal/handler"

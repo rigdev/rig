@@ -11,7 +11,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/rigdev/rig/gen/go/proxy"
-	"github.com/rigdev/rig/internal/build"
+	"github.com/rigdev/rig/pkg/build"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
