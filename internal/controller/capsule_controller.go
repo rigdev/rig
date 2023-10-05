@@ -24,9 +24,9 @@ import (
 	"reflect"
 	"strings"
 
+	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/go-logr/logr"
-	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
@@ -40,12 +40,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/ptr"
 )
 
 // CapsuleReconciler reconciles a Capsule object
 type CapsuleReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Config *configv1alpha1.OperatorConfig
 }
 
 const (
@@ -56,6 +61,11 @@ const (
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules/finalizers,verbs=update
+//+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cert-manager.io,resources=certificates,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile compares the state specified by the Capsule object against the
 // actual cluster state, and then performs operations to make the cluster state
@@ -78,6 +88,9 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return result, err
 	}
 	if result, err := r.reconcileService(ctx, req, log, capsule); err != nil {
+		return result, err
+	}
+	if result, err := r.reconcileCertificate(ctx, req, log, capsule); err != nil {
 		return result, err
 	}
 	if result, err := r.reconcileIngress(ctx, req, log, capsule); err != nil {
@@ -340,13 +353,125 @@ func createService(
 	return svc, nil
 }
 
+func (r *CapsuleReconciler) reconcileCertificate(
+	ctx context.Context,
+	req ctrl.Request,
+	log logr.Logger,
+	capsule *rigdevv1alpha1.Capsule,
+) (ctrl.Result, error) {
+	crt, err := r.createCertificate(capsule, r.Scheme)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	existingCrt := &cmv1.Certificate{}
+	if err := r.Get(ctx, req.NamespacedName, existingCrt); err != nil {
+		if kerrors.IsNotFound(err) {
+			if !capsuleHasIngress(capsule) {
+				return ctrl.Result{}, nil
+			}
+			if !r.ingressIsSupported() {
+				log.V(1).Info("not creating certificate as ingress is not supported: cert-manager config missing")
+				return ctrl.Result{}, nil
+			}
+			if !r.shouldCreateCertificateRessource() {
+				log.V(1).Info("not creating certificate as operator is configured to use ingress annotations")
+				return ctrl.Result{}, nil
+			}
+
+			log.Info("creating certificate")
+			if err := r.Create(ctx, crt); err != nil {
+				return ctrl.Result{}, fmt.Errorf("could not create certificate: %w", err)
+			}
+			existingCrt = crt
+		} else {
+			return ctrl.Result{}, fmt.Errorf("could not fetch certificate: %w", err)
+		}
+	}
+
+	if !IsOwnedBy(capsule, existingCrt) {
+		if capsuleHasIngress(capsule) {
+			log.Info("Found existing certificate not owned by capsule. Will not update it.")
+			return ctrl.Result{}, errors.New("found existing certificate not owned by capsule")
+		} else {
+			log.Info("Found existing certificate not owned by capsule. Will not delete it.")
+		}
+	} else {
+		if r.ingressIsSupported() && r.shouldCreateCertificateRessource() && capsuleHasIngress(capsule) {
+			if !reflect.DeepEqual(existingCrt.Spec, crt.Spec) {
+				log.Info("updating certificate")
+				if err := r.Update(ctx, crt); err != nil {
+					return ctrl.Result{}, fmt.Errorf("could not update certificate: %w", err)
+				}
+			}
+		} else {
+			if !r.ingressIsSupported() {
+				log.V(1).Info("deleting certificate as ingress is not supported: cert-manager config missing")
+			} else if !r.shouldCreateCertificateRessource() {
+				log.V(1).Info("deleting certificate becausee operator is configured to use ingress annotations")
+			} else {
+				log.Info("deleting certificate")
+			}
+			if err := r.Delete(ctx, existingCrt); err != nil {
+				return ctrl.Result{}, fmt.Errorf("could not delete certificate: %w", err)
+			}
+		}
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *CapsuleReconciler) shouldCreateCertificateRessource() bool {
+	return r.Config.Certmanager != nil &&
+		r.Config.Certmanager.CreateCertificateResources
+}
+
+func (r *CapsuleReconciler) createCertificate(
+	capsule *rigdevv1alpha1.Capsule,
+	scheme *runtime.Scheme,
+) (*cmv1.Certificate, error) {
+	crt := &cmv1.Certificate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      capsule.Name,
+			Namespace: capsule.Namespace,
+		},
+		Spec: cmv1.CertificateSpec{
+			SecretName: fmt.Sprintf("%s-tls", capsule.Name),
+		},
+	}
+
+	if r.Config.Certmanager != nil {
+		crt.Spec.IssuerRef = cmmetav1.ObjectReference{
+			Kind: cmv1.ClusterIssuerKind,
+			Name: r.Config.Certmanager.ClusterIssuer,
+		}
+	}
+
+	for _, inf := range capsule.Spec.Interfaces {
+		if inf.Public != nil && inf.Public.Ingress != nil {
+			crt.Spec.DNSNames = append(crt.Spec.DNSNames, inf.Public.Ingress.Host)
+		}
+	}
+
+	if err := controllerutil.SetControllerReference(capsule, crt, scheme); err != nil {
+		return nil, fmt.Errorf("could not set owner reference on certificate: %w", err)
+	}
+
+	return crt, nil
+}
+
+func (r *CapsuleReconciler) ingressIsSupported() bool {
+	cm := r.Config.Certmanager
+	return cm != nil && cm.ClusterIssuer != ""
+}
+
 func (r *CapsuleReconciler) reconcileIngress(
 	ctx context.Context,
 	req ctrl.Request,
 	log logr.Logger,
 	capsule *rigdevv1alpha1.Capsule,
 ) (ctrl.Result, error) {
-	ing, err := createIngress(capsule, r.Scheme)
+	ing, err := r.createIngress(capsule, r.Scheme)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -355,6 +480,10 @@ func (r *CapsuleReconciler) reconcileIngress(
 	if err := r.Get(ctx, req.NamespacedName, existingIng); err != nil {
 		if kerrors.IsNotFound(err) {
 			if !capsuleHasIngress(capsule) {
+				return ctrl.Result{}, nil
+			}
+			if !r.ingressIsSupported() {
+				log.V(1).Info("ingress not supported: cert-manager config missing")
 				return ctrl.Result{}, nil
 			}
 
@@ -376,7 +505,7 @@ func (r *CapsuleReconciler) reconcileIngress(
 			log.Info("Found existing ingress not owned by capsule. Will not delete it.")
 		}
 	} else {
-		if capsuleHasIngress(capsule) {
+		if r.ingressIsSupported() && capsuleHasIngress(capsule) {
 			if !reflect.DeepEqual(existingIng.Spec, ing.Spec) {
 				log.Info("updating ingress")
 				if err := r.Update(ctx, ing); err != nil {
@@ -384,6 +513,9 @@ func (r *CapsuleReconciler) reconcileIngress(
 				}
 			}
 		} else {
+			if !r.ingressIsSupported() {
+				log.V(1).Info("ingress not supported: cert-manager config missing")
+			}
 			log.Info("deleting ingress")
 			if err := r.Delete(ctx, existingIng); err != nil {
 				return ctrl.Result{}, fmt.Errorf("could not delete ingress: %w", err)
@@ -403,20 +535,24 @@ func capsuleHasIngress(capsule *rigdevv1alpha1.Capsule) bool {
 	return false
 }
 
-func createIngress(
+func (r *CapsuleReconciler) createIngress(
 	capsule *rigdevv1alpha1.Capsule,
 	scheme *runtime.Scheme,
 ) (*netv1.Ingress, error) {
 	ing := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      capsule.Name,
-			Namespace: capsule.Namespace,
+			Name:        capsule.Name,
+			Namespace:   capsule.Namespace,
+			Annotations: map[string]string{},
 		},
+	}
+
+	if r.ingressIsSupported() && !r.shouldCreateCertificateRessource() {
+		ing.Annotations["cert-manager.io/cluster-issuer"] = r.Config.Certmanager.ClusterIssuer
 	}
 
 	for _, inf := range capsule.Spec.Interfaces {
 		if inf.Public != nil && inf.Public.Ingress != nil {
-			// TODO: setup TLS
 			ing.Spec.Rules = append(ing.Spec.Rules, netv1.IngressRule{
 				Host: inf.Public.Ingress.Host,
 				IngressRuleValue: netv1.IngressRuleValue{
@@ -438,6 +574,12 @@ func createIngress(
 					},
 				},
 			})
+			if len(ing.Spec.TLS) == 0 {
+				ing.Spec.TLS = []netv1.IngressTLS{{
+					SecretName: fmt.Sprintf("%s-tls", capsule.Name),
+				}}
+			}
+			ing.Spec.TLS[0].Hosts = append(ing.Spec.TLS[0].Hosts, inf.Public.Ingress.Host)
 		}
 	}
 
@@ -543,7 +685,7 @@ func createLoadBalancer(
 	}
 
 	if err := controllerutil.SetControllerReference(capsule, svc, scheme); err != nil {
-		return nil, fmt.Errorf("could not set owner reference on ingress: %w", err)
+		return nil, fmt.Errorf("could not set owner reference on loadbalancer service: %w", err)
 	}
 
 	return svc, nil
