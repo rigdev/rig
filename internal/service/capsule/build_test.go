@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/rigdev/rig/internal/gateway/cluster"
+	"github.com/rigdev/rig/pkg/gateway/cluster"
 	"github.com/rigdev/rig/pkg/repository"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/auth"

@@ -25,7 +25,7 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/internal/config"
-	"github.com/rigdev/rig/internal/gateway/cluster"
+	"github.com/rigdev/rig/pkg/gateway/cluster"
 	"github.com/rigdev/rig/pkg/repository"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"

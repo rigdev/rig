@@ -13,7 +13,7 @@ import (
 	"github.com/distribution/distribution/v3/registry/storage/driver"
 	"github.com/distribution/distribution/v3/registry/storage/driver/factory"
 	"github.com/rigdev/rig-go-api/api/v1/storage"
-	storage_gateway "github.com/rigdev/rig/internal/gateway/storage"
+	storage_gateway "github.com/rigdev/rig/pkg/gateway/storage"
 	"github.com/rigdev/rig/internal/config"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"

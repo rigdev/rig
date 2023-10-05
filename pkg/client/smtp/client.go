@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
-	"github.com/rigdev/rig/internal/gateway/email"
+	"github.com/rigdev/rig/pkg/gateway/email"
 )
 
 type smtpProvider struct {

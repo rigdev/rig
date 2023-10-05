@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/rigdev/rig/internal/gateway/cluster"
+	"github.com/rigdev/rig/pkg/gateway/cluster"
 	"github.com/rigdev/rig/pkg/repository"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"

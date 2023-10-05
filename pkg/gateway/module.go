@@ -7,8 +7,8 @@ import (
 	"github.com/rigdev/rig/pkg/client/k8s"
 	"github.com/rigdev/rig/pkg/client/minio"
 	"github.com/rigdev/rig/internal/config"
-	"github.com/rigdev/rig/internal/gateway/cluster"
-	"github.com/rigdev/rig/internal/gateway/storage"
+	"github.com/rigdev/rig/pkg/gateway/cluster"
+	"github.com/rigdev/rig/pkg/gateway/storage"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

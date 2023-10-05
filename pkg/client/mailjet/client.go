@@ -6,7 +6,7 @@ import (
 
 	"github.com/mailjet/mailjet-apiv3-go"
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
-	"github.com/rigdev/rig/internal/gateway/email"
+	"github.com/rigdev/rig/pkg/gateway/email"
 )
 
 type mailjetProvider struct {

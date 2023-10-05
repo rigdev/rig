@@ -3,7 +3,7 @@ package project
 import (
 	"context"
 
-	"github.com/rigdev/rig/internal/gateway/text"
+	"github.com/rigdev/rig/pkg/gateway/text"
 	"github.com/rigdev/rig/pkg/errors"
 )
 

@@ -7,7 +7,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/pkg/client/mailjet"
 	"github.com/rigdev/rig/pkg/client/smtp"
-	"github.com/rigdev/rig/internal/gateway/email"
+	"github.com/rigdev/rig/pkg/gateway/email"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"google.golang.org/protobuf/proto"

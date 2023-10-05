@@ -1,6 +1,6 @@
 package k8s
 
-import "github.com/rigdev/rig/internal/gateway/cluster"
+import "github.com/rigdev/rig/pkg/gateway/cluster"
 
 const (
 	labelName         = "app.kubernetes.io/name"

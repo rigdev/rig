@@ -15,6 +15,6 @@ packages:
     interfaces:
       Session:
       Capsule:
-  github.com/rigdev/rig/internal/gateway/cluster:
+  github.com/rigdev/rig/pkg/gateway/cluster:
     interfaces:
       ConfigGateway:

@@ -12,7 +12,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/internal/gateway/email"
+	"github.com/rigdev/rig/pkg/gateway/email"
 	"github.com/rigdev/rig/pkg/crypto"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/hash"
