@@ -10,13 +10,14 @@ type CapsuleSpec struct {
 	Replicas *int32 `json:"replicas,omitempty"`
 	Image    string `json:"image"`
 
-	Command         string                   `json:"command,omitempty"`
-	Args            []string                 `json:"args,omitempty"`
-	Interfaces      []CapsuleInterface       `json:"interfaces,omitempty"`
-	Files           []File                   `json:"files,omitempty"`
-	Resources       *v1.ResourceRequirements `json:"resources,omitempty"`
-	ImagePullSecret *v1.LocalObjectReference `json:"imagePullSecret,omitempty"`
-	HorizontalScale HorizontalScale          `json:"horizontalScale,omitempty"`
+	Command            string                   `json:"command,omitempty"`
+	Args               []string                 `json:"args,omitempty"`
+	Interfaces         []CapsuleInterface       `json:"interfaces,omitempty"`
+	Files              []File                   `json:"files,omitempty"`
+	Resources          *v1.ResourceRequirements `json:"resources,omitempty"`
+	ImagePullSecret    *v1.LocalObjectReference `json:"imagePullSecret,omitempty"`
+	HorizontalScale    HorizontalScale          `json:"horizontalScale,omitempty"`
+	ServiceAccountName string                   `json:"serviceAccountName,omitempty"`
 }
 
 // CapsuleInterface defines an interface for a capsule
@@ -46,7 +47,8 @@ type CapsuleInterfaceIngress struct {
 type CapsuleInterfaceLoadBalancer struct {
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
-	Port int32 `json:"port"`
+	Port     int32 `json:"port"`
+	NodePort int32 `json:"nodePort,omitempty"`
 }
 
 // File defines a mounted file and where to retrieve the contents from
@@ -56,8 +58,8 @@ type File struct {
 	Secret    *FileContentRef `json:"secret,omitempty"`
 }
 
-// FileContentRef defines the name of a config resource and the key which from
-// which to retrieve the contents
+// FileContentRef defines the name of a config resource and the key from which
+// to retrieve the contents
 type FileContentRef struct {
 	Name string `json:"name"`
 	Key  string `json:"key"`

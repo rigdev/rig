@@ -91,7 +91,8 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 			"--set", "postgres.enabled=true",
 			"--set", "rig.cluster.dev_registry.host=localhost:30000",
 			"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
-			"--set", "service.type=NodePort"},
+			"--set", "service.type=NodePort",
+			"--set", "rig-operator.enabled=false"},
 	}); err != nil {
 		return err
 	}

@@ -112,6 +112,7 @@ message PublicInterface {
 message RoutingMethod {
   message LoadBalancer {
     uint32 port = 1;
+    uint32 node_port = 2;
   }
 
   message Ingress {

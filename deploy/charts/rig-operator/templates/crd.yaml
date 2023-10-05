@@ -55,7 +55,7 @@ spec:
                   properties:
                     configMap:
                       description: FileContentRef defines the name of a config resource
-                        and the key which from which to retrieve the contents
+                        and the key from which to retrieve the contents
                       properties:
                         key:
                           type: string
@@ -69,7 +69,7 @@ spec:
                       type: string
                     secret:
                       description: FileContentRef defines the name of a config resource
-                        and the key which from which to retrieve the contents
+                        and the key from which to retrieve the contents
                       properties:
                         key:
                           type: string
@@ -150,6 +150,9 @@ spec:
                           description: CapsuleInterfaceLoadBalancer defines that the
                             interface should be exposed as a L4 loadbalancer
                           properties:
+                            nodePort:
+                              format: int32
+                              type: integer
                             port:
                               format: int32
                               maximum: 65535
@@ -215,6 +218,8 @@ spec:
                       More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     type: object
                 type: object
+              serviceAccountName:
+                type: string
             required:
             - image
             type: object
