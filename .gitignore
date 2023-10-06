@@ -12,6 +12,10 @@
 # dependencies
 go.work.sum
 
+# helm charts
+deploy/charts/*/Chart.lock
+deploy/charts/*/charts
+
 # at some point we might want to commit this so that rig can be installed via
 # kustomize
 /deploy/kustomize
