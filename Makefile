@@ -93,8 +93,8 @@ KUBECTX ?= kind-rig
 export KUBECTL ?= kubectl --context $(KUBECTX)
 export HELM ?= helm --kube-context $(KUBECTX)
 
-.PHONY: deploy
-deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
+.PHONY: deploy-operator
+deploy-operator: ## 🚀 Deploy operator to k8s context defined by $KUBECTX (default: kind-rig)
 	$(HELM) upgrade --install rig-operator ./deploy/charts/rig-operator \
 			--namespace rig-system \
 			--set image.tag=$(TAG) \
@@ -103,15 +103,20 @@ deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
 
 PLATFORM_TAG ?= latest
 
-deploy-platform: ## 🚀 Deploy to platform to k8s defined by $KUBECTX (default: kind-rig)
+.PHONY: deploy-platform
+deploy-platform: ## 🚀 Deploy platform to k8s context defined by $KUBECTX (default: kind-rig)
+	$(HELM) dependency build ./deploy/charts/rig-platform
 	$(HELM) upgrade --install rig-platform ./deploy/charts/rig-platform \
-			--namespace rig-system 																		\
-			--set postgres.enabled=true																\
-			--set image.tag=$(PLATFORM_TAG)   																	\
-			--set rig.cluster.dev_registry.enabled=true 							\
-			--set rig.cluster.dev_registry.host=localhost:30000 			\
+			--namespace rig-system \
+			--set postgres.enabled=true	\
+			--set image.tag=$(PLATFORM_TAG) \
+			--set rig.cluster.dev_registry.enabled=true \
+			--set rig.cluster.dev_registry.host=localhost:30000 \
 			--set rig.cluster.dev_registry.cluster_host=registry:5000 \
+			--set rig-operator.enabled=false \
 			--create-namespace
+
+PLATFORM_TAG ?= latest
 
 .PHONY: kind-create
 kind-create: kind ## 🐋 Create kind cluster with rig dependencies
