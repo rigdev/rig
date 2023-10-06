@@ -101,11 +101,13 @@ deploy: ## 🚀 Deploy to k8s context defined by $KUBECTX (default: kind-rig)
 			--set config.devModeEnabled=true \
 			--create-namespace
 
+PLATFORM_TAG ?= latest
+
 deploy-platform: ## 🚀 Deploy to platform to k8s defined by $KUBECTX (default: kind-rig)
 	$(HELM) upgrade --install rig-platform ./deploy/charts/rig-platform \
 			--namespace rig-system 																		\
 			--set postgres.enabled=true																\
-			--set image.tag=latest   																	\
+			--set image.tag=$(PLATFORM_TAG)   																	\
 			--set rig.cluster.dev_registry.enabled=true 							\
 			--set rig.cluster.dev_registry.host=localhost:30000 			\
 			--set rig.cluster.dev_registry.cluster_host=registry:5000 \
