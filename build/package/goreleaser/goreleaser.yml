@@ -63,14 +63,14 @@ dockers:
   - image_templates:
       - "ghcr.io/rigdev/rig-operator:{{ .Version }}-amd64"
     goarch: amd64
-    dockerfile: build/package/goreleaser/Dockerfile.core
+    dockerfile: build/package/goreleaser/Dockerfile
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
   - image_templates:
       - "ghcr.io/rigdev/rig-operator:{{ .Version }}-arm64"
     goarch: arm64
-    dockerfile: build/package/goreleaser/Dockerfile.core
+    dockerfile: build/package/goreleaser/Dockerfile
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
