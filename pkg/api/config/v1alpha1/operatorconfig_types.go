@@ -25,7 +25,11 @@ type OperatorConfig struct {
 
 	// Certmanager holds configuration for how the operator should create
 	// certificates for ingress resources.
-	Certmanager *CertManagerConfig `json:"certManager"`
+	Certmanager *CertManagerConfig `json:"certManager,omitempty"`
+
+	// Ingress holds the configuration for ingress resources created by the
+	// operator.
+	Ingress IngressConfig `json:"ingress,omitempty"`
 }
 
 type CertManagerConfig struct {
@@ -38,12 +42,24 @@ type CertManagerConfig struct {
 	CreateCertificateResources bool `json:"createCertificateResources,omitempty"`
 }
 
+type IngressConfig struct {
+	// Annotations for all ingress resources created.
+	Annotations map[string]string `json:"annotations"`
+
+	// ClassName specifies the default ingress class to use for all ingress
+	// resources created.
+	ClassName string `json:"className"`
+}
+
 func (c *OperatorConfig) Default() {
 	if c.WebhooksEnabled == nil {
 		c.WebhooksEnabled = ptr.New(true)
 	}
 	if c.LeaderElectionEnabled == nil {
 		c.LeaderElectionEnabled = ptr.New(true)
+	}
+	if c.Ingress.Annotations == nil {
+		c.Ingress.Annotations = map[string]string{}
 	}
 }
 
