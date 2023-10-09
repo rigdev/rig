@@ -5,6 +5,9 @@ config:
   certManager:
     clusterIssuer: ""
     createCertificateResources: false
+  ingress:
+    annotations: {}
+    className: ""
 
 replicaCount: 1
 
@@ -47,7 +50,8 @@ securityContext:
     drop:
       - "ALL"
 
-resources: {}
+resources:
+  {}
   # limits:
   #   cpu: 100m
   #   memory: 128Mi

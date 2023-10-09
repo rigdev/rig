@@ -82,7 +82,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
-	log.Info("reconcile, hpa", capsule.Spec.HorizontalScale)
+	log.Info("reconcile", "hpa", capsule.Spec.HorizontalScale)
 
 	if result, err := r.reconcileDeployment(ctx, req, log, capsule); err != nil {
 		return result, err
@@ -543,8 +543,12 @@ func (r *CapsuleReconciler) createIngress(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        capsule.Name,
 			Namespace:   capsule.Namespace,
-			Annotations: map[string]string{},
+			Annotations: r.Config.Ingress.Annotations,
 		},
+	}
+
+	if r.Config.Ingress.ClassName != "" {
+		ing.Spec.IngressClassName = ptr.New(r.Config.Ingress.ClassName)
 	}
 
 	if r.ingressIsSupported() && !r.shouldCreateCertificateRessource() {
@@ -760,14 +764,16 @@ func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autosc
 		},
 		Spec: autoscalingv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
-				Kind:       capsule.Kind,
+				Kind:       "Deployment",
 				Name:       capsule.Name,
-				APIVersion: capsule.APIVersion,
+				APIVersion: appsv1.SchemeGroupVersion.Version,
 			},
-			MinReplicas: ptr.New(int32(scale.MinReplicas)),
 			MaxReplicas: int32(scale.MaxReplicas),
 			Metrics:     metrics,
 		},
+	}
+	if scale.MinReplicas > 0 {
+		hpa.Spec.MinReplicas = ptr.New(int32(scale.MinReplicas))
 	}
 	if err := controllerutil.SetControllerReference(capsule, hpa, scheme); err != nil {
 		return nil, err
