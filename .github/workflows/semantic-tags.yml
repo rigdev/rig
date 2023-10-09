@@ -39,35 +39,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-tools-
 
-      - name: Get dashboard asset ID
-        uses: actions/github-script@v6
-        id: get-asset-id
-        with:
-          github-token: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
-          script: |
-            const release = await github.rest.repos.getReleaseByTag({
-              "owner": "rigdev",
-              "repo": "dashboard",
-              "tag": "v0.2.10"
-            })
-            const asset = release.data.assets.find(a => a.name == "public.tar.gz")
-            if (!asset) {
-              throw new Error("could not find public.tar.gz")
-            }
-            return asset.id
-
-      - name: Download and embed dashboard
-        run: |
-          curl -LJO \
-            --header "Authorization: Bearer $GITHUB_TOKEN" \
-            --header "Accept: application/octet-stream" \
-            https://api.github.com/repos/rigdev/dashboard/releases/assets/${{steps.get-asset-id.outputs.result}}
-          tar -xzvf public.tar.gz
-          rsync -a public/ pkg/service/web/
-          rm -rf public public.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
-
       - name: Release
         run: make proto release
         env:
