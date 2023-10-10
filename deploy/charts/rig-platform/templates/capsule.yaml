@@ -20,7 +20,7 @@ spec:
       {{- if .Values.ingress.enabled }}
       public:
         ingress:
-          host: .Values.ingress.host
+          host: {{ .Values.ingress.host }}
       {{- end}}
       {{- if .Values.loadBalancer.enabled }}
       public:
