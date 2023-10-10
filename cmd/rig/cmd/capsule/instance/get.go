@@ -56,7 +56,7 @@ func instanceStatusToTableRows(instance *capsule.InstanceStatus) [][]any {
 		{"", "", "", ""},
 		{"", "", "", ""},
 	}
-	rows[0][0] = "id"
+	rows[0][0] = instance.InstanceId
 
 	schedule := instance.GetSchedule()
 	rows[0][1] = capsule.ScheduleState_name[int32(schedule.GetState())]
