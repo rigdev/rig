@@ -140,9 +140,16 @@ kind-load-platform: kind docker ## 🐋 Load docker image into kind cluster
 kind-deploy: kind kind-load deploy-operator ## 🐋 Deploy rig to kind cluster
 	$(KUBECTL) rollout restart deployment -n rig-system rig-operator
 
-.PHONY: kind-clean
-kind-clean: ## 🧹 Clean kind cluster
-	$(KIND) delete clusters rig
+.PHONY: clean-kind
+clean-kind: ## 🧹 Clean kind cluster
+	$(KIND) delete clusters rig || true
+
+.PHONY: clean-gen
+clean-gen: ## 🧹 Clean generated files
+	rm -r gen || true
+
+.PHONY: clean
+clean: clean-kind clean-gen ## 🧹 Clean everything
 
 ##@ Release
 
