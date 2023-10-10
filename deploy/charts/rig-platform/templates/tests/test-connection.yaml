@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "rig-platform.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "rig-platform.fullname" . }}:{{ .Values.port }}']
   restartPolicy: Never

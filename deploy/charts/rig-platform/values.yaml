@@ -47,8 +47,11 @@ securityContext:
   # runAsNonRoot: true
   # runAsUser: 1000
 
-service:
-  port: 4747
+port: 4747
+
+loadBalancer:
+  enabled: false
+  nodePort: 30047
 
 ingress:
   enabled: false
