@@ -163,25 +163,10 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 		return err
 	}
 
-	waitUntilResourceExists(fmt.Sprintf("deployment.apps/%s", p.chartName))
+	waitUntilDeploymentIsReady(fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName)
 	if err := runCmd("kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName); err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func waitUntilResourceExists(name string) error {
-	fmt.Printf("Waiting until %s exists...\n", name)
-
-	for {
-		if err := exec.Command("kubectl", "--context", "kind-rig", "get", name, "-n", "rig-system").Run(); err == nil {
-			break
-		}
-		time.Sleep(time.Millisecond * 500)
-	}
-
-	fmt.Printf("%s exists!\n", name)
 
 	return nil
 }
