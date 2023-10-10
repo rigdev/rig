@@ -2,4 +2,3 @@ version: v1
 directories:
   - rig
   - internal
-  - operator

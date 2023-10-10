@@ -5,8 +5,8 @@ import (
 
 	connect "github.com/bufbuild/connect-go"
 
-	"github.com/rigdev/rig/gen/go/operator/api/v1/capabilities"
-	"github.com/rigdev/rig/gen/go/operator/api/v1/capabilities/capabilitiesconnect"
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 )
 

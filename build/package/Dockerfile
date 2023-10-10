@@ -12,12 +12,17 @@ COPY go.mod go.sum Makefile ./
 COPY tools tools
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
+    make \
+        gen/go/rig/go.mod \
+        buf \
+        protoc-gen-go \
+        protoc-gen-connect-go && \
     go mod download # && go mod verify
 
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    make proto-operator build-rig-operator
+    make proto build-rig-operator
 
 FROM scratch
 

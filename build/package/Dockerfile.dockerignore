@@ -1,6 +1,8 @@
 *
 !/go.mod
 !/go.sum
+!/go.work
+!/go.work.sum
 !/Makefile
 !/tools/go.mod
 !/tools/go.sum
