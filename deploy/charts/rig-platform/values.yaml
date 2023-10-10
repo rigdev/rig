@@ -48,18 +48,11 @@ securityContext:
   # runAsUser: 1000
 
 service:
-  type: ClusterIP
   port: 4747
-  nodePort: 30047
 
 ingress:
   enabled: false
   host: ""
-  className: nginx
-  annotations: {}
-  tls:
-    secretName: rig-platform-tls
-    clusterIssuer: ""
 
 resources:
   {}
@@ -77,7 +70,7 @@ resources:
 autoscaling:
   enabled: false
   minReplicas: 1
-  maxReplicas: 100
+  maxReplicas: 2
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
@@ -121,12 +114,6 @@ rig:
     mongo:
       user: mongodb
       password: mongodb
-
-    minio:
-      endpoint: minio:80
-      secure: false
-      access_key_id: minio
-      secret_access_key: minio123
 
   cluster:
     type: k8s
