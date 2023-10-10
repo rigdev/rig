@@ -132,6 +132,10 @@ kind-create: kind ## 🐋 Create kind cluster with rig dependencies
 kind-load: kind docker ## 🐋 Load docker image into kind cluster
 	$(KIND) load docker-image ghcr.io/rigdev/rig-operator:$(TAG) -n rig
 
+.PHONY: kind-load-platform
+kind-load-platform: kind docker ## 🐋 Load docker image into kind cluster
+	$(KIND) load docker-image ghcr.io/rigdev/rig-platform:$(TAG) -n rig
+
 .PHONY: kind-deploy
 kind-deploy: kind kind-load deploy-operator ## 🐋 Deploy rig to kind cluster
 	$(KUBECTL) rollout restart deployment -n rig-system rig-operator

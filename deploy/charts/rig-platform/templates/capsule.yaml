@@ -1,0 +1,39 @@
+apiVersion: rig.dev/v1alpha1
+kind: Capsule
+metadata:
+  name: rig-platform
+spec:
+  horizontalScale:
+    {{- if .Values.autoscaling.enabled }}
+    minReplicas: {{ .Values.autoscaling.minReplicas }}
+    maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+    cpuTarget:
+      averageUtilizationPercentage: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- else }}
+    minReplicas: {{ .Values.replicaCount }}
+    maxReplicas: {{ .Values.replicaCount }}
+    {{- end }}
+  image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+  interfaces:
+    - name: http
+      port: {{ .Values.service.port }}
+      public:
+        loadBalancer:
+          port: {{ .Values.service.port }}
+          nodePort: {{ .Values.service.nodePort }}
+    {{- if .Values.ingress.enabled }}
+    name: http-ingress
+    port: {{ $.Values.service.port }}
+    public:
+      ingress:
+        host: .Values.ingress.host
+    {{- end}}
+  files:
+    - path: /etc/rig/server-config.yaml
+      secret:
+        name: {{ include "rig-platform.fullname" . }}
+        key: server-config.yaml
+  {{- with .Values.resources }}
+  resources: {{ toYaml . | nindent 12 }}
+  {{- end }}
+  serviceAccountName: rig-platform

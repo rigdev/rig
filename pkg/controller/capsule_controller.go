@@ -255,7 +255,8 @@ func createDeployment(
 							Ports:        ports,
 						},
 					},
-					Volumes: volumes,
+					ServiceAccountName: capsule.Spec.ServiceAccountName,
+					Volumes:            volumes,
 				},
 			},
 		},
@@ -684,6 +685,7 @@ func createLoadBalancer(
 				Name:       inf.Name,
 				Port:       inf.Public.LoadBalancer.Port,
 				TargetPort: intstr.FromString(inf.Name),
+				NodePort:   inf.Public.LoadBalancer.NodePort,
 			})
 		}
 	}

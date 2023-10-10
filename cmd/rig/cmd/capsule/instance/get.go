@@ -15,7 +15,7 @@ import (
 
 func (c Cmd) get(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
-	resp, err := c.Rig.Capsule().ListInstanceStatuses(ctx, connect.NewRequest(&capsule.ListInstanceStatusesRequest{
+	resp, err := c.Rig.Capsule().ListAllCurrentInstanceStatuses(ctx, connect.NewRequest(&capsule.ListAllCurrentInstanceStatusesRequest{
 		CapsuleId: cmd_capsule.CapsuleID,
 		Pagination: &model.Pagination{
 			Offset: uint32(offset),

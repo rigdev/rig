@@ -128,6 +128,12 @@ func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
 			if public.Ingress != nil && public.Ingress.Host == "" {
 				errs = append(errs, field.Required(publicPath.Child("ingress").Child("host"), ""))
 			}
+			if public.LoadBalancer != nil {
+				p := public.LoadBalancer.NodePort
+				if p > 0 && (p < 30000 || p > 32767) {
+					errs = append(errs, field.Invalid(publicPath.Child("loadBalancer").Child("nodePort"), p, "nodePort must be in the range [30,000; 32,767]"))
+				}
+			}
 		}
 	}
 
