@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
@@ -57,7 +58,16 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 			"RIG_AUTH_JWT_SECRET=shhhdonotshare",
 			"REPOSITORY_SECRET_POSTGRES_KEY=thisisasecret",
 		},
+		ExposedPorts: nat.PortSet{
+			"4747/tcp": struct{}{},
+		},
 	}, &container.HostConfig{
+		PortBindings: nat.PortMap{
+			"4747/tcp": []nat.PortBinding{{
+				HostIP:   "127.0.0.1",
+				HostPort: "4747",
+			}},
+		},
 		Mounts: []mount.Mount{
 			{
 				Type:   mount.TypeBind,
