@@ -9,13 +9,13 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
+	"gopkg.in/yaml.v3"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
@@ -26,7 +26,6 @@ var config string
 var registry string
 
 func (c Cmd) create(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
 	if err := checkBinaries(kubectl, kind, helm); err != nil {
 		return err
 	}
@@ -47,14 +46,18 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := c.setupKindContext(ctx); err != nil {
+	if err := waitUntilDeploymentIsReady("statefulset.apps/rig-platform-postgres", "postgres"); err != nil {
+		return err
+	}
+	if err := waitUntilDeploymentIsReady("deployment.apps/rig-platform", "Rig platform"); err != nil {
 		return err
 	}
 
 	fmt.Println()
-	fmt.Println("Creating a new Rig cluster requries setting up an admin user and project")
-	fmt.Println("Run the following command once the new Rig server has finished starting up")
-	fmt.Println("kubectl exec --tty --stdin --namespace rig-system deploy/rig-platform -- rig-admin init")
+	fmt.Println("To use Rig you need to create at least one admin user.")
+	if err := runCmd("kubectl", "exec", "--tty", "--stdin", "--namespace", "rig-system", "deploy/rig-platform", "--", "rig-admin", "init"); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -77,6 +80,9 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 	}); err != nil {
 		return err
 	}
+	if err := waitUntilDeploymentIsReady("deployment.apps/rig-operator", "Rig operator"); err != nil {
+		return err
+	}
 
 	if platformDockerTag == "" {
 		platformDockerTag = "latest"
@@ -96,7 +102,33 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 	}); err != nil {
 		return err
 	}
+	fmt.Println()
 
+	return nil
+}
+
+func waitUntilDeploymentIsReady(deployment string, humanReadableName string) error {
+	fmt.Printf("Waiting for %s to be ready....\n", humanReadableName)
+	for {
+		out, err := exec.Command("kubectl", "--context", "kind-rig", "get", deployment, "-n", "rig-system", "-oyaml").Output()
+		if err != nil {
+			return err
+		}
+		type ready struct {
+			Status struct {
+				AvailableReplicas int `yaml:"availableReplicas,omitempty"`
+			} `yaml:"status,omitempty"`
+		}
+		var r ready
+		if err := yaml.Unmarshal(out, &r); err != nil {
+			return err
+		}
+		if r.Status.AvailableReplicas > 0 {
+			break
+		}
+		time.Sleep(time.Millisecond * 500)
+	}
+	fmt.Printf("%s is ready!\n", humanReadableName)
 	return nil
 }
 
@@ -127,11 +159,11 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 	if p.chartPath == "" {
 		cArgs = append(cArgs, "--repo", "https://charts.rig.dev")
 	}
-
 	if err := runCmd("helm", cArgs...); err != nil {
 		return err
 	}
 
+	waitUntilDeploymentIsReady(fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName)
 	if err := runCmd("kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName); err != nil {
 		return err
 	}
@@ -273,30 +305,6 @@ func helmInstall() error {
 	return nil
 }
 
-func (c Cmd) setupKindContext(ctx context.Context) error {
-	fmt.Println("")
-	fmt.Println("Rig on the Kind cluster listens on the port 30047. This requires you to use a different context than the default one which uses port 4747.")
-	ok, err := common.PromptConfirm("Create a new context which uses port 30047?", true)
-	if err != nil {
-		return err
-	}
-	if ok {
-		if err := cmd_config.CreateContext(c.Cfg, "kind", "http://localhost:30047/"); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	ok, err = common.PromptConfirm("Change context?", true)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return nil
-	}
-	return cmd_config.SelectContext(c.Cfg)
-}
-
 type binary struct {
 	name string
 	link string
@@ -340,6 +348,7 @@ func checkBinaries(binaries ...binary) error {
 
 func runCmd(arg string, args ...string) error {
 	cmd := exec.Command(arg, args...)
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

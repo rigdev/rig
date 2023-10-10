@@ -7,10 +7,10 @@ require (
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/bufbuild/connect-grpcreflect-go v1.0.0
 	github.com/docker/docker v24.0.2+incompatible
-	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-connections v0.4.0
 	github.com/google/uuid v1.3.1
 	github.com/nyaruka/phonenumbers v1.1.7
-	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc3
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.4
@@ -37,7 +37,7 @@ require (
 	github.com/google/go-containerregistry v0.16.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/lithammer/fuzzysearch v1.1.8
-	github.com/rigdev/rig-go-api v0.0.0-20231010072119-250879c71e03
+	github.com/rigdev/rig-go-api v0.0.0-20231010092557-1f09a03dd8a5
 	github.com/rigdev/rig-go-sdk v0.0.0-20230918110956-2301fcd9da11
 	github.com/rodaine/table v1.1.0
 	sigs.k8s.io/controller-runtime v0.16.1
