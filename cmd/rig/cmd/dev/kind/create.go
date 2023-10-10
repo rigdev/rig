@@ -171,21 +171,6 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 	return nil
 }
 
-func waitUntilResourceExists(name string) error {
-	fmt.Printf("Waiting until %s exists...\n", name)
-
-	for {
-		if err := exec.Command("kubectl", "--context", "kind-rig", "get", name, "-n", "rig-system").Run(); err == nil {
-			break
-		}
-		time.Sleep(time.Millisecond * 500)
-	}
-
-	fmt.Printf("%s exists!\n", name)
-
-	return nil
-}
-
 func (c Cmd) loadImage(ctx context.Context, image, tag string) error {
 	imageTag := fmt.Sprintf("%s:%s", image, tag)
 	res, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{

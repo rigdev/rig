@@ -117,17 +117,6 @@ func ValidateQuantity(s string) error {
 	return err
 }
 
-func AndValidators(validators ...func(string) bool) func(string) bool {
-	return func(s string) bool {
-		for _, v := range validators {
-			if !v(s) {
-				return false
-			}
-		}
-		return true
-	}
-}
-
 func parseBool(s string) (bool, error) {
 	switch s {
 	case "1", "t", "T", "true", "TRUE", "True", "y", "Y", "yes", "YES", "Yes":
