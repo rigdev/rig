@@ -17,16 +17,18 @@ spec:
   interfaces:
     - name: http
       port: {{ .Values.service.port }}
+      {{- if .Values.service.nodePort }}
       public:
         loadBalancer:
           port: {{ .Values.service.port }}
           nodePort: {{ .Values.service.nodePort }}
+      {{- end}}
     {{- if .Values.ingress.enabled }}
-    name: http-ingress
-    port: {{ $.Values.service.port }}
-    public:
-      ingress:
-        host: .Values.ingress.host
+    - name: http-ingress
+      port: {{ $.Values.service.port }}
+      public:
+        ingress:
+          host: .Values.ingress.host
     {{- end}}
   files:
     - path: /etc/rig/server-config.yaml

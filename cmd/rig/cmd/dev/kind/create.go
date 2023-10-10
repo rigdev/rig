@@ -92,13 +92,15 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 		dockerTag:   platformDockerTag,
 		chartName:   "rig-platform",
 		chartPath:   platformChartPath,
-		customArgs: []string{"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
+		customArgs: []string{
+			"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
 			"--set", "rig.telemetry.enabled=false",
 			"--set", "postgres.enabled=true",
 			"--set", "rig.cluster.dev_registry.host=localhost:30000",
 			"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
 			"--set", "service.type=NodePort",
-			"--set", "rig-operator.enabled=false"},
+			"--set", "rig-operator.enabled=false",
+		},
 	}); err != nil {
 		return err
 	}
@@ -154,6 +156,7 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 		"upgrade", "--install", p.chartName, chart,
 		"--namespace", "rig-system",
 		"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag),
+		"--set", "service.nodePort=30047",
 		"--create-namespace",
 	}
 	cArgs = append(cArgs, p.customArgs...)

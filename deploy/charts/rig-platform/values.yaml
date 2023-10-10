@@ -50,16 +50,10 @@ securityContext:
 service:
   type: ClusterIP
   port: 4747
-  nodePort: 30047
 
 ingress:
   enabled: false
   host: ""
-  className: nginx
-  annotations: {}
-  tls:
-    secretName: rig-platform-tls
-    clusterIssuer: ""
 
 resources:
   {}
