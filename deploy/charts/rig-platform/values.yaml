@@ -95,7 +95,7 @@ mongodb:
     size: 10Gi
 
 postgres:
-  enabled: true
+  enabled: false
   image:
     repository: postgres
     tag: 16
