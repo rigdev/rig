@@ -16,6 +16,7 @@ message GetConfigResponse {
     DockerDaemon docker = 2;
     Registry registry = 3;
   }
+  bool ingress = 4;
 }
 
 message DockerDaemon {}
