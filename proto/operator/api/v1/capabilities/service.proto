@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package api.v1.capabilities;
+
+// The service for getting operator capabilities
+service Service {
+    rpc Get(GetRequest) returns (GetResponse) {}
+}
+
+message GetRequest {}
+
+message GetResponse {
+    bool ingress = 1;
+}

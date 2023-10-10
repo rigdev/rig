@@ -29,7 +29,7 @@ build-rig-operator: ## 🔨 Build rig-operator binary
 gen: proto manifests generate-k8s ## 🪄 Run code generation (proto and k8s)
 
 .PHONY: proto
-proto: proto-internal proto-public ## 🪄 Generate all protobuf
+proto: proto-internal proto-public proto-operator ## 🪄 Generate all protobuf
 
 gen/go/rig/go.mod:
 	@mkdir -p gen/go/rig
@@ -37,7 +37,7 @@ gen/go/rig/go.mod:
 
 .PHONY: proto-internal
 proto-internal: buf protoc-gen-go protoc-gen-connect-go ## 🪄 Generate internal protobuf
-	@find . -path './gen/go/*' -not -path './gen/go/rig/*' -type f -name '*.go' -delete
+	@find . -path './gen/go/*' -not -path './gen/go/rig/*' -not -path './gen/go/operator/*' -type f -name '*.go' -delete
 	$(BUF) generate proto/internal --template proto/buf.gen.internal.yaml
 
 .PHONY: proto-public
@@ -45,6 +45,11 @@ proto-public: gen/go/rig/go.mod buf protoc-gen-go protoc-gen-connect-go ## 🪄 
 	@find . -path './gen/go/rig/*' -type f -name '*.go' -delete
 	$(BUF) generate proto/rig --template proto/buf.gen.yaml
 	@(cd gen/go/rig/; go get -u ./...)
+
+.PHONY: proto-operator
+proto-operator: buf protoc-gen-go protoc-gen-connect-go ## 🪄 Generate operator protobuf
+	@find . -path './gen/go/operator/*' -type f -name '*.go' -delete
+	$(BUF) generate proto/operator --template proto/buf.gen.operator.yaml
 
 .PHONY: manifests
 manifests: controller-gen ## 🪄 Generate k8s manifests
@@ -128,7 +133,7 @@ kind-load: kind docker ## 🐋 Load docker image into kind cluster
 	$(KIND) load docker-image ghcr.io/rigdev/rig-operator:$(TAG) -n rig
 
 .PHONY: kind-deploy
-kind-deploy: kind kind-load deploy ## 🐋 Deploy rig to kind cluster
+kind-deploy: kind kind-load deploy-operator ## 🐋 Deploy rig to kind cluster
 	$(KUBECTL) rollout restart deployment -n rig-system rig-operator
 
 .PHONY: kind-clean

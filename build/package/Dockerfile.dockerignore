@@ -4,6 +4,7 @@
 !/Makefile
 !/tools/go.mod
 !/tools/go.sum
+!/proto
 !/cmd
 !/pkg
 !/internal
