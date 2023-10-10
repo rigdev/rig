@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"errors"
 	"html/template"
 	"strings"
@@ -18,92 +19,131 @@ type GetInputOption = func(*textinput.TextInput)
 // TODO What about non-string Selection
 type SelectInputOption = func(s *selection.Selection[string])
 
-var ValidateAllOpt = func(inp *textinput.TextInput) {
+func ValidateAllOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateAll
 }
 
-var BoolValidateOpt = func(inp *textinput.TextInput) {
+func BoolValidateOpt(inp *textinput.TextInput) {
 	inp.Validate = BoolValidate
 }
 
-var ValidateIntOpt = func(inp *textinput.TextInput) {
+func ValidateIntOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateInt
 }
 
-var ValidateNonEmptyOpt = func(inp *textinput.TextInput) {
+func ValidateNonEmptyOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateNonEmpty
 }
 
-var ValidateAbsPathOpt = func(inp *textinput.TextInput) {
+func ValidateAbsPathOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateAbsolutePath
 }
 
-var ValidateFilePathOpt = func(inp *textinput.TextInput) {
+func ValidateFilePathOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateFilePath
 }
 
-var ValidateEmailOpt = func(inp *textinput.TextInput) {
+func ValidateEmailOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateEmail
 }
 
-var ValidateSystemNameOpt = func(inp *textinput.TextInput) {
+func ValidateSystemNameOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateSystemName
 }
 
-var ValidateURLOpt = func(inp *textinput.TextInput) {
+func ValidateURLOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateURL
 }
 
-var ValidateImageOpt = func(inp *textinput.TextInput) {
+func ValidateImageOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateImage
 }
 
-var ValidatePhoneOpt = func(inp *textinput.TextInput) {
+func ValidatePhoneOpt(inp *textinput.TextInput) {
 	inp.Validate = utils.ValidatePhone
 }
 
-var ValidatePasswordOpt = func(inp *textinput.TextInput) {
+func ValidatePasswordOpt(inp *textinput.TextInput) {
 	inp.Validate = utils.ValidatePassword
 }
 
-var ValidateBoolOpt = func(inp *textinput.TextInput) {
+func ValidateBoolOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateBool
 }
 
-var ValidateQuantityOpt = func(inp *textinput.TextInput) {
+func ValidateQuantityOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateQuantity
 }
 
-var InputDefaultOpt = func(def string) GetInputOption {
+func InputDefaultOpt(def string) GetInputOption {
 	return func(inp *textinput.TextInput) {
 		inp.InitialValue = def
 	}
 }
 
-var SelectEnableFilterOpt = func(s *selection.Selection[string]) {
+func SelectEnableFilterOpt(s *selection.Selection[string]) {
 	s.Filter = selection.FilterContainsCaseSensitive[string]
 }
 
-var SelectFuzzyFilterOpt = func(s *selection.Selection[string]) {
+func SelectFuzzyFilterOpt(s *selection.Selection[string]) {
 	s.Filter = func(filter string, choice *selection.Choice[string]) bool {
 		return fuzzy.Match(filter, choice.Value)
 	}
 }
 
-var SelectExtendTemplateOpt = func(t template.FuncMap) SelectInputOption {
+func SelectExtendTemplateOpt(t template.FuncMap) SelectInputOption {
 	return func(s *selection.Selection[string]) {
 		s.ExtendedTemplateFuncs = t
 	}
 }
 
-var SelectTemplateOpt = func(template string) SelectInputOption {
+func SelectTemplateOpt(template string) SelectInputOption {
 	return func(s *selection.Selection[string]) {
 		s.Template = template
 	}
 }
 
+var inputTemplate = `
+	{{- Bold .Prompt }} {{ .Input -}}
+	{{- if .ValidationError }}
+        {{- Foreground "1" (Bold "✘") }}
+        {{- if ge (len (StripCursor .Input)) 3 }}
+            {{- printf " %s" (Italic .ValidationError.Error) }}
+        {{- end }}
+	{{- else }} {{ Foreground "2" (Bold "✔") }}
+	{{- end -}}
+`
+
+func stripCursor(s string) string {
+	// When the cursor blinks away, it adds a space instead
+	if len(s) > 0 && s[len(s)-1] == ' ' {
+		return s[:len(s)-1]
+	}
+	// The default cursor of the Input field is exactly these bytes
+	// There might be a unicode character equivalent or smth, but I'm not sure
+	// This was the easiest way of fixing my issue. Don't judge.
+	cursorBytes := []byte{27, 91, 55, 109, 32, 27, 91, 48, 109}
+	bs := []byte(s)
+	if len(bs) < len(cursorBytes) {
+		return s
+	}
+	if bytes.Equal(bs[len(bs)-len(cursorBytes):], cursorBytes) {
+		return string(bs[:len(bs)-len(cursorBytes)])
+	}
+
+	return s
+}
+
+var templateExtensions = map[string]any{
+	// The Input variable to the Input template will get the blinking cursor prepended
+	// Thus you need to strip it if you want access to the real input
+	"StripCursor": stripCursor,
+}
+
 func PromptInput(label string, opts ...GetInputOption) (string, error) {
 	input := textinput.New(label)
+	input.Template = inputTemplate
+	input.ExtendedTemplateFuncs = templateExtensions
 	for _, opt := range opts {
 		opt(input)
 	}
@@ -171,7 +211,7 @@ var (
 `
 	confirmTemplateN = `
 	{{- Bold .Prompt }} {{- Faint " [y/N]" }} {{ .Input -}}
-	{{- if .ValidationError }} {{ Foreground "1" (Bold "✘") }}
+	{{- if .ValidationError }} {{ Foreground "1" (Bold "✘") {printf .ValidationError } }}
 	{{- else }} {{ Foreground "2" (Bold "✔") }}
 	{{- end -}}
 `

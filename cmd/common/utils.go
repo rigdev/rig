@@ -26,18 +26,18 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-var ValidateAll = func(input string) error {
+func ValidateAll(input string) error {
 	return nil
 }
 
-var BoolValidate = func(bool string) error {
+func BoolValidate(bool string) error {
 	if bool != "true" && bool != "false" {
 		return errors.InvalidArgumentErrorf("invalid boolean value")
 	}
 	return nil
 }
 
-var ValidateInt = func(input string) error {
+func ValidateInt(input string) error {
 	_, err := strconv.Atoi(input)
 	if err != nil {
 		return err
@@ -45,14 +45,14 @@ var ValidateInt = func(input string) error {
 	return nil
 }
 
-var ValidateNonEmpty = func(input string) error {
+func ValidateNonEmpty(input string) error {
 	if input == "" {
 		return errors.InvalidArgumentErrorf("value cannot be empty")
 	}
 	return nil
 }
 
-var ValidateEmail = func(input string) error {
+func ValidateEmail(input string) error {
 	_, err := mail.ParseAddress(input)
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ var ValidateEmail = func(input string) error {
 	return nil
 }
 
-var ValidateSystemName = func(input string) error {
+func ValidateSystemName(input string) error {
 	if l := len(input); l < 3 || l > 63 {
 		return errors.InvalidArgumentErrorf("must be between 3 and 63 characters long")
 	}
@@ -72,26 +72,26 @@ var ValidateSystemName = func(input string) error {
 	return nil
 }
 
-var ValidateURL = func(input string) error {
+func ValidateURL(input string) error {
 	_, err := url.Parse(input)
 	return err
 }
 
-var ValidateAbsolutePath = func(input string) error {
+func ValidateAbsolutePath(input string) error {
 	if abs := path.IsAbs(input); !abs {
 		return errors.InvalidArgumentErrorf("must be an absolute path")
 	}
 	return nil
 }
 
-var ValidateFilePath = func(input string) error {
+func ValidateFilePath(input string) error {
 	if path.Ext(input) == "" {
 		return errors.InvalidArgumentErrorf("must be a file path")
 	}
 	return nil
 }
 
-var ValidateImage = func(input string) error {
+func ValidateImage(input string) error {
 	_, err := reference.ParseDockerRef(input)
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ var ValidateImage = func(input string) error {
 	return nil
 }
 
-var ValidateBool = func(s string) error {
+func ValidateBool(s string) error {
 	if s == "" {
 		return nil
 	}
@@ -112,9 +112,20 @@ var ValidateBool = func(s string) error {
 	return nil
 }
 
-var ValidateQuantity = func(s string) error {
+func ValidateQuantity(s string) error {
 	_, err := resource.ParseQuantity(s)
 	return err
+}
+
+func AndValidators(validators ...func(string) bool) func(string) bool {
+	return func(s string) bool {
+		for _, v := range validators {
+			if !v(s) {
+				return false
+			}
+		}
+		return true
+	}
 }
 
 func parseBool(s string) (bool, error) {
