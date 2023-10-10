@@ -98,7 +98,7 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 			"--set", "postgres.enabled=true",
 			"--set", "rig.cluster.dev_registry.host=localhost:30000",
 			"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
-			"--set", "service.type=NodePort",
+			"--set", "loadBalancer.enabled=true",
 			"--set", "rig-operator.enabled=false",
 		},
 	}); err != nil {
@@ -156,7 +156,6 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 		"upgrade", "--install", p.chartName, chart,
 		"--namespace", "rig-system",
 		"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag),
-		"--set", "service.nodePort=30047",
 		"--create-namespace",
 	}
 	cArgs = append(cArgs, p.customArgs...)

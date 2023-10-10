@@ -16,20 +16,18 @@ spec:
   image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
   interfaces:
     - name: http
-      port: {{ .Values.service.port }}
-      {{- if .Values.service.nodePort }}
-      public:
-        loadBalancer:
-          port: {{ .Values.service.port }}
-          nodePort: {{ .Values.service.nodePort }}
-      {{- end}}
-    {{- if .Values.ingress.enabled }}
-    - name: http-ingress
-      port: {{ $.Values.service.port }}
+      port: {{ .Values.port }}
+      {{- if .Values.ingress.enabled }}
       public:
         ingress:
           host: .Values.ingress.host
-    {{- end}}
+      {{- end}}
+      {{- if .Values.loadBalancer.enabled }}
+      public:
+        loadBalancer:
+          port: {{ .Values.port }}
+          nodePort: {{ .Values.loadBalancer.nodePort }}
+      {{- end}}
   files:
     - path: /etc/rig/server-config.yaml
       secret:
