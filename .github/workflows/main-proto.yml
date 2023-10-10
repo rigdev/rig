@@ -73,7 +73,6 @@ jobs:
           cd rig-go-api
           rm -fr api/ model/
           cp -R ../gen/go/rig/* .
-          cp -r ../gen/go/operator .
           git config user.name "rig-bot"
           git config user.email "shared@rig.dev"
           git add .

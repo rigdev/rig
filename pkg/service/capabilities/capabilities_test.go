@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/rigdev/rig/gen/go/operator/api/v1/capabilities"
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/stretchr/testify/assert"

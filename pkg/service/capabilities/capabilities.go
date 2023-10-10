@@ -3,7 +3,7 @@ package capabilities
 import (
 	"context"
 
-	"github.com/rigdev/rig/gen/go/operator/api/v1/capabilities"
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
 )
 

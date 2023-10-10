@@ -10,7 +10,7 @@ import (
 	"time"
 
 	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
-	"github.com/rigdev/rig/gen/go/operator/api/v1/capabilities/capabilitiesconnect"
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
 	"github.com/rigdev/rig/pkg/manager"
