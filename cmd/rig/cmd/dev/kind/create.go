@@ -109,15 +109,16 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 
 func waitUntilDeploymentIsReady(deployment string, humanReadableName string) error {
 	fmt.Printf("Waiting for %s to be ready....\n", humanReadableName)
+	type ready struct {
+		Status struct {
+			AvailableReplicas int `yaml:"availableReplicas,omitempty"`
+		} `yaml:"status,omitempty"`
+	}
 	for {
 		out, err := exec.Command("kubectl", "--context", "kind-rig", "get", deployment, "-n", "rig-system", "-oyaml").Output()
 		if err != nil {
-			return err
-		}
-		type ready struct {
-			Status struct {
-				AvailableReplicas int `yaml:"availableReplicas,omitempty"`
-			} `yaml:"status,omitempty"`
+			time.Sleep(time.Millisecond * 500)
+			continue
 		}
 		var r ready
 		if err := yaml.Unmarshal(out, &r); err != nil {
