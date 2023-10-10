@@ -10,32 +10,34 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
-type Loader interface {
-	Load(file string) (*v1alpha1.OperatorConfig, error)
+type Service interface {
+	Get() *v1alpha1.OperatorConfig
 }
 
-type loader struct {
-	scheme *runtime.Scheme
-	file   string
-}
-
-func NewLoader(scheme *runtime.Scheme) Loader {
-	return &loader{
-		scheme: scheme,
-	}
-}
-
-func (cl *loader) Load(file string) (*v1alpha1.OperatorConfig, error) {
-	bs, err := os.ReadFile(file)
+func NewService(path string, scheme *runtime.Scheme) (Service, error) {
+	bs, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not read config file: %w", err)
 	}
-	cfg, err := deserialize(bs, cl.scheme)
+	cfg, err := deserialize(bs, scheme)
 	if err != nil {
 		return nil, err
 	}
 	cfg.Default()
-	return cfg, nil
+
+	return &service{cfg: cfg}, nil
+
+}
+
+type service struct {
+	path   string
+	scheme *runtime.Scheme
+	cfg    *v1alpha1.OperatorConfig
+}
+
+// Get implements Service.
+func (s *service) Get() *v1alpha1.OperatorConfig {
+	return s.cfg
 }
 
 func deserialize(data []byte, scheme *runtime.Scheme) (*v1alpha1.OperatorConfig, error) {

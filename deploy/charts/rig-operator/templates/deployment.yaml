@@ -31,6 +31,9 @@ spec:
               containerPort: 9443
               protocol: TCP
             {{- end }}
+            - name: grpc
+              containerPort: 9000
+              protocol: TCP
             - name: metrics
               containerPort: 8080
               protocol: TCP
