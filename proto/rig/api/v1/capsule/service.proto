@@ -53,7 +53,12 @@ service Service {
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
   // Get metrics for a capsule
   rpc CapsuleMetrics(CapsuleMetricsRequest) returns (CapsuleMetricsResponse) {}
-  // Lists all instance statuses for the capsule.
+
+  // Lists the current instance status for each instance of the capsule.
+  rpc ListAllCurrentInstanceStatuses(ListAllCurrentInstanceStatusesRequest) returns (ListAllCurrentInstanceStatusesResponse) {}
+  // GetInstanceStatus returns the current status for the given instance
+  rpc GetInstanceStatus(GetInstanceStatusRequest) returns (GetInstanceStatusResponse) {}
+  // ListInstanceStatuses lists all the historical statuses for the instance
   rpc ListInstanceStatuses(ListInstanceStatusesRequest) returns (ListInstanceStatusesResponse) {}
 }
 
@@ -169,9 +174,29 @@ message ListInstancesResponse {
   uint64 total = 2;
 }
 
-message ListInstanceStatusesRequest {
+message ListAllCurrentInstanceStatusesRequest {
   string capsule_id = 1;
   model.Pagination pagination = 2;
+}
+
+message ListAllCurrentInstanceStatusesResponse {
+  repeated api.v1.capsule.InstanceStatus instances = 1;
+  uint64 total = 2;
+}
+
+message GetInstanceStatusRequest {
+  string capsule_id = 1;
+  string instance_id = 2;
+}
+
+message GetInstanceStatusResponse {
+  api.v1.capsule.InstanceStatus status = 1;
+}
+
+message ListInstanceStatusesRequest {
+  string capsule_id = 1;
+  string instance_id = 2;
+  model.Pagination pagination = 3;
 }
 
 message ListInstanceStatusesResponse {
