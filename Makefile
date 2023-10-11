@@ -102,24 +102,22 @@ export HELM ?= helm --kube-context $(KUBECTX)
 deploy-operator: ## 🚀 Deploy operator to k8s context defined by $KUBECTX (default: kind-rig)
 	$(HELM) upgrade --install rig-operator ./deploy/charts/rig-operator \
 			--namespace rig-system \
+			--create-namespace \
 			--set image.tag=$(TAG) \
-			--set config.devModeEnabled=true \
-			--create-namespace
+			--set config.devModeEnabled=true
 
 PLATFORM_TAG ?= latest
 
 .PHONY: deploy-platform
-deploy-platform: ## 🚀 Deploy platform to k8s context defined by $KUBECTX (default: kind-rig)
-	$(HELM) dependency build ./deploy/charts/rig-platform
+deploy-platform: deploy-operator ## 🚀 Deploy platform to k8s context defined by $KUBECTX (default: kind-rig)
 	$(HELM) upgrade --install rig-platform ./deploy/charts/rig-platform \
 			--namespace rig-system \
+			--create-namespace \
 			--set postgres.enabled=true	\
 			--set image.tag=$(PLATFORM_TAG) \
 			--set rig.cluster.dev_registry.enabled=true \
 			--set rig.cluster.dev_registry.host=localhost:30000 \
-			--set rig.cluster.dev_registry.cluster_host=registry:5000 \
-			--set rig-operator.enabled=false \
-			--create-namespace
+			--set rig.cluster.dev_registry.cluster_host=registry:5000
 
 PLATFORM_TAG ?= latest
 
