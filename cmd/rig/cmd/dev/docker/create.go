@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
@@ -113,19 +114,8 @@ func (c Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *con
 	}
 
 	if create {
-		if strings.HasSuffix(cc.Image, ":latest") {
-			fmt.Printf("Pulling latest `%s` image... ", cc.Image)
-
-			r, err := c.DockerClient.ImagePull(ctx, cc.Image, types.ImagePullOptions{})
-			if err != nil {
-				return err
-			}
-
-			if _, err := io.Copy(io.Discard, r); err != nil {
-				return err
-			}
-
-			fmt.Printf("OK\n")
+		if err := c.ensureImage(ctx, cc.Image, strings.HasSuffix(cc.Image, ":latest")); err != nil {
+			return err
 		}
 
 		fmt.Printf("Starting container `%s`... ", containerName)
@@ -155,6 +145,43 @@ func (c Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *con
 	if err := c.DockerClient.ContainerStart(ctx, containerName, types.ContainerStartOptions{}); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (c Cmd) ensureImage(ctx context.Context, image string, force bool) error {
+	if !force {
+		image = strings.TrimPrefix(image, "docker.io/library/")
+		image = strings.TrimPrefix(image, "index.docker.io/library/")
+
+		images, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{
+			Filters: filters.NewArgs(filters.KeyValuePair{
+				Key:   "reference",
+				Value: image,
+			}),
+		})
+		if err != nil {
+			return err
+		}
+
+		if len(images) > 0 {
+			// Image is local
+			return nil
+		}
+	}
+
+	fmt.Printf("Pulling image `%s`... ", image)
+
+	r, err := c.DockerClient.ImagePull(ctx, image, types.ImagePullOptions{})
+	if err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(io.Discard, r); err != nil {
+		return err
+	}
+
+	fmt.Printf("OK\n")
 
 	return nil
 }
