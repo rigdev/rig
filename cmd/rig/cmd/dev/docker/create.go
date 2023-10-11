@@ -168,7 +168,7 @@ func (c Cmd) ensureImage(ctx context.Context, image string, force bool) error {
 		}
 	}
 
-	fmt.Printf("Pulling latest `%s` image... ", image)
+	fmt.Printf("Pulling image `%s`... ", image)
 
 	r, err := c.DockerClient.ImagePull(ctx, image, types.ImagePullOptions{})
 	if err != nil {
