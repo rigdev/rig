@@ -114,7 +114,9 @@ func (c Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *con
 	}
 
 	if create {
-		c.ensureImage(ctx, cc.Image, strings.HasSuffix(cc.Image, ":latest"))
+		if err := c.ensureImage(ctx, cc.Image, strings.HasSuffix(cc.Image, ":latest")); err != nil {
+			return err
+		}
 
 		fmt.Printf("Starting container `%s`... ", containerName)
 		if _, err := c.DockerClient.NetworkInspect(ctx, "rig", types.NetworkInspectOptions{}); client.IsErrNotFound(err) {
