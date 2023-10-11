@@ -81,15 +81,15 @@ func (c Cmd) loginWithRetry(ctx context.Context, identifierStr, password, projec
 			}
 			fmt.Println("User not found")
 			continue
-		}
-
-		if errors.IsUnauthenticated(err) {
+		} else if errors.IsUnauthenticated(err) {
 			if !shouldPromptPassword {
 				return nil, err
 			}
 			shouldPromptIdentifier = false
 			fmt.Println("Wrong password")
 			continue
+		} else {
+			fmt.Println(err.Error())
 		}
 	}
 }
