@@ -26,79 +26,147 @@ message Instance {
 
 
 message InstanceStatus {
-    string instance_id = 1;
-    string message = 2;
-    google.protobuf.Timestamp timestamp = 3;
-
-    InstanceStatusScheduling schedule = 4;
-    InstanceStatusPreparing preparing = 5;
-    InstanceStatusRunning running = 6;
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+    InstanceStatusData data = 3;
+    InstanceStatusStages stages = 4;
 }
 
+message InstanceStatusData  {
+    string instance_id =1;
+    uint64 rollout_id = 2;
+    string image_name = 3;
+    string node = 4;
+}
+
+message InstanceStatusStages {
+    InstanceStatusScheduling schedule = 1;
+    InstanceStatusPreparing preparing = 2;
+    InstanceStatusRunning running = 3;
+}
+
+// ====================== SCHEDULING ====================
 message InstanceStatusScheduling {
     string message = 1;
     StatusTimestamps timestamps = 2;
-
-    ScheduleState state = 3;
+    InstanceStatusSchedulingStages stages = 3;
 }
 
-enum ScheduleState {
-    SCHEDULE_STATE_UNSPECIFIED = 0;
-    SCHEDULE_STATE_CURRENTLY_UNSCHEDULEABLE = 1;
-    SCHEDULE_STATE_DONE = 2;
+message InstanceStatusSchedulingStages {
+    CurrentlyUnscheduleable currently_unscheduleable = 1;
+    DoneScheduling done = 2;
 }
 
+message CurrentlyUnscheduleable {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+}
+
+message DoneScheduling {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+}
+
+// ======================================================
+
+// ======================= PREPARING =====================
 message InstanceStatusPreparing {
     string message = 1;
     StatusTimestamps timestamps = 2;
 
-    ImagePulling pulling = 3;
+    InstanceStatusPreparingStages stages = 3;
+}
+
+message InstanceStatusPreparingStages {
+    ImagePulling pulling = 1;
 }
 
 message ImagePulling {
     string message = 1;
     StatusTimestamps timestamps = 2;
-
-    ImagePullingState state = 3;
+    ImagePullingStages stages = 3;
 }
 
-enum ImagePullingState {
-    IMAGE_PULLING_STATE_UNSPECIFIED = 0;
-    IMAGE_PULLING_STATE_PULLING = 1;
-    IMAGE_PULLING_STATE_ERROR = 2;
-    IMAGE_PULLING_STATE_PULL_BACKOFF = 3;
-    IMAGE_PULLING_STATE_DONE = 4;
+message ImagePullingStages {
+    ImagePullingPulling pulling = 1;
+    ImagePullingError error = 2;
+    ImagePullingBackOff back_off= 3;
+    ImagePullingDone done = 4;
+}
+
+message ImagePullingPulling {
+    string message = 1;
+    StatusTimestamps  timestamps = 2;
+}
+
+message ImagePullingError {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+}
+
+message ImagePullingBackOff {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+}
+
+message ImagePullingDone {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+}
+// =======================================================
+
+// ======================== RUNNING ======================
+message InstanceStatusRunning {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+    InstanceStatusRunningStages stages = 3;
+    InstanceStatusRunningData data = 4;
+}
+
+message InstanceStatusRunningData {
+    uint32 restarts = 1;
+}
+
+message InstanceStatusRunningStages {
+    CrashLoopBackoff crash_loop_backoff = 1;
+    Ready ready = 2;
+    Running running = 3;
 }
 
 message CrashLoopBackoff {
     string message = 1;
     StatusTimestamps timestamps = 2;
-    ContainerStateTerminated terminated = 3;
-    uint32 restarts = 4;
+    CrashLoopBackoffData data = 3;
 }
 
-message InstanceStatusRunning {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
-
-    CrashLoopBackoff crash_loop_backoff = 3;
-    InstanceRunningReady ready = 4;
-    Running running = 5;
+message CrashLoopBackoffData {
+    ContainerStateTerminated termination = 1;
 }
 
 message Running {
-    StatusTimestamps timestamps = 1;
+    string message = 1;
+    StatusTimestamps timestamps = 2;
 }
 
-message InstanceRunningReady {
-    StatusTimestamps timestamps = 1;
-    InstanceRunningReadyState state = 2;
+message Ready {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+    ReadyStages stages = 3;
 }
 
-enum InstanceRunningReadyState {
-    INSTANCE_RUNNING_READY_STATE_UNSPECIFIED = 0;
-    INSTANCE_RUNNING_READY_STATE_NOT_READY = 1;
-    INSTANCE_RUNNING_READY_STATE_READY = 2;
+message ReadyStages {
+    NotReady not_ready = 1;
+    InstanceReady ready = 2;
+}
+
+message NotReady {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
+}
+
+message InstanceReady {
+    string message = 1;
+    StatusTimestamps timestamps = 2;
 }
 
 message ContainerStateTerminated {
@@ -123,6 +191,7 @@ message ContainerStateTerminated {
 	// +optional
 	string container_id  = 7;
 }
+// =======================================================
 
 message StatusTimestamps {
     google.protobuf.Timestamp entered = 1;
