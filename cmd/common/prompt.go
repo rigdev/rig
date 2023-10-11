@@ -211,7 +211,7 @@ var (
 `
 	confirmTemplateN = `
 	{{- Bold .Prompt }} {{- Faint " [y/N]" }} {{ .Input -}}
-	{{- if .ValidationError }} {{ Foreground "1" (Bold "✘") {printf .ValidationError } }}
+	{{- if .ValidationError }} {{ Foreground "1" (Bold "✘") }}
 	{{- else }} {{ Foreground "2" (Bold "✔") }}
 	{{- end -}}
 `
