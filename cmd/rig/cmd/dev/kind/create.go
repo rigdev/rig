@@ -79,6 +79,7 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 	}); err != nil {
 		return err
 	}
+
 	if err := waitUntilDeploymentIsReady("deployment.apps/rig-operator", "Rig operator"); err != nil {
 		return err
 	}
@@ -111,20 +112,22 @@ func waitUntilDeploymentIsReady(deployment string, humanReadableName string) err
 	fmt.Printf("Waiting for %s to be ready....\n", humanReadableName)
 	type ready struct {
 		Status struct {
-			AvailableReplicas int `yaml:"availableReplicas,omitempty"`
+			UnavailableReplicas int `yaml:"unavailableReplicas,omitempty"`
+			AvailableReplicas   int `yaml:"availableReplicas,omitempty"`
+			UpdatedReplicas     int `yaml:"updatedReplicas,omitempty"`
 		} `yaml:"status,omitempty"`
 	}
 	for {
 		out, err := exec.Command("kubectl", "--context", "kind-rig", "get", deployment, "-n", "rig-system", "-oyaml").Output()
 		if err != nil {
-			time.Sleep(time.Millisecond * 500)
-			continue
+			return err
 		}
+
 		var r ready
 		if err := yaml.Unmarshal(out, &r); err != nil {
 			return err
 		}
-		if r.Status.AvailableReplicas > 0 {
+		if r.Status.UnavailableReplicas == 0 && r.Status.UpdatedReplicas > 0 {
 			break
 		}
 		time.Sleep(time.Millisecond * 500)
@@ -164,8 +167,11 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 		return err
 	}
 
-	waitUntilDeploymentIsReady(fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName)
 	if err := runCmd("kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName); err != nil {
+		return err
+	}
+
+	if err := waitUntilDeploymentIsReady(fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName); err != nil {
 		return err
 	}
 
@@ -183,7 +189,7 @@ func (c Cmd) loadImage(ctx context.Context, image, tag string) error {
 	if err != nil {
 		return err
 	}
-	if len(res) == 0 {
+	if len(res) == 0 || tag == "latest" {
 		if err := runCmd("docker", "pull", imageTag); err != nil {
 			return err
 		}
