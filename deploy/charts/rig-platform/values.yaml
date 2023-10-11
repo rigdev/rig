@@ -118,13 +118,13 @@ rig:
       user: mongodb
       password: mongodb
 
+    operator:
+      # if the rig-operator is installed in a non-standard way, please update
+      # this to point to the service of the rig-operator
+      base_url: http://rig-operator:9000
+
   cluster:
     type: k8s
-
-  operator:
-    # if the rig-operator is installed in a non-standard way, please update
-    # this to point to the service of the rig-operator
-    base_url: http://rig-operator:9000
 
 rig-operator:
   # wether or not to install the rig-operator as part of rig-platform. If this
