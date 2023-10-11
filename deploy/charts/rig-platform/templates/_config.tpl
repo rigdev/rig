@@ -39,6 +39,10 @@ client:
     access_key_id: {{ .access_key_id | quote }}
     secret_access_key: {{ .secret_access_key | quote }}
   {{- end }}
+  {{- if .Values.rig.client.operator.base_url }}
+  operator:
+    base_url: {{ .Values.rig.client.operator.base_url }}
+  {{- end }}
 cluster:
   type: k8s
   {{- with .Values.rig.cluster.dev_registry }}
