@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"time"
@@ -43,6 +44,23 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 
 	if err := c.deploy(cmd, args); err != nil {
 		return err
+	}
+
+	n := 0
+	for {
+		res, err := http.Get("http://localhost:4747/")
+		if err != nil {
+			n++
+			if n > 50 {
+				return err
+			}
+
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		res.Body.Close()
+		break
 	}
 
 	fmt.Println()
@@ -89,6 +107,8 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 			"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
 			"--set", "loadBalancer.enabled=true",
 		},
+		// Restart to pick up new changes.
+		restart: true,
 	}); err != nil {
 		return err
 	}
@@ -105,6 +125,7 @@ func waitUntilDeploymentIsReady(deployment string, humanReadableName string) err
 			UnavailableReplicas int `yaml:"unavailableReplicas,omitempty"`
 			AvailableReplicas   int `yaml:"availableReplicas,omitempty"`
 			UpdatedReplicas     int `yaml:"updatedReplicas,omitempty"`
+			ReadyReplicas       int `yaml:"readyReplicas,omitempty"`
 		} `yaml:"status,omitempty"`
 	}
 	c := 0
@@ -112,7 +133,7 @@ func waitUntilDeploymentIsReady(deployment string, humanReadableName string) err
 		out, err := exec.Command("kubectl", "--context", "kind-rig", "get", deployment, "-n", "rig-system", "-oyaml").Output()
 		if err != nil {
 			c++
-			if c > 20 {
+			if c > 50 {
 				return err
 			}
 
@@ -142,6 +163,7 @@ type deployParams struct {
 	chartName   string
 	chartPath   string
 	customArgs  []string
+	restart     bool
 }
 
 func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
@@ -167,12 +189,18 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 		return err
 	}
 
-	if err := runCmd("kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName); err != nil {
+	if err := waitUntilDeploymentIsReady(fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName); err != nil {
 		return err
 	}
 
-	if err := waitUntilDeploymentIsReady(fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName); err != nil {
-		return err
+	if p.restart {
+		if err := runCmd("kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName); err != nil {
+			return err
+		}
+
+		if err := waitUntilDeploymentIsReady(fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName); err != nil {
+			return err
+		}
 	}
 
 	return nil
