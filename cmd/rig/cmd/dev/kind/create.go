@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"regexp"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -261,33 +260,10 @@ func setupK8s() error {
 }
 
 func helmInstall() error {
-	output, err := exec.Command("helm", "--kube-context", "kind-rig", "repo", "list").Output()
-	if err != nil {
-		return err
-	}
-	re := regexp.MustCompile(`\njetstack\s*https://charts.jetstack.io\s*\n`)
-	matches := re.FindStringSubmatch(string(output))
-	if len(matches) == 0 {
-		if err := exec.Command("helm", "--kube-context", "kind-rig", "repo", "add", "jetstack", "https://charts.jetstack.io").Run(); err != nil {
-			return err
-		}
-	}
-
-	re = regexp.MustCompile(`\nmetrics-server\s*https://kubernetes-sigs.github.io/metrics-server\s*\n`)
-	matches = re.FindStringSubmatch(string(output))
-	if len(matches) == 0 {
-		if err := exec.Command("helm", "--kube-context", "kind-rig", "repo", "add", "metrics-server", "https://kubernetes-sigs.github.io/metrics-server").Run(); err != nil {
-			return err
-		}
-	}
-
-	if err := runCmd("helm", "--kube-context", "kind-rig", "repo", "update"); err != nil {
-		return err
-	}
-
 	if err := runCmd(
 		"helm", "--kube-context", "kind-rig",
-		"upgrade", "--install", "cert-manager", "jetstack/cert-manager",
+		"upgrade", "--install", "cert-manager", "cert-manager",
+		"--repo", "https://charts.jetstack.io",
 		"--namespace", "cert-manager",
 		"--create-namespace", "--version", "v1.13.0",
 		"--set", "installCRDs=true",
@@ -297,7 +273,8 @@ func helmInstall() error {
 
 	if err := runCmd(
 		"helm", "--kube-context", "kind-rig",
-		"upgrade", "--install", "metrics-server", "metrics-server/metrics-server",
+		"upgrade", "--install", "metrics-server", "metrics-server",
+		"--repo", "https://kubernetes-sigs.github.io/metrics-server",
 		"--namespace", "kube-system",
 		"--set", "args={--kubelet-insecure-tls}",
 	); err != nil {
