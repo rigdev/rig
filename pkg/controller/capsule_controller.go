@@ -31,6 +31,7 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -138,7 +139,17 @@ func (r *CapsuleReconciler) reconcileDeployment(
 		return ctrl.Result{}, errors.New("found existing deployment not owned by capsule")
 	}
 
-	if !reflect.DeepEqual(existingDeploy.Spec, deploy.Spec) {
+	// Dry run to fully materialize the new spec.
+	if err := r.Update(ctx, deploy, client.DryRunAll); err != nil {
+		return ctrl.Result{}, fmt.Errorf("could not update deployment: %w", err)
+	}
+
+	// Edge case, this property is not carried over my k8s.
+	if ra, ok := existingDeploy.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"]; ok {
+		deploy.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = ra
+	}
+
+	if !equality.Semantic.DeepEqual(existingDeploy.Spec, deploy.Spec) {
 		log.Info("updating deployment")
 		if err := r.Update(ctx, deploy); err != nil {
 			return ctrl.Result{}, fmt.Errorf("could not update deployment: %w", err)

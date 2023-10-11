@@ -124,7 +124,7 @@ func waitUntilDeploymentIsReady(deployment string, humanReadableName string) err
 		if err := yaml.Unmarshal(out, &r); err != nil {
 			return err
 		}
-		fmt.Printf("%+v\n", r)
+
 		if r.Status.Replicas >= 1 &&
 			r.Status.AvailableReplicas == r.Status.Replicas &&
 			r.Status.UpdatedReplicas == r.Status.Replicas {
