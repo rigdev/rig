@@ -99,7 +99,6 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 			"--set", "rig.cluster.dev_registry.host=localhost:30000",
 			"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
 			"--set", "loadBalancer.enabled=true",
-			"--set", "rig-operator.enabled=false",
 		},
 	}); err != nil {
 		return err

@@ -125,8 +125,3 @@ rig:
 
   cluster:
     type: k8s
-
-rig-operator:
-  # wether or not to install the rig-operator as part of rig-platform. If this
-  # is disabled, the rig-operator must be installed manually.
-  enabled: true
