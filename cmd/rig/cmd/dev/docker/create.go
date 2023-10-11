@@ -4,8 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -111,6 +113,21 @@ func (c Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *con
 	}
 
 	if create {
+		if strings.HasSuffix(cc.Image, ":latest") {
+			fmt.Printf("Pulling latest `%s` image... ", cc.Image)
+
+			r, err := c.DockerClient.ImagePull(ctx, cc.Image, types.ImagePullOptions{})
+			if err != nil {
+				return err
+			}
+
+			if _, err := io.Copy(io.Discard, r); err != nil {
+				return err
+			}
+
+			fmt.Printf("OK\n")
+		}
+
 		fmt.Printf("Starting container `%s`... ", containerName)
 		if _, err := c.DockerClient.NetworkInspect(ctx, "rig", types.NetworkInspectOptions{}); client.IsErrNotFound(err) {
 			if _, err := c.DockerClient.NetworkCreate(ctx, "rig", types.NetworkCreate{
@@ -122,14 +139,13 @@ func (c Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *con
 			return err
 		}
 
-		_, err := c.DockerClient.ContainerCreate(ctx, cc, chc, &network.NetworkingConfig{
+		if _, err := c.DockerClient.ContainerCreate(ctx, cc, chc, &network.NetworkingConfig{
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				"rig": {
 					Aliases: []string{containerName},
 				},
 			},
-		}, &v1.Platform{}, containerName)
-		if err != nil {
+		}, &v1.Platform{}, containerName); err != nil {
 			return err
 		}
 
