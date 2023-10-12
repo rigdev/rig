@@ -14,8 +14,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/controller"
 
 	//+kubebuilder:scaffold:imports
 
@@ -29,7 +29,7 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 	t.Parallel()
 
 	env := setupTest(t, options{runManager: true})
-	defer env.cancel()
+	defer env.stop()
 	k8sClient := env.k8sClient
 
 	ctx := context.Background()

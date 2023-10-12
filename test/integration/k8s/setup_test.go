@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -35,6 +36,12 @@ type options struct {
 type env struct {
 	k8sClient client.Client
 	cancel    context.CancelFunc
+	wg        sync.WaitGroup
+}
+
+func (e *env) stop() {
+	e.cancel()
+	e.wg.Wait()
 }
 
 func setupTest(t *testing.T, opts options) *env {
@@ -63,6 +70,21 @@ func setupTest(t *testing.T, opts options) *env {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	e := &env{
+		k8sClient: k8sClient,
+		cancel:    cancel,
+		wg:        sync.WaitGroup{},
+	}
+
+	e.wg.Add(1)
+	go func() {
+		defer e.wg.Done()
+		<-ctx.Done()
+		if err := testEnv.Stop(); err != nil {
+			fmt.Printf("could not stop envtest: %s\n", err)
+		}
+	}()
+
 	if opts.runManager {
 		manager, err := ctrl.NewManager(cfg, ctrl.Options{
 			Scheme:  scheme,
@@ -83,19 +105,12 @@ func setupTest(t *testing.T, opts options) *env {
 
 		assert.NoError(t, capsuleReconciler.SetupWithManager(manager))
 
+		e.wg.Add(1)
 		go func() {
+			defer e.wg.Done()
 			assert.NoError(t, manager.Start(ctx))
 		}()
 	}
 
-	go func() {
-		<-ctx.Done()
-		testEnv.ControlPlane.Etcd.StopTimeout = time.Second * 30
-		assert.NoError(t, testEnv.Stop())
-	}()
-
-	return &env{
-		cancel:    cancel,
-		k8sClient: k8sClient,
-	}
+	return e
 }
