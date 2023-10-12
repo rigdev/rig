@@ -56,26 +56,23 @@ func instanceStatusToTableRows(instance *capsule.InstanceStatus) [][]any {
 		{"", "", "", ""},
 		{"", "", "", ""},
 	}
-	rows[0][0] = instance.InstanceId
+	rows[0][0] = instance.GetData().GetInstanceId()
 
-	schedule := instance.GetSchedule()
-	rows[0][1] = capsule.ScheduleState_name[int32(schedule.GetState())]
+	schedule := instance.GetStages().GetSchedule()
 	rows[1][1] = schedule.GetMessage()
 
-	pulling := instance.GetPreparing().GetPulling()
-	rows[0][2] = capsule.ImagePullingState_name[int32(pulling.GetState())]
+	pulling := instance.GetStages().GetPreparing().GetStages().GetPulling()
 	rows[1][2] = pulling.GetMessage()
 
-	running := instance.GetRunning()
-	if crashLoop := running.GetCrashLoopBackoff(); crashLoop != nil {
+	running := instance.GetStages().GetRunning()
+	if crashLoop := running.GetStages().GetCrashLoopBackoff(); crashLoop != nil {
 		rows[0][3] = "CRASH_LOOP"
 		rows[1][3] = crashLoop.GetMessage()
 	}
-	if ready := running.GetReady(); ready != nil {
-		rows[0][3] = capsule.InstanceRunningReadyState_name[int32(ready.GetState())]
+	if ready := running.GetStages().GetReady(); ready != nil {
 		rows[1][3] = running.GetMessage()
 	}
-	if running := running.GetRunning(); running != nil {
+	if running := running.GetStages().GetRunning(); running != nil {
 		rows[0][3] = "RUNNING"
 	}
 
