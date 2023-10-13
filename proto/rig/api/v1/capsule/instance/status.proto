@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package api.v1.capsule.instance;
+
+import "google/protobuf/timestamp.proto";
+
+message Status {
+    string instance_id = 1;
+    StateMachine state_machine = 2;
+    Data data = 3;
+}
+
+message State {
+    StateID id = 1;
+    StateStatus status = 2;
+    string message = 3;
+    Timestamps timestamps = 4;
+    repeated StateMachine sub_state_machines = 5;
+}
+
+message StateMachine {
+    StateMachineID id = 1;
+    StateStatus status = 2;
+    repeated State states = 3;
+}
+
+enum StateStatus {
+    STATE_STATUS_UNSPECIFIED = 0;
+    STATE_STATUS_ONGOING = 1;
+    STATE_STATUS_FAILED = 2;
+    STATE_STATUS_DONE = 3;
+}
+
+enum StateID {
+    STATE_ID_UNSPECIFIED = 0;
+
+    STATE_ID_SCHEDULING = 1;
+    STATE_ID_PREPARING = 2;
+    STATE_ID_RUNNING = 3;
+
+    STATE_ID_UNSCHEDULEABLE = 4;
+    STATE_ID_SCHEDULING_DONE = 5;
+
+    STATE_ID_IMAGE_PULLING = 6;
+    STATE_ID_IMAGE_PULLING_ERROR = 7;
+    STATE_ID_IMAGE_PULLING_BACK_OFF = 8;
+    STATE_ID_IMAGE_PULLING_DONE = 9;
+
+    STATE_ID_CRASH_LOOP_BACK_OFF = 10;
+    STATE_ID_WAITING = 11;
+    STATE_ID_RUNNING_RUNNING = 12;
+}
+
+enum StateMachineID {
+    STATE_MACHINE_ID_UNSPECIFIED = 0;
+    STATE_MACHINE_ID_BASE = 1;
+    STATE_MACHINE_ID_SCHEDULING = 2;
+    STATE_MACHINE_ID_IMAGE_PULLING = 3;
+    STATE_MACHINE_ID_RUNNING = 4;
+}
+
+message Timestamps {
+    google.protobuf.Timestamp entered = 1;
+    google.protobuf.Timestamp updated = 2;
+    google.protobuf.Timestamp exited = 3;
+}
+
+message Data {
+    TopLevelData top_level = 1;
+    RunningData running = 2;
+    CrashLoopBackOffData crash_loop_back_off = 3;
+}
+
+message TopLevelData {
+    uint64 rollout_id = 1;
+    string image = 2;
+    string node = 3;
+    google.protobuf.Timestamp created_at = 4;
+}
+
+message RunningData {
+    uint32 restarts = 1;
+}
+
+message CrashLoopBackOffData {
+    ContainerTermination termination = 1;
+}
+
+message ContainerTermination {
+	// Exit status from the last termination of the container
+	int32 exit_code	 = 1;
+	// Signal from the last termination of the container
+	// +optional
+	int32 signal  = 2;
+	// (brief) reason from the last termination of the container
+	// +optional
+    string reason  = 3;
+	// Message regarding the last termination of the container
+	// +optional
+	string message = 4;
+	// Time at which previous execution of the container started
+	// +optional
+    google.protobuf.Timestamp started_at = 5;
+	// Time at which the container last terminated
+	// +optional
+    google.protobuf.Timestamp finished_at = 6;
+	// Container's ID in the format '<type>://<container_id>'
+	// +optional
+	string container_id  = 7;
+}
