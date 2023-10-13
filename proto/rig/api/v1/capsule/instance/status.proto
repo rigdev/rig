@@ -4,12 +4,18 @@ package api.v1.capsule.instance;
 
 import "google/protobuf/timestamp.proto";
 
+// Status is a reprsentation of the current state of an instance
 message Status {
     string instance_id = 1;
     StateMachine state_machine = 2;
     Data data = 3;
 }
 
+// A State is a part of a StateMachine representing where in its lifecycle an instance is at the moment.
+// Within the entire tree-structure of the Status, there is at most one state with a given StateID
+// A State can represent fairly complicated parts of an instance lifecycle, thus they can in turn
+// contain several sub-statemachines. Each sub-statemachine will run in parallel.
+// States with no sub-statemachines are called leaf states. States with sub-statemachines are called complex States
 message State {
     StateID id = 1;
     StateStatus status = 2;
@@ -18,12 +24,28 @@ message State {
     repeated StateMachine sub_state_machines = 5;
 }
 
+// A StateMachine represents a set of States the instance cycles through.
+// At any point in time a StateMachine is only actively in one state.
+// The 'states' usually only contain a single State (the current state of the StateMachine),
+// but in some cases contains previous states visited by the Machine. 
+// Thus the linear order of 'states' is an incomplete historical view of the StateMachine's execution
 message StateMachine {
     StateMachineID id = 1;
     StateStatus status = 2;
     repeated State states = 3;
 }
 
+// StateStatus is used to indicate the status of States and StateMachines.
+//
+// A State can be
+//  - Failed: If it is a leaf-state representing a failure or a complex state with at least one failing sub-statemachine
+//  - Ongoing: If it is a leaf-state representing an ongoing operation or a complex state with no failing sub-statemachines and at least one ongoing one
+//  - Done: If it is a leaf-state representing a done operation or a complex state with only done sub-statemachines
+//
+// A StateMachine can be
+//  - Failed: If at least one of its states are failed
+//  - Ongoing: If none one of its states are failed and at least one is ongoing
+//  - Done: If all its states are done
 enum StateStatus {
     STATE_STATUS_UNSPECIFIED = 0;
     STATE_STATUS_ONGOING = 1;
@@ -31,6 +53,8 @@ enum StateStatus {
     STATE_STATUS_DONE = 3;
 }
 
+// StateID uniquely qualifes a State. That is, all states have a StateID and at most
+// one State can have a specific StateID at a time.
 enum StateID {
     STATE_ID_UNSPECIFIED = 0;
 
@@ -51,6 +75,8 @@ enum StateID {
     STATE_ID_RUNNING_RUNNING = 12;
 }
 
+// StateMachineID uniquely qualifes a StateMachine. That is, all statemachines have a StateMachineID and at most
+// one StateMachine can have a specific StateMachineID at a time.
 enum StateMachineID {
     STATE_MACHINE_ID_UNSPECIFIED = 0;
     STATE_MACHINE_ID_BASE = 1;
@@ -65,9 +91,13 @@ message Timestamps {
     google.protobuf.Timestamp exited = 3;
 }
 
+// Extra data which is not common among all states.
+// Each field is a set of data associated to one specific state
 message Data {
     TopLevelData top_level = 1;
+    // RunningData is associated to the RUNNING StateID
     RunningData running = 2;
+    // CrashLoopBackOffData is associated to the CRASH_LOOP_BACK_OFF StateID
     CrashLoopBackOffData crash_loop_back_off = 3;
 }
 
