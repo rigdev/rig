@@ -7,6 +7,7 @@ import "api/v1/capsule/log.proto";
 import "api/v1/capsule/build.proto";
 import "api/v1/capsule/instance.proto";
 import "api/v1/capsule/rollout.proto";
+import "api/v1/capsule/instance/status.proto";
 import "api/v1/capsule/event.proto";
 import "api/v1/capsule/metrics.proto";
 import "model/common.proto";
@@ -180,7 +181,7 @@ message ListAllCurrentInstanceStatusesRequest {
 }
 
 message ListAllCurrentInstanceStatusesResponse {
-  repeated api.v1.capsule.InstanceStatus instances = 1;
+  repeated api.v1.capsule.instance.Status instances = 1;
   uint64 total = 2;
 }
 
@@ -190,7 +191,7 @@ message GetInstanceStatusRequest {
 }
 
 message GetInstanceStatusResponse {
-  api.v1.capsule.InstanceStatus status = 1;
+  api.v1.capsule.instance.Status status = 1;
 }
 
 message ListInstanceStatusesRequest {
@@ -200,7 +201,7 @@ message ListInstanceStatusesRequest {
 }
 
 message ListInstanceStatusesResponse {
-  repeated api.v1.capsule.InstanceStatus instances = 1;
+  repeated api.v1.capsule.instance.Status instances = 1;
   uint64 total = 2;
 }
 
