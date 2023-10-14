@@ -58,6 +58,9 @@ manifests: controller-gen ## 🪄 Generate k8s manifests
 		output:rbac:dir=deploy/kustomize/rbac \
 		output:webhook:dir=deploy/kustomize/webhook \
 		output:crd:dir=deploy/kustomize/crd/bases
+	echo '{{- if .Values.installCRDs }}' > deploy/charts/rig-operator/templates/crd.yaml
+	cat 'deploy/kustomize/crd/bases/rig.dev_capsules.yaml' >> deploy/charts/rig-operator/templates/crd.yaml
+	echo '{{- end }}' >> deploy/charts/rig-operator/templates/crd.yaml
 
 .PHONY: generate-k8s
 generate-k8s: controller-gen ## 🪄 Generate runtime.Object implementations.

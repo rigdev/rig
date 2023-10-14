@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"reflect"
 	"strings"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -52,12 +51,37 @@ type CapsuleReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 	Config *configv1alpha1.OperatorConfig
+
+	reconcileSteps []reconcileStepFunc
 }
+
+type reconcileStepFunc func(
+	ctx context.Context,
+	req ctrl.Request,
+	log logr.Logger,
+	capsule *rigdevv1alpha1.Capsule,
+	status *rigdevv1alpha1.CapsuleStatus,
+) error
 
 const (
 	labelRigDevCapsule = "rig.dev/capsule"
 	finalizer          = "rig.dev/finalizer"
 )
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.reconcileSteps = []reconcileStepFunc{
+		r.reconcileDeployment,
+		r.reconcileService,
+		r.reconcileCertificate,
+		r.reconcileIngress,
+		r.reconcileLoadBalancer,
+		r.reconcileHorizontalPodAutoscaler,
+	}
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&rigdevv1alpha1.Capsule{}).
+		Complete(r)
+}
 
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules/status,verbs=get;update;patch
@@ -83,31 +107,31 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
+	if capsule.GetGeneration() == capsule.Status.ObservedGeneration {
+		return ctrl.Result{}, nil
+	}
+
+	status := &rigdevv1alpha1.CapsuleStatus{}
+
 	log.Info("reconcile", "hpa", capsule.Spec.HorizontalScale)
 
-	if result, err := r.reconcileDeployment(ctx, req, log, capsule); err != nil {
-		return result, err
-	}
-	if result, err := r.reconcileService(ctx, req, log, capsule); err != nil {
-		return result, err
-	}
-	if result, err := r.reconcileCertificate(ctx, req, log, capsule); err != nil {
-		return result, err
-	}
-	if result, err := r.reconcileIngress(ctx, req, log, capsule); err != nil {
-		return result, err
-	}
-	if result, err := r.reconcileLoadBalancer(ctx, req, log, capsule); err != nil {
-		return result, err
-	}
-	if result, err := r.reconcileLoadBalancer(ctx, req, log, capsule); err != nil {
-		return result, err
-	}
-	if result, err := r.reconcileHorizontalPodAutoscaler(ctx, req, log, capsule); err != nil {
-		return result, err
+	var stepErrs []error
+	for _, sf := range r.reconcileSteps {
+		if err := sf(ctx, req, log, capsule, status); err != nil {
+			stepErrs = append(stepErrs, err)
+		}
 	}
 
-	return ctrl.Result{}, nil
+	if len(stepErrs) == 0 {
+		status.ObservedGeneration = capsule.GetGeneration()
+	}
+
+	capsule.Status = *status
+	if err := r.Status().Update(ctx, capsule); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, errors.Join(stepErrs...)
 }
 
 func (r *CapsuleReconciler) reconcileDeployment(
@@ -115,10 +139,13 @@ func (r *CapsuleReconciler) reconcileDeployment(
 	req ctrl.Request,
 	log logr.Logger,
 	capsule *rigdevv1alpha1.Capsule,
-) (ctrl.Result, error) {
+	status *rigdevv1alpha1.CapsuleStatus,
+) error {
 	deploy, err := createDeployment(capsule, r.Scheme)
 	if err != nil {
-		return ctrl.Result{}, err
+		status.Deployment.State = "failed"
+		status.Deployment.Message = err.Error()
+		return err
 	}
 
 	existingDeploy := &appsv1.Deployment{}
@@ -126,37 +153,29 @@ func (r *CapsuleReconciler) reconcileDeployment(
 		if kerrors.IsNotFound(err) {
 			log.Info("creating deployment")
 			if err := r.Create(ctx, deploy); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not create deployment: %w", err)
+				status.Deployment.State = "failed"
+				status.Deployment.Message = err.Error()
+				return fmt.Errorf("could not create deployment: %w", err)
 			}
 			existingDeploy = deploy
 		} else {
-			return ctrl.Result{}, fmt.Errorf("could not fetch deployment: %w", err)
+			status.Deployment.State = "failed"
+			status.Deployment.Message = err.Error()
+			return fmt.Errorf("could not fetch deployment: %w", err)
 		}
 	}
 
-	if !IsOwnedBy(capsule, existingDeploy) {
-		log.Info("Found existing deployment not owned by capsule. Will not update it.")
-		return ctrl.Result{}, errors.New("found existing deployment not owned by capsule")
-	}
+	// Edge case, this property is not carried over by k8s.
+	delete(existingDeploy.Spec.Template.Annotations, "kubectl.kubernetes.io/restartedAt")
 
-	// Dry run to fully materialize the new spec.
-	if err := r.Update(ctx, deploy, client.DryRunAll); err != nil {
-		return ctrl.Result{}, fmt.Errorf("could not update deployment: %w", err)
+	err = upsertIfNewer(ctx, r, existingDeploy, deploy, log, capsule, status, func(t1, t2 *appsv1.Deployment) bool {
+		return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
+	})
+	if err != nil {
+		status.Deployment.State = "failed"
+		status.Deployment.Message = err.Error()
 	}
-
-	// Edge case, this property is not carried over my k8s.
-	if ra, ok := existingDeploy.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"]; ok {
-		deploy.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = ra
-	}
-
-	if !equality.Semantic.DeepEqual(existingDeploy.Spec, deploy.Spec) {
-		log.Info("updating deployment")
-		if err := r.Update(ctx, deploy); err != nil {
-			return ctrl.Result{}, fmt.Errorf("could not update deployment: %w", err)
-		}
-	}
-
-	return ctrl.Result{}, nil
+	return err
 }
 
 func createDeployment(
@@ -285,26 +304,27 @@ func (r *CapsuleReconciler) reconcileService(
 	req ctrl.Request,
 	log logr.Logger,
 	capsule *rigdevv1alpha1.Capsule,
-) (ctrl.Result, error) {
+	status *rigdevv1alpha1.CapsuleStatus,
+) error {
 	service, err := createService(capsule, r.Scheme)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	existingService := &v1.Service{}
 	if err := r.Get(ctx, req.NamespacedName, existingService); err != nil {
 		if kerrors.IsNotFound(err) {
 			if len(capsule.Spec.Interfaces) == 0 {
-				return ctrl.Result{}, nil
+				return nil
 			}
 
 			log.Info("creating service")
 			if err := r.Create(ctx, service); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not create service: %w", err)
+				return fmt.Errorf("could not create service: %w", err)
 			}
 			existingService = service
 		} else {
-			return ctrl.Result{}, fmt.Errorf("could not fetch service: %w", err)
+			return fmt.Errorf("could not fetch service: %w", err)
 		}
 	}
 
@@ -313,25 +333,22 @@ func (r *CapsuleReconciler) reconcileService(
 			log.Info("Found existing service not owned by capsule. Will not delete it.")
 		} else {
 			log.Info("Found existing service not owned by capsule. Will not update it.")
-			return ctrl.Result{}, errors.New("found existing service not owned by capsule")
+			return errors.New("found existing service not owned by capsule")
 		}
 	} else {
 		if len(capsule.Spec.Interfaces) == 0 {
 			log.Info("deleting service")
 			if err := r.Delete(ctx, existingService); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not delete service: %w", err)
+				return fmt.Errorf("could not delete service: %w", err)
 			}
 		} else {
-			if !reflect.DeepEqual(existingService.Spec, service.Spec) {
-				log.Info("updating service")
-				if err := r.Update(ctx, service); err != nil {
-					return ctrl.Result{}, fmt.Errorf("could not update service: %w", err)
-				}
-			}
+			return upsertIfNewer(ctx, r, existingService, service, log, capsule, status, func(t1, t2 *v1.Service) bool {
+				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
+			})
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func createService(
@@ -370,52 +387,50 @@ func (r *CapsuleReconciler) reconcileCertificate(
 	req ctrl.Request,
 	log logr.Logger,
 	capsule *rigdevv1alpha1.Capsule,
-) (ctrl.Result, error) {
+	status *rigdevv1alpha1.CapsuleStatus,
+) error {
 	crt, err := r.createCertificate(capsule, r.Scheme)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	existingCrt := &cmv1.Certificate{}
 	if err := r.Get(ctx, req.NamespacedName, existingCrt); err != nil {
 		if kerrors.IsNotFound(err) {
 			if !capsuleHasIngress(capsule) {
-				return ctrl.Result{}, nil
+				return nil
 			}
 			if !r.ingressIsSupported() {
 				log.V(1).Info("not creating certificate as ingress is not supported: cert-manager config missing")
-				return ctrl.Result{}, nil
+				return nil
 			}
 			if !r.shouldCreateCertificateRessource() {
 				log.V(1).Info("not creating certificate as operator is configured to use ingress annotations")
-				return ctrl.Result{}, nil
+				return nil
 			}
 
 			log.Info("creating certificate")
 			if err := r.Create(ctx, crt); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not create certificate: %w", err)
+				return fmt.Errorf("could not create certificate: %w", err)
 			}
 			existingCrt = crt
 		} else {
-			return ctrl.Result{}, fmt.Errorf("could not fetch certificate: %w", err)
+			return fmt.Errorf("could not fetch certificate: %w", err)
 		}
 	}
 
 	if !IsOwnedBy(capsule, existingCrt) {
 		if capsuleHasIngress(capsule) {
 			log.Info("Found existing certificate not owned by capsule. Will not update it.")
-			return ctrl.Result{}, errors.New("found existing certificate not owned by capsule")
+			return errors.New("found existing certificate not owned by capsule")
 		} else {
 			log.Info("Found existing certificate not owned by capsule. Will not delete it.")
 		}
 	} else {
 		if r.ingressIsSupported() && r.shouldCreateCertificateRessource() && capsuleHasIngress(capsule) {
-			if !reflect.DeepEqual(existingCrt.Spec, crt.Spec) {
-				log.Info("updating certificate")
-				if err := r.Update(ctx, crt); err != nil {
-					return ctrl.Result{}, fmt.Errorf("could not update certificate: %w", err)
-				}
-			}
+			return upsertIfNewer(ctx, r, existingCrt, crt, log, capsule, status, func(t1, t2 *cmv1.Certificate) bool {
+				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
+			})
 		} else {
 			if !r.ingressIsSupported() {
 				log.V(1).Info("deleting certificate as ingress is not supported: cert-manager config missing")
@@ -425,12 +440,12 @@ func (r *CapsuleReconciler) reconcileCertificate(
 				log.Info("deleting certificate")
 			}
 			if err := r.Delete(ctx, existingCrt); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not delete certificate: %w", err)
+				return fmt.Errorf("could not delete certificate: %w", err)
 			}
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func (r *CapsuleReconciler) shouldCreateCertificateRessource() bool {
@@ -482,60 +497,58 @@ func (r *CapsuleReconciler) reconcileIngress(
 	req ctrl.Request,
 	log logr.Logger,
 	capsule *rigdevv1alpha1.Capsule,
-) (ctrl.Result, error) {
+	status *rigdevv1alpha1.CapsuleStatus,
+) error {
 	ing, err := r.createIngress(capsule, r.Scheme)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	existingIng := &netv1.Ingress{}
 	if err := r.Get(ctx, req.NamespacedName, existingIng); err != nil {
 		if kerrors.IsNotFound(err) {
 			if !capsuleHasIngress(capsule) {
-				return ctrl.Result{}, nil
+				return nil
 			}
 			if !r.ingressIsSupported() {
 				log.V(1).Info("ingress not supported: cert-manager config missing")
-				return ctrl.Result{}, nil
+				return nil
 			}
 
 			log.Info("creating ingress")
 			if err := r.Create(ctx, ing); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not create ingress: %w", err)
+				return fmt.Errorf("could not create ingress: %w", err)
 			}
 			existingIng = ing
 		} else {
-			return ctrl.Result{}, fmt.Errorf("could not fetch ingress: %w", err)
+			return fmt.Errorf("could not fetch ingress: %w", err)
 		}
 	}
 
 	if !IsOwnedBy(capsule, existingIng) {
 		if capsuleHasIngress(capsule) {
 			log.Info("Found existing ingress not owned by capsule. Will not update it.")
-			return ctrl.Result{}, errors.New("found existing ingress not owned by capsule")
+			return errors.New("found existing ingress not owned by capsule")
 		} else {
 			log.Info("Found existing ingress not owned by capsule. Will not delete it.")
 		}
 	} else {
 		if r.ingressIsSupported() && capsuleHasIngress(capsule) {
-			if !reflect.DeepEqual(existingIng.Spec, ing.Spec) {
-				log.Info("updating ingress")
-				if err := r.Update(ctx, ing); err != nil {
-					return ctrl.Result{}, fmt.Errorf("could not update ingress: %w", err)
-				}
-			}
+			return upsertIfNewer(ctx, r, existingIng, ing, log, capsule, status, func(t1, t2 *netv1.Ingress) bool {
+				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
+			})
 		} else {
 			if !r.ingressIsSupported() {
 				log.V(1).Info("ingress not supported: cert-manager config missing")
 			}
 			log.Info("deleting ingress")
 			if err := r.Delete(ctx, existingIng); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not delete ingress: %w", err)
+				return fmt.Errorf("could not delete ingress: %w", err)
 			}
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func capsuleHasIngress(capsule *rigdevv1alpha1.Capsule) bool {
@@ -611,10 +624,11 @@ func (r *CapsuleReconciler) reconcileLoadBalancer(
 	req ctrl.Request,
 	log logr.Logger,
 	capsule *rigdevv1alpha1.Capsule,
-) (ctrl.Result, error) {
+	status *rigdevv1alpha1.CapsuleStatus,
+) error {
 	svc, err := createLoadBalancer(capsule, r.Scheme)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	nsName := types.NamespacedName{
@@ -625,43 +639,40 @@ func (r *CapsuleReconciler) reconcileLoadBalancer(
 	if err := r.Get(ctx, nsName, existingSvc); err != nil {
 		if kerrors.IsNotFound(err) {
 			if !capsuleHasLoadBalancer(capsule) {
-				return ctrl.Result{}, nil
+				return nil
 			}
 
 			log.Info("creating loadbalancer service")
 			if err := r.Create(ctx, svc); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not create loadbalancer: %w", err)
+				return fmt.Errorf("could not create loadbalancer: %w", err)
 			}
 			existingSvc = svc
 		} else {
-			return ctrl.Result{}, fmt.Errorf("could not fetch loadbalancer: %w", err)
+			return fmt.Errorf("could not fetch loadbalancer: %w", err)
 		}
 	}
 
 	if !IsOwnedBy(capsule, existingSvc) {
 		if capsuleHasLoadBalancer(capsule) {
 			log.Info("Found existing loadbalancer service not owned by capsule. Will not update it.")
-			return ctrl.Result{}, errors.New("found existing loadbalancer service not owned by capsule")
+			return errors.New("found existing loadbalancer service not owned by capsule")
 		} else {
 			log.Info("Found existing loadbalancer service not owned by capsule. Will not delete it.")
 		}
 	} else {
 		if capsuleHasLoadBalancer(capsule) {
-			if !reflect.DeepEqual(existingSvc.Spec, svc.Spec) {
-				log.Info("updating loadbalancer service")
-				if err := r.Update(ctx, svc); err != nil {
-					return ctrl.Result{}, fmt.Errorf("could not update loadbalancer service: %w", err)
-				}
-			}
+			return upsertIfNewer(ctx, r, existingSvc, svc, log, capsule, status, func(t1, t2 *v1.Service) bool {
+				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
+			})
 		} else {
 			log.Info("deleting loadbalancer service")
 			if err := r.Delete(ctx, existingSvc); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not delete loadbalancer service: %w", err)
+				return fmt.Errorf("could not delete loadbalancer service: %w", err)
 			}
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 func capsuleHasLoadBalancer(capsule *rigdevv1alpha1.Capsule) bool {
@@ -708,49 +719,33 @@ func createLoadBalancer(
 	return svc, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&rigdevv1alpha1.Capsule{}).
-		Complete(r)
-}
-
 func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
 	ctx context.Context,
 	req ctrl.Request,
 	log logr.Logger,
 	capsule *rigdevv1alpha1.Capsule,
-) (ctrl.Result, error) {
+	status *rigdevv1alpha1.CapsuleStatus,
+) error {
 	hpa, err := createHPA(capsule, r.Scheme)
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 	existingHPA := &autoscalingv2.HorizontalPodAutoscaler{}
 	if err = r.Get(ctx, client.ObjectKeyFromObject(hpa), existingHPA); err != nil {
 		if kerrors.IsNotFound(err) {
 			log.Info("creating horizontal pod autoscaler")
 			if err := r.Create(ctx, hpa); err != nil {
-				return ctrl.Result{}, fmt.Errorf("could not create horizontal pod autoscaler: %w", err)
+				return fmt.Errorf("could not create horizontal pod autoscaler: %w", err)
 			}
 			existingHPA = hpa
 		} else {
-			return ctrl.Result{}, fmt.Errorf("could not fetch horizontal pod autoscaler: %w", err)
+			return fmt.Errorf("could not fetch horizontal pod autoscaler: %w", err)
 		}
 	}
 
-	if !IsOwnedBy(capsule, existingHPA) {
-		log.Info("Found existing horizontal pod autoscaler not owned by capsule. Will not update it.")
-		return ctrl.Result{}, errors.New("found existing horizontal pod autoscaler not owned by capsule")
-	}
-
-	if !reflect.DeepEqual(existingHPA.Spec, hpa.Spec) {
-		log.Info("updating hpa")
-		if err := r.Update(ctx, hpa); err != nil {
-			return ctrl.Result{}, fmt.Errorf("could not update deployment: %w", err)
-		}
-	}
-
-	return ctrl.Result{}, nil
+	return upsertIfNewer(ctx, r, existingHPA, hpa, log, capsule, status, func(t1, t2 *autoscalingv2.HorizontalPodAutoscaler) bool {
+		return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
+	})
 }
 
 func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autoscalingv2.HorizontalPodAutoscaler, error) {
@@ -793,4 +788,44 @@ func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autosc
 	}
 
 	return hpa, nil
+}
+
+func upsertIfNewer[T client.Object](ctx context.Context, r *CapsuleReconciler, current T, new T, log logr.Logger, capsule *rigdevv1alpha1.Capsule, status *rigdevv1alpha1.CapsuleStatus, equal func(t1 T, t2 T) bool) error {
+	kind := current.GetObjectKind().GroupVersionKind().Kind
+
+	res := rigdevv1alpha1.OwnedResource{
+		Ref: &v1.TypedLocalObjectReference{
+			Kind: kind,
+			Name: new.GetName(),
+		},
+		State: "created",
+	}
+	defer func() {
+		status.OwnedResources = append(status.OwnedResources, res)
+	}()
+
+	if !IsOwnedBy(capsule, new) {
+		log.Info("Found existing resource not owned by capsule. Will not update it.", "kind", kind, "name", new.GetName())
+		res.State = "failed"
+		res.Message = "found existing resource not owned by capsule"
+		return fmt.Errorf("found existing %s not owned by capsule", kind)
+	}
+
+	// Dry run to fully materialize the new spec.
+	if err := r.Update(ctx, new, client.DryRunAll); err != nil {
+		res.State = "failed"
+		res.Message = err.Error()
+		return fmt.Errorf("could not update %s: %w", kind, err)
+	}
+
+	if !equal(new, current) {
+		log.Info("updating", "kind", kind)
+		if err := r.Update(ctx, new); err != nil {
+			res.State = "failed"
+			res.Message = err.Error()
+			return fmt.Errorf("could not update %s: %w", kind, err)
+		}
+	}
+
+	return nil
 }
