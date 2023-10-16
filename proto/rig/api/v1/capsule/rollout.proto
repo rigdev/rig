@@ -9,8 +9,9 @@ enum RolloutState {
   ROLLOUT_STATE_UNSPECIFIED = 0;
   ROLLOUT_STATE_PENDING = 1;
   ROLLOUT_STATE_PREPARING = 6;
-  ROLLOUT_STATE_DEPLOYING = 2;
-  ROLLOUT_STATE_OBSERVING = 7;
+  ROLLOUT_STATE_APPLYING = 2;
+  ROLLOUT_STATE_RESOURCE_CREATION = 8;
+  ROLLOUT_STATE_INSTANCE_ROLL_OUT = 7;
   ROLLOUT_STATE_DONE = 3;
   ROLLOUT_STATE_ABORTED = 4;
   ROLLOUT_STATE_FAILED = 5;
@@ -179,15 +180,15 @@ message Auth {
 }
 
 message HorizontalScale {
-    uint32 max_replicas = 1;
-    uint32 min_replicas = 2;
-    CPUTarget cpu_target = 3;
+  uint32 max_replicas = 1;
+  uint32 min_replicas = 2;
+  CPUTarget cpu_target = 3;
 }
 
 message CPUTarget {
-    uint32 average_utilization_percentage  = 1;
+  uint32 average_utilization_percentage = 1;
 }
 
 message Rollback {
-    uint64 rollback_id = 1;
+  uint64 rollback_id = 1;
 }
