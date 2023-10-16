@@ -4,137 +4,152 @@ package api.v1.capsule.instance;
 
 import "google/protobuf/timestamp.proto";
 
-// Status is a reprsentation of the current state of an instance
+// Status is a representation of the current state of an instance
 message Status {
-    string instance_id = 1;
-    StateMachine state_machine = 2;
-    Data data = 3;
+  string instance_id = 1;
+  Stages stages = 2;
+
+  uint64 rollout_id = 3;
+  string image = 4;
+  google.protobuf.Timestamp created_at = 6;
 }
 
-// A State is a part of a StateMachine representing where in its lifecycle an instance is at the moment.
-// Within the entire tree-structure of the Status, there is at most one state with a given StateID
-// A State can represent fairly complicated parts of an instance lifecycle, thus they can in turn
-// contain several sub-statemachines. Each sub-statemachine will run in parallel.
-// States with no sub-statemachines are called leaf states. States with sub-statemachines are called complex States
-message State {
-    StateID id = 1;
-    StateStatus status = 2;
-    string message = 3;
-    Timestamps timestamps = 4;
-    repeated StateMachine sub_state_machines = 5;
+message Stages {
+  SchedulingStage schedule = 1;
+  PreparingStage preparing = 2;
+  RunningStage running = 3;
 }
 
-// A StateMachine represents a set of States the instance cycles through.
-// At any point in time a StateMachine is only actively in one state.
-// The 'states' usually only contain a single State (the current state of the StateMachine),
-// but in some cases contains previous states visited by the Machine. 
-// Thus the linear order of 'states' is an incomplete historical view of the StateMachine's execution
-message StateMachine {
-    StateMachineID id = 1;
-    StateStatus status = 2;
-    repeated State states = 3;
+message StageInfo {
+  string name = 1;
+  google.protobuf.Timestamp updated_at = 2;
+  StageState state = 3;
 }
 
-// StateStatus is used to indicate the status of States and StateMachines.
-//
-// A State can be
-//  - Failed: If it is a leaf-state representing a failure or a complex state with at least one failing sub-statemachine
-//  - Ongoing: If it is a leaf-state representing an ongoing operation or a complex state with no failing sub-statemachines and at least one ongoing one
-//  - Done: If it is a leaf-state representing a done operation or a complex state with only done sub-statemachines
-//
-// A StateMachine can be
-//  - Failed: If at least one of its states are failed
-//  - Ongoing: If none one of its states are failed and at least one is ongoing
-//  - Done: If all its states are done
-enum StateStatus {
-    STATE_STATUS_UNSPECIFIED = 0;
-    STATE_STATUS_ONGOING = 1;
-    STATE_STATUS_FAILED = 2;
-    STATE_STATUS_DONE = 3;
+enum StageState {
+  STAGE_STATE_UNSPECIFIED = 0;
+  STAGE_STATE_ONGOING = 1;
+  STAGE_STATE_FAILED = 2;
+  STAGE_STATE_DONE = 3;
 }
 
-// StateID uniquely qualifes a State. That is, all states have a StateID and at most
-// one State can have a specific StateID at a time.
-enum StateID {
-    STATE_ID_UNSPECIFIED = 0;
-
-    STATE_ID_SCHEDULING = 1;
-    STATE_ID_PREPARING = 2;
-    STATE_ID_RUNNING = 3;
-
-    STATE_ID_UNSCHEDULEABLE = 4;
-    STATE_ID_SCHEDULING_DONE = 5;
-
-    STATE_ID_IMAGE_PULLING = 6;
-    STATE_ID_IMAGE_PULLING_ERROR = 7;
-    STATE_ID_IMAGE_PULLING_BACK_OFF = 8;
-    STATE_ID_IMAGE_PULLING_DONE = 9;
-
-    STATE_ID_CRASH_LOOP_BACK_OFF = 10;
-    STATE_ID_WAITING = 11;
-    STATE_ID_RUNNING_RUNNING = 12;
+message SchedulingStage {
+  StageInfo info = 1;
+  repeated SchedulingStep steps = 2;
 }
 
-// StateMachineID uniquely qualifes a StateMachine. That is, all statemachines have a StateMachineID and at most
-// one StateMachine can have a specific StateMachineID at a time.
-enum StateMachineID {
-    STATE_MACHINE_ID_UNSPECIFIED = 0;
-    STATE_MACHINE_ID_BASE = 1;
-    STATE_MACHINE_ID_SCHEDULING = 2;
-    STATE_MACHINE_ID_IMAGE_PULLING = 3;
-    STATE_MACHINE_ID_RUNNING = 4;
+message SchedulingStep {
+  oneof step {
+    GenericStep generic = 1;
+    PlacementStep placement = 2;
+  }
 }
 
-message Timestamps {
-    google.protobuf.Timestamp entered = 1;
-    google.protobuf.Timestamp updated = 2;
-    google.protobuf.Timestamp exited = 3;
+message PlacementStep {
+  StepInfo info = 1;
+  string node = 2;
 }
 
-// Extra data which is not common among all states.
-// Each field is a set of data associated to one specific state
-message Data {
-    TopLevelData top_level = 1;
-    // RunningData is associated to the RUNNING StateID
-    RunningData running = 2;
-    // CrashLoopBackOffData is associated to the CRASH_LOOP_BACK_OFF StateID
-    CrashLoopBackOffData crash_loop_back_off = 3;
+message GenericStep {
+  StepInfo info = 1;
 }
 
-message TopLevelData {
-    uint64 rollout_id = 1;
-    string image = 2;
-    string node = 3;
-    google.protobuf.Timestamp created_at = 4;
+message StepInfo {
+  string name = 1;
+  string message = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  StepState state = 4;
 }
 
-message RunningData {
-    uint32 restarts = 1;
+enum StepState {
+  STEP_STATE_UNSPECIFIED = 0;
+  STEP_STATE_ONGOING = 1;
+  STEP_STATE_FAILED = 2;
+  STEP_STATE_DONE = 3;
 }
 
-message CrashLoopBackOffData {
-    ContainerTermination termination = 1;
+enum PlacementState {
+  SCHEDULING_STATE_UNSPECIFIED = 0;
+  SCHEDULING_STATE_UNSCHEDULEABLE = 1;
+  SCHEDULING_STATE_DONE = 2;
+}
+
+message PreparingStage {
+  StageInfo info = 1;
+  repeated PreparingStep steps = 2;
+}
+
+message PreparingStep {
+  oneof step {
+    GenericStep generic = 1;
+    ImagePullingStep image_pulling = 2;
+  }
+}
+
+message ImagePullingStep {
+  StepInfo info = 1;
+  ImagePullingState state = 2;
+  string image = 3;
+}
+
+enum ImagePullingState {
+  IMAGE_PULLING_STATE_PULLING = 0;
+  IMAGE_PULLING_STATE_ERROR = 1;
+  IMAGE_PULLING_STATE_BACK_OFF = 2;
+  IMAGE_PULLING_STATE_DONE = 3;
+}
+
+message RunningStage {
+  StageInfo info = 1;
+  repeated RunningStep steps = 2;
+  uint32 restarts = 3;
+  ContainerTermination last_container_termination = 4;
+}
+
+message RunningStep {
+  oneof step {
+    GenericStep generic = 1;
+    ReadyStep ready = 2;
+    ExecutingStep executing = 3;
+  }
+}
+
+message ReadyStep {
+  StepInfo info = 1;
+  ReadyState state = 2;
+}
+
+enum ReadyState {
+  READY_STATE_UNSPECIFIED = 0;
+  READY_STATE_CRASH_LOOP_BACKOFF = 1;
+  READY_STATE_NOT_READY = 2;
+  READY_STATE_READY = 3;
+}
+
+message ExecutingStep {
+  StepInfo info = 1;
+  google.protobuf.Timestamp started_at = 2;
 }
 
 message ContainerTermination {
-	// Exit status from the last termination of the container
-	int32 exit_code	 = 1;
-	// Signal from the last termination of the container
-	// +optional
-	int32 signal  = 2;
-	// (brief) reason from the last termination of the container
-	// +optional
-    string reason  = 3;
-	// Message regarding the last termination of the container
-	// +optional
-	string message = 4;
-	// Time at which previous execution of the container started
-	// +optional
-    google.protobuf.Timestamp started_at = 5;
-	// Time at which the container last terminated
-	// +optional
-    google.protobuf.Timestamp finished_at = 6;
-	// Container's ID in the format '<type>://<container_id>'
-	// +optional
-	string container_id  = 7;
+  // Exit status from the last termination of the container
+  int32 exit_code = 1;
+  // Signal from the last termination of the container
+  // +optional
+  int32 signal = 2;
+  // (brief) reason from the last termination of the container
+  // +optional
+  string reason = 3;
+  // Message regarding the last termination of the container
+  // +optional
+  string message = 4;
+  // Time at which previous execution of the container started
+  // +optional
+  google.protobuf.Timestamp started_at = 5;
+  // Time at which the container last terminated
+  // +optional
+  google.protobuf.Timestamp finished_at = 6;
+  // Container's ID in the format '<type>://<container_id>'
+  // +optional
+  string container_id = 7;
 }

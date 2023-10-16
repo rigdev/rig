@@ -10,8 +10,8 @@ enum State {
   STATE_RUNNING = 2;
   STATE_SUCCEEDED = 3;
   STATE_FAILED = 4;
- }
- 
+}
+
 message Instance {
   string instance_id = 1;
   string build_id = 2;
@@ -24,177 +24,176 @@ message Instance {
   uint64 rollout_id = 9;
 }
 
-
 message InstanceStatus {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
-    InstanceStatusData data = 3;
-    InstanceStatusStages stages = 4;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
+  InstanceStatusData data = 3;
+  InstanceStatusStages stages = 4;
 }
 
-message InstanceStatusData  {
-    string instance_id =1;
-    uint64 rollout_id = 2;
-    string image_name = 3;
-    string node = 4;
+message InstanceStatusData {
+  string instance_id = 1;
+  uint64 rollout_id = 2;
+  string image_name = 3;
+  string node = 4;
 }
 
 message InstanceStatusStages {
-    InstanceStatusScheduling schedule = 1;
-    InstanceStatusPreparing preparing = 2;
-    InstanceStatusRunning running = 3;
+  InstanceStatusScheduling schedule = 1;
+  InstanceStatusPreparing preparing = 2;
+  InstanceStatusRunning running = 3;
 }
 
 // ====================== SCHEDULING ====================
 message InstanceStatusScheduling {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
-    InstanceStatusSchedulingStages stages = 3;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
+  InstanceStatusSchedulingStages stages = 3;
 }
 
 message InstanceStatusSchedulingStages {
-    CurrentlyUnscheduleable currently_unscheduleable = 1;
-    DoneScheduling done = 2;
+  CurrentlyUnscheduleable currently_unscheduleable = 1;
+  DoneScheduling done = 2;
 }
 
 message CurrentlyUnscheduleable {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 
 message DoneScheduling {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 
 // ======================================================
 
 // ======================= PREPARING =====================
 message InstanceStatusPreparing {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 
-    InstanceStatusPreparingStages stages = 3;
+  InstanceStatusPreparingStages stages = 3;
 }
 
 message InstanceStatusPreparingStages {
-    ImagePulling pulling = 1;
+  ImagePulling pulling = 1;
 }
 
 message ImagePulling {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
-    ImagePullingStages stages = 3;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
+  ImagePullingStages stages = 3;
 }
 
 message ImagePullingStages {
-    ImagePullingPulling pulling = 1;
-    ImagePullingError error = 2;
-    ImagePullingBackOff back_off= 3;
-    ImagePullingDone done = 4;
+  ImagePullingPulling pulling = 1;
+  ImagePullingError error = 2;
+  ImagePullingBackOff back_off = 3;
+  ImagePullingDone done = 4;
 }
 
 message ImagePullingPulling {
-    string message = 1;
-    StatusTimestamps  timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 
 message ImagePullingError {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 
 message ImagePullingBackOff {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 
 message ImagePullingDone {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 // =======================================================
 
 // ======================== RUNNING ======================
 message InstanceStatusRunning {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
-    InstanceStatusRunningStages stages = 3;
-    InstanceStatusRunningData data = 4;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
+  InstanceStatusRunningStages stages = 3;
+  InstanceStatusRunningData data = 4;
 }
 
 message InstanceStatusRunningData {
-    uint32 restarts = 1;
+  uint32 restarts = 1;
 }
 
 message InstanceStatusRunningStages {
-    CrashLoopBackoff crash_loop_backoff = 1;
-    Ready ready = 2;
-    Running running = 3;
+  CrashLoopBackoff crash_loop_backoff = 1;
+  Ready ready = 2;
+  Running running = 3;
 }
 
 message CrashLoopBackoff {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
-    CrashLoopBackoffData data = 3;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
+  CrashLoopBackoffData data = 3;
 }
 
 message CrashLoopBackoffData {
-    ContainerStateTerminated termination = 1;
+  ContainerStateTerminated termination = 1;
 }
 
 message Running {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 
 message Ready {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
-    ReadyStages stages = 3;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
+  ReadyStages stages = 3;
 }
 
 message ReadyStages {
-    NotReady not_ready = 1;
-    InstanceReady ready = 2;
+  NotReady not_ready = 1;
+  InstanceReady ready = 2;
 }
 
 message NotReady {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 
 message InstanceReady {
-    string message = 1;
-    StatusTimestamps timestamps = 2;
+  string message = 1;
+  StatusTimestamps timestamps = 2;
 }
 
 message ContainerStateTerminated {
-	// Exit status from the last termination of the container
-	int32 exit_code	 = 1;
-	// Signal from the last termination of the container
-	// +optional
-	int32 signal  = 2;
-	// (brief) reason from the last termination of the container
-	// +optional
-    string reason  = 3;
-	// Message regarding the last termination of the container
-	// +optional
-	string message = 4;
-	// Time at which previous execution of the container started
-	// +optional
-    google.protobuf.Timestamp started_at = 5;
-	// Time at which the container last terminated
-	// +optional
-    google.protobuf.Timestamp finished_at = 6;
-	// Container's ID in the format '<type>://<container_id>'
-	// +optional
-	string container_id  = 7;
+  // Exit status from the last termination of the container
+  int32 exit_code = 1;
+  // Signal from the last termination of the container
+  // +optional
+  int32 signal = 2;
+  // (brief) reason from the last termination of the container
+  // +optional
+  string reason = 3;
+  // Message regarding the last termination of the container
+  // +optional
+  string message = 4;
+  // Time at which previous execution of the container started
+  // +optional
+  google.protobuf.Timestamp started_at = 5;
+  // Time at which the container last terminated
+  // +optional
+  google.protobuf.Timestamp finished_at = 6;
+  // Container's ID in the format '<type>://<container_id>'
+  // +optional
+  string container_id = 7;
 }
 // =======================================================
 
 message StatusTimestamps {
-    google.protobuf.Timestamp entered = 1;
-    google.protobuf.Timestamp updated = 2;
-    google.protobuf.Timestamp exited = 3;
+  google.protobuf.Timestamp entered = 1;
+  google.protobuf.Timestamp updated = 2;
+  google.protobuf.Timestamp exited = 3;
 }

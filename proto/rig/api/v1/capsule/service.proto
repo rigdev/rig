@@ -56,11 +56,14 @@ service Service {
   rpc CapsuleMetrics(CapsuleMetricsRequest) returns (CapsuleMetricsResponse) {}
 
   // Lists the current instance status for each instance of the capsule.
-  rpc ListAllCurrentInstanceStatuses(ListAllCurrentInstanceStatusesRequest) returns (ListAllCurrentInstanceStatusesResponse) {}
+  rpc ListAllCurrentInstanceStatuses(ListAllCurrentInstanceStatusesRequest)
+      returns (ListAllCurrentInstanceStatusesResponse) {}
   // GetInstanceStatus returns the current status for the given instance
-  rpc GetInstanceStatus(GetInstanceStatusRequest) returns (GetInstanceStatusResponse) {}
+  rpc GetInstanceStatus(GetInstanceStatusRequest)
+      returns (GetInstanceStatusResponse) {}
   // ListInstanceStatuses lists all the historical statuses for the instance
-  rpc ListInstanceStatuses(ListInstanceStatusesRequest) returns (ListInstanceStatusesResponse) {}
+  rpc ListInstanceStatuses(ListInstanceStatusesRequest)
+      returns (ListInstanceStatusesResponse) {}
 }
 
 message CreateRequest {
