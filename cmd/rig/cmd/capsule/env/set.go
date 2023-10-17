@@ -21,12 +21,16 @@ func (c Cmd) set(cmd *cobra.Command, args []string) error {
 
 	cs := r.GetConfig().GetContainerSettings()
 
+	if cs == nil {
+		cs = &capsule.ContainerSettings{}
+	}
+
 	if cs.GetEnvironmentVariables() == nil {
 		cs.EnvironmentVariables = make(map[string]string)
 	}
 	cs.EnvironmentVariables[args[0]] = args[1]
 
-	if _, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId: cmd_capsule.CapsuleID,
 			Changes: []*capsule.Change{
@@ -37,7 +41,14 @@ func (c Cmd) set(cmd *cobra.Command, args []string) error {
 				},
 			},
 		},
-	}); err != nil {
+	}
+
+	_, err = c.Rig.Capsule().Deploy(ctx, req)
+
+	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
+		_, err = cmd_capsule.AbortAndDeploy(ctx, cmd_capsule.CapsuleID, c.Rig, req)
+	}
+	if err != nil {
 		return err
 	}
 

@@ -16,6 +16,9 @@ func (r Cmd) get(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, r.Rig)
+	if err != nil {
+		return err
+	}
 
 	if outputJSON {
 		obj := scaleObj{

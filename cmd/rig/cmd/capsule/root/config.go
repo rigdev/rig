@@ -44,12 +44,18 @@ func (c Cmd) config(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	if _, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Changes:   cs,
 		},
-	}); err != nil {
+	}
+
+	_, err := c.Rig.Capsule().Deploy(ctx, req)
+	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
+		_, err = capsule_cmd.AbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+	}
+	if err != nil {
 		return err
 	}
 

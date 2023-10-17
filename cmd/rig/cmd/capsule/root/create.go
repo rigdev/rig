@@ -254,15 +254,22 @@ func (c *Cmd) create(cmd *cobra.Command, args []string) error {
 		})
 	}
 
+	req := &connect.Request[capsule.DeployRequest]{
+		Msg: &capsule.DeployRequest{
+			CapsuleId: capsuleID,
+			Changes:   init,
+		},
+	}
+
 	if len(init) > 0 {
-		if _, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
-			Msg: &capsule.DeployRequest{
-				CapsuleId: capsuleID,
-				Changes:   init,
-			},
-		}); err != nil {
+		_, err = c.Rig.Capsule().Deploy(ctx, req)
+		if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
+			_, err = capsule_cmd.AbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+		}
+		if err != nil {
 			return err
 		}
+
 	}
 
 	cmd.Printf("Created new capsule '%v'\n", capsule_cmd.CapsuleID)

@@ -30,17 +30,24 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	res, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+
+	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_BuildId{BuildId: buildID},
 			}},
 		},
-	})
+	}
+
+	res, err := c.Rig.Capsule().Deploy(ctx, req)
+	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
+		res, err = capsule_cmd.AbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+	}
 	if err != nil {
 		return err
 	}
+
 	cmd.Printf("Deploying build %v in rollout %v \n", buildID, res.Msg.GetRolloutId())
 	return c.listenForEvents(ctx, res.Msg.GetRolloutId(), capsule_cmd.CapsuleID)
 }

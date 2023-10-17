@@ -5,6 +5,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +35,7 @@ func (c Cmd) remove(cmd *cobra.Command, args []string) error {
 
 	delete(cs.GetEnvironmentVariables(), key)
 
-	if _, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId: cmd_capsule.CapsuleID,
 			Changes: []*capsule.Change{
@@ -45,7 +46,13 @@ func (c Cmd) remove(cmd *cobra.Command, args []string) error {
 				},
 			},
 		},
-	}); err != nil {
+	}
+
+	_, err = c.Rig.Capsule().Deploy(ctx, req)
+	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
+		_, err = cmd_capsule.AbortAndDeploy(ctx, cmd_capsule.CapsuleID, c.Rig, req)
+	}
+	if err != nil {
 		return err
 	}
 
