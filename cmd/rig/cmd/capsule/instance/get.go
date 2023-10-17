@@ -3,6 +3,7 @@ package instance
 import (
 	"encoding/json"
 	"fmt"
+
 	// "strings"
 
 	"github.com/bufbuild/connect-go"
@@ -11,6 +12,7 @@ import (
 	// "github.com/rigdev/rig-go-api/api/v1/capsule/instance"
 	"github.com/rigdev/rig-go-api/model"
 	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+
 	// table2 "github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +21,7 @@ func (c Cmd) get(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
 
 	// TODO Fix to use the new dataformat
-	resp, err := c.Rig.Capsule().ListAllCurrentInstanceStatuses(ctx, connect.NewRequest(&capsule.ListAllCurrentInstanceStatusesRequest{
+	resp, err := c.Rig.Capsule().ListInstanceStatuses(ctx, connect.NewRequest(&capsule.ListInstanceStatusesRequest{
 		CapsuleId: cmd_capsule.CapsuleID,
 		Pagination: &model.Pagination{
 			Offset: uint32(offset),
