@@ -26,6 +26,9 @@ import (
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/go-logr/logr"
+	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
@@ -40,10 +43,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/ptr"
 )
 
 // CapsuleReconciler reconciles a Capsule object
@@ -71,12 +70,12 @@ const (
 // SetupWithManager sets up the controller with the Manager.
 func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.reconcileSteps = []reconcileStepFunc{
+		r.reconcileHorizontalPodAutoscaler,
 		r.reconcileDeployment,
 		r.reconcileService,
 		r.reconcileCertificate,
 		r.reconcileIngress,
 		r.reconcileLoadBalancer,
-		r.reconcileHorizontalPodAutoscaler,
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&rigdevv1alpha1.Capsule{}).
@@ -112,9 +111,6 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	status := &rigdevv1alpha1.CapsuleStatus{}
-
-	log.Info("reconcile", "hpa", capsule.Spec.HorizontalScale)
-
 	var stepErrs []error
 	for _, sf := range r.reconcileSteps {
 		if err := sf(ctx, req, log, capsule, status); err != nil {
@@ -726,45 +722,41 @@ func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
 	capsule *rigdevv1alpha1.Capsule,
 	status *rigdevv1alpha1.CapsuleStatus,
 ) error {
-	hpa, err := createHPA(capsule, r.Scheme)
+	hpa, shouldHaveHPA, err := createHPA(capsule, r.Scheme)
 	if err != nil {
 		return err
 	}
 	existingHPA := &autoscalingv2.HorizontalPodAutoscaler{}
+	hasExistingHPA := false
 	if err = r.Get(ctx, client.ObjectKeyFromObject(hpa), existingHPA); err != nil {
-		if kerrors.IsNotFound(err) {
+		if kerrors.IsNotFound(err) && shouldHaveHPA {
 			log.Info("creating horizontal pod autoscaler")
 			if err := r.Create(ctx, hpa); err != nil {
 				return fmt.Errorf("could not create horizontal pod autoscaler: %w", err)
 			}
 			existingHPA = hpa
-		} else {
+		} else if err != nil {
 			return fmt.Errorf("could not fetch horizontal pod autoscaler: %w", err)
+		}
+	} else {
+		hasExistingHPA = true
+	}
+	if !shouldHaveHPA && hasExistingHPA {
+		if err := r.Delete(ctx, existingHPA); err != nil {
+			return err
 		}
 	}
 
-	return upsertIfNewer(ctx, r, existingHPA, hpa, log, capsule, status, func(t1, t2 *autoscalingv2.HorizontalPodAutoscaler) bool {
-		return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
-	})
-}
-
-func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autoscalingv2.HorizontalPodAutoscaler, error) {
-	scale := capsule.Spec.HorizontalScale
-
-	var metrics []autoscalingv2.MetricSpec
-	if scale.CPUTarget != (rigdevv1alpha1.CPUTarget{}) {
-		metrics = append(metrics, autoscalingv2.MetricSpec{
-			Type: autoscalingv2.ResourceMetricSourceType,
-			Resource: &autoscalingv2.ResourceMetricSource{
-				Name: v1.ResourceCPU,
-				Target: autoscalingv2.MetricTarget{
-					Type:               autoscalingv2.UtilizationMetricType,
-					AverageUtilization: ptr.New(int32(scale.CPUTarget.AverageUtilizationPercentage)),
-				},
-			},
+	if shouldHaveHPA {
+		return upsertIfNewer(ctx, r, existingHPA, hpa, log, capsule, status, func(t1, t2 *autoscalingv2.HorizontalPodAutoscaler) bool {
+			return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 		})
 	}
 
+	return nil
+}
+
+func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-autoscaler", capsule.Name),
@@ -776,18 +768,36 @@ func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autosc
 				Name:       capsule.Name,
 				APIVersion: appsv1.SchemeGroupVersion.Version,
 			},
-			MaxReplicas: int32(scale.MaxReplicas),
-			Metrics:     metrics,
 		},
 	}
-	if scale.MinReplicas > 0 {
-		hpa.Spec.MinReplicas = ptr.New(int32(scale.MinReplicas))
-	}
 	if err := controllerutil.SetControllerReference(capsule, hpa, scheme); err != nil {
-		return nil, err
+		return nil, true, err
 	}
 
-	return hpa, nil
+	scale := capsule.Spec.HorizontalScale
+	fmt.Printf("createHPA2, min: %v, max: %v\n", scale.MinReplicas, scale.MaxReplicas)
+	if scale.MinReplicas == 0 && scale.MaxReplicas == 0 {
+		capsule.Spec.Replicas = ptr.New(int32(0))
+		return hpa, false, nil
+	}
+
+	if scale.CPUTarget != (rigdevv1alpha1.CPUTarget{}) {
+		hpa.Spec.Metrics = append(hpa.Spec.Metrics, autoscalingv2.MetricSpec{
+			Type: autoscalingv2.ResourceMetricSourceType,
+			Resource: &autoscalingv2.ResourceMetricSource{
+				Name: v1.ResourceCPU,
+				Target: autoscalingv2.MetricTarget{
+					Type:               autoscalingv2.UtilizationMetricType,
+					AverageUtilization: ptr.New(int32(scale.CPUTarget.AverageUtilizationPercentage)),
+				},
+			},
+		})
+	}
+
+	hpa.Spec.MaxReplicas = int32(scale.MaxReplicas)
+	hpa.Spec.MinReplicas = ptr.New(int32(scale.MinReplicas))
+
+	return hpa, true, nil
 }
 
 func upsertIfNewer[T client.Object](ctx context.Context, r *CapsuleReconciler, current T, new T, log logr.Logger, capsule *rigdevv1alpha1.Capsule, status *rigdevv1alpha1.CapsuleStatus, equal func(t1 T, t2 T) bool) error {

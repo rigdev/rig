@@ -2,7 +2,6 @@ package scale
 
 import (
 	"context"
-	"math"
 
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -79,7 +78,7 @@ func (r Cmd) Setup(parent *cobra.Command) {
 		RunE:              r.horizontal,
 		ValidArgsFunction: common.NoCompletions,
 	}
-	scaleHorizontal.Flags().Uint32VarP(&replicas, "replicas", "r", math.MaxUint32, "number of replicas to scale to")
+	scaleHorizontal.Flags().Uint32VarP(&replicas, "replicas", "r", 0, "number of replicas to scale to")
 	scaleHorizontal.Flags().BoolVarP(&overwriteAutoscaler, "overwrite-autoscaler", "o", false, "if the autoscaler is enabled, this flag is necessary to set the replicas. It will disable the autoscaler.")
 	scaleHorizontal.RegisterFlagCompletionFunc("replicas", common.NoCompletions)
 	scaleHorizontal.RegisterFlagCompletionFunc("overwrite-autoscaler", common.NoCompletions)

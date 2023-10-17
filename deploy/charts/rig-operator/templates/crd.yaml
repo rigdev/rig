@@ -107,9 +107,6 @@ spec:
                   minReplicas:
                     format: int32
                     type: integer
-                required:
-                - maxReplicas
-                - minReplicas
                 type: object
               image:
                 type: string

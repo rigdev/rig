@@ -1,8 +1,6 @@
 package scale
 
 import (
-	"math"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -28,7 +26,7 @@ func (c Cmd) horizontal(cmd *cobra.Command, args []string) error {
 
 	horizontal.CpuTarget = nil
 
-	if replicas == math.MaxUint32 {
+	if !cmd.Flags().Lookup("replicas").Changed {
 		return errors.New("--replicas not set")
 	}
 	horizontal.MinReplicas = replicas
