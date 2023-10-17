@@ -29,12 +29,14 @@ import (
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/ptr"
+	"github.com/rigdev/rig/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -279,6 +281,7 @@ func createDeployment(
 							},
 							VolumeMounts: volumeMounts,
 							Ports:        ports,
+							Resources:    makeResourceRequirements(capsule),
 						},
 					},
 					ServiceAccountName: capsule.Spec.ServiceAccountName,
@@ -293,6 +296,29 @@ func createDeployment(
 	}
 
 	return d, nil
+}
+
+func makeResourceRequirements(capsule *rigdevv1alpha1.Capsule) v1.ResourceRequirements {
+	requests := utils.DefaultResources.Requests
+	res := v1.ResourceRequirements{
+		Requests: v1.ResourceList{
+			v1.ResourceCPU:    *resource.NewMilliQuantity(int64(requests.CpuMillis), resource.DecimalSI),
+			v1.ResourceMemory: *resource.NewQuantity(int64(requests.MemoryBytes), resource.DecimalSI),
+		},
+		Limits: v1.ResourceList{},
+	}
+
+	if capsule.Spec.Resources == nil {
+		return res
+	}
+	for name, q := range capsule.Spec.Resources.Requests {
+		res.Requests[name] = q
+	}
+	for name, q := range capsule.Spec.Resources.Limits {
+		res.Limits[name] = q
+	}
+
+	return res
 }
 
 func (r *CapsuleReconciler) reconcileService(
@@ -775,7 +801,6 @@ func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autosc
 	}
 
 	scale := capsule.Spec.HorizontalScale
-	fmt.Printf("createHPA2, min: %v, max: %v\n", scale.MinReplicas, scale.MaxReplicas)
 	if scale.MinReplicas == 0 && scale.MaxReplicas == 0 {
 		capsule.Spec.Replicas = ptr.New(int32(0))
 		return hpa, false, nil
