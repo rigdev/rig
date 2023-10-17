@@ -68,8 +68,8 @@ type FileContentRef struct {
 // HorizontalScale defines the policy for the number of replicas of the capsule
 // It can both be configured with autoscaling and with a static number of replicas
 type HorizontalScale struct {
-	MinReplicas uint32    `json:"minReplicas"`
-	MaxReplicas uint32    `json:"maxReplicas"`
+	MinReplicas uint32    `json:"minReplicas,omitempty"`
+	MaxReplicas uint32    `json:"maxReplicas,omitempty"`
 	CPUTarget   CPUTarget `json:"cpuTarget,omitempty"`
 }
 

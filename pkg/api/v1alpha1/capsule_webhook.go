@@ -26,7 +26,6 @@ var _ webhook.Defaulter = &Capsule{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *Capsule) Default() {
 	capsulelog.Info("default", "name", r.Name)
-
 	if r.Spec.Replicas == nil {
 		r.Spec.Replicas = ptr.New(int32(1))
 	}
@@ -187,7 +186,11 @@ func (r *Capsule) validateFiles() (admission.Warnings, field.ErrorList) {
 	return nil, errs
 }
 
-func (h HorizontalScale) validate(fPath *field.Path) field.ErrorList {
+func (h *HorizontalScale) validate(fPath *field.Path) field.ErrorList {
+	if h == nil {
+		return nil
+	}
+
 	var errs field.ErrorList
 
 	if h.MaxReplicas > 0 && h.MaxReplicas < h.MinReplicas {
