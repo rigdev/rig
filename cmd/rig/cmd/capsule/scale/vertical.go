@@ -8,6 +8,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -32,7 +33,7 @@ func (r Cmd) vertical(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = r.Rig.Capsule().Deploy(ctx, connect.NewRequest(&capsule.DeployRequest{
+	req := connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{
 			{
@@ -41,7 +42,12 @@ func (r Cmd) vertical(cmd *cobra.Command, args []string) error {
 				},
 			},
 		},
-	}))
+	})
+
+	_, err = r.Rig.Capsule().Deploy(ctx, req)
+	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
+		_, err = capsule_cmd.AbortAndDeploy(ctx, capsule_cmd.CapsuleID, r.Rig, req)
+	}
 	if err != nil {
 		return err
 	}

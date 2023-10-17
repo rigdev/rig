@@ -46,7 +46,7 @@ func (c Cmd) configure(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if _, err := c.Rig.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
+	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Changes: []*capsule.Change{{
@@ -55,7 +55,13 @@ func (c Cmd) configure(cmd *cobra.Command, args []string) error {
 				},
 			}},
 		},
-	}); err != nil {
+	}
+
+	_, err = c.Rig.Capsule().Deploy(ctx, req)
+	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
+		_, err = capsule_cmd.AbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+	}
+	if err != nil {
 		return err
 	}
 

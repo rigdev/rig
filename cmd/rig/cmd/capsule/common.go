@@ -9,6 +9,8 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
 )
 
@@ -106,4 +108,36 @@ func TruncatedFixed(str string, max int) string {
 	}
 
 	return str
+}
+
+func AbortAndDeploy(ctx context.Context, capsuleID string, rig rig.Client, req *connect.Request[capsule.DeployRequest]) (*connect.Response[capsule.DeployResponse], error) {
+	deploy, err := common.PromptConfirm("Rollout already in progress, would you like to cancel it and redeploy?", false)
+	if err != nil {
+		return nil, err
+	}
+
+	if !deploy {
+		return nil, errors.FailedPreconditionErrorf("rollout already in progress")
+	}
+
+	cc, err := rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
+		Msg: &capsule.GetRequest{
+			CapsuleId: capsuleID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := rig.Capsule().AbortRollout(ctx, &connect.Request[capsule.AbortRolloutRequest]{
+		Msg: &capsule.AbortRolloutRequest{
+			CapsuleId: capsuleID,
+			RolloutId: cc.Msg.GetCapsule().GetCurrentRollout(),
+		},
+	}); err != nil {
+		return nil, err
+	}
+
+	return rig.Capsule().Deploy(ctx, req)
+
 }

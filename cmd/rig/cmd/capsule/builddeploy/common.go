@@ -160,9 +160,10 @@ func (c Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef im
 
 	res, err := c.Rig.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 		Msg: &capsule.CreateBuildRequest{
-			CapsuleId: capsuleID,
-			Image:     imageRef.Image,
-			Digest:    digest,
+			CapsuleId:      capsuleID,
+			Image:          imageRef.Image,
+			Digest:         digest,
+			SkipImageCheck: skipImageCheck,
 		},
 	})
 	if err != nil {
