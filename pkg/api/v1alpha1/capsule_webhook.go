@@ -29,6 +29,13 @@ func (r *Capsule) Default() {
 	if r.Spec.Replicas == nil {
 		r.Spec.Replicas = ptr.New(int32(1))
 	}
+	if r.Spec.HorizontalScale.MinReplicas == nil {
+		r.Spec.HorizontalScale.MinReplicas = ptr.New(uint32(1))
+	}
+	if r.Spec.HorizontalScale.MaxReplicas == nil {
+		max := *r.Spec.HorizontalScale.MinReplicas
+		r.Spec.HorizontalScale.MaxReplicas = ptr.New(max)
+	}
 }
 
 //+kubebuilder:webhook:path=/validate-rig-dev-v1alpha1-capsule,mutating=false,failurePolicy=fail,sideEffects=None,groups=rig.dev,resources=capsules,verbs=create;update,versions=v1alpha1,name=vcapsule.kb.io,admissionReviewVersions=v1
@@ -193,8 +200,21 @@ func (h *HorizontalScale) validate(fPath *field.Path) field.ErrorList {
 
 	var errs field.ErrorList
 
-	if h.MaxReplicas > 0 && h.MaxReplicas < h.MinReplicas {
-		errs = append(errs, field.Invalid(fPath.Child("maxReplicas"), h.MaxReplicas, "maxReplicas cannot be smaller than minReplicas"))
+	var maxReplicas uint32
+	var minReplicas uint32
+	if h.MinReplicas == nil {
+		minReplicas = 1
+	} else {
+		minReplicas = *h.MinReplicas
+	}
+	if h.MaxReplicas == nil {
+		maxReplicas = minReplicas
+	} else {
+		maxReplicas = *h.MaxReplicas
+	}
+
+	if maxReplicas > 0 && maxReplicas < minReplicas {
+		errs = append(errs, field.Invalid(fPath.Child("maxReplicas"), maxReplicas, "maxReplicas cannot be smaller than minReplicas"))
 	}
 
 	avg := h.CPUTarget.AverageUtilizationPercentage

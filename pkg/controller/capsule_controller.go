@@ -801,7 +801,19 @@ func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autosc
 	}
 
 	scale := capsule.Spec.HorizontalScale
-	if scale.MinReplicas == 0 && scale.MaxReplicas == 0 {
+	var maxReplicas uint32
+	var minReplicas uint32
+	if scale.MinReplicas == nil {
+		minReplicas = 1
+	} else {
+		minReplicas = *scale.MinReplicas
+	}
+	if scale.MaxReplicas == nil {
+		maxReplicas = minReplicas
+	} else {
+		maxReplicas = *scale.MaxReplicas
+	}
+	if maxReplicas == 0 && minReplicas == 0 {
 		capsule.Spec.Replicas = ptr.New(int32(0))
 		return hpa, false, nil
 	}
@@ -819,8 +831,8 @@ func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autosc
 		})
 	}
 
-	hpa.Spec.MaxReplicas = int32(scale.MaxReplicas)
-	hpa.Spec.MinReplicas = ptr.New(int32(scale.MinReplicas))
+	hpa.Spec.MaxReplicas = int32(maxReplicas)
+	hpa.Spec.MinReplicas = ptr.New(int32(minReplicas))
 
 	return hpa, true, nil
 }

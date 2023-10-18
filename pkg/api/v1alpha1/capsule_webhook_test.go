@@ -18,8 +18,14 @@ func TestDefault(t *testing.T) {
 		expected CapsuleSpec
 	}{
 		{
-			name:     "replicas default to 1",
-			expected: CapsuleSpec{Replicas: ptr.New(int32(1))},
+			name: "replicas default to 1",
+			expected: CapsuleSpec{
+				Replicas: ptr.New(int32(1)),
+				HorizontalScale: HorizontalScale{
+					MinReplicas: ptr.New(uint32(1)),
+					MaxReplicas: ptr.New(uint32(1)),
+				},
+			},
 		},
 	}
 
@@ -271,8 +277,8 @@ func Test_HorizontalScaleValidate(t *testing.T) {
 		{
 			name: "max < min",
 			h: HorizontalScale{
-				MinReplicas: 10,
-				MaxReplicas: 1,
+				MinReplicas: ptr.New(uint32(10)),
+				MaxReplicas: ptr.New(uint32(1)),
 			},
 			expectedErrs: []*field.Error{
 				field.Invalid(path.Child("maxReplicas"), uint32(1), "maxReplicas cannot be smaller than minReplicas"),
@@ -281,8 +287,8 @@ func Test_HorizontalScaleValidate(t *testing.T) {
 		{
 			name: "utilization percentage > 100",
 			h: HorizontalScale{
-				MinReplicas: 1,
-				MaxReplicas: 1,
+				MinReplicas: ptr.New(uint32(1)),
+				MaxReplicas: ptr.New(uint32(1)),
 				CPUTarget: CPUTarget{
 					AverageUtilizationPercentage: 110,
 				},
@@ -298,14 +304,14 @@ func Test_HorizontalScaleValidate(t *testing.T) {
 		{
 			name: "good, no autoscaling",
 			h: HorizontalScale{
-				MinReplicas: 10,
+				MinReplicas: ptr.New(uint32(10)),
 			},
 		},
 		{
 			name: "good, with autoscaling",
 			h: HorizontalScale{
-				MinReplicas: 10,
-				MaxReplicas: 30,
+				MinReplicas: ptr.New(uint32(10)),
+				MaxReplicas: ptr.New(uint32(30)),
 				CPUTarget: CPUTarget{
 					AverageUtilizationPercentage: 50,
 				},

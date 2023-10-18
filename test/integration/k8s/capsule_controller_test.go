@@ -55,8 +55,8 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 		Spec: v1alpha1.CapsuleSpec{
 			Image: "nginx:1.25.1",
 			HorizontalScale: v1alpha1.HorizontalScale{
-				MinReplicas: 1,
-				MaxReplicas: 1,
+				MinReplicas: ptr.New(uint32(1)),
+				MaxReplicas: ptr.New(uint32(1)),
 			},
 		},
 	}
