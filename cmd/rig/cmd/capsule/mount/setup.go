@@ -17,6 +17,7 @@ import (
 
 var (
 	outputJSON bool
+	secret     bool
 )
 
 var (
@@ -59,6 +60,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	}
 	mountSet.Flags().StringVar(&srcPath, "src", "", "source path")
 	mountSet.Flags().StringVar(&dstPath, "dst", "", "destination path")
+	mountSet.Flags().BoolVarP(&secret, "secret", "s", false, "mount as secret")
 	mountSet.RegisterFlagCompletionFunc("dst", common.NoCompletions)
 	mount.AddCommand(mountSet)
 

@@ -35,8 +35,9 @@ func (c Cmd) set(cmd *cobra.Command, args []string) error {
 
 	cf := &capsule.Change_SetConfigFile{
 		SetConfigFile: &capsule.Change_ConfigFile{
-			Path:    dstPath,
-			Content: bytes,
+			Path:     dstPath,
+			Content:  bytes,
+			IsSecret: secret,
 		},
 	}
 
