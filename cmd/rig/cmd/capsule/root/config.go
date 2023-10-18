@@ -22,6 +22,9 @@ func (c Cmd) config(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		containerSettings := r.GetConfig().GetContainerSettings()
+		if containerSettings == nil {
+			containerSettings = &capsule.ContainerSettings{}
+		}
 		containerSettings.Command = command
 
 		if len(args) > 0 {
