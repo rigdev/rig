@@ -21,7 +21,7 @@ message Change {
   message ConfigFile {
     string path = 1;
     bytes content = 2;
-    bool isSecret = 3;
+    bool is_secret = 3;
   }
 
   oneof field {
@@ -67,7 +67,7 @@ message ConfigFile {
   bytes content = 2;
   model.Author updated_by = 3;
   google.protobuf.Timestamp updated_at = 4;
-  bool isSecret = 5;
+  bool is_secret = 5;
 }
 
 message RolloutStatus {
