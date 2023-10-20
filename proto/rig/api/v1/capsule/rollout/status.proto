@@ -6,12 +6,9 @@ import "google/protobuf/timestamp.proto";
 
 // Status is a representation of the current state of a rollout
 message Status {
-  string rollout_id = 1;
+  uint64 rollout_id = 1;
   State state = 2;
   Stages stages = 3;
-
-  string image = 4;
-  google.protobuf.Timestamp created_at = 5;
 }
 
 message StageInfo {
@@ -22,9 +19,9 @@ message StageInfo {
 
 enum StageState {
   STAGE_STATE_UNSPECIFIED = 0;
-  STAGE_STATE_ONGOING = 1;
-  STAGE_STATE_FAILED = 2;
-  STAGE_STATE_DONE = 3;
+  STAGE_STATE_DEPLOYING = 1;
+  STAGE_STATE_RUNNING = 2;
+  STAGE_STATE_STOPPED = 3;
 }
 
 message GenericStep {
@@ -76,27 +73,28 @@ message ConfigureStep {
 
 message ConfigureCapsuleStep {
   StepInfo info = 1;
-  ConfigureState state = 2;
+  ConfigureResult state = 2;
 }
 
 message ConfigureFileStep {
   StepInfo info = 1;
-  ConfigureState state = 2;
+  ConfigureResult state = 2;
   string path = 3;
   bool is_secret = 4;
 }
 
 message ConfigureEnvStep {
   StepInfo info = 1;
-  ConfigureState state = 2;
+  ConfigureResult state = 2;
   bool is_secret = 3;
 }
 
-enum ConfigureState {
-  CONFIGURE_STATE_UNSPECIFIED = 0;
-  CONFIGURE_STATE_CREATED = 1;
-  CONFIGURE_STATE_UPDATED = 2;
-  CONFIGURE_STATE_NO_CHANGE = 3;
+enum ConfigureResult {
+  CONFIGURE_RESULT_UNSPECIFIED = 0;
+  CONFIGURE_RESULT_CREATED = 1;
+  CONFIGURE_RESULT_UPDATED = 2;
+  CONFIGURE_RESULT_NO_CHANGE = 3;
+  CONFIGURE_RESULT_DELETED = 4;
 }
 
 message ResourceCreationStage {
@@ -107,11 +105,11 @@ message ResourceCreationStage {
 message ResourceCreationStep {
   oneof step {
     GenericStep generic = 1;
-    ResourceCreation resource_creation = 2;
+    CreateResourceStep create_resource = 2;
   }
 }
 
-message ResourceCreation {
+message CreateResourceStep {
   StepInfo info = 1;
   string kind = 2;
   string name = 3;
@@ -134,4 +132,5 @@ message InstancesStep {
   uint32 num_updated = 2;
   uint32 num_ready = 3;
   uint32 num_stuck = 4;
+  uint32 num_wrong_version = 5;
 }
