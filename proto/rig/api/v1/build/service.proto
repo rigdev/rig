@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package api.v1.build;
+
+import "google/protobuf/timestamp.proto";
+import "model/author.proto";
+import "api/v1/capsule/build.proto";
+import "model/common.proto";
+
+service Service {
+  rpc GetImageInfo(GetImageInfoRequest) returns (GetImageInfoResponse) {}
+  rpc GetRepositoryInfo(GetRepositoryInfoRequest)
+      returns (GetRepositoryInfoResponse) {}
+  rpc GetBuild(GetBuildRequest) returns (GetBuildResponse) {}
+  // Create a new build.
+  // Builds are immutable and cannot change. Create a new build to make
+  // changes from an existing one.
+  rpc CreateBuild(CreateBuildRequest) returns (CreateBuildResponse) {}
+  // List builds for a capsule.
+  rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse) {}
+  // Delete a build.
+  rpc DeleteBuild(DeleteBuildRequest) returns (DeleteBuildResponse) {}
+}
+
+message GetImageInfoRequest {
+  string image = 1;
+}
+
+message GetImageInfoResponse {
+  ImageId image_id = 1;
+  string image_string = 2;
+  google.protobuf.Timestamp created_at = 3;
+  api.v1.capsule.Origin origin = 4;
+}
+
+message ImageId {
+  string registry = 1;
+  string repository = 2;
+  string tag = 3;
+  string digest = 4;
+}
+
+message GetRepositoryInfoRequest {
+  string registry = 1;
+  string repository = 2;
+}
+
+message GetRepositoryInfoResponse {
+  repeated Tag tags = 1;
+}
+
+message Tag {
+  string tag = 1;
+  google.protobuf.Timestamp image_created_at = 2;
+}
+
+message CreateBuildRequest {
+  string capsule_id = 1;
+  string image = 2;
+  string digest = 3;
+  api.v1.capsule.Origin origin = 4;
+  map<string, string> labels = 5;
+  bool skip_image_check = 6;
+}
+
+message CreateBuildResponse {
+  string build_id = 1;
+  bool created_new_build = 2;
+}
+
+message ListBuildsRequest {
+  string capsule_id = 1;
+  model.Pagination pagination = 2;
+}
+
+message ListBuildsResponse {
+  repeated api.v1.capsule.Build builds = 1;
+  uint64 total = 2;
+}
+
+message DeleteBuildRequest {
+  string capsule_id = 1;
+  string build_id = 2;
+}
+
+message DeleteBuildResponse {}
+
+message GetBuildRequest {
+  string capsule_id = 1;
+  string build_id = 2;
+}
+
+message GetBuildResponse {
+  api.v1.capsule.Build build = 1;
+}
