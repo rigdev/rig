@@ -25,32 +25,43 @@ var (
 
 func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
 	ctx := context.Background()
-	if _, ok := cmd.Annotations[OmitUser]; ok {
-		return nil
-	} else if uuid.UUID(cfg.GetCurrentAuth().UserID).IsNil() {
-		loginBool, err := common.PromptConfirm("You are not logged in. Would you like to login now?", true)
-		if err != nil {
-			return err
-		}
-		if !loginBool {
-			return errors.UnauthenticatedErrorf("Login to continue")
-		}
-		err = login(ctx, rc, cfg)
-		if err != nil {
+
+	if _, ok := cmd.Annotations[OmitUser]; !ok {
+		if err := authUser(ctx, rc, cfg); err != nil {
 			return err
 		}
 	}
 
-	res, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
+	if _, ok := cmd.Annotations[OmitProject]; !ok {
+		if err := authProject(ctx, cmd, rc, cfg); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func authUser(ctx context.Context, rig rig.Client, cfg *cmd_config.Config) error {
+	if cfg.GetCurrentAuth().UserID != "" {
+		return nil
+	}
+	loginBool, err := common.PromptConfirm("You are not logged in. Would you like to login now?", true)
+	if err != nil {
+		return err
+	}
+	if !loginBool {
+		return errors.UnauthenticatedErrorf("Login to continue")
+	}
+	return login(ctx, rig, cfg)
+}
+
+func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *cmd_config.Config) error {
+	res, err := rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return err
 	}
 
-	if _, ok := cmd.Annotations[OmitProject]; ok {
-		return nil
-	}
-
-	if res.Msg.GetProjects() == nil || len(res.Msg.GetProjects()) == 0 {
+	if len(res.Msg.GetProjects()) == 0 {
 		create, err := common.PromptConfirm("You have no projects. Would you like to create on now?", true)
 		if err != nil {
 			return err
@@ -59,13 +70,13 @@ func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error 
 			return errors.FailedPreconditionErrorf("Create and select a project to continue")
 		}
 
-		err = createProject(ctx, cmd, rc, cfg)
+		err = createProject(ctx, cmd, rig, cfg)
 		if err != nil {
 			return err
 		}
 	}
 
-	if uuid.UUID(cfg.GetCurrentContext().Project.ProjectID).IsNil() {
+	if cfg.GetCurrentContext().Project.ProjectID == "" {
 		use, err := common.PromptConfirm("You have not selected a project. Would you like to select one now?", true)
 		if err != nil {
 			return err
@@ -74,11 +85,12 @@ func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error 
 			return errors.FailedPreconditionErrorf("Select a project to continue")
 		}
 
-		err = useProject(ctx, rc, cfg)
+		err = useProject(ctx, rig, cfg)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
