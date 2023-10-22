@@ -4,16 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	// "strings"
-
 	"github.com/bufbuild/connect-go"
-	// "github.com/fatih/color"
+	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	// "github.com/rigdev/rig-go-api/api/v1/capsule/instance"
+	"github.com/rigdev/rig-go-api/api/v1/capsule/instance"
 	"github.com/rigdev/rig-go-api/model"
 	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-
-	// table2 "github.com/rodaine/table"
+	table2 "github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
 
@@ -41,37 +38,40 @@ func (c Cmd) get(cmd *cobra.Command, args []string) error {
 		fmt.Println(string(jsonStr))
 		return nil
 	}
-	//
-	// headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
-	// columnFmt := color.New(color.FgYellow).SprintfFunc()
-	// tbl := table2.New("ID", "Scheduling", "Preparing", "Running")
-	// tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
-	// for _, i := range instances {
-	// 	for _, r := range instanceStatusToTableRows(i) {
-	// 		tbl.AddRow(r...)
-	// 	}
-	// }
-	// tbl.Print()
+
+	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+	tbl := table2.New("ID", "Scheduling", "Preparing", "Running")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+	for _, i := range instances {
+		for _, r := range instanceStatusToTableRows(i) {
+			tbl.AddRow(r...)
+		}
+	}
+	tbl.Print()
 
 	return nil
 }
 
-// func instanceStatusToTableRows(instance *instance.Status) [][]any {
-// 	rowLength := len(instance.GetStateMachine().GetStates()) + 1
-// 	rows := [][]any{
-// 		make([]any, rowLength),
-// 		make([]any, rowLength),
-// 	}
-//
-// 	rows[0][0] = instance.GetInstanceId()
-// 	for idx, s := range instance.GetStateMachine().GetStates() {
-// 		m := s.GetSubStateMachines()[0]
-// 		s = m.GetStates()[0]
-// 		str := s.GetStateId().String()
-// 		str, _ = strings.CutPrefix(str, "STATE_ID_")
-// 		rows[0][idx+1] = str
-// 		rows[1][idx+1] = s.GetMessage()
-// 	}
-//
-// 	return rows
-// }
+func instanceStatusToTableRows(instance *instance.Status) [][]any {
+	rowLength := 4
+	rows := [][]any{
+		make([]any, rowLength),
+		make([]any, rowLength),
+	}
+
+	rows[0][0] = instance.GetInstanceId()
+	rows[1][0] = ""
+	stages := instance.GetStages()
+
+	rows[0][1] = stages.GetPreparing().GetInfo().GetName()
+	rows[1][1] = stages.GetPreparing().GetInfo().GetState().String()
+
+	rows[0][2] = stages.GetSchedule().GetInfo().GetName()
+	rows[1][2] = stages.GetSchedule().GetInfo().GetState().String()
+
+	rows[0][3] = stages.GetRunning().GetInfo().GetName()
+	rows[1][3] = stages.GetRunning().GetInfo().GetState().String()
+
+	return rows
+}
