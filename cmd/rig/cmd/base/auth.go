@@ -25,7 +25,6 @@ var (
 
 func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
 	ctx := context.Background()
-
 	if _, ok := cmd.Annotations[OmitUser]; !ok {
 		if err := authUser(ctx, rc, cfg); err != nil {
 			return err
@@ -42,7 +41,8 @@ func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error 
 }
 
 func authUser(ctx context.Context, rig rig.Client, cfg *cmd_config.Config) error {
-	if cfg.GetCurrentAuth().UserID != "" {
+	user := cfg.GetCurrentAuth().UserID
+	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil
 	}
 	loginBool, err := common.PromptConfirm("You are not logged in. Would you like to login now?", true)
@@ -76,7 +76,8 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 		}
 	}
 
-	if cfg.GetCurrentContext().Project.ProjectID == "" {
+	pid := cfg.GetCurrentContext().Project.ProjectID
+	if pid == "" || uuid.UUID(pid).IsNil() {
 		use, err := common.PromptConfirm("You have not selected a project. Would you like to select one now?", true)
 		if err != nil {
 			return err
