@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/rigdev/rig-go-sdk"
@@ -61,8 +60,11 @@ func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) (
 
 	for _, ctx := range c.Cfg.Contexts {
 		if strings.HasPrefix(ctx.Name, toComplete) {
-			names = append(names, ctx.Name)
-			names = append(names, formatContext(ctx, c.Cfg))
+			var isCurrent string
+			if ctx.Name == c.Cfg.CurrentContextName {
+				isCurrent = "*"
+			}
+			names = append(names, ctx.Name+isCurrent)
 		}
 	}
 
@@ -70,14 +72,5 @@ func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) (
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return names, cobra.ShellCompDirectiveDefault
-}
-
-func formatContext(ctx *cmd_config.Context, cfg *cmd_config.Config) string {
-	name := ctx.Name
-	if cfg.CurrentContextName == name {
-		name += "*"
-	}
-
-	return fmt.Sprintf("%v\t (Server: %v)", name, ctx.GetService().Server)
+	return names, cobra.ShellCompDirectiveNoFileComp
 }
