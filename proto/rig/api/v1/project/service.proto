@@ -4,6 +4,7 @@ package api.v1.project;
 
 import "api/v1/project/project.proto";
 import "model/common.proto";
+import "google/protobuf/timestamp.proto";
 
 // The service to manage your project in Users
 service Service {
@@ -22,6 +23,8 @@ service Service {
   // Use generates a project token for editing the project as the current
   // user.
   rpc Use(UseRequest) returns (UseResponse) {}
+  // Get License Information
+  rpc GetLicenseInfo(GetLicenseInfoRequest) returns (GetLicenseInfoResponse) {}
 }
 
 // The request of a Namespace.Create RPC
@@ -82,4 +85,11 @@ message UseRequest {
 
 message UseResponse {
   string project_token = 1;
+}
+
+message GetLicenseInfoRequest {}
+
+message GetLicenseInfoResponse {
+  api.v1.project.Plan plan = 1;
+  google.protobuf.Timestamp expires_at = 2;
 }
