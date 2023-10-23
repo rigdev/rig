@@ -17,3 +17,10 @@ message Update {
     string name = 1;
   }
 }
+
+enum Plan {
+  PLAN_UNSPECIFIED = 0;
+  PLAN_FREE = 1;
+  PLAN_TEAM = 2;
+  PLAN_ENTERPRISE = 3;
+}
