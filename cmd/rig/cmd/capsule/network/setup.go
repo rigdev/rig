@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	outputJSON bool
+	outputJSON  bool
+	forceDeploy bool
 )
 
 type Cmd struct {
@@ -36,6 +37,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  c.configure,
 	}
+	networkConfigure.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	network.AddCommand(networkConfigure)
 
 	networkGet := &cobra.Command{

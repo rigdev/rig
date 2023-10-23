@@ -32,12 +32,10 @@ var (
 var (
 	interactive bool
 	outputJSON  bool
-	remote      bool
+	forceDeploy bool
 )
 
 var (
-	image   string
-	buildID string
 	command string
 	args    []string
 )
@@ -101,7 +99,9 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleCreate.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode")
+	capsuleCreate.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	capsuleCreate.RegisterFlagCompletionFunc("interactive", common.BoolCompletions)
+	capsuleCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
 	capsuleCmd.AddCommand(capsuleCreate)
 
 	capsuleAbort := &cobra.Command{
@@ -148,6 +148,8 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	capsuleConfig.Flags().Bool("auto-add-service-account", false, "automatically add the rig service account to the capsule")
 	capsuleConfig.Flags().StringVar(&command, "cmd", "", "Container CMD to run")
 	capsuleConfig.Flags().StringSliceVar(&args, "args", []string{}, "Container CMD args")
+	capsuleConfig.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	capsuleConfig.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
 	capsuleConfig.RegisterFlagCompletionFunc("auto-add-service-account", common.BoolCompletions)
 	capsuleConfig.RegisterFlagCompletionFunc("cmd", common.NoCompletions)
 	capsuleConfig.RegisterFlagCompletionFunc("args", common.NoCompletions)

@@ -42,7 +42,12 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 
 	res, err := c.Rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
-		res, err = capsule_cmd.AbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+		if forceDeploy {
+			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
+		} else {
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+
+		}
 	}
 	if err != nil {
 		return err

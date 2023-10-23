@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	outputJSON bool
-	secret     bool
+	outputJSON  bool
+	secret      bool
+	forceDeploy bool
 )
 
 var (
@@ -61,7 +62,9 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	mountSet.Flags().StringVar(&srcPath, "src", "", "source path")
 	mountSet.Flags().StringVar(&dstPath, "dst", "", "destination path")
 	mountSet.Flags().BoolVarP(&secret, "secret", "s", false, "mount as secret")
+	mountSet.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	mountSet.RegisterFlagCompletionFunc("dst", common.NoCompletions)
+	mountSet.RegisterFlagCompletionFunc("src", common.NoCompletions)
 	mount.AddCommand(mountSet)
 
 	mountRemove := &cobra.Command{
@@ -71,6 +74,8 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		RunE:              c.remove,
 		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
 	}
+	mountRemove.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	mountRemove.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
 	mount.AddCommand(mountRemove)
 
 	parent.AddCommand(mount)

@@ -12,6 +12,10 @@ import (
 	"go.uber.org/fx"
 )
 
+var (
+	forceDeploy bool
+)
+
 type Cmd struct {
 	fx.In
 
@@ -33,6 +37,8 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		RunE:              c.set,
 		ValidArgsFunction: common.NoCompletions,
 	}
+	envSet.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	envSet.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
 	env.AddCommand(envSet)
 
 	envGet := &cobra.Command{
@@ -51,6 +57,8 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		RunE:              c.remove,
 		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
 	}
+	envRemove.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	envRemove.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
 	env.AddCommand(envRemove)
 
 	parent.AddCommand(env)

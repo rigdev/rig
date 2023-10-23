@@ -38,7 +38,7 @@ func (c Cmd) remove(cmd *cobra.Command, args []string) error {
 
 	_, err = c.Rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
-		_, err = capsule_cmd.AbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+		_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
 	}
 	if err != nil {
 		return err
