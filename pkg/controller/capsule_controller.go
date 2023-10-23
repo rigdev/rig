@@ -18,17 +18,18 @@ package controller
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
+
+	"golang.org/x/exp/maps"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/go-logr/logr"
-	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -38,13 +39,21 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	rigdevv1alpha1 "github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/ptr"
 )
 
 // CapsuleReconciler reconciles a Capsule object
@@ -65,12 +74,50 @@ type reconcileStepFunc func(
 ) error
 
 const (
-	labelRigDevCapsule = "rig.dev/capsule"
-	finalizer          = "rig.dev/finalizer"
+	_annotationChecksum     = "rig.dev/config-checksum"
+	labelRigDevCapsule      = "rig.dev/capsule"
+	fieldFilesConfigMapName = ".spec.files.configMap.name"
+	fieldFilesSecretName    = ".spec.files.secret.name"
 )
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := mgr.GetFieldIndexer().IndexField(
+		context.Background(),
+		&rigdevv1alpha1.Capsule{},
+		fieldFilesConfigMapName,
+		func(o client.Object) []string {
+			capsule := o.(*rigdevv1alpha1.Capsule)
+			var cms []string
+			for _, f := range capsule.Spec.Files {
+				if f.ConfigMap != nil {
+					cms = append(cms, f.ConfigMap.Name)
+				}
+			}
+			return cms
+		},
+	); err != nil {
+		return fmt.Errorf("could not setup indexer for %s: %w", fieldFilesConfigMapName, err)
+	}
+
+	if err := mgr.GetFieldIndexer().IndexField(
+		context.Background(),
+		&rigdevv1alpha1.Capsule{},
+		fieldFilesSecretName,
+		func(o client.Object) []string {
+			capsule := o.(*rigdevv1alpha1.Capsule)
+			var cms []string
+			for _, f := range capsule.Spec.Files {
+				if f.Secret != nil {
+					cms = append(cms, f.Secret.Name)
+				}
+			}
+			return cms
+		},
+	); err != nil {
+		return fmt.Errorf("could not setup indexer for %s: %w", fieldFilesSecretName, err)
+	}
+
 	r.reconcileSteps = []reconcileStepFunc{
 		r.reconcileHorizontalPodAutoscaler,
 		r.reconcileDeployment,
@@ -79,9 +126,80 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		r.reconcileIngress,
 		r.reconcileLoadBalancer,
 	}
+
+	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&rigdevv1alpha1.Capsule{}).
+		Watches(
+			&v1.ConfigMap{},
+			configEventHandler,
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
+		Watches(
+			&v1.Secret{},
+			configEventHandler,
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		).
 		Complete(r)
+}
+
+func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {
+	scheme := mgr.GetScheme()
+	log := mgr.GetLogger().WithName("configEventHandler")
+	c := mgr.GetClient()
+
+	return func(ctx context.Context, o client.Object) []ctrl.Request {
+		gvks, _, err := scheme.ObjectKinds(o)
+		if err != nil {
+			log.Error(err, "could not get ObjectKinds from object")
+			return nil
+		}
+
+		gvk := gvks[0]
+		log = log.WithValues(gvk.Kind, o)
+
+		var capsulesWithReference rigdevv1alpha1.CapsuleList
+		var refField string
+		switch gvk.Kind {
+		case "Secret":
+			refField = fieldFilesSecretName
+		case "ConfigMap":
+			refField = fieldFilesConfigMapName
+		default:
+			log.Error(fmt.Errorf("unsupported Kind: %s", gvk.Kind), "unsupported kind")
+			return nil
+		}
+
+		if err = c.List(ctx, &capsulesWithReference, &client.ListOptions{
+			Namespace:     o.GetNamespace(),
+			FieldSelector: fields.SelectorFromSet(fields.Set{refField: o.GetName()}),
+		}); err != nil {
+			log.Error(err, "could not list capsules with reference to object", "err", fmt.Sprintf("%+v\n", err))
+			return nil
+		}
+
+		requests := make([]ctrl.Request, len(capsulesWithReference.Items))
+		for i, capsule := range capsulesWithReference.Items {
+			requests[i] = ctrl.Request{
+				NamespacedName: client.ObjectKeyFromObject(&capsule),
+			}
+		}
+
+		var capsule rigdevv1alpha1.Capsule
+		err = c.Get(ctx, client.ObjectKeyFromObject(o), &capsule)
+		if err != nil && !kerrors.IsNotFound(err) {
+			log.Error(err, "could not get capsule for object")
+			return nil
+		}
+		if err == nil {
+			requests = append(requests, ctrl.Request{
+				NamespacedName: client.ObjectKeyFromObject(o),
+			})
+		}
+
+		return requests
+	}
 }
 
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules,verbs=get;list;watch;create;update;patch;delete
@@ -92,6 +210,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 //+kubebuilder:rbac:groups=cert-manager.io,resources=certificates,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=configmaps;secrets,verbs=get;list;watch
 
 // Reconcile compares the state specified by the Capsule object against the
 // actual cluster state, and then performs operations to make the cluster state
@@ -99,6 +218,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// TODO: use rig logger
 	log := log.FromContext(ctx)
+	log.Info("reconciliation started")
 
 	capsule := &rigdevv1alpha1.Capsule{}
 	if err := r.Get(ctx, req.NamespacedName, capsule); err != nil {
@@ -106,10 +226,6 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
-	}
-
-	if capsule.GetGeneration() == capsule.Status.ObservedGeneration {
-		return ctrl.Result{}, nil
 	}
 
 	status := &rigdevv1alpha1.CapsuleStatus{}
@@ -132,6 +248,123 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, errors.Join(stepErrs...)
 }
 
+func (r *CapsuleReconciler) filesSHA256(
+	ctx context.Context,
+	req ctrl.Request,
+	log logr.Logger,
+	capsule *rigdevv1alpha1.Capsule,
+) (string, error) {
+	secrets := map[string]*v1.Secret{}
+	referencedKeysBySecretName := map[string]map[string]struct{}{}
+	configMaps := map[string]*v1.ConfigMap{}
+	referencedKeysByConfigMapName := map[string]map[string]struct{}{}
+
+	var s v1.Secret
+	err := r.Get(ctx, req.NamespacedName, &s)
+	if err != nil && !kerrors.IsNotFound(err) {
+		return "", fmt.Errorf("could not get environment secret: %w", err)
+	}
+	if err == nil {
+		secrets[s.Name] = &s
+		referencedKeysBySecretName[s.Name] = map[string]struct{}{}
+		for k, _ := range s.Data {
+			referencedKeysBySecretName[s.Name][k] = struct{}{}
+		}
+	}
+
+	var cm v1.ConfigMap
+	err = r.Get(ctx, req.NamespacedName, &cm)
+	if err != nil && !kerrors.IsNotFound(err) {
+		return "", fmt.Errorf("could not get environment configMap: %w", err)
+	}
+	if err == nil {
+		configMaps[cm.Name] = &cm
+		referencedKeysByConfigMapName[cm.Name] = map[string]struct{}{}
+		for k, _ := range cm.Data {
+			referencedKeysByConfigMapName[cm.Name][k] = struct{}{}
+		}
+	}
+
+	for _, f := range capsule.Spec.Files {
+		if f.Secret != nil {
+			if _, ok := secrets[f.Secret.Name]; ok {
+				referencedKeysBySecretName[f.Secret.Name][f.Secret.Key] = struct{}{}
+				continue
+			}
+
+			var s v1.Secret
+			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.Secret.Name}, &s)
+			if err != nil {
+				return "", fmt.Errorf("could not get referenced secret: %w", err)
+			}
+			secrets[f.Secret.Name] = &s
+			referencedKeysBySecretName[f.Secret.Name] = map[string]struct{}{
+				f.Secret.Key: struct{}{},
+			}
+		}
+		if f.ConfigMap != nil {
+			if _, ok := configMaps[f.ConfigMap.Name]; ok {
+				referencedKeysByConfigMapName[f.ConfigMap.Name][f.ConfigMap.Key] = struct{}{}
+				continue
+			}
+
+			var cm v1.ConfigMap
+			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.ConfigMap.Name}, &cm)
+			if err != nil {
+				return "", fmt.Errorf("could not get referenced configMap: %w", err)
+			}
+			configMaps[f.ConfigMap.Name] = &cm
+			referencedKeysByConfigMapName[f.ConfigMap.Name] = map[string]struct{}{
+				f.ConfigMap.Key: struct{}{},
+			}
+		}
+	}
+
+	keysBySecretName := map[string][]string{}
+	for name, keys := range referencedKeysBySecretName {
+		keysBySecretName[name] = maps.Keys(keys)
+		slices.Sort(keysBySecretName[name])
+	}
+	keysByConfigMapName := map[string][]string{}
+	for name, keys := range referencedKeysByConfigMapName {
+		keysByConfigMapName[name] = maps.Keys(keys)
+		slices.Sort(keysByConfigMapName[name])
+	}
+
+	secretNames := maps.Keys(secrets)
+	slices.Sort(secretNames)
+	configMapNames := maps.Keys(configMaps)
+	slices.Sort(configMapNames)
+
+	hash := sha256.New()
+
+	for _, name := range secretNames {
+		for _, key := range keysBySecretName[name] {
+			if _, err := hash.Write([]byte(key)); err != nil {
+				return "", fmt.Errorf("error when calculating sha256: %w", err)
+			}
+			if _, err := hash.Write(secrets[name].Data[key]); err != nil {
+				return "", fmt.Errorf("error when calculating sha256: %w", err)
+			}
+		}
+	}
+	for _, name := range configMapNames {
+		for _, key := range keysByConfigMapName[name] {
+			if _, err := hash.Write([]byte(key)); err != nil {
+				return "", fmt.Errorf("error when calculating sha256: %w", err)
+			}
+			if _, err := hash.Write([]byte(configMaps[name].Data[key])); err != nil {
+				return "", fmt.Errorf("error when calculating sha256: %w", err)
+			}
+		}
+	}
+
+	if len(secretNames) == 0 && len(configMapNames) == 0 {
+		return "", nil
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
 func (r *CapsuleReconciler) reconcileDeployment(
 	ctx context.Context,
 	req ctrl.Request,
@@ -139,7 +372,16 @@ func (r *CapsuleReconciler) reconcileDeployment(
 	capsule *rigdevv1alpha1.Capsule,
 	status *rigdevv1alpha1.CapsuleStatus,
 ) error {
-	deploy, err := createDeployment(capsule, r.Scheme)
+	configChecksum, err := r.filesSHA256(ctx, req, log, capsule)
+	if err != nil {
+		return err
+	}
+
+	deploy, err := createDeployment(capsule, r.Scheme, configChecksum)
+	if err != nil {
+		return err
+	}
+
 	if err != nil {
 		status.Deployment.State = "failed"
 		status.Deployment.Message = err.Error()
@@ -179,6 +421,7 @@ func (r *CapsuleReconciler) reconcileDeployment(
 func createDeployment(
 	capsule *rigdevv1alpha1.Capsule,
 	scheme *runtime.Scheme,
+	configChecksum string,
 ) (*appsv1.Deployment, error) {
 	var ports []v1.ContainerPort
 	for _, i := range capsule.Spec.Interfaces {
@@ -237,6 +480,12 @@ func createDeployment(
 		}
 	}
 
+	podAnnotations := map[string]string{}
+	maps.Copy(capsule.Annotations, podAnnotations)
+	if configChecksum != "" {
+		podAnnotations[_annotationChecksum] = configChecksum
+	}
+
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsule.Name,
@@ -251,7 +500,7 @@ func createDeployment(
 			Replicas: capsule.Spec.Replicas,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Annotations: capsule.Annotations,
+					Annotations: podAnnotations,
 					Labels: map[string]string{
 						labelRigDevCapsule: capsule.Name,
 					},
@@ -838,13 +1087,33 @@ func createHPA(capsule *rigdevv1alpha1.Capsule, scheme *runtime.Scheme) (*autosc
 	return hpa, true, nil
 }
 
-func upsertIfNewer[T client.Object](ctx context.Context, r *CapsuleReconciler, current T, new T, log logr.Logger, capsule *rigdevv1alpha1.Capsule, status *rigdevv1alpha1.CapsuleStatus, equal func(t1 T, t2 T) bool) error {
-	kind := current.GetObjectKind().GroupVersionKind().Kind
+func upsertIfNewer[T client.Object](
+	ctx context.Context,
+	r *CapsuleReconciler,
+	currentObj T,
+	newObj T,
+	log logr.Logger,
+	capsule *rigdevv1alpha1.Capsule,
+	status *rigdevv1alpha1.CapsuleStatus,
+	equal func(t1 T, t2 T) bool,
+) error {
+	gvks, _, err := r.Scheme.ObjectKinds(currentObj)
+	if err != nil {
+		return fmt.Errorf("could not get object kinds for object: %w", err)
+	}
+	gvk := gvks[0]
+	log = log.WithValues(
+		"gvk", map[string]string{
+			"kind":    gvk.Kind,
+			"group":   gvk.Group,
+			"version": gvk.Version,
+		},
+	)
 
 	res := rigdevv1alpha1.OwnedResource{
 		Ref: &v1.TypedLocalObjectReference{
-			Kind: kind,
-			Name: new.GetName(),
+			Kind: gvk.Kind,
+			Name: newObj.GetName(),
 		},
 		State: "created",
 	}
@@ -852,28 +1121,32 @@ func upsertIfNewer[T client.Object](ctx context.Context, r *CapsuleReconciler, c
 		status.OwnedResources = append(status.OwnedResources, res)
 	}()
 
-	if !IsOwnedBy(capsule, new) {
-		log.Info("Found existing resource not owned by capsule. Will not update it.", "kind", kind, "name", new.GetName())
+	if !IsOwnedBy(capsule, newObj) {
+		log.Info("Found existing resource not owned by capsule. Will not update it.")
 		res.State = "failed"
 		res.Message = "found existing resource not owned by capsule"
-		return fmt.Errorf("found existing %s not owned by capsule", kind)
+		return fmt.Errorf("found existing %s not owned by capsule", gvk.Kind)
 	}
 
 	// Dry run to fully materialize the new spec.
-	if err := r.Update(ctx, new, client.DryRunAll); err != nil {
+	newObj.SetResourceVersion(currentObj.GetResourceVersion())
+	if err := r.Update(ctx, newObj, client.DryRunAll); err != nil {
 		res.State = "failed"
 		res.Message = err.Error()
-		return fmt.Errorf("could not update %s: %w", kind, err)
+		return fmt.Errorf("could not update %s: %w", gvk.Kind, err)
 	}
+	newObj.SetResourceVersion("")
 
-	if !equal(new, current) {
-		log.Info("updating", "kind", kind)
-		if err := r.Update(ctx, new); err != nil {
+	if !equal(newObj, currentObj) {
+		log.Info("updating resource")
+		if err := r.Update(ctx, newObj); err != nil {
 			res.State = "failed"
 			res.Message = err.Error()
-			return fmt.Errorf("could not update %s: %w", kind, err)
+			return fmt.Errorf("could not update %s: %w", gvk.Kind, err)
 		}
+		return nil
 	}
 
+	log.Info("resource is up-to-date")
 	return nil
 }

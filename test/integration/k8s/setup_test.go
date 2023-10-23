@@ -14,7 +14,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/rigdev/rig/pkg/controller"
@@ -45,8 +44,6 @@ func (e *env) stop() {
 }
 
 func setupTest(t *testing.T, opts options) *env {
-	logf.SetLogger(testr.New(t))
-
 	testEnv := &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases"),
@@ -89,11 +86,12 @@ func setupTest(t *testing.T, opts options) *env {
 		manager, err := ctrl.NewManager(cfg, ctrl.Options{
 			Scheme:  scheme,
 			Metrics: server.Options{BindAddress: "0"},
+			Logger:  testr.New(t),
 		})
 		assert.NoError(t, err)
 
 		capsuleReconciler := &controller.CapsuleReconciler{
-			Client: k8sClient,
+			Client: manager.GetClient(),
 			Scheme: scheme,
 			Config: &configv1alpha1.OperatorConfig{
 				Certmanager: &configv1alpha1.CertManagerConfig{

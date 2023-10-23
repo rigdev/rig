@@ -2,6 +2,7 @@ package k8s_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"testing"
 	"time"
@@ -34,9 +35,13 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 	}
 	t.Parallel()
 
+	by(t, "Setting up test env")
+
 	env := setupTest(t, options{runManager: true})
 	defer env.stop()
 	k8sClient := env.k8sClient
+
+	by(t, "Creating namespace")
 
 	ctx := context.Background()
 	nsName := types.NamespacedName{
@@ -46,6 +51,8 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 
 	ns := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: nsName.Namespace}}
 	assert.NoError(t, k8sClient.Create(ctx, ns))
+
+	by(t, "Creating a capsule")
 
 	capsule := v1alpha1.Capsule{
 		ObjectMeta: metav1.ObjectMeta{
@@ -112,6 +119,9 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 	assert.True(t, kerrors.IsNotFound(err))
 
 	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+
+	by(t, "Adding an interface")
+
 	capsule.Spec.Interfaces = []v1alpha1.CapsuleInterface{
 		{
 			Name: "http",
@@ -166,6 +176,9 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 	assert.True(t, kerrors.IsNotFound(err))
 
 	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+
+	by(t, "Enabling ingress")
+
 	capsule.Spec.Interfaces[0].Public = &v1alpha1.CapsulePublicInterface{
 		Ingress: &v1alpha1.CapsuleInterfaceIngress{
 			Host: "test.com",
@@ -231,6 +244,9 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 	})
 
 	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+
+	by(t, "Changing ingress to loadbalancer")
+
 	capsule.Spec.Interfaces[0].Public = &v1alpha1.CapsulePublicInterface{
 		LoadBalancer: &v1alpha1.CapsuleInterfaceLoadBalancer{
 			Port: 1,
@@ -267,6 +283,154 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 		},
 	})
 
+	by(t, "Adding an environment variable configmap")
+
+	cm := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nsName.Name,
+			Namespace: nsName.Namespace,
+		},
+		Data: map[string]string{
+			"TEST": "test",
+		},
+	}
+
+	assert.NoError(t, k8sClient.Create(ctx, cm))
+	hash := sha256.New()
+	hash.Write([]byte("TEST"))
+	hash.Write([]byte("test"))
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: ns.Name,
+				OwnerReferences: []metav1.OwnerReference{
+					capsuleOwnerRef,
+				},
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"rig.dev/config-checksum": fmt.Sprintf("%x", hash.Sum(nil)),
+						},
+					},
+					Spec: v1.PodSpec{
+						Containers: []v1.Container{{
+							Name: "test",
+							Ports: []v1.ContainerPort{{
+								Name:          "http",
+								ContainerPort: 80,
+							}},
+						}},
+					},
+				},
+			},
+		},
+	})
+
+	assert.NoError(t, k8sClient.Delete(ctx, cm))
+
+	by(t, "Adding a configfile configmap")
+
+	cm = &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-files", nsName.Name),
+			Namespace: nsName.Namespace,
+		},
+		Data: map[string]string{
+			"test.yaml":           "test1",
+			"not-referenced.yaml": "test",
+		},
+	}
+
+	assert.NoError(t, k8sClient.Create(ctx, cm))
+	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+
+	capsule.Spec.Files = []v1alpha1.File{{
+		Path: "/etc/test/test.yaml",
+		ConfigMap: &v1alpha1.FileContentRef{
+			Name: cm.GetName(),
+			Key:  "test.yaml",
+		},
+	}}
+
+	assert.NoError(t, k8sClient.Update(ctx, &capsule))
+
+	hash = sha256.New()
+	hash.Write([]byte("test.yaml"))
+	hash.Write([]byte("test1"))
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: ns.Name,
+				OwnerReferences: []metav1.OwnerReference{
+					capsuleOwnerRef,
+				},
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"rig.dev/config-checksum": fmt.Sprintf("%x", hash.Sum(nil)),
+						},
+					},
+					Spec: v1.PodSpec{
+						Containers: []v1.Container{{
+							Name: "test",
+							Ports: []v1.ContainerPort{{
+								Name:          "http",
+								ContainerPort: 80,
+							}},
+						}},
+					},
+				},
+			},
+		},
+	})
+
+	cm.Data["test.yaml"] = "test2"
+
+	assert.NoError(t, k8sClient.Update(ctx, cm))
+	hash = sha256.New()
+	hash.Write([]byte("test.yaml"))
+	hash.Write([]byte("test2"))
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: ns.Name,
+				OwnerReferences: []metav1.OwnerReference{
+					capsuleOwnerRef,
+				},
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"rig.dev/config-checksum": fmt.Sprintf("%x", hash.Sum(nil)),
+						},
+					},
+					Spec: v1.PodSpec{
+						Containers: []v1.Container{{
+							Name: "test",
+							Ports: []v1.ContainerPort{{
+								Name:          "http",
+								ContainerPort: 80,
+							}},
+						}},
+					},
+				},
+			},
+		},
+	})
+
+	by(t, "Deleting the capsule")
+
 	assert.NoError(t, k8sClient.Delete(ctx, &capsule))
 	assert.Eventually(t, func() bool {
 		if err := k8sClient.Get(ctx, nsName, &capsule); err != nil {
@@ -276,6 +440,10 @@ func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
 		}
 		return false
 	}, waitFor, tick)
+}
+
+func by(t *testing.T, msg string) {
+	t.Log("STEP: ", msg)
 }
 
 func expectResources(ctx context.Context, t *testing.T, k8sClient client.Client, resources []client.Object) {
