@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
@@ -13,7 +14,6 @@ import (
 var (
 	authPassword       string
 	authUserIdentifier string
-	redirectAddr       string
 )
 
 var outputJSON bool
@@ -40,10 +40,13 @@ func (c Cmd) Setup(parent *cobra.Command) {
 			base.OmitUser:    "",
 			base.OmitProject: "",
 		},
-		RunE: c.login,
+		ValidArgsFunction: common.NoCompletions,
+		RunE:              c.login,
 	}
 	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
 	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
+	login.RegisterFlagCompletionFunc("user", common.NoCompletions)
+	login.RegisterFlagCompletionFunc("password", common.NoCompletions)
 	auth.AddCommand(login)
 
 	get := &cobra.Command{
@@ -54,22 +57,11 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
+		ValidArgsFunction: common.NoCompletions,
 	}
 	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
+	get.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	auth.AddCommand(get)
-
-	getAuthConfig := &cobra.Command{
-		Use:   "get-auth-config {project-id | project-name}",
-		Short: "Get the authorization config with allowed login methods and configurations",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  c.getAuthConfig,
-		Annotations: map[string]string{
-			base.OmitProject: "",
-		},
-	}
-	getAuthConfig.Flags().StringVarP(&redirectAddr, "redirect-addr", "r", "", "redirect address for oauth2")
-	getAuthConfig.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
-	auth.AddCommand(getAuthConfig)
 
 	parent.AddCommand(auth)
 }

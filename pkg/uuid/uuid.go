@@ -30,7 +30,7 @@ func New() UUID {
 }
 
 func (u UUID) IsNil() bool {
-	return u == Nil
+	return u == Nil || u == ""
 }
 
 func (u UUID) String() string {

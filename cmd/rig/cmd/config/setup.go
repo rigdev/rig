@@ -2,8 +2,10 @@ package config
 
 import (
 	"context"
+	"strings"
 
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
@@ -33,6 +35,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 			base.OmitProject: "",
 			base.OmitUser:    "",
 		},
+		ValidArgsFunction: common.NoCompletions,
 	}
 	config.AddCommand(init)
 
@@ -45,8 +48,29 @@ func (c Cmd) Setup(parent *cobra.Command) {
 			base.OmitProject: "",
 			base.OmitUser:    "",
 		},
+		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
 	}
 	config.AddCommand(useContext)
 
 	parent.AddCommand(config)
+}
+
+func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	names := []string{}
+
+	for _, ctx := range c.Cfg.Contexts {
+		if strings.HasPrefix(ctx.Name, toComplete) {
+			var isCurrent string
+			if ctx.Name == c.Cfg.CurrentContextName {
+				isCurrent = "*"
+			}
+			names = append(names, ctx.Name+isCurrent)
+		}
+	}
+
+	if len(names) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return names, cobra.ShellCompDirectiveNoFileComp
 }

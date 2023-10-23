@@ -10,7 +10,7 @@ import (
 func (c Cmd) addMember(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
 	uidentifier := ""
-	if len(args) > 1 {
+	if len(args) >= 1 {
 		uidentifier = args[0]
 	}
 	u, uuid, err := common.GetUser(ctx, uidentifier, c.Rig)

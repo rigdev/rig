@@ -7,7 +7,7 @@ import (
 )
 
 var BoolCompletions = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	return []string{"true", "false"}, cobra.ShellCompDirectiveNoFileComp
+	return []string{"true", "false"}, cobra.ShellCompDirectiveDefault
 }
 
 var NoCompletions = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

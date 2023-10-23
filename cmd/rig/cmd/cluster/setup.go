@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -22,10 +23,11 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	}
 
 	getConfig := &cobra.Command{
-		Use:   "get-config",
-		Short: "Returns the config of the Rig cluster",
-		Args:  cobra.NoArgs,
-		RunE:  c.get,
+		Use:               "get-config",
+		Short:             "Returns the config of the Rig cluster",
+		Args:              cobra.NoArgs,
+		RunE:              c.get,
+		ValidArgsFunction: common.NoCompletions,
 	}
 
 	cluster.AddCommand(getConfig)

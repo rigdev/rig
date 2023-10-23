@@ -16,8 +16,14 @@ func (c Cmd) use(cmd *cobra.Command, args []string) error {
 	var err error
 	if len(args) == 0 {
 		projectID, err = c.promptForProjectID(ctx)
+		if err != nil {
+			return err
+		}
 	} else {
 		projectID, err = c.projectIDFromArg(ctx, args[0])
+		if err != nil {
+			return err
+		}
 	}
 
 	res, err := c.Rig.Project().Use(ctx, &connect.Request[project.UseRequest]{

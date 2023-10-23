@@ -91,6 +91,28 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 		}
 	}
 
+	found := false
+	for _, p := range res.Msg.GetProjects() {
+		if p.GetProjectId() == cfg.GetCurrentContext().Project.ProjectID {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		use, err := common.PromptConfirm("Your selected project is not available. Would you like to select a new one?", true)
+		if err != nil {
+			return err
+		}
+		if !use {
+			return errors.FailedPreconditionErrorf("Select a project to continue")
+		}
+
+		err = useProject(ctx, rig, cfg)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

@@ -16,7 +16,8 @@ type Cmd struct {
 
 func (d *Cmd) Setup(parent *cobra.Command) {
 	dev := &cobra.Command{
-		Use: "dev",
+		Use:   "dev",
+		Short: "Setup and manage development environments",
 	}
 
 	d.Kind.Setup(dev)
