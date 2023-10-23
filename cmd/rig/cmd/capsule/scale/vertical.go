@@ -46,7 +46,11 @@ func (r Cmd) vertical(cmd *cobra.Command, args []string) error {
 
 	_, err = r.Rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
-		_, err = capsule_cmd.AbortAndDeploy(ctx, capsule_cmd.CapsuleID, r.Rig, req)
+		if forceDeploy {
+			_, err = capsule_cmd.AbortAndDeploy(ctx, r.Rig, capsule_cmd.CapsuleID, req)
+		} else {
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, r.Rig, req)
+		}
 	}
 	if err != nil {
 		return err

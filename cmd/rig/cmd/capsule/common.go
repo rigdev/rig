@@ -110,7 +110,7 @@ func TruncatedFixed(str string, max int) string {
 	return str
 }
 
-func AbortAndDeploy(ctx context.Context, capsuleID string, rig rig.Client, req *connect.Request[capsule.DeployRequest]) (*connect.Response[capsule.DeployResponse], error) {
+func PromptAbortAndDeploy(ctx context.Context, capsuleID string, rig rig.Client, req *connect.Request[capsule.DeployRequest]) (*connect.Response[capsule.DeployResponse], error) {
 	deploy, err := common.PromptConfirm("Rollout already in progress, would you like to cancel it and redeploy?", false)
 	if err != nil {
 		return nil, err
@@ -120,6 +120,10 @@ func AbortAndDeploy(ctx context.Context, capsuleID string, rig rig.Client, req *
 		return nil, errors.FailedPreconditionErrorf("rollout already in progress")
 	}
 
+	return AbortAndDeploy(ctx, rig, capsuleID, req)
+}
+
+func AbortAndDeploy(ctx context.Context, rig rig.Client, capsuleID string, req *connect.Request[capsule.DeployRequest]) (*connect.Response[capsule.DeployResponse], error) {
 	cc, err := rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
 			CapsuleId: capsuleID,
@@ -139,5 +143,4 @@ func AbortAndDeploy(ctx context.Context, capsuleID string, rig rig.Client, req *
 	}
 
 	return rig.Capsule().Deploy(ctx, req)
-
 }

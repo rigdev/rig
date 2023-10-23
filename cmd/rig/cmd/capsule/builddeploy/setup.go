@@ -27,6 +27,7 @@ var (
 	deploy         bool
 	skipImageCheck bool
 	remote         bool
+	forceDeploy    bool
 )
 
 var (
@@ -63,11 +64,13 @@ func (c Cmd) setupBuild(parent *cobra.Command) {
 	}
 	buildCreate.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
 	buildCreate.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy build after successful creation")
+	buildCreate.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a deployment if one is in progress")
 	buildCreate.Flags().BoolVarP(&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists")
 	buildCreate.Flags().BoolVarP(&remote, "remote", "r", false, "Rig will not look for the image locally but assumes it from a remote registry. If not set, Rig will search locally and then remotely")
 
 	buildCreate.RegisterFlagCompletionFunc("image", common.NoCompletions)
 	buildCreate.RegisterFlagCompletionFunc("deploy", common.BoolCompletions)
+	buildCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
 	buildCreate.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions)
 	buildCreate.RegisterFlagCompletionFunc("remote", common.BoolCompletions)
 	build.AddCommand(buildCreate)
@@ -104,9 +107,11 @@ Not both --build-id and --image can be given`,
 	capsuleDeploy.Flags().StringVarP(&buildID, "build-id", "b", "", "rig build id to deploy")
 	capsuleDeploy.Flags().StringVarP(&image, "image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist")
 	capsuleDeploy.Flags().BoolVarP(&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote registry. If not set, Rig will search locally and then remotely")
+	capsuleDeploy.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a rollout if one is in progress")
 	capsuleDeploy.RegisterFlagCompletionFunc("build-id", c.completions)
 	capsuleDeploy.RegisterFlagCompletionFunc("image", common.NoCompletions)
 	capsuleDeploy.RegisterFlagCompletionFunc("remote", common.BoolCompletions)
+	capsuleDeploy.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
 
 	parent.AddCommand(capsuleDeploy)
 }

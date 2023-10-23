@@ -3,7 +3,7 @@ package env
 import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -14,7 +14,7 @@ func (c Cmd) set(cmd *cobra.Command, args []string) error {
 		return errors.InvalidArgumentErrorf("expected key and value arguments")
 	}
 
-	r, err := cmd_capsule.GetCurrentRollout(ctx, c.Rig)
+	r, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (c Cmd) set(cmd *cobra.Command, args []string) error {
 
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: cmd_capsule.CapsuleID,
+			CapsuleId: capsule_cmd.CapsuleID,
 			Changes: []*capsule.Change{
 				{
 					Field: &capsule.Change_ContainerSettings{
@@ -46,7 +46,12 @@ func (c Cmd) set(cmd *cobra.Command, args []string) error {
 	_, err = c.Rig.Capsule().Deploy(ctx, req)
 
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
-		_, err = cmd_capsule.AbortAndDeploy(ctx, cmd_capsule.CapsuleID, c.Rig, req)
+		if forceDeploy {
+			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
+		} else {
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+
+		}
 	}
 	if err != nil {
 		return err

@@ -22,7 +22,8 @@ var (
 )
 
 var (
-	outputJSON bool
+	outputJSON  bool
+	forceDeploy bool
 )
 
 type Cmd struct {
@@ -70,6 +71,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		RunE:              c.rollback,
 		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
 	}
+	rollback.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and perform the rollback")
 	rollback.Flags().IntVarP(&rolloutID, "rollout-id", "r", -1, "The rollout to rollback to. If not given, will roll back to the latest successful rollout.")
 	rollout.AddCommand(rollback)
 

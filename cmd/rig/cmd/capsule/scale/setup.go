@@ -13,6 +13,7 @@ var (
 	outputJSON          bool
 	disable             bool
 	overwriteAutoscaler bool
+	forceDeploy         bool
 )
 
 var (
@@ -69,6 +70,9 @@ func (r Cmd) Setup(parent *cobra.Command) {
 	scaleVertical.Flags().StringVar(&limitMemory, "limit-memory", "", "Maximum memory per container")
 	scaleVertical.RegisterFlagCompletionFunc("limit-cpu", common.NoCompletions)
 	scaleVertical.RegisterFlagCompletionFunc("limit-memory", common.NoCompletions)
+
+	scaleVertical.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	scaleVertical.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
 	scale.AddCommand(scaleVertical)
 
 	scaleHorizontal := &cobra.Command{
@@ -80,6 +84,8 @@ func (r Cmd) Setup(parent *cobra.Command) {
 	}
 	scaleHorizontal.Flags().Uint32VarP(&replicas, "replicas", "r", 0, "number of replicas to scale to")
 	scaleHorizontal.Flags().BoolVarP(&overwriteAutoscaler, "overwrite-autoscaler", "o", false, "if the autoscaler is enabled, this flag is necessary to set the replicas. It will disable the autoscaler.")
+	scaleHorizontal.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	scaleHorizontal.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
 	scaleHorizontal.RegisterFlagCompletionFunc("replicas", common.NoCompletions)
 	scaleHorizontal.RegisterFlagCompletionFunc("overwrite-autoscaler", common.NoCompletions)
 	scale.AddCommand(scaleHorizontal)
