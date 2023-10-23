@@ -3,7 +3,11 @@ package cmd
 import (
 	"context"
 
+	"github.com/bufbuild/connect-go"
+	"github.com/jedib0t/go-pretty/v6/table"
+	project_api "github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/root"
@@ -19,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type RootCmd struct {
@@ -47,6 +52,18 @@ func (r RootCmd) Execute() error {
 		PersistentPreRunE: r.preRun,
 	}
 
+	license := &cobra.Command{
+		Use:               "license",
+		Short:             "Get License Information for the current project",
+		Args:              cobra.NoArgs,
+		RunE:              r.getLicenseInfo,
+		ValidArgsFunction: common.NoCompletions,
+		Annotations: map[string]string{
+			base.OmitProject: "",
+		},
+	}
+	rootCmd.AddCommand(license)
+
 	// database.Setup(rootCmd)
 	// storage.Setup(rootCmd)
 	r.Dev.Setup(rootCmd)
@@ -65,4 +82,29 @@ func (r RootCmd) Execute() error {
 
 func (r RootCmd) preRun(cmd *cobra.Command, args []string) error {
 	return base.CheckAuth(cmd, r.Rig, r.Cfg)
+}
+
+func (c RootCmd) getLicenseInfo(cmd *cobra.Command, args []string) error {
+	var plan project_api.Plan
+	var expiresAt *timestamppb.Timestamp
+
+	resp, err := c.Rig.Project().GetLicenseInfo(c.Ctx, &connect.Request[project_api.GetLicenseInfoRequest]{})
+	if err != nil {
+		cmd.Println("Unable to get license info", err)
+		plan = project_api.Plan_PLAN_FREE
+	} else {
+		plan = resp.Msg.GetPlan()
+		expiresAt = resp.Msg.GetExpiresAt()
+	}
+
+	t := table.NewWriter()
+	t.AppendHeader(table.Row{"Attribute", "Value"})
+	t.AppendRows([]table.Row{
+		{"Plan", plan.String()},
+		{"Expires At", expiresAt.AsTime().Format("2006-01-02 15:04:05")},
+	})
+
+	cmd.Println(t.Render())
+
+	return nil
 }

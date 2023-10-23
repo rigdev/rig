@@ -105,17 +105,21 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 	}
 
 	if !found {
+		// what to do here? Should we allow to use projects not existing in the list? Eg. Rig project or projects form another context?
 		use, err := common.PromptConfirm("Your selected project is not available. Would you like to select a new one?", true)
 		if err != nil {
 			return err
 		}
-		if !use {
-			return errors.FailedPreconditionErrorf("Select a project to continue")
-		}
 
-		err = useProject(ctx, rig, cfg)
-		if err != nil {
-			return err
+		// if !use {
+		// 	return errors.FailedPreconditionErrorf("Select a project to continue")
+		// }
+
+		if use {
+			err = useProject(ctx, rig, cfg)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

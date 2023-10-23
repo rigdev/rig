@@ -17,7 +17,7 @@ require (
 	go.mongodb.org/mongo-driver v1.11.6
 	go.uber.org/fx v1.19.3
 	go.uber.org/zap v1.25.0
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	golang.org/x/oauth2 v0.13.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
@@ -38,8 +38,8 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
-	github.com/rigdev/rig-go-api v0.0.0-20231106100904-682e26764555
-	github.com/rigdev/rig-go-sdk v0.0.0-20231023135215-741e54df3608
+	github.com/rigdev/rig-go-api v0.0.0-20231108145848-48c2b1d00294
+	github.com/rigdev/rig-go-sdk v0.0.0-20231109094225-fa1b04bc2432
 	github.com/rodaine/table v1.1.0
 	sigs.k8s.io/controller-runtime v0.16.1
 	sigs.k8s.io/kind v0.20.0
@@ -119,7 +119,7 @@ require (
 	github.com/prometheus/procfs v0.10.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/term v0.14.0 // indirect
 	golang.org/x/time v0.4.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
@@ -153,7 +153,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/dig v1.17.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.17.0
+	golang.org/x/net v0.18.0
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
