@@ -19,10 +19,8 @@ func UseContext(cfg *Config, name string) error {
 }
 
 func SelectContext(cfg *Config) error {
-	var names []string
 	var labels []string
 	for _, c := range cfg.Contexts {
-		names = append(names, c.Name)
 		if c.Name == cfg.CurrentContextName {
 			labels = append(labels, c.Name+"*")
 		} else {
@@ -49,9 +47,27 @@ func CreateContext(cfg *Config, name, url string) error {
 		return err
 	}
 
+	for _, c := range cfg.Contexts {
+		if c.Name == name {
+			return fmt.Errorf("context '%v' already exists", name)
+		}
+	}
+
 	server, err := common.PromptInput("Server:", common.ValidateURLOpt, common.InputDefaultOpt(url))
 	if err != nil {
 		return err
+	}
+
+	for _, s := range cfg.Services {
+		if s.Server == server {
+			if ok, err := common.PromptConfirm("Context with this server already exists. Do you want activate this context now?", true); err != nil {
+				return err
+			} else if ok {
+				cfg.CurrentContextName = name
+			}
+
+			return cfg.Save()
+		}
 	}
 
 	cfg.Contexts = append(cfg.Contexts, &Context{
