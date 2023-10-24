@@ -8,11 +8,10 @@ import "google/protobuf/timestamp.proto";
 message Status {
   string rollout_id = 1;
   State state = 2;
-  Stages stages = 2;
+  Stages stages = 3;
 
-  uint64 rollout_id = 3;
   string image = 4;
-  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp created_at = 5;
 }
 
 message StageInfo {
@@ -108,11 +107,11 @@ message ResourceCreationStage {
 message ResourceCreationStep {
   oneof step {
     GenericStep generic = 1;
-    ResourceCreationStep resource_creation = 2;
+    ResourceCreation resource_creation = 2;
   }
 }
 
-message ResourceCreationStep {
+message ResourceCreation {
   StepInfo info = 1;
   string kind = 2;
   string name = 3;

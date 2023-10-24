@@ -4,6 +4,7 @@ package api.v1.capsule;
 
 import "google/protobuf/timestamp.proto";
 import "model/author.proto";
+import "api/v1/capsule/rollout/status.proto";
 
 enum RolloutState {
   ROLLOUT_STATE_UNSPECIFIED = 0;
@@ -41,6 +42,7 @@ message Rollout {
   uint64 rollout_id = 1;
   RolloutConfig config = 2;
   RolloutStatus status = 3;
+  api.v1.capsule.rollout.Status status2 = 4;
 }
 
 enum EventType {
