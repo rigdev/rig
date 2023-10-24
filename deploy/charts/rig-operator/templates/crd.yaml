@@ -165,6 +165,10 @@ spec:
                   - port
                   type: object
                 type: array
+              nodeLabels:
+                additionalProperties:
+                  type: string
+                type: object
               replicas:
                 format: int32
                 type: integer
