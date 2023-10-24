@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package api.v1.capsule.rollout;
+
+import "google/protobuf/timestamp.proto";
+
+// Status is a representation of the current state of a rollout
+message Status {
+  string rollout_id = 1;
+  State state = 2;
+  Stages stages = 3;
+
+  string image = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message StageInfo {
+  string name = 1;
+  google.protobuf.Timestamp updated_at = 2;
+  StageState state = 3;
+}
+
+enum StageState {
+  STAGE_STATE_UNSPECIFIED = 0;
+  STAGE_STATE_ONGOING = 1;
+  STAGE_STATE_FAILED = 2;
+  STAGE_STATE_DONE = 3;
+}
+
+message GenericStep {
+  StepInfo info = 1;
+}
+
+message StepInfo {
+  string name = 1;
+  string message = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  StepState state = 4;
+}
+
+enum StepState {
+  STEP_STATE_UNSPECIFIED = 0;
+  STEP_STATE_ONGOING = 1;
+  STEP_STATE_FAILED = 2;
+  STEP_STATE_DONE = 3;
+}
+
+enum State {
+  STATE_UNSPECIFIED = 0;
+  STATE_PREPARING = 1;
+  STATE_DEPLOYING = 2;
+  STATE_RUNNING = 3;
+  STATE_ABORTED = 4;
+  STATE_DONE = 5;
+}
+
+message Stages {
+  ConfigureStage configure = 1;
+  ResourceCreationStage resource_creation = 2;
+  RunningStage running = 3;
+}
+
+message ConfigureStage {
+  StageInfo info = 1;
+  repeated ConfigureStep steps = 2;
+}
+
+message ConfigureStep {
+  oneof step {
+    GenericStep generic = 1;
+    ConfigureCapsuleStep configure_capsule = 2;
+    ConfigureFileStep configure_file = 3;
+    ConfigureEnvStep configure_env = 4;
+  }
+}
+
+message ConfigureCapsuleStep {
+  StepInfo info = 1;
+  ConfigureState state = 2;
+}
+
+message ConfigureFileStep {
+  StepInfo info = 1;
+  ConfigureState state = 2;
+  string path = 3;
+  bool is_secret = 4;
+}
+
+message ConfigureEnvStep {
+  StepInfo info = 1;
+  ConfigureState state = 2;
+  bool is_secret = 3;
+}
+
+enum ConfigureState {
+  CONFIGURE_STATE_UNSPECIFIED = 0;
+  CONFIGURE_STATE_CREATED = 1;
+  CONFIGURE_STATE_UPDATED = 2;
+  CONFIGURE_STATE_NO_CHANGE = 3;
+}
+
+message ResourceCreationStage {
+  StageInfo info = 1;
+  repeated ResourceCreationStep steps = 2;
+}
+
+message ResourceCreationStep {
+  oneof step {
+    GenericStep generic = 1;
+    ResourceCreation resource_creation = 2;
+  }
+}
+
+message ResourceCreation {
+  StepInfo info = 1;
+  string kind = 2;
+  string name = 3;
+}
+
+message RunningStage {
+  StageInfo info = 1;
+  repeated RunningStep steps = 2;
+}
+
+message RunningStep {
+  oneof step {
+    GenericStep generic = 1;
+    InstancesStep instances = 2;
+  }
+}
+
+message InstancesStep {
+  StepInfo info = 1;
+  uint32 num_updated = 2;
+  uint32 num_ready = 3;
+  uint32 num_stuck = 4;
+}
