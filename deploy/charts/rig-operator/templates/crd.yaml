@@ -165,7 +165,7 @@ spec:
                   - port
                   type: object
                 type: array
-              nodeLabels:
+              nodeSelector:
                 additionalProperties:
                   type: string
                 type: object
