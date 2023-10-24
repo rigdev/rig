@@ -88,6 +88,7 @@ message ContainerSettings {
 message Resources {
   ResourceList requests = 1;
   ResourceList limits = 2;
+  GpuLimits gpu_limits = 3;
 }
 
 message ResourceList {
@@ -96,6 +97,15 @@ message ResourceList {
   // Unit: Bytes
   uint64 memory_bytes = 2;
 }
+
+message GpuLimits {
+  // gpu resource type - fx. nvidia.com/gpu
+  string type = 1;
+  // number of gpus
+  uint32 count = 2;
+}
+
+
 
 message Network {
   repeated Interface interfaces = 1;
