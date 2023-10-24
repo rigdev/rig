@@ -18,6 +18,7 @@ type CapsuleSpec struct {
 	ImagePullSecret    *v1.LocalObjectReference `json:"imagePullSecret,omitempty"`
 	HorizontalScale    HorizontalScale          `json:"horizontalScale,omitempty"`
 	ServiceAccountName string                   `json:"serviceAccountName,omitempty"`
+	NodeSelector       map[string]string        `json:"nodeSelector,omitempty"`
 }
 
 // CapsuleInterface defines an interface for a capsule

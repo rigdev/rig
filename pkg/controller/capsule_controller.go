@@ -286,6 +286,7 @@ func createDeployment(
 					},
 					ServiceAccountName: capsule.Spec.ServiceAccountName,
 					Volumes:            volumes,
+					NodeSelector:       capsule.Spec.NodeSelector,
 				},
 			},
 		},
