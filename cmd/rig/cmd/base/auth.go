@@ -24,6 +24,10 @@ var (
 )
 
 func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
+	if cmd.Parent().Use == "completion" {
+		return nil
+	}
+
 	ctx := context.Background()
 	if _, ok := cmd.Annotations[OmitUser]; !ok {
 		if err := authUser(ctx, rc, cfg); err != nil {

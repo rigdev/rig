@@ -3,6 +3,7 @@ package scale
 import (
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -61,7 +62,7 @@ func (r Cmd) vertical(cmd *cobra.Command, args []string) error {
 
 func setResourcesInteractive(curResources *capsule.Resources) error {
 	for {
-		i, _, err := common.PromptSelect("What to update", []string{"Requests", "Limits", "Done"})
+		i, _, err := common.PromptSelect("What to update", []string{"Requests", "Limits", "GPU", "Done"})
 		if err != nil {
 			return err
 		}
@@ -76,6 +77,28 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 		case 1:
 			curR = curResources.Limits
 			name = "limit"
+		case 2:
+			label := fmt.Sprintf("New GPU type (current is %s):", curResources.GetGpuLimits().GetType())
+			gpuType, err := common.PromptInput(label, common.ValidateNonEmptyOpt)
+			if err != nil {
+				return err
+			}
+			label = fmt.Sprintf("New GPU limit (current is %d):", curResources.GetGpuLimits().GetCount())
+			gpuLimitStr, err := common.PromptInput(label, common.ValidateQuantityOpt)
+			if err != nil {
+				return err
+			}
+			gpuLimit, err := strconv.Atoi(gpuLimitStr)
+			if err != nil {
+				return err
+			}
+
+			err = updateGPU(curResources, gpuType, uint32(gpuLimit))
+			if err != nil {
+				return err
+			}
+
+			continue
 		default:
 			done = true
 		}
@@ -150,6 +173,25 @@ func setResourcesFromFlags(curResources *capsule.Resources) error {
 		return err
 	}
 
+	if err := updateGPU(curResources, gpuType, gpuLimit); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateGPU(resources *capsule.Resources, gpuType string, gpuLimit uint32) error {
+	if gpuType == "" {
+		return nil
+	}
+
+	if resources.GpuLimits == nil {
+		resources.GpuLimits = &capsule.GpuLimits{}
+	}
+
+	resources.GetGpuLimits().Type = gpuType
+	resources.GetGpuLimits().Count = gpuLimit
+
 	return nil
 }
 
@@ -196,5 +238,5 @@ func parseBytes(s string) (uint64, error) {
 }
 
 func allFlagsEmpty() bool {
-	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == ""
+	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == "" && gpuType == ""
 }
