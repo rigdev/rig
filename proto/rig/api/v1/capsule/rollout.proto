@@ -42,7 +42,7 @@ message Rollout {
   uint64 rollout_id = 1;
   RolloutConfig config = 2;
   RolloutStatus status = 3;
-  api.v1.capsule.rollout.Status status2 = 4;
+  api.v1.capsule.rollout.Status rollout_status = 4;
 }
 
 enum EventType {
@@ -104,8 +104,6 @@ message GpuLimits {
   // number of gpus
   uint32 count = 2;
 }
-
-
 
 message Network {
   repeated Interface interfaces = 1;
