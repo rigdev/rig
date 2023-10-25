@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/go-logr/logr/testr"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -23,28 +23,18 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
-const (
-	waitFor = time.Second * 10
-	tick    = time.Millisecond * 200
-)
+type K8sTestSuite struct {
+	suite.Suite
 
-type options struct {
-	runManager bool
+	cancel  context.CancelFunc
+	TestEnv *envtest.Environment
+	Client  client.Client
 }
 
-type env struct {
-	k8sClient client.Client
-	cancel    context.CancelFunc
-	wg        sync.WaitGroup
-}
+func (s *K8sTestSuite) SetupSuite() {
+	t := s.Suite.T()
 
-func (e *env) stop() {
-	e.cancel()
-	e.wg.Wait()
-}
-
-func setupTest(t *testing.T, opts options) *env {
-	testEnv := &envtest.Environment{
+	s.TestEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases"),
 			filepath.Join("."),
@@ -55,60 +45,58 @@ func setupTest(t *testing.T, opts options) *env {
 	}
 
 	var err error
-	cfg, err := testEnv.Start()
-	assert.NoError(t, err)
-	assert.NotNil(t, cfg)
+	cfg, err := s.TestEnv.Start()
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
 
 	scheme := manager.NewScheme()
+	manager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:  scheme,
+		Metrics: server.Options{BindAddress: "0"},
+		Logger:  testr.New(t),
+	})
+	require.NoError(t, err)
 
 	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme})
-	assert.NoError(t, err)
-	assert.NotNil(t, k8sClient)
+	require.NoError(t, err)
+	require.NotNil(t, k8sClient)
+	s.Client = k8sClient
+
+	capsuleReconciler := &controller.CapsuleReconciler{
+		Client: manager.GetClient(),
+		Scheme: scheme,
+		Config: &configv1alpha1.OperatorConfig{
+			Certmanager: &configv1alpha1.CertManagerConfig{
+				ClusterIssuer:              "test",
+				CreateCertificateResources: true,
+			},
+		},
+	}
+
+	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
 
 	ctx, cancel := context.WithCancel(context.Background())
-
-	e := &env{
-		k8sClient: k8sClient,
-		cancel:    cancel,
-		wg:        sync.WaitGroup{},
-	}
-
-	e.wg.Add(1)
 	go func() {
-		defer e.wg.Done()
-		<-ctx.Done()
-		if err := testEnv.Stop(); err != nil {
-			fmt.Printf("could not stop envtest: %s\n", err)
-		}
+		require.NoError(t, manager.Start(ctx))
 	}()
 
-	if opts.runManager {
-		manager, err := ctrl.NewManager(cfg, ctrl.Options{
-			Scheme:  scheme,
-			Metrics: server.Options{BindAddress: "0"},
-			Logger:  testr.New(t),
-		})
-		assert.NoError(t, err)
-
-		capsuleReconciler := &controller.CapsuleReconciler{
-			Client: manager.GetClient(),
-			Scheme: scheme,
-			Config: &configv1alpha1.OperatorConfig{
-				Certmanager: &configv1alpha1.CertManagerConfig{
-					ClusterIssuer:              "test",
-					CreateCertificateResources: true,
-				},
-			},
-		}
-
-		assert.NoError(t, capsuleReconciler.SetupWithManager(manager))
-
-		e.wg.Add(1)
-		go func() {
-			defer e.wg.Done()
-			assert.NoError(t, manager.Start(ctx))
-		}()
-	}
-
-	return e
+	s.cancel = cancel
 }
+
+func (s *K8sTestSuite) TearDownSuite() {
+	s.cancel()
+	s.TestEnv.Stop()
+}
+
+func TestIntegrationK8s(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+	t.Parallel()
+	suite.Run(t, new(K8sTestSuite))
+}
+
+const (
+	waitFor = time.Second * 10
+	tick    = time.Millisecond * 200
+)

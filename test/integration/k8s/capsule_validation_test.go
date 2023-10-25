@@ -12,18 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func TestIntegrationCapsuleOpenAPIValidation(t *testing.T) {
-	// TODO: Share the env between integration tests. There is currently an
-	// issue with running multiple parallel environments.
-	t.Skip()
-	if testing.Short() {
-		t.Skip()
-	}
-	t.Parallel()
-
-	env := setupTest(t, options{})
-	defer env.stop()
-	k8sClient := env.k8sClient
+func (s *K8sTestSuite) TestCapsuleOpenAPIValidation() {
+	k8sClient := s.Client
+	t := s.Suite.T()
 
 	tests := []struct {
 		name         string
