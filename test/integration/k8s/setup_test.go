@@ -32,6 +32,13 @@ type K8sTestSuite struct {
 }
 
 func (s *K8sTestSuite) SetupSuite() {
+	setupDone := false
+	defer func() {
+		if !setupDone {
+			s.TearDownSuite()
+		}
+	}()
+
 	t := s.Suite.T()
 
 	s.TestEnv = &envtest.Environment{
@@ -81,11 +88,16 @@ func (s *K8sTestSuite) SetupSuite() {
 	}()
 
 	s.cancel = cancel
+	setupDone = true
 }
 
 func (s *K8sTestSuite) TearDownSuite() {
-	s.cancel()
-	s.TestEnv.Stop()
+	if s.cancel != nil {
+		s.cancel()
+	}
+	if s.TestEnv != nil {
+		s.TestEnv.Stop()
+	}
 }
 
 func TestIntegrationK8s(t *testing.T) {
