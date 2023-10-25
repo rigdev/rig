@@ -29,17 +29,9 @@ import (
 	"github.com/rigdev/rig/pkg/ptr"
 )
 
-func TestIntegrationCapsuleReconcilerNginx(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-	t.Parallel()
-
-	by(t, "Setting up test env")
-
-	env := setupTest(t, options{runManager: true})
-	defer env.stop()
-	k8sClient := env.k8sClient
+func (s *K8sTestSuite) TestController() {
+	k8sClient := s.Client
+	t := s.Suite.T()
 
 	by(t, "Creating namespace")
 
