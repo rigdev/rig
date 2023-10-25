@@ -131,6 +131,11 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&rigdevv1alpha1.Capsule{}).
+		Owns(&appsv1.Deployment{}).
+		Owns(&v1.Service{}).
+		Owns(&netv1.Ingress{}).
+		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
+		Owns(&cmv1.Certificate{}).
 		Watches(
 			&v1.ConfigMap{},
 			configEventHandler,
