@@ -9,6 +9,7 @@ message Status {
   uint64 rollout_id = 1;
   State state = 2;
   Stages stages = 3;
+  google.protobuf.Timestamp updated_at = 4;
 }
 
 message StageInfo {
