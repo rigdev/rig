@@ -134,6 +134,7 @@ func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *
 	res, err := rc.Project().Create(ctx, &connect.Request[project.CreateRequest]{
 		Msg: &project.CreateRequest{
 			Initializers: initializers,
+			ProjectId:    name,
 		},
 	})
 	if err != nil {

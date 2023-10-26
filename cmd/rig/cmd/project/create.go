@@ -28,6 +28,7 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 	res, err := c.Rig.Project().Create(ctx, &connect.Request[project.CreateRequest]{
 		Msg: &project.CreateRequest{
 			Initializers: initializers,
+			ProjectId:    name,
 		},
 	})
 	if err != nil {
