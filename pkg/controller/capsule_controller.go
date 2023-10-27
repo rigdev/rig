@@ -30,6 +30,7 @@ import (
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/go-logr/logr"
+	"github.com/rigdev/rig/pkg/hash"
 	"github.com/rigdev/rig/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -40,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -74,8 +76,13 @@ type reconcileStepFunc func(
 ) error
 
 const (
-	_annotationChecksum     = "rig.dev/config-checksum"
-	labelRigDevCapsule      = "rig.dev/capsule"
+	AnnotationChecksumFiles     = "rig.dev/config-checksum-files"
+	AnnotationChecksumEnv       = "rig.dev/config-checksum-env"
+	AnnotationChecksumSharedEnv = "rig.dev/config-checksum-shared-env"
+
+	LabelSharedConfig = "rig.dev/shared-config"
+	LabelCapsule      = "rig.dev/capsule"
+
 	fieldFilesConfigMapName = ".spec.files.configMap.name"
 	fieldFilesSecretName    = ".spec.files.secret.name"
 )
@@ -155,6 +162,18 @@ func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {
 	c := mgr.GetClient()
 
 	return func(ctx context.Context, o client.Object) []ctrl.Request {
+		var capsulesWithReference rigdevv1alpha1.CapsuleList
+		if sharedConfig := o.GetLabels()[LabelSharedConfig]; sharedConfig == "true" {
+			if err := c.List(ctx, &capsulesWithReference, client.InNamespace(o.GetNamespace())); err != nil {
+				log.Error(err, "could not get capsules")
+			}
+			requests := make([]ctrl.Request, len(capsulesWithReference.Items))
+			for i, c := range capsulesWithReference.Items {
+				requests[i] = ctrl.Request{NamespacedName: client.ObjectKeyFromObject(&c)}
+			}
+			return requests
+		}
+
 		gvks, _, err := scheme.ObjectKinds(o)
 		if err != nil {
 			log.Error(err, "could not get ObjectKinds from object")
@@ -164,7 +183,6 @@ func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {
 		gvk := gvks[0]
 		log = log.WithValues(gvk.Kind, o)
 
-		var capsulesWithReference rigdevv1alpha1.CapsuleList
 		var refField string
 		switch gvk.Kind {
 		case "Secret":
@@ -253,121 +271,267 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, errors.Join(stepErrs...)
 }
 
-func (r *CapsuleReconciler) filesSHA256(
+type configs struct {
+	configMaps          map[string]*v1.ConfigMap
+	secrets             map[string]*v1.Secret
+	sharedEnvConfigMaps []string
+	sharedEnvSecrets    []string
+}
+
+func (c *configs) hasSharedConfig() bool {
+	return len(c.sharedEnvConfigMaps) > 0 || len(c.sharedEnvSecrets) > 0
+}
+
+type checksums struct {
+	sharedEnv string
+	env       string
+	files     string
+}
+
+func (r *CapsuleReconciler) configChecksums(
 	ctx context.Context,
 	req ctrl.Request,
-	log logr.Logger,
 	capsule *rigdevv1alpha1.Capsule,
+	configs *configs,
+) (*checksums, error) {
+	sharedEnv, err := r.configSharedEnvChecksum(ctx, req, configs)
+	if err != nil {
+		return nil, err
+	}
+
+	env, err := r.configEnvChecksum(
+		ctx,
+		req,
+		configs.configMaps[capsule.GetName()],
+		configs.secrets[capsule.GetName()],
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := r.configFilesChecksum(ctx, req, capsule, configs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &checksums{
+		sharedEnv: sharedEnv,
+		env:       env,
+		files:     files,
+	}, nil
+}
+
+func (r *CapsuleReconciler) configSharedEnvChecksum(
+	ctx context.Context,
+	req ctrl.Request,
+	configs *configs,
 ) (string, error) {
-	secrets := map[string]*v1.Secret{}
+	if !configs.hasSharedConfig() {
+		return "", nil
+	}
+
+	h := sha256.New()
+
+	configMaps := slices.Clone(configs.sharedEnvConfigMaps)
+	slices.Sort(configMaps)
+	secrets := slices.Clone(configs.sharedEnvSecrets)
+	slices.Sort(secrets)
+
+	for _, name := range configMaps {
+		if err := hash.ConfigMap(h, configs.configMaps[name]); err != nil {
+			return "", err
+		}
+	}
+	for _, name := range secrets {
+		if err := hash.Secret(h, configs.secrets[name]); err != nil {
+			return "", err
+		}
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func (r *CapsuleReconciler) configEnvChecksum(
+	ctx context.Context,
+	req ctrl.Request,
+	configMap *v1.ConfigMap,
+	secret *v1.Secret,
+) (string, error) {
+	if configMap == nil && secret == nil {
+		return "", nil
+	}
+
+	h := sha256.New()
+
+	if configMap != nil {
+		if err := hash.ConfigMap(h, configMap); err != nil {
+			return "", err
+		}
+	}
+	if secret != nil {
+		if err := hash.Secret(h, secret); err != nil {
+			return "", err
+		}
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func (r *CapsuleReconciler) configFilesChecksum(
+	ctx context.Context,
+	req ctrl.Request,
+	capsule *rigdevv1alpha1.Capsule,
+	configs *configs,
+) (string, error) {
+	if len(capsule.Spec.Files) == 0 {
+		return "", nil
+	}
+
 	referencedKeysBySecretName := map[string]map[string]struct{}{}
-	configMaps := map[string]*v1.ConfigMap{}
 	referencedKeysByConfigMapName := map[string]map[string]struct{}{}
-
-	var s v1.Secret
-	err := r.Get(ctx, req.NamespacedName, &s)
-	if err != nil && !kerrors.IsNotFound(err) {
-		return "", fmt.Errorf("could not get environment secret: %w", err)
-	}
-	if err == nil {
-		secrets[s.Name] = &s
-		referencedKeysBySecretName[s.Name] = map[string]struct{}{}
-		for k, _ := range s.Data {
-			referencedKeysBySecretName[s.Name][k] = struct{}{}
-		}
-	}
-
-	var cm v1.ConfigMap
-	err = r.Get(ctx, req.NamespacedName, &cm)
-	if err != nil && !kerrors.IsNotFound(err) {
-		return "", fmt.Errorf("could not get environment configMap: %w", err)
-	}
-	if err == nil {
-		configMaps[cm.Name] = &cm
-		referencedKeysByConfigMapName[cm.Name] = map[string]struct{}{}
-		for k, _ := range cm.Data {
-			referencedKeysByConfigMapName[cm.Name][k] = struct{}{}
-		}
-	}
-
 	for _, f := range capsule.Spec.Files {
+		if f.ConfigMap != nil {
+			if _, ok := referencedKeysByConfigMapName[f.ConfigMap.Name]; ok {
+				referencedKeysByConfigMapName[f.ConfigMap.Name][f.ConfigMap.Key] = struct{}{}
+				continue
+			}
+			referencedKeysByConfigMapName[f.ConfigMap.Name] = map[string]struct{}{
+				f.ConfigMap.Key: struct{}{},
+			}
+		}
 		if f.Secret != nil {
-			if _, ok := secrets[f.Secret.Name]; ok {
+			if _, ok := referencedKeysBySecretName[f.Secret.Name]; ok {
 				referencedKeysBySecretName[f.Secret.Name][f.Secret.Key] = struct{}{}
 				continue
 			}
-
-			var s v1.Secret
-			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.Secret.Name}, &s)
-			if err != nil {
-				return "", fmt.Errorf("could not get referenced secret: %w", err)
-			}
-			secrets[f.Secret.Name] = &s
 			referencedKeysBySecretName[f.Secret.Name] = map[string]struct{}{
 				f.Secret.Key: struct{}{},
 			}
 		}
+	}
+
+	secretNames := maps.Keys(referencedKeysBySecretName)
+	slices.Sort(secretNames)
+	configMapNames := maps.Keys(referencedKeysByConfigMapName)
+	slices.Sort(configMapNames)
+	h := sha256.New()
+	for _, name := range secretNames {
+		if err := hash.SecretKeys(
+			h,
+			maps.Keys(referencedKeysBySecretName[name]),
+			configs.secrets[name],
+		); err != nil {
+			return "", err
+		}
+	}
+	for _, name := range configMapNames {
+		if err := hash.ConfigMapKeys(
+			h,
+			maps.Keys(referencedKeysByConfigMapName[name]),
+			configs.configMaps[name],
+		); err != nil {
+			return "", err
+		}
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func (r *CapsuleReconciler) getConfigs(
+	ctx context.Context,
+	req ctrl.Request,
+	log logr.Logger,
+	capsule *rigdevv1alpha1.Capsule,
+) (*configs, error) {
+	cfgs := &configs{
+		configMaps: map[string]*v1.ConfigMap{},
+		secrets:    map[string]*v1.Secret{},
+	}
+
+	// Get shared env
+	var configMapList v1.ConfigMapList
+	if err := r.Client.List(ctx, &configMapList, &client.ListOptions{
+		Namespace: req.Namespace,
+		LabelSelector: labels.SelectorFromSet(labels.Set{
+			LabelSharedConfig: "true",
+		}),
+	}); err != nil {
+		return nil, fmt.Errorf("could not list shared env configmaps: %w", err)
+	}
+	cfgs.sharedEnvConfigMaps = make([]string, len(configMapList.Items))
+	for i, cm := range configMapList.Items {
+		cfgs.sharedEnvConfigMaps[i] = cm.GetName()
+		cfgs.configMaps[cm.Name] = &cm
+	}
+	var secretList v1.SecretList
+	if err := r.Client.List(ctx, &secretList, &client.ListOptions{
+		Namespace: req.Namespace,
+		LabelSelector: labels.SelectorFromSet(labels.Set{
+			LabelSharedConfig: "true",
+		}),
+	}); err != nil {
+		return nil, fmt.Errorf("could not list shared env secrets: %w", err)
+	}
+	cfgs.sharedEnvSecrets = make([]string, len(secretList.Items))
+	for i, cm := range secretList.Items {
+		cfgs.sharedEnvSecrets[i] = cm.GetName()
+		cfgs.secrets[cm.Name] = &cm
+	}
+	log.Info("env secrets", "secrets", secretList.Items)
+
+	// Get env
+	if _, ok := cfgs.configMaps[req.NamespacedName.Name]; !ok {
+		var cm v1.ConfigMap
+		err := r.Get(ctx, req.NamespacedName, &cm)
+		if err != nil && !kerrors.IsNotFound(err) {
+			return nil, fmt.Errorf("could not get environment configmap: %w", err)
+		}
+		if err == nil {
+			cfgs.configMaps[req.NamespacedName.Name] = &cm
+		}
+	}
+	if _, ok := cfgs.secrets[req.NamespacedName.Name]; !ok {
+		var s v1.Secret
+		err := r.Get(ctx, req.NamespacedName, &s)
+		if err != nil && !kerrors.IsNotFound(err) {
+			return nil, fmt.Errorf("could not get environment secret: %w", err)
+		}
+		if err == nil {
+			cfgs.secrets[req.NamespacedName.Name] = &s
+		}
+	}
+
+	// Get files
+	for _, f := range capsule.Spec.Files {
 		if f.ConfigMap != nil {
-			if _, ok := configMaps[f.ConfigMap.Name]; ok {
-				referencedKeysByConfigMapName[f.ConfigMap.Name][f.ConfigMap.Key] = struct{}{}
+			if _, ok := cfgs.configMaps[f.ConfigMap.Name]; ok {
 				continue
 			}
 
 			var cm v1.ConfigMap
 			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.ConfigMap.Name}, &cm)
 			if err != nil {
-				return "", fmt.Errorf("could not get referenced configMap: %w", err)
+				return nil, fmt.Errorf("could not get file configmap: %w", err)
 			}
-			configMaps[f.ConfigMap.Name] = &cm
-			referencedKeysByConfigMapName[f.ConfigMap.Name] = map[string]struct{}{
-				f.ConfigMap.Key: struct{}{},
+			cfgs.configMaps[cm.Name] = &cm
+		}
+	}
+	for _, f := range capsule.Spec.Files {
+		if f.Secret != nil {
+			if _, ok := cfgs.secrets[f.Secret.Name]; ok {
+				continue
 			}
+
+			var s v1.Secret
+			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.ConfigMap.Name}, &s)
+			if err != nil {
+				return nil, fmt.Errorf("could not get file secret: %w", err)
+			}
+			cfgs.secrets[s.Name] = &s
 		}
 	}
 
-	keysBySecretName := map[string][]string{}
-	for name, keys := range referencedKeysBySecretName {
-		keysBySecretName[name] = maps.Keys(keys)
-		slices.Sort(keysBySecretName[name])
-	}
-	keysByConfigMapName := map[string][]string{}
-	for name, keys := range referencedKeysByConfigMapName {
-		keysByConfigMapName[name] = maps.Keys(keys)
-		slices.Sort(keysByConfigMapName[name])
-	}
-
-	secretNames := maps.Keys(secrets)
-	slices.Sort(secretNames)
-	configMapNames := maps.Keys(configMaps)
-	slices.Sort(configMapNames)
-
-	hash := sha256.New()
-
-	for _, name := range secretNames {
-		for _, key := range keysBySecretName[name] {
-			if _, err := hash.Write([]byte(key)); err != nil {
-				return "", fmt.Errorf("error when calculating sha256: %w", err)
-			}
-			if _, err := hash.Write(secrets[name].Data[key]); err != nil {
-				return "", fmt.Errorf("error when calculating sha256: %w", err)
-			}
-		}
-	}
-	for _, name := range configMapNames {
-		for _, key := range keysByConfigMapName[name] {
-			if _, err := hash.Write([]byte(key)); err != nil {
-				return "", fmt.Errorf("error when calculating sha256: %w", err)
-			}
-			if _, err := hash.Write([]byte(configMaps[name].Data[key])); err != nil {
-				return "", fmt.Errorf("error when calculating sha256: %w", err)
-			}
-		}
-	}
-
-	if len(secretNames) == 0 && len(configMapNames) == 0 {
-		return "", nil
-	}
-	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+	return cfgs, nil
 }
 
 func (r *CapsuleReconciler) reconcileDeployment(
@@ -377,12 +541,17 @@ func (r *CapsuleReconciler) reconcileDeployment(
 	capsule *rigdevv1alpha1.Capsule,
 	status *rigdevv1alpha1.CapsuleStatus,
 ) error {
-	configChecksum, err := r.filesSHA256(ctx, req, log, capsule)
+	cfgs, err := r.getConfigs(ctx, req, log, capsule)
 	if err != nil {
 		return err
 	}
 
-	deploy, err := createDeployment(capsule, r.Scheme, configChecksum)
+	checksums, err := r.configChecksums(ctx, req, capsule, cfgs)
+	if err != nil {
+		return err
+	}
+
+	deploy, err := createDeployment(capsule, r.Scheme, cfgs, checksums)
 	if err != nil {
 		return err
 	}
@@ -426,7 +595,8 @@ func (r *CapsuleReconciler) reconcileDeployment(
 func createDeployment(
 	capsule *rigdevv1alpha1.Capsule,
 	scheme *runtime.Scheme,
-	configChecksum string,
+	configs *configs,
+	checksums *checksums,
 ) (*appsv1.Deployment, error) {
 	var ports []v1.ContainerPort
 	for _, i := range capsule.Spec.Interfaces {
@@ -487,8 +657,44 @@ func createDeployment(
 
 	podAnnotations := map[string]string{}
 	maps.Copy(capsule.Annotations, podAnnotations)
-	if configChecksum != "" {
-		podAnnotations[_annotationChecksum] = configChecksum
+	if checksums.files != "" {
+		podAnnotations[AnnotationChecksumFiles] = checksums.files
+	}
+	if checksums.env != "" {
+		podAnnotations[AnnotationChecksumEnv] = checksums.env
+	}
+	if checksums.sharedEnv != "" {
+		podAnnotations[AnnotationChecksumSharedEnv] = checksums.sharedEnv
+	}
+
+	var envFrom []v1.EnvFromSource
+	if _, ok := configs.configMaps[capsule.GetName()]; ok {
+		envFrom = append(envFrom, v1.EnvFromSource{
+			ConfigMapRef: &v1.ConfigMapEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{Name: capsule.GetName()},
+			},
+		})
+	}
+	if _, ok := configs.secrets[capsule.GetName()]; ok {
+		envFrom = append(envFrom, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{Name: capsule.GetName()},
+			},
+		})
+	}
+	for _, name := range configs.sharedEnvConfigMaps {
+		envFrom = append(envFrom, v1.EnvFromSource{
+			ConfigMapRef: &v1.ConfigMapEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{Name: name},
+			},
+		})
+	}
+	for _, name := range configs.sharedEnvSecrets {
+		envFrom = append(envFrom, v1.EnvFromSource{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{Name: name},
+			},
+		})
 	}
 
 	d := &appsv1.Deployment{
@@ -499,7 +705,7 @@ func createDeployment(
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					labelRigDevCapsule: capsule.Name,
+					LabelCapsule: capsule.Name,
 				},
 			},
 			Replicas: capsule.Spec.Replicas,
@@ -507,32 +713,15 @@ func createDeployment(
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: podAnnotations,
 					Labels: map[string]string{
-						labelRigDevCapsule: capsule.Name,
+						LabelCapsule: capsule.Name,
 					},
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
-							Name:  capsule.Name,
-							Image: capsule.Spec.Image,
-							EnvFrom: []v1.EnvFromSource{
-								{
-									SecretRef: &v1.SecretEnvSource{
-										LocalObjectReference: v1.LocalObjectReference{
-											Name: capsule.Name,
-										},
-										Optional: ptr.New(true),
-									},
-								},
-								{
-									ConfigMapRef: &v1.ConfigMapEnvSource{
-										LocalObjectReference: v1.LocalObjectReference{
-											Name: capsule.Name,
-										},
-										Optional: ptr.New(true),
-									},
-								},
-							},
+							Name:         capsule.Name,
+							Image:        capsule.Spec.Image,
+							EnvFrom:      envFrom,
 							VolumeMounts: volumeMounts,
 							Ports:        ports,
 							Resources:    makeResourceRequirements(capsule),
@@ -639,7 +828,7 @@ func createService(
 		},
 		Spec: v1.ServiceSpec{
 			Selector: map[string]string{
-				labelRigDevCapsule: capsule.Name,
+				LabelCapsule: capsule.Name,
 			},
 		},
 	}
@@ -973,7 +1162,7 @@ func createLoadBalancer(
 		Spec: v1.ServiceSpec{
 			Type: v1.ServiceTypeLoadBalancer,
 			Selector: map[string]string{
-				labelRigDevCapsule: capsule.Name,
+				LabelCapsule: capsule.Name,
 			},
 		},
 	}

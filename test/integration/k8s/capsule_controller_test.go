@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/nsf/jsondiff"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,6 +22,8 @@ import (
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/hash"
 	netv1 "k8s.io/api/networking/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -28,6 +31,98 @@ import (
 
 	"github.com/rigdev/rig/pkg/ptr"
 )
+
+func (s *K8sTestSuite) TestControllerSharedSecrets() {
+	k8sClient := s.Client
+	t := s.Suite.T()
+	ctx := context.Background()
+	nsName := types.NamespacedName{
+		Name:      uuid.NewString(),
+		Namespace: "default",
+	}
+
+	by(t, "Creating a capsule")
+
+	capsule := v1alpha1.Capsule{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nsName.Name,
+			Namespace: nsName.Namespace,
+		},
+		Spec: v1alpha1.CapsuleSpec{
+			Image: "nginx:1.25.1",
+			HorizontalScale: v1alpha1.HorizontalScale{
+				MinReplicas: ptr.New(uint32(1)),
+				MaxReplicas: ptr.New(uint32(1)),
+			},
+		},
+	}
+
+	require.NoError(t, k8sClient.Create(ctx, &capsule))
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: nsName.Namespace,
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: v1.PodTemplateSpec{
+					Spec: v1.PodSpec{
+						Containers: []v1.Container{{
+							Name: nsName.Name,
+						}},
+					},
+				},
+			},
+		},
+	})
+
+	by(t, "Creating a namespace capsule environment secret")
+
+	secretName := uuid.NewString()
+	secret := v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: nsName.Namespace,
+			Labels: map[string]string{
+				controller.LabelSharedConfig: "true",
+			},
+		},
+		Data: map[string][]byte{
+			"SECRET": []byte("secret"),
+		},
+	}
+
+	require.NoError(t, k8sClient.Create(ctx, &secret))
+
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: nsName.Namespace,
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: v1.PodTemplateSpec{
+					Spec: v1.PodSpec{
+						Containers: []v1.Container{{
+							Name: nsName.Name,
+							EnvFrom: []v1.EnvFromSource{
+								{
+									SecretRef: &v1.SecretEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: secretName,
+										},
+									},
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	})
+}
 
 func (s *K8sTestSuite) TestController() {
 	k8sClient := s.Client
@@ -288,9 +383,10 @@ func (s *K8sTestSuite) TestController() {
 	}
 
 	assert.NoError(t, k8sClient.Create(ctx, cm))
-	hash := sha256.New()
-	hash.Write([]byte("TEST"))
-	hash.Write([]byte("test"))
+
+	h := sha256.New()
+	assert.NoError(t, hash.ConfigMap(h, cm))
+
 	expectResources(ctx, t, k8sClient, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -305,7 +401,7 @@ func (s *K8sTestSuite) TestController() {
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"rig.dev/config-checksum": fmt.Sprintf("%x", hash.Sum(nil)),
+							controller.AnnotationChecksumEnv: fmt.Sprintf("%x", h.Sum(nil)),
 						},
 					},
 					Spec: v1.PodSpec{
@@ -350,9 +446,8 @@ func (s *K8sTestSuite) TestController() {
 
 	assert.NoError(t, k8sClient.Update(ctx, &capsule))
 
-	hash = sha256.New()
-	hash.Write([]byte("test.yaml"))
-	hash.Write([]byte("test1"))
+	h = sha256.New()
+	assert.NoError(t, hash.ConfigMapKeys(h, []string{"test.yaml"}, cm))
 	expectResources(ctx, t, k8sClient, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -367,7 +462,7 @@ func (s *K8sTestSuite) TestController() {
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"rig.dev/config-checksum": fmt.Sprintf("%x", hash.Sum(nil)),
+							controller.AnnotationChecksumFiles: fmt.Sprintf("%x", h.Sum(nil)),
 						},
 					},
 					Spec: v1.PodSpec{
@@ -387,9 +482,8 @@ func (s *K8sTestSuite) TestController() {
 	cm.Data["test.yaml"] = "test2"
 
 	assert.NoError(t, k8sClient.Update(ctx, cm))
-	hash = sha256.New()
-	hash.Write([]byte("test.yaml"))
-	hash.Write([]byte("test2"))
+	h = sha256.New()
+	assert.NoError(t, hash.ConfigMapKeys(h, []string{"test.yaml"}, cm))
 	expectResources(ctx, t, k8sClient, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -404,7 +498,7 @@ func (s *K8sTestSuite) TestController() {
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"rig.dev/config-checksum": fmt.Sprintf("%x", hash.Sum(nil)),
+							controller.AnnotationChecksumFiles: fmt.Sprintf("%x", h.Sum(nil)),
 						},
 					},
 					Spec: v1.PodSpec{

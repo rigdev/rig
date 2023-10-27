@@ -16,11 +16,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/rigdev/rig/pkg/controller"
-
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/manager"
 	//+kubebuilder:scaffold:imports
+)
+
+const (
+	waitFor = time.Second * 10
+	tick    = time.Millisecond * 200
 )
 
 type K8sTestSuite struct {
@@ -107,8 +111,3 @@ func TestIntegrationK8s(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, new(K8sTestSuite))
 }
-
-const (
-	waitFor = time.Second * 10
-	tick    = time.Millisecond * 200
-)
