@@ -16,6 +16,7 @@ message StageInfo {
   string name = 1;
   google.protobuf.Timestamp updated_at = 2;
   StageState state = 3;
+  google.protobuf.Timestamp started_at = 4;
 }
 
 enum StageState {
@@ -34,6 +35,7 @@ message StepInfo {
   string message = 2;
   google.protobuf.Timestamp updated_at = 3;
   StepState state = 4;
+  google.protobuf.Timestamp started_at = 5;
 }
 
 enum StepState {
