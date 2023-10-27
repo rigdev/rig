@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	alpha1v1 "github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	alpha1v1 "github.com/rigdev/rig/pkg/api/v1alpha1"
 )
 
 func (s *K8sTestSuite) TestCapsuleOpenAPIValidation() {
