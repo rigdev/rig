@@ -656,7 +656,7 @@ func createDeployment(
 	}
 
 	podAnnotations := map[string]string{}
-	maps.Copy(capsule.Annotations, podAnnotations)
+	maps.Copy(podAnnotations, capsule.Annotations)
 	if checksums.files != "" {
 		podAnnotations[AnnotationChecksumFiles] = checksums.files
 	}

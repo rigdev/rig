@@ -15,6 +15,7 @@ import (
 	container_name "github.com/google/go-containerregistry/pkg/name"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
@@ -271,14 +272,13 @@ func (c Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID st
 		}
 		eventCount += len(eventRes.Msg.GetEvents())
 
-		switch res.Msg.GetRollout().GetStatus().GetState() {
-		case capsule.RolloutState_ROLLOUT_STATE_DONE:
+		switch res.Msg.GetRollout().GetRolloutStatus().GetState() {
+		case rollout.State_STATE_RUNNING:
+			fallthrough
+		case rollout.State_STATE_DONE:
 			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment complete")
 			return nil
-		case capsule.RolloutState_ROLLOUT_STATE_FAILED:
-			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment failed")
-			return nil
-		case capsule.RolloutState_ROLLOUT_STATE_ABORTED:
+		case rollout.State_STATE_ABORTED:
 			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment aborted")
 			return nil
 		}
