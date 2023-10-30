@@ -27,6 +27,20 @@ func TestDefault(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "spec.env.autotmatic defaults to true, when env is not nil.",
+			spec: CapsuleSpec{
+				Env: &Env{},
+			},
+			expected: CapsuleSpec{
+				Replicas: ptr.New(int32(1)),
+				HorizontalScale: HorizontalScale{
+					MinReplicas: ptr.New(uint32(1)),
+					MaxReplicas: ptr.New(uint32(1)),
+				},
+				Env: &Env{Automatic: ptr.New(true)},
+			},
+		},
 	}
 
 	for i := range tests {

@@ -36,6 +36,9 @@ func (r *Capsule) Default() {
 		max := *r.Spec.HorizontalScale.MinReplicas
 		r.Spec.HorizontalScale.MaxReplicas = ptr.New(max)
 	}
+	if r.Spec.Env != nil && r.Spec.Env.Automatic == nil {
+		r.Spec.Env.Automatic = ptr.New(true)
+	}
 }
 
 //+kubebuilder:webhook:path=/validate-rig-dev-v1alpha1-capsule,mutating=false,failurePolicy=fail,sideEffects=None,groups=rig.dev,resources=capsules,verbs=create;update,versions=v1alpha1,name=vcapsule.kb.io,admissionReviewVersions=v1
