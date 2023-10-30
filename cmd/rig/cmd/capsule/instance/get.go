@@ -64,11 +64,11 @@ func instanceStatusToTableRows(instance *instance.Status) [][]any {
 	rows[1][0] = ""
 	stages := instance.GetStages()
 
-	rows[0][1] = stages.GetPreparing().GetInfo().GetName()
-	rows[1][1] = stages.GetPreparing().GetInfo().GetState().String()
+	rows[0][1] = stages.GetSchedule().GetInfo().GetName()
+	rows[1][1] = stages.GetSchedule().GetInfo().GetState().String()
 
-	rows[0][2] = stages.GetSchedule().GetInfo().GetName()
-	rows[1][2] = stages.GetSchedule().GetInfo().GetState().String()
+	rows[0][2] = stages.GetPreparing().GetInfo().GetName()
+	rows[1][2] = stages.GetPreparing().GetInfo().GetState().String()
 
 	rows[0][3] = stages.GetRunning().GetInfo().GetName()
 	rows[1][3] = stages.GetRunning().GetInfo().GetState().String()
