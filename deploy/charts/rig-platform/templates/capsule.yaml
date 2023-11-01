@@ -31,7 +31,7 @@ spec:
   files:
     - path: /etc/rig/server-config.yaml
       secret:
-        name: {{ include "rig-platform.fullname" . }}
+        name: {{ include "rig-platform.fullname" . }}-config
         key: server-config.yaml
   {{- with .Values.resources }}
   resources: {{ toYaml . | nindent 12 }}
