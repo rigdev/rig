@@ -10,27 +10,27 @@ repository:
     mongodb:
       key: thisisasecret
 client:
-  {{- with .Values.rig.client.postgres }}
+  {{- if or .Values.rig.client.postgres.host .Values.postgres.enabled }}
   postgres:
-    {{- if $.Values.postgres.enabled }}
-    host: "{{ include "rig-platform.fullname" $ }}-postgres:5432"
+    {{- if .Values.postgres.enabled }}
+    host: "{{ include "rig-platform.fullname" . }}-postgres:5432"
     insecure: true
     {{- else }}
-    host: {{ .host | quote }}
-    insecure: {{ .insecure }}
+    host: {{ .Values.rig.client.postgres.host | quote }}
+    insecure: {{ .Values.rig.client.postgres.insecure }}
     {{- end }}
-    user: {{ .user | quote }}
-    password: {{ .password | quote }}
+    user: {{ .Values.rig.client.postgres.user | quote }}
+    password: {{ .Values.rig.client.postgres.password | quote }}
   {{- end }}
-  {{- with .Values.rig.client.mongo }}
+  {{- if or .Values.rig.client.mongo.host .Values.mongodb.enabled }}
   mongo:
-    {{- if $.Values.mongodb.enabled }}
-    host: "{{ include "rig-platform.fullname" $ }}-mongodb:27017"
+    {{- if .Values.mongodb.enabled }}
+    host: "{{ include "rig-platform.fullname" . }}-mongodb:27017"
     {{- else }}
-    host: {{ .host | quote }}
+    host: {{ .Values.rig.client.mongo.host | quote }}
     {{- end }}
-    user: {{ .user | quote }}
-    password: {{ .password | quote }}
+    user: {{ .Values.rig.client.mongo.user | quote }}
+    password: {{ .Values.rig.client.mongo.password | quote }}
   {{- end }}
   {{- with .Values.rig.client.minio }}
   minio:
