@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"strings"
 
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
@@ -47,8 +48,6 @@ func (r RootCmd) Execute() error {
 		PersistentPreRunE: r.preRun,
 	}
 
-	// database.Setup(rootCmd)
-	// storage.Setup(rootCmd)
 	r.Dev.Setup(rootCmd)
 	r.Capsule.Setup(rootCmd)
 	r.Auth.Setup(rootCmd)
@@ -60,9 +59,29 @@ func (r RootCmd) Execute() error {
 	r.Project.Setup(rootCmd)
 	rootCmd.AddCommand(build.VersionCommand())
 
+	rootCmd.InitDefaultHelpCmd()
+	rootCmd.InitDefaultCompletionCmd()
+	cmds := rootCmd.Commands()
+	for _, c := range cmds {
+		if strings.HasPrefix(c.Use, "help ") {
+			omitForCommand(c)
+		}
+		if strings.HasPrefix(c.Use, "completions") {
+			omitForCommand(c)
+		}
+	}
+
 	return rootCmd.Execute()
 }
 
 func (r RootCmd) preRun(cmd *cobra.Command, args []string) error {
 	return base.CheckAuth(cmd, r.Rig, r.Cfg)
+}
+
+func omitForCommand(cmd *cobra.Command) {
+	if cmd.Annotations == nil {
+		cmd.Annotations = map[string]string{}
+	}
+	cmd.Annotations[base.OmitUser] = ""
+	cmd.Annotations[base.OmitProject] = ""
 }
