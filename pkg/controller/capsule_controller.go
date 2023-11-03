@@ -523,7 +523,7 @@ func (r *CapsuleReconciler) getConfigs(
 			}
 
 			var s v1.Secret
-			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.ConfigMap.Name}, &s)
+			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.Secret.Name}, &s)
 			if err != nil {
 				return nil, fmt.Errorf("could not get file secret: %w", err)
 			}
