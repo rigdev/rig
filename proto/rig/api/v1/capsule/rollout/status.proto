@@ -10,6 +10,7 @@ message Status {
   State state = 2;
   Stages stages = 3;
   google.protobuf.Timestamp updated_at = 4;
+  Result result = 5;
 }
 
 message StageInfo {
@@ -48,10 +49,17 @@ enum StepState {
 enum State {
   STATE_UNSPECIFIED = 0;
   STATE_PREPARING = 1;
-  STATE_DEPLOYING = 2;
-  STATE_RUNNING = 3;
-  STATE_ABORTED = 4;
-  STATE_DONE = 5;
+  STATE_CONFIGURE = 2;
+  STATE_RESOURCE_CREATION = 3;
+  STATE_RUNNING = 4;
+  STATE_STOPPED = 5;
+}
+
+enum Result {
+  RESULT_UNSPECIFIED = 0;
+  RESULT_DONE = 1;
+  RESULT_ABORTED = 2;
+  RESULT_ROLLBACK = 3;
 }
 
 message Stages {
