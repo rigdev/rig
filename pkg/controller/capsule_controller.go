@@ -1322,6 +1322,8 @@ func upsertIfNewer[T client.Object](
 		return fmt.Errorf("found existing %s not owned by capsule", gvk.Kind)
 	}
 
+	orig := newObj.DeepCopyObject().(client.Object)
+
 	// Dry run to fully materialize the new spec.
 	newObj.SetResourceVersion(currentObj.GetResourceVersion())
 	if err := r.Update(ctx, newObj, client.DryRunAll); err != nil {
@@ -1333,7 +1335,7 @@ func upsertIfNewer[T client.Object](
 
 	if !equal(newObj, currentObj) {
 		log.Info("updating resource")
-		if err := r.Update(ctx, newObj); err != nil {
+		if err := r.Update(ctx, orig); err != nil {
 			res.State = "failed"
 			res.Message = err.Error()
 			return fmt.Errorf("could not update %s: %w", gvk.Kind, err)
