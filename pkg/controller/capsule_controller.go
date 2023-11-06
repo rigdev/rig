@@ -396,7 +396,7 @@ func (r *CapsuleReconciler) configFilesChecksum(
 				continue
 			}
 			referencedKeysByConfigMapName[f.ConfigMap.Name] = map[string]struct{}{
-				f.ConfigMap.Key: struct{}{},
+				f.ConfigMap.Key: {},
 			}
 		}
 		if f.Secret != nil {
@@ -405,7 +405,7 @@ func (r *CapsuleReconciler) configFilesChecksum(
 				continue
 			}
 			referencedKeysBySecretName[f.Secret.Name] = map[string]struct{}{
-				f.Secret.Key: struct{}{},
+				f.Secret.Key: {},
 			}
 		}
 	}
@@ -515,8 +515,6 @@ func (r *CapsuleReconciler) getConfigs(
 			}
 			cfgs.configMaps[cm.Name] = &cm
 		}
-	}
-	for _, f := range capsule.Spec.Files {
 		if f.Secret != nil {
 			if _, ok := cfgs.secrets[f.Secret.Name]; ok {
 				continue
