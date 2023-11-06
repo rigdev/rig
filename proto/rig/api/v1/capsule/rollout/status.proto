@@ -57,9 +57,10 @@ enum State {
 
 enum Result {
   RESULT_UNSPECIFIED = 0;
-  RESULT_DONE = 1;
-  RESULT_ABORTED = 2;
-  RESULT_ROLLBACK = 3;
+  RESULT_REPLACED = 1;
+  RESULT_FAILED = 2;
+  RESULT_ABORTED = 3;
+  RESULT_ROLLBACK = 4;
 }
 
 message Stages {
