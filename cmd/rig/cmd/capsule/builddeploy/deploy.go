@@ -47,7 +47,6 @@ func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
 			res, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
 		} else {
 			res, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
-
 		}
 	}
 	if err != nil {
@@ -273,13 +272,8 @@ func (c Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID st
 		eventCount += len(eventRes.Msg.GetEvents())
 
 		switch res.Msg.GetRollout().GetRolloutStatus().GetState() {
-		case rollout.State_STATE_RUNNING:
-			fallthrough
-		case rollout.State_STATE_DONE:
+		case rollout.State_STATE_RUNNING, rollout.State_STATE_STOPPED:
 			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment complete")
-			return nil
-		case rollout.State_STATE_ABORTED:
-			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment aborted")
 			return nil
 		}
 
