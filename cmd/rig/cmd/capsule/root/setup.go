@@ -9,6 +9,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/docker/docker/client"
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -79,11 +80,24 @@ func (c Cmd) Setup(parent *cobra.Command) {
 				return nil
 			}
 
-			var err error
-			capsule.CapsuleID, err = common.PromptInput("Capsule id:", common.ValidateNonEmptyOpt)
+			resp, err := c.Rig.Capsule().List(c.Ctx, connect.NewRequest(&capsule_api.ListRequest{
+				Pagination: &model.Pagination{},
+			}))
 			if err != nil {
 				return err
 			}
+
+			var capsuleNames []string
+			for _, c := range resp.Msg.GetCapsules() {
+				capsuleNames = append(capsuleNames, c.GetCapsuleId())
+			}
+
+			_, name, err := common.PromptSelect("Capsule: ", capsuleNames, common.SelectFuzzyFilterOpt)
+			if err != nil {
+				return err
+			}
+			capsule.CapsuleID = name
+
 			return nil
 		},
 	}

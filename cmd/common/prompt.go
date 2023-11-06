@@ -2,7 +2,6 @@ package common
 
 import (
 	"bytes"
-	"errors"
 	"html/template"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"github.com/lithammer/fuzzysearch/fuzzy"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
 	"golang.org/x/exp/slices"
 )
@@ -108,7 +108,7 @@ var inputTemplate = `
 	{{- if .ValidationError }}
         {{- Foreground "1" (Bold "✘") }}
         {{- if ge (len (StripCursor .Input)) 3 }}
-            {{- printf " %s" (Italic .ValidationError.Error) }}
+            {{- printf " %s" (Italic (FormatValidationError .ValidationError)) }}
         {{- end }}
 	{{- else }} {{ Foreground "2" (Bold "✔") }}
 	{{- end -}}
@@ -134,10 +134,32 @@ func stripCursor(s string) string {
 	return s
 }
 
+func formatValidationError(err error) string {
+	if err == nil {
+		return ""
+	}
+	s := err.Error()
+	badPrefixes := []string{"invalid_argument:", "invalid password;"}
+	for {
+		found := false
+		for _, p := range badPrefixes {
+			var b bool
+			s = strings.TrimSpace(s)
+			s, b = strings.CutPrefix(s, p)
+			found = found || b
+		}
+		if !found {
+			break
+		}
+	}
+	return s
+}
+
 var templateExtensions = map[string]any{
 	// The Input variable to the Input template will get the blinking cursor prepended
 	// Thus you need to strip it if you want access to the real input
-	"StripCursor": stripCursor,
+	"StripCursor":           stripCursor,
+	"FormatValidationError": formatValidationError,
 }
 
 func PromptInput(label string, opts ...GetInputOption) (string, error) {
@@ -159,7 +181,8 @@ func PromptPassword(label string) (string, error) {
 	input := textinput.New(label)
 	input.Hidden = true
 	input.Validate = utils.ValidatePassword
-	input.ResultTemplate = ""
+	input.Template = inputTemplate
+	input.ExtendedTemplateFuncs = templateExtensions
 
 	pw, err := input.RunPrompt()
 	if err != nil {

@@ -46,12 +46,10 @@ func ValidatePassword(password string) error {
 			return errors.InvalidArgumentErrorf("invalid password; contains invalid characters")
 		}
 	}
-	if !num {
-		return errors.InvalidArgumentErrorf("invalid password; missing required number")
-	} else if !sym {
-		return errors.InvalidArgumentErrorf("invalid password; missing required symbol")
-	} else if tot < 8 {
-		return errors.InvalidArgumentErrorf("invalid password; must be at least 8 chars long")
+	err := errors.InvalidArgumentErrorf("invalid password; must contain a number, normal symbol and be at least 8 chars long")
+
+	if !num || tot < 8 || !sym {
+		return err
 	}
 	return nil
 }
