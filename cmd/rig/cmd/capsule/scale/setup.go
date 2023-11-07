@@ -21,6 +21,7 @@ var (
 	requestMemory string
 	limitCPU      string
 	limitMemory   string
+	gpuType       string
 )
 
 var (
@@ -28,6 +29,7 @@ var (
 	utilizationPercentage uint32
 	minReplicas           uint32
 	maxReplicas           uint32
+	gpuLimit              uint32
 )
 
 type Cmd struct {
@@ -70,6 +72,12 @@ func (r Cmd) Setup(parent *cobra.Command) {
 	scaleVertical.Flags().StringVar(&limitMemory, "limit-memory", "", "Maximum memory per container")
 	scaleVertical.RegisterFlagCompletionFunc("limit-cpu", common.NoCompletions)
 	scaleVertical.RegisterFlagCompletionFunc("limit-memory", common.NoCompletions)
+
+	scaleVertical.Flags().Uint32Var(&gpuLimit, "limit-gpu", 0, "Maximum number of GPUs per container")
+	scaleVertical.Flags().StringVar(&gpuType, "gpu-type", "", "GPU type")
+	scaleVertical.RegisterFlagCompletionFunc("limit-gpu", common.NoCompletions)
+	scaleVertical.RegisterFlagCompletionFunc("gpu-type", common.NoCompletions)
+	scaleVertical.MarkFlagsRequiredTogether("limit-gpu", "gpu-type")
 
 	scaleVertical.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	scaleVertical.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
