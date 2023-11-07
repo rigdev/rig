@@ -11,6 +11,7 @@ import "api/v1/capsule/instance/status.proto";
 import "api/v1/capsule/event.proto";
 import "api/v1/capsule/metrics.proto";
 import "model/common.proto";
+import "google/protobuf/duration.proto";
 
 // The service to manage capsules.
 service Service {
@@ -98,6 +99,8 @@ message LogsRequest {
   string instance_id = 2;
   // If true, the request will stay open and stream new log messages.
   bool follow = 3;
+  // If set, will not show logs older than since.
+  google.protobuf.Duration since = 4;
 }
 
 // The response of a capsule.Logs RPC

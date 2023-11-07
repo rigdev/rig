@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 message Log {
   google.protobuf.Timestamp timestamp = 1;
   LogMessage message = 2;
+  string instance_id = 3;
 }
 
 message LogMessage {

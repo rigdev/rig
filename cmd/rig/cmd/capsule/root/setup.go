@@ -34,11 +34,13 @@ var (
 	interactive bool
 	outputJSON  bool
 	forceDeploy bool
+	follow      bool
 )
 
 var (
 	command string
 	args    []string
+	since   string
 )
 
 var omitCapsuleIDAnnotation = map[string]string{
@@ -168,6 +170,17 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	capsuleConfig.RegisterFlagCompletionFunc("cmd", common.NoCompletions)
 	capsuleConfig.RegisterFlagCompletionFunc("args", common.NoCompletions)
 	capsuleCmd.AddCommand(capsuleConfig)
+
+	capsuleLogs := &cobra.Command{
+		Use:               "logs",
+		Short:             "Get logs across all instances of the capsule",
+		Args:              cobra.NoArgs,
+		RunE:              c.logs,
+		ValidArgsFunction: common.NoCompletions,
+	}
+	capsuleLogs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
+	capsuleLogs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
+	capsuleCmd.AddCommand(capsuleLogs)
 
 	c.Scale.Setup(capsuleCmd)
 	c.BuildDeploy.Setup(capsuleCmd)
