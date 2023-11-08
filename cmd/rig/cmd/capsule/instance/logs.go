@@ -1,14 +1,13 @@
 package instance
 
 import (
-	"os"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func (c Cmd) logs(cmd *cobra.Command, args []string) error {
@@ -17,7 +16,13 @@ func (c Cmd) logs(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		arg = args[0]
 	}
+
 	instanceID, err := c.provideInstanceID(ctx, capsule_cmd.CapsuleID, arg)
+	if err != nil {
+		return err
+	}
+
+	duration, err := time.ParseDuration(since)
 	if err != nil {
 		return err
 	}
@@ -27,30 +32,12 @@ func (c Cmd) logs(cmd *cobra.Command, args []string) error {
 			CapsuleId:  capsule_cmd.CapsuleID,
 			InstanceId: instanceID,
 			Follow:     follow,
+			Since:      durationpb.New(duration),
 		},
 	})
 	if err != nil {
 		return err
 	}
 
-	for s.Receive() {
-		switch v := s.Msg().GetLog().GetMessage().GetMessage().(type) {
-		case *capsule.LogMessage_Stdout:
-			os.Stdout.WriteString(s.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
-			os.Stdout.WriteString(": ")
-			if _, err := os.Stdout.Write(v.Stdout); err != nil {
-				return err
-			}
-		case *capsule.LogMessage_Stderr:
-			os.Stderr.WriteString(s.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
-			os.Stderr.WriteString(": ")
-			if _, err := os.Stderr.Write(v.Stderr); err != nil {
-				return err
-			}
-		default:
-			return errors.InvalidArgumentErrorf("invalid log message")
-		}
-	}
-
-	return s.Err()
+	return capsule_cmd.PrintLogs(s)
 }

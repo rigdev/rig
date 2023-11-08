@@ -3,13 +3,16 @@ package capsule
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
 )
@@ -143,4 +146,52 @@ func AbortAndDeploy(ctx context.Context, rig rig.Client, capsuleID string, req *
 	}
 
 	return rig.Capsule().Deploy(ctx, req)
+}
+
+func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) error {
+	for stream.Receive() {
+		switch v := stream.Msg().GetLog().GetMessage().GetMessage().(type) {
+		case *capsule.LogMessage_Stdout:
+			printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stdout)
+			os.Stdout.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
+			os.Stdout.WriteString(": ")
+			if _, err := os.Stdout.Write(v.Stdout); err != nil {
+				return err
+			}
+		case *capsule.LogMessage_Stderr:
+			printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stderr)
+			os.Stderr.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
+			os.Stderr.WriteString(": ")
+			if _, err := os.Stderr.Write(v.Stderr); err != nil {
+				return err
+			}
+		default:
+			return errors.InvalidArgumentErrorf("invalid log message")
+		}
+	}
+
+	return stream.Err()
+}
+
+var colors = []color.Attribute{
+	color.FgRed,
+	color.FgBlue,
+	color.FgCyan,
+	color.FgGreen,
+	color.FgYellow,
+	color.FgMagenta,
+	color.FgWhite,
+}
+
+var instanceToColor = map[string]color.Attribute{}
+
+func printInstanceID(instanceID string, out *os.File) {
+	c, ok := instanceToColor[instanceID]
+	if !ok {
+		c = colors[len(instanceToColor)%len(colors)]
+		instanceToColor[instanceID] = c
+	}
+	color.Set(c)
+	out.WriteString(instanceID + " ")
+	color.Unset()
 }

@@ -28,6 +28,10 @@ var (
 	follow     bool
 )
 
+var (
+	since string
+)
+
 type Cmd struct {
 	fx.In
 
@@ -74,6 +78,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
 	}
 	logs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
+	logs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
 	logs.RegisterFlagCompletionFunc("follow", common.BoolCompletions)
 	instance.AddCommand(logs)
 
