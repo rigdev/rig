@@ -63,7 +63,6 @@ func (c Cmd) configure(cmd *cobra.Command, args []string) error {
 			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
 		} else {
 			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
-
 		}
 	}
 	if err != nil {

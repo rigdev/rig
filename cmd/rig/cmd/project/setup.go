@@ -171,10 +171,13 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	project.AddCommand(listProjects)
 
 	use := &cobra.Command{
-		Use:               "use [project-id | project-name]",
-		Short:             "Set the project to query for project-scoped resources",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.use,
+		Use:   "use [project-id | project-name]",
+		Short: "Set the project to query for project-scoped resources",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  c.use,
+		Annotations: map[string]string{
+			base.OmitProject: "",
+		},
 		ValidArgsFunction: c.useProjectCompletion,
 	}
 	project.AddCommand(use)
