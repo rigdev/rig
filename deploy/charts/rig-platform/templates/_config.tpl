@@ -2,63 +2,192 @@
 Rig Server config file
 */}}
 {{- define "rig-platform.config" -}}
-auth:
-  jwt:
-    secret: shhhdonotshare
-repository:
-  secret:
-    mongodb:
-      key: thisisasecret
+{{- with .Values.rig -}}
+port: {{ $.Values.port }}
+{{- if $.Values.ingress.enabled }}
+public_url: {{ printf "https://%s" $.Values.ingress.host | quote }}
+{{- end }}
+telemetry:
+  enabled: {{ .telemetry.enabled }}
 client:
-  {{- if or .Values.rig.client.postgres.host .Values.postgres.enabled }}
+  {{- if or .client.postgres.host $.Values.postgres.enabled }}
   postgres:
-    {{- if .Values.postgres.enabled }}
-    host: "{{ include "rig-platform.fullname" . }}-postgres:5432"
+    {{- if $.Values.postgres.enabled }}
+    host: "{{ include "rig-platform.fullname" $ }}-postgres:5432"
     insecure: true
     {{- else }}
-    host: {{ .Values.rig.client.postgres.host | quote }}
-    insecure: {{ .Values.rig.client.postgres.insecure }}
+    host: {{ .client.postgres.host | quote }}
+    insecure: {{ .client.postgres.insecure }}
     {{- end }}
-    user: {{ .Values.rig.client.postgres.user | quote }}
-    password: {{ .Values.rig.client.postgres.password | quote }}
+    user: {{ .client.postgres.user | quote }}
   {{- end }}
-  {{- if or .Values.rig.client.mongo.host .Values.mongodb.enabled }}
+
+  {{- if or .client.mongo.host $.Values.mongodb.enabled }}
   mongo:
-    {{- if .Values.mongodb.enabled }}
-    host: "{{ include "rig-platform.fullname" . }}-mongodb:27017"
+    {{- if $.Values.mongodb.enabled }}
+    host: "{{ include "rig-platform.fullname" $ }}-mongodb:27017"
     {{- else }}
-    host: {{ .Values.rig.client.mongo.host | quote }}
+    host: {{ .client.mongo.host | quote }}
     {{- end }}
-    user: {{ .Values.rig.client.mongo.user | quote }}
-    password: {{ .Values.rig.client.mongo.password | quote }}
+    user: {{ .client.mongo.user | quote }}
   {{- end }}
-  {{- with .Values.rig.client.minio }}
+
+  {{- if .client.minio.host }}
   minio:
-    endpoint: {{ .endpoint | quote }}
-    secure: {{ .secure }}
-    access_key_id: {{ .access_key_id | quote }}
-    secret_access_key: {{ .secret_access_key | quote }}
+    host: {{ .client.minio.host | quote }}
+    endpoint: {{ .client.minio.endpoint | quote }}
+    secure: {{ .client.minio.secure }}
   {{- end }}
-  {{- if .Values.rig.client.operator.base_url }}
+
+  {{- if .client.mailjet.api_key }}
+  mailjet:
+    api_key: {{ .client.mailjet.api_key | quote }}
+  {{- end }}
+
+  {{- if .client.smtp.host }}
+  smtp:
+    host: {{ .client.smtp.host | quote }}
+    port: {{ .client.smtp.port }}
+    username: {{ .client.smtp.username | quote }}
+  {{- end }}
+
+  {{- if .client.operator.base_url }}
   operator:
-    base_url: {{ .Values.rig.client.operator.base_url }}
+    base_url: {{ .client.operator.base_url }}
   {{- end }}
+repository:
+  capsule: {{ include "rig-platform.repository" $ | nindent 4 }}
+  service_account: {{ include "rig-platform.repository" $ | nindent 4 }}
+  group: {{ include "rig-platform.repository" $ | nindent 4 }}
+  project: {{ include "rig-platform.repository" $ | nindent 4 }}
+  cluster_config: {{ include "rig-platform.repository" $ | nindent 4 }}
+  session: {{ include "rig-platform.repository" $ | nindent 4 }}
+  user: {{ include "rig-platform.repository" $ | nindent 4 }}
+  verification_code: {{ include "rig-platform.repository" $ | nindent 4 }}
+  secret: {{ include "rig-platform.repository" $ | nindent 4 }}
 cluster:
   type: k8s
-  {{- with .Values.rig.cluster.dev_registry }}
+  {{- if .cluster.dev_registry.host }}
   dev_registry:
-    enabled: {{ .enabled }}
-    host: {{ .host }}
-    cluster_host: {{ .cluster_host }}
+    host: {{ .cluster.dev_registry.host | quote }}
+    cluster_host: {{ default .cluster.dev_registry.host .cluster.dev_registry.cluster_host | quote }}
   {{- end }}
-{{- with .Values.rig.email }}
+  {{- if .cluster.git.url }}
+  git:
+    {{- with .cluster.git }}
+    url: {{ .url | quote }}
+    branch: {{ .branch | quote }}
+    {{- if .credentials.path_prefix }}
+    path_prefix: {{ .credentials.path_prefix | quote }}
+    {{- end }}
+    {{- if .credentials.https.username }}
+    credentials:
+      https:
+        username: {{ .credentials.https.username | quote }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+
+{{- if .email.type }}
 email:
-  type: {{ .type | quote }}
+  type: {{ .email.type | quote }}
+  from: {{ .email.from | quote }}
 {{- end }}
-{{- with .Values.rig.registry }}
-registry:
-  enabled: {{ .enabled }}
-  port: {{ .port }}
-  log_level: {{ .log_level }}
+logging:
+  level: {{ .logging.level | quote }}
+  {{- if .logging.dev_mode }}
+  dev_mode: {{ .logging.dev_mode }}
+  {{- end }}
+
 {{- end }}
+{{- end -}}
+
+{{/*
+Rig platform repository
+*/}}
+{{- define "rig-platform.repository" -}}
+{{- if .Values.rig.client.mongo.host -}}
+store: "mongodb"
+{{- else -}}
+store: "postgres"
+{{- end -}}
+{{- end -}}
+
+{{/*
+Rig Server secret config
+*/}}
+{{- define "rig-platform.config-secret" -}}
+{{- with .Values.rig -}}
+
+auth:
+
+  {{- with .auth.jwt }}
+  jwt:
+    {{- if and .certficate_file .certificate_key_file }}
+    certficate_file: {{ .certificate_file | quote }}
+    certificate_key_file: {{ .certificate_key_file | quote }}
+    {{- else }}
+    secret: {{ .secret | quote }}
+    {{- end }}
+  {{- end }}
+
+{{- with .client }}
+client:
+  {{- if .postgres.password }}
+  postgres:
+    password: {{ .postgres.password | quote }}
+  {{- end }}
+  {{- if .mongo.password }}
+  mongo:
+    password: {{ .mongo.password | quote }}
+  {{- end }}
+  {{- if .minio.secret_access_key }}
+  minio:
+    secret_access_key: {{ .minio.secret_access_key | quote }}
+  {{- end }}
+  {{- if .mailjet.secret_key }}
+  mailjet:
+    secret_key: {{ .mailjet.secret_key | quote }}
+  {{- end }}
+  {{- if .smtp.password }}
+  smtp:
+    password: {{ .smtp.password | quote }}
+  {{- end }}
+{{- end }}
+
+{{- with .repository.secret }}
+{{- if or .mongodb.key .postgres.key }}
+repository:
+  secret:
+    {{- if .mongodb.key }}
+    mongodb:
+      key: {{ .mongodb.key | quote }}
+    {{- end }}
+    {{- if .postgres.key }}
+    postgres:
+      key: {{ .postgres.key | quote }}
+    {{- end }}
+{{- end }}
+{{- end }}
+
+{{- with .cluster.git.credentials }}
+{{- if or .https.password .ssh.private_key }}
+cluster:
+  git:
+    credentials:
+      {{- if .https.password }}
+      https:
+        password: {{ .https.password | quote }}
+      {{- end }}
+      {{- if .ssh.private_key }}
+      ssh:
+        private_key: {{ .ssh.private_key | quote }}
+        {{- if .ssh.private_key_password }}
+        private_key_password: {{ .ssh.private_key_password | quote }}
+        {{- end }}
+      {{- end }}
+{{- end }}
+{{- end }}
+
+{{- end -}}
 {{- end -}}

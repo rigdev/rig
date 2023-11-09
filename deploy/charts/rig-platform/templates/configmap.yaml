@@ -1,9 +1,7 @@
-{{- if not .Values.secretName -}}
 apiVersion: v1
-kind: Secret
+kind: ConfigMap
 metadata:
   name: {{ include "rig-platform.fullname" . }}-config
   labels: {{ include "rig-platform.labels" . | nindent 4 }}
 data:
-  config.yaml: {{ include "rig-platform.config-secret" . | b64enc }}
-{{- end }}
+  config.yaml: | {{ include "rig-platform.config" . | nindent 4 }}
