@@ -62,6 +62,33 @@ service Service {
   // ListInstanceStatuses lists the status of all instances.
   rpc ListInstanceStatuses(ListInstanceStatusesRequest)
       returns (ListInstanceStatusesResponse) {}
+
+  // Execute executes a command in a given in instance, 
+  // and returns the output along with an exit code.
+  rpc Execute(stream ExecuteRequest) returns (stream ExecuteResponse) {}
+}
+
+message ExecuteRequest{
+  message Start{
+    string capsule_id = 1;
+    string instance_id = 2;
+    string command = 3;
+    repeated string arguments = 4;
+    bool tty = 5;
+    bool interactive = 6;
+  }
+
+  oneof request {
+    Start start = 1;
+    bytes stdin = 2;
+  }
+}
+
+message ExecuteResponse{
+  oneof response {
+    bytes stdout = 1;
+    bytes stderr = 2;
+  }
 }
 
 message CreateRequest {
