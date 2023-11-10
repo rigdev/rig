@@ -34,7 +34,7 @@ func getEnvWithDefault(env, def string) string {
 	if v == "" {
 		return def
 	}
-	return env
+	return v
 }
 
 func NewManager(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, error) {
