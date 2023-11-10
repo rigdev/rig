@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"os"
+
 	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -27,6 +29,14 @@ func NewScheme() *runtime.Scheme {
 	return s
 }
 
+func getEnvWithDefault(env, def string) string {
+	v := os.Getenv(env)
+	if v == "" {
+		return def
+	}
+	return env
+}
+
 func NewManager(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, error) {
 	cfg := cfgS.Get()
 
@@ -39,8 +49,9 @@ func NewManager(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, e
 		Logger:                  logger,
 		LeaderElection:          *cfg.LeaderElectionEnabled,
 		LeaderElectionID:        "3d9f417a.rig.dev",
-		LeaderElectionNamespace: "rig-system",
+		LeaderElectionNamespace: getEnvWithDefault("POD_NAMESPACE", "rig-system"),
 	})
+
 	if err != nil {
 		return nil, err
 	}
