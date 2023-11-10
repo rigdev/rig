@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	alpha1v1 "github.com/rigdev/rig/pkg/api/v1alpha1"
+	alpha1v2 "github.com/rigdev/rig/pkg/api/v1alpha2"
 )
 
 func (s *K8sTestSuite) TestCapsuleOpenAPIValidation() {
@@ -19,22 +19,22 @@ func (s *K8sTestSuite) TestCapsuleOpenAPIValidation() {
 
 	tests := []struct {
 		name         string
-		capsule      *alpha1v1.Capsule
+		capsule      *alpha1v2.Capsule
 		expectedErrs field.ErrorList
 	}{
 		{
 			name: "port number should be greater than 0",
-			capsule: &alpha1v1.Capsule{
-				Spec: alpha1v1.CapsuleSpec{
+			capsule: &alpha1v2.Capsule{
+				Spec: alpha1v2.CapsuleSpec{
 					Image: "test",
-					Interfaces: []alpha1v1.CapsuleInterface{
+					Interfaces: []alpha1v2.CapsuleInterface{
 						{Name: "test", Port: 0},
 						{Name: "test", Port: -42},
 						{
 							Name: "test",
 							Port: 1,
-							Public: &alpha1v1.CapsulePublicInterface{
-								LoadBalancer: &alpha1v1.CapsuleInterfaceLoadBalancer{
+							Public: &alpha1v2.CapsulePublicInterface{
+								LoadBalancer: &alpha1v2.CapsuleInterfaceLoadBalancer{
 									Port: 0,
 								},
 							},

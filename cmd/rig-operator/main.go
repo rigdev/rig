@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -42,7 +44,10 @@ func main() {
 	c.AddCommand(build.VersionCommand())
 
 	ctx := context.Background()
-	c.ExecuteContext(ctx)
+	if err := c.ExecuteContext(ctx); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 func run(cmd *cobra.Command, args []string) error {
@@ -64,12 +69,17 @@ func run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	mgrCtx, mgrCancel := context.WithCancel(cmd.Context())
-	defer mgrCancel()
+	ctx, cancel := context.WithCancel(cmd.Context())
+	defer cancel()
 
 	go func() {
-		log.Info("starting manager server")
-		mgr.Start(mgrCtx)
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+
+		<-signals
+
+		// Stop everything in progress, doing a graceful shutdown.
+		cancel()
 	}()
 
 	capabilitiesSvc := svccapabilities.NewService(cfg)
@@ -87,6 +97,9 @@ func run(cmd *cobra.Command, args []string) error {
 	))
 
 	srv := &http.Server{
+		BaseContext: func(l net.Listener) context.Context {
+			return ctx
+		},
 		Addr:              ":9000",
 		Handler:           h2c.NewHandler(mux, &http2.Server{}),
 		ReadHeaderTimeout: time.Second,
@@ -99,15 +112,17 @@ func run(cmd *cobra.Command, args []string) error {
 		log.Info("starting GRPC server")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Error(err, "could not start GRPC server")
+			os.Exit(1)
 		}
 	}()
 
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	log.Info("starting manager server")
+	if err := mgr.Start(ctx); err != nil {
+		log.Error(err, "failed starting manager")
+		return err
+	}
 
-	<-signals
-
-	log.Info("received stop signal")
+	log.Info("manager stopped")
 
 	log.Info("stopping GRPC server...")
 	grpcCTX, grpcCancel := context.WithTimeout(cmd.Context(), time.Second)

@@ -13,7 +13,7 @@ webhooks:
     service:
       name: {{ include "rig-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
-      path: /mutate-rig-dev-v1alpha1-capsule
+      path: /mutate-rig-dev-v1alpha2-capsule
       port: 9443
   failurePolicy: Fail
   name: mcapsule.kb.io
@@ -21,7 +21,7 @@ webhooks:
   - apiGroups:
     - rig.dev
     apiVersions:
-    - v1alpha1
+    - v1alpha2
     operations:
     - CREATE
     - UPDATE
@@ -43,7 +43,7 @@ webhooks:
     service:
       name: {{ include "rig-operator.fullname" . }}
       namespace: {{ .Release.Namespace }}
-      path: /validate-rig-dev-v1alpha1-capsule
+      path: /validate-rig-dev-v1alpha2-capsule
       port: 9443
   failurePolicy: Fail
   name: vcapsule.kb.io
@@ -51,7 +51,7 @@ webhooks:
   - apiGroups:
     - rig.dev
     apiVersions:
-    - v1alpha1
+    - v1alpha2
     operations:
     - CREATE
     - UPDATE

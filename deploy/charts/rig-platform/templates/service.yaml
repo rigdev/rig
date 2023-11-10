@@ -1,0 +1,15 @@
+{{- if .Values.loadBalancer.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: rig-platform-load-balancer
+spec:
+  type: LoadBalancer
+  selector:
+    rig.dev/capsule: rig-platform
+  ports:
+  - name: http
+    port: {{ .Values.port }}
+    nodePort: {{ .Values.loadBalancer.nodePort }}
+    targetPort: http
+{{- end }}

@@ -46,12 +46,14 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 		return err
 	}
 
+	hc := http.Client{}
+	hc.Timeout = 2 * time.Second
 	n := 0
 	for {
-		res, err := http.Get("http://localhost:4747/")
+		res, err := hc.Get("http://localhost:4747/")
 		if err != nil {
 			n++
-			if n > 50 {
+			if n > 200 {
 				return err
 			}
 

@@ -1,4 +1,4 @@
-package v1alpha1
+package v1alpha2
 
 import (
 	"testing"
@@ -16,32 +16,7 @@ func TestDefault(t *testing.T) {
 		name     string
 		spec     CapsuleSpec
 		expected CapsuleSpec
-	}{
-		{
-			name: "replicas default to 1",
-			expected: CapsuleSpec{
-				Replicas: ptr.New(int32(1)),
-				HorizontalScale: HorizontalScale{
-					MinReplicas: ptr.New(uint32(1)),
-					MaxReplicas: ptr.New(uint32(1)),
-				},
-			},
-		},
-		{
-			name: "spec.env.autotmatic defaults to true, when env is not nil.",
-			spec: CapsuleSpec{
-				Env: &Env{},
-			},
-			expected: CapsuleSpec{
-				Replicas: ptr.New(int32(1)),
-				HorizontalScale: HorizontalScale{
-					MinReplicas: ptr.New(uint32(1)),
-					MaxReplicas: ptr.New(uint32(1)),
-				},
-				Env: &Env{Automatic: ptr.New(true)},
-			},
-		},
-	}
+	}{}
 
 	for i := range tests {
 		test := tests[i]
@@ -171,6 +146,72 @@ func TestValidateInterfaces(t *testing.T) {
 				),
 			},
 		},
+		{
+			name: "valid interface probes",
+			interfaces: []CapsuleInterface{
+				{
+					Name:     "test1",
+					Port:     1,
+					Liveness: &InterfaceProbe{Path: "/health1"},
+				},
+				{
+					Name:      "test2",
+					Port:      2,
+					Readiness: &InterfaceProbe{Path: "/health2"},
+				},
+			},
+		},
+		{
+			name: "duplicated interface probes",
+			interfaces: []CapsuleInterface{
+				{
+					Name:      "test1",
+					Port:      1,
+					Liveness:  &InterfaceProbe{Path: "/health1"},
+					Readiness: &InterfaceProbe{Path: "/health1"},
+				},
+				{
+					Name:      "test2",
+					Port:      2,
+					Liveness:  &InterfaceProbe{Path: "/health2"},
+					Readiness: &InterfaceProbe{Path: "/health2"},
+				},
+			},
+			expectedErrs: field.ErrorList{
+				field.Duplicate(
+					infsPath.Index(1).Child("liveness"), &InterfaceProbe{Path: "/health2"},
+				),
+				field.Duplicate(
+					infsPath.Index(1).Child("readiness"), &InterfaceProbe{Path: "/health2"},
+				),
+			},
+		},
+		{
+			name: "invalid interface probe",
+			interfaces: []CapsuleInterface{
+				{
+					Name:     "test1",
+					Port:     1,
+					Liveness: &InterfaceProbe{},
+				},
+				{
+					Name:      "test2",
+					Port:      2,
+					Readiness: &InterfaceProbe{Path: "health2", TCP: true},
+				},
+			},
+			expectedErrs: field.ErrorList{
+				field.Invalid(
+					infsPath.Index(0).Child("liveness"), &InterfaceProbe{}, "interface probes must contain one of `path`, `tcp` or `grpc`",
+				),
+				field.Invalid(
+					infsPath.Index(1).Child("readiness").Child("path"), "health2", "path must be an absolute path",
+				),
+				field.Invalid(
+					infsPath.Index(1).Child("readiness"), &InterfaceProbe{Path: "health2", TCP: true}, "interface probes must contain only one of `path`, `tcp` or `grpc`",
+				),
+			},
+		},
 	}
 
 	for i := range tests {
@@ -191,6 +232,69 @@ func TestValidateInterfaces(t *testing.T) {
 	}
 }
 
+func TestValidateEnv(t *testing.T) {
+	t.Parallel()
+	path := field.NewPath("spec").Child("env").Child("from")
+	tests := []struct {
+		name         string
+		from         []EnvReference
+		expectedErrs field.ErrorList
+	}{
+		{name: "no from should cause no errors"},
+		{
+			name: "env ref: name and key are required",
+			from: []EnvReference{
+				{Kind: "ConfigMap"},
+				{Kind: "Secret"},
+			},
+			expectedErrs: field.ErrorList{
+				field.Required(path.Index(0).Child("name"), "missing env name"),
+				field.Required(path.Index(1).Child("name"), "missing env name"),
+			},
+		},
+		{
+			name: "one of configMap or secret is required",
+			from: []EnvReference{
+				{
+					Kind: "", Name: "test",
+				},
+				{
+					Kind: "Deployment", Name: "test",
+				},
+			},
+			expectedErrs: field.ErrorList{
+				field.Required(path.Index(0).Child("kind"), "env reference kind is required"),
+				field.Invalid(
+					path.Index(1).Child("kind"),
+					EnvReference{
+						Kind: "Deployment",
+						Name: "test",
+					},
+					"env reference kind must be either ConfigMap or Secret"),
+			},
+		},
+	}
+
+	for i := range tests {
+		test := tests[i]
+
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := &Capsule{
+				Spec: CapsuleSpec{
+					Env: &Env{
+						From: test.from,
+					},
+				},
+			}
+
+			_, err := c.validateEnv()
+			assert.Equal(t, test.expectedErrs, err)
+		})
+	}
+}
+
 func TestValidateFiles(t *testing.T) {
 	t.Parallel()
 	path := field.NewPath("spec").Child("files")
@@ -203,7 +307,7 @@ func TestValidateFiles(t *testing.T) {
 		{
 			name: "path is required",
 			files: []File{
-				{ConfigMap: &FileContentRef{Name: "test", Key: "test"}},
+				{Ref: &FileContentReference{Name: "test", Key: "test", Kind: "ConfigMap"}},
 			},
 			expectedErrs: field.ErrorList{
 				field.Required(path.Index(0).Child("path"), ""),
@@ -212,52 +316,60 @@ func TestValidateFiles(t *testing.T) {
 		{
 			name: "file content ref: name and key are required",
 			files: []File{
-				{Path: "/test1", ConfigMap: &FileContentRef{}},
-				{Path: "/test2", Secret: &FileContentRef{}},
+				{Path: "/test1", Ref: &FileContentReference{Kind: "ConfigMap"}},
+				{Path: "/test2", Ref: &FileContentReference{Kind: "Secret"}},
 			},
 			expectedErrs: field.ErrorList{
-				field.Required(path.Index(0).Child("configMap").Child("name"), ""),
-				field.Required(path.Index(0).Child("configMap").Child("key"), ""),
-				field.Required(path.Index(1).Child("secret").Child("name"), ""),
-				field.Required(path.Index(1).Child("secret").Child("key"), ""),
+				field.Required(path.Index(0).Child("ref").Child("name"), ""),
+				field.Required(path.Index(0).Child("ref").Child("key"), ""),
+				field.Required(path.Index(1).Child("ref").Child("name"), ""),
+				field.Required(path.Index(1).Child("ref").Child("key"), ""),
 			},
 		},
 		{
 			name: "path should be unique",
 			files: []File{
-				{Path: "/test", ConfigMap: &FileContentRef{Name: "test", Key: "test"}},
-				{Path: "/test", ConfigMap: &FileContentRef{Name: "test", Key: "test"}},
+				{Path: "/test", Ref: &FileContentReference{Kind: "ConfigMap", Name: "test", Key: "test"}},
+				{Path: "/test", Ref: &FileContentReference{Kind: "Secret", Name: "test", Key: "test"}},
 			},
 			expectedErrs: field.ErrorList{
 				field.Duplicate(path.Index(1).Child("path"), "/test"),
 			},
 		},
 		{
-			name: "configMap and secret are mutually exclusive",
-			files: []File{
-				{
-					Path:      "/test",
-					ConfigMap: &FileContentRef{Name: "test", Key: "test"},
-					Secret:    &FileContentRef{Name: "test", Key: "test"},
-				},
-			},
-			expectedErrs: field.ErrorList{
-				field.Invalid(path.Index(0), File{
-					Path:      "/test",
-					ConfigMap: &FileContentRef{Name: "test", Key: "test"},
-					Secret:    &FileContentRef{Name: "test", Key: "test"},
-				}, "configMap and secret are mutually exclusive"),
-			},
-		},
-		{
-			name: "one of configMap or secret is required",
+			name: "ref is required",
 			files: []File{
 				{
 					Path: "/test",
 				},
 			},
 			expectedErrs: field.ErrorList{
-				field.Required(path.Index(0), "one of configMap or secret is required"),
+				field.Required(path.Index(0).Child("ref"), "file reference is required"),
+			},
+		},
+		{
+			name: "one of configMap or secret is required",
+			files: []File{
+				{
+					Path: "/test1", Ref: &FileContentReference{Kind: "", Name: "test", Key: "test"},
+				},
+				{
+					Path: "/test2", Ref: &FileContentReference{Kind: "Deployment", Name: "test", Key: "test"},
+				},
+			},
+			expectedErrs: field.ErrorList{
+				field.Required(path.Index(0).Child("ref").Child("kind"), "file reference kind is required"),
+				field.Invalid(
+					path.Index(1).Child("ref").Child("kind"),
+					File{
+						Path: "/test2",
+						Ref: &FileContentReference{
+							Kind: "Deployment",
+							Name: "test",
+							Key:  "test",
+						},
+					},
+					"file reference kind must be either ConfigMap or Secret"),
 			},
 		},
 	}
@@ -282,7 +394,7 @@ func TestValidateFiles(t *testing.T) {
 
 func Test_HorizontalScaleValidate(t *testing.T) {
 	t.Parallel()
-	path := field.NewPath("spec").Child("horizontalScale")
+	path := field.NewPath("spec").Child("scale").Child("horizontal")
 	tests := []struct {
 		name         string
 		h            HorizontalScale
@@ -291,25 +403,25 @@ func Test_HorizontalScaleValidate(t *testing.T) {
 		{
 			name: "max < min",
 			h: HorizontalScale{
-				MinReplicas: ptr.New(uint32(10)),
-				MaxReplicas: ptr.New(uint32(1)),
+				Instances: Instances{
+					Min: uint32(10),
+					Max: ptr.New(uint32(1)),
+				},
 			},
 			expectedErrs: []*field.Error{
-				field.Invalid(path.Child("maxReplicas"), uint32(1), "maxReplicas cannot be smaller than minReplicas"),
+				field.Invalid(path.Child("instances").Child("max"), uint32(1), "max cannot be smaller than min"),
 			},
 		},
 		{
 			name: "utilization percentage > 100",
 			h: HorizontalScale{
-				MinReplicas: ptr.New(uint32(1)),
-				MaxReplicas: ptr.New(uint32(1)),
-				CPUTarget: CPUTarget{
-					AverageUtilizationPercentage: 110,
+				CPUTarget: &CPUTarget{
+					Utilization: ptr.New[uint32](110),
 				},
 			},
 			expectedErrs: []*field.Error{
 				field.Invalid(
-					path.Child("cpuTarget").Child("averageUtilizationPercentage"),
+					path.Child("cpuTarget").Child("utilization"),
 					uint32(110),
 					"cannot be larger than 100",
 				),
@@ -318,16 +430,20 @@ func Test_HorizontalScaleValidate(t *testing.T) {
 		{
 			name: "good, no autoscaling",
 			h: HorizontalScale{
-				MinReplicas: ptr.New(uint32(10)),
+				Instances: Instances{
+					Min: 10,
+				},
 			},
 		},
 		{
 			name: "good, with autoscaling",
 			h: HorizontalScale{
-				MinReplicas: ptr.New(uint32(10)),
-				MaxReplicas: ptr.New(uint32(30)),
-				CPUTarget: CPUTarget{
-					AverageUtilizationPercentage: 50,
+				Instances: Instances{
+					Min: 10,
+					Max: ptr.New(uint32(30)),
+				},
+				CPUTarget: &CPUTarget{
+					Utilization: ptr.New(uint32(50)),
 				},
 			},
 		},
@@ -335,7 +451,7 @@ func Test_HorizontalScaleValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.h.validate(field.NewPath("spec").Child("horizontalScale"))
+			err := tt.h.validate(field.NewPath("spec").Child("scale").Child("horizontal"))
 			assert.Equal(t, tt.expectedErrs, err)
 		})
 	}

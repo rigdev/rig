@@ -21,7 +21,7 @@ import (
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
-	"github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/hash"
 	netv1 "k8s.io/api/networking/v1"
@@ -43,16 +43,20 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 
 	by(t, "Creating a capsule")
 
-	capsule := v1alpha1.Capsule{
+	capsule := v1alpha2.Capsule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nsName.Name,
 			Namespace: nsName.Namespace,
 		},
-		Spec: v1alpha1.CapsuleSpec{
+		Spec: v1alpha2.CapsuleSpec{
 			Image: "nginx:1.25.1",
-			HorizontalScale: v1alpha1.HorizontalScale{
-				MinReplicas: ptr.New(uint32(1)),
-				MaxReplicas: ptr.New(uint32(1)),
+			Scale: v1alpha2.CapsuleScale{
+				Horizontal: v1alpha2.HorizontalScale{
+					Instances: v1alpha2.Instances{
+						Min: uint32(1),
+						Max: ptr.New(uint32(1)),
+					},
+				},
 			},
 		},
 	}
@@ -269,16 +273,20 @@ func (s *K8sTestSuite) TestController() {
 
 	by(t, "Creating a capsule")
 
-	capsule := v1alpha1.Capsule{
+	capsule := v1alpha2.Capsule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nsName.Name,
 			Namespace: nsName.Namespace,
 		},
-		Spec: v1alpha1.CapsuleSpec{
+		Spec: v1alpha2.CapsuleSpec{
 			Image: "nginx:1.25.1",
-			HorizontalScale: v1alpha1.HorizontalScale{
-				MinReplicas: ptr.New(uint32(1)),
-				MaxReplicas: ptr.New(uint32(1)),
+			Scale: v1alpha2.CapsuleScale{
+				Horizontal: v1alpha2.HorizontalScale{
+					Instances: v1alpha2.Instances{
+						Min: uint32(1),
+						Max: ptr.New(uint32(1)),
+					},
+				},
 			},
 		},
 	}
@@ -299,7 +307,7 @@ func (s *K8sTestSuite) TestController() {
 
 	capsuleOwnerRef := metav1.OwnerReference{
 		Kind:               "Capsule",
-		APIVersion:         v1alpha1.GroupVersion.Identifier(),
+		APIVersion:         v1alpha2.GroupVersion.Identifier(),
 		UID:                capsule.UID,
 		Name:               nsName.Name,
 		Controller:         ptr.New(true),
@@ -337,7 +345,7 @@ func (s *K8sTestSuite) TestController() {
 
 	by(t, "Adding an interface")
 
-	capsule.Spec.Interfaces = []v1alpha1.CapsuleInterface{
+	capsule.Spec.Interfaces = []v1alpha2.CapsuleInterface{
 		{
 			Name: "http",
 			Port: 80,
@@ -394,8 +402,8 @@ func (s *K8sTestSuite) TestController() {
 
 	by(t, "Enabling ingress")
 
-	capsule.Spec.Interfaces[0].Public = &v1alpha1.CapsulePublicInterface{
-		Ingress: &v1alpha1.CapsuleInterfaceIngress{
+	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
+		Ingress: &v1alpha2.CapsuleInterfaceIngress{
 			Host: "test.com",
 		},
 	}
@@ -462,8 +470,8 @@ func (s *K8sTestSuite) TestController() {
 
 	by(t, "Changing ingress to loadbalancer")
 
-	capsule.Spec.Interfaces[0].Public = &v1alpha1.CapsulePublicInterface{
-		LoadBalancer: &v1alpha1.CapsuleInterfaceLoadBalancer{
+	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
+		LoadBalancer: &v1alpha2.CapsuleInterfaceLoadBalancer{
 			Port: 1,
 		},
 	}
@@ -564,9 +572,10 @@ func (s *K8sTestSuite) TestController() {
 	assert.NoError(t, k8sClient.Create(ctx, cm))
 	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
 
-	capsule.Spec.Files = []v1alpha1.File{{
+	capsule.Spec.Files = []v1alpha2.File{{
 		Path: "/etc/test/test.yaml",
-		ConfigMap: &v1alpha1.FileContentRef{
+		Ref: &v1alpha2.FileContentReference{
+			Kind: "ConfigMap",
 			Name: cm.GetName(),
 			Key:  "test.yaml",
 		},
