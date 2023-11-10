@@ -610,7 +610,7 @@ func createDeployment(
 		var name string
 		switch {
 		case f.ConfigMap != nil:
-			name = "volume-" + strings.ReplaceAll(f.ConfigMap.Name, ".", "-")
+			name = "configmap-" + strings.ReplaceAll(f.ConfigMap.Name, ".", "-")
 			volumes = append(volumes, v1.Volume{
 				Name: name,
 				VolumeSource: v1.VolumeSource{
@@ -628,7 +628,7 @@ func createDeployment(
 				},
 			})
 		case f.Secret != nil:
-			name = "volume-" + strings.ReplaceAll(f.Secret.Name, ".", "-")
+			name = "secret-" + strings.ReplaceAll(f.Secret.Name, ".", "-")
 			volumes = append(volumes, v1.Volume{
 				Name: name,
 				VolumeSource: v1.VolumeSource{
