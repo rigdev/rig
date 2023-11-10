@@ -108,20 +108,67 @@ postgres:
 # Rig holds configuration for the rig server. This is used for generating
 # the rig-server config file.
 rig:
+  auth:
+    jwt:
+      secret: shhhdonotshare
+      certificate_file: ""
+      certificate_key_file: ""
+
+  telemetry:
+    enabled: true
+
   client:
     postgres:
+      host: ""
+      insecure: false
       user: postgres
       password: postgres
-      insecure: false
-
     mongo:
+      host: ""
       user: mongodb
       password: mongodb
-
+    minio:
+      host: ""
+      secure: false
+      access_key_id: ""
+      secret_access_key: ""
+    mailjet:
+      api_key: ""
+      secret_key: ""
+    smtp:
+      password: ""
     operator:
       # if the rig-operator is installed in a non-standard way, please update
       # this to point to the service of the rig-operator
       base_url: http://rig-operator:9000
 
+  repository:
+    secret:
+      mongodb:
+        key: ""
+      postgres:
+        key: ""
+
   cluster:
-    type: k8s
+    dev_registry:
+      host: ""
+      cluster_host: ""
+    git:
+      url: ""
+      branch: main
+      path_prefix: ""
+      credentials:
+        https:
+          username: ""
+          password: ""
+        ssh:
+          private_key: ""
+          private_key_password: ""
+
+  email:
+    type: ""
+    from: ""
+
+  logging:
+    dev_mode: false
+    level: info

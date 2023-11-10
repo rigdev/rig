@@ -29,10 +29,14 @@ spec:
           nodePort: {{ .Values.loadBalancer.nodePort }}
       {{- end}}
   files:
-    - path: /etc/rig/server-config.yaml
+    - path: /etc/rig/config.yaml
+      configMap:
+        name: {{ include "rig-platform.fullname" . }}-config
+        key: config.yaml
+    - path: /etc/rig/secret-config.yaml
       secret:
         name: {{ include "rig-platform.fullname" . }}-config
-        key: server-config.yaml
+        key: config.yaml
   {{- with .Values.resources }}
   resources: {{ toYaml . | nindent 12 }}
   {{- end }}
