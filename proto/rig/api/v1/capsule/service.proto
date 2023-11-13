@@ -68,6 +68,11 @@ service Service {
   rpc Execute(stream ExecuteRequest) returns (stream ExecuteResponse) {}
 }
 
+message StreamData{
+  bytes data = 1;
+  bool closed = 2;
+}
+
 message ExecuteRequest{
   message Start{
     string capsule_id = 1;
@@ -80,14 +85,15 @@ message ExecuteRequest{
 
   oneof request {
     Start start = 1;
-    bytes stdin = 2;
+    StreamData stdin = 2;
   }
 }
 
 message ExecuteResponse{
   oneof response {
-    bytes stdout = 1;
-    bytes stderr = 2;
+    StreamData stdout = 1;
+    StreamData stderr = 2;
+    int32 exit_code = 3;
   }
 }
 
