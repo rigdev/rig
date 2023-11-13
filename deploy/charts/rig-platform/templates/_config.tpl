@@ -3,6 +3,12 @@ Rig Server config file
 */}}
 {{- define "rig-platform.config" -}}
 {{- with .Values.rig -}}
+{{- if and .auth.jwt.certificate_file .auth.jwt.certificate_key_file }}
+auth:
+  jwt:
+    certificate_file: {{ .auth.jwt.certificate_file | quote }}
+    certificate_key_file: {{ .auth.jwt.certificate_key_file | quote }}
+{{- end }}
 port: {{ $.Values.port }}
 {{- if $.Values.ingress.enabled }}
 public_url: {{ printf "https://%s" $.Values.ingress.host | quote }}
@@ -123,10 +129,7 @@ auth:
 
   {{- with .auth.jwt }}
   jwt:
-    {{- if and .certficate_file .certificate_key_file }}
-    certficate_file: {{ .certificate_file | quote }}
-    certificate_key_file: {{ .certificate_key_file | quote }}
-    {{- else }}
+    {{- if not (and .certificate_file .certificate_key_file) }}
     secret: {{ .secret | quote }}
     {{- end }}
   {{- end }}

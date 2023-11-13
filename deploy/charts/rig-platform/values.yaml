@@ -19,6 +19,10 @@ fullnameOverride: ""
 # secret.
 secretName: ""
 
+# Wether or not to load secret parts of the configuration from environment
+# variables instead of a config file.
+useEnvForSecrets: false
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
