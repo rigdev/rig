@@ -14,9 +14,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/docker/distribution/reference"
-	"github.com/rigdev/rig-go-api/api/v1/database"
 	"github.com/rigdev/rig-go-api/api/v1/group"
-	"github.com/rigdev/rig-go-api/api/v1/storage"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/errors"
@@ -197,74 +195,6 @@ func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Gro
 		g = res.Msg.GetGroup()
 	}
 	return g, resId, nil
-}
-
-func GetDatabase(ctx context.Context, identifier string, nc rig.Client) (*database.Database, string, error) {
-	var err error
-	if identifier == "" {
-		identifier, err = PromptInput("DB Identifier:", ValidateSystemNameOpt)
-		if err != nil {
-			return nil, "", err
-		}
-	}
-	var d *database.Database
-	var id uuid.UUID
-	id, err = uuid.Parse(identifier)
-	var resId string
-	if err != nil {
-		res, err := nc.Database().GetByName(ctx, connect.NewRequest(&database.GetByNameRequest{
-			Name: identifier,
-		}))
-		if err != nil {
-			return nil, "", err
-		}
-		resId = res.Msg.GetDatabase().GetDatabaseId()
-		d = res.Msg.GetDatabase()
-	} else {
-		res, err := nc.Database().Get(ctx, connect.NewRequest(&database.GetRequest{
-			DatabaseId: id.String(),
-		}))
-		if err != nil {
-			return nil, "", err
-		}
-		resId = id.String()
-		d = res.Msg.GetDatabase()
-	}
-	return d, resId, nil
-}
-
-func GetStorageProvider(ctx context.Context, identifier string, nc rig.Client) (*storage.Provider, string, error) {
-	var err error
-	if identifier == "" {
-		identifier, err = PromptInput("Provider Identifier:", ValidateSystemNameOpt)
-		if err != nil {
-			return nil, "", err
-		}
-	}
-	var p *storage.Provider
-	var resId string
-	id, err := uuid.Parse(identifier)
-	if err != nil {
-		res, err := nc.Storage().LookupProvider(ctx, connect.NewRequest(&storage.LookupProviderRequest{
-			Name: identifier,
-		}))
-		if err != nil {
-			return nil, "", err
-		}
-		resId = res.Msg.GetProviderId()
-		p = res.Msg.GetProvider()
-	} else {
-		res, err := nc.Storage().GetProvider(ctx, connect.NewRequest(&storage.GetProviderRequest{
-			ProviderId: id.String(),
-		}))
-		if err != nil {
-			return nil, "", err
-		}
-		resId = id.String()
-
-		p = res.Msg.GetProvider()
-	}
-	return p, resId, nil
 }
 
 func FormatField(s string) string {
