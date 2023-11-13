@@ -372,6 +372,8 @@ github.com/rigdev/rig-go-sdk v0.0.0-20231023135215-741e54df3608 h1:LeCW6FLcEKDht
 github.com/rigdev/rig-go-sdk v0.0.0-20231023135215-741e54df3608/go.mod h1:ZKP8nTitg5YfrFWzP0T58i5A3jSxvkaQPhg3z6KHPZ0=
 github.com/rigdev/rig-go-sdk v0.0.0-20231109094225-fa1b04bc2432 h1:NrIRS6zzCXlTxPDX9zINVh9wKL/Jc3+XyArtiSL3gr8=
 github.com/rigdev/rig-go-sdk v0.0.0-20231109094225-fa1b04bc2432/go.mod h1:gHIzQot5en1qQvs8LIyGHWaSz+Gc21Cpa+c6vWQic+Y=
+github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea h1:CSXoyGPNq5TccvT6wO4ND/hQeFZSzboHRlEd4IJ4arM=
+github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea/go.mod h1:PP9+YzQQQjPzGhnoVJ/N4C+nLx15dX+KLrJWyGVvV6c=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.4 h1:8TfxU8dW6PdqD27gjM8MVNuicgxIjxpm4K7x4jp8sis=

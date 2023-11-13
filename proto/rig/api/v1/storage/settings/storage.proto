@@ -1,5 +1,0 @@
-syntax = "proto3";
-
-package api.v1.storage.settings;
-
-message Settings {}

@@ -39,7 +39,7 @@ require (
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/rigdev/rig-go-api v0.0.0-20231113081606-6c48e003c860
-	github.com/rigdev/rig-go-sdk v0.0.0-20231109094225-fa1b04bc2432
+	github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea
 	github.com/rodaine/table v1.1.0
 	sigs.k8s.io/controller-runtime v0.16.1
 	sigs.k8s.io/kind v0.20.0
