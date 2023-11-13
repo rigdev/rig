@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+import "api/v1/capsule/rollout.proto";
+import "model/author.proto";
+import "google/protobuf/timestamp.proto";
+
+message RolloutConfig {
+  oneof field {
+    api.v1.capsule.Auth auth = 1;
+    api.v1.capsule.Authentication authentication = 2;
+    api.v1.capsule.CPUTarget cpu_target = 3;
+    api.v1.capsule.Change change = 4;
+    api.v1.capsule.ConfigFile config_file = 5;
+    api.v1.capsule.ContainerSettings container_settings = 6;
+    api.v1.capsule.GRPC grpc = 7;
+    api.v1.capsule.GRPCMethod grpc_method = 8;
+    api.v1.capsule.GRPCService grpc_service = 9;
+    api.v1.capsule.GpuLimits gpu_limits = 10;
+    api.v1.capsule.HorizontalScale horizontal_scale = 11;
+    api.v1.capsule.HttpAuth http_auth = 12;
+    api.v1.capsule.Interface interface = 13;
+    api.v1.capsule.Logging logging = 14;
+    api.v1.capsule.Network network = 15;
+    api.v1.capsule.PublicInterface public_interface = 16;
+    api.v1.capsule.ResourceList resource_list = 17;
+    api.v1.capsule.Resources resources = 18;
+    api.v1.capsule.RolloutConfig rollout_config = 19;
+    api.v1.capsule.RoutingMethod routing_method = 20;
+    bool bool = 21;
+    bytes bytes = 22;
+    google.protobuf.Timestamp timestamp = 23;
+    model.Author author = 24;
+    string string = 25;
+    uint32 uint32 = 26;
+    uint64 uint64 = 27;
+  }
+}
+
+message RolloutConfigDiff {
+  KeyNode root = 1;
+  repeated RolloutConfigDiffNode nodes = 2;
+}
+
+message RolloutConfigDiffNode {
+  RolloutConfig old = 1;
+  RolloutConfig new = 2;
+}
+
+message KeyNode {
+  Key key = 1;
+  uint32 index = 2;
+  repeated KeyNode children = 3;
+}
+
+message Key {
+  oneof key {
+    string field = 1;
+    uint32 index = 2;
+    string map_string_key = 3;
+    int64 map_int_key = 4;
+  }
+}

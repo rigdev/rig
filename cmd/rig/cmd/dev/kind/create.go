@@ -185,6 +185,7 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 	if p.chartPath == "" {
 		cArgs = append(cArgs, "--repo", "https://charts.rig.dev")
 	}
+	fmt.Println(cArgs)
 	if err := runCmd("helm", cArgs...); err != nil {
 		return err
 	}

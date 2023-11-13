@@ -29,6 +29,8 @@ require (
 	k8s.io/client-go v0.28.3
 )
 
+replace github.com/rigdev/rig-go-api => ./gen/go/rig
+
 require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/cert-manager/cert-manager v1.13.1
@@ -41,6 +43,7 @@ require (
 	github.com/rigdev/rig-go-api v0.0.0-20231113081606-6c48e003c860
 	github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea
 	github.com/rodaine/table v1.1.0
+	github.com/yoheimuta/go-protoparser v3.4.0+incompatible
 	sigs.k8s.io/controller-runtime v0.16.1
 	sigs.k8s.io/kind v0.20.0
 )

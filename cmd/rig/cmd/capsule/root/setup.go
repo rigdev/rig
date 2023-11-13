@@ -187,6 +187,14 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	capsuleLogs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
 	capsuleCmd.AddCommand(capsuleLogs)
 
+	rolloutTest := &cobra.Command{
+		Use:   "rtest",
+		Short: "hej",
+		Args:  cobra.NoArgs,
+		RunE:  c.rolloutTest,
+	}
+	capsuleCmd.AddCommand(rolloutTest)
+
 	c.Scale.Setup(capsuleCmd)
 	c.BuildDeploy.Setup(capsuleCmd)
 	c.Instance.Setup(capsuleCmd)

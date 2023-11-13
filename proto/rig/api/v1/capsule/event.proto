@@ -4,6 +4,7 @@ package api.v1.capsule;
 
 import "google/protobuf/timestamp.proto";
 import "model/author.proto";
+import "api/v1/capsule/test.proto";
 
 message Event {
   // Potential author associated with the event.
@@ -24,4 +25,5 @@ message EventData {
     ErrorEvent error = 2;
     AbortEvent abort = 3;
   }
+  SomeMessage hej = 10;
 }
