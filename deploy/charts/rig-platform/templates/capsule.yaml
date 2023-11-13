@@ -33,10 +33,12 @@ spec:
       configMap:
         name: {{ include "rig-platform.fullname" . }}-config
         key: config.yaml
+    {{- if not .Values.useEnvForSecrets }}
     - path: /etc/rig/secret-config.yaml
       secret:
         name: {{ include "rig-platform.fullname" . }}-config
         key: config.yaml
+    {{- end }}
   {{- with .Values.resources }}
   resources: {{ toYaml . | nindent 12 }}
   {{- end }}
