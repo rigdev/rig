@@ -11,7 +11,6 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -24,8 +23,10 @@ var (
 )
 
 var (
-	outputJSON bool
-	follow     bool
+	outputJSON  bool
+	follow      bool
+	tty         bool
+	interactive bool
 )
 
 var (
@@ -82,11 +83,23 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	logs.RegisterFlagCompletionFunc("follow", common.BoolCompletions)
 	instance.AddCommand(logs)
 
+	shell := &cobra.Command{
+		Use:               "shell [instance-id] -- [command] [args...]",
+		Short:             "Open a shell to the instance",
+		RunE:              c.shell,
+		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+	}
+	shell.Flags().BoolVarP(&tty, "tty", "t", false, "allocate a TTY")
+	shell.Flags().BoolVarP(&interactive, "interactive", "i", false, "Keep STDIN open")
+	shell.RegisterFlagCompletionFunc("tty", common.BoolCompletions)
+	shell.RegisterFlagCompletionFunc("interactive", common.BoolCompletions)
+	instance.AddCommand(shell)
+
 	parent.AddCommand(instance)
 }
 
-func (c Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg string) (string, error) {
-	if arg != "" {
+func (c Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg string, argsLenAtDash int) (string, error) {
+	if arg != "" && argsLenAtDash != 0 {
 		return arg, nil
 	}
 
@@ -117,7 +130,7 @@ func (c Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg string
 }
 
 func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	if cmd_capsule.CapsuleID == "" {
+	if capsule_cmd.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

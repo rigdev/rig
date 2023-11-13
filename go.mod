@@ -38,7 +38,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
-	github.com/rigdev/rig-go-api v0.0.0-20231108145848-48c2b1d00294
+	github.com/rigdev/rig-go-api v0.0.0-20231113081606-6c48e003c860
 	github.com/rigdev/rig-go-sdk v0.0.0-20231109094225-fa1b04bc2432
 	github.com/rodaine/table v1.1.0
 	sigs.k8s.io/controller-runtime v0.16.1
@@ -48,6 +48,7 @@ require (
 require (
 	cloud.google.com/go/firestore v1.11.0 // indirect
 	cloud.google.com/go/longrunning v0.5.1 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -56,6 +57,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.24.2 // indirect
 	github.com/charmbracelet/lipgloss v0.7.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
+	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/evanphx/json-patch v5.7.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/go-logr/zapr v1.2.4 // indirect
@@ -66,6 +68,9 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
+	github.com/moby/spdystream v0.2.0 // indirect
+	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
@@ -77,7 +82,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230911183012-2d3300fd4832 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.28.1 // indirect
-	k8s.io/component-base v0.28.1 // indirect
+	k8s.io/component-base v0.28.3 // indirect
 	sigs.k8s.io/gateway-api v0.8.0 // indirect
 )
 
@@ -158,5 +163,6 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
+	k8s.io/kubectl v0.28.3
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 )

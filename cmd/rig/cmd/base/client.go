@@ -30,6 +30,7 @@ var _omitProjectToken = map[string]struct{}{
 var clientModule = fx.Module("client",
 	fx.Supply(&http.Client{}),
 	fx.Provide(func(s *cmd_config.Service, cfg *cmd_config.Config) rig.Client {
+
 		ai := &authInterceptor{cfg: cfg}
 		nc := rig.NewClient(
 			rig.WithHost(s.Server),

@@ -17,7 +17,7 @@ func (c Cmd) logs(cmd *cobra.Command, args []string) error {
 		arg = args[0]
 	}
 
-	instanceID, err := c.provideInstanceID(ctx, capsule_cmd.CapsuleID, arg)
+	instanceID, err := c.provideInstanceID(ctx, capsule_cmd.CapsuleID, arg, cmd.ArgsLenAtDash())
 	if err != nil {
 		return err
 	}
