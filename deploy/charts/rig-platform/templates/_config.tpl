@@ -159,16 +159,15 @@ client:
 {{- end }}
 
 {{- with .repository.secret }}
-{{- if or .mongodb.key .postgres.key }}
+{{- if .key }}
 repository:
   secret:
-    {{- if .mongodb.key }}
+    {{- if $.Values.rig.client.mongo.host }}
     mongodb:
-      key: {{ .mongodb.key | quote }}
-    {{- end }}
-    {{- if .postgres.key }}
+      key: {{ .key | quote }}
+    {{- else }}
     postgres:
-      key: {{ .postgres.key | quote }}
+      key: {{ .key | quote }}
     {{- end }}
 {{- end }}
 {{- end }}
