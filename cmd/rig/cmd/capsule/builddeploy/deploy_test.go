@@ -17,16 +17,16 @@ func Test_expandBuildID(t *testing.T) {
 	t2 := time.Date(2000, 1, 1, 1, 0, 0, 0, time.UTC)
 	builds := []*capsule.Build{
 		{
-			BuildId:    "registry/name:tag@sha256:0123456789",
+			BuildId:    "registry.io/name:tag@sha256:0123456789",
 			Digest:     "sha256:0123456789",
-			Repository: "registry/name",
+			Repository: "registry.io/name",
 			Tag:        "tag",
 			CreatedAt:  timestamppb.New(t1),
 		},
 		{
-			BuildId:    "registry/name:tag@sha256:01234abcd",
+			BuildId:    "registry.io/name:tag@sha256:01234abcd",
 			Digest:     "sha256:01234abcd",
-			Repository: "registry/name",
+			Repository: "registry.io/name",
 			Tag:        "tag",
 			CreatedAt:  timestamppb.New(t2),
 		},
@@ -40,21 +40,21 @@ func Test_expandBuildID(t *testing.T) {
 	}{
 		{
 			name:    "exact match",
-			buildID: "registry/name:tag@sha256:0123456789",
+			buildID: "registry.io/name:tag@sha256:0123456789",
 			err:     nil,
-			res:     "registry/name:tag@sha256:0123456789",
+			res:     "registry.io/name:tag@sha256:0123456789",
 		},
 		{
 			name:    "sha prefix",
 			buildID: "sha256:01234567",
 			err:     nil,
-			res:     "registry/name:tag@sha256:0123456789",
+			res:     "registry.io/name:tag@sha256:0123456789",
 		},
 		{
 			name:    "hex prefix",
 			buildID: "01234567",
 			err:     nil,
-			res:     "registry/name:tag@sha256:0123456789",
+			res:     "registry.io/name:tag@sha256:0123456789",
 		},
 		{
 			name:    "not unique prefix",
@@ -70,21 +70,21 @@ func Test_expandBuildID(t *testing.T) {
 		},
 		{
 			name:    "get latest by tag",
-			buildID: "registry/name:tag",
+			buildID: "registry.io/name:tag",
 			err:     nil,
-			res:     "registry/name:tag@sha256:01234abcd",
+			res:     "registry.io/name:tag@sha256:01234abcd",
 		},
 		{
 			name:    "no build with tag",
-			buildID: "registry/name:tag2",
+			buildID: "registry.io/name:tag2",
 			err:     errors.New("no builds matched the given image name"),
 			res:     "",
 		},
 		{
 			name:    "image name + digest prefix",
-			buildID: "registry/name:tag@sha256:0123456",
+			buildID: "registry.io/name:tag@sha256:0123456",
 			err:     nil,
-			res:     "registry/name:tag@sha256:0123456789",
+			res:     "registry.io/name:tag@sha256:0123456789",
 		},
 		{
 			name:    "malformed",

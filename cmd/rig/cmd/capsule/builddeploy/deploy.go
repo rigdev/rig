@@ -129,7 +129,7 @@ func expandByDigestName(buildID string, builds []*capsule.Build) (string, error)
 func expandByLatestTag(ref container_name.Reference, builds []*capsule.Build) (string, error) {
 	var latest *capsule.Build
 	for _, b := range builds {
-		if b.GetRepository() != ref.Context().RepositoryStr() || b.GetTag() != ref.Identifier() {
+		if b.GetRepository() != fmt.Sprintf("%s/%s", ref.Context().RegistryStr(), ref.Context().RepositoryStr()) || b.GetTag() != ref.Identifier() {
 			continue
 		}
 		if latest == nil || latest.CreatedAt.AsTime().Before(b.CreatedAt.AsTime()) {
