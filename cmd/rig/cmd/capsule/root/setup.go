@@ -21,6 +21,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -92,6 +93,10 @@ func (c Cmd) Setup(parent *cobra.Command) {
 			var capsuleNames []string
 			for _, c := range resp.Msg.GetCapsules() {
 				capsuleNames = append(capsuleNames, c.GetCapsuleId())
+			}
+
+			if len(capsuleNames) == 0 {
+				return errors.New("This project has no capsules. Create one, to get started")
 			}
 
 			_, name, err := common.PromptSelect("Capsule: ", capsuleNames, common.SelectFuzzyFilterOpt)
