@@ -148,12 +148,13 @@ func parseArgs(cmd *cobra.Command, args []string) (string, []string) {
 			return "", nil
 		}
 
-		argString, err := common.PromptInput("Arguments", common.ValidateNonEmptyOpt)
+		argString, err := common.PromptInput("Arguments", common.ValidateAllOpt)
 		if err != nil {
 			return "", nil
 		}
-
-		arguments = strings.Split(argString, " ")
+		if argString != "" {
+			arguments = strings.Split(argString, " ")
+		}
 	} else {
 		command = args[cmd.ArgsLenAtDash()]
 		arguments = args[cmd.ArgsLenAtDash()+1:]
