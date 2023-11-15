@@ -66,11 +66,6 @@ func (c Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) {
 		// TODO Figure out pagination
 		resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
 			CapsuleId: capsuleID,
-			Pagination: &model.Pagination{
-				Offset:     0,
-				Limit:      0,
-				Descending: false,
-			},
 		}))
 		if err != nil {
 			return "", err
@@ -113,7 +108,7 @@ func expandByDigestName(buildID string, builds []*capsule.Build) (string, error)
 	}
 	var validBuilds []*capsule.Build
 	for _, b := range builds {
-		repoMatch := b.GetRepository() == tag.RepositoryStr()
+		repoMatch := b.GetRepository() == fmt.Sprintf("%s/%s", tag.RegistryStr(), tag.RepositoryStr())
 		tagMatch := b.GetTag() == tag.TagStr()
 		digMatch := strings.HasPrefix(b.GetDigest(), digest)
 		if repoMatch && tagMatch && digMatch {
@@ -134,7 +129,7 @@ func expandByDigestName(buildID string, builds []*capsule.Build) (string, error)
 func expandByLatestTag(ref container_name.Reference, builds []*capsule.Build) (string, error) {
 	var latest *capsule.Build
 	for _, b := range builds {
-		if b.GetRepository() != ref.Context().RepositoryStr() || b.GetTag() != ref.Identifier() {
+		if b.GetRepository() != fmt.Sprintf("%s/%s", ref.Context().RegistryStr(), ref.Context().RepositoryStr()) || b.GetTag() != ref.Identifier() {
 			continue
 		}
 		if latest == nil || latest.CreatedAt.AsTime().Before(b.CreatedAt.AsTime()) {
