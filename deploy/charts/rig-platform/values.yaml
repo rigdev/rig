@@ -148,10 +148,7 @@ rig:
 
   repository:
     secret:
-      mongodb:
-        key: ""
-      postgres:
-        key: ""
+      key: ""
 
   cluster:
     dev_registry:
