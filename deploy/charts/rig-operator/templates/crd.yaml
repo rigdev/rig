@@ -49,6 +49,33 @@ spec:
                 type: array
               command:
                 type: string
+              env:
+                description: Env defines what secrets and configmaps should be used
+                  for environment variables in the capsule.
+                properties:
+                  automatic:
+                    description: Automatic sets wether the capsule should automatically
+                      use existing secrets and configmaps which share the same name
+                      as the capsule as environment variables.
+                    type: boolean
+                  from:
+                    description: From holds a list of references to secrets and configmaps
+                      which should be mounted as environment variables.
+                    items:
+                      description: EnvSource holds a reference to either a ConfigMap
+                        or a Secret
+                      properties:
+                        configMapName:
+                          description: ConfigMapName is the name of a ConfigMap in
+                            the same namespace as the Capsule
+                          type: string
+                        secretName:
+                          description: SecretName is the name of a Secret in the same
+                            namespace as the Capsule
+                          type: string
+                      type: object
+                    type: array
+                type: object
               files:
                 items:
                   description: File defines a mounted file and where to retrieve the

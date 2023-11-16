@@ -13,6 +13,7 @@ type CapsuleSpec struct {
 	Command            string                   `json:"command,omitempty"`
 	Args               []string                 `json:"args,omitempty"`
 	Interfaces         []CapsuleInterface       `json:"interfaces,omitempty"`
+	Env                *Env                     `json:"env,omitempty"`
 	Files              []File                   `json:"files,omitempty"`
 	Resources          *v1.ResourceRequirements `json:"resources,omitempty"`
 	ImagePullSecret    *v1.LocalObjectReference `json:"imagePullSecret,omitempty"`
@@ -64,6 +65,27 @@ type File struct {
 type FileContentRef struct {
 	Name string `json:"name"`
 	Key  string `json:"key"`
+}
+
+// Env defines what secrets and configmaps should be used for environment
+// variables in the capsule.
+type Env struct {
+	// Automatic sets wether the capsule should automatically use existing
+	// secrets and configmaps which share the same name as the capsule as
+	// environment variables.
+	Automatic *bool `json:"automatic,omitempty"`
+
+	// From holds a list of references to secrets and configmaps which should
+	// be mounted as environment variables.
+	From []EnvSource `json:"from,omitempty"`
+}
+
+// EnvSource holds a reference to either a ConfigMap or a Secret
+type EnvSource struct {
+	// ConfigMapName is the name of a ConfigMap in the same namespace as the Capsule
+	ConfigMapName string `json:"configMapName,omitempty"`
+	// SecretName is the name of a Secret in the same namespace as the Capsule
+	SecretName string `json:"secretName,omitempty"`
 }
 
 // HorizontalScale defines the policy for the number of replicas of the capsule

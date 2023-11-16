@@ -79,10 +79,9 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 
 	by(t, "Creating a namespace capsule environment secret")
 
-	secretName := uuid.NewString()
 	secret := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
+			Name:      uuid.NewString(),
 			Namespace: nsName.Namespace,
 			Labels: map[string]string{
 				controller.LabelSharedConfig: "true",
@@ -111,7 +110,136 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 								{
 									SecretRef: &v1.SecretEnvSource{
 										LocalObjectReference: v1.LocalObjectReference{
-											Name: secretName,
+											Name: secret.Name,
+										},
+									},
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	})
+
+	by(t, "Creating a specific capsule environment secret")
+
+	require.NoError(t, k8sClient.Delete(ctx, &secret))
+	require.Eventually(t, func() bool {
+		return kerrors.IsNotFound(
+			k8sClient.Get(ctx, client.ObjectKeyFromObject(&secret), &v1.Secret{}),
+		)
+	}, waitFor, tick)
+
+	secret.Name = uuid.NewString()
+	delete(secret.Labels, controller.LabelSharedConfig)
+	secret.ResourceVersion = ""
+	require.NoError(t, k8sClient.Create(ctx, &secret))
+
+	require.NoError(t, k8sClient.Get(ctx, nsName, &capsule))
+	capsule.Spec.Env = &v1alpha1.Env{
+		From: []v1alpha1.EnvSource{
+			v1alpha1.EnvSource{
+				SecretName: secret.Name,
+			},
+		},
+	}
+
+	require.NoError(t, k8sClient.Update(ctx, &capsule))
+
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: nsName.Namespace,
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: v1.PodTemplateSpec{
+					Spec: v1.PodSpec{
+						Containers: []v1.Container{{
+							Name: nsName.Name,
+							EnvFrom: []v1.EnvFromSource{
+								{
+									SecretRef: &v1.SecretEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: secret.Name,
+										},
+									},
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	})
+
+	by(t, "Creating an auto env secret")
+
+	autoSecret := secret.DeepCopy()
+	autoSecret.Name = nsName.Name
+	autoSecret.ResourceVersion = ""
+	require.NoError(t, k8sClient.Create(ctx, autoSecret))
+
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: nsName.Namespace,
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: v1.PodTemplateSpec{
+					Spec: v1.PodSpec{
+						Containers: []v1.Container{{
+							Name: nsName.Name,
+							EnvFrom: []v1.EnvFromSource{
+								{
+									SecretRef: &v1.SecretEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: nsName.Name,
+										},
+									},
+								},
+								{
+									SecretRef: &v1.SecretEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: secret.Name,
+										},
+									},
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	})
+
+	by(t, "Disabling automatic env")
+
+	require.NoError(t, k8sClient.Get(ctx, nsName, &capsule))
+	capsule.Spec.Env.Automatic = ptr.New(false)
+	require.NoError(t, k8sClient.Update(ctx, &capsule))
+
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: nsName.Namespace,
+			},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: v1.PodTemplateSpec{
+					Spec: v1.PodSpec{
+						Containers: []v1.Container{{
+							Name: nsName.Name,
+							EnvFrom: []v1.EnvFromSource{
+								{
+									SecretRef: &v1.SecretEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: secret.Name,
 										},
 									},
 								},
@@ -382,16 +510,16 @@ func (s *K8sTestSuite) TestController() {
 		},
 	}
 
-	assert.NoError(t, k8sClient.Create(ctx, cm))
+	require.NoError(t, k8sClient.Create(ctx, cm))
 
 	h := sha256.New()
-	assert.NoError(t, hash.ConfigMap(h, cm))
+	require.NoError(t, hash.ConfigMap(h, cm))
 
 	expectResources(ctx, t, k8sClient, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -401,7 +529,7 @@ func (s *K8sTestSuite) TestController() {
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							controller.AnnotationChecksumEnv: fmt.Sprintf("%x", h.Sum(nil)),
+							controller.AnnotationChecksumAutoEnv: fmt.Sprintf("%x", h.Sum(nil)),
 						},
 					},
 					Spec: v1.PodSpec{
