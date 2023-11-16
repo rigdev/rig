@@ -148,6 +148,21 @@ func AbortAndDeploy(ctx context.Context, rig rig.Client, capsuleID string, req *
 	return rig.Capsule().Deploy(ctx, req)
 }
 
+func Deploy(ctx context.Context, rig rig.Client, capsuleID string, req *connect.Request[capsule.DeployRequest], forceDeploy bool) error {
+	_, err := rig.Capsule().Deploy(ctx, req)
+	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
+		if forceDeploy {
+			_, err = AbortAndDeploy(ctx, rig, capsuleID, req)
+		} else {
+			_, err = PromptAbortAndDeploy(ctx, capsuleID, rig, req)
+		}
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) error {
 	for stream.Receive() {
 		switch v := stream.Msg().GetLog().GetMessage().GetMessage().(type) {

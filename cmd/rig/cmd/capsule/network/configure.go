@@ -1,11 +1,17 @@
 package network
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
@@ -19,10 +25,10 @@ func (c Cmd) configure(cmd *cobra.Command, args []string) error {
 	var err error
 	networkFile := ""
 	if len(args) == 0 {
-		networkFile, err = common.PromptInput("Enter Network file path:", common.ValidateNonEmptyOpt)
-		if err != nil {
+		if err := c.configureInteractive(ctx, capsule_cmd.CapsuleID); err != nil {
 			return err
 		}
+		return nil
 	} else {
 		networkFile = args[0]
 	}
@@ -57,19 +63,248 @@ func (c Cmd) configure(cmd *cobra.Command, args []string) error {
 		},
 	}
 
-	_, err = c.Rig.Capsule().Deploy(ctx, req)
-	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
-		if forceDeploy {
-			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
-		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
-		}
-	}
-	if err != nil {
+	if err := capsule_cmd.Deploy(ctx, c.Rig, capsule_cmd.CapsuleID, req, forceDeploy); err != nil {
 		return err
 	}
 
 	cmd.Println("Network configured successfully!")
 
 	return nil
+}
+
+func (c Cmd) configureInteractive(ctx context.Context, capsuleID string) error {
+	resp, err := c.Rig.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
+		CapsuleId: capsuleID,
+		Pagination: &model.Pagination{
+			Offset:     1,
+			Limit:      1,
+			Descending: true,
+		},
+	}))
+	if err != nil {
+		return err
+	}
+	rollouts := resp.Msg.GetRollouts()
+	if len(rollouts) == 0 {
+		return errors.New("capsule has no rollouts")
+	}
+	network := rollouts[0].GetConfig().GetNetwork()
+	if network == nil {
+		rollouts[0].Config.Network = &capsule.Network{}
+		network = rollouts[0].Config.Network
+	}
+
+	for {
+		idx, _, err := common.PromptSelect("Choose", []string{
+			"Add new interface",
+			"Delete interface",
+			"See interface",
+			"Apply and finish",
+		}, common.SelectDontShowResultOpt)
+		if err != nil {
+			return err
+		}
+
+		isDone := false
+		switch idx {
+		case 0:
+			if err := addInterface(network); err != nil {
+				return err
+			}
+		case 1:
+			if err := deleteInterface(network); err != nil {
+				return err
+			}
+		case 2:
+			if err := seeInterface(network); err != nil {
+				return err
+			}
+		case 3:
+			isDone = true
+		}
+		if isDone {
+			break
+		}
+	}
+
+	req := connect.NewRequest(&capsule.DeployRequest{
+		CapsuleId: capsuleID,
+		Changes: []*capsule.Change{{
+			Field: &capsule.Change_Network{
+				Network: network,
+			},
+		}},
+	})
+	if err := capsule_cmd.Deploy(ctx, c.Rig, capsule_cmd.CapsuleID, req, forceDeploy); err != nil {
+		return err
+	}
+
+	fmt.Println("Network configured successfully!")
+
+	return nil
+}
+
+func addInterface(network *capsule.Network) error {
+	printBanner("Adding Interface")
+	defer printBannerEnd()
+
+	var names []string
+	var ports []string
+	for _, i := range network.GetInterfaces() {
+		names = append(names, i.GetName())
+		ports = append(ports, strconv.Itoa(int(i.GetPort())))
+	}
+
+	name, err := common.PromptInput("Name of interface:", common.ValidateAndOpt(
+		common.ValidateSystemName,
+		common.ValidateUnique(names),
+	))
+	if err != nil {
+		return err
+	}
+
+	portStr, err := common.PromptInput("Port:", common.ValidateAndOpt(
+		common.ValidatePort,
+		common.ValidateUnique(ports),
+	))
+	if err != nil {
+		return err
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return err
+	}
+
+	interface_ := &capsule.Interface{
+		Port: uint32(port),
+		Name: name,
+	}
+
+	public, err := common.PromptConfirm("Make public:", false)
+	if err != nil {
+		return err
+	}
+
+	if !public {
+		network.Interfaces = append(network.Interfaces, interface_)
+		return nil
+	}
+
+	interface_.Public = &capsule.PublicInterface{
+		Enabled: true,
+		Method:  &capsule.RoutingMethod{},
+	}
+
+	idx, _, err := common.PromptSelect("Routing method type:", []string{"Ingress", "Loadbalancer"})
+	if err != nil {
+		return err
+	}
+	switch idx {
+	case 0:
+		host, err := common.PromptInput("Ingress host:")
+		if err != nil {
+			return err
+		}
+		interface_.Public.Method.Kind = &capsule.RoutingMethod_Ingress_{
+			Ingress: &capsule.RoutingMethod_Ingress{
+				Host: host,
+			},
+		}
+	case 1:
+		portStr, err := common.PromptInput("Loadbalancer port:", common.ValidatePortOpt)
+		if err != nil {
+			return err
+		}
+		loadBalancerPort, err := strconv.Atoi(portStr)
+		if err != nil {
+			return err
+		}
+		interface_.Public.Method.Kind = &capsule.RoutingMethod_LoadBalancer_{
+			LoadBalancer: &capsule.RoutingMethod_LoadBalancer{
+				Port: uint32(loadBalancerPort),
+			},
+		}
+	}
+	network.Interfaces = append(network.Interfaces, interface_)
+
+	return nil
+}
+
+func seeInterface(network *capsule.Network) error {
+	printBanner("See interface")
+	defer printBannerEnd()
+
+	if len(network.GetInterfaces()) == 0 {
+		fmt.Println("Capsule has no interfaces")
+		return nil
+	}
+
+	var names []string
+	for _, i := range network.Interfaces {
+		names = append(names, i.GetName())
+	}
+	idx, _, err := common.PromptSelect("Choose", names, common.SelectDontShowResultOpt)
+	if err != nil {
+		return err
+	}
+
+	interface_ := network.GetInterfaces()[idx]
+	bytes, err := yaml.Marshal(interface_)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+
+	return nil
+}
+
+func deleteInterface(network *capsule.Network) error {
+	printBanner("Delete interface")
+	defer printBannerEnd()
+
+	if len(network.GetInterfaces()) == 0 {
+		fmt.Println("Capsule has no interfaces")
+		return nil
+	}
+
+	names := []string{"Go back"}
+	for _, i := range network.Interfaces {
+		names = append(names, i.GetName())
+	}
+	idx, _, err := common.PromptSelect("Choose", names)
+	if err != nil {
+		return err
+	}
+
+	if idx == 0 {
+		return nil
+	}
+	idx -= 1
+
+	var newInterfaces []*capsule.Interface
+	for i, interface_ := range network.GetInterfaces() {
+		if i != idx {
+			newInterfaces = append(newInterfaces, interface_)
+		}
+	}
+	network.Interfaces = newInterfaces
+
+	return nil
+}
+
+var bannerLength = 30
+
+func printBanner(s string) {
+	color.Cyan(makeBanner(s))
+}
+
+func printBannerEnd() {
+	color.Cyan(strings.Repeat("-", bannerLength+2))
+}
+
+func makeBanner(s string) string {
+	sideLength := (bannerLength - len(s)) / 2
+	side1 := strings.Repeat("-", sideLength)
+	side2 := strings.Repeat("-", bannerLength-len(s)-len(side1))
+	return side1 + " " + s + " " + side2
 }

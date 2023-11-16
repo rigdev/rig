@@ -115,6 +115,28 @@ func ValidateQuantity(s string) error {
 	return err
 }
 
+func ValidatePort(s string) error {
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return err
+	}
+	if n <= 0 || n >= 65536 {
+		return errors.New("port number x must be 0 < x < 65536")
+	}
+	return nil
+}
+
+func ValidateUnique(values []string) func(string) error {
+	return func(s string) error {
+		for _, v := range values {
+			if v == s {
+				return errors.New("must be unique")
+			}
+		}
+		return nil
+	}
+}
+
 func parseBool(s string) (bool, error) {
 	switch s {
 	case "1", "t", "T", "true", "TRUE", "True", "y", "Y", "yes", "YES", "Yes":

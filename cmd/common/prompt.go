@@ -75,6 +75,29 @@ func ValidateQuantityOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateQuantity
 }
 
+func ValidatePortOpt(inp *textinput.TextInput) {
+	inp.Validate = ValidatePort
+}
+
+func ValidateAndOpt(validators ...func(string) error) GetInputOption {
+	return func(inp *textinput.TextInput) {
+		inp.Validate = func(s string) error {
+			for _, v := range validators {
+				if err := v(s); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}
+}
+
+func ValidateUniqueOpt(values []string) GetInputOption {
+	return func(inp *textinput.TextInput) {
+		inp.Validate = ValidateUnique(values)
+	}
+}
+
 func InputDefaultOpt(def string) GetInputOption {
 	return func(inp *textinput.TextInput) {
 		inp.InitialValue = def
@@ -101,6 +124,10 @@ func SelectTemplateOpt(template string) SelectInputOption {
 	return func(s *selection.Selection[string]) {
 		s.Template = template
 	}
+}
+
+func SelectDontShowResultOpt(s *selection.Selection[string]) {
+	s.ResultTemplate = ""
 }
 
 var inputTemplate = `
