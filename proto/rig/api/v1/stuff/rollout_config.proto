@@ -46,6 +46,10 @@ message RolloutConfigDiffNode {
   RolloutConfig new = 2;
 }
 
+// KeyNode contains a tree of keys (subfields, indices or map keys) into a proto
+// message
+// It is paired with a list of nodes with 'index' indicating which node is
+// associated with the specific KeyNode
 message KeyNode {
   Key key = 1;
   uint32 index = 2;
