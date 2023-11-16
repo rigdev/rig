@@ -33,7 +33,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 
 	networkConfigure := &cobra.Command{
 		Use:   "configure [network-file]",
-		Short: "configure the network of the capsule",
+		Short: "configure the network of the capsule. If no filepath is given it goes through an interactive configuration",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  c.configure,
 	}
