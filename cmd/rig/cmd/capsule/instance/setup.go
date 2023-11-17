@@ -83,17 +83,17 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	logs.RegisterFlagCompletionFunc("follow", common.BoolCompletions)
 	instance.AddCommand(logs)
 
-	shell := &cobra.Command{
-		Use:               "shell [instance-id] -- [command] [args...]",
+	exec := &cobra.Command{
+		Use:               "exec [instance-id] -- [command] [args...]",
 		Short:             "Open a shell to the instance",
-		RunE:              c.shell,
+		RunE:              c.exec,
 		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
 	}
-	shell.Flags().BoolVarP(&tty, "tty", "t", false, "allocate a TTY")
-	shell.Flags().BoolVarP(&interactive, "interactive", "i", false, "Keep STDIN open")
-	shell.RegisterFlagCompletionFunc("tty", common.BoolCompletions)
-	shell.RegisterFlagCompletionFunc("interactive", common.BoolCompletions)
-	instance.AddCommand(shell)
+	exec.Flags().BoolVarP(&tty, "tty", "t", false, "allocate a TTY")
+	exec.Flags().BoolVarP(&interactive, "interactive", "i", false, "Keep STDIN open")
+	exec.RegisterFlagCompletionFunc("tty", common.BoolCompletions)
+	exec.RegisterFlagCompletionFunc("interactive", common.BoolCompletions)
+	instance.AddCommand(exec)
 
 	parent.AddCommand(instance)
 }
