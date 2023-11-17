@@ -1,6 +1,7 @@
 package root
 
 import (
+	"context"
 	"os"
 	"strconv"
 
@@ -12,8 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) create(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var err error
 	if capsule_cmd.CapsuleID == "" {
 		capsule_cmd.CapsuleID, err = common.PromptInput("Capsule name:", common.ValidateSystemNameOpt)

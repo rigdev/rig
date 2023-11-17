@@ -69,8 +69,7 @@ type firebaseUser struct {
 	CreatedAt     string `json:"createdAt"`
 }
 
-func (c Cmd) migrate(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) migrate(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var err error
 	fields := []string{
 		platformFirebase.String(),

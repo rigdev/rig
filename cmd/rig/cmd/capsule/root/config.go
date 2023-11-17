@@ -1,6 +1,8 @@
 package root
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -8,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) config(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) config(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if len(args) > 0 && command == "" {
 		return errors.InvalidArgumentErrorf("command must be set when args are provided")
 	}

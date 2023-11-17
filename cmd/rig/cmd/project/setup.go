@@ -34,12 +34,11 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 	Cfg *cmd_config.Config
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	project := &cobra.Command{
 		Use:   "project",
 		Short: "Manage Rig projects",
@@ -49,7 +48,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "get-settings",
 		Short:             "Get settings for the current project",
 		Args:              cobra.NoArgs,
-		RunE:              c.getSettings,
+		RunE:              base.Register(func(c Cmd) any { return c.getSettings }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	getSettings.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
@@ -60,7 +59,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "update-settings",
 		Short:             "Update settings for the current project",
 		Args:              cobra.NoArgs,
-		RunE:              c.updateSettings,
+		RunE:              base.Register(func(c Cmd) any { return c.updateSettings }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	updateSettings.Flags().StringVarP(&field, "field", "f", "", "Field to update")
@@ -92,7 +91,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:   "create",
 		Short: "Create a new project",
 		Args:  cobra.NoArgs,
-		RunE:  c.create,
+		RunE:  base.Register(func(c Cmd) any { return c.create }),
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
@@ -108,7 +107,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "delete",
 		Short:             "Delete the current project",
 		Args:              cobra.NoArgs,
-		RunE:              c.delete,
+		RunE:              base.Register(func(c Cmd) any { return c.delete }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	project.AddCommand(deleteProject)
@@ -117,7 +116,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "get ",
 		Short:             "Get the current project",
 		Args:              cobra.NoArgs,
-		RunE:              c.get,
+		RunE:              base.Register(func(c Cmd) any { return c.get }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	getProject.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
@@ -128,7 +127,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "update",
 		Short:             "Update the current project",
 		Args:              cobra.NoArgs,
-		RunE:              c.update,
+		RunE:              base.Register(func(c Cmd) any { return c.update }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	updateProject.Flags().StringVarP(&field, "field", "f", "", "Field to update")
@@ -156,7 +155,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:   "list",
 		Short: "List projects",
 		Args:  cobra.NoArgs,
-		RunE:  c.list,
+		RunE:  base.Register(func(c Cmd) any { return c.list }),
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
@@ -174,11 +173,11 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:   "use [project-id | project-name]",
 		Short: "Set the project to query for project-scoped resources",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  c.use,
+		RunE:  base.Register(func(c Cmd) any { return c.use }),
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
-		ValidArgsFunction: c.useProjectCompletion,
+		ValidArgsFunction: base.RegisterCompletion(func(c Cmd) any { return c.useProjectCompletion }),
 	}
 	project.AddCommand(use)
 
@@ -215,14 +214,14 @@ func projectUpdateFieldsCompletion(cmd *cobra.Command, args []string, toComplete
 	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
-func (c Cmd) useProjectCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) useProjectCompletion(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	var projectIDs []string
 
 	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	resp, err := c.Rig.Project().List(c.Ctx, &connect.Request[project.ListRequest]{
+	resp, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{
 		Msg: &project.ListRequest{},
 	})
 	if err != nil {

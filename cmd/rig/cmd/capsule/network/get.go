@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -11,8 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) get(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	n, err := capsule_cmd.GetCurrentNetwork(ctx, c.Rig)
 	if err != nil {
 		return err

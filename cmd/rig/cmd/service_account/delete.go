@@ -1,6 +1,8 @@
 package service_account
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig/cmd/common"
@@ -8,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) delete(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var id string
 	var err error
 

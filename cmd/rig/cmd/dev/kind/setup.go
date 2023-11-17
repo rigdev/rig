@@ -1,8 +1,6 @@
 package kind
 
 import (
-	"context"
-
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -22,13 +20,12 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx          context.Context
 	DockerClient *client.Client
 	Rig          rig.Client
 	Cfg          *cmd_config.Config
 }
 
-func (c *Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	kind := &cobra.Command{
 		Use:   "kind",
 		Short: "The kind command is used to setup and manage a development kubernetes cluster running Rig using Kind",
@@ -38,7 +35,7 @@ func (c *Cmd) Setup(parent *cobra.Command) {
 		Use:   "create",
 		Short: "Create a rig cluster in Kind for local development",
 		Args:  cobra.NoArgs,
-		RunE:  c.create,
+		RunE:  base.Register(func(c Cmd) any { return c.create }),
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",
@@ -59,7 +56,7 @@ func (c *Cmd) Setup(parent *cobra.Command) {
 		Use:   "deploy",
 		Short: "Deploy a new (or specific) version of Rig to the kind cluster",
 		Args:  cobra.NoArgs,
-		RunE:  c.deploy,
+		RunE:  base.Register(func(c Cmd) any { return c.deploy }),
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",
@@ -80,7 +77,7 @@ func (c *Cmd) Setup(parent *cobra.Command) {
 		Use:   "clean",
 		Short: "Deletes the rig kind-cluster",
 		Args:  cobra.NoArgs,
-		RunE:  c.clean,
+		RunE:  base.Register(func(c Cmd) any { return c.clean }),
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",

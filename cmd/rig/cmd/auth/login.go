@@ -14,8 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) login(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) login(ctx context.Context, cmd *cobra.Command, args []string) error {
 	res, err := c.loginWithRetry(ctx, authUserIdentifier, authPassword, auth.RigProjectID)
 	if err != nil {
 		return err

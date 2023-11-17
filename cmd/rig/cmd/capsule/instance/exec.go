@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"context"
 	"errors"
 	"io"
 	"strings"
@@ -35,8 +36,7 @@ func listen(stream *connect.BidiStreamForClient[capsule.ExecuteRequest, capsule.
 	return doneChan
 }
 
-func (c Cmd) exec(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error {
 	arg := ""
 	if len(args) > 0 {
 		arg = args[0]

@@ -6,6 +6,7 @@ import (
 
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
@@ -19,12 +20,11 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 	Cfg *cmd_config.Config
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	env := &cobra.Command{
 		Use:   "env",
 		Short: "Manage environment variables for the capsule",
@@ -34,7 +34,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "set key value",
 		Short:             "Set an environment variable",
 		Args:              cobra.ExactArgs(2),
-		RunE:              c.set,
+		RunE:              base.Register(func(c Cmd) any { return c.set }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	envSet.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
@@ -42,20 +42,26 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	env.AddCommand(envSet)
 
 	envGet := &cobra.Command{
-		Use:               "get [key]",
-		Short:             "Get an environment variable",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.get,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get [key]",
+		Short: "Get an environment variable",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	env.AddCommand(envGet)
 
 	envRemove := &cobra.Command{
-		Use:               "remove [key]",
-		Short:             "Remove an environment variable",
-		Args:              cobra.ExactArgs(1),
-		RunE:              c.remove,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "remove [key]",
+		Short: "Remove an environment variable",
+		Args:  cobra.ExactArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.remove }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	envRemove.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	envRemove.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
@@ -64,7 +70,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	parent.AddCommand(env)
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -75,7 +81,7 @@ func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) (
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	r, err := capsule.GetCurrentRollout(c.Ctx, c.Rig)
+	r, err := capsule.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

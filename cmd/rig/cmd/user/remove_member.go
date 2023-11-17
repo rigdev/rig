@@ -1,14 +1,15 @@
 package user
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) removeMember(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) removeMember(ctx context.Context, cmd *cobra.Command, args []string) error {
 	uidentifier := ""
 	if len(args) > 1 {
 		uidentifier = args[1]

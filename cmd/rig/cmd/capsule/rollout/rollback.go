@@ -13,8 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) rollback(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) error {
 	rolloutID, err := c.getRollback(ctx)
 	if err != nil {
 		return err

@@ -1,14 +1,15 @@
 package project
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) create(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if name == "" {
 		var err error
 		name, err = common.PromptInput("Project name:", common.ValidateNonEmptyOpt)

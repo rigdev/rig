@@ -6,6 +6,7 @@ import (
 
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
@@ -20,12 +21,11 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 	Cfg *cmd_config.Config
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	network := &cobra.Command{
 		Use:   "network",
 		Short: "Configure and inspect the network of the capsule",
@@ -35,17 +35,20 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:   "configure [network-file]",
 		Short: "configure the network of the capsule. If no filepath is given it goes through an interactive configuration",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  c.configure,
+		RunE:  base.Register(func(c Cmd) any { return c.configure }),
 	}
 	networkConfigure.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	network.AddCommand(networkConfigure)
 
 	networkGet := &cobra.Command{
-		Use:               "get [name]",
-		Short:             "get the entire network or a specific interface of the capsule",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.get,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get [name]",
+		Short: "get the entire network or a specific interface of the capsule",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	networkGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
 	networkGet.RegisterFlagCompletionFunc("json", common.BoolCompletions)
@@ -54,7 +57,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	parent.AddCommand(network)
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -65,7 +68,7 @@ func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) (
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	n, err := capsule.GetCurrentNetwork(c.Ctx, c.Rig)
+	n, err := capsule.GetCurrentNetwork(ctx, c.Rig)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

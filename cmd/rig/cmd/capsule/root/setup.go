@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/builddeploy"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/env"
@@ -51,71 +52,30 @@ var omitCapsuleIDAnnotation = map[string]string{
 type Cmd struct {
 	fx.In
 
-	Ctx          context.Context
 	Rig          rig.Client
 	Cfg          *cmd_config.Config
 	DockerClient *client.Client
-
-	Scale       scale.Cmd
-	BuildDeploy builddeploy.Cmd
-	Instance    instance.Cmd
-	Network     network.Cmd
-	Rollout     rollout.Cmd
-	Env         env.Cmd
-	Mount       mount.Cmd
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	capsuleCmd := &cobra.Command{
 		Use:   "capsule",
 		Short: "Manage capsules",
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if parent.PersistentPreRunE != nil {
-				if err := parent.PersistentPreRunE(cmd, args); err != nil {
-					return err
-				}
-			}
-			if cmd.Annotations["OMIT_CAPSULE_ID"] != "" {
-				return nil
-			}
-
-			if capsule.CapsuleID != "" {
-				return nil
-			}
-
-			resp, err := c.Rig.Capsule().List(c.Ctx, connect.NewRequest(&capsule_api.ListRequest{
-				Pagination: &model.Pagination{},
-			}))
-			if err != nil {
-				return err
-			}
-
-			var capsuleNames []string
-			for _, c := range resp.Msg.GetCapsules() {
-				capsuleNames = append(capsuleNames, c.GetCapsuleId())
-			}
-
-			if len(capsuleNames) == 0 {
-				return errors.New("This project has no capsules. Create one, to get started")
-			}
-
-			_, name, err := common.PromptSelect("Capsule: ", capsuleNames, common.SelectFuzzyFilterOpt)
-			if err != nil {
-				return err
-			}
-			capsule.CapsuleID = name
-
-			return nil
-		},
+		PersistentPreRunE: base.Register(func(c Cmd) any {
+			return c.persistentPreRunE
+		}),
 	}
 	capsuleCmd.PersistentFlags().StringVarP(&capsule.CapsuleID, "capsule-id", "c", "", "Id of the capsule")
-	capsuleCmd.RegisterFlagCompletionFunc("capsule-id", c.completions)
+	capsuleCmd.RegisterFlagCompletionFunc(
+		"capsule-id",
+		base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+	)
 
 	capsuleCreate := &cobra.Command{
 		Use:               "create",
 		Short:             "Create a new capsule",
 		Args:              cobra.NoArgs,
-		RunE:              c.create,
+		RunE:              base.Register(func(c Cmd) any { return c.create }),
 		Annotations:       omitCapsuleIDAnnotation,
 		ValidArgsFunction: common.NoCompletions,
 	}
@@ -129,7 +89,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "abort",
 		Short:             "Abort the current rollout. This will leave the capsule in a undefined state",
 		Args:              cobra.NoArgs,
-		RunE:              c.abort,
+		RunE:              base.Register(func(c Cmd) any { return c.abort }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleCmd.AddCommand(capsuleAbort)
@@ -138,7 +98,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "delete",
 		Short:             "Delete a capsule",
 		Args:              cobra.NoArgs,
-		RunE:              c.delete,
+		RunE:              base.Register(func(c Cmd) any { return c.delete }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleCmd.AddCommand(capsuleDelete)
@@ -148,7 +108,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Short:             "Get one or more capsules",
 		Args:              cobra.NoArgs,
 		Annotations:       omitCapsuleIDAnnotation,
-		RunE:              c.get,
+		RunE:              base.Register(func(c Cmd) any { return c.get }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
@@ -163,7 +123,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "config",
 		Short:             "Configure the capsule",
 		Args:              cobra.NoArgs,
-		RunE:              c.config,
+		RunE:              base.Register(func(c Cmd) any { return c.config }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleConfig.Flags().Bool("auto-add-service-account", false, "automatically add the rig service account to the capsule")
@@ -180,32 +140,32 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "logs",
 		Short:             "Get logs across all instances of the capsule",
 		Args:              cobra.NoArgs,
-		RunE:              c.logs,
+		RunE:              base.Register(func(c Cmd) any { return c.logs }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleLogs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
 	capsuleLogs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
 	capsuleCmd.AddCommand(capsuleLogs)
 
-	c.Scale.Setup(capsuleCmd)
-	c.BuildDeploy.Setup(capsuleCmd)
-	c.Instance.Setup(capsuleCmd)
-	c.Network.Setup(capsuleCmd)
-	c.Rollout.Setup(capsuleCmd)
-	c.Env.Setup(capsuleCmd)
-	c.Mount.Setup(capsuleCmd)
+	scale.Setup(capsuleCmd)
+	builddeploy.Setup(capsuleCmd)
+	instance.Setup(capsuleCmd)
+	network.Setup(capsuleCmd)
+	rollout.Setup(capsuleCmd)
+	env.Setup(capsuleCmd)
+	mount.Setup(capsuleCmd)
 
 	parent.AddCommand(capsuleCmd)
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	var capsuleIDs []string
 
 	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	resp, err := c.Rig.Capsule().List(c.Ctx, &connect.Request[capsule_api.ListRequest]{
+	resp, err := c.Rig.Capsule().List(ctx, &connect.Request[capsule_api.ListRequest]{
 		Msg: &capsule_api.ListRequest{},
 	})
 	if err != nil {
@@ -234,4 +194,39 @@ func formatCapsule(c *capsule_api.Capsule) string {
 	}
 
 	return fmt.Sprintf("%v\t (Rollout: %v, Updated At: %v)", c.GetCapsuleId(), c.GetCurrentRollout(), age)
+}
+
+func (c Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, args []string) error {
+	base.ExecutePersistentPreRunERecursively(cmd, args)
+	if cmd.Annotations["OMIT_CAPSULE_ID"] != "" {
+		return nil
+	}
+
+	if capsule.CapsuleID != "" {
+		return nil
+	}
+
+	resp, err := c.Rig.Capsule().List(ctx, connect.NewRequest(&capsule_api.ListRequest{
+		Pagination: &model.Pagination{},
+	}))
+	if err != nil {
+		return err
+	}
+
+	var capsuleNames []string
+	for _, c := range resp.Msg.GetCapsules() {
+		capsuleNames = append(capsuleNames, c.GetCapsuleId())
+	}
+
+	if len(capsuleNames) == 0 {
+		return errors.New("This project has no capsules. Create one, to get started")
+	}
+
+	_, name, err := common.PromptSelect("Capsule: ", capsuleNames, common.SelectFuzzyFilterOpt)
+	if err != nil {
+		return err
+	}
+	capsule.CapsuleID = name
+
+	return nil
 }

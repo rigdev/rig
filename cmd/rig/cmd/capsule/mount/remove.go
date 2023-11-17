@@ -1,6 +1,8 @@
 package mount
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
@@ -9,8 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) remove(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) remove(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var path string
 	var err error
 	if len(args) != 1 {

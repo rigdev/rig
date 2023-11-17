@@ -1,7 +1,6 @@
 package config
 
 import (
-	"context"
 	"strings"
 
 	"github.com/rigdev/rig-go-sdk"
@@ -15,12 +14,11 @@ import (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 	Cfg *cmd_config.Config
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	config := &cobra.Command{
 		Use:   "config",
 		Short: "Manage Rig CLI configuration",
@@ -30,7 +28,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:   "init",
 		Short: "Initialize a new context",
 		Args:  cobra.NoArgs,
-		RunE:  c.init,
+		RunE:  base.Register(func(c Cmd) any { return c.init }),
 		Annotations: map[string]string{
 			base.OmitProject: "",
 			base.OmitUser:    "",
@@ -43,12 +41,15 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:   "use-context [context]",
 		Short: "Change the current context to use",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  c.useContext,
+		RunE:  base.Register(func(c Cmd) any { return c.useContext }),
 		Annotations: map[string]string{
 			base.OmitProject: "",
 			base.OmitUser:    "",
 		},
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	config.AddCommand(useContext)
 

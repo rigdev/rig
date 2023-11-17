@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
@@ -28,8 +29,7 @@ func (p projectField) String() string {
 	}
 }
 
-func (c Cmd) update(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) error {
 	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: &project.GetRequest{}})
 	if err != nil {
 		return err

@@ -11,6 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -44,11 +45,10 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	user := &cobra.Command{
 		Use:   "user",
 		Short: "Manage users in your projects",
@@ -57,7 +57,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	create := &cobra.Command{
 		Use:               "create",
 		Short:             "Create a new user",
-		RunE:              c.create,
+		RunE:              base.Register(func(c Cmd) any { return c.create }),
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: common.NoCompletions,
 	}
@@ -72,11 +72,14 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	user.AddCommand(create)
 
 	update := &cobra.Command{
-		Use:               "update [user-id | {email|username|phone}]",
-		Short:             "Update a user",
-		RunE:              c.update,
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(c.userCompletions, common.MaxArgsCompletionFilter(1)),
+		Use:   "update [user-id | {email|username|phone}]",
+		Short: "Update a user",
+		RunE:  base.Register(func(c Cmd) any { return c.update }),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.userCompletions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	update.Flags().StringVarP(&field, "field", "f", "", "field to update")
 	update.Flags().StringVarP(&value, "value", "v", "", "value to update the field with")
@@ -108,11 +111,13 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	user.AddCommand(update)
 
 	get := &cobra.Command{
-		Use:               "get [user-id | {email|username|phone}]",
-		Short:             "Get one or multiple users",
-		RunE:              c.get,
-		ValidArgsFunction: common.Complete(c.userCompletions, common.MaxArgsCompletionFilter(1)),
-		Args:              cobra.MaximumNArgs(1),
+		Use:   "get [user-id | {email|username|phone}]",
+		Short: "Get one or multiple users",
+		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.userCompletions }),
+			common.MaxArgsCompletionFilter(1)),
+		Args: cobra.MaximumNArgs(1),
 	}
 	get.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
@@ -123,20 +128,26 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	user.AddCommand(get)
 
 	delete := &cobra.Command{
-		Use:               "delete [user-id | {email|username|phone}]",
-		Short:             "Delete a user",
-		RunE:              c.delete,
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(c.userCompletions, common.MaxArgsCompletionFilter(1)),
+		Use:   "delete [user-id | {email|username|phone}]",
+		Short: "Delete a user",
+		RunE:  base.Register(func(c Cmd) any { return c.delete }),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.userCompletions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	user.AddCommand(delete)
 
 	getSessions := &cobra.Command{
-		Use:               "get-sessions [user-id | {email|username|phone}]",
-		Short:             "Get sessions of a user",
-		RunE:              c.listSessions,
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(c.userCompletions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get-sessions [user-id | {email|username|phone}]",
+		Short: "Get sessions of a user",
+		RunE:  base.Register(func(c Cmd) any { return c.listSessions }),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.userCompletions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	getSessions.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
 	getSessions.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
@@ -149,7 +160,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	getSettings := &cobra.Command{
 		Use:               "get-settings",
 		Short:             "Get the user-settings for the current project",
-		RunE:              c.getSettings,
+		RunE:              base.Register(func(c Cmd) any { return c.getSettings }),
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: common.NoCompletions,
 	}
@@ -160,7 +171,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	updateSettings := &cobra.Command{
 		Use:               "update-settings",
 		Short:             "Update the user-settings for the current project",
-		RunE:              c.updateSettings,
+		RunE:              base.Register(func(c Cmd) any { return c.updateSettings }),
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: common.NoCompletions,
 	}
@@ -201,7 +212,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	migrate := &cobra.Command{
 		Use:               "migrate",
 		Short:             "Migrate users from another platform",
-		RunE:              c.migrate,
+		RunE:              base.Register(func(c Cmd) any { return c.migrate }),
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: common.NoCompletions,
 	}
@@ -236,32 +247,44 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	user.AddCommand(migrate)
 
 	addUser := &cobra.Command{
-		Use:               "add-member [user-id | {email|username|phone}]",
-		Short:             "Add a user to a group",
-		RunE:              c.addMember,
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(c.userCompletions, common.MaxArgsCompletionFilter(1)),
+		Use:   "add-member [user-id | {email|username|phone}]",
+		Short: "Add a user to a group",
+		RunE:  base.Register(func(c Cmd) any { return c.addMember }),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.userCompletions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	addUser.Flags().StringVarP(&groupIdentifier, "group", "g", "", "group to add the user to")
-	addUser.RegisterFlagCompletionFunc("group", c.groupCompletions)
+	addUser.RegisterFlagCompletionFunc(
+		"group",
+		base.RegisterCompletion(func(c Cmd) any { return c.groupCompletions }),
+	)
 	user.AddCommand(addUser)
 
 	removeUser := &cobra.Command{
-		Use:               "remove-member [user-id | {email|username|phone}]",
-		Short:             "Remove a user from a group",
-		RunE:              c.removeMember,
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(c.userCompletions, common.MaxArgsCompletionFilter(1)),
+		Use:   "remove-member [user-id | {email|username|phone}]",
+		Short: "Remove a user from a group",
+		RunE:  base.Register(func(c Cmd) any { return c.removeMember }),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.userCompletions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	removeUser.Flags().StringVarP(&groupIdentifier, "group", "g", "", "group to remove the user from")
-	removeUser.RegisterFlagCompletionFunc("group", c.groupCompletions)
+	removeUser.RegisterFlagCompletionFunc(
+		"group",
+		base.RegisterCompletion(func(c Cmd) any { return c.groupCompletions }),
+	)
 	user.AddCommand(removeUser)
 
 	parent.AddCommand(user)
 }
 
-func (c Cmd) userCompletions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	resp, err := c.Rig.User().List(c.Ctx, &connect.Request[user.ListRequest]{
+func (c Cmd) userCompletions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	resp, err := c.Rig.User().List(ctx, &connect.Request[user.ListRequest]{
 		Msg: &user.ListRequest{},
 	})
 	if err != nil {
@@ -360,9 +383,9 @@ func formatUser(u *model.UserEntry) string {
 	return fmt.Sprintf("%s\t (ID: %s)", u.GetPrintableName(), u.GetUserId())
 }
 
-func (c Cmd) groupCompletions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) groupCompletions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	completions := []string{}
-	resp, err := c.Rig.Group().List(c.Ctx, &connect.Request[group.ListRequest]{
+	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{
 		Msg: &group.ListRequest{},
 	})
 	if err != nil {

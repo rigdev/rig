@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"context"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -10,8 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-func (c Cmd) logs(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error {
 	arg := ""
 	if len(args) > 0 {
 		arg = args[0]
