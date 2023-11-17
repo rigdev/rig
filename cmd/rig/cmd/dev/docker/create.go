@@ -22,9 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) create(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
-
+func (c Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
 	v, err := c.DockerClient.VolumeCreate(ctx, volume.CreateOptions{
 		Name: "rig-platform-postgres-data",
 	})

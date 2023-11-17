@@ -9,6 +9,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
@@ -29,23 +30,25 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 	Cfg *cmd_config.Config
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	mount := &cobra.Command{
 		Use:   "mount",
 		Short: "Manage config files mounts in the capsule",
 	}
 
 	mountGet := &cobra.Command{
-		Use:               "get [mount-path]",
-		Short:             "Get one or multiple mounts",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.get,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get [mount-path]",
+		Short: "Get one or multiple mounts",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	mountGet.Flags().StringVar(&dstPath, "download", "", "download the mount to specified path. If empty use current dir")
 	mountGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
@@ -56,7 +59,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:               "set",
 		Short:             "Mount a local configuration file in specified path the capsule",
 		Args:              cobra.NoArgs,
-		RunE:              c.set,
+		RunE:              base.Register(func(c Cmd) any { return c.set }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	mountSet.Flags().StringVar(&srcPath, "src", "", "source path")
@@ -68,11 +71,14 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	mount.AddCommand(mountSet)
 
 	mountRemove := &cobra.Command{
-		Use:               "remove [mount-path]",
-		Short:             "Remove a mount",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.remove,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "remove [mount-path]",
+		Short: "Remove a mount",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.remove }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	mountRemove.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	mountRemove.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
@@ -82,7 +88,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -93,7 +99,7 @@ func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) (
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	r, err := capsule.GetCurrentRollout(c.Ctx, c.Rig)
+	r, err := capsule.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

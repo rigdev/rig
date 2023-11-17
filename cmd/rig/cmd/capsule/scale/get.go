@@ -1,6 +1,7 @@
 package scale
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -9,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (r Cmd) get(cmd *cobra.Command, args []string) error {
-	ctx := r.Ctx
+func (r Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	rollout, err := capsule.GetCurrentRollout(ctx, r.Rig)
 	if err != nil {
 		return err

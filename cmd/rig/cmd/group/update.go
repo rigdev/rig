@@ -1,6 +1,7 @@
 package group
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
@@ -32,8 +33,7 @@ func (f groupField) String() string {
 	}
 }
 
-func (c Cmd) update(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) error {
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]

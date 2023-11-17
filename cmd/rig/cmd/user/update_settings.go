@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -108,8 +109,7 @@ func (f settingsField) String() string {
 	}
 }
 
-func (c Cmd) updateSettings(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, args []string) error {
 	res, err := c.Rig.UserSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err

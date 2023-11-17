@@ -20,8 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (c Cmd) configure(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) configure(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var err error
 	networkFile := ""
 	if len(args) == 0 {

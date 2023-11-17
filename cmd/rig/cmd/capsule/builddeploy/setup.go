@@ -11,6 +11,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
@@ -38,18 +39,17 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx          context.Context
 	Rig          rig.Client
 	Cfg          *cmd_config.Config
 	DockerClient *client.Client
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
-	c.setupBuild(parent)
-	c.setupDeploy(parent)
+func Setup(parent *cobra.Command) {
+	setupBuild(parent)
+	setupDeploy(parent)
 }
 
-func (c Cmd) setupBuild(parent *cobra.Command) {
+func setupBuild(parent *cobra.Command) {
 	build := &cobra.Command{
 		Use:   "build",
 		Short: "Manage builds of the capsule",
@@ -59,7 +59,7 @@ func (c Cmd) setupBuild(parent *cobra.Command) {
 		Use:               "create",
 		Short:             "Create a new build with the given image",
 		Args:              cobra.NoArgs,
-		RunE:              c.createBuild,
+		RunE:              base.Register(func(c Cmd) any { return c.createBuild }),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	buildCreate.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
@@ -76,11 +76,14 @@ func (c Cmd) setupBuild(parent *cobra.Command) {
 	build.AddCommand(buildCreate)
 
 	buildGet := &cobra.Command{
-		Use:               "get [build-id]",
-		Short:             "Get one or multiple builds",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.getBuild,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get [build-id]",
+		Short: "Get one or multiple builds",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.getBuild }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	buildGet.Flags().IntVarP(&offset, "offset", "o", 0, "offset")
 	buildGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
@@ -93,12 +96,12 @@ func (c Cmd) setupBuild(parent *cobra.Command) {
 	parent.AddCommand(build)
 }
 
-func (c Cmd) setupDeploy(parent *cobra.Command) {
+func setupDeploy(parent *cobra.Command) {
 	capsuleDeploy := &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy the given build to a capsule",
 		Args:  cobra.NoArgs,
-		RunE:  c.deploy,
+		RunE:  base.Register(func(c Cmd) any { return c.deploy }),
 		Long: `Deploy either the given rig-build or docker image to a capsule.
 If --build-id is given rig tries to find a matching existing rig-build to deploy.
 If --image is given rig tries to create a new rig-build from the docker image (if it doesn't already exist)
@@ -108,7 +111,10 @@ Not both --build-id and --image can be given`,
 	capsuleDeploy.Flags().StringVarP(&image, "image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist")
 	capsuleDeploy.Flags().BoolVarP(&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote registry. If not set, Rig will search locally and then remotely")
 	capsuleDeploy.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a rollout if one is in progress")
-	capsuleDeploy.RegisterFlagCompletionFunc("build-id", c.completions)
+	capsuleDeploy.RegisterFlagCompletionFunc(
+		"build-id",
+		base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+	)
 	capsuleDeploy.RegisterFlagCompletionFunc("image", common.NoCompletions)
 	capsuleDeploy.RegisterFlagCompletionFunc("remote", common.BoolCompletions)
 	capsuleDeploy.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
@@ -116,7 +122,7 @@ Not both --build-id and --image can be given`,
 	parent.AddCommand(capsuleDeploy)
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if len(args) > 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -131,7 +137,7 @@ func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) (
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	resp, err := c.Rig.Capsule().ListBuilds(c.Ctx, &connect.Request[capsule_api.ListBuildsRequest]{
+	resp, err := c.Rig.Capsule().ListBuilds(ctx, &connect.Request[capsule_api.ListBuildsRequest]{
 		Msg: &capsule_api.ListBuildsRequest{
 			CapsuleId: capsule.CapsuleID,
 		},

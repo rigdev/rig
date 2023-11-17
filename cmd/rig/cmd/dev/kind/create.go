@@ -25,7 +25,7 @@ var config string
 //go:embed registry.yaml
 var registry string
 
-func (c Cmd) create(cmd *cobra.Command, args []string) error {
+func (c Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if err := checkBinaries(kubectl, kind, helm); err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := c.deploy(cmd, args); err != nil {
+	if err := c.deploy(ctx, cmd, args); err != nil {
 		return err
 	}
 
@@ -72,8 +72,7 @@ func (c Cmd) create(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if err := checkBinaries(kind, kubectl, helm, docker); err != nil {
 		return err
 	}
@@ -230,7 +229,7 @@ func (c Cmd) loadImage(ctx context.Context, image, tag string) error {
 	return nil
 }
 
-func (c Cmd) clean(cmd *cobra.Command, args []string) error {
+func (c Cmd) clean(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if err := checkBinaries(kind); err != nil {
 		return err
 	}

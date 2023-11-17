@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -84,8 +85,7 @@ func (f userProfileField) String() string {
 	}
 }
 
-func (c Cmd) update(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) error {
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]

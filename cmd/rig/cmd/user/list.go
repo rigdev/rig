@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
@@ -11,11 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) get(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
-
+func (c Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
-		ctx := c.Ctx
 		identifier := ""
 		if len(args) > 0 {
 			identifier = args[0]

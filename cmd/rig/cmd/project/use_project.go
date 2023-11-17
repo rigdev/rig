@@ -10,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) use(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) use(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var projectID string
 	var err error
 	if len(args) == 0 {

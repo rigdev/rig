@@ -23,12 +23,11 @@ var (
 	OmitProject = "OMIT_PROJECT"
 )
 
-func CheckAuth(cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
-	if cmd.Parent().Use == "completion" {
+func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
+	if cmd.HasParent() && cmd.Parent().Use == "completion" {
 		return nil
 	}
 
-	ctx := context.Background()
 	if _, ok := cmd.Annotations[OmitUser]; !ok {
 		if err := authUser(ctx, rc, cfg); err != nil {
 			return err

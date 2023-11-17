@@ -26,7 +26,7 @@ type Cmd struct {
 	Cfg *cmd_config.Config
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	auth := &cobra.Command{
 		Use:   "auth",
 		Short: "Manage authentication for the current user",
@@ -41,7 +41,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 			base.OmitProject: "",
 		},
 		ValidArgsFunction: common.NoCompletions,
-		RunE:              c.login,
+		RunE:              base.Register(func(c Cmd) any { return c.login }),
 	}
 	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
 	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
@@ -53,7 +53,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 		Use:   "get",
 		Short: "Get user information associated with the current user",
 		Args:  cobra.NoArgs,
-		RunE:  c.get,
+		RunE:  base.Register(func(c Cmd) any { return c.get }),
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},

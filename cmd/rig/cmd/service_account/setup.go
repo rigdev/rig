@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -29,11 +30,10 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	serviceAccount := &cobra.Command{
 		Use:   "service-account",
 		Short: "Manage service accounts",
@@ -42,7 +42,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new service account",
-		RunE:  c.create,
+		RunE:  base.Register(func(c Cmd) any { return c.create }),
 		Args:  cobra.NoArgs,
 	}
 	serviceAccount.PersistentFlags().StringVarP(&name, "name", "n", "", "name of the credential")
@@ -51,9 +51,9 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	get := &cobra.Command{
 		Use:               "get [id]",
 		Short:             "Get one or multiple service accounts",
-		RunE:              c.list,
+		RunE:              base.Register(func(c Cmd) any { return c.list }),
 		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: c.completions,
+		ValidArgsFunction: base.RegisterCompletion(func(c Cmd) any { return c.completions }),
 	}
 	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	get.Flags().IntVarP(&offset, "offset", "o", 0, "offset")
@@ -67,18 +67,18 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	delete := &cobra.Command{
 		Use:               "delete [id]",
 		Short:             "Delete a service account",
-		RunE:              c.delete,
+		RunE:              base.Register(func(c Cmd) any { return c.delete }),
 		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: c.completions,
+		ValidArgsFunction: base.RegisterCompletion(func(c Cmd) any { return c.completions }),
 	}
 	serviceAccount.AddCommand(delete)
 
 	parent.AddCommand(serviceAccount)
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	var completions []string
-	accs, err := c.Rig.ServiceAccount().List(c.Ctx, &connect.Request[service_account.ListRequest]{
+	accs, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
 		Msg: &service_account.ListRequest{},
 	})
 	if err != nil {

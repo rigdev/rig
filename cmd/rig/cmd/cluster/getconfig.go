@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
@@ -9,8 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (c Cmd) get(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	resp, err := c.Rig.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{}))
 	if err != nil {
 		return err

@@ -1,6 +1,8 @@
 package service_account
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
@@ -9,8 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) list(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error {
 	resp, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
 		Msg: &service_account.ListRequest{},
 	})

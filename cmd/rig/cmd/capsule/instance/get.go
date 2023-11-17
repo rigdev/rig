@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -14,9 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) get(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
-
+func (c Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	// TODO Fix to use the new dataformat
 	resp, err := c.Rig.Capsule().ListInstanceStatuses(ctx, connect.NewRequest(&capsule.ListInstanceStatusesRequest{
 		CapsuleId: cmd_capsule.CapsuleID,

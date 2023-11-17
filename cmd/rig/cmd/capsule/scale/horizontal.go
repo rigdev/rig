@@ -1,6 +1,8 @@
 package scale
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -8,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) horizontal(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) horizontal(ctx context.Context, cmd *cobra.Command, args []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return nil
@@ -58,8 +59,7 @@ func (c Cmd) horizontal(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c Cmd) autoscale(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) autoscale(ctx context.Context, cmd *cobra.Command, args []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return nil

@@ -1,6 +1,8 @@
 package builddeploy
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -8,9 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) createBuild(cmd *cobra.Command, args []string) error {
+func (c Cmd) createBuild(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var err error
-	ctx := c.Ctx
 
 	imageRef := imageRefFromFlags()
 	if image == "" {

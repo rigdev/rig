@@ -11,6 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -31,11 +32,10 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	group := &cobra.Command{
 		Use:   "group",
 		Short: "Manage user groups",
@@ -44,7 +44,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	create := &cobra.Command{
 		Use:               "create",
 		Short:             "Create a new group",
-		RunE:              c.create,
+		RunE:              base.Register(func(c Cmd) any { return c.create }),
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: common.NoCompletions,
 	}
@@ -53,30 +53,39 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	group.AddCommand(create)
 
 	delete := &cobra.Command{
-		Use:               "delete [group-id | group-name]",
-		Short:             "Delete a group",
-		RunE:              c.delete,
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "delete [group-id | group-name]",
+		Short: "Delete a group",
+		RunE:  base.Register(func(c Cmd) any { return c.delete }),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	group.AddCommand(delete)
 
 	update := &cobra.Command{
-		Use:               "update [group-id | group-name]",
-		Short:             "Update a group",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.update,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "update [group-id | group-name]",
+		Short: "Update a group",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.update }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	group.AddCommand(update)
 
 	get := &cobra.Command{
-		Use:               "get [group-id | group-name]",
-		Short:             "Get one or multiple groups",
-		Args:              cobra.MaximumNArgs(1),
-		Aliases:           []string{"ls"},
-		RunE:              c.get,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:     "get [group-id | group-name]",
+		Short:   "Get one or multiple groups",
+		Args:    cobra.MaximumNArgs(1),
+		Aliases: []string{"ls"},
+		RunE:    base.Register(func(c Cmd) any { return c.get }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
@@ -87,11 +96,14 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	group.AddCommand(get)
 
 	getMembers := &cobra.Command{
-		Use:               "get-members [group-id | group-name]",
-		Short:             "Get members of a group",
-		RunE:              c.listMembers,
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get-members [group-id | group-name]",
+		Short: "Get members of a group",
+		RunE:  base.Register(func(c Cmd) any { return c.listMembers }),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	getMembers.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	getMembers.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of members to return")
@@ -102,11 +114,14 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	group.AddCommand(getMembers)
 
 	getGroupsForUser := &cobra.Command{
-		Use:               "get-groups-for-user [user-id | {email|username|phone}]",
-		Short:             "Get groups that a user is a member of",
-		RunE:              c.listGroupsForUser,
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(c.userCompletions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get-groups-for-user [user-id | {email|username|phone}]",
+		Short: "Get groups that a user is a member of",
+		RunE:  base.Register(func(c Cmd) any { return c.listGroupsForUser }),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.userCompletions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	getGroupsForUser.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	getGroupsForUser.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
@@ -119,9 +134,9 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	parent.AddCommand(group)
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	completions := []string{}
-	resp, err := c.Rig.Group().List(c.Ctx, &connect.Request[group.ListRequest]{
+	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{
 		Msg: &group.ListRequest{},
 	})
 	if err != nil {
@@ -145,9 +160,9 @@ func formatGroup(g *group.Group) string {
 	return fmt.Sprintf("%s\t (#Members: %v)", g.GetName(), g.GetNumMembers())
 }
 
-func (c Cmd) userCompletions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) userCompletions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	completions := []string{}
-	resp, err := c.Rig.User().List(c.Ctx, &connect.Request[user.ListRequest]{
+	resp, err := c.Rig.User().List(ctx, &connect.Request[user.ListRequest]{
 		Msg: &user.ListRequest{},
 	})
 	if err != nil {

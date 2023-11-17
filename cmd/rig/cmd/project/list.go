@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
@@ -11,8 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) list(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error {
 	req := &project.ListRequest{
 		Pagination: &model.Pagination{
 			Offset: uint32(offset),

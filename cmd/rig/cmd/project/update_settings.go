@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -90,8 +91,7 @@ func (f settingsField) String() string {
 	}
 }
 
-func (c Cmd) updateSettings(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, args []string) error {
 	res, err := c.Rig.ProjectSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err

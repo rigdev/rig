@@ -1,6 +1,7 @@
 package scale
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strconv"
@@ -14,8 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func (r Cmd) vertical(cmd *cobra.Command, args []string) error {
-	ctx := r.Ctx
+func (r Cmd) vertical(ctx context.Context, cmd *cobra.Command, args []string) error {
 	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, r.Rig)
 	if err != nil {
 		return nil

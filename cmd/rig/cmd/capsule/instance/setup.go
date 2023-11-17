@@ -10,6 +10,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/rigdev/rig/pkg/errors"
@@ -36,23 +37,25 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 	Cfg *cmd_config.Config
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	instance := &cobra.Command{
 		Use:   "instance",
 		Short: "Inspect and restart instances",
 	}
 
 	GetInstances := &cobra.Command{
-		Use:               "get [instance-id]",
-		Short:             "Get one or more instances",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.get,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get [instance-id]",
+		Short: "Get one or more instances",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	GetInstances.Flags().BoolVar(&outputJSON, "json", false, "output as json")
 	GetInstances.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
@@ -63,20 +66,26 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	instance.AddCommand(GetInstances)
 
 	restartInstance := &cobra.Command{
-		Use:               "restart [instance-id]",
-		Short:             "Restart a single instance",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.restart,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "restart [instance-id]",
+		Short: "Restart a single instance",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.restart }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	instance.AddCommand(restartInstance)
 
 	logs := &cobra.Command{
-		Use:               "logs [instance-id]",
-		Short:             "Read instance logs from the capsule ",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.logs,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "logs [instance-id]",
+		Short: "Read instance logs from the capsule ",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.logs }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	logs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
 	logs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
@@ -84,10 +93,13 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	instance.AddCommand(logs)
 
 	exec := &cobra.Command{
-		Use:               "exec [instance-id] -- [command] [args...]",
-		Short:             "Open a shell to the instance",
-		RunE:              c.exec,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "exec [instance-id] -- [command] [args...]",
+		Short: "Open a shell to the instance",
+		RunE:  base.Register(func(c Cmd) any { return c.exec }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	exec.Flags().BoolVarP(&tty, "tty", "t", false, "allocate a TTY")
 	exec.Flags().BoolVarP(&interactive, "interactive", "i", false, "Keep STDIN open")
@@ -129,7 +141,7 @@ func (c Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg string
 	return s, err
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if capsule_cmd.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -140,7 +152,7 @@ func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) (
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	resp, err := c.Rig.Capsule().ListInstances(c.Ctx, &connect.Request[capsule.ListInstancesRequest]{
+	resp, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 		},

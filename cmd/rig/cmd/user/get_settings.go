@@ -1,6 +1,8 @@
 package user
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
@@ -8,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) getSettings(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) getSettings(ctx context.Context, cmd *cobra.Command, args []string) error {
 	res, err := c.Rig.UserSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err

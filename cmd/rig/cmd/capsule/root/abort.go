@@ -1,14 +1,15 @@
 package root
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) abort(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) abort(ctx context.Context, cmd *cobra.Command, args []string) error {
 	cc, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
 			CapsuleId: capsule_cmd.CapsuleID,

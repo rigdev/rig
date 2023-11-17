@@ -25,8 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) deploy(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
 	buildID, err := c.getBuildID(ctx, capsule_cmd.CapsuleID)
 	if err != nil {
 		return err

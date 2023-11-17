@@ -22,7 +22,7 @@ type Cmd struct {
 	Cfg          *cmd_config.Config
 }
 
-func (c *Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	docker := &cobra.Command{
 		Use:   "docker",
 		Short: "The docker command is used to setup and manage a development Docker cluster running Rig",
@@ -32,7 +32,7 @@ func (c *Cmd) Setup(parent *cobra.Command) {
 		Use:   "create",
 		Short: "Create a Rig cluster in Docker for local development",
 		Args:  cobra.NoArgs,
-		RunE:  c.create,
+		RunE:  base.Register(func(c Cmd) any { return c.create }),
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",

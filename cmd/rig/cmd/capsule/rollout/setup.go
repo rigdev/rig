@@ -9,6 +9,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
@@ -29,23 +30,25 @@ var (
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 	Cfg *cmd_config.Config
 }
 
-func (c Cmd) Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command) {
 	rollout := &cobra.Command{
 		Use:   "rollout",
 		Short: "Inspect the rollouts of the capsule",
 	}
 
 	rolloutGet := &cobra.Command{
-		Use:               "get [rollout-id]",
-		Short:             "Get one or more rollouts",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.get,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "get [rollout-id]",
+		Short: "Get one or more rollouts",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	rolloutGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
 	rolloutGet.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
@@ -56,20 +59,26 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	rollout.AddCommand(rolloutGet)
 
 	events := &cobra.Command{
-		Use:               "events [rollout-id]",
-		Short:             "List events related to a rollout, default to the current rollout",
-		Args:              cobra.MaximumNArgs(1),
-		RunE:              c.capsuleEvents,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "events [rollout-id]",
+		Short: "List events related to a rollout, default to the current rollout",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(func(c Cmd) any { return c.capsuleEvents }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	rollout.AddCommand(events)
 
 	rollback := &cobra.Command{
-		Use:               "rollback [rollout-id]",
-		Short:             "Rollback the capsule to a previous rollout",
-		Args:              cobra.NoArgs,
-		RunE:              c.rollback,
-		ValidArgsFunction: common.Complete(c.completions, common.MaxArgsCompletionFilter(1)),
+		Use:   "rollback [rollout-id]",
+		Short: "Rollback the capsule to a previous rollout",
+		Args:  cobra.NoArgs,
+		RunE:  base.Register(func(c Cmd) any { return c.rollback }),
+		ValidArgsFunction: common.Complete(
+			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
 	rollback.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and perform the rollback")
 	rollback.Flags().IntVarP(&rolloutID, "rollout-id", "r", -1, "The rollout to rollback to. If not given, will roll back to the latest successful rollout.")
@@ -78,7 +87,7 @@ func (c Cmd) Setup(parent *cobra.Command) {
 	parent.AddCommand(rollout)
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -89,7 +98,7 @@ func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) (
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	resp, err := c.Rig.Capsule().ListRollouts(c.Ctx, &connect.Request[capsule_api.ListRolloutsRequest]{
+	resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule_api.ListRolloutsRequest]{
 		Msg: &capsule_api.ListRolloutsRequest{
 			CapsuleId: capsule.CapsuleID,
 		},

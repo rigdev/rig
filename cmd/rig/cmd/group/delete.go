@@ -1,14 +1,15 @@
 package group
 
 import (
+	"context"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) delete(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) error {
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]

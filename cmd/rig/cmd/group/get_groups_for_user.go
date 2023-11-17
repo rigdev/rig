@@ -1,6 +1,7 @@
 package group
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
@@ -11,8 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) listGroupsForUser(cmd *cobra.Command, args []string) error {
-	ctx := c.Ctx
+func (c Cmd) listGroupsForUser(ctx context.Context, cmd *cobra.Command, args []string) error {
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]
