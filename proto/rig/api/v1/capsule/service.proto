@@ -79,13 +79,19 @@ message ExecuteRequest{
     string instance_id = 2;
     string command = 3;
     repeated string arguments = 4;
-    bool tty = 5;
+    Resize tty = 5;
     bool interactive = 6;
+  }
+
+  message Resize{
+    uint32 height = 1;
+    uint32 width = 2;
   }
 
   oneof request {
     Start start = 1;
     StreamData stdin = 2;
+    Resize resize = 3;
   }
 }
 
