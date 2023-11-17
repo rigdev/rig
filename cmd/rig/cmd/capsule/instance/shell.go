@@ -50,11 +50,11 @@ func (c Cmd) shell(cmd *cobra.Command, args []string) error {
 	start := &capsule.ExecuteRequest{
 		Request: &capsule.ExecuteRequest_Start_{
 			Start: &capsule.ExecuteRequest_Start{
-				CapsuleId:   capsule_cmd.CapsuleID,
-				InstanceId:  instance,
-				Command:     command,
-				Arguments:   arguments,
-				Tty:         tty,
+				CapsuleId:  capsule_cmd.CapsuleID,
+				InstanceId: instance,
+				Command:    command,
+				Arguments:  arguments,
+				// Tty:         tty,
 				Interactive: interactive,
 			},
 		},
