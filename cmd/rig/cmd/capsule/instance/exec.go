@@ -3,17 +3,19 @@ package instance
 import (
 	"errors"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/moby/term"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func listen(stream *connect.BidiStreamForClient[capsule.ExecuteRequest, capsule.ExecuteResponse]) chan error {
+var defaultEscapeKeys = []byte{16, 17}
+
+func listen(stream *connect.BidiStreamForClient[capsule.ExecuteRequest, capsule.ExecuteResponse], stdout, stderr io.Writer) chan error {
 	doneChan := make(chan error, 1)
 	go func() {
 		for {
@@ -24,16 +26,16 @@ func listen(stream *connect.BidiStreamForClient[capsule.ExecuteRequest, capsule.
 			}
 			switch v := resp.Response.(type) {
 			case *capsule.ExecuteResponse_Stdout:
-				os.Stdout.Write(v.Stdout.GetData())
+				stdout.Write(v.Stdout.GetData())
 			case *capsule.ExecuteResponse_Stderr:
-				os.Stderr.Write(v.Stderr.GetData())
+				stderr.Write(v.Stderr.GetData())
 			}
 		}
 	}()
 	return doneChan
 }
 
-func (c Cmd) shell(cmd *cobra.Command, args []string) error {
+func (c Cmd) exec(cmd *cobra.Command, args []string) error {
 	ctx := c.Ctx
 	arg := ""
 	if len(args) > 0 {
@@ -47,14 +49,25 @@ func (c Cmd) shell(cmd *cobra.Command, args []string) error {
 
 	command, arguments := parseArgs(cmd, args)
 
+	var resize *capsule.ExecuteRequest_Resize
+	var ttyStruct *Tty
+	if tty {
+		ttyStruct = NewTty()
+		width, height := ttyStruct.GetTtySize()
+		resize = &capsule.ExecuteRequest_Resize{
+			Height: height,
+			Width:  width,
+		}
+	}
+
 	start := &capsule.ExecuteRequest{
 		Request: &capsule.ExecuteRequest_Start_{
 			Start: &capsule.ExecuteRequest_Start{
-				CapsuleId:  capsule_cmd.CapsuleID,
-				InstanceId: instance,
-				Command:    command,
-				Arguments:  arguments,
-				// Tty:         tty,
+				CapsuleId:   capsule_cmd.CapsuleID,
+				InstanceId:  instance,
+				Command:     command,
+				Arguments:   arguments,
+				Tty:         resize,
 				Interactive: interactive,
 			},
 		},
@@ -63,6 +76,12 @@ func (c Cmd) shell(cmd *cobra.Command, args []string) error {
 	stream := c.Rig.Capsule().Execute(ctx)
 
 	defer func() {
+		if tty {
+			err := ttyStruct.RestoreTerminal()
+			if err != nil {
+				cmd.Println(err)
+			}
+		}
 		stream.CloseRequest()
 		stream.CloseResponse()
 	}()
@@ -72,13 +91,49 @@ func (c Cmd) shell(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	stdinClose, stdout, stderr := term.StdStreams()
+	var stdin io.Reader = stdinClose
+
 	if interactive {
-		outChan := listen(stream)
+		outChan := listen(stream, stdout, stderr)
 		inChan := make(chan error, 1)
+		interruptChan := make(chan error, 1)
+		if ttyStruct != nil {
+			stdin = term.NewEscapeProxy(stdin, defaultEscapeKeys)
+			err := ttyStruct.SetTtyTerminal()
+			if err != nil {
+				return err
+			}
+			err = ttyStruct.MonitorSize()
+			if err != nil {
+				return err
+			}
+			go func() {
+				for size := range ttyStruct.resizeChan {
+					err := stream.Send(&capsule.ExecuteRequest{
+						Request: &capsule.ExecuteRequest_Resize_{
+							Resize: &capsule.ExecuteRequest_Resize{
+								Height: size.height,
+								Width:  size.width,
+							},
+						},
+					})
+					if err != nil {
+						inChan <- err
+						return
+					}
+				}
+			}()
+			err = ttyStruct.MonitorInterrupt(interruptChan)
+			if err != nil {
+				return err
+			}
+
+		}
 		go func() {
 			buf := make([]byte, 4096)
 			for {
-				n, err := os.Stdin.Read(buf)
+				n, err := stdin.Read(buf)
 				if n > 0 {
 					err := stream.Send(&capsule.ExecuteRequest{
 						Request: &capsule.ExecuteRequest_Stdin{
@@ -113,6 +168,8 @@ func (c Cmd) shell(cmd *cobra.Command, args []string) error {
 			}
 		}()
 		select {
+		case err := <-interruptChan:
+			return err
 		case err := <-outChan:
 			if errors.Is(err, io.EOF) {
 				return nil
@@ -122,13 +179,18 @@ func (c Cmd) shell(cmd *cobra.Command, args []string) error {
 		case err := <-inChan:
 			if errors.Is(err, io.EOF) {
 				// in is finished wait for out to finish.
-				return <-outChan
+				select {
+				case err := <-outChan:
+					return err
+				case err := <-interruptChan:
+					return err
+				}
 			} else {
 				return err
 			}
 		}
 	} else {
-		outChan := listen(stream)
+		outChan := listen(stream, stdout, stderr)
 		err := <-outChan
 		if errors.Is(err, io.EOF) {
 			return nil
