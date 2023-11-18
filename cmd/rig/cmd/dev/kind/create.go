@@ -25,7 +25,7 @@ var config string
 //go:embed registry.yaml
 var registry string
 
-func (c Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if err := checkBinaries(kubectl, kind, helm); err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (c Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) erro
 	return nil
 }
 
-func (c Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if err := checkBinaries(kind, kubectl, helm, docker); err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ type deployParams struct {
 	restart     bool
 }
 
-func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
+func (c *Cmd) deployInner(ctx context.Context, p deployParams) error {
 	if err := c.loadImage(ctx, p.dockerImage, p.dockerTag); err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (c Cmd) deployInner(ctx context.Context, p deployParams) error {
 	return nil
 }
 
-func (c Cmd) loadImage(ctx context.Context, image, tag string) error {
+func (c *Cmd) loadImage(ctx context.Context, image, tag string) error {
 	imageTag := fmt.Sprintf("%s:%s", image, tag)
 	res, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
@@ -229,7 +229,7 @@ func (c Cmd) loadImage(ctx context.Context, image, tag string) error {
 	return nil
 }
 
-func (c Cmd) clean(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) clean(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if err := checkBinaries(kind); err != nil {
 		return err
 	}

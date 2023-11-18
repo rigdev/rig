@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	res, err := c.Rig.Authentication().Get(ctx, &connect.Request[authentication.GetRequest]{
 		Msg: &authentication.GetRequest{},
 	})

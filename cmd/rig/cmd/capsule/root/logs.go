@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-func (c Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error {
 	duration, err := time.ParseDuration(since)
 	if err != nil {
 		return err

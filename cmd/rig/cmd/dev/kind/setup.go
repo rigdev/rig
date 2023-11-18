@@ -25,17 +25,26 @@ type Cmd struct {
 	Cfg          *cmd_config.Config
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.DockerClient = c.DockerClient
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+}
+
 func Setup(parent *cobra.Command) {
 	kind := &cobra.Command{
-		Use:   "kind",
-		Short: "The kind command is used to setup and manage a development kubernetes cluster running Rig using Kind",
+		Use:               "kind",
+		Short:             "The kind command is used to setup and manage a development kubernetes cluster running Rig using Kind",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "Create a rig cluster in Kind for local development",
 		Args:  cobra.NoArgs,
-		RunE:  base.Register(func(c Cmd) any { return c.create }),
+		RunE:  base.CtxWrap(cmd.create),
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",
@@ -56,7 +65,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "deploy",
 		Short: "Deploy a new (or specific) version of Rig to the kind cluster",
 		Args:  cobra.NoArgs,
-		RunE:  base.Register(func(c Cmd) any { return c.deploy }),
+		RunE:  base.CtxWrap(cmd.deploy),
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",
@@ -77,7 +86,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "clean",
 		Short: "Deletes the rig kind-cluster",
 		Args:  cobra.NoArgs,
-		RunE:  base.Register(func(c Cmd) any { return c.clean }),
+		RunE:  base.CtxWrap(cmd.create),
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",

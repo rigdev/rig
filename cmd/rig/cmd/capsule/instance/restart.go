@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) restart(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) restart(ctx context.Context, cmd *cobra.Command, args []string) error {
 	arg := ""
 	if len(args) > 0 {
 		arg = args[0]

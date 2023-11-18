@@ -18,17 +18,25 @@ type Cmd struct {
 	Cfg *cmd_config.Config
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+}
+
 func Setup(parent *cobra.Command) {
 	config := &cobra.Command{
-		Use:   "config",
-		Short: "Manage Rig CLI configuration",
+		Use:               "config",
+		Short:             "Manage Rig CLI configuration",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	init := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a new context",
 		Args:  cobra.NoArgs,
-		RunE:  base.Register(func(c Cmd) any { return c.init }),
+		RunE:  cmd.init,
 		Annotations: map[string]string{
 			base.OmitProject: "",
 			base.OmitUser:    "",
@@ -41,22 +49,21 @@ func Setup(parent *cobra.Command) {
 		Use:   "use-context [context]",
 		Short: "Change the current context to use",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(func(c Cmd) any { return c.useContext }),
+		RunE:  cmd.useContext,
 		Annotations: map[string]string{
 			base.OmitProject: "",
 			base.OmitUser:    "",
 		},
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			cmd.completions,
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
 	config.AddCommand(useContext)
-
 	parent.AddCommand(config)
 }
 
-func (c Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	names := []string{}
 
 	for _, ctx := range c.Cfg.Contexts {

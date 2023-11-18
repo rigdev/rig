@@ -14,17 +14,24 @@ type Cmd struct {
 	Rig rig.Client
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+}
+
 func Setup(parent *cobra.Command) {
 	cluster := &cobra.Command{
-		Use:   "cluster",
-		Short: "Manage Rig clusters",
+		Use:               "cluster",
+		Short:             "Manage Rig clusters",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	getConfig := &cobra.Command{
 		Use:               "get-config",
 		Short:             "Returns the config of the Rig cluster",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.get }),
+		RunE:              base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.NoCompletions,
 	}
 

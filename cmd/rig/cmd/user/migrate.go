@@ -69,7 +69,7 @@ type firebaseUser struct {
 	CreatedAt     string `json:"createdAt"`
 }
 
-func (c Cmd) migrate(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) migrate(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var err error
 	fields := []string{
 		platformFirebase.String(),
@@ -96,7 +96,7 @@ func (c Cmd) migrate(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 }
 
-func (c Cmd) migrateFromFirebase(ctx context.Context) error {
+func (c *Cmd) migrateFromFirebase(ctx context.Context) error {
 	fields := []string{
 		methodCredentials.String(),
 		methodUsersFile.String(),
@@ -117,7 +117,7 @@ func (c Cmd) migrateFromFirebase(ctx context.Context) error {
 	}
 }
 
-func (c Cmd) migrateFromFirebaseCredentials(ctx context.Context) error {
+func (c *Cmd) migrateFromFirebaseCredentials(ctx context.Context) error {
 	var err error
 	if credFilePath == "" {
 		credFilePath, err = common.PromptInput("Credentials Path:", common.ValidateNonEmptyOpt)
@@ -258,7 +258,7 @@ func (c Cmd) migrateFromFirebaseCredentials(ctx context.Context) error {
 	return nil
 }
 
-func (c Cmd) migrateFromFirebaseUsersFile(ctx context.Context) error {
+func (c *Cmd) migrateFromFirebaseUsersFile(ctx context.Context) error {
 	var err error
 	if usersFilePath == "" {
 		usersFilePath, err = common.PromptInput("users.json path:", common.ValidateNonEmptyOpt)

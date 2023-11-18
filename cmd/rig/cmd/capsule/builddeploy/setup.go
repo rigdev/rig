@@ -44,6 +44,14 @@ type Cmd struct {
 	DockerClient *client.Client
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+	cmd.DockerClient = c.DockerClient
+}
+
 func Setup(parent *cobra.Command) {
 	setupBuild(parent)
 	setupDeploy(parent)
@@ -51,15 +59,16 @@ func Setup(parent *cobra.Command) {
 
 func setupBuild(parent *cobra.Command) {
 	build := &cobra.Command{
-		Use:   "build",
-		Short: "Manage builds of the capsule",
+		Use:               "build",
+		Short:             "Manage builds of the capsule",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	buildCreate := &cobra.Command{
 		Use:               "create",
 		Short:             "Create a new build with the given image",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.createBuild }),
+		RunE:              base.CtxWrap(cmd.createBuild),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	buildCreate.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
@@ -79,9 +88,9 @@ func setupBuild(parent *cobra.Command) {
 		Use:   "get [build-id]",
 		Short: "Get one or multiple builds",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(func(c Cmd) any { return c.getBuild }),
+		RunE:  base.CtxWrap(cmd.getBuild),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -98,10 +107,11 @@ func setupBuild(parent *cobra.Command) {
 
 func setupDeploy(parent *cobra.Command) {
 	capsuleDeploy := &cobra.Command{
-		Use:   "deploy",
-		Short: "Deploy the given build to a capsule",
-		Args:  cobra.NoArgs,
-		RunE:  base.Register(func(c Cmd) any { return c.deploy }),
+		Use:               "deploy",
+		Short:             "Deploy the given build to a capsule",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		Args:              cobra.NoArgs,
+		RunE:              base.CtxWrap(cmd.deploy),
 		Long: `Deploy either the given rig-build or docker image to a capsule.
 If --build-id is given rig tries to find a matching existing rig-build to deploy.
 If --image is given rig tries to create a new rig-build from the docker image (if it doesn't already exist)
@@ -113,7 +123,7 @@ Not both --build-id and --image can be given`,
 	capsuleDeploy.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a rollout if one is in progress")
 	capsuleDeploy.RegisterFlagCompletionFunc(
 		"build-id",
-		base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+		base.CtxWrapCompletion(cmd.completions),
 	)
 	capsuleDeploy.RegisterFlagCompletionFunc("image", common.NoCompletions)
 	capsuleDeploy.RegisterFlagCompletionFunc("remote", common.BoolCompletions)
@@ -122,7 +132,7 @@ Not both --build-id and --image can be given`,
 	parent.AddCommand(capsuleDeploy)
 }
 
-func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if len(args) > 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}

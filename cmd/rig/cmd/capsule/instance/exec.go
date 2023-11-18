@@ -36,7 +36,7 @@ func listen(stream *connect.BidiStreamForClient[capsule.ExecuteRequest, capsule.
 	return doneChan
 }
 
-func (c Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error {
 	arg := ""
 	if len(args) > 0 {
 		arg = args[0]

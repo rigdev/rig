@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
 	buildID, err := c.getBuildID(ctx, capsule_cmd.CapsuleID)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func (c Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) erro
 	return c.listenForEvents(ctx, res.Msg.GetRolloutId(), capsule_cmd.CapsuleID)
 }
 
-func (c Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) {
+func (c *Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) {
 	if buildID != "" && image != "" {
 		return "", errors.New("not both --build-id and --image can be given")
 	}
@@ -169,7 +169,7 @@ func isHexString(s string) bool {
 	return true
 }
 
-func (c Cmd) promptForImageOrBuild(ctx context.Context, capsuleID string) (string, error) {
+func (c *Cmd) promptForImageOrBuild(ctx context.Context, capsuleID string) (string, error) {
 	i, _, err := common.PromptSelect("Deploy from docker image or existing rig build?", []string{"Image", "Build"})
 	if err != nil {
 		return "", err
@@ -188,7 +188,7 @@ func (c Cmd) promptForImageOrBuild(ctx context.Context, capsuleID string) (strin
 	}
 }
 
-func (c Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (string, error) {
+func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (string, error) {
 	resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
 		CapsuleId:  capsuleID,
 		Pagination: &model.Pagination{},
@@ -235,7 +235,7 @@ func (c Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (stri
 	return builds[idx].GetBuildId(), nil
 }
 
-func (c Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID string) error {
+func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID string) error {
 	eventCount := 0
 	for {
 		res, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
@@ -275,7 +275,7 @@ func (c Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID st
 	}
 }
 
-func (c Cmd) pushLocalImageToDevRegistry(ctx context.Context, image string) (string, string, error) {
+func (c *Cmd) pushLocalImageToDevRegistry(ctx context.Context, image string) (string, string, error) {
 	resp, err := c.Rig.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{}))
 	if err != nil {
 		return "", "", err
@@ -324,7 +324,7 @@ func makeDevRegistryImageName(image string, devRegistryHost string) (string, err
 	return tag.String(), nil
 }
 
-func (c Cmd) pushToDevRegistry(ctx context.Context, image string, host string) (string, error) {
+func (c *Cmd) pushToDevRegistry(ctx context.Context, image string, host string) (string, error) {
 	ac := registry.AuthConfig{
 		ServerAddress: host,
 	}

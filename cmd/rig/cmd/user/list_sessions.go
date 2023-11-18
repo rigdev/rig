@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) listSessions(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) listSessions(ctx context.Context, cmd *cobra.Command, args []string) error {
 	identifier := ""
 	if len(args) > 0 {
 		identifier = args[0]

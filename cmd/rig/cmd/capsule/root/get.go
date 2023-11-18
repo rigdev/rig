@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	resp, err := c.Rig.Capsule().List(ctx, &connect.Request[capsule.ListRequest]{
 		Msg: &capsule.ListRequest{
 			Pagination: &model.Pagination{

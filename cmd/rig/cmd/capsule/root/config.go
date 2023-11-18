@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) config(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) config(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if len(args) > 0 && command == "" {
 		return errors.InvalidArgumentErrorf("command must be set when args are provided")
 	}

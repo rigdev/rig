@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-func (c Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error {
 	arg := ""
 	if len(args) > 0 {
 		arg = args[0]

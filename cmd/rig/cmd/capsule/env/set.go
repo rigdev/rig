@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) set(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) set(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if len(args) != 2 {
 		return errors.InvalidArgumentErrorf("expected key and value arguments")
 	}

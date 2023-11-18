@@ -67,68 +67,73 @@ func getContext(cfg *cmd_config.Config) (*cmd_config.Context, error) {
 	return c, nil
 }
 
-// Register solves an annoying problem I haven't found a good solution to yet.
-// 1. We want to use FX to generate all the dependencies for the commands
-//
-// 2. We only want to generate dependencies strictly for the commands currently in the
-// command chain being executed. Some dependencies prompt the user interactively if their
-// values don't already exist (e.g. some Config and Context does this). We don't want this
-// to happen for all commands  (otherwise it would prompt during e.g. 'help' which is super weird behaviour).
-//
-// 3. We would like to encapsulate all dependencies to a command in a struct (called Cmd structs here)
-// to make it possible to easily call helper functions with the dependencies as well and not have
-// unwieldy function signatures.
-//
-// 4. Cobra has no lifecycle step in between parsing all commands and starting executing the functions
-// defined on the cobra.Commands (e.g. PreRun, Run...)
-//
-// Conclusion: We need to have a reference to all functions being called before any cobra parsing happens
-// These functions are instance methods on objects we cannot construct before any Cobra parsing happens
-// :(
-func Register[T any](f func(T) any) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		return fx.New(
+var (
+	options     []fx.Option
+	firstPreRun = true
+	preRunsLeft = 0
+)
+
+func computeNumOfPreRuns(cmd *cobra.Command) int {
+	res := 0
+	for p := cmd; p != nil; p = p.Parent() {
+		if p.PersistentPreRunE != nil {
+			res += 1
+		}
+	}
+	return res
+}
+
+func PersistentPreRunE(cmd *cobra.Command, args []string) error {
+	if firstPreRun {
+		firstPreRun = false
+		preRunsLeft = computeNumOfPreRuns(cmd)
+	}
+	preRunsLeft -= 1
+
+	if preRunsLeft == 0 {
+		allOpts := []fx.Option{
 			Module,
 			fx.NopLogger,
 			fx.Provide(func() *cobra.Command { return cmd }),
 			fx.Provide(func() []string { return args }),
-			fx.Invoke(func(t T, ctx context.Context, cmd *cobra.Command, args []string) error {
-				switch f := f(t).(type) {
-				case func(context.Context, *cobra.Command, []string) error:
-					return f(ctx, cmd, args)
-				case func(*cobra.Command, []string) error:
-					return f(cmd, args)
-				default:
-					return fmt.Errorf("unexpected function signature %T to Register", f)
-				}
-			}),
-		).Err()
+		}
+		allOpts = append(allOpts, options...)
+		return fx.New(allOpts...).Err()
+	}
+	return nil
+}
+
+func InvokePreRunE(cmd *cobra.Command, args []string, invokes ...any) error {
+	for _, invoke := range invokes {
+		options = append(options, fx.Invoke(invoke))
+	}
+
+	if err := PersistentPreRunE(cmd, args); err != nil {
+		return err
+	}
+	return nil
+}
+
+func MakeInvokePreRunE(fs ...any) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		return InvokePreRunE(cmd, args, fs...)
 	}
 }
 
-// See Register
-func RegisterCompletion[T any](f func(T) any) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+type FCtx = func(ctx context.Context, cmd *cobra.Command, args []string) error
+type F = func(cmd *cobra.Command, args []string) error
+
+func CtxWrap(f FCtx) F {
+	return func(cmd *cobra.Command, args []string) error {
+		return f(context.Background(), cmd, args)
+	}
+}
+
+type FCompleteCtx = func(context.Context, *cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+type FComplete = func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+
+func CtxWrapCompletion(f FCompleteCtx) FComplete {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		var completions []string
-		var directive cobra.ShellCompDirective
-		if err := fx.New(
-			Module,
-			fx.NopLogger,
-			fx.Provide(func() *cobra.Command { return cmd }),
-			fx.Provide(func() []string { return args }),
-			fx.Invoke(func(t T, ctx context.Context, cmd *cobra.Command, args []string) error {
-				switch f := f(t).(type) {
-				case func(*cobra.Command, []string, string) error:
-					return f(cmd, args, toComplete)
-				case func(context.Context, *cobra.Command, []string, string) error:
-					return f(ctx, cmd, args, toComplete)
-				default:
-					return fmt.Errorf("unexpected function signature %T to Register", f)
-				}
-			}),
-		).Err(); err != nil {
-			return nil, cobra.ShellCompDirectiveError
-		}
-		return completions, directive
+		return f(context.Background(), cmd, args, toComplete)
 	}
 }

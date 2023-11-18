@@ -57,25 +57,37 @@ type Cmd struct {
 	DockerClient *client.Client
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	fmt.Println("initCmd capsule")
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+	cmd.DockerClient = c.DockerClient
+}
+
 func Setup(parent *cobra.Command) {
 	capsuleCmd := &cobra.Command{
 		Use:   "capsule",
 		Short: "Manage capsules",
-		PersistentPreRunE: base.Register(func(c Cmd) any {
-			return c.persistentPreRunE
+		PersistentPreRunE: base.CtxWrap(func(ctx context.Context, c *cobra.Command, args []string) error {
+			if err := base.InvokePreRunE(c, args, initCmd); err != nil {
+				return err
+			}
+			return cmd.persistentPreRunE(ctx, c, args)
 		}),
 	}
 	capsuleCmd.PersistentFlags().StringVarP(&capsule.CapsuleID, "capsule-id", "c", "", "Id of the capsule")
 	capsuleCmd.RegisterFlagCompletionFunc(
 		"capsule-id",
-		base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+		base.CtxWrapCompletion(cmd.completions),
 	)
 
 	capsuleCreate := &cobra.Command{
 		Use:               "create",
 		Short:             "Create a new capsule",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.create }),
+		RunE:              base.CtxWrap(cmd.create),
 		Annotations:       omitCapsuleIDAnnotation,
 		ValidArgsFunction: common.NoCompletions,
 	}
@@ -89,7 +101,7 @@ func Setup(parent *cobra.Command) {
 		Use:               "abort",
 		Short:             "Abort the current rollout. This will leave the capsule in a undefined state",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.abort }),
+		RunE:              base.CtxWrap(cmd.abort),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleCmd.AddCommand(capsuleAbort)
@@ -98,7 +110,7 @@ func Setup(parent *cobra.Command) {
 		Use:               "delete",
 		Short:             "Delete a capsule",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.delete }),
+		RunE:              base.CtxWrap(cmd.delete),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleCmd.AddCommand(capsuleDelete)
@@ -106,9 +118,10 @@ func Setup(parent *cobra.Command) {
 	capsuleGet := &cobra.Command{
 		Use:               "get",
 		Short:             "Get one or more capsules",
+		PersistentPreRunE: base.PersistentPreRunE,
 		Args:              cobra.NoArgs,
 		Annotations:       omitCapsuleIDAnnotation,
-		RunE:              base.Register(func(c Cmd) any { return c.get }),
+		RunE:              base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
@@ -123,7 +136,7 @@ func Setup(parent *cobra.Command) {
 		Use:               "config",
 		Short:             "Configure the capsule",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.config }),
+		RunE:              base.CtxWrap(cmd.config),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleConfig.Flags().Bool("auto-add-service-account", false, "automatically add the rig service account to the capsule")
@@ -140,7 +153,7 @@ func Setup(parent *cobra.Command) {
 		Use:               "logs",
 		Short:             "Get logs across all instances of the capsule",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.logs }),
+		RunE:              base.CtxWrap(cmd.logs),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleLogs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
@@ -158,7 +171,7 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(capsuleCmd)
 }
 
-func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	var capsuleIDs []string
 
 	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
@@ -196,8 +209,8 @@ func formatCapsule(c *capsule_api.Capsule) string {
 	return fmt.Sprintf("%v\t (Rollout: %v, Updated At: %v)", c.GetCapsuleId(), c.GetCurrentRollout(), age)
 }
 
-func (c Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, args []string) error {
-	base.ExecutePersistentPreRunERecursively(cmd, args)
+func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, args []string) error {
+	// base.ExecutePersistentPreRunERecursively(cmd, args)
 	if cmd.Annotations["OMIT_CAPSULE_ID"] != "" {
 		return nil
 	}

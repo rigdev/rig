@@ -1,6 +1,8 @@
 package scale
 
 import (
+	"fmt"
+
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
@@ -37,17 +39,25 @@ type Cmd struct {
 	Rig rig.Client
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	fmt.Println("initCmd capsule scale")
+	cmd.Rig = c.Rig
+}
+
 func Setup(parent *cobra.Command) {
 	scale := &cobra.Command{
-		Use:   "scale",
-		Short: "Scale and inspect the resources of the capsule",
+		Use:               "scale",
+		Short:             "Scale and inspect the resources of the capsule",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	scaleGet := &cobra.Command{
 		Use:               "get",
 		Short:             "Displays the resources (container size) and replicas of the capsule",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.get }),
+		RunE:              base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	scaleGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
@@ -58,7 +68,7 @@ func Setup(parent *cobra.Command) {
 		Use:               "vertical",
 		Short:             "Vertically scaling the capsule (setting the container size)",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.vertical }),
+		RunE:              base.CtxWrap(cmd.vertical),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	scaleVertical.Flags().StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
@@ -85,7 +95,7 @@ func Setup(parent *cobra.Command) {
 		Use:               "horizontal",
 		Short:             "Horizontally scaling the capsule (setting the number of replicas and configuring the autoscaler)",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.horizontal }),
+		RunE:              base.CtxWrap(cmd.horizontal),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	scaleHorizontal.Flags().Uint32VarP(&replicas, "replicas", "r", 0, "number of replicas to scale to")
@@ -100,7 +110,7 @@ func Setup(parent *cobra.Command) {
 		Use:               "autoscale",
 		Short:             "Configure the autoscaler for horizontal scaling",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.autoscale }),
+		RunE:              base.CtxWrap(cmd.autoscale),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	scaleHorizontalAuto.Flags().Uint32VarP(&utilizationPercentage, "utilization-percentage", "u", 0, "CPU utilization percentage for the autoscaler. 1 <= 100")
