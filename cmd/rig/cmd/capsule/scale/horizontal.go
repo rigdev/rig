@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) horizontal(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, args []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return nil
@@ -59,7 +59,7 @@ func (c Cmd) horizontal(ctx context.Context, cmd *cobra.Command, args []string) 
 	return nil
 }
 
-func (c Cmd) autoscale(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, args []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return nil

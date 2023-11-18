@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -34,18 +35,32 @@ type Cmd struct {
 	Logger *zap.Logger
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	fmt.Println("initCmd root")
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+	cmd.Logger = c.Logger
+}
+
 func Run() error {
 	rootCmd := &cobra.Command{
-		Use:               "rig",
-		Short:             "CLI tool for managing your Rig projects",
-		PersistentPreRunE: base.Register(func(c Cmd) any { return c.preRun }),
+		Use:   "rig",
+		Short: "CLI tool for managing your Rig projects",
+		PersistentPreRunE: base.MakeInvokePreRunE(
+			initCmd,
+			func(ctx context.Context, c *cobra.Command, args []string) error {
+				return cmd.preRun(ctx, c, args)
+			},
+		),
 	}
 
 	license := &cobra.Command{
 		Use:               "license",
 		Short:             "Get License Information for the current project",
 		Args:              cobra.NoArgs,
-		RunE:              base.Register(func(c Cmd) any { return c.getLicenseInfo }),
+		RunE:              base.CtxWrap(cmd.getLicenseInfo),
 		ValidArgsFunction: common.NoCompletions,
 		Annotations: map[string]string{
 			base.OmitProject: "",
@@ -64,14 +79,15 @@ func Run() error {
 	project.Setup(rootCmd)
 	rootCmd.AddCommand(build.VersionCommand())
 
+	cobra.EnableTraverseRunHooks = true
 	return rootCmd.Execute()
 }
 
-func (r Cmd) preRun(ctx context.Context, cmd *cobra.Command, args []string) error {
-	return base.CheckAuth(ctx, cmd, r.Rig, r.Cfg)
+func (c *Cmd) preRun(ctx context.Context, cmd *cobra.Command, args []string) error {
+	return base.CheckAuth(ctx, cmd, c.Rig, c.Cfg)
 }
 
-func (c Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var plan project_api.Plan
 	var expiresAt *timestamppb.Timestamp
 

@@ -41,19 +41,27 @@ type Cmd struct {
 	Cfg *cmd_config.Config
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+}
+
 func Setup(parent *cobra.Command) {
 	instance := &cobra.Command{
-		Use:   "instance",
-		Short: "Inspect and restart instances",
+		Use:               "instance",
+		Short:             "Inspect and restart instances",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	GetInstances := &cobra.Command{
 		Use:   "get [instance-id]",
 		Short: "Get one or more instances",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		RunE:  base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -69,9 +77,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "restart [instance-id]",
 		Short: "Restart a single instance",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(func(c Cmd) any { return c.restart }),
+		RunE:  base.CtxWrap(cmd.restart),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -81,9 +89,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "logs [instance-id]",
 		Short: "Read instance logs from the capsule ",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(func(c Cmd) any { return c.logs }),
+		RunE:  base.CtxWrap(cmd.logs),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -95,9 +103,9 @@ func Setup(parent *cobra.Command) {
 	exec := &cobra.Command{
 		Use:   "exec [instance-id] -- [command] [args...]",
 		Short: "Open a shell to the instance",
-		RunE:  base.Register(func(c Cmd) any { return c.exec }),
+		RunE:  base.CtxWrap(cmd.exec),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -110,7 +118,7 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(instance)
 }
 
-func (c Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg string, argsLenAtDash int) (string, error) {
+func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg string, argsLenAtDash int) (string, error) {
 	if arg != "" && argsLenAtDash != 0 {
 		return arg, nil
 	}
@@ -141,7 +149,7 @@ func (c Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg string
 	return s, err
 }
 
-func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if capsule_cmd.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}

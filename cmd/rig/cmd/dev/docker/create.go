@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
 	v, err := c.DockerClient.VolumeCreate(ctx, volume.CreateOptions{
 		Name: "rig-platform-postgres-data",
 	})
@@ -89,7 +89,7 @@ func (c Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) erro
 	return initCmd.Run()
 }
 
-func (c Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *container.HostConfig, containerName string) error {
+func (c *Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *container.HostConfig, containerName string) error {
 	create := true
 	if _, err := c.DockerClient.ContainerInspect(ctx, containerName); client.IsErrNotFound(err) {
 	} else if err != nil {
@@ -147,7 +147,7 @@ func (c Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *con
 	return nil
 }
 
-func (c Cmd) ensureImage(ctx context.Context, image string, force bool) error {
+func (c *Cmd) ensureImage(ctx context.Context, image string, force bool) error {
 	if !force {
 		image = strings.TrimPrefix(image, "docker.io/library/")
 		image = strings.TrimPrefix(image, "index.docker.io/library/")

@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"context"
-
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
@@ -21,15 +19,22 @@ var outputJSON bool
 type Cmd struct {
 	fx.In
 
-	Ctx context.Context
 	Rig rig.Client
 	Cfg *cmd_config.Config
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+}
+
 func Setup(parent *cobra.Command) {
 	auth := &cobra.Command{
-		Use:   "auth",
-		Short: "Manage authentication for the current user",
+		Use:               "auth",
+		Short:             "Manage authentication for the current user",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	login := &cobra.Command{
@@ -41,7 +46,7 @@ func Setup(parent *cobra.Command) {
 			base.OmitProject: "",
 		},
 		ValidArgsFunction: common.NoCompletions,
-		RunE:              base.Register(func(c Cmd) any { return c.login }),
+		RunE:              base.CtxWrap(cmd.login),
 	}
 	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
 	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
@@ -53,7 +58,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "get",
 		Short: "Get user information associated with the current user",
 		Args:  cobra.NoArgs,
-		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		RunE:  base.CtxWrap(cmd.get),
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},

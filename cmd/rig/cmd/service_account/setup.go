@@ -33,16 +33,23 @@ type Cmd struct {
 	Rig rig.Client
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+}
+
 func Setup(parent *cobra.Command) {
 	serviceAccount := &cobra.Command{
-		Use:   "service-account",
-		Short: "Manage service accounts",
+		Use:               "service-account",
+		Short:             "Manage service accounts",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new service account",
-		RunE:  base.Register(func(c Cmd) any { return c.create }),
+		RunE:  base.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
 	serviceAccount.PersistentFlags().StringVarP(&name, "name", "n", "", "name of the credential")
@@ -51,9 +58,9 @@ func Setup(parent *cobra.Command) {
 	get := &cobra.Command{
 		Use:               "get [id]",
 		Short:             "Get one or multiple service accounts",
-		RunE:              base.Register(func(c Cmd) any { return c.list }),
+		RunE:              base.CtxWrap(cmd.list),
 		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+		ValidArgsFunction: base.CtxWrapCompletion(cmd.completions),
 	}
 	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	get.Flags().IntVarP(&offset, "offset", "o", 0, "offset")
@@ -67,16 +74,16 @@ func Setup(parent *cobra.Command) {
 	delete := &cobra.Command{
 		Use:               "delete [id]",
 		Short:             "Delete a service account",
-		RunE:              base.Register(func(c Cmd) any { return c.delete }),
+		RunE:              base.CtxWrap(cmd.delete),
 		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+		ValidArgsFunction: base.CtxWrapCompletion(cmd.completions),
 	}
 	serviceAccount.AddCommand(delete)
 
 	parent.AddCommand(serviceAccount)
 }
 
-func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	var completions []string
 	accs, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
 		Msg: &service_account.ListRequest{},

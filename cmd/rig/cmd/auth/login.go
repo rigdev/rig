@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) login(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) login(ctx context.Context, cmd *cobra.Command, args []string) error {
 	res, err := c.loginWithRetry(ctx, authUserIdentifier, authPassword, auth.RigProjectID)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (c Cmd) login(ctx context.Context, cmd *cobra.Command, args []string) error
 	return nil
 }
 
-func (c Cmd) loginWithRetry(ctx context.Context, identifierStr, password, project string) (*connect.Response[authentication.LoginResponse], error) {
+func (c *Cmd) loginWithRetry(ctx context.Context, identifierStr, password, project string) (*connect.Response[authentication.LoginResponse], error) {
 	shouldPromptIdentifier := identifierStr == ""
 	shouldPromptPassword := password == ""
 	var identifier *model.UserIdentifier

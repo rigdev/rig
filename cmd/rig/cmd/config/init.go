@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) init(cmd *cobra.Command, args []string) error {
+func (c *Cmd) init(cmd *cobra.Command, args []string) error {
 	if ok, err := common.PromptConfirm("Do you want to configure a new context?", true); err != nil {
 		return err
 	} else if !ok {

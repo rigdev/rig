@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) capsuleEvents(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) capsuleEvents(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var rollout uint64
 	var err error
 	if len(args) > 0 {

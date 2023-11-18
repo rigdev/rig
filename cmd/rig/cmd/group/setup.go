@@ -35,16 +35,23 @@ type Cmd struct {
 	Rig rig.Client
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+}
+
 func Setup(parent *cobra.Command) {
 	group := &cobra.Command{
-		Use:   "group",
-		Short: "Manage user groups",
+		Use:               "group",
+		Short:             "Manage user groups",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	create := &cobra.Command{
 		Use:               "create",
 		Short:             "Create a new group",
-		RunE:              base.Register(func(c Cmd) any { return c.create }),
+		RunE:              base.CtxWrap(cmd.create),
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: common.NoCompletions,
 	}
@@ -55,10 +62,10 @@ func Setup(parent *cobra.Command) {
 	delete := &cobra.Command{
 		Use:   "delete [group-id | group-name]",
 		Short: "Delete a group",
-		RunE:  base.Register(func(c Cmd) any { return c.delete }),
+		RunE:  base.CtxWrap(cmd.delete),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -68,9 +75,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "update [group-id | group-name]",
 		Short: "Update a group",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(func(c Cmd) any { return c.update }),
+		RunE:  base.CtxWrap(cmd.update),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -81,9 +88,9 @@ func Setup(parent *cobra.Command) {
 		Short:   "Get one or multiple groups",
 		Args:    cobra.MaximumNArgs(1),
 		Aliases: []string{"ls"},
-		RunE:    base.Register(func(c Cmd) any { return c.get }),
+		RunE:    base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -98,10 +105,10 @@ func Setup(parent *cobra.Command) {
 	getMembers := &cobra.Command{
 		Use:   "get-members [group-id | group-name]",
 		Short: "Get members of a group",
-		RunE:  base.Register(func(c Cmd) any { return c.listMembers }),
+		RunE:  base.CtxWrap(cmd.listMembers),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -116,10 +123,10 @@ func Setup(parent *cobra.Command) {
 	getGroupsForUser := &cobra.Command{
 		Use:   "get-groups-for-user [user-id | {email|username|phone}]",
 		Short: "Get groups that a user is a member of",
-		RunE:  base.Register(func(c Cmd) any { return c.listGroupsForUser }),
+		RunE:  base.CtxWrap(cmd.listGroupsForUser),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.userCompletions }),
+			base.CtxWrapCompletion(cmd.userCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -134,7 +141,7 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(group)
 }
 
-func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	completions := []string{}
 	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{
 		Msg: &group.ListRequest{},
@@ -160,7 +167,7 @@ func formatGroup(g *group.Group) string {
 	return fmt.Sprintf("%s\t (#Members: %v)", g.GetName(), g.GetNumMembers())
 }
 
-func (c Cmd) userCompletions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) userCompletions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	completions := []string{}
 	resp, err := c.Rig.User().List(ctx, &connect.Request[user.ListRequest]{
 		Msg: &user.ListRequest{},

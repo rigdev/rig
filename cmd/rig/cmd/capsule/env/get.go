@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	r, err := capsule.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err

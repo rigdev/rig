@@ -24,17 +24,25 @@ type Cmd struct {
 	Cfg *cmd_config.Config
 }
 
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+}
+
 func Setup(parent *cobra.Command) {
 	env := &cobra.Command{
-		Use:   "env",
-		Short: "Manage environment variables for the capsule",
+		Use:               "env",
+		Short:             "Manage environment variables for the capsule",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
 	envSet := &cobra.Command{
 		Use:               "set key value",
 		Short:             "Set an environment variable",
 		Args:              cobra.ExactArgs(2),
-		RunE:              base.Register(func(c Cmd) any { return c.set }),
+		RunE:              base.CtxWrap(cmd.set),
 		ValidArgsFunction: common.NoCompletions,
 	}
 	envSet.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
@@ -45,9 +53,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "get [key]",
 		Short: "Get an environment variable",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(func(c Cmd) any { return c.get }),
+		RunE:  base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -57,9 +65,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "remove [key]",
 		Short: "Remove an environment variable",
 		Args:  cobra.ExactArgs(1),
-		RunE:  base.Register(func(c Cmd) any { return c.remove }),
+		RunE:  base.CtxWrap(cmd.remove),
 		ValidArgsFunction: common.Complete(
-			base.RegisterCompletion(func(c Cmd) any { return c.completions }),
+			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -70,7 +78,7 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(env)
 }
 
-func (c Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}

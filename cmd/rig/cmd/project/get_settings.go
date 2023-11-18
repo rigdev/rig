@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) getSettings(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, args []string) error {
 	req := &settings.GetSettingsRequest{}
 	resp, err := c.Rig.ProjectSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{Msg: req})
 	if err != nil {

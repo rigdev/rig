@@ -36,7 +36,7 @@ func imageRefFromFlags() imageRef {
 	return imageRef
 }
 
-func (c Cmd) promptForImage(ctx context.Context) (imageRef, error) {
+func (c *Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 	var empty imageRef
 
 	ok, err := common.PromptConfirm("Use a local image?", true)
@@ -65,7 +65,7 @@ func (c Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 	}, nil
 }
 
-func (c Cmd) getDaemonImage(ctx context.Context) (*imageInfo, error) {
+func (c *Cmd) getDaemonImage(ctx context.Context) (*imageInfo, error) {
 	images, prompts, err := c.getImagePrompts(ctx, "")
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (c Cmd) getDaemonImage(ctx context.Context) (*imageInfo, error) {
 	return &images[idx], nil
 }
 
-func (c Cmd) getImagePrompts(ctx context.Context, filter string) ([]imageInfo, [][]string, error) {
+func (c *Cmd) getImagePrompts(ctx context.Context, filter string) ([]imageInfo, [][]string, error) {
 	res, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{
 		Filters: filters.NewArgs(filters.Arg("dangling", "false")),
 	})
@@ -134,7 +134,7 @@ type imageInfo struct {
 	created time.Time
 }
 
-func (c Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef imageRef) (string, error) {
+func (c *Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef imageRef) (string, error) {
 	if strings.Contains(imageRef.Image, "@") {
 		return "", errors.UnimplementedErrorf("referencing images by digest is not yet supported")
 	}

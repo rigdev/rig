@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) getBuild(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, args []string) error {
 	resp, err := c.Rig.Capsule().ListBuilds(ctx, &connect.Request[capsule.ListBuildsRequest]{
 		Msg: &capsule.ListBuildsRequest{
 			CapsuleId: capsule_cmd.CapsuleID,

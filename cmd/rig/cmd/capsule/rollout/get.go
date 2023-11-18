@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
 		Msg: &capsule.ListRolloutsRequest{
 			CapsuleId: capsule_cmd.CapsuleID,

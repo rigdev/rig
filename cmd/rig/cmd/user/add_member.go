@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) error {
 	uidentifier := ""
 	if len(args) >= 1 {
 		uidentifier = args[0]

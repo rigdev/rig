@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) set(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) set(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var err error
 	if srcPath == "" {
 		srcPath, err = common.PromptInput("Source path", common.ValidateFilePathOpt)

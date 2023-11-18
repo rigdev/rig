@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error {
 	resp, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
 		Msg: &service_account.ListRequest{},
 	})

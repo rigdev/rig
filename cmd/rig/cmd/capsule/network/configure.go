@@ -20,7 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (c Cmd) configure(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) configure(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var err error
 	networkFile := ""
 	if len(args) == 0 {
@@ -71,7 +71,7 @@ func (c Cmd) configure(ctx context.Context, cmd *cobra.Command, args []string) e
 	return nil
 }
 
-func (c Cmd) configureInteractive(ctx context.Context, capsuleID string) error {
+func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error {
 	resp, err := c.Rig.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
 		CapsuleId: capsuleID,
 		Pagination: &model.Pagination{
