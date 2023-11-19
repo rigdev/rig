@@ -24,7 +24,6 @@ var (
 )
 
 var (
-	outputJSON     bool
 	deploy         bool
 	skipImageCheck bool
 	remote         bool
@@ -94,10 +93,8 @@ func setupBuild(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	buildGet.Flags().IntVarP(&offset, "offset", "o", 0, "offset")
+	buildGet.Flags().IntVar(&offset, "offset", 0, "offset")
 	buildGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
-	buildGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	buildGet.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	buildGet.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	buildGet.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	build.AddCommand(buildGet)

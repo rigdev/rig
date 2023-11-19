@@ -34,7 +34,6 @@ var (
 
 var (
 	interactive bool
-	outputJSON  bool
 	forceDeploy bool
 	follow      bool
 )
@@ -123,10 +122,8 @@ func Setup(parent *cobra.Command) {
 		RunE:              base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.NoCompletions,
 	}
-	capsuleGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	capsuleGet.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
+	capsuleGet.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	capsuleGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	capsuleGet.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	capsuleGet.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	capsuleGet.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	capsuleCmd.AddCommand(capsuleGet)

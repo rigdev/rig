@@ -6,7 +6,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
-	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 )
 
@@ -18,9 +18,8 @@ func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, args []string
 	}
 	set := resp.Msg.GetSettings()
 
-	if outputJSON {
-		cmd.Println(common.ProtoToPrettyJson(set))
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(set)
 	}
 
 	dockerRegistries := []table.Row{}

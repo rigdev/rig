@@ -23,7 +23,6 @@ var (
 )
 
 var (
-	outputJSON  bool
 	forceDeploy bool
 )
 
@@ -58,10 +57,8 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	rolloutGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	rolloutGet.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
+	rolloutGet.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	rolloutGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	rolloutGet.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	rolloutGet.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	rolloutGet.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	rollout.AddCommand(rolloutGet)

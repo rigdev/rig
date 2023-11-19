@@ -53,6 +53,7 @@ func Run() error {
 			},
 		),
 	}
+	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 
 	license := &cobra.Command{
 		Use:               "license",

@@ -6,7 +6,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/user/settings"
-	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 )
 
@@ -17,9 +17,8 @@ func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, args []string
 	}
 	settings := res.Msg.GetSettings()
 
-	if outputJson {
-		cmd.Println(common.ProtoToPrettyJson(settings))
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(settings)
 	}
 
 	rows_login := []table.Row{}

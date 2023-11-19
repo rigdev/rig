@@ -7,7 +7,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
-	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +19,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	if outputJSON {
-		cmd.Println(common.ProtoToPrettyJson(res.Msg))
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(res.Msg)
 	}
 
 	ui := res.Msg.GetUserInfo()

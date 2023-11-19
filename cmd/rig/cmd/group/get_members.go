@@ -8,6 +8,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 )
 
@@ -30,11 +31,8 @@ func (c *Cmd) listMembers(ctx context.Context, cmd *cobra.Command, args []string
 		return err
 	}
 
-	if outputJSON {
-		for _, u := range resp.Msg.GetMembers() {
-			cmd.Println(common.ProtoToPrettyJson(u))
-		}
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(resp.Msg.GetMembers())
 	}
 
 	t := table.NewWriter()

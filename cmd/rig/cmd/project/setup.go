@@ -27,7 +27,6 @@ var (
 )
 
 var (
-	outputJSON bool
 	useProject bool
 )
 
@@ -60,8 +59,6 @@ func Setup(parent *cobra.Command) {
 		RunE:              base.CtxWrap(cmd.getSettings),
 		ValidArgsFunction: common.NoCompletions,
 	}
-	getSettings.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
-	getSettings.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	project.AddCommand(getSettings)
 
 	updateSettings := &cobra.Command{
@@ -128,8 +125,6 @@ func Setup(parent *cobra.Command) {
 		RunE:              base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.NoCompletions,
 	}
-	getProject.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
-	getProject.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	project.AddCommand(getProject)
 
 	updateProject := &cobra.Command{
@@ -170,10 +165,8 @@ func Setup(parent *cobra.Command) {
 		},
 		ValidArgsFunction: common.NoCompletions,
 	}
-	listProjects.Flags().IntVarP(&offset, "offset", "o", 0, "Offset")
+	listProjects.Flags().IntVar(&offset, "offset", 0, "Offset")
 	listProjects.Flags().IntVarP(&limit, "limit", "l", 10, "Limit")
-	listProjects.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
-	listProjects.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	listProjects.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	listProjects.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	project.AddCommand(listProjects)

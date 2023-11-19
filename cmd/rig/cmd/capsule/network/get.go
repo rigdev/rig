@@ -6,9 +6,8 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-
 	"github.com/spf13/cobra"
 )
 
@@ -33,9 +32,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	if outputJSON {
-		cmd.Println(common.ProtoToPrettyJson(n))
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(n)
 	}
 
 	t := table.NewWriter()

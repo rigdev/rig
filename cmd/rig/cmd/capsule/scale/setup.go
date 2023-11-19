@@ -1,8 +1,6 @@
 package scale
 
 import (
-	"fmt"
-
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
@@ -11,7 +9,6 @@ import (
 )
 
 var (
-	outputJSON          bool
 	disable             bool
 	overwriteAutoscaler bool
 	forceDeploy         bool
@@ -42,7 +39,6 @@ type Cmd struct {
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	fmt.Println("initCmd capsule scale")
 	cmd.Rig = c.Rig
 }
 
@@ -60,8 +56,6 @@ func Setup(parent *cobra.Command) {
 		RunE:              base.CtxWrap(cmd.get),
 		ValidArgsFunction: common.NoCompletions,
 	}
-	scaleGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	scaleGet.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	scale.AddCommand(scaleGet)
 
 	scaleVertical := &cobra.Command{

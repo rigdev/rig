@@ -2,14 +2,13 @@ package instance
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/capsule/instance"
 	"github.com/rigdev/rig-go-api/model"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	table2 "github.com/rodaine/table"
 	"github.com/spf13/cobra"
@@ -29,13 +28,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 	}
 	instances := resp.Msg.GetInstances()
 
-	if outputJSON {
-		jsonStr, err := json.MarshalIndent(instances, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(jsonStr))
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(instances)
 	}
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()

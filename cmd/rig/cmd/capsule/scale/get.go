@@ -2,36 +2,31 @@ package scale
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
 
-func (r Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
-	rollout, err := capsule.GetCurrentRollout(ctx, r.Rig)
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+	rollout, err := capsule.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err
 	}
-	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, r.Rig)
+	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, c.Rig)
 	if err != nil {
 		return err
 	}
 
-	if outputJSON {
+	if base.Flags.OutputType != base.OutputTypePretty {
 		obj := scaleObj{
 			Replicas:      rollout.GetConfig().GetReplicas(),
 			ContainerSize: containerSettings.GetResources(),
 			Autoscaler:    rollout.GetConfig().GetHorizontalScale(),
 		}
-		bytes, err := json.MarshalIndent(&obj, "", "  ")
-		if err != nil {
-			return err
-		}
-		cmd.Println(string(bytes))
-		return nil
+		return base.FormatPrint(obj)
 	}
 
 	limits := containerSettings.GetResources().GetLimits()

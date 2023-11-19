@@ -15,8 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func (r Cmd) vertical(ctx context.Context, cmd *cobra.Command, args []string) error {
-	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, r.Rig)
+func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, args []string) error {
+	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, c.Rig)
 	if err != nil {
 		return nil
 	}
@@ -45,12 +45,12 @@ func (r Cmd) vertical(ctx context.Context, cmd *cobra.Command, args []string) er
 		},
 	})
 
-	_, err = r.Rig.Capsule().Deploy(ctx, req)
+	_, err = c.Rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 		if forceDeploy {
-			_, err = capsule_cmd.AbortAndDeploy(ctx, r.Rig, capsule_cmd.CapsuleID, req)
+			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
 		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, r.Rig, req)
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
 		}
 	}
 	if err != nil {

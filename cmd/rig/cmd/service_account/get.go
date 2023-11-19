@@ -6,7 +6,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
-	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -35,11 +35,8 @@ func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error
 		}
 	}
 
-	if outputJSON {
-		for _, cred := range serviceAccounts {
-			cmd.Println(common.ProtoToPrettyJson(cred))
-		}
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(serviceAccounts)
 	}
 
 	t := table.NewWriter()
