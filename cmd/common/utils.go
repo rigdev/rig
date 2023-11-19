@@ -19,8 +19,6 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -221,10 +219,6 @@ func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Gro
 
 func FormatField(s string) string {
 	return strings.ToLower(strings.ReplaceAll(s, " ", "-"))
-}
-
-func ProtoToPrettyJson(m protoreflect.ProtoMessage) string {
-	return protojson.Format(m)
 }
 
 func FormatIntToSI(n uint64, decimals int) string {

@@ -17,10 +17,6 @@ import (
 )
 
 var (
-	outputJSON bool
-)
-
-var (
 	offset int
 	limit  int
 )
@@ -94,10 +90,8 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
-	get.Flags().IntVarP(&offset, "offset", "o", 0, "offset the number of groups to return")
-	get.RegisterFlagCompletionFunc("json", common.BoolCompletions)
+	get.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
 	get.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	get.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	group.AddCommand(get)
@@ -112,10 +106,8 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	getMembers.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	getMembers.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of members to return")
-	getMembers.Flags().IntVarP(&offset, "offset", "o", 0, "offset the number of members to return")
-	getMembers.RegisterFlagCompletionFunc("json", common.BoolCompletions)
+	getMembers.Flags().IntVar(&offset, "offset", 0, "offset the number of members to return")
 	getMembers.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	getMembers.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	group.AddCommand(getMembers)
@@ -130,10 +122,8 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	getGroupsForUser.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
 	getGroupsForUser.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
-	getGroupsForUser.Flags().IntVarP(&offset, "offset", "o", 0, "offset the number of groups to return")
-	getGroupsForUser.RegisterFlagCompletionFunc("json", common.BoolCompletions)
+	getGroupsForUser.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
 	getGroupsForUser.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	getGroupsForUser.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	group.AddCommand(getGroupsForUser)

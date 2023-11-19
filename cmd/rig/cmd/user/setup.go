@@ -38,10 +38,6 @@ var (
 	groupIdentifier string
 )
 
-var (
-	outputJson bool
-)
-
 type Cmd struct {
 	fx.In
 
@@ -126,10 +122,8 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1)),
 		Args: cobra.MaximumNArgs(1),
 	}
-	get.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
+	get.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	get.Flags().BoolVar(&outputJson, "json", false, "output as json")
-	get.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	get.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	get.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	user.AddCommand(get)
@@ -156,10 +150,8 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	getSessions.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
+	getSessions.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	getSessions.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	getSessions.Flags().BoolVar(&outputJson, "json", false, "output as json")
-	getSessions.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	getSessions.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	getSessions.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	user.AddCommand(getSessions)
@@ -171,8 +163,6 @@ func Setup(parent *cobra.Command) {
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: common.NoCompletions,
 	}
-	getSettings.Flags().BoolVar(&outputJson, "json", false, "output as json")
-	getSettings.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	user.AddCommand(getSettings)
 
 	updateSettings := &cobra.Command{

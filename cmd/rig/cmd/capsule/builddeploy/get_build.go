@@ -10,6 +10,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
@@ -29,11 +30,8 @@ func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, args []string) e
 		return err
 	}
 
-	if outputJSON {
-		for _, b := range resp.Msg.GetBuilds() {
-			cmd.Println(common.ProtoToPrettyJson(b))
-		}
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(resp.Msg.GetBuilds())
 	}
 
 	t := table.NewWriter()

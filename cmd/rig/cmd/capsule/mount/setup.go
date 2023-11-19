@@ -17,7 +17,6 @@ import (
 )
 
 var (
-	outputJSON  bool
 	secret      bool
 	forceDeploy bool
 )
@@ -59,8 +58,6 @@ func Setup(parent *cobra.Command) {
 		),
 	}
 	mountGet.Flags().StringVar(&dstPath, "download", "", "download the mount to specified path. If empty use current dir")
-	mountGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	mountGet.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	mount.AddCommand(mountGet)
 
 	mountSet := &cobra.Command{

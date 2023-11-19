@@ -24,7 +24,6 @@ var (
 )
 
 var (
-	outputJSON  bool
 	follow      bool
 	tty         bool
 	interactive bool
@@ -65,10 +64,8 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	GetInstances.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	GetInstances.Flags().IntVarP(&offset, "offset", "o", 0, "offset for pagination")
+	GetInstances.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	GetInstances.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	GetInstances.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	GetInstances.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	GetInstances.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	instance.AddCommand(GetInstances)

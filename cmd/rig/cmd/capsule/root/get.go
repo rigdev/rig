@@ -8,7 +8,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -43,7 +43,12 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	if outputJSON {
+	type output struct {
+		Capsule *capsule.Capsule `json:"capsule" yaml:"capsule"`
+		Rollout *capsule.Rollout `json:"rollout" yaml:"rollout"`
+	}
+	if base.Flags.OutputType != base.OutputTypePretty {
+		var res []output
 		for _, cc := range capsules {
 			r, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
 				Msg: &capsule.GetRolloutRequest{
@@ -58,12 +63,16 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 				return err
 			}
 
-			cmd.Println(common.ProtoToPrettyJson(cc))
-			if r.Msg.GetRollout() != nil {
-				cmd.Println(common.ProtoToPrettyJson(r.Msg.GetRollout()))
-			}
+			res = append(res, output{
+				Capsule: cc,
+				Rollout: r.Msg.GetRollout(),
+			})
 		}
-		return nil
+
+		if capsule_cmd.CapsuleID != "" {
+			return base.FormatPrint(res[0])
+		}
+		return base.FormatPrint(res)
 	}
 
 	t := table.NewWriter()

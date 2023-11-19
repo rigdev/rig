@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 )
 
@@ -33,11 +34,8 @@ func (c *Cmd) listSessions(ctx context.Context, cmd *cobra.Command, args []strin
 		return err
 	}
 
-	if outputJson {
-		for _, s := range resp.Msg.GetSessions() {
-			cmd.Println(common.ProtoToPrettyJson(s))
-		}
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(resp.Msg.GetSessions())
 	}
 
 	t := table.NewWriter()

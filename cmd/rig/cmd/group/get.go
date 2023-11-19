@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 )
 
@@ -23,9 +24,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 			return err
 		}
 
-		if outputJSON {
-			cmd.Println(common.ProtoToPrettyJson(g))
-			return nil
+		if base.Flags.OutputType != base.OutputTypePretty {
+			return base.FormatPrint(g)
 		}
 
 		t := table.NewWriter()
@@ -51,11 +51,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	if outputJSON {
-		for _, u := range resp.Msg.GetGroups() {
-			cmd.Println(common.ProtoToPrettyJson(u))
-		}
-		return nil
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(resp.Msg.GetGroups())
 	}
 
 	t := table.NewWriter()

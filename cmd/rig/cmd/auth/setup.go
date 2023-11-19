@@ -14,8 +14,6 @@ var (
 	authUserIdentifier string
 )
 
-var outputJSON bool
-
 type Cmd struct {
 	fx.In
 
@@ -64,8 +62,6 @@ func Setup(parent *cobra.Command) {
 		},
 		ValidArgsFunction: common.NoCompletions,
 	}
-	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
-	get.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	auth.AddCommand(get)
 
 	parent.AddCommand(auth)

@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	outputJSON  bool
 	forceDeploy bool
 )
 
@@ -58,8 +57,6 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	networkGet.Flags().BoolVar(&outputJSON, "json", false, "output as json")
-	networkGet.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	network.AddCommand(networkGet)
 
 	parent.AddCommand(network)

@@ -15,10 +15,6 @@ import (
 )
 
 var (
-	outputJSON bool
-)
-
-var (
 	offset int
 	limit  int
 )
@@ -62,10 +58,8 @@ func Setup(parent *cobra.Command) {
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: base.CtxWrapCompletion(cmd.completions),
 	}
-	get.Flags().BoolVar(&outputJSON, "json", false, "Output as JSON")
-	get.Flags().IntVarP(&offset, "offset", "o", 0, "offset")
+	get.Flags().IntVar(&offset, "offset", 0, "offset")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
-	get.RegisterFlagCompletionFunc("json", common.BoolCompletions)
 	get.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	get.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 
