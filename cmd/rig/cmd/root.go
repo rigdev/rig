@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -38,7 +37,6 @@ type Cmd struct {
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	fmt.Println("initCmd root")
 	cmd.Rig = c.Rig
 	cmd.Cfg = c.Cfg
 	cmd.Logger = c.Logger

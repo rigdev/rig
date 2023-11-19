@@ -60,7 +60,6 @@ type Cmd struct {
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	fmt.Println("initCmd capsule")
 	cmd.Rig = c.Rig
 	cmd.Cfg = c.Cfg
 	cmd.DockerClient = c.DockerClient
@@ -70,12 +69,12 @@ func Setup(parent *cobra.Command) {
 	capsuleCmd := &cobra.Command{
 		Use:   "capsule",
 		Short: "Manage capsules",
-		PersistentPreRunE: base.CtxWrap(func(ctx context.Context, c *cobra.Command, args []string) error {
-			if err := base.InvokePreRunE(c, args, initCmd); err != nil {
-				return err
-			}
-			return cmd.persistentPreRunE(ctx, c, args)
-		}),
+		PersistentPreRunE: base.MakeInvokePreRunE(
+			initCmd,
+			func(ctx context.Context, cmd Cmd, c *cobra.Command, args []string) error {
+				return cmd.persistentPreRunE(ctx, c, args)
+			},
+		),
 	}
 	capsuleCmd.PersistentFlags().StringVarP(&capsule.CapsuleID, "capsule-id", "c", "", "Id of the capsule")
 	capsuleCmd.RegisterFlagCompletionFunc(
@@ -210,7 +209,6 @@ func formatCapsule(c *capsule_api.Capsule) string {
 }
 
 func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, args []string) error {
-	// base.ExecutePersistentPreRunERecursively(cmd, args)
 	if cmd.Annotations["OMIT_CAPSULE_ID"] != "" {
 		return nil
 	}

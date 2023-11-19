@@ -90,7 +90,7 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	}
 	preRunsLeft -= 1
 
-	if preRunsLeft == 0 {
+	if preRunsLeft == 0 && !skipChecks(cmd) {
 		allOpts := []fx.Option{
 			Module,
 			fx.NopLogger,
