@@ -23,17 +23,8 @@ var (
 	OmitProject = "OMIT_PROJECT"
 )
 
-func cmdPathContainsUsePrefix(cmd *cobra.Command, use string) bool {
-	for cmd := cmd; cmd != nil; cmd = cmd.Parent() {
-		if strings.HasPrefix(cmd.Use, use) {
-			return true
-		}
-	}
-	return false
-}
-
 func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
-	if cmdPathContainsUsePrefix(cmd, "completion") || cmdPathContainsUsePrefix(cmd, "help ") {
+	if skipChecks(cmd) {
 		return nil
 	}
 
