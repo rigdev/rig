@@ -12,14 +12,16 @@ var _ conversion.Convertible = &Capsule{}
 func (src *Capsule) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*v1alpha2.Capsule)
 
+	srcSpec := src.DeepCopy().Spec
+
 	dst.ObjectMeta = src.ObjectMeta
 
-	dst.Spec.Args = src.Spec.Args
-	dst.Spec.Command = src.Spec.Command
-	dst.Spec.Image = src.Spec.Image
-	dst.Spec.NodeSelector = src.Spec.NodeSelector
+	dst.Spec.Args = srcSpec.Args
+	dst.Spec.Command = srcSpec.Command
+	dst.Spec.Image = srcSpec.Image
+	dst.Spec.NodeSelector = srcSpec.NodeSelector
 
-	for _, f := range src.Spec.Files {
+	for _, f := range srcSpec.Files {
 		switch {
 		case f.ConfigMap != nil:
 			dst.Spec.Files = append(dst.Spec.Files, v1alpha2.File{
@@ -42,7 +44,7 @@ func (src *Capsule) ConvertTo(dstRaw conversion.Hub) error {
 		}
 	}
 
-	for _, i := range src.Spec.Interfaces {
+	for _, i := range srcSpec.Interfaces {
 		ni := v1alpha2.CapsuleInterface{
 			Name: i.Name,
 			Port: i.Port,
@@ -63,36 +65,36 @@ func (src *Capsule) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Interfaces = append(dst.Spec.Interfaces, ni)
 	}
 
-	if src.Spec.Replicas != nil {
-		dst.Spec.Scale.Horizontal.Instances.Min = uint32(*src.Spec.Replicas)
+	if srcSpec.Replicas != nil {
+		dst.Spec.Scale.Horizontal.Instances.Min = uint32(*srcSpec.Replicas)
 	}
 
-	if src.Spec.HorizontalScale.MinReplicas != nil {
-		dst.Spec.Scale.Horizontal.Instances.Min = *src.Spec.HorizontalScale.MinReplicas
+	if srcSpec.HorizontalScale.MinReplicas != nil {
+		dst.Spec.Scale.Horizontal.Instances.Min = *srcSpec.HorizontalScale.MinReplicas
 	}
 
-	if src.Spec.HorizontalScale.MaxReplicas != nil {
-		dst.Spec.Scale.Horizontal.Instances.Max = ptr.New(*src.Spec.HorizontalScale.MaxReplicas)
+	if srcSpec.HorizontalScale.MaxReplicas != nil {
+		dst.Spec.Scale.Horizontal.Instances.Max = ptr.New(*srcSpec.HorizontalScale.MaxReplicas)
 	}
 
-	if src.Spec.HorizontalScale.CPUTarget.AverageUtilizationPercentage != 0 {
+	if srcSpec.HorizontalScale.CPUTarget.AverageUtilizationPercentage != 0 {
 		dst.Spec.Scale.Horizontal.CPUTarget = &v1alpha2.CPUTarget{
-			Utilization: ptr.New(src.Spec.HorizontalScale.CPUTarget.AverageUtilizationPercentage),
+			Utilization: ptr.New(srcSpec.HorizontalScale.CPUTarget.AverageUtilizationPercentage),
 		}
 	}
 
-	if src.Spec.Resources != nil {
+	if srcSpec.Resources != nil {
 		dst.Spec.Scale.Vertical = &v1alpha2.VerticalScale{
 			CPU: &v1alpha2.ResourceLimits{
-				Request: src.Spec.Resources.Requests.Cpu(),
-				Limit:   src.Spec.Resources.Limits.Cpu(),
+				Request: srcSpec.Resources.Requests.Cpu(),
+				Limit:   srcSpec.Resources.Limits.Cpu(),
 			},
 			Memory: &v1alpha2.ResourceLimits{
-				Request: src.Spec.Resources.Requests.Cpu(),
-				Limit:   src.Spec.Resources.Limits.Cpu(),
+				Request: srcSpec.Resources.Requests.Cpu(),
+				Limit:   srcSpec.Resources.Limits.Cpu(),
 			},
 			GPU: &v1alpha2.ResourceRequest{
-				Request: src.Spec.Resources.Requests["nvidia.com/gpu"],
+				Request: srcSpec.Resources.Requests["nvidia.com/gpu"],
 			},
 		}
 	}
@@ -106,12 +108,14 @@ func (dst *Capsule) ConvertFrom(srcRaw conversion.Hub) error {
 
 	dst.ObjectMeta = src.ObjectMeta
 
-	dst.Spec.Args = src.Spec.Args
-	dst.Spec.Command = src.Spec.Command
-	dst.Spec.Image = src.Spec.Image
-	dst.Spec.NodeSelector = src.Spec.NodeSelector
+	srcSpec := src.DeepCopy().Spec
 
-	for _, f := range src.Spec.Files {
+	dst.Spec.Args = srcSpec.Args
+	dst.Spec.Command = srcSpec.Command
+	dst.Spec.Image = srcSpec.Image
+	dst.Spec.NodeSelector = srcSpec.NodeSelector
+
+	for _, f := range srcSpec.Files {
 		switch {
 		case f.Ref != nil:
 			switch f.Ref.Kind {
@@ -135,7 +139,7 @@ func (dst *Capsule) ConvertFrom(srcRaw conversion.Hub) error {
 		}
 	}
 
-	for _, i := range src.Spec.Interfaces {
+	for _, i := range srcSpec.Interfaces {
 		ni := CapsuleInterface{
 			Name: i.Name,
 			Port: i.Port,
@@ -156,18 +160,18 @@ func (dst *Capsule) ConvertFrom(srcRaw conversion.Hub) error {
 		dst.Spec.Interfaces = append(dst.Spec.Interfaces, ni)
 	}
 
-	dst.Spec.Replicas = ptr.New(int32(src.Spec.Scale.Horizontal.Instances.Min))
-	dst.Spec.HorizontalScale.MinReplicas = ptr.New(src.Spec.Scale.Horizontal.Instances.Min)
-	dst.Spec.HorizontalScale.MaxReplicas = ptr.New(src.Spec.Scale.Horizontal.Instances.Min)
-	if src.Spec.Scale.Horizontal.Instances.Max != nil {
-		dst.Spec.HorizontalScale.MaxReplicas = ptr.New(*src.Spec.Scale.Horizontal.Instances.Max)
+	dst.Spec.Replicas = ptr.New(int32(srcSpec.Scale.Horizontal.Instances.Min))
+	dst.Spec.HorizontalScale.MinReplicas = ptr.New(srcSpec.Scale.Horizontal.Instances.Min)
+	dst.Spec.HorizontalScale.MaxReplicas = ptr.New(srcSpec.Scale.Horizontal.Instances.Min)
+	if srcSpec.Scale.Horizontal.Instances.Max != nil {
+		dst.Spec.HorizontalScale.MaxReplicas = ptr.New(*srcSpec.Scale.Horizontal.Instances.Max)
 	}
 
-	if c := src.Spec.Scale.Horizontal.CPUTarget; c != nil && c.Utilization != nil {
+	if c := srcSpec.Scale.Horizontal.CPUTarget; c != nil && c.Utilization != nil {
 		dst.Spec.HorizontalScale.CPUTarget.AverageUtilizationPercentage = *c.Utilization
 	}
 
-	if v := src.Spec.Scale.Vertical; v != nil {
+	if v := srcSpec.Scale.Vertical; v != nil {
 		dst.Spec.Resources = &v1.ResourceRequirements{}
 
 		if v.CPU != nil {
