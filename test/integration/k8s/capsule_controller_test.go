@@ -141,10 +141,11 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 	require.NoError(t, k8sClient.Create(ctx, &secret))
 
 	require.NoError(t, k8sClient.Get(ctx, nsName, &capsule))
-	capsule.Spec.Env = &v1alpha1.Env{
-		From: []v1alpha1.EnvSource{
-			v1alpha1.EnvSource{
-				SecretName: secret.Name,
+	capsule.Spec.Env = &v1alpha2.Env{
+		From: []v1alpha2.EnvReference{
+			{
+				Kind: "Secret",
+				Name: secret.Name,
 			},
 		},
 	}
@@ -224,7 +225,7 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 	by(t, "Disabling automatic env")
 
 	require.NoError(t, k8sClient.Get(ctx, nsName, &capsule))
-	capsule.Spec.Env.Automatic = ptr.New(false)
+	capsule.Spec.Env.DisableAutomatic = true
 	require.NoError(t, k8sClient.Update(ctx, &capsule))
 
 	expectResources(ctx, t, k8sClient, []client.Object{
