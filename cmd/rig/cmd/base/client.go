@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
 
@@ -29,16 +30,20 @@ var _omitProjectToken = map[string]struct{}{
 
 var clientModule = fx.Module("client",
 	fx.Supply(&http.Client{}),
-	fx.Provide(func(s *cmd_config.Service, cfg *cmd_config.Config) rig.Client {
+	fx.Provide(func(ctx context.Context, cmd *cobra.Command, s *cmd_config.Service, cfg *cmd_config.Config) (rig.Client, error) {
 
 		ai := &authInterceptor{cfg: cfg}
-		nc := rig.NewClient(
+		rigClient := rig.NewClient(
 			rig.WithHost(s.Server),
 			rig.WithInterceptors(ai, &userAgentInterceptor{}),
 			rig.WithSessionManager(&configSessionManager{cfg: cfg}),
 		)
-		ai.nc = nc
-		return nc
+		ai.rig = rigClient
+		if err := CheckAuth(ctx, cmd, rigClient, cfg); err != nil {
+			return nil, err
+		}
+
+		return rigClient, nil
 	}),
 	fx.Provide(func(cfg *cmd_config.Config) []connect.Interceptor {
 		return []connect.Interceptor{&userAgentInterceptor{}, &authInterceptor{cfg: cfg}}
@@ -95,7 +100,7 @@ func (s *configSessionManager) SetAccessToken(accessToken, refreshToken string) 
 
 type authInterceptor struct {
 	cfg *cmd_config.Config
-	nc  rig.Client
+	rig rig.Client
 }
 
 func (i *authInterceptor) handleAuth(ctx context.Context, h http.Header, method string) {
@@ -127,7 +132,7 @@ func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
 	}
 
 	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) && i.cfg.GetCurrentContext().Project.ProjectID != "" {
-		res, err := i.nc.Project().Use(ctx, &connect.Request[project.UseRequest]{
+		res, err := i.rig.Project().Use(ctx, &connect.Request[project.UseRequest]{
 			Msg: &project.UseRequest{
 				ProjectId: i.cfg.GetCurrentContext().Project.ProjectID,
 			},

@@ -46,12 +46,6 @@ func Run() error {
 	rootCmd := &cobra.Command{
 		Use:   "rig",
 		Short: "CLI tool for managing your Rig projects",
-		PersistentPreRunE: base.MakeInvokePreRunE(
-			initCmd,
-			func(ctx context.Context, c *cobra.Command, args []string) error {
-				return cmd.preRun(ctx, c, args)
-			},
-		),
 	}
 	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 
@@ -59,6 +53,7 @@ func Run() error {
 		Use:               "license",
 		Short:             "Get License Information for the current project",
 		Args:              cobra.NoArgs,
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		RunE:              base.CtxWrap(cmd.getLicenseInfo),
 		ValidArgsFunction: common.NoCompletions,
 		Annotations: map[string]string{
@@ -80,10 +75,6 @@ func Run() error {
 
 	cobra.EnableTraverseRunHooks = true
 	return rootCmd.Execute()
-}
-
-func (c *Cmd) preRun(ctx context.Context, cmd *cobra.Command, args []string) error {
-	return base.CheckAuth(ctx, cmd, c.Rig, c.Cfg)
 }
 
 func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, args []string) error {
