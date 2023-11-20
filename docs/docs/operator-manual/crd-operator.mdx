@@ -17,7 +17,8 @@ ConfigMaps and Secrets used by a capsule is not owned by the capsule though. The
 ## Capsule Spec
 
 This is a complete example of the `Capsule` CRD spec
-
+<Tabs>
+<TabItem value="v1alpha1" label="v1alpha1">
 ```yaml
 apiVersion: rig.dev/v1alpha1
 kind: Capsule
@@ -54,3 +55,5 @@ spec:
           host: http://www.example.com
   serviceAccountName: name
 ```
+</TabItem>
+</Tabs>
