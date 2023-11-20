@@ -31,23 +31,8 @@ To easily create a Rig Kubernetes setup on your local machine, Rig comes with su
 rig dev kind create
 ```
 
-## Kubernetes Cluster Installation
-
-See [here](/operator-manual/setup-guide) for how to setup Rig on an already existing Kubernetes cluster.
-
-### Next step
+### Next steps
 
 And that's it, you're now ready to login on the dashboard at [http://localhost:4747](http://localhost:4747).
 
-### Setup Rig
-
-The next step is to do some simple setup of Rig. This amounts to creating yourself a new Admin user and create a proejct. The Rig docker image comes with a `rig-admin` tool, that can be used for exactly this:
-
-```bash
-kubectl exec -it --namespace rig-system deploy/rig-platform \
-  -- rig-admin init
-```
-
-## Configuration
-
-For more information about how to configure Rig, see the [configuration](/configuration) section.
+You can now either explore the [Your First Capsule](first-capsule) walkthrough or check out the [Next steps](next-steps) guide.
