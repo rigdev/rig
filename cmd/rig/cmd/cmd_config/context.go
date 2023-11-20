@@ -28,7 +28,7 @@ func SelectContext(cfg *Config) error {
 		}
 	}
 
-	n, _, err := common.PromptSelect("Context:", labels)
+	n, _, err := common.PromptSelect("Rig context:", labels)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func CreateContext(cfg *Config, name, url string) error {
 		},
 	})
 
-	if ok, err := common.PromptConfirm("Do you want activate this context now?", true); err != nil {
+	if ok, err := common.PromptConfirm("Do you want activate this Rig context now?", true); err != nil {
 		return err
 	} else if ok {
 		cfg.CurrentContextName = name
@@ -105,7 +105,7 @@ func CreateContext(cfg *Config, name, url string) error {
 }
 
 func ConfigInit(cfg *Config) error {
-	if ok, err := common.PromptConfirm("Do you want to configure a new context?", true); err != nil {
+	if ok, err := common.PromptConfirm("Do you want to configure a new Rig context?", true); err != nil {
 		return err
 	} else if !ok {
 		return nil

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -86,6 +87,17 @@ func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, args []str
 	} else {
 		plan = resp.Msg.GetPlan()
 		expiresAt = resp.Msg.GetExpiresAt()
+	}
+
+	if base.Flags.OutputType != base.OutputTypePretty {
+		obj := struct {
+			Plan      string    `json:"plan" yaml:"plan"`
+			ExpiresAt time.Time `json:"expires_at" yaml:"expires_at"`
+		}{
+			Plan:      plan.String(),
+			ExpiresAt: expiresAt.AsTime(),
+		}
+		return base.FormatPrint(obj)
 	}
 
 	t := table.NewWriter()
