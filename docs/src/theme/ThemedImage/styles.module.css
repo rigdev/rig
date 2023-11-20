@@ -1,0 +1,16 @@
+.themedImage {
+  display: none;
+}
+
+.themedImageZoom {
+  display: none;
+  border-radius: 8px !important;
+}
+
+[data-theme='light'] .themedImage--light {
+  display: initial;
+}
+
+[data-theme='dark'] .themedImage--dark {
+  display: initial;
+}

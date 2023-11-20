@@ -1,0 +1,2 @@
+### Setup the SDK
+This section provides code snippets that demonstrate how to send requests to your Rig backend using Rig's SDK. It is assumed that if you follow the SDK code blocks, you have already installed [Rig’s SDK](/sdks) and created a client instance.

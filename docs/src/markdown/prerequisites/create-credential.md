@@ -1,0 +1,2 @@
+### Create Credential
+Before proceeding, it is assumed that you have created your Rig Credential, which will be used for authentication purposes. If you haven't created your Rig Credential yet, please refer to the [Create Credential Guide](/service-accounts) for detailed instructions.

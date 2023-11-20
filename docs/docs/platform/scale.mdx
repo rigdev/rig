@@ -1,0 +1,19 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import ThemedImage from '@theme/ThemedImage';
+
+# Scale
+
+Rig capsule has a concept of _scale_ partitioned in to _horizontal scaling_ and _vertical scaling_. Horizontal scaling controls how many replicas a capsule has whereas vertical scaling controls the size of each container, but not the number of them.
+
+Adding replicas is _scaling out_, removing is _scaling in_, increasing container size is _scaling up_, decreasing container size is _scaling down_.
+
+![Scaling visualiazation](/img/platform/scale.svg)
+
+## Horizontal Scaling
+
+You can explicitly set the minimum number of replicas your capsule should have. If you don't have an autoscaler enabled, this simply becomes the number of replicas of your capsule. You can also enable the autoscaler. The autoscaler monitors the CPU usage of your capsule and whenever the average CPU utilization across all replicas deviates from a user-configured _CPU Utilization Target_, the autoscaler will add- or remove replicas to reach the utilization target. The autoscaler will stay between a configured minimum and maximum number of replicas.
+
+## Vertical Scaling
+
+You can configure the requested CPU and memory of each instance. The CPU and memory requests will be used by Kubernetes to make sure each instance has at least that amount of CPU and memory accessable. You can also configure limits. If the limits are configured and an instance uses more (either of CPU or memory) it will be killed. Only use limits with caution!

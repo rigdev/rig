@@ -1,0 +1,54 @@
+# Ingress
+
+Ingress resources enables HTTP traffic from the outside of your kubernetes
+cluster to reach the pods inside your cluster.
+
+## An Ingress resource per Capsule
+
+When enabling an ingress interface on a capsule, the rig-operator will under
+the hood create an `Ingress` resource for the capsule. Exactly what happens
+when an ingress resource is created depends on what controller has the
+responsiblity of handling the ingress resources.
+
+### An IP per Ingress is annoying
+
+Some ingress controllers create a cloud load balancer for each Ingress
+resource, in turn this means that each ingress resource will get a dedicated
+IP. This leaves you to setup DNS to point to the cloud loadbalancer IP.
+
+In order to avoid this we recommend that you either use a dedicated ingress
+controller (eg. [ingress-nginx](https://github.com/kubernetes/ingress-nginx)),
+or automate configuration of DNS based on ingress resources using
+[external-dns](https://github.com/kubernetes-sigs/external-dns).
+
+If you use a dedicated controller, then you can create a wildcard DNS record
+which points *.mycluster.mydomain.com to the loadbalancer. Then you can easily
+enable Ingress for resources using the capsule name or whatever you want eg.
+mycapsule.mycluster.mydomain.com.
+
+### Specifying ingress class
+
+If you want rig to use a specific ingress controller, this can be achieved by
+setting the ingress class that rig should use for the `Ingress` resources it
+creates.
+
+When install using [the helm
+chart](https://github.com/rigdev/rig/tree/main/deploy/charts/rig-operator), you
+can pass the value `config.ingress.className` to specify the ingress class rig
+should use.
+
+## TLS is required
+
+We want to encourage proper secure HTTP, which is why we have decided that we
+only support ingress with a TLS certificate. At the time of writing we support
+this with the help of the amazing [cert-manager](https://cert-manager.io/). The
+rig operator, can be configured with a reference to a cert-manager
+`ClusterIssuer` which in turn will be used to issue certificates for the
+Ingress resources. We don't have an opinion about how you configure the
+`ClusterIssuer`, but it should be able to issue certificates for the `Ingress`
+resources which will be created.
+
+When installing the `rig-operator` through [the helm
+chart](https://github.com/rigdev/rig/tree/main/deploy/charts/rig-operator) you
+can set `config.certManager.clusterIssuer` to specify what `ClusterIssuer` rig
+should use for creating certificates.

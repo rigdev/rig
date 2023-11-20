@@ -1,0 +1,21 @@
+---
+sidebar_position: 1
+hide_table_of_contents: true
+hide_title: true
+---
+
+<br />
+
+![Capsules](/img/banners/capsules-banner.png "Capsules")
+
+Rig comes with a deployment engine that wraps resources in what we call _Capsules_. This is our top level abstraction, and the main way you will interact with Rig. 
+Each capsule specifies (in most cases) a single service, and handles the creation and configuration of the kubernetes reasources needed to deploy and run it.
+
+In short, a capsule contains:
+- _Builds_ as an immutable abstraction of containerized services.
+- Kubernetes resources, such as services, config-files, secrets etc. used to run and scale the capsule.
+- A complete history of changes made to the capsule, and the ability to rollback to any previous state.
+- An event log of the state of capsules and the their instances.
+- An autoscaler to ensure that the capsule is scaled to the required number of replicas.
+
+To see the complete specification of a capsule, see the [Capsule Spec](/operator-manual/crd-operator). 

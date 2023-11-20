@@ -1,0 +1,116 @@
+---
+slug: /
+displayed_sidebar: homepage
+hide_table_of_contents: true
+hide_sidebar: true
+hide_title: true
+hide_footer: true
+---
+
+import DocCardList from "@theme/DocCardList";
+import CardCategory from "@theme/DocCard";
+import Button from "../src/components/Button";
+
+![Rig.dev documentation](/img/banners/docs-banner.png "Rig.dev documentation")
+
+The Rig Platform offers an application platform for Kubernetes.
+Rig empower developers to work in their own environments with elevated application abstractions,
+while still leveraging Kubernetes's reliability, portability, and scalability.
+
+The developer-friendly deployment engine simplifies the process of rolling out, managing, debugging and scaling applications.
+The platform includes a Dashboard, CLI, and CI/CD hooks, as well as numerous ways of integrating with existing pipelines, such as GitOps.
+
+<hr class="solid" />
+
+# Getting Started
+
+<DocCardList
+  items={[
+    {
+      type: "block",
+      href: "/getting-started",
+      label: "Run Rig on your machine",
+      description:
+        "Rig enhances Local Development by running directly on your machine using either Docker or KIND.",
+      customProps: {
+        col: "col--6",
+      },
+      cover: "/img/banners/local-machine.png",
+    },
+    {
+      type: "block",
+      href: "/operator-manual/setup-guide",
+      label: "Install Rig in a Kubernetes cluster",
+      description:
+        "Install Rig in your own Kubernetes cluster, allowing you to run Capsules in a matter of minutes",
+      customProps: {
+        col: "col--6",
+      },
+      cover: "/img/banners/kubernetes.png",
+    },
+  ]}
+/>
+
+<hr class="solid" />
+
+# Explore Rig
+
+<DocCardList
+  items={[
+    {
+      type: "link",
+      href: "/operator-manual/architecture",
+      label: "Rig Architecture",
+      description:
+        "Explore how the Rig platform interactions your Kubernetes cluster.",
+      customProps: {
+        icon: "BiSolidLayout",
+        col: "col--6",
+      },
+    },
+    {
+      type: "link",
+      href: "/operator-manual/gitops",
+      label: "GitOps flow",
+      description:
+        "Rig comes with built-in support for the most common GitOps workflows.",
+      customProps: {
+        icon: "SiGit",
+        col: "col--6",
+      },
+    },
+    {
+      type: "link",
+      href: "/platform/ci-cd",
+      label: "GitHub Actions",
+      description:
+        "Use the CI/CD hooks to deploy directly from your GitHub Actions.",
+      customProps: {
+        icon: "SiGithub",
+        col: "col--4",
+      },
+    },
+    {
+      type: "link",
+      href: "/operator-manual/crd-operator",
+      label: "Capsule Spec",
+      description:
+        "Check out the Rigs Capsule Spec, our the behavior associated with it.",
+      customProps: {
+        icon: "BiDna",
+        col: "col--4",
+      },
+    },
+    {
+      type: "link",
+      href: "/platform/rollouts",
+      label: "Rollout and Rollbacks",
+      description:
+        "The Rig platform makes it intuitive to rollout your changes to production",
+      customProps: {
+        icon: "TbPlayerTrackNextFilled",
+        col: "col--4",
+      },
+    },
+  ]}
+/>

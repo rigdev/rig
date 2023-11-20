@@ -1,0 +1,20 @@
+# Builds
+
+Builds are a shallow abstraction on top of Container Images.
+
+To create a new build, simply insert the container image and click "Create build". The platform will validate the build against the Container Registry, defaulting to `index.docker.io` if omitted.
+
+If the build fails due to an Authentication error and the Container Registry is private, be sure to check if Authentication is configured for the Container Registry.
+See [Container Registries](/platform/container-registries) for more information.
+
+:::info Validation Skip
+If the Rig Platform cannot access the Container Registry for some reason, the validation step can be omitted.
+:::
+
+### Deploying
+
+To deploy a build, simply click the `Deploy` button for the given build. That will initiate a new Rollout, upgrading the instances to this build.
+
+### Immutability
+
+A Build, when being validated, captures the underlying Image Digest of the Container Image. By capturing this reference, Rig ensure that a Build always point to the same reference of the image. If a Container Image becomes available with the same tag, simply create a new Build using the same Image name and tag, and a new Build will be created with the new Image Digest.

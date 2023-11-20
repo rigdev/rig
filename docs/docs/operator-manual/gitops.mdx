@@ -1,0 +1,58 @@
+# GitOps
+
+GitOps has become a popular way of managing changes to kubernetes cluster
+resources. If you want to know more about gitops, head over to weaveworks and
+read about it https://www.weave.works/technologies/gitops/
+
+## Flux
+
+We have prepared a small demo repository which show cases how rig can be
+deployed using Flux. Head over to Github to explore the repo:
+https://github.com/rigdev/flux-demo
+
+## ArgoCD
+
+We are working on an equivalent example as we have for flux with regards to how
+to setup rig in a GitOps setting.
+
+## GitOps for rig-platform resource changes
+
+The rig platform has experimental support for committing the changes it does to
+Kubernetes resources to a git repository, instead of actually doing the changes
+against the kubernetes APIs. This can be paired with flux or argocd, to have
+the rig-platform tied well into your existing GitOps workflow.
+
+In order to enable the git write back feature, set the following helm values
+when installing the rig-platform chart:
+
+```yaml
+rig:
+  cluster:
+    git:
+      url: <git-repo-url>
+      branch: <git-branch>
+      path_prefix: <path-in-git-repo>
+      credentials:
+        https:
+          username: <username>
+          password: <password>
+      # Or the following if using SSH instead of basic auth
+      # ssh:
+      #   private_key: <pem-encoded-private-key>
+      #   private_key_password: <optional-private-key-password>
+```
+
+This will make rig-platform commit yaml into the folder denoted by
+`rig.cluster.git.path_prefix`. You will need to ensure that your gitops tool of
+choice is setup to include the given folder in the cluster where you want the
+resources. The flux example is setup to include the `apps/demo` folder.
+
+### Caveats
+
+- Currently rig-platform will not take ownership of existing resources in the
+  GitOps repo. This is something we are looking into in order to enable
+  seamless migrations and disaster recovery.
+- We want to explore is the option of having rig make PRs with it's changes, so
+  that they can take part in a regular git approval flow.
+- We currently only support configuring one repository, but we plan to lift the
+  concept to rig-platform projects at some point.

@@ -1,0 +1,40 @@
+.cardContainer {
+  --ifm-link-color: var(--ifm-color-emphasis-800);
+  --ifm-link-hover-color: var(--ifm-color-emphasis-700);
+  --ifm-link-hover-decoration: none;
+
+  box-shadow: none;
+  border: 1px solid var(--ifm-color-emphasis-200);
+
+  background-color: var(--ifm-color-emphasis-100);
+
+  margin-right: 0;
+  margin-left: 0;
+
+  transition: all var(--ifm-transition-fast) ease;
+  transition-property: border, box-shadow;
+}
+
+.cardContainer:hover {
+  border-color: var(--ifm-color-emphasis-600);
+}
+
+.cardContainer *:last-child {
+  margin-bottom: 0;
+}
+
+.cardTitle {
+  font-weight: 00 !important;
+  font-size: 16px !important;
+  color: var(--ifm-color-primary);
+}
+
+.cardDescription {
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.cardIcon {
+  margin-bottom: 10px;
+}

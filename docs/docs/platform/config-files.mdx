@@ -1,0 +1,16 @@
+# Config Files
+
+Config Files are a convenient way of mapping plain-text files into the Container, at the given path.
+
+In the Kubernetes cluster, a Config File is mapped to a ConfigMap, that is read-only mounted into the Container at the path given.
+
+The Config File does not support hot-swapping - changes to a Config File results in new resources being generated and Capsule instances being restarted.
+
+### Secrets
+
+If a Config File is marked as a secret, it will be created as a Secret in Kubernetes, rather than a ConfigMap.
+
+### Limitations
+
+- The Config Files can only contain UTF-8 compatible content (no binary data).
+- While there are no upper limit to the number of Config Files per Capsule, Config Files should not be used to map out e.g. a fully static web-site folder.
