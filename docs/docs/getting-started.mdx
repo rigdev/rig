@@ -1,0 +1,83 @@
+---
+sidebar_position: 1
+---
+
+import DocCardList from "@theme/DocCardList";
+
+# Getting started
+
+This getting started guide is meant to get you up and running with Rig as fast as possible. It will walk you through installing the Rig CLI, 
+installing the Rig Platform for local development in either Docker or Kind.
+
+<hr class="solid" />
+
+## Install the Rig CLI
+
+The Rig CLI is used to interact with the Rig Platform. It can be used to both setup a local Rig Platform installation, as well as interact with Rig platform.
+
+<DocCardList
+  items={[
+    {
+      type: "link",
+      href: "/getting-started/cli-install",
+      label: "Install CLI",
+      description: "Tool for setting up local development and for interacting with Rig Platform.",
+      customProps: {
+        icon: "TbTerminal2",
+        col: "col--12",
+      },
+    },
+  ]}
+/>
+
+<hr class="solid" />
+
+## Install Rig Platform for Local Development
+
+The Rig Platform can run locally in either Docker or Kubernetes. Install the Rig Platform using one of the two guides below:
+
+<DocCardList
+  items={[
+    {
+      type: "link",
+      href: "/getting-started/platform-installation#option-1-docker",
+      label: "Run in Docker",
+      description: "Best for rapid local development",
+      customProps: {
+        icon: "BiLogoDocker",
+        col: "col--6",
+      },
+    },
+    {
+      type: "link",
+      href: "/getting-started/platform-installation#option-2-kubernetes-kind",
+      label: "Run in Kubernetes (KIND)",
+      description: "Best for imitating production environment",
+      customProps: {
+        icon: "BiLogoKubernetes",
+        col: "col--6",
+      },
+    },
+  ]}
+/>
+
+<hr class="solid" />
+
+## Install Rig Platform on Kubernetes cluster
+
+To install the Rig Platform on your existing Kubernetes cluster, follow the simple guide below.
+
+<DocCardList
+  items={[
+    {
+      type: "link",
+      href: "/operator-manual/setup-guide",
+      label: "Run in Kubernetes",
+      description: "Production environments for real-world workloads.",
+      customProps: {
+        icon: "BiLogoKubernetes",
+        col: "col--12",
+      },
+    },
+  ]}
+/>

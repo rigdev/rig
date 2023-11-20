@@ -1,0 +1,71 @@
+import ThemedImage from "@theme/ThemedImage";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# Container Registries
+
+By default, the Rig Platform can use Container Images any public Container Repositories.
+For example, when creating a new Build using the repository `nginx`, the Rig Platform will be able to resolve this at registry `index.docker.io`.
+
+## Private Repositories
+
+Then a Container Repository is private, Authentication for the Container Registry needs to be added to the Rig Platform.
+
+This is done through the `Container Registry` tab within the Project Settings.
+
+For Container Registries registered in the Rig Platform, image-pull-secrets will automatically be generated for the Capsules that uses builds from these registries.
+
+### Example
+
+Let's imagine that we have the private Container Repository `index.docker.io/rigdev/test-container`, that we want to use in a Capsule.
+
+First, we need the _registry_ section of the repository, which is the `host` part of the url; `index.docker.io`.
+
+Then, using the guide for _this_ registry, available [here](https://docs.docker.com/security/for-developers/access-tokens/), we can see that we can create a new token for our account.
+
+When created, the username and token can be used to register the registry in the Rig Platform:
+
+<Tabs>
+  <TabItem value="dashboard" label="Dashboard">
+    <ThemedImage
+      alt="Stages of a Rollout"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/container-registries/add-registry.png",
+        dark: "/img/dashboard/platform/container-registries/add-registry.png",
+      }}
+    />
+  </TabItem>
+</Tabs>
+
+With this change, the Rig Platform can now generate the image-pull-secrets needed to pull the container.
+
+## Dev Registry
+
+The Rig Platform supports the concept of a _dev_ registry. This registry is used by the CLI when interacting with the platform, to push images directly to a registry, an operation very useful for development.
+
+When starting a local dev cluster (using the `rig dev ...` CLI command), a dev registry is automatically created and registered.
+
+When running the command `rig capsule deploy`, you can access local images and have them automatically pushed to the dev registry as part of deploying the local image:
+
+<Tabs>
+  <TabItem value="cli" label="CLI">
+
+```sh
+$ rig capsule deploy -c webserver
+Deploy from docker image or existing rig build? Image
+Use a local image?
+Select image:
+Filter: nginx
+
+                           Image name                            Age
+   ---------------------------------------------------------------------
+  ▸ nginx:latest                                             | 7d 23h  |
+    nginx:1.25.1                                             | 98d 8h  |
+    nginx:1.25.0                                             | 143d 4h |
+```
+
+  </TabItem>
+</Tabs>

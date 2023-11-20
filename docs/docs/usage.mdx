@@ -1,0 +1,54 @@
+---
+hide_table_of_contents: false
+show_last_update_author: false
+---
+
+
+# Usage Information
+
+This document offers a summary of the optional user data that Rig.dev gathers, its role in enhancing the our platform, and the steps for developers to opt-out from this feature.
+
+## Summary
+
+At Rig.dev, our aim is to deliver an unparalleled experience for developers on our platform. To achieve this, we gather non-personal and non-intrusive data to gain a better insight into how users interact with Rig.
+
+## Purpose
+
+Being an open-source platform, Rig.dev thrives on tight-knit interactions with our community, aiming to consistently offer the best experience for all users.
+
+While platforms like Discord, GitHub issues and discussions, and occasional one-on-one interactions offer us some understanding of developer usage and common issues, these methods alone aren't sufficient for understanding the complete picture, particularly concerning usage in real environments.
+
+By collecting these metrics, we gain insights into various aspects such as:
+
+- Which operating system is predominant among Rig.dev developers?
+- Which Rig version is in use?
+- Are there Rig.dev Admin features that remain largely unexplored by our community?
+- Are new releases more or less stable than previous?
+
+## Backend Telemetry
+
+This section covers what data is collected in the backend and how to opt out of it.
+
+### Collected metrics in the Backend
+
+The following metrics are being collected on your backend:
+
+- Admin API requests
+- Admin username and/or email
+- Installation ID
+- API errors for Admin API requests
+
+**How to Opt Out**
+
+Should you wish to opt out of data collection, you can achieve this by setting the following environment variable to true:
+
+```bash
+RIG_TELEMETRY_ENABLED=false
+```
+
+Alternatively, add the following to your sever-config.yaml file:
+
+```yaml
+telemetry:
+  enabled: false
+```

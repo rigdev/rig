@@ -1,0 +1,57 @@
+# Database
+
+Rig uses a database to store its data. Rig currently supports two database
+backends, either mongodb or postgres. This article explains how to configure
+each of them.
+
+When installing the rig helm chart the value `postgres.enabled` toggles a small
+single instance postgres. This is only meant for development environments and
+not production. For production environments we recommend that you use a managed
+database at your cloud provider, or another for of production ready database.
+
+The `rig-platform` container will at startup connect to the database, and print
+any error there may be if wrongly configured.
+
+To connect rig to your own database please follow the steps below.
+
+## Postgres
+
+To connect to your own PostgreSQL database, you need to fill out the following
+section of your helm values:
+
+```yaml
+rig:
+  client:
+    postgres:
+      host: <host-and-port>
+      user: <username>
+      password: <password>
+      insecure: <set to true if insecure>
+      database: rig
+```
+
+## MongoDB
+
+To connect to your own MongoDB database, you need to fill out the following
+section of your helm values:
+
+```yaml
+rig:
+  client:
+    mongo:
+      host: <host-and-port>
+      user: <username>
+      password: <password>
+```
+
+## Encryption at rest
+
+In order to make rig encrypt secrets stored in the database, you will need to
+setup an encryption key. This is done through the following helm value:
+
+```yaml
+rig:
+  repository:
+    secret:
+      key: <your secret>
+```

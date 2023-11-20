@@ -1,0 +1,30 @@
+# Network Interfaces
+
+A container can expose multiple ports, each of them allowing a unique set of traffic. To expose these ports into Kubernetes, a Network Interface must be created - one per port.
+
+The Network Interface allows for configuring additional behavior, such as if the network should be publicly available and health checks.
+
+## Public Interface
+
+If a Network Interface is marked as public, external traffic will be routed to the interface, and thus the container port configured.
+
+When exposing an interface to the internet, it's important to consider how the external traffic is processed, as exposing interfaces publicly can result in security issues.
+
+There are two ways in Kubernetes to expose Network Interfaces, either as a Load Balancer or as an Ingress.
+
+### Ingress
+
+An Ingress is a _managed_ load balancer, that accepts HTTPS traffic only. When configuring, one thus has to select which DNS host address the interface should be exposed as.
+
+The Ingress handles the termination of the TLS connection, meaning the request is forwarded to the interface as plain HTTP traffic.
+
+:::info Prerequisites
+Make sure you have an Ingress and Certificate manager configured.
+:::
+
+### Load Balancer
+
+A Load Balancer is a raw TCP forwarding of traffic, to the interface. This means it can support any protocol running on top of TCP.
+It also means that the Capsule itself must deal with encryption, security and certificates, depending on the protocol being implemented.
+
+Using a Load Balancer is disencouraged in favor of an Ingress, when the HTTPS protocol is used.

@@ -1,0 +1,25 @@
+.tabList {
+  margin-bottom: var(--ifm-leading);
+  background-color: #1E1E1E;
+  border-radius: var(--ifm-code-border-radius);
+  padding: 15px;
+}
+
+.tabItem {
+  margin-top: 0 !important;
+  color: var(--ifm-color-emphasis-600);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  padding: 3px 15px 0 15px;
+  margin-right: 10px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 22px;
+}
+
+.tabItemActive {
+  color: white;
+  border: 1px solid var(--ifm-color-emphasis-800);
+  background-color: #1E1E1E;
+}
