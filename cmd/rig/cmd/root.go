@@ -12,12 +12,12 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_root "github.com/rigdev/rig/cmd/rig/cmd/capsule/root"
 	"github.com/rigdev/rig/cmd/rig/cmd/cluster"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/config"
 	"github.com/rigdev/rig/cmd/rig/cmd/dev"
 	"github.com/rigdev/rig/cmd/rig/cmd/group"
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
-	"github.com/rigdev/rig/cmd/rig/cmd/service_account"
+	"github.com/rigdev/rig/cmd/rig/cmd/serviceaccount"
 	"github.com/rigdev/rig/cmd/rig/cmd/user"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/spf13/cobra"
@@ -30,7 +30,7 @@ type Cmd struct {
 	fx.In
 
 	Rig    rig.Client
-	Cfg    *cmd_config.Config
+	Cfg    *cmdconfig.Config
 	Logger *zap.Logger
 }
 
@@ -65,7 +65,7 @@ func Run() error {
 	capsule_root.Setup(rootCmd)
 	auth.Setup(rootCmd)
 	user.Setup(rootCmd)
-	service_account.Setup(rootCmd)
+	serviceaccount.Setup(rootCmd)
 	group.Setup(rootCmd)
 	cluster.Setup(rootCmd)
 	config.Setup(rootCmd)
@@ -76,7 +76,7 @@ func Run() error {
 	return rootCmd.Execute()
 }
 
-func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var plan project_api.Plan
 	var expiresAt *timestamppb.Timestamp
 

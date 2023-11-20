@@ -8,7 +8,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -21,7 +21,7 @@ type Cmd struct {
 	fx.In
 
 	Rig rig.Client
-	Cfg *cmd_config.Config
+	Cfg *cmdconfig.Config
 }
 
 var cmd Cmd
@@ -39,12 +39,16 @@ func Setup(parent *cobra.Command) {
 	}
 
 	networkConfigure := &cobra.Command{
-		Use:   "configure [network-file]",
-		Short: "configure the network of the capsule. If no filepath is given it goes through an interactive configuration",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.configure),
+		Use: "configure [network-file]",
+		Short: "configure the network of the capsule. If no filepath is given it goes through an interactive " +
+			"configuration",
+		Args: cobra.MaximumNArgs(1),
+		RunE: base.CtxWrap(cmd.configure),
 	}
-	networkConfigure.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	networkConfigure.Flags().BoolVarP(
+		&forceDeploy,
+		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
+	)
 	network.AddCommand(networkConfigure)
 
 	networkGet := &cobra.Command{
@@ -62,7 +66,12 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(network)
 }
 
-func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}

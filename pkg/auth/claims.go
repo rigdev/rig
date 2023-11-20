@@ -98,7 +98,7 @@ type Oauth2Claims struct {
 
 type State struct {
 	Rand         string
-	ProjectId    string
+	ProjectID    string
 	AppRedirect  string
 	ProviderType model.OauthProvider
 }

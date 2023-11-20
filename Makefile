@@ -66,6 +66,14 @@ manifests: controller-gen ## 🪄 Generate k8s manifests
 generate-k8s: controller-gen ## 🪄 Generate runtime.Object implementations.
 	$(CONTROLLER_GEN) object paths="./pkg/api/..."
 
+.PHONY: docs
+docs: ## 📚 Generate docs
+	(cd docs && npm i && npm run start)
+
+.PHONY: lint
+lint: golangci-lint ## 🚨 Run linting
+	$(GOLANGCI_LINT) run
+
 .PHONY: test
 test: gotestsum ## ✅ Run unit tests
 	$(GOTESTSUM) \
@@ -239,6 +247,11 @@ setup-envtest: ## 📦 Download setup-envtest locally if necessary.
 	(test -s $(SETUP_ENVTEST)) || \
 	(cd tools && GOBIN=$(TOOLSBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest)
 
-.PHONY: docs
-docs: ## 📚 Generate docs
-	(cd docs && npm i && npm run start)
+GOLANGCI_LINT ?= $(TOOLSBIN)/golangci-lint
+GOLANGCI_LINT_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "github.com/golangci/golangci-lint" | cut -d ' ' -f2)
+
+.PHONY: golangci-lint
+golangci-lint: ## 📦 Download golangci-lint locally if necessary.
+	(test -s $(GOLANGCI_LINT) && \
+	$(GOLANGCI_LINT) --version | grep $(GOLANGCI_LINT_GO_MOD_VERSION)) || \
+	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint)

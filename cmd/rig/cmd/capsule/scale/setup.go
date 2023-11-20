@@ -64,15 +64,16 @@ func Setup(parent *cobra.Command) {
 	}
 	scaleVertical.Flags().StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
 	scaleVertical.Flags().StringVar(&requestMemory, "request-memory", "", "Minimum memory per container")
-
 	scaleVertical.Flags().StringVar(&limitCPU, "limit-cpu", "", "Maximum CPU cores per container")
 	scaleVertical.Flags().StringVar(&limitMemory, "limit-memory", "", "Maximum memory per container")
-
 	scaleVertical.Flags().Uint32Var(&gpuLimit, "limit-gpu", 0, "Maximum number of GPUs per container")
 	scaleVertical.Flags().StringVar(&gpuType, "gpu-type", "", "GPU type")
 	scaleVertical.MarkFlagsRequiredTogether("limit-gpu", "gpu-type")
 
-	scaleVertical.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	scaleVertical.Flags().BoolVarP(
+		&forceDeploy,
+		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
+	)
 	scale.AddCommand(scaleVertical)
 
 	scaleHorizontal := &cobra.Command{
@@ -82,8 +83,14 @@ func Setup(parent *cobra.Command) {
 		RunE:  base.CtxWrap(cmd.horizontal),
 	}
 	scaleHorizontal.Flags().Uint32VarP(&replicas, "replicas", "r", 0, "number of replicas to scale to")
-	scaleHorizontal.Flags().BoolVarP(&overwriteAutoscaler, "overwrite-autoscaler", "a", false, "if the autoscaler is enabled, this flag is necessary to set the replicas. It will disable the autoscaler.")
-	scaleHorizontal.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	scaleHorizontal.Flags().BoolVarP(
+		&overwriteAutoscaler, "overwrite-autoscaler", "a", false, "if the autoscaler is enabled, this flag is "+
+			"necessary to set the replicas. It will disable the autoscaler.",
+	)
+	scaleHorizontal.Flags().BoolVarP(
+		&forceDeploy,
+		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
+	)
 	scale.AddCommand(scaleHorizontal)
 
 	scaleHorizontalAuto := &cobra.Command{
@@ -92,10 +99,16 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.autoscale),
 	}
-	scaleHorizontalAuto.Flags().Uint32VarP(&utilizationPercentage, "utilization-percentage", "u", 0, "CPU utilization percentage for the autoscaler. 1 <= 100")
+	scaleHorizontalAuto.Flags().Uint32VarP(
+		&utilizationPercentage,
+		"utilization-percentage", "u", 0, "CPU utilization percentage for the autoscaler. 1 <= 100",
+	)
 	scaleHorizontalAuto.Flags().Uint32Var(&minReplicas, "min-replicas", 0, "minimum replicas")
 	scaleHorizontalAuto.Flags().Uint32Var(&maxReplicas, "max-replicas", 0, "maximum replicas")
-	scaleHorizontalAuto.Flags().BoolVarP(&disable, "disable", "d", false, "Disable the autoscaler, fixing the capsule with its current number of replicas")
+	scaleHorizontalAuto.Flags().BoolVarP(
+		&disable,
+		"disable", "d", false, "Disable the autoscaler, fixing the capsule with its current number of replicas",
+	)
 	scaleHorizontal.AddCommand(scaleHorizontalAuto)
 
 	parent.AddCommand(scale)

@@ -46,7 +46,9 @@ func ValidatePassword(password string) error {
 			return errors.InvalidArgumentErrorf("invalid password; contains invalid characters")
 		}
 	}
-	err := errors.InvalidArgumentErrorf("invalid password; must contain a number, normal symbol and be at least 8 chars long")
+	err := errors.InvalidArgumentErrorf(
+		"invalid password; must contain a number, normal symbol and be at least 8 chars long",
+	)
 
 	if !num || tot < 8 || !sym {
 		return err
@@ -62,8 +64,11 @@ func ValidateEmail(email string) error {
 	return nil
 }
 
+//nolint:lll
+const validPhoneRegexp = `^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`
+
 func ValidatePhone(phone string) error {
-	re := regexp.MustCompile(`^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
+	re := regexp.MustCompile(validPhoneRegexp)
 	if !re.MatchString(phone) && phone != "" {
 		return errors.InvalidArgumentErrorf("invalid phone number")
 	}
@@ -84,11 +89,11 @@ func GetExponentialBackoff(backoff float64, factor float64) time.Duration {
 	// keep within bounds
 	if dur < min {
 		return min
-	} else if dur > max {
-		return max
-	} else {
-		return dur
 	}
+	if dur > max {
+		return max
+	}
+	return dur
 }
 
 var ErrFileIsTooLarge = errors.InvalidArgumentErrorf("file exceeds maximum file size")

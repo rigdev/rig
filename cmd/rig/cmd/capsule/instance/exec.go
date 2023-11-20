@@ -16,7 +16,10 @@ import (
 
 var defaultEscapeKeys = []byte{16, 17}
 
-func listen(stream *connect.BidiStreamForClient[capsule.ExecuteRequest, capsule.ExecuteResponse], stdout, stderr io.Writer) chan error {
+func listen(
+	stream *connect.BidiStreamForClient[capsule.ExecuteRequest, capsule.ExecuteResponse],
+	stdout, stderr io.Writer,
+) chan error {
 	doneChan := make(chan error, 1)
 	go func() {
 		for {
@@ -82,7 +85,9 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 				cmd.Println(err)
 			}
 		}
+		//nolint:errcheck
 		stream.CloseRequest()
+		//nolint:errcheck
 		stream.CloseResponse()
 	}()
 
@@ -194,9 +199,8 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 		err := <-outChan
 		if errors.Is(err, io.EOF) {
 			return nil
-		} else {
-			return err
 		}
+		return err
 	}
 }
 

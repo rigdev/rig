@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	cc, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
 			CapsuleId: capsule_cmd.CapsuleID,

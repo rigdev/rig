@@ -39,9 +39,19 @@ func (c *Cmd) listSessions(ctx context.Context, cmd *cobra.Command, args []strin
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Sessions (%d)", resp.Msg.GetTotal()), "Session-Id", "Auth Method", "Device"})
+	t.AppendHeader(table.Row{
+		fmt.Sprintf("Sessions (%d)", resp.Msg.GetTotal()),
+		"Session-Id",
+		"Auth Method",
+		"Device",
+	})
 	for i, s := range resp.Msg.GetSessions() {
-		t.AppendRow(table.Row{i + 1, s.GetSessionId(), s.GetSession().GetAuthMethod().GetMethod(), s.GetSession().GetDevice()})
+		t.AppendRow(table.Row{
+			i + 1,
+			s.GetSessionId(),
+			s.GetSession().GetAuthMethod().GetMethod(),
+			s.GetSession().GetDevice(),
+		})
 	}
 
 	cmd.Println(t.Render())

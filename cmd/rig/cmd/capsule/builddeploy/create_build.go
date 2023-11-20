@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) createBuild(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) createBuild(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var err error
 
 	imageRef := imageRefFromFlags()

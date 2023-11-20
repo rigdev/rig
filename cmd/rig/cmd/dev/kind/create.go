@@ -72,7 +72,12 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	fmt.Println()
 	fmt.Println("To use Rig you need to create at least one admin user.")
-	execCmd := exec.Command("kubectl", "exec", "--tty", "--stdin", "--namespace", "rig-system", "deploy/rig-platform", "--", "rig-admin", "init")
+	execCmd := exec.Command(
+		"kubectl", "exec", "--tty", "--stdin",
+		"--namespace", "rig-system",
+		"deploy/rig-platform", "--",
+		"rig-admin", "init",
+	)
 	execCmd.Stdin = os.Stdin
 	execCmd.Stdout = os.Stdout
 	execCmd.Stderr = os.Stderr
@@ -85,7 +90,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 	return nil
 }
 
-func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if err := checkBinaries(kind, kubectl, helm, docker); err != nil {
 		return err
 	}
@@ -128,7 +133,10 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	return nil
 }
 
-func waitUntilDeploymentIsReady(cmd *common.DeferredOutputCommand, deployment string, humanReadableName string) error {
+func waitUntilDeploymentIsReady(
+	cmd *common.DeferredOutputCommand,
+	deployment string,
+) error {
 	type ready struct {
 		Status struct {
 			Replicas            int `yaml:"replicas,omitempty"`
@@ -140,7 +148,9 @@ func waitUntilDeploymentIsReady(cmd *common.DeferredOutputCommand, deployment st
 	}
 	c := 0
 	for {
-		out, err := cmd.Command("kubectl", "--context", "kind-rig", "get", deployment, "-n", "rig-system", "-oyaml").Output()
+		out, err := cmd.Command(
+			"kubectl", "--context", "kind-rig", "get", deployment, "-n", "rig-system", "-oyaml",
+		).Output()
 		if err != nil {
 			c++
 			if c > 50 {
@@ -204,16 +214,18 @@ func (c *Cmd) deployInner(ctx context.Context, p deployParams) error {
 		return err
 	}
 
-	if err = waitUntilDeploymentIsReady(cmd, fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName); err != nil {
+	if err = waitUntilDeploymentIsReady(cmd, fmt.Sprintf("deployment.apps/%s", p.chartName)); err != nil {
 		return err
 	}
 
 	if p.restart {
-		if err = cmd.RunNew("kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName); err != nil {
+		if err = cmd.RunNew(
+			"kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName,
+		); err != nil {
 			return err
 		}
 
-		if err = waitUntilDeploymentIsReady(cmd, fmt.Sprintf("deployment.apps/%s", p.chartName), p.chartName); err != nil {
+		if err = waitUntilDeploymentIsReady(cmd, fmt.Sprintf("deployment.apps/%s", p.chartName)); err != nil {
 			return err
 		}
 	}
@@ -245,7 +257,7 @@ func (c *Cmd) loadImage(ctx context.Context, cmd *common.DeferredOutputCommand, 
 	return nil
 }
 
-func (c *Cmd) clean(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) clean(_ context.Context, _ *cobra.Command, _ []string) error {
 	if err := checkBinaries(kind); err != nil {
 		return err
 	}
@@ -310,7 +322,9 @@ func setupK8s() error {
 		return err
 	}
 
-	io.WriteString(stdin, registry)
+	if _, err := io.WriteString(stdin, registry); err != nil {
+		return fmt.Errorf("could not write registry to kubectl command: %w", err)
+	}
 	stdin.Close()
 	if err = cmd.Wait(); err != nil {
 		return err
@@ -372,7 +386,11 @@ func checkBinaries(binaries ...binary) error {
 	hasAll := true
 	for _, bin := range binaries {
 		if _, err := exec.LookPath(bin.name); err != nil {
-			fmt.Printf("No bin bin.named '%s' could be found. Install %s and make sure it's in the PATH to use this command\n", bin.name, bin.name)
+			fmt.Printf(
+				"No bin bin.named '%s' could be found. Install %s and make sure it's in the PATH to use this command\n",
+				bin.name,
+				bin.name,
+			)
 			fmt.Printf("See here %s for how to install %s\n\n", bin.link, bin.name)
 			hasAll = false
 		}

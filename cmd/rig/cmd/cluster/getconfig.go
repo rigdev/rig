@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{}))
 	if err != nil {
 		return err

@@ -109,7 +109,7 @@ func (f settingsField) String() string {
 	}
 }
 
-func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	res, err := c.Rig.UserSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err
@@ -191,7 +191,9 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 	switch f {
 	case settingsAllowRegister:
 		defAllowRegister := strconv.FormatBool(s.GetAllowRegister())
-		allowRegister, err := common.PromptInput("Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(defAllowRegister))
+		allowRegister, err := common.PromptInput(
+			"Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(defAllowRegister),
+		)
 		if err != nil {
 			return nil, nil
 		}
@@ -204,7 +206,9 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsIsVerifiedEmailRequired:
 		defIsVerifiedEmailRequired := strconv.FormatBool(s.GetIsVerifiedEmailRequired())
-		isVerifiedEmailRequired, err := common.PromptInput("Verify Email Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedEmailRequired))
+		isVerifiedEmailRequired, err := common.PromptInput(
+			"Verify Email Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedEmailRequired),
+		)
 		if err != nil {
 			return nil, nil
 		}
@@ -217,7 +221,9 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsIsVerifiedPhoneRequired:
 		defIsVerifiedPhoneRequired := strconv.FormatBool(s.GetIsVerifiedPhoneRequired())
-		isVerifiedPhoneRequired, err := common.PromptInput("Verify Phone Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedPhoneRequired))
+		isVerifiedPhoneRequired, err := common.PromptInput(
+			"Verify Phone Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedPhoneRequired),
+		)
 		if err != nil {
 			return nil, nil
 		}
@@ -229,51 +235,57 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 			},
 		}, nil
 	case settingsAccessTokenTTL:
-		defAccessTokenTtl := strconv.Itoa(int(s.GetAccessTokenTtl().AsDuration().Minutes()))
-		accessTokenTtl, err := common.PromptInput("Access Token TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defAccessTokenTtl))
+		defAccessTokenTTL := strconv.Itoa(int(s.GetAccessTokenTtl().AsDuration().Minutes()))
+		accessTokenTTL, err := common.PromptInput(
+			"Access Token TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defAccessTokenTTL),
+		)
 		if err != nil {
 			return nil, nil
 		}
 
-		accessTokenTtlInt, _ := strconv.Atoi(accessTokenTtl)
+		accessTokenTTLInt, _ := strconv.Atoi(accessTokenTTL)
 		return []*settings.Update{
 			{
 				Field: &settings.Update_AccessTokenTtl{
 					AccessTokenTtl: &durationpb.Duration{
-						Seconds: int64(accessTokenTtlInt * 60),
+						Seconds: int64(accessTokenTTLInt * 60),
 					},
 				},
 			},
 		}, err
 	case settingsRefreshTokenTTL:
-		defRefreshTokenTtl := strconv.Itoa(int(s.GetRefreshTokenTtl().AsDuration().Hours()))
-		refreshTokenTtl, err := common.PromptInput("Refresh Token TTL (hours):", common.ValidateIntOpt, common.InputDefaultOpt(defRefreshTokenTtl))
+		defRefreshTokenTTL := strconv.Itoa(int(s.GetRefreshTokenTtl().AsDuration().Hours()))
+		refreshTokenTTL, err := common.PromptInput(
+			"Refresh Token TTL (hours):", common.ValidateIntOpt, common.InputDefaultOpt(defRefreshTokenTTL),
+		)
 		if err != nil {
 			return nil, nil
 		}
 
-		refreshTokenTtlInt, _ := strconv.Atoi(refreshTokenTtl)
+		refreshTokenTTLInt, _ := strconv.Atoi(refreshTokenTTL)
 		return []*settings.Update{
 			{
 				Field: &settings.Update_RefreshTokenTtl{
 					RefreshTokenTtl: &durationpb.Duration{
-						Seconds: int64(refreshTokenTtlInt * 60 * 60),
+						Seconds: int64(refreshTokenTTLInt * 60 * 60),
 					},
 				},
 			},
 		}, nil
 	case settingsVerificationCodeTTL:
-		defVerificationCodeTtl := strconv.Itoa(int(s.GetVerificationCodeTtl().AsDuration().Minutes()))
-		verificationCodeTtl, err := common.PromptInput("Verification Code TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defVerificationCodeTtl))
+		defVerificationCodeTTL := strconv.Itoa(int(s.GetVerificationCodeTtl().AsDuration().Minutes()))
+		verificationCodeTTL, err := common.PromptInput(
+			"Verification Code TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defVerificationCodeTTL),
+		)
 		if err != nil {
 			return nil, nil
 		}
-		verificationCodeTtlInt, _ := strconv.Atoi(verificationCodeTtl)
+		verificationCodeTTLInt, _ := strconv.Atoi(verificationCodeTTL)
 		return []*settings.Update{
 			{
 				Field: &settings.Update_VerificationCodeTtl{
 					VerificationCodeTtl: &durationpb.Duration{
-						Seconds: int64(verificationCodeTtlInt * 60),
+						Seconds: int64(verificationCodeTTLInt * 60),
 					},
 				},
 			},
@@ -312,7 +324,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		return nil, err
 	}
 	if res == "Bcrypt" {
-		var defCost string = ""
+		var defCost string
 		if psh.GetBcrypt() != nil {
 			defCost = strconv.Itoa(int(psh.GetBcrypt().GetCost()))
 		}
@@ -356,34 +368,44 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		}
 		scrypt.SignerKey = key
 
-		saltSeparator, err := common.PromptInput("Salt Separator:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defSaltSeparator))
+		saltSeparator, err := common.PromptInput(
+			"Salt Separator:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defSaltSeparator),
+		)
 		if err != nil {
 			return nil, err
 		}
 		scrypt.SaltSeparator = saltSeparator
 
-		rounds, err := common.PromptInput("Rounds:", common.ValidateIntOpt, common.InputDefaultOpt(defRounds))
+		rounds, err := common.PromptInput(
+			"Rounds:", common.ValidateIntOpt, common.InputDefaultOpt(defRounds),
+		)
 		if err != nil {
 			return nil, err
 		}
 		roundsInt, _ := strconv.Atoi(rounds)
 		scrypt.Rounds = int32(roundsInt)
 
-		memCost, err := common.PromptInput("Memory Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defMemCost))
+		memCost, err := common.PromptInput(
+			"Memory Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defMemCost),
+		)
 		if err != nil {
 			return nil, err
 		}
 		memCostInt, _ := strconv.Atoi(memCost)
 		scrypt.MemCost = int32(memCostInt)
 
-		parallelism, err := common.PromptInput("Parallelism:", common.ValidateIntOpt, common.InputDefaultOpt(defParallelism))
+		parallelism, err := common.PromptInput(
+			"Parallelism:", common.ValidateIntOpt, common.InputDefaultOpt(defParallelism),
+		)
 		if err != nil {
 			return nil, err
 		}
 		parallelismInt, _ := strconv.Atoi(parallelism)
 		scrypt.P = int32(parallelismInt)
 
-		keyLength, err := common.PromptInput("Key Length:", common.ValidateIntOpt, common.InputDefaultOpt(defKeyLength))
+		keyLength, err := common.PromptInput(
+			"Key Length:", common.ValidateIntOpt, common.InputDefaultOpt(defKeyLength),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -541,27 +563,35 @@ func getOauthSettingsUpdate(current *settings.OauthSettings) ([]*settings.Update
 func updateOauthProvider(u *settings.OauthProviderUpdate) (*settings.OauthProviderUpdate, error) {
 	fmt.Println("Current Oauth Provider Settings: ", u)
 
-	allowLogin, err := common.PromptInput("Allow Login:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowLogin())))
+	allowLogin, err := common.PromptInput(
+		"Allow Login:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowLogin())),
+	)
 	if err != nil {
 		return nil, err
 	}
 	allowLoginBool, _ := strconv.ParseBool(allowLogin)
 	u.AllowLogin = allowLoginBool
 
-	allowRegister, err := common.PromptInput("Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowRegister())))
+	allowRegister, err := common.PromptInput(
+		"Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowRegister())),
+	)
 	if err != nil {
 		return nil, err
 	}
 	allowRegisterBool, _ := strconv.ParseBool(allowRegister)
 	u.AllowRegister = allowRegisterBool
 
-	clientID, err := common.PromptInput("Client ID:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.GetCredentials().GetPublicKey()))
+	clientID, err := common.PromptInput(
+		"Client ID:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.GetCredentials().GetPublicKey()),
+	)
 	if err != nil {
 		return nil, err
 	}
 	u.Credentials.PublicKey = clientID
 
-	clientSecret, err := common.PromptInput("Client Secret:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.Credentials.GetPrivateKey()))
+	clientSecret, err := common.PromptInput(
+		"Client Secret:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.Credentials.GetPrivateKey()),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -662,38 +692,38 @@ func parseSettingsUpdate() (*settings.Update, error) {
 			},
 		}, nil
 	case common.FormatField(settingsAccessTokenTTL.String()):
-		accessTokenTtl, err := strconv.Atoi(value)
+		accessTokenTTL, err := strconv.Atoi(value)
 		if err != nil {
 			return nil, err
 		}
 		return &settings.Update{
 			Field: &settings.Update_AccessTokenTtl{
 				AccessTokenTtl: &durationpb.Duration{
-					Seconds: int64(accessTokenTtl * 60),
+					Seconds: int64(accessTokenTTL * 60),
 				},
 			},
 		}, nil
 	case common.FormatField(settingsRefreshTokenTTL.String()):
-		refreshTokenTtl, err := strconv.Atoi(value)
+		refreshTokenTTL, err := strconv.Atoi(value)
 		if err != nil {
 			return nil, err
 		}
 		return &settings.Update{
 			Field: &settings.Update_RefreshTokenTtl{
 				RefreshTokenTtl: &durationpb.Duration{
-					Seconds: int64(refreshTokenTtl * 60 * 60),
+					Seconds: int64(refreshTokenTTL * 60 * 60),
 				},
 			},
 		}, nil
 	case common.FormatField(settingsVerificationCodeTTL.String()):
-		verificationCodeTtl, err := strconv.Atoi(value)
+		verificationCodeTTL, err := strconv.Atoi(value)
 		if err != nil {
 			return nil, err
 		}
 		return &settings.Update{
 			Field: &settings.Update_VerificationCodeTtl{
 				VerificationCodeTtl: &durationpb.Duration{
-					Seconds: int64(verificationCodeTtl * 60),
+					Seconds: int64(verificationCodeTTL * 60),
 				},
 			},
 		}, nil

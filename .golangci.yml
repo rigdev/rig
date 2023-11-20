@@ -1,0 +1,9 @@
+linters:
+  enable:
+    - revive
+    - lll
+issues:
+  exclude-rules:
+    - linters:
+        - lll
+      source: '^//\+kubebuilder'

@@ -1,11 +1,42 @@
-name: Pull Request
+name: Test
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          cache: false # this is handled in the golangci-lint-action
+
+      - name: Cache tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            tools/bin
+          key: ${{ runner.os }}-${{ github.job }}-tools-${{ hashFiles('tools/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-tools-
+
+      - name: Generate code
+        run: make gen
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.55.2
+          args: --timeout 3m
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -21,9 +52,9 @@ jobs:
         with:
           path: |
             tools/bin
-          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
+          key: ${{ runner.os }}-${{ github.job }}-tools-${{ hashFiles('tools/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-tools-
+            ${{ runner.os }}-${{ github.job }}-tools-
 
       - name: Run tests
         run: make gen build test-all
@@ -36,6 +67,7 @@ jobs:
 
   cli-import-test:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - name: Set up Go
         uses: actions/setup-go@v4

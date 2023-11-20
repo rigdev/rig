@@ -29,7 +29,7 @@ func (p projectField) String() string {
 	}
 }
 
-func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: &project.GetRequest{}})
 	if err != nil {
 		return err

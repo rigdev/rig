@@ -3,6 +3,7 @@ package mount
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -30,7 +31,7 @@ type Cmd struct {
 	fx.In
 
 	Rig rig.Client
-	Cfg *cmd_config.Config
+	Cfg *cmdconfig.Config
 }
 
 var cmd Cmd
@@ -57,7 +58,9 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	mountGet.Flags().StringVar(&dstPath, "download", "", "download the mount to specified path. If empty use current dir")
+	mountGet.Flags().StringVar(
+		&dstPath, "download", "", "download the mount to specified path. If empty use current dir",
+	)
 	mount.AddCommand(mountGet)
 
 	mountSet := &cobra.Command{
@@ -69,7 +72,10 @@ func Setup(parent *cobra.Command) {
 	mountSet.Flags().StringVar(&srcPath, "src", "", "source path")
 	mountSet.Flags().StringVar(&dstPath, "dst", "", "destination path")
 	mountSet.Flags().BoolVarP(&secret, "secret", "s", false, "mount as secret")
-	mountSet.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
+	mountSet.Flags().BoolVarP(
+		&forceDeploy,
+		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
+	)
 	mount.AddCommand(mountSet)
 
 	mountRemove := &cobra.Command{
@@ -82,15 +88,26 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	mountRemove.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
-	mountRemove.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
+	mountRemove.Flags().BoolVarP(
+		&forceDeploy,
+		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
+	)
+	if err := mountRemove.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	mount.AddCommand(mountRemove)
 
 	parent.AddCommand(mount)
 
 }
 
-func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}

@@ -1,4 +1,4 @@
-package service_account
+package serviceaccount
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var name string
 	var err error
 

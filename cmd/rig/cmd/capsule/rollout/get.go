@@ -56,7 +56,13 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Rollouts (%d)", resp.Msg.GetTotal()), "Deployed At", "Replicas", "State", "Created By"})
+	t.AppendHeader(table.Row{
+		fmt.Sprintf("Rollouts (%d)", resp.Msg.GetTotal()),
+		"Deployed At",
+		"Replicas",
+		"State",
+		"Created By",
+	})
 	for i, r := range rollouts {
 		id := fmt.Sprint("#", r.GetRolloutId())
 		if i == 0 {

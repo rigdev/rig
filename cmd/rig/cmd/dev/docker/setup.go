@@ -38,7 +38,10 @@ func Setup(parent *cobra.Command) {
 			base.OmitProject: "",
 		},
 	}
-	create.Flags().StringVarP(&platformDockerTag, "platform-docker-tag", "p", "latest", "The rig-platform docker image tag. Defaults to latest.")
+	create.Flags().StringVarP(
+		&platformDockerTag,
+		"platform-docker-tag", "p", "latest", "The rig-platform docker image tag. Defaults to latest.",
+	)
 	docker.AddCommand(create)
 
 	parent.AddCommand(docker)

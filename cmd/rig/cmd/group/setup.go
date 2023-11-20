@@ -53,7 +53,7 @@ func Setup(parent *cobra.Command) {
 	create.Flags().StringVarP(&name, "name", "n", "", "name of the group")
 	group.AddCommand(create)
 
-	delete := &cobra.Command{
+	deleteCmd := &cobra.Command{
 		Use:   "delete [group-id | group-name]",
 		Short: "Delete a group",
 		RunE:  base.CtxWrap(cmd.delete),
@@ -63,7 +63,7 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	group.AddCommand(delete)
+	group.AddCommand(deleteCmd)
 
 	update := &cobra.Command{
 		Use:   "update [group-id | group-name]",
@@ -123,7 +123,12 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(group)
 }
 
-func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	completions := []string{}
 	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{
 		Msg: &group.ListRequest{},
@@ -149,7 +154,12 @@ func formatGroup(g *group.Group) string {
 	return fmt.Sprintf("%s\t (#Members: %v)", g.GetName(), g.GetNumMembers())
 }
 
-func (c *Cmd) userCompletions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) userCompletions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	completions := []string{}
 	resp, err := c.Rig.User().List(ctx, &connect.Request[user.ListRequest]{
 		Msg: &user.ListRequest{},

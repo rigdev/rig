@@ -1,4 +1,4 @@
-package cmd_config
+package cmdconfig
 
 import (
 	"os"

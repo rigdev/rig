@@ -3,6 +3,7 @@ package instance
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -37,7 +38,7 @@ type Cmd struct {
 	fx.In
 
 	Rig rig.Client
-	Cfg *cmd_config.Config
+	Cfg *cmdconfig.Config
 }
 
 var cmd Cmd
@@ -90,9 +91,14 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	logs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
+	logs.Flags().BoolVarP(
+		&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced",
+	)
 	logs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
-	logs.RegisterFlagCompletionFunc("follow", common.BoolCompletions)
+	if err := logs.RegisterFlagCompletionFunc("follow", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	instance.AddCommand(logs)
 
 	exec := &cobra.Command{
@@ -106,8 +112,14 @@ func Setup(parent *cobra.Command) {
 	}
 	exec.Flags().BoolVarP(&tty, "tty", "t", false, "allocate a TTY")
 	exec.Flags().BoolVarP(&interactive, "interactive", "i", false, "Keep STDIN open")
-	exec.RegisterFlagCompletionFunc("tty", common.BoolCompletions)
-	exec.RegisterFlagCompletionFunc("interactive", common.BoolCompletions)
+	if err := exec.RegisterFlagCompletionFunc("tty", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := exec.RegisterFlagCompletionFunc("interactive", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	instance.AddCommand(exec)
 
 	parent.AddCommand(instance)
@@ -144,7 +156,12 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 	return s, err
 }
 
-func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	if capsule_cmd.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}

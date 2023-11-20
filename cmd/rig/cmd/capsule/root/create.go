@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var err error
 	if capsule_cmd.CapsuleID == "" {
 		capsule_cmd.CapsuleID, err = common.PromptInput("Capsule name:", common.ValidateSystemNameOpt)
@@ -228,16 +228,16 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	if image != "" {
 		var buildID string
-		if res, err := c.Rig.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
+		res, err := c.Rig.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
 			Msg: &capsule.CreateBuildRequest{
 				CapsuleId: capsuleID,
 				Image:     image,
 			},
-		}); err != nil {
+		})
+		if err != nil {
 			return err
-		} else {
-			buildID = res.Msg.GetBuildId()
 		}
+		buildID = res.Msg.GetBuildId()
 
 		init = append(init, &capsule.Change{
 			Field: &capsule.Change_BuildId{

@@ -9,7 +9,8 @@ import (
 
 var _ conversion.Convertible = &Capsule{}
 
-func (src *Capsule) ConvertTo(dstRaw conversion.Hub) error {
+func (c *Capsule) ConvertTo(dstRaw conversion.Hub) error {
+	src := c
 	dst := dstRaw.(*v1alpha2.Capsule)
 
 	srcSpec := src.DeepCopy().Spec
@@ -103,8 +104,9 @@ func (src *Capsule) ConvertTo(dstRaw conversion.Hub) error {
 }
 
 // ConvertFrom converts from the Hub version (v1) to this version.
-func (dst *Capsule) ConvertFrom(srcRaw conversion.Hub) error {
+func (c *Capsule) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*v1alpha2.Capsule)
+	dst := c
 
 	dst.ObjectMeta = src.ObjectMeta
 

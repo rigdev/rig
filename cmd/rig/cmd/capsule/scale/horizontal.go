@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return nil
@@ -22,7 +22,9 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, args []string)
 	}
 
 	if horizontal.CpuTarget != nil && !overwriteAutoscaler {
-		return errors.New("cannot set the number of replicas with the autoscaler enabled with setting the --overwrite-autoscaler flag")
+		return errors.New(
+			"cannot set the number of replicas with the autoscaler enabled with setting the --overwrite-autoscaler flag",
+		)
 	}
 
 	horizontal.CpuTarget = nil
@@ -59,7 +61,7 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, args []string)
 	return nil
 }
 
-func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return nil

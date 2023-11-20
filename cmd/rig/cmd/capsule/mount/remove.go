@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) remove(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) remove(ctx context.Context, _ *cobra.Command, args []string) error {
 	var path string
 	var err error
 	if len(args) != 1 {

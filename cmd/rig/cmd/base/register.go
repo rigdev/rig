@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/client"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -14,15 +14,15 @@ import (
 var Module = fx.Module(
 	"rig-cli",
 	clientModule,
-	fx.Provide(func() (*cmd_config.Config, error) {
-		return cmd_config.NewConfig("")
+	fx.Provide(func() (*cmdconfig.Config, error) {
+		return cmdconfig.NewConfig("")
 	}),
 	fx.Provide(zap.NewDevelopment),
 	fx.Provide(getContext),
-	fx.Provide(func(c *cmd_config.Context) *cmd_config.Auth {
+	fx.Provide(func(c *cmdconfig.Context) *cmdconfig.Auth {
 		return c.GetAuth()
 	}),
-	fx.Provide(func(c *cmd_config.Context) *cmd_config.Service {
+	fx.Provide(func(c *cmdconfig.Context) *cmdconfig.Service {
 		return c.GetService()
 	}),
 	fx.Provide(func() context.Context { return context.Background() }),
@@ -34,16 +34,16 @@ var Module = fx.Module(
 	}),
 )
 
-func getContext(cfg *cmd_config.Config) (*cmd_config.Context, error) {
+func getContext(cfg *cmdconfig.Config) (*cmdconfig.Context, error) {
 	if cfg.CurrentContextName == "" {
 		if len(cfg.Contexts) > 0 {
 			fmt.Println("No context selected, please select one")
-			if err := cmd_config.SelectContext(cfg); err != nil {
+			if err := cmdconfig.SelectContext(cfg); err != nil {
 				return nil, err
 			}
 		} else {
 			fmt.Println("No context available, please create one")
-			if err := cmd_config.CreateDefaultContext(cfg); err != nil {
+			if err := cmdconfig.CreateDefaultContext(cfg); err != nil {
 				return nil, err
 			}
 		}
@@ -77,7 +77,7 @@ func computeNumOfPreRuns(cmd *cobra.Command) int {
 	res := 0
 	for p := cmd; p != nil; p = p.Parent() {
 		if p.PersistentPreRunE != nil {
-			res += 1
+			res++
 		}
 	}
 	return res
@@ -88,7 +88,7 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 		firstPreRun = false
 		preRunsLeft = computeNumOfPreRuns(cmd)
 	}
-	preRunsLeft -= 1
+	preRunsLeft--
 
 	if preRunsLeft == 0 && !skipChecks(cmd) {
 		allOpts := []fx.Option{

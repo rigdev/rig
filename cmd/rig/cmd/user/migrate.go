@@ -58,18 +58,18 @@ type firebaseUsers struct {
 }
 
 type firebaseUser struct {
-	LocalId       string `json:"localId"`
+	LocalID       string `json:"localId"`
 	DisplayName   string `json:"displayName"`
 	Email         string `json:"email"`
 	PhoneNumber   string `json:"phoneNumber"`
 	EmailVerified bool   `json:"emailVerified"`
-	PhotoUrl      string `json:"photoUrl"`
+	PhotoURL      string `json:"photoUrl"`
 	PasswordHash  string `json:"passwordHash"`
 	Salt          string `json:"salt"`
 	CreatedAt     string `json:"createdAt"`
 }
 
-func (c *Cmd) migrate(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	var err error
 	fields := []string{
 		platformFirebase.String(),

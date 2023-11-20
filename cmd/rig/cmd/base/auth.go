@@ -11,7 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -23,7 +23,7 @@ var (
 	OmitProject = "OMIT_PROJECT"
 )
 
-func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
+func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config) error {
 	if skipChecks(cmd) {
 		return nil
 	}
@@ -43,7 +43,7 @@ func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmd_
 	return nil
 }
 
-func authUser(ctx context.Context, rig rig.Client, cfg *cmd_config.Config) error {
+func authUser(ctx context.Context, rig rig.Client, cfg *cmdconfig.Config) error {
 	user := cfg.GetCurrentAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil
@@ -58,7 +58,7 @@ func authUser(ctx context.Context, rig rig.Client, cfg *cmd_config.Config) error
 	return login(ctx, rig, cfg)
 }
 
-func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *cmd_config.Config) error {
+func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *cmdconfig.Config) error {
 	res, err := rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return err
@@ -104,7 +104,8 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 	}
 
 	if !found {
-		// what to do here? Should we allow to use projects not existing in the list? Eg. Rig project or projects form another context?
+		// what to do here? Should we allow to use projects not existing in the
+		// list? Eg. Rig project or projects form another context?
 		use, err := common.PromptConfirm("Your selected project is not available. Would you like to select a new one?", true)
 		if err != nil {
 			return err
@@ -124,7 +125,7 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 	return nil
 }
 
-func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmd_config.Config) error {
+func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config) error {
 	name, err := common.PromptInput("Project name:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return err
@@ -178,7 +179,7 @@ func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *
 	return nil
 }
 
-func login(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
+func login(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error {
 	u, err := common.PromptInput("Enter Username or Email:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return err
@@ -235,16 +236,16 @@ func login(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
 	return nil
 }
 
-func useProject(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) error {
+func useProject(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error {
 	var projectID string
 	var err error
-	list_res, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
+	listRes, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return err
 	}
 
 	var ps []string
-	for _, p := range list_res.Msg.GetProjects() {
+	for _, p := range listRes.Msg.GetProjects() {
 		ps = append(ps, p.GetName())
 	}
 
@@ -253,7 +254,7 @@ func useProject(ctx context.Context, rc rig.Client, cfg *cmd_config.Config) erro
 		return err
 	}
 
-	projectID = list_res.Msg.GetProjects()[i].GetProjectId()
+	projectID = listRes.Msg.GetProjects()[i].GetProjectId()
 
 	res, err := rc.Project().Use(ctx, &connect.Request[project.UseRequest]{
 		Msg: &project.UseRequest{

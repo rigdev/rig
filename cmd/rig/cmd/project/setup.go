@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
@@ -10,7 +11,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -34,7 +35,7 @@ type Cmd struct {
 	fx.In
 
 	Rig rig.Client
-	Cfg *cmd_config.Config
+	Cfg *cmdconfig.Config
 }
 
 var cmd Cmd
@@ -87,7 +88,10 @@ func Setup(parent *cobra.Command) {
 			)
 		},
 	)
-	updateSettings.RegisterFlagCompletionFunc("field", settingsUpdateFieldsCompletion)
+	if err := updateSettings.RegisterFlagCompletionFunc("field", settingsUpdateFieldsCompletion); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	project.AddCommand(updateSettings)
 
 	createProject := &cobra.Command{
@@ -101,7 +105,10 @@ func Setup(parent *cobra.Command) {
 	}
 	createProject.Flags().StringVarP(&name, "name", "n", "", "Project name")
 	createProject.Flags().BoolVar(&useProject, "use", false, "Use the created project")
-	createProject.RegisterFlagCompletionFunc("use", common.BoolCompletions)
+	if err := createProject.RegisterFlagCompletionFunc("use", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	project.AddCommand(createProject)
 
 	deleteProject := &cobra.Command{
@@ -144,7 +151,10 @@ func Setup(parent *cobra.Command) {
 			)
 		},
 	)
-	updateProject.RegisterFlagCompletionFunc("field", projectUpdateFieldsCompletion)
+	if err := updateProject.RegisterFlagCompletionFunc("field", projectUpdateFieldsCompletion); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	project.AddCommand(updateProject)
 
 	listProjects := &cobra.Command{
@@ -175,7 +185,11 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(project)
 }
 
-func settingsUpdateFieldsCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func settingsUpdateFieldsCompletion(
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	fields := []string{"email-provider", "add-docker-registry", "delete-docker-registry", "template"}
 	var completions []string
 	for _, s := range fields {
@@ -190,7 +204,11 @@ func settingsUpdateFieldsCompletion(cmd *cobra.Command, args []string, toComplet
 	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
-func projectUpdateFieldsCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func projectUpdateFieldsCompletion(
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	fields := []string{"name"}
 	var completions []string
 	for _, s := range fields {
@@ -205,7 +223,12 @@ func projectUpdateFieldsCompletion(cmd *cobra.Command, args []string, toComplete
 	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
-func (c *Cmd) useProjectCompletion(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) useProjectCompletion(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	var projectIDs []string
 
 	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	if _, err := c.Rig.Capsule().Delete(ctx, &connect.Request[capsule.DeleteRequest]{
 		Msg: &capsule.DeleteRequest{
 			CapsuleId: capsule_cmd.CapsuleID,

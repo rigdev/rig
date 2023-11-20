@@ -28,8 +28,9 @@ func initCmd(c Cmd) {
 
 func Setup(parent *cobra.Command) {
 	kind := &cobra.Command{
-		Use:               "kind",
-		Short:             "The kind command is used to setup and manage a development kubernetes cluster running Rig using Kind",
+		Use: "kind",
+		Short: "The kind command is used to setup and manage a development kubernetes cluster running " +
+			"Rig using Kind",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
@@ -43,10 +44,22 @@ func Setup(parent *cobra.Command) {
 			base.OmitProject: "",
 		},
 	}
-	create.Flags().StringVarP(&platformDockerTag, "platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.")
-	create.Flags().StringVar(&platformChartPath, "platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.")
-	create.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.")
-	create.Flags().StringVar(&operatorChartPath, "operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.")
+	create.Flags().StringVarP(
+		&platformDockerTag,
+		"platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.",
+	)
+	create.Flags().StringVar(
+		&platformChartPath,
+		"platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.",
+	)
+	create.Flags().StringVarP(
+		&operatorDockerTag,
+		"operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.",
+	)
+	create.Flags().StringVar(
+		&operatorChartPath,
+		"operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.",
+	)
 	kind.AddCommand(create)
 
 	deploy := &cobra.Command{
@@ -60,10 +73,22 @@ func Setup(parent *cobra.Command) {
 		},
 	}
 	kind.AddCommand(deploy)
-	deploy.Flags().StringVarP(&platformDockerTag, "platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.")
-	deploy.Flags().StringVar(&platformChartPath, "platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.")
-	deploy.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.")
-	deploy.Flags().StringVar(&operatorChartPath, "operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.")
+	deploy.Flags().StringVarP(
+		&platformDockerTag,
+		"platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.",
+	)
+	deploy.Flags().StringVar(
+		&platformChartPath,
+		"platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.",
+	)
+	deploy.Flags().StringVarP(
+		&operatorDockerTag,
+		"operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.",
+	)
+	deploy.Flags().StringVar(
+		&operatorChartPath,
+		"operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.",
+	)
 
 	clean := &cobra.Command{
 		Use:   "clean",

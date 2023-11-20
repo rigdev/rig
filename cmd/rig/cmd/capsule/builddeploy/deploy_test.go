@@ -1,7 +1,6 @@
 package builddeploy
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -96,7 +95,7 @@ func Test_expandBuildID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := expandBuildID(context.Background(), builds, tt.buildID)
+			res, err := expandBuildID(builds, tt.buildID)
 			utils.ErrorEqual(t, tt.err, err)
 			assert.Equal(t, tt.res, res)
 		})

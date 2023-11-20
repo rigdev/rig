@@ -1,7 +1,6 @@
 package capabilities_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
@@ -61,7 +60,7 @@ func TestGet(t *testing.T) {
 			}
 			c := svccapabilities.NewService(cfg)
 
-			res, err := c.Get(context.Background(), &capabilities.GetRequest{})
+			res, err := c.Get()
 
 			if test.err == nil {
 				assert.NoError(t, err)

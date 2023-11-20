@@ -267,7 +267,12 @@ var (
 `
 )
 
-func PromptTableSelect(label string, choices [][]string, columnHeaders []string, opts ...SelectInputOption) (int, error) {
+func PromptTableSelect(
+	label string,
+	choices [][]string,
+	columnHeaders []string,
+	opts ...SelectInputOption,
+) (int, error) {
 	// TODO Honestly, this thing with manually creating the table rows and header
 	// feels like I'm reinventing the wheel. Maybe find some package to do this for me?
 	// I can't just use our table pretty printer as I don't want to print a table,

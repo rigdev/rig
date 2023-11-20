@@ -2,12 +2,14 @@ package docker
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
+
+	//nolint:revive
+	_ "embed"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -22,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) create(ctx context.Context, _ *cobra.Command, _ []string) error {
 	v, err := c.DockerClient.VolumeCreate(ctx, volume.CreateOptions{
 		Name: "rig-platform-postgres-data",
 	})
@@ -81,7 +83,9 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	fmt.Printf("Running init command:\n")
-	initCmd := exec.CommandContext(ctx, "docker", "exec", "-it", "-eRIG_LOGGING_LEVEL=warn", "rig-platform", "rig-admin", "init")
+	initCmd := exec.CommandContext(
+		ctx, "docker", "exec", "-it", "-eRIG_LOGGING_LEVEL=warn", "rig-platform", "rig-admin", "init",
+	)
 	initCmd.Stdin = os.Stdin
 	initCmd.Stdout = os.Stdout
 	initCmd.Stderr = os.Stderr
@@ -89,13 +93,21 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 	return initCmd.Run()
 }
 
-func (c *Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *container.HostConfig, containerName string) error {
+func (c *Cmd) ensureContainer(
+	ctx context.Context,
+	cc *container.Config,
+	chc *container.HostConfig,
+	containerName string,
+) error {
 	create := true
-	if _, err := c.DockerClient.ContainerInspect(ctx, containerName); client.IsErrNotFound(err) {
-	} else if err != nil {
+	_, err := c.DockerClient.ContainerInspect(ctx, containerName)
+	if err != nil && !client.IsErrNotFound(err) {
 		return err
-	} else {
-		ok, err := common.PromptConfirm(fmt.Sprint("Container `", containerName, "` already exists, re-create?"), false)
+	}
+	if err == nil {
+		ok, err := common.PromptConfirm(
+			fmt.Sprint("Container `", containerName, "` already exists, re-create?"), false,
+		)
 		if err != nil {
 			return err
 		}
@@ -117,7 +129,9 @@ func (c *Cmd) ensureContainer(ctx context.Context, cc *container.Config, chc *co
 		}
 
 		fmt.Printf("Starting container `%s`... ", containerName)
-		if _, err := c.DockerClient.NetworkInspect(ctx, "rig", types.NetworkInspectOptions{}); client.IsErrNotFound(err) {
+		if _, err := c.DockerClient.NetworkInspect(
+			ctx, "rig", types.NetworkInspectOptions{},
+		); client.IsErrNotFound(err) {
 			if _, err := c.DockerClient.NetworkCreate(ctx, "rig", types.NetworkCreate{
 				CheckDuplicate: true,
 			}); err != nil {

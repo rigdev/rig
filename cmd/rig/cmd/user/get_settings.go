@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	res, err := c.Rig.UserSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err
@@ -21,36 +21,36 @@ func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, args []string
 		return base.FormatPrint(settings)
 	}
 
-	rows_login := []table.Row{}
+	rowsLogin := []table.Row{}
 	for i, l := range settings.GetLoginMechanisms() {
 		if i == 0 {
-			rows_login = append(rows_login, table.Row{"Login Mechanisms", l})
+			rowsLogin = append(rowsLogin, table.Row{"Login Mechanisms", l})
 			continue
 		}
-		rows_login = append(rows_login, table.Row{"", l})
+		rowsLogin = append(rowsLogin, table.Row{"", l})
 	}
 
 	oauthSettings := settings.GetOauthSettings()
-	rows_oauth := []table.Row{}
+	rowsOAuth := []table.Row{}
 	if oauthSettings.GetGoogle().GetAllowRegister() {
-		if len(rows_oauth) == 0 {
-			rows_oauth = append(rows_oauth, table.Row{"Oauth Providers", "Google"})
+		if len(rowsOAuth) == 0 {
+			rowsOAuth = append(rowsOAuth, table.Row{"Oauth Providers", "Google"})
 		} else {
-			rows_oauth = append(rows_oauth, table.Row{"", "Google"})
+			rowsOAuth = append(rowsOAuth, table.Row{"", "Google"})
 		}
 	}
 	if oauthSettings.GetFacebook().GetAllowRegister() {
-		if len(rows_oauth) == 0 {
-			rows_oauth = append(rows_oauth, table.Row{"Oauth Providers", "Facebook"})
+		if len(rowsOAuth) == 0 {
+			rowsOAuth = append(rowsOAuth, table.Row{"Oauth Providers", "Facebook"})
 		} else {
-			rows_oauth = append(rows_oauth, table.Row{"", "Facebook"})
+			rowsOAuth = append(rowsOAuth, table.Row{"", "Facebook"})
 		}
 	}
 	if oauthSettings.GetGithub().GetAllowRegister() {
-		if len(rows_oauth) == 0 {
-			rows_oauth = append(rows_oauth, table.Row{"Oauth Providers", "Github"})
+		if len(rowsOAuth) == 0 {
+			rowsOAuth = append(rowsOAuth, table.Row{"Oauth Providers", "Github"})
 		} else {
-			rows_oauth = append(rows_oauth, table.Row{"", "Github"})
+			rowsOAuth = append(rowsOAuth, table.Row{"", "Github"})
 		}
 	}
 
@@ -63,10 +63,10 @@ func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, args []string
 	t.AppendRow(table.Row{"Refresh Token TTL", settings.GetRefreshTokenTtl().AsDuration()})
 	t.AppendRow(table.Row{"Verification Code TTL", settings.GetVerificationCodeTtl().AsDuration()})
 	t.AppendRow(table.Row{"Password hashing", settings.GetPasswordHashing().GetMethod()})
-	for _, r := range rows_login {
+	for _, r := range rowsLogin {
 		t.AppendRow(r)
 	}
-	for _, r := range rows_oauth {
+	for _, r := range rowsOAuth {
 		t.AppendRow(r)
 	}
 	cmd.Println(t.Render())

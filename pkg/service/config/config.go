@@ -30,9 +30,7 @@ func NewService(path string, scheme *runtime.Scheme) (Service, error) {
 }
 
 type service struct {
-	path   string
-	scheme *runtime.Scheme
-	cfg    *v1alpha1.OperatorConfig
+	cfg *v1alpha1.OperatorConfig
 }
 
 // Get implements Service.

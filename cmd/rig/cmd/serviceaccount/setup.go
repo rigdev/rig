@@ -1,4 +1,4 @@
-package service_account
+package serviceaccount
 
 import (
 	"context"
@@ -59,22 +59,26 @@ func Setup(parent *cobra.Command) {
 	}
 	get.Flags().IntVar(&offset, "offset", 0, "offset")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
-
 	serviceAccount.AddCommand(get)
 
-	delete := &cobra.Command{
+	deleteCmd := &cobra.Command{
 		Use:               "delete [id]",
 		Short:             "Delete a service account",
 		RunE:              base.CtxWrap(cmd.delete),
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: base.CtxWrapCompletion(cmd.completions),
 	}
-	serviceAccount.AddCommand(delete)
+	serviceAccount.AddCommand(deleteCmd)
 
 	parent.AddCommand(serviceAccount)
 }
 
-func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	var completions []string
 	accs, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
 		Msg: &service_account.ListRequest{},

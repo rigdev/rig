@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func ValidateAll(input string) error {
+func ValidateAll(_ string) error {
 	return nil
 }
 
@@ -154,7 +154,7 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 		}
 	}
 	var u *user.User
-	var resId string
+	var resID string
 	id, err := uuid.Parse(identifier)
 	if err != nil {
 		ident, err := ParseUserIdentifier(identifier)
@@ -168,7 +168,7 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 		if err != nil {
 			return nil, "", err
 		}
-		resId = res.Msg.GetUser().GetUserId()
+		resID = res.Msg.GetUser().GetUserId()
 		u = res.Msg.GetUser()
 	} else {
 		res, err := nc.User().Get(ctx, connect.NewRequest(&user.GetRequest{
@@ -179,9 +179,9 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 		}
 
 		u = res.Msg.GetUser()
-		resId = id.String()
+		resID = id.String()
 	}
-	return u, resId, nil
+	return u, resID, nil
 }
 
 func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Group, string, error) {
@@ -193,7 +193,7 @@ func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Gro
 		}
 	}
 	var g *group.Group
-	var resId string
+	var resID string
 	id, err := uuid.Parse(identifier)
 	if err != nil {
 		res, err := nc.Group().GetByName(ctx, connect.NewRequest(&group.GetByNameRequest{
@@ -202,7 +202,7 @@ func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Gro
 		if err != nil {
 			return nil, "", err
 		}
-		resId = res.Msg.GetGroup().GetGroupId()
+		resID = res.Msg.GetGroup().GetGroupId()
 		g = res.Msg.GetGroup()
 	} else {
 		res, err := nc.Group().Get(ctx, connect.NewRequest(&group.GetRequest{
@@ -211,10 +211,10 @@ func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Gro
 		if err != nil {
 			return nil, "", err
 		}
-		resId = id.String()
+		resID = id.String()
 		g = res.Msg.GetGroup()
 	}
-	return g, resId, nil
+	return g, resID, nil
 }
 
 func FormatField(s string) string {
