@@ -4,9 +4,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
-	"time"
 
 	"github.com/moby/term"
 )
@@ -77,44 +75,6 @@ func (tty *Tty) RestoreTerminal() error {
 			return err
 		}
 	}
-
-	return nil
-}
-
-func (tty *Tty) MonitorSize() error {
-	go func() {
-		if runtime.GOOS == "windows" {
-			prevH, prevW := tty.GetTtySize()
-			for {
-				time.Sleep(time.Millisecond * 250)
-				h, w := tty.GetTtySize()
-
-				if prevW != w || prevH != h {
-					tty.resizeChan <- sizeMsg{
-						width:  w,
-						height: h,
-					}
-				}
-				prevH = h
-				prevW = w
-			}
-		} else {
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, syscall.SIGWINCH)
-			defer func() {
-				signal.Stop(sigChan)
-				close(sigChan)
-			}()
-
-			for range sigChan {
-				w, h := tty.GetTtySize()
-				tty.resizeChan <- sizeMsg{
-					width:  w,
-					height: h,
-				}
-			}
-		}
-	}()
 
 	return nil
 }
