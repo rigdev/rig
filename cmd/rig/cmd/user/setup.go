@@ -58,20 +58,15 @@ func Setup(parent *cobra.Command) {
 	}
 
 	create := &cobra.Command{
-		Use:               "create",
-		Short:             "Create a new user",
-		RunE:              base.CtxWrap(cmd.create),
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "create",
+		Short: "Create a new user",
+		RunE:  base.CtxWrap(cmd.create),
+		Args:  cobra.NoArgs,
 	}
 	create.Flags().StringVarP(&email, "email", "e", "", "email of the user")
 	create.Flags().StringVarP(&username, "username", "u", "", "username of the user")
 	create.Flags().StringVarP(&phoneNumber, "phone", "P", "", "phone number of the user")
 	create.Flags().StringVarP(&password, "password", "p", "", "password of the user")
-	create.RegisterFlagCompletionFunc("email", common.NoCompletions)
-	create.RegisterFlagCompletionFunc("username", common.NoCompletions)
-	create.RegisterFlagCompletionFunc("phone", common.NoCompletions)
-	create.RegisterFlagCompletionFunc("password", common.NoCompletions)
 	user.AddCommand(create)
 
 	update := &cobra.Command{
@@ -110,7 +105,6 @@ func Setup(parent *cobra.Command) {
 		},
 	)
 	update.RegisterFlagCompletionFunc("field", updateUserCompletions)
-	update.RegisterFlagCompletionFunc("value", common.NoCompletions)
 	user.AddCommand(update)
 
 	get := &cobra.Command{
@@ -124,8 +118,6 @@ func Setup(parent *cobra.Command) {
 	}
 	get.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	get.RegisterFlagCompletionFunc("offset", common.NoCompletions)
-	get.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	user.AddCommand(get)
 
 	delete := &cobra.Command{
@@ -152,25 +144,21 @@ func Setup(parent *cobra.Command) {
 	}
 	getSessions.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	getSessions.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	getSessions.RegisterFlagCompletionFunc("offset", common.NoCompletions)
-	getSessions.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	user.AddCommand(getSessions)
 
 	getSettings := &cobra.Command{
-		Use:               "get-settings",
-		Short:             "Get the user-settings for the current project",
-		RunE:              base.CtxWrap(cmd.getSettings),
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "get-settings",
+		Short: "Get the user-settings for the current project",
+		RunE:  base.CtxWrap(cmd.getSettings),
+		Args:  cobra.NoArgs,
 	}
 	user.AddCommand(getSettings)
 
 	updateSettings := &cobra.Command{
-		Use:               "update-settings",
-		Short:             "Update the user-settings for the current project",
-		RunE:              base.CtxWrap(cmd.updateSettings),
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "update-settings",
+		Short: "Update the user-settings for the current project",
+		RunE:  base.CtxWrap(cmd.updateSettings),
+		Args:  cobra.NoArgs,
 	}
 	updateSettings.Flags().StringVarP(&field, "field", "f", "", "field to update")
 	updateSettings.Flags().StringVarP(&value, "value", "v", "", "value to update the field with")
@@ -203,15 +191,13 @@ func Setup(parent *cobra.Command) {
 		},
 	)
 	updateSettings.RegisterFlagCompletionFunc("field", updateSettingsCompletions)
-	updateSettings.RegisterFlagCompletionFunc("value", common.NoCompletions)
 	user.AddCommand(updateSettings)
 
 	migrate := &cobra.Command{
-		Use:               "migrate",
-		Short:             "Migrate users from another platform",
-		RunE:              base.CtxWrap(cmd.migrate),
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "migrate",
+		Short: "Migrate users from another platform",
+		RunE:  base.CtxWrap(cmd.migrate),
+		Args:  cobra.NoArgs,
 	}
 	migrate.Flags().StringVarP(&platform, "platform", "p", "Firebase", "platform to migrate from")
 	migrate.Flags().StringVarP(&credFilePath, "cred-file", "c", "", "path to the credentials file")
@@ -238,9 +224,6 @@ func Setup(parent *cobra.Command) {
 		},
 	)
 	migrate.RegisterFlagCompletionFunc("platform", migrateCompletions)
-	migrate.RegisterFlagCompletionFunc("cred-file", common.NoCompletions)
-	migrate.RegisterFlagCompletionFunc("users-file", common.NoCompletions)
-	migrate.RegisterFlagCompletionFunc("hashing-key", common.NoCompletions)
 	user.AddCommand(migrate)
 
 	addUser := &cobra.Command{

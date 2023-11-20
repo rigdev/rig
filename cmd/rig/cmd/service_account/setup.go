@@ -8,7 +8,6 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -60,8 +59,6 @@ func Setup(parent *cobra.Command) {
 	}
 	get.Flags().IntVar(&offset, "offset", 0, "offset")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
-	get.RegisterFlagCompletionFunc("offset", common.NoCompletions)
-	get.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 
 	serviceAccount.AddCommand(get)
 

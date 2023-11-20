@@ -66,8 +66,6 @@ func Setup(parent *cobra.Command) {
 	}
 	GetInstances.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	GetInstances.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	GetInstances.RegisterFlagCompletionFunc("offset", common.NoCompletions)
-	GetInstances.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	instance.AddCommand(GetInstances)
 
 	restartInstance := &cobra.Command{

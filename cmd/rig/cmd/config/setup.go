@@ -41,7 +41,6 @@ func Setup(parent *cobra.Command) {
 			base.OmitProject: "",
 			base.OmitUser:    "",
 		},
-		ValidArgsFunction: common.NoCompletions,
 	}
 	config.AddCommand(init)
 

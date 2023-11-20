@@ -39,14 +39,12 @@ func Setup(parent *cobra.Command) {
 	}
 
 	envSet := &cobra.Command{
-		Use:               "set key value",
-		Short:             "Set an environment variable",
-		Args:              cobra.ExactArgs(2),
-		RunE:              base.CtxWrap(cmd.set),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "set key value",
+		Short: "Set an environment variable",
+		Args:  cobra.ExactArgs(2),
+		RunE:  base.CtxWrap(cmd.set),
 	}
 	envSet.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
-	envSet.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
 	env.AddCommand(envSet)
 
 	envGet := &cobra.Command{
@@ -72,7 +70,6 @@ func Setup(parent *cobra.Command) {
 		),
 	}
 	envRemove.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
-	envRemove.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
 	env.AddCommand(envRemove)
 
 	parent.AddCommand(env)

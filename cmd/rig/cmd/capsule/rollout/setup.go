@@ -59,8 +59,6 @@ func Setup(parent *cobra.Command) {
 	}
 	rolloutGet.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	rolloutGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	rolloutGet.RegisterFlagCompletionFunc("offset", common.NoCompletions)
-	rolloutGet.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	rollout.AddCommand(rolloutGet)
 
 	events := &cobra.Command{

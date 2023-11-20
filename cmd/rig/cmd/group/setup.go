@@ -45,14 +45,12 @@ func Setup(parent *cobra.Command) {
 	}
 
 	create := &cobra.Command{
-		Use:               "create",
-		Short:             "Create a new group",
-		RunE:              base.CtxWrap(cmd.create),
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "create",
+		Short: "Create a new group",
+		RunE:  base.CtxWrap(cmd.create),
+		Args:  cobra.NoArgs,
 	}
 	create.Flags().StringVarP(&name, "name", "n", "", "name of the group")
-	create.RegisterFlagCompletionFunc("name", common.NoCompletions)
 	group.AddCommand(create)
 
 	delete := &cobra.Command{
@@ -92,8 +90,6 @@ func Setup(parent *cobra.Command) {
 	}
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
 	get.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
-	get.RegisterFlagCompletionFunc("limit", common.NoCompletions)
-	get.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	group.AddCommand(get)
 
 	getMembers := &cobra.Command{
@@ -108,8 +104,6 @@ func Setup(parent *cobra.Command) {
 	}
 	getMembers.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of members to return")
 	getMembers.Flags().IntVar(&offset, "offset", 0, "offset the number of members to return")
-	getMembers.RegisterFlagCompletionFunc("limit", common.NoCompletions)
-	getMembers.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	group.AddCommand(getMembers)
 
 	getGroupsForUser := &cobra.Command{
@@ -124,8 +118,6 @@ func Setup(parent *cobra.Command) {
 	}
 	getGroupsForUser.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
 	getGroupsForUser.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
-	getGroupsForUser.RegisterFlagCompletionFunc("limit", common.NoCompletions)
-	getGroupsForUser.RegisterFlagCompletionFunc("offset", common.NoCompletions)
 	group.AddCommand(getGroupsForUser)
 
 	parent.AddCommand(group)

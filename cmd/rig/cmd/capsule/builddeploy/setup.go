@@ -64,11 +64,10 @@ func setupBuild(parent *cobra.Command) {
 	}
 
 	buildCreate := &cobra.Command{
-		Use:               "create",
-		Short:             "Create a new build with the given image",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.createBuild),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "create",
+		Short: "Create a new build with the given image",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.createBuild),
 	}
 	buildCreate.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
 	buildCreate.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy build after successful creation")
@@ -76,7 +75,6 @@ func setupBuild(parent *cobra.Command) {
 	buildCreate.Flags().BoolVarP(&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists")
 	buildCreate.Flags().BoolVarP(&remote, "remote", "r", false, "Rig will not look for the image locally but assumes it from a remote registry. If not set, Rig will search locally and then remotely")
 
-	buildCreate.RegisterFlagCompletionFunc("image", common.NoCompletions)
 	buildCreate.RegisterFlagCompletionFunc("deploy", common.BoolCompletions)
 	buildCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
 	buildCreate.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions)
@@ -95,8 +93,6 @@ func setupBuild(parent *cobra.Command) {
 	}
 	buildGet.Flags().IntVar(&offset, "offset", 0, "offset")
 	buildGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
-	buildGet.RegisterFlagCompletionFunc("offset", common.NoCompletions)
-	buildGet.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	build.AddCommand(buildGet)
 
 	parent.AddCommand(build)
@@ -122,8 +118,6 @@ Not both --build-id and --image can be given`,
 		"build-id",
 		base.CtxWrapCompletion(cmd.completions),
 	)
-	capsuleDeploy.RegisterFlagCompletionFunc("image", common.NoCompletions)
-	capsuleDeploy.RegisterFlagCompletionFunc("remote", common.BoolCompletions)
 	capsuleDeploy.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
 
 	parent.AddCommand(capsuleDeploy)

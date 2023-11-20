@@ -7,7 +7,6 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	project_api "github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_root "github.com/rigdev/rig/cmd/rig/cmd/capsule/root"
@@ -55,7 +54,6 @@ func Run() error {
 		Args:              cobra.NoArgs,
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		RunE:              base.CtxWrap(cmd.getLicenseInfo),
-		ValidArgsFunction: common.NoCompletions,
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
