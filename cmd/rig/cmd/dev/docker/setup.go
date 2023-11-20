@@ -2,9 +2,7 @@ package docker
 
 import (
 	"github.com/docker/docker/client"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -15,16 +13,12 @@ type Cmd struct {
 	fx.In
 
 	DockerClient *client.Client
-	Rig          rig.Client
-	Cfg          *cmd_config.Config
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
 	cmd.DockerClient = c.DockerClient
-	cmd.Rig = c.Rig
-	cmd.Cfg = c.Cfg
 }
 
 func Setup(parent *cobra.Command) {

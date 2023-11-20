@@ -93,7 +93,7 @@ func Setup(parent *cobra.Command) {
 		ValidArgsFunction: common.NoCompletions,
 	}
 	scaleHorizontal.Flags().Uint32VarP(&replicas, "replicas", "r", 0, "number of replicas to scale to")
-	scaleHorizontal.Flags().BoolVarP(&overwriteAutoscaler, "overwrite-autoscaler", "o", false, "if the autoscaler is enabled, this flag is necessary to set the replicas. It will disable the autoscaler.")
+	scaleHorizontal.Flags().BoolVarP(&overwriteAutoscaler, "overwrite-autoscaler", "a", false, "if the autoscaler is enabled, this flag is necessary to set the replicas. It will disable the autoscaler.")
 	scaleHorizontal.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	scaleHorizontal.RegisterFlagCompletionFunc("force-deploy", common.NoCompletions)
 	scaleHorizontal.RegisterFlagCompletionFunc("replicas", common.NoCompletions)
