@@ -47,7 +47,7 @@ func Setup(parent *cobra.Command) {
 	}
 	create.Flags().StringVarP(&platformDockerTag, "platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.")
 	create.Flags().StringVar(&platformChartPath, "platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.")
-	create.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "o", "", "The rig-operator docker image tag. Defaults to latest.")
+	create.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.")
 	create.Flags().StringVar(&operatorChartPath, "operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.")
 	create.RegisterFlagCompletionFunc("platform-docker-tag", common.NoCompletions)
 	create.RegisterFlagCompletionFunc("platform-chart-path", common.NoCompletions)
@@ -69,7 +69,7 @@ func Setup(parent *cobra.Command) {
 	kind.AddCommand(deploy)
 	deploy.Flags().StringVarP(&platformDockerTag, "platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.")
 	deploy.Flags().StringVar(&platformChartPath, "platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.")
-	deploy.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "o", "", "The rig-operator docker image tag. Defaults to latest.")
+	deploy.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.")
 	deploy.Flags().StringVar(&operatorChartPath, "operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.")
 	deploy.RegisterFlagCompletionFunc("platform-docker-tag", common.NoCompletions)
 	deploy.RegisterFlagCompletionFunc("platform-chart-path", common.NoCompletions)
@@ -80,7 +80,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "clean",
 		Short: "Deletes the rig kind-cluster",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.create),
+		RunE:  base.CtxWrap(cmd.clean),
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",

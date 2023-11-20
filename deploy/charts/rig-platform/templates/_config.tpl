@@ -112,7 +112,7 @@ logging:
 Rig platform repository
 */}}
 {{- define "rig-platform.repository" -}}
-{{- if .Values.rig.client.mongo.host -}}
+{{- if or .Values.rig.client.mongo.host .Values.mongodb.enabled -}}
 store: "mongodb"
 {{- else -}}
 store: "postgres"

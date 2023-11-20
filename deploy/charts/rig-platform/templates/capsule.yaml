@@ -20,6 +20,10 @@ spec:
   interfaces:
     - name: http
       port: {{ .Values.port }}
+      liveness:
+        path: /api/v1/status
+      readiness:
+        path: /api/v1/status
       {{- if .Values.ingress.enabled }}
       public:
         ingress:
@@ -35,7 +39,13 @@ spec:
     - path: /etc/rig/secret-config.yaml
       ref:
         kind: Secret
-        name: {{ include "rig-platform.fullname" . }}-config
+        name: {{ include "rig-platform.secretName" . }}
         key: config.yaml
     {{- end }}
+  {{- if .Values.useEnvForSecrets }}
+  env:
+    from:
+      - kind: Secret
+        name: {{ include "rig-platform.secretName" . }}
+  {{- end }}
   serviceAccountName: rig-platform
