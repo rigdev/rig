@@ -82,12 +82,11 @@ func Setup(parent *cobra.Command) {
 	)
 
 	capsuleCreate := &cobra.Command{
-		Use:               "create",
-		Short:             "Create a new capsule",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.create),
-		Annotations:       omitCapsuleIDAnnotation,
-		ValidArgsFunction: common.NoCompletions,
+		Use:         "create",
+		Short:       "Create a new capsule",
+		Args:        cobra.NoArgs,
+		RunE:        base.CtxWrap(cmd.create),
+		Annotations: omitCapsuleIDAnnotation,
 	}
 	capsuleCreate.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode")
 	capsuleCreate.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
@@ -96,20 +95,18 @@ func Setup(parent *cobra.Command) {
 	capsuleCmd.AddCommand(capsuleCreate)
 
 	capsuleAbort := &cobra.Command{
-		Use:               "abort",
-		Short:             "Abort the current rollout. This will leave the capsule in a undefined state",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.abort),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "abort",
+		Short: "Abort the current rollout. This will leave the capsule in a undefined state",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.abort),
 	}
 	capsuleCmd.AddCommand(capsuleAbort)
 
 	capsuleDelete := &cobra.Command{
-		Use:               "delete",
-		Short:             "Delete a capsule",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.delete),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "delete",
+		Short: "Delete a capsule",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.delete),
 	}
 	capsuleCmd.AddCommand(capsuleDelete)
 
@@ -120,20 +117,16 @@ func Setup(parent *cobra.Command) {
 		Args:              cobra.NoArgs,
 		Annotations:       omitCapsuleIDAnnotation,
 		RunE:              base.CtxWrap(cmd.get),
-		ValidArgsFunction: common.NoCompletions,
 	}
 	capsuleGet.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	capsuleGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	capsuleGet.RegisterFlagCompletionFunc("offset", common.NoCompletions)
-	capsuleGet.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	capsuleCmd.AddCommand(capsuleGet)
 
 	capsuleConfig := &cobra.Command{
-		Use:               "config",
-		Short:             "Configure the capsule",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.config),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "config",
+		Short: "Configure the capsule",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.config),
 	}
 	capsuleConfig.Flags().Bool("auto-add-service-account", false, "automatically add the rig service account to the capsule")
 	capsuleConfig.Flags().StringVar(&command, "cmd", "", "Container CMD to run")
@@ -141,16 +134,13 @@ func Setup(parent *cobra.Command) {
 	capsuleConfig.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
 	capsuleConfig.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
 	capsuleConfig.RegisterFlagCompletionFunc("auto-add-service-account", common.BoolCompletions)
-	capsuleConfig.RegisterFlagCompletionFunc("cmd", common.NoCompletions)
-	capsuleConfig.RegisterFlagCompletionFunc("args", common.NoCompletions)
 	capsuleCmd.AddCommand(capsuleConfig)
 
 	capsuleLogs := &cobra.Command{
-		Use:               "logs",
-		Short:             "Get logs across all instances of the capsule",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.logs),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "logs",
+		Short: "Get logs across all instances of the capsule",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.logs),
 	}
 	capsuleLogs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
 	capsuleLogs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")

@@ -53,20 +53,18 @@ func Setup(parent *cobra.Command) {
 	}
 
 	getSettings := &cobra.Command{
-		Use:               "get-settings",
-		Short:             "Get settings for the current project",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.getSettings),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "get-settings",
+		Short: "Get settings for the current project",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.getSettings),
 	}
 	project.AddCommand(getSettings)
 
 	updateSettings := &cobra.Command{
-		Use:               "update-settings",
-		Short:             "Update settings for the current project",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.updateSettings),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "update-settings",
+		Short: "Update settings for the current project",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.updateSettings),
 	}
 	updateSettings.Flags().StringVarP(&field, "field", "f", "", "Field to update")
 	updateSettings.Flags().StringVarP(&value, "value", "v", "", "Value to set")
@@ -90,7 +88,6 @@ func Setup(parent *cobra.Command) {
 		},
 	)
 	updateSettings.RegisterFlagCompletionFunc("field", settingsUpdateFieldsCompletion)
-	updateSettings.RegisterFlagCompletionFunc("value", common.NoCompletions)
 	project.AddCommand(updateSettings)
 
 	createProject := &cobra.Command{
@@ -101,38 +98,33 @@ func Setup(parent *cobra.Command) {
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
-		ValidArgsFunction: common.NoCompletions,
 	}
 	createProject.Flags().StringVarP(&name, "name", "n", "", "Project name")
 	createProject.Flags().BoolVar(&useProject, "use", false, "Use the created project")
-	createProject.RegisterFlagCompletionFunc("name", common.NoCompletions)
 	createProject.RegisterFlagCompletionFunc("use", common.BoolCompletions)
 	project.AddCommand(createProject)
 
 	deleteProject := &cobra.Command{
-		Use:               "delete",
-		Short:             "Delete the current project",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.delete),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "delete",
+		Short: "Delete the current project",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.delete),
 	}
 	project.AddCommand(deleteProject)
 
 	getProject := &cobra.Command{
-		Use:               "get ",
-		Short:             "Get the current project",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.get),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "get ",
+		Short: "Get the current project",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.get),
 	}
 	project.AddCommand(getProject)
 
 	updateProject := &cobra.Command{
-		Use:               "update",
-		Short:             "Update the current project",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.update),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "update",
+		Short: "Update the current project",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.update),
 	}
 	updateProject.Flags().StringVarP(&field, "field", "f", "", "Field to update")
 	updateProject.Flags().StringVarP(&value, "value", "v", "", "Value to set")
@@ -163,12 +155,9 @@ func Setup(parent *cobra.Command) {
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
-		ValidArgsFunction: common.NoCompletions,
 	}
 	listProjects.Flags().IntVar(&offset, "offset", 0, "Offset")
 	listProjects.Flags().IntVarP(&limit, "limit", "l", 10, "Limit")
-	listProjects.RegisterFlagCompletionFunc("offset", common.NoCompletions)
-	listProjects.RegisterFlagCompletionFunc("limit", common.NoCompletions)
 	project.AddCommand(listProjects)
 
 	use := &cobra.Command{

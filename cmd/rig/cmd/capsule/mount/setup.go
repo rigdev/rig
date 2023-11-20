@@ -61,18 +61,15 @@ func Setup(parent *cobra.Command) {
 	mount.AddCommand(mountGet)
 
 	mountSet := &cobra.Command{
-		Use:               "set",
-		Short:             "Mount a local configuration file in specified path the capsule",
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.set),
-		ValidArgsFunction: common.NoCompletions,
+		Use:   "set",
+		Short: "Mount a local configuration file in specified path the capsule",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.set),
 	}
 	mountSet.Flags().StringVar(&srcPath, "src", "", "source path")
 	mountSet.Flags().StringVar(&dstPath, "dst", "", "destination path")
 	mountSet.Flags().BoolVarP(&secret, "secret", "s", false, "mount as secret")
 	mountSet.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
-	mountSet.RegisterFlagCompletionFunc("dst", common.NoCompletions)
-	mountSet.RegisterFlagCompletionFunc("src", common.NoCompletions)
 	mount.AddCommand(mountSet)
 
 	mountRemove := &cobra.Command{

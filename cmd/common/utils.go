@@ -226,7 +226,6 @@ func FormatIntToSI(n uint64, decimals int) string {
 	n = (n * scale) / scale
 
 	suffix := ""
-	scale = 1
 	if n < 1_000 {
 		scale = 1
 		suffix = ""

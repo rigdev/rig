@@ -2,7 +2,6 @@ package auth
 
 import (
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
 	"github.com/spf13/cobra"
@@ -43,13 +42,10 @@ func Setup(parent *cobra.Command) {
 			base.OmitUser:    "",
 			base.OmitProject: "",
 		},
-		ValidArgsFunction: common.NoCompletions,
-		RunE:              base.CtxWrap(cmd.login),
+		RunE: base.CtxWrap(cmd.login),
 	}
 	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
 	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
-	login.RegisterFlagCompletionFunc("user", common.NoCompletions)
-	login.RegisterFlagCompletionFunc("password", common.NoCompletions)
 	auth.AddCommand(login)
 
 	get := &cobra.Command{
@@ -60,7 +56,6 @@ func Setup(parent *cobra.Command) {
 		Annotations: map[string]string{
 			base.OmitProject: "",
 		},
-		ValidArgsFunction: common.NoCompletions,
 	}
 	auth.AddCommand(get)
 

@@ -2,7 +2,6 @@ package kind
 
 import (
 	"github.com/docker/docker/client"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -43,16 +42,11 @@ func Setup(parent *cobra.Command) {
 			base.OmitUser:    "",
 			base.OmitProject: "",
 		},
-		ValidArgsFunction: common.NoCompletions,
 	}
 	create.Flags().StringVarP(&platformDockerTag, "platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.")
 	create.Flags().StringVar(&platformChartPath, "platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.")
 	create.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.")
 	create.Flags().StringVar(&operatorChartPath, "operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.")
-	create.RegisterFlagCompletionFunc("platform-docker-tag", common.NoCompletions)
-	create.RegisterFlagCompletionFunc("platform-chart-path", common.NoCompletions)
-	create.RegisterFlagCompletionFunc("operator-docker-tag", common.NoCompletions)
-	create.RegisterFlagCompletionFunc("operator-chart-path", common.NoCompletions)
 	kind.AddCommand(create)
 
 	deploy := &cobra.Command{
@@ -64,17 +58,12 @@ func Setup(parent *cobra.Command) {
 			base.OmitUser:    "",
 			base.OmitProject: "",
 		},
-		ValidArgsFunction: common.NoCompletions,
 	}
 	kind.AddCommand(deploy)
 	deploy.Flags().StringVarP(&platformDockerTag, "platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.")
 	deploy.Flags().StringVar(&platformChartPath, "platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.")
 	deploy.Flags().StringVarP(&operatorDockerTag, "operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.")
 	deploy.Flags().StringVar(&operatorChartPath, "operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.")
-	deploy.RegisterFlagCompletionFunc("platform-docker-tag", common.NoCompletions)
-	deploy.RegisterFlagCompletionFunc("platform-chart-path", common.NoCompletions)
-	deploy.RegisterFlagCompletionFunc("operator-docker-tag", common.NoCompletions)
-	deploy.RegisterFlagCompletionFunc("operator-chart-path", common.NoCompletions)
 
 	clean := &cobra.Command{
 		Use:   "clean",
@@ -85,7 +74,6 @@ func Setup(parent *cobra.Command) {
 			base.OmitUser:    "",
 			base.OmitProject: "",
 		},
-		ValidArgsFunction: common.NoCompletions,
 	}
 	kind.AddCommand(clean)
 
