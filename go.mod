@@ -49,6 +49,7 @@ require (
 require (
 	cloud.google.com/go/firestore v1.11.0 // indirect
 	cloud.google.com/go/longrunning v0.5.1 // indirect
+	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/alessio/shellescape v1.4.1 // indirect

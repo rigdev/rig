@@ -111,13 +111,11 @@ postgres:
 # the rig-server config file.
 rig:
   auth:
-    jwt:
-      secret: shhhdonotshare
-      certificate_file: ""
-      certificate_key_file: ""
+    secret: shhhdonotshare
+    certificateFile: ""
+    certificateKeyFile: ""
 
-  telemetry:
-    enabled: true
+  telemetryEnabled: true
 
   client:
     postgres:
@@ -125,49 +123,46 @@ rig:
       insecure: false
       user: postgres
       password: postgres
+      database: rig
     mongo:
       host: ""
       user: mongodb
       password: mongodb
-    minio:
-      host: ""
-      secure: false
-      access_key_id: ""
-      secret_access_key: ""
     mailjet:
-      api_key: ""
-      secret_key: ""
+      apiKey: ""
+      secretKey: ""
     smtp:
       password: ""
     operator:
       # if the rig-operator is installed in a non-standard way, please update
       # this to point to the service of the rig-operator
-      base_url: http://rig-operator:9000
+      baseUrl: http://rig-operator:9000
 
   repository:
-    secret:
-      key: ""
+    store: postgres
+    secret: ""
 
   cluster:
-    dev_registry:
+    devRegistry:
       host: ""
-      cluster_host: ""
+      clusterHost: ""
     git:
       url: ""
       branch: main
-      path_prefix: ""
+      pathPrefix: ""
       credentials:
         https:
           username: ""
           password: ""
         ssh:
-          private_key: ""
-          private_key_password: ""
+          privateKey: ""
+          privateKeyPassword: ""
 
   email:
     type: ""
     from: ""
 
   logging:
-    dev_mode: false
-    level: info
+    devMode: true
+    level: debug
+

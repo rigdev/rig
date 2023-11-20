@@ -39,7 +39,11 @@ spec:
     - path: /etc/rig/secret-config.yaml
       ref:
         kind: Secret
+        {{- if .Values.secretName }}
         name: {{ include "rig-platform.secretName" . }}
+        {{- else }}
+        name: {{ include "rig-platform.fullname" . }}-config
+        {{- end }}
         key: config.yaml
     {{- end }}
   {{- if .Values.useEnvForSecrets }}
@@ -48,4 +52,3 @@ spec:
       - kind: Secret
         name: {{ include "rig-platform.secretName" . }}
   {{- end }}
-  serviceAccountName: rig-platform
