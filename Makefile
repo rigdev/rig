@@ -238,3 +238,7 @@ SETUP_ENVTEST ?= $(TOOLSBIN)/setup-envtest
 setup-envtest: ## 📦 Download setup-envtest locally if necessary.
 	(test -s $(SETUP_ENVTEST)) || \
 	(cd tools && GOBIN=$(TOOLSBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest)
+
+.PHONY: docs
+docs: ## 📚 Generate docs
+	(cd docs && npm i && npm run start)
