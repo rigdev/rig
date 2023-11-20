@@ -6,6 +6,10 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
   name: capsules.rig.dev
+  {{- if .Values.config.webhooksEnabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rig-operator.fullname" . }}-webhook
+  {{- end }}
 spec:
   group: rig.dev
   names:
@@ -14,6 +18,21 @@ spec:
     plural: capsules
     singular: capsule
   scope: Namespaced
+  {{- if .Values.config.webhooksEnabled }}
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: {{ include "rig-operator.fullname" . }}
+          namespace: {{ .Release.Namespace }}
+          path: /convert
+          port: 9443
+      conversionReviewVersions:
+        - v1alpha1
+        - v1alpha2
+        - v1beta1
+  {{- end }}
   versions:
   - name: v1alpha1
     schema:
@@ -310,10 +329,306 @@ spec:
             type: object
         type: object
     served: true
-    storage: true
+    storage: false
     subresources:
       scale:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
+      status: {}
+  - name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: Capsule is the Schema for the capsules API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CapsuleSpec defines the desired state of Capsule
+            properties:
+              args:
+                items:
+                  type: string
+                type: array
+              command:
+                type: string
+              env:
+                description: Env defines what secrets and configmaps should be used
+                  for environment variables in the capsule.
+                properties:
+                  disable_automatic:
+                    description: DisableAutomatic sets wether the capsule should disable
+                      automatically use of existing secrets and configmaps which share
+                      the same name as the capsule as environment variables.
+                    type: boolean
+                  from:
+                    description: From holds a list of references to secrets and configmaps
+                      which should be mounted as environment variables.
+                    items:
+                      description: EnvSource holds a reference to either a ConfigMap
+                        or a Secret
+                      properties:
+                        kind:
+                          description: Kind is the resource kind of the env reference,
+                            must be ConfigMap or Secret.
+                          type: string
+                        name:
+                          description: Name is the name of a ConfigMap or Secret in
+                            the same namespace as the Capsule.
+                          type: string
+                      required:
+                      - kind
+                      - name
+                      type: object
+                    type: array
+                type: object
+              files:
+                items:
+                  description: File defines a mounted file and where to retrieve the
+                    contents from
+                  properties:
+                    path:
+                      type: string
+                    ref:
+                      description: FileContentRef defines the name of a config resource
+                        and the key from which to retrieve the contents
+                      properties:
+                        key:
+                          type: string
+                        kind:
+                          type: string
+                        name:
+                          type: string
+                      required:
+                      - key
+                      - kind
+                      - name
+                      type: object
+                  required:
+                  - path
+                  type: object
+                type: array
+              image:
+                type: string
+              interfaces:
+                items:
+                  description: CapsuleInterface defines an interface for a capsule
+                  properties:
+                    liveness:
+                      properties:
+                        grpc:
+                          properties:
+                            service:
+                              type: string
+                          required:
+                          - service
+                          type: object
+                        path:
+                          type: string
+                        tcp:
+                          type: boolean
+                      type: object
+                    name:
+                      type: string
+                    port:
+                      format: int32
+                      maximum: 65535
+                      minimum: 1
+                      type: integer
+                    public:
+                      description: CapsulePublicInterface defines how to publicly
+                        expose the interface
+                      properties:
+                        ingress:
+                          description: CapsuleInterfaceIngress defines that the interface
+                            should be exposed as http ingress
+                          properties:
+                            host:
+                              type: string
+                          required:
+                          - host
+                          type: object
+                        loadBalancer:
+                          description: CapsuleInterfaceLoadBalancer defines that the
+                            interface should be exposed as a L4 loadbalancer
+                          properties:
+                            port:
+                              format: int32
+                              maximum: 65535
+                              minimum: 1
+                              type: integer
+                          required:
+                          - port
+                          type: object
+                      type: object
+                    readiness:
+                      properties:
+                        grpc:
+                          properties:
+                            service:
+                              type: string
+                          required:
+                          - service
+                          type: object
+                        path:
+                          type: string
+                        tcp:
+                          type: boolean
+                      type: object
+                  required:
+                  - name
+                  - port
+                  type: object
+                type: array
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              scale:
+                properties:
+                  horizontal:
+                    description: HorizontalScale defines the policy for the number
+                      of replicas of the capsule It can both be configured with autoscaling
+                      and with a static number of replicas
+                    properties:
+                      cpuTarget:
+                        description: CPUTarget defines an autoscaler target for the
+                          CPU metric If empty, no autoscaling will be done
+                        properties:
+                          utilization:
+                            format: int32
+                            maximum: 100
+                            minimum: 1
+                            type: integer
+                        type: object
+                      instances:
+                        properties:
+                          max:
+                            format: int32
+                            type: integer
+                          min:
+                            format: int32
+                            type: integer
+                        required:
+                        - min
+                        type: object
+                    required:
+                    - instances
+                    type: object
+                  vertical:
+                    properties:
+                      cpu:
+                        properties:
+                          limit:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          request:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                        type: object
+                      gpu:
+                        properties:
+                          request:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                        type: object
+                      memory:
+                        properties:
+                          limit:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          request:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                        type: object
+                    type: object
+                type: object
+            required:
+            - image
+            type: object
+          status:
+            description: CapsuleStatus defines the observed state of Capsule
+            properties:
+              deploymentStatus:
+                properties:
+                  message:
+                    type: string
+                  state:
+                    enum:
+                    - created
+                    - failed
+                    type: string
+                type: object
+              observedGeneration:
+                format: int64
+                type: integer
+              ownedResources:
+                items:
+                  properties:
+                    message:
+                      type: string
+                    ref:
+                      description: TypedLocalObjectReference contains enough information
+                        to let you locate the typed referenced object inside the same
+                        namespace.
+                      properties:
+                        apiGroup:
+                          description: APIGroup is the group for the resource being
+                            referenced. If APIGroup is not specified, the specified
+                            Kind must be in the core API group. For any other third-party
+                            types, APIGroup is required.
+                          type: string
+                        kind:
+                          description: Kind is the type of resource being referenced
+                          type: string
+                        name:
+                          description: Name is the name of resource being referenced
+                          type: string
+                      required:
+                      - kind
+                      - name
+                      type: object
+                      x-kubernetes-map-type: atomic
+                    state:
+                      enum:
+                      - created
+                      - failed
+                      type: string
+                  required:
+                  - ref
+                  type: object
+                type: array
+              replicas:
+                format: int32
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
       status: {}
 {{- end }}

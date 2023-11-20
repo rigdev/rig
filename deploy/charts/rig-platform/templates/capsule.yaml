@@ -1,18 +1,21 @@
-apiVersion: rig.dev/v1alpha1
+apiVersion: rig.dev/v1alpha2
 kind: Capsule
 metadata:
   name: rig-platform
 spec:
-  horizontalScale:
-    {{- if .Values.autoscaling.enabled }}
-    minReplicas: {{ .Values.autoscaling.minReplicas }}
-    maxReplicas: {{ .Values.autoscaling.maxReplicas }}
-    cpuTarget:
-      averageUtilizationPercentage: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-    {{- else }}
-    minReplicas: {{ .Values.replicaCount }}
-    maxReplicas: {{ .Values.replicaCount }}
-    {{- end }}
+  scale:
+    horizontal:
+      instances:
+        min: {{ .Values.instances.min }}
+        max: {{ .Values.instances.max }}
+      {{- if .Values.instances.autoscaling.enabled }}
+      cpuTarget:
+        utilization: {{ .Values.instances.autoscaling.cpuUtilization }}
+      {{- end }}
+    vertical:
+      {{- with .Values.resources }}
+      {{ toYaml . | nindent 12 }}
+      {{- end }}
   image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
   interfaces:
     - name: http
@@ -22,24 +25,17 @@ spec:
         ingress:
           host: {{ .Values.ingress.host }}
       {{- end}}
-      {{- if .Values.loadBalancer.enabled }}
-      public:
-        loadBalancer:
-          port: {{ .Values.port }}
-          nodePort: {{ .Values.loadBalancer.nodePort }}
-      {{- end}}
   files:
     - path: /etc/rig/config.yaml
-      configMap:
+      ref:
+        kind: ConfigMap
         name: {{ include "rig-platform.fullname" . }}-config
         key: config.yaml
     {{- if not .Values.useEnvForSecrets }}
     - path: /etc/rig/secret-config.yaml
-      secret:
+      ref:
+        kind: Secret
         name: {{ include "rig-platform.fullname" . }}-config
         key: config.yaml
     {{- end }}
-  {{- with .Values.resources }}
-  resources: {{ toYaml . | nindent 12 }}
-  {{- end }}
   serviceAccountName: rig-platform
