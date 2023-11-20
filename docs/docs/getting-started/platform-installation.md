@@ -31,10 +31,8 @@ To easily create a Rig Kubernetes setup on your local machine, Rig comes with su
 rig dev kind create
 ```
 
-### Next step
+### Next steps
 
 And that's it, you're now ready to login on the dashboard at [http://localhost:4747](http://localhost:4747).
 
-## Configuration
-
-For more information about how to configure Rig, see the [operator manual](/operator-manual).
+You can now either explore the [Your First Capsule](first-capsule) walkthrough or check out the [Next steps](next-steps) guide.
