@@ -30,6 +30,19 @@ rig:
       database: rig
 ```
 
+### Database migrations
+
+The postgres implementation uses Schema Migrations to ensure consistent upgrades to newer schemas.
+This is done automatically when `rig-platform` is starting.
+
+:::info
+If you end up having to wipe the database, it's thus important that you also wipe the `schema_migrations` table:
+
+```sql
+DROP TABLE schema_migrations;
+```
+:::
+
 ## MongoDB
 
 To connect to your own MongoDB database, you need to fill out the following
