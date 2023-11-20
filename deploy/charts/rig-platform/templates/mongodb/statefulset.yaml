@@ -16,6 +16,7 @@ spec:
       securityContext: {{ toYaml .Values.mongodb.podSecurityContext | nindent 8 }}
       containers:
         - name: mongodb
+          args: {{ toYaml .Values.mongodb.args | nindent 12 }}
           securityContext: {{ toYaml .Values.mongodb.securityContext | nindent 12 }}
           image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
