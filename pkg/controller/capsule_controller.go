@@ -942,22 +942,22 @@ func makeResourceRequirements(capsule *v1alpha2.Capsule) v1.ResourceRequirements
 		return res
 	}
 	if c := capsule.Spec.Scale.Vertical.CPU; c != nil {
-		if c.Request != nil {
+		if c.Request != nil && !c.Request.IsZero() {
 			res.Requests[v1.ResourceCPU] = *c.Request
 		}
-		if c.Limit != nil {
+		if c.Limit != nil && !c.Limit.IsZero() {
 			res.Limits[v1.ResourceCPU] = *c.Limit
 		}
 	}
 	if m := capsule.Spec.Scale.Vertical.Memory; m != nil {
-		if m.Request != nil {
+		if m.Request != nil && !m.Request.IsZero() {
 			res.Requests[v1.ResourceMemory] = *m.Request
 		}
-		if m.Limit != nil {
+		if m.Limit != nil && !m.Limit.IsZero() {
 			res.Limits[v1.ResourceMemory] = *m.Limit
 		}
 	}
-	if g := capsule.Spec.Scale.Vertical.GPU; g != nil {
+	if g := capsule.Spec.Scale.Vertical.GPU; g != nil && !g.Request.IsZero() {
 		res.Requests["nvidia.com/gpu"] = g.Request
 	}
 
