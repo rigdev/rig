@@ -5,11 +5,10 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: capsules.rig.dev
-  {{- if .Values.config.webhooksEnabled }}
-  annotations:
+    {{- if .Values.config.webhooksEnabled }}
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rig-operator.fullname" . }}-webhook
-  {{- end }}
+    {{- end }}
+  name: capsules.rig.dev
 spec:
   group: rig.dev
   names:
