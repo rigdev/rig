@@ -90,8 +90,8 @@ func (src *Capsule) ConvertTo(dstRaw conversion.Hub) error {
 				Limit:   srcSpec.Resources.Limits.Cpu(),
 			},
 			Memory: &v1alpha2.ResourceLimits{
-				Request: srcSpec.Resources.Requests.Cpu(),
-				Limit:   srcSpec.Resources.Limits.Cpu(),
+				Request: srcSpec.Resources.Requests.Memory(),
+				Limit:   srcSpec.Resources.Limits.Memory(),
 			},
 			GPU: &v1alpha2.ResourceRequest{
 				Request: srcSpec.Resources.Requests["nvidia.com/gpu"],
