@@ -80,6 +80,8 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 		return err
 	}
 
+	fmt.Println("Rig is now accessible on http://localhost:4747")
+
 	return nil
 }
 
