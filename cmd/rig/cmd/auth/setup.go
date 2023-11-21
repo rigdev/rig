@@ -3,7 +3,7 @@ package auth
 import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -17,7 +17,7 @@ type Cmd struct {
 	fx.In
 
 	Rig rig.Client
-	Cfg *cmd_config.Config
+	Cfg *cmdconfig.Config
 }
 
 var cmd Cmd

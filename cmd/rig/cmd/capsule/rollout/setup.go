@@ -11,7 +11,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -30,7 +30,7 @@ type Cmd struct {
 	fx.In
 
 	Rig rig.Client
-	Cfg *cmd_config.Config
+	Cfg *cmdconfig.Config
 }
 
 var cmd Cmd
@@ -83,14 +83,26 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	rollback.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and perform the rollback")
-	rollback.Flags().IntVarP(&rolloutID, "rollout-id", "r", -1, "The rollout to rollback to. If not given, will roll back to the latest successful rollout.")
+	rollback.Flags().BoolVarP(
+		&forceDeploy,
+		"force-deploy", "f", false, "Abort the current rollout if one is in progress and perform the rollback",
+	)
+	rollback.Flags().IntVarP(
+		&rolloutID,
+		"rollout-id",
+		"r", -1, "The rollout to rollback to. If not given, will roll back to the latest successful rollout.",
+	)
 	rollout.AddCommand(rollback)
 
 	parent.AddCommand(rollout)
 }
 
-func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}

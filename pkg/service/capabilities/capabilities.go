@@ -1,14 +1,12 @@
 package capabilities
 
 import (
-	"context"
-
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
 )
 
 type Service interface {
-	Get(ctx context.Context, req *capabilities.GetRequest) (*capabilities.GetResponse, error)
+	Get() (*capabilities.GetResponse, error)
 }
 
 func NewService(cfg config.Service) Service {
@@ -20,7 +18,7 @@ type service struct {
 }
 
 // Get implements Service.
-func (s *service) Get(ctx context.Context, req *capabilities.GetRequest) (*capabilities.GetResponse, error) {
+func (s *service) Get() (*capabilities.GetResponse, error) {
 	res := &capabilities.GetResponse{}
 
 	cfg := s.cfg.Get()

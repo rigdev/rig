@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
@@ -104,7 +105,10 @@ func Setup(parent *cobra.Command) {
 			)
 		},
 	)
-	update.RegisterFlagCompletionFunc("field", updateUserCompletions)
+	if err := update.RegisterFlagCompletionFunc("field", updateUserCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	user.AddCommand(update)
 
 	get := &cobra.Command{
@@ -120,7 +124,7 @@ func Setup(parent *cobra.Command) {
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
 	user.AddCommand(get)
 
-	delete := &cobra.Command{
+	deleteCmd := &cobra.Command{
 		Use:   "delete [user-id | {email|username|phone}]",
 		Short: "Delete a user",
 		RunE:  base.CtxWrap(cmd.delete),
@@ -130,7 +134,7 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	user.AddCommand(delete)
+	user.AddCommand(deleteCmd)
 
 	getSessions := &cobra.Command{
 		Use:   "get-sessions [user-id | {email|username|phone}]",
@@ -190,7 +194,10 @@ func Setup(parent *cobra.Command) {
 			)
 		},
 	)
-	updateSettings.RegisterFlagCompletionFunc("field", updateSettingsCompletions)
+	if err := updateSettings.RegisterFlagCompletionFunc("field", updateSettingsCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	user.AddCommand(updateSettings)
 
 	migrate := &cobra.Command{
@@ -223,7 +230,10 @@ func Setup(parent *cobra.Command) {
 			)
 		},
 	)
-	migrate.RegisterFlagCompletionFunc("platform", migrateCompletions)
+	if err := migrate.RegisterFlagCompletionFunc("platform", migrateCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	user.AddCommand(migrate)
 
 	addUser := &cobra.Command{
@@ -237,10 +247,13 @@ func Setup(parent *cobra.Command) {
 		),
 	}
 	addUser.Flags().StringVarP(&groupIdentifier, "group", "g", "", "group to add the user to")
-	addUser.RegisterFlagCompletionFunc(
+	if err := addUser.RegisterFlagCompletionFunc(
 		"group",
 		base.CtxWrapCompletion(cmd.groupCompletions),
-	)
+	); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	user.AddCommand(addUser)
 
 	removeUser := &cobra.Command{
@@ -254,16 +267,24 @@ func Setup(parent *cobra.Command) {
 		),
 	}
 	removeUser.Flags().StringVarP(&groupIdentifier, "group", "g", "", "group to remove the user from")
-	removeUser.RegisterFlagCompletionFunc(
+	if err := removeUser.RegisterFlagCompletionFunc(
 		"group",
 		base.CtxWrapCompletion(cmd.groupCompletions),
-	)
+	); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	user.AddCommand(removeUser)
 
 	parent.AddCommand(user)
 }
 
-func (c *Cmd) userCompletions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) userCompletions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	resp, err := c.Rig.User().List(ctx, &connect.Request[user.ListRequest]{
 		Msg: &user.ListRequest{},
 	})
@@ -285,7 +306,7 @@ func (c *Cmd) userCompletions(ctx context.Context, cmd *cobra.Command, args []st
 	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
-func migrateCompletions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func migrateCompletions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	options := []string{"Firebase"}
 	var completions []string
 
@@ -302,7 +323,7 @@ func migrateCompletions(cmd *cobra.Command, args []string, toComplete string) ([
 	return completions, cobra.ShellCompDirectiveDefault
 }
 
-func updateSettingsCompletions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func updateSettingsCompletions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	options := []string{
 		"allow-register",
 		"allow-login",
@@ -332,7 +353,7 @@ func updateSettingsCompletions(cmd *cobra.Command, args []string, toComplete str
 	return completions, cobra.ShellCompDirectiveDefault
 }
 
-func updateUserCompletions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func updateUserCompletions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	fields := []string{
 		"email",
 		"username",
@@ -363,7 +384,12 @@ func formatUser(u *model.UserEntry) string {
 	return fmt.Sprintf("%s\t (ID: %s)", u.GetPrintableName(), u.GetUserId())
 }
 
-func (c *Cmd) groupCompletions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) groupCompletions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	completions := []string{}
 	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{
 		Msg: &group.ListRequest{},

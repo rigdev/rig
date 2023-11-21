@@ -1,4 +1,4 @@
-package cmd_config
+package cmdconfig
 
 import (
 	"fmt"
@@ -60,7 +60,9 @@ func CreateContext(cfg *Config, name, url string) error {
 
 	for _, s := range cfg.Services {
 		if s.Server == server {
-			if ok, err := common.PromptConfirm("Context with this server already exists. Do you want activate this context now?", true); err != nil {
+			if ok, err := common.PromptConfirm(
+				"Context with this server already exists. Do you want activate this context now?", true,
+			); err != nil {
 				return err
 			} else if ok {
 				cfg.CurrentContextName = name

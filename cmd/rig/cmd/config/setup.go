@@ -6,7 +6,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -15,7 +15,7 @@ type Cmd struct {
 	fx.In
 
 	Rig rig.Client
-	Cfg *cmd_config.Config
+	Cfg *cmdconfig.Config
 }
 
 var cmd Cmd
@@ -62,7 +62,7 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(config)
 }
 
-func (c *Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	names := []string{}
 
 	for _, ctx := range c.Cfg.Contexts {

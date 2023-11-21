@@ -100,7 +100,9 @@ func (s *K8sTestSuite) TearDownSuite() {
 		s.cancel()
 	}
 	if s.TestEnv != nil {
-		s.TestEnv.Stop()
+		if err := s.TestEnv.Stop(); err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 

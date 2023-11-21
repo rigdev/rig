@@ -362,19 +362,15 @@ type checksums struct {
 }
 
 func (r *CapsuleReconciler) configChecksums(
-	ctx context.Context,
-	req ctrl.Request,
 	capsule *v1alpha2.Capsule,
 	configs *configs,
 ) (*checksums, error) {
-	sharedEnv, err := r.configSharedEnvChecksum(ctx, req, configs)
+	sharedEnv, err := r.configSharedEnvChecksum(configs)
 	if err != nil {
 		return nil, err
 	}
 
 	autoEnv, err := r.configAutoEnvChecksum(
-		ctx,
-		req,
 		configs.configMaps[capsule.GetName()],
 		configs.secrets[capsule.GetName()],
 	)
@@ -382,12 +378,12 @@ func (r *CapsuleReconciler) configChecksums(
 		return nil, err
 	}
 
-	env, err := r.configEnvChecksum(ctx, req, capsule, configs)
+	env, err := r.configEnvChecksum(capsule, configs)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := r.configFilesChecksum(ctx, req, capsule, configs)
+	files, err := r.configFilesChecksum(capsule, configs)
 	if err != nil {
 		return nil, err
 	}
@@ -401,8 +397,6 @@ func (r *CapsuleReconciler) configChecksums(
 }
 
 func (r *CapsuleReconciler) configSharedEnvChecksum(
-	ctx context.Context,
-	req ctrl.Request,
 	configs *configs,
 ) (string, error) {
 	if !configs.hasSharedConfig() {
@@ -431,8 +425,6 @@ func (r *CapsuleReconciler) configSharedEnvChecksum(
 }
 
 func (r *CapsuleReconciler) configAutoEnvChecksum(
-	ctx context.Context,
-	req ctrl.Request,
 	configMap *v1.ConfigMap,
 	secret *v1.Secret,
 ) (string, error) {
@@ -457,8 +449,6 @@ func (r *CapsuleReconciler) configAutoEnvChecksum(
 }
 
 func (r *CapsuleReconciler) configEnvChecksum(
-	ctx context.Context,
-	req ctrl.Request,
 	capsule *v1alpha2.Capsule,
 	configs *configs,
 ) (string, error) {
@@ -484,8 +474,6 @@ func (r *CapsuleReconciler) configEnvChecksum(
 }
 
 func (r *CapsuleReconciler) configFilesChecksum(
-	ctx context.Context,
-	req ctrl.Request,
 	capsule *v1alpha2.Capsule,
 	configs *configs,
 ) (string, error) {
@@ -546,7 +534,6 @@ func (r *CapsuleReconciler) configFilesChecksum(
 func (r *CapsuleReconciler) getConfigs(
 	ctx context.Context,
 	req ctrl.Request,
-	log logr.Logger,
 	capsule *v1alpha2.Capsule,
 ) (*configs, error) {
 	cfgs := &configs{
@@ -679,12 +666,12 @@ func (r *CapsuleReconciler) reconcileDeployment(
 	capsule *v1alpha2.Capsule,
 	status *v1alpha2.CapsuleStatus,
 ) error {
-	cfgs, err := r.getConfigs(ctx, req, log, capsule)
+	cfgs, err := r.getConfigs(ctx, req, capsule)
 	if err != nil {
 		return err
 	}
 
-	checksums, err := r.configChecksums(ctx, req, capsule, cfgs)
+	checksums, err := r.configChecksums(capsule, cfgs)
 	if err != nil {
 		return err
 	}
@@ -1088,25 +1075,23 @@ func (r *CapsuleReconciler) reconcileCertificate(
 		if capsuleHasIngress(capsule) {
 			log.Info("Found existing certificate not owned by capsule. Will not update it.")
 			return errors.New("found existing certificate not owned by capsule")
-		} else {
-			log.Info("Found existing certificate not owned by capsule. Will not delete it.")
 		}
+		log.Info("Found existing certificate not owned by capsule. Will not delete it.")
 	} else {
 		if r.ingressIsSupported() && r.shouldCreateCertificateRessource() && capsuleHasIngress(capsule) {
 			return upsertIfNewer(ctx, r, existingCrt, crt, log, capsule, status, func(t1, t2 *cmv1.Certificate) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			})
+		}
+		if !r.ingressIsSupported() {
+			log.V(1).Info("deleting certificate as ingress is not supported: cert-manager config missing")
+		} else if !r.shouldCreateCertificateRessource() {
+			log.V(1).Info("deleting certificate becausee operator is configured to use ingress annotations")
 		} else {
-			if !r.ingressIsSupported() {
-				log.V(1).Info("deleting certificate as ingress is not supported: cert-manager config missing")
-			} else if !r.shouldCreateCertificateRessource() {
-				log.V(1).Info("deleting certificate becausee operator is configured to use ingress annotations")
-			} else {
-				log.Info("deleting certificate")
-			}
-			if err := r.Delete(ctx, existingCrt); err != nil {
-				return fmt.Errorf("could not delete certificate: %w", err)
-			}
+			log.Info("deleting certificate")
+		}
+		if err := r.Delete(ctx, existingCrt); err != nil {
+			return fmt.Errorf("could not delete certificate: %w", err)
 		}
 	}
 
@@ -1194,22 +1179,20 @@ func (r *CapsuleReconciler) reconcileIngress(
 		if capsuleHasIngress(capsule) {
 			log.Info("Found existing ingress not owned by capsule. Will not update it.")
 			return errors.New("found existing ingress not owned by capsule")
-		} else {
-			log.Info("Found existing ingress not owned by capsule. Will not delete it.")
 		}
+		log.Info("Found existing ingress not owned by capsule. Will not delete it.")
 	} else {
 		if r.ingressIsSupported() && capsuleHasIngress(capsule) {
 			return upsertIfNewer(ctx, r, existingIng, ing, log, capsule, status, func(t1, t2 *netv1.Ingress) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			})
-		} else {
-			if !r.ingressIsSupported() {
-				log.V(1).Info("ingress not supported: cert-manager config missing")
-			}
-			log.Info("deleting ingress")
-			if err := r.Delete(ctx, existingIng); err != nil {
-				return fmt.Errorf("could not delete ingress: %w", err)
-			}
+		}
+		if !r.ingressIsSupported() {
+			log.V(1).Info("ingress not supported: cert-manager config missing")
+		}
+		log.Info("deleting ingress")
+		if err := r.Delete(ctx, existingIng); err != nil {
+			return fmt.Errorf("could not delete ingress: %w", err)
 		}
 	}
 
@@ -1321,19 +1304,17 @@ func (r *CapsuleReconciler) reconcileLoadBalancer(
 		if capsuleHasLoadBalancer(capsule) {
 			log.Info("Found existing loadbalancer service not owned by capsule. Will not update it.")
 			return errors.New("found existing loadbalancer service not owned by capsule")
-		} else {
-			log.Info("Found existing loadbalancer service not owned by capsule. Will not delete it.")
 		}
+		log.Info("Found existing loadbalancer service not owned by capsule. Will not delete it.")
 	} else {
 		if capsuleHasLoadBalancer(capsule) {
 			return upsertIfNewer(ctx, r, existingSvc, svc, log, capsule, status, func(t1, t2 *v1.Service) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			})
-		} else {
-			log.Info("deleting loadbalancer service")
-			if err := r.Delete(ctx, existingSvc); err != nil {
-				return fmt.Errorf("could not delete loadbalancer service: %w", err)
-			}
+		}
+		log.Info("deleting loadbalancer service")
+		if err := r.Delete(ctx, existingSvc); err != nil {
+			return fmt.Errorf("could not delete loadbalancer service: %w", err)
 		}
 	}
 
@@ -1385,7 +1366,7 @@ func createLoadBalancer(
 
 func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
 	ctx context.Context,
-	req ctrl.Request,
+	_ ctrl.Request,
 	log logr.Logger,
 	capsule *v1alpha2.Capsule,
 	status *v1alpha2.CapsuleStatus,
@@ -1415,12 +1396,24 @@ func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
 		}
 	}
 
-	return upsertIfNewer(ctx, r, existingHPA, hpa, log, capsule, status, func(t1, t2 *autoscalingv2.HorizontalPodAutoscaler) bool {
-		return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
-	})
+	return upsertIfNewer(
+		ctx,
+		r,
+		existingHPA,
+		hpa,
+		log,
+		capsule,
+		status,
+		func(t1, t2 *autoscalingv2.HorizontalPodAutoscaler) bool {
+			return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
+		},
+	)
 }
 
-func createHPA(capsule *v1alpha2.Capsule, scheme *runtime.Scheme) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
+func createHPA(
+	capsule *v1alpha2.Capsule,
+	scheme *runtime.Scheme,
+) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsule.Name,
@@ -1473,7 +1466,7 @@ func createHPA(capsule *v1alpha2.Capsule, scheme *runtime.Scheme) (*autoscalingv
 
 func (r *CapsuleReconciler) reconcileServiceAccount(
 	ctx context.Context,
-	req ctrl.Request,
+	_ ctrl.Request,
 	log logr.Logger,
 	capsule *v1alpha2.Capsule,
 	status *v1alpha2.CapsuleStatus,

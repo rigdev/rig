@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fatih/color"
@@ -86,17 +85,6 @@ func GetCurrentRollout(ctx context.Context, client rig.Client) (*capsule.Rollout
 	return r.Msg.GetRollout(), nil
 }
 
-func formatCapsule(c *capsule.Capsule) string {
-	var age string
-	if c.GetCurrentRollout() == 0 {
-		age = "-"
-	} else {
-		age = time.Since(c.GetUpdatedAt().AsTime()).Truncate(time.Second).String()
-	}
-
-	return fmt.Sprintf("%v\t (Rollout: %v, Updated At: %v)", c.GetCapsuleId(), c.GetCurrentRollout(), age)
-}
-
 func Truncated(str string, max int) string {
 	if len(str) > max {
 		return str[:strings.LastIndexAny(str[:max], " .,:;-")] + "..."
@@ -113,7 +101,12 @@ func TruncatedFixed(str string, max int) string {
 	return str
 }
 
-func PromptAbortAndDeploy(ctx context.Context, capsuleID string, rig rig.Client, req *connect.Request[capsule.DeployRequest]) (*connect.Response[capsule.DeployResponse], error) {
+func PromptAbortAndDeploy(
+	ctx context.Context,
+	capsuleID string,
+	rig rig.Client,
+	req *connect.Request[capsule.DeployRequest],
+) (*connect.Response[capsule.DeployResponse], error) {
 	deploy, err := common.PromptConfirm("Rollout already in progress, would you like to cancel it and redeploy?", false)
 	if err != nil {
 		return nil, err
@@ -126,7 +119,12 @@ func PromptAbortAndDeploy(ctx context.Context, capsuleID string, rig rig.Client,
 	return AbortAndDeploy(ctx, rig, capsuleID, req)
 }
 
-func AbortAndDeploy(ctx context.Context, rig rig.Client, capsuleID string, req *connect.Request[capsule.DeployRequest]) (*connect.Response[capsule.DeployResponse], error) {
+func AbortAndDeploy(
+	ctx context.Context,
+	rig rig.Client,
+	capsuleID string,
+	req *connect.Request[capsule.DeployRequest],
+) (*connect.Response[capsule.DeployResponse], error) {
 	cc, err := rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
 			CapsuleId: capsuleID,
@@ -148,7 +146,13 @@ func AbortAndDeploy(ctx context.Context, rig rig.Client, capsuleID string, req *
 	return rig.Capsule().Deploy(ctx, req)
 }
 
-func Deploy(ctx context.Context, rig rig.Client, capsuleID string, req *connect.Request[capsule.DeployRequest], forceDeploy bool) error {
+func Deploy(
+	ctx context.Context,
+	rig rig.Client,
+	capsuleID string,
+	req *connect.Request[capsule.DeployRequest],
+	forceDeploy bool,
+) error {
 	_, err := rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 		if forceDeploy {
@@ -167,14 +171,18 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 	for stream.Receive() {
 		switch v := stream.Msg().GetLog().GetMessage().GetMessage().(type) {
 		case *capsule.LogMessage_Stdout:
-			printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stdout)
+			if err := printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stdout); err != nil {
+				return err
+			}
 			os.Stdout.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
 			os.Stdout.WriteString(": ")
 			if _, err := os.Stdout.Write(v.Stdout); err != nil {
 				return err
 			}
 		case *capsule.LogMessage_Stderr:
-			printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stderr)
+			if err := printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stderr); err != nil {
+				return err
+			}
 			os.Stderr.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
 			os.Stderr.WriteString(": ")
 			if _, err := os.Stderr.Write(v.Stderr); err != nil {
@@ -200,13 +208,16 @@ var colors = []color.Attribute{
 
 var instanceToColor = map[string]color.Attribute{}
 
-func printInstanceID(instanceID string, out *os.File) {
+func printInstanceID(instanceID string, out *os.File) error {
 	c, ok := instanceToColor[instanceID]
 	if !ok {
 		c = colors[len(instanceToColor)%len(colors)]
 		instanceToColor[instanceID] = c
 	}
 	color.Set(c)
-	out.WriteString(instanceID + " ")
+	if _, err := out.WriteString(instanceID + " "); err != nil {
+		return fmt.Errorf("could not print instance id: %w", err)
+	}
 	color.Unset()
+	return nil
 }

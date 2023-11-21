@@ -21,18 +21,14 @@ import (
 )
 
 func (c *Cmd) configure(ctx context.Context, cmd *cobra.Command, args []string) error {
-	var err error
-	networkFile := ""
 	if len(args) == 0 {
 		if err := c.configureInteractive(ctx, capsule_cmd.CapsuleID); err != nil {
 			return err
 		}
 		return nil
-	} else {
-		networkFile = args[0]
 	}
 
-	bs, err := os.ReadFile(networkFile)
+	bs, err := os.ReadFile(args[0])
 	if err != nil {
 		return errors.InvalidArgumentErrorf("errors reading network info: %v", err)
 	}
@@ -174,7 +170,7 @@ func addInterface(network *capsule.Network) error {
 		return err
 	}
 
-	interface_ := &capsule.Interface{
+	capsuleInterface := &capsule.Interface{
 		Port: uint32(port),
 		Name: name,
 	}
@@ -185,11 +181,11 @@ func addInterface(network *capsule.Network) error {
 	}
 
 	if !public {
-		network.Interfaces = append(network.Interfaces, interface_)
+		network.Interfaces = append(network.Interfaces, capsuleInterface)
 		return nil
 	}
 
-	interface_.Public = &capsule.PublicInterface{
+	capsuleInterface.Public = &capsule.PublicInterface{
 		Enabled: true,
 		Method:  &capsule.RoutingMethod{},
 	}
@@ -204,7 +200,7 @@ func addInterface(network *capsule.Network) error {
 		if err != nil {
 			return err
 		}
-		interface_.Public.Method.Kind = &capsule.RoutingMethod_Ingress_{
+		capsuleInterface.Public.Method.Kind = &capsule.RoutingMethod_Ingress_{
 			Ingress: &capsule.RoutingMethod_Ingress{
 				Host: host,
 			},
@@ -218,13 +214,13 @@ func addInterface(network *capsule.Network) error {
 		if err != nil {
 			return err
 		}
-		interface_.Public.Method.Kind = &capsule.RoutingMethod_LoadBalancer_{
+		capsuleInterface.Public.Method.Kind = &capsule.RoutingMethod_LoadBalancer_{
 			LoadBalancer: &capsule.RoutingMethod_LoadBalancer{
 				Port: uint32(loadBalancerPort),
 			},
 		}
 	}
-	network.Interfaces = append(network.Interfaces, interface_)
+	network.Interfaces = append(network.Interfaces, capsuleInterface)
 
 	return nil
 }
@@ -247,8 +243,8 @@ func seeInterface(network *capsule.Network) error {
 		return err
 	}
 
-	interface_ := network.GetInterfaces()[idx]
-	bytes, err := yaml.Marshal(interface_)
+	capsuleInterface := network.GetInterfaces()[idx]
+	bytes, err := yaml.Marshal(capsuleInterface)
 	if err != nil {
 		return err
 	}
@@ -278,12 +274,12 @@ func deleteInterface(network *capsule.Network) error {
 	if idx == 0 {
 		return nil
 	}
-	idx -= 1
+	idx--
 
 	var newInterfaces []*capsule.Interface
-	for i, interface_ := range network.GetInterfaces() {
+	for i, capsuleInterface := range network.GetInterfaces() {
 		if i != idx {
-			newInterfaces = append(newInterfaces, interface_)
+			newInterfaces = append(newInterfaces, capsuleInterface)
 		}
 	}
 	network.Interfaces = newInterfaces

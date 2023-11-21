@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	rollout, err := capsule.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err
@@ -36,8 +36,16 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 	t.AppendRow(table.Row{"", "Requests", "Limits"})
 	t.AppendSeparator()
 	t.AppendRows([]table.Row{
-		{"CPU", milliIntToString(uint64(requests.GetCpuMillis())), formatLimitString(milliIntToString, uint64(limits.GetCpuMillis()))},
-		{"Memory", intToByteString(requests.GetMemoryBytes()), formatLimitString(intToByteString, limits.GetMemoryBytes())},
+		{
+			"CPU",
+			milliIntToString(uint64(requests.GetCpuMillis())),
+			formatLimitString(milliIntToString, uint64(limits.GetCpuMillis())),
+		},
+		{
+			"Memory",
+			intToByteString(requests.GetMemoryBytes()),
+			formatLimitString(intToByteString, limits.GetMemoryBytes()),
+		},
 	})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Replicas", replicas})

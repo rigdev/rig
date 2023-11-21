@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	req := &project.GetRequest{}
 	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: req})
 	if err != nil {

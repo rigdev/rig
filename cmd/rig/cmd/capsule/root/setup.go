@@ -3,6 +3,7 @@ package root
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -21,7 +22,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/network"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -52,7 +53,7 @@ type Cmd struct {
 	fx.In
 
 	Rig          rig.Client
-	Cfg          *cmd_config.Config
+	Cfg          *cmdconfig.Config
 	DockerClient *client.Client
 }
 
@@ -76,10 +77,13 @@ func Setup(parent *cobra.Command) {
 		),
 	}
 	capsuleCmd.PersistentFlags().StringVarP(&capsule.CapsuleID, "capsule-id", "c", "", "Id of the capsule")
-	capsuleCmd.RegisterFlagCompletionFunc(
+	if err := capsuleCmd.RegisterFlagCompletionFunc(
 		"capsule-id",
 		base.CtxWrapCompletion(cmd.completions),
-	)
+	); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	capsuleCreate := &cobra.Command{
 		Use:         "create",
@@ -89,9 +93,18 @@ func Setup(parent *cobra.Command) {
 		Annotations: omitCapsuleIDAnnotation,
 	}
 	capsuleCreate.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode")
-	capsuleCreate.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
-	capsuleCreate.RegisterFlagCompletionFunc("interactive", common.BoolCompletions)
-	capsuleCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
+	capsuleCreate.Flags().BoolVarP(
+		&forceDeploy,
+		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
+	)
+	if err := capsuleCreate.RegisterFlagCompletionFunc("interactive", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := capsuleCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	capsuleCmd.AddCommand(capsuleCreate)
 
 	capsuleAbort := &cobra.Command{
@@ -128,12 +141,23 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.config),
 	}
-	capsuleConfig.Flags().Bool("auto-add-service-account", false, "automatically add the rig service account to the capsule")
+	capsuleConfig.Flags().Bool(
+		"auto-add-service-account", false, "automatically add the rig service account to the capsule",
+	)
 	capsuleConfig.Flags().StringVar(&command, "cmd", "", "Container CMD to run")
 	capsuleConfig.Flags().StringSliceVar(&args, "args", []string{}, "Container CMD args")
-	capsuleConfig.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes")
-	capsuleConfig.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
-	capsuleConfig.RegisterFlagCompletionFunc("auto-add-service-account", common.BoolCompletions)
+	capsuleConfig.Flags().BoolVarP(
+		&forceDeploy,
+		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
+	)
+	if err := capsuleConfig.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := capsuleConfig.RegisterFlagCompletionFunc("auto-add-service-account", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	capsuleCmd.AddCommand(capsuleConfig)
 
 	capsuleLogs := &cobra.Command{
@@ -142,7 +166,9 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.logs),
 	}
-	capsuleLogs.Flags().BoolVarP(&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced")
+	capsuleLogs.Flags().BoolVarP(
+		&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced",
+	)
 	capsuleLogs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
 	capsuleCmd.AddCommand(capsuleLogs)
 
@@ -157,7 +183,12 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(capsuleCmd)
 }
 
-func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	var capsuleIDs []string
 
 	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
@@ -195,7 +226,7 @@ func formatCapsule(c *capsule_api.Capsule) string {
 	return fmt.Sprintf("%v\t (Rollout: %v, Updated At: %v)", c.GetCapsuleId(), c.GetCurrentRollout(), age)
 }
 
-func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	if cmd.Annotations["OMIT_CAPSULE_ID"] != "" {
 		return nil
 	}

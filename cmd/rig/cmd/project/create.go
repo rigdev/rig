@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	if name == "" {
 		var err error
 		name, err = common.PromptInput("Project name:", common.ValidateNonEmptyOpt)

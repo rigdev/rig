@@ -66,7 +66,7 @@ func (c *Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 }
 
 func (c *Cmd) getDaemonImage(ctx context.Context) (*imageInfo, error) {
-	images, prompts, err := c.getImagePrompts(ctx, "")
+	images, prompts, err := c.getImagePrompts(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -74,14 +74,16 @@ func (c *Cmd) getDaemonImage(ctx context.Context) (*imageInfo, error) {
 	if len(images) == 0 {
 		return nil, errors.New("no local docker images found")
 	}
-	idx, err := common.PromptTableSelect("Select image:", prompts, []string{"Image name", "Age"}, common.SelectEnableFilterOpt)
+	idx, err := common.PromptTableSelect(
+		"Select image:", prompts, []string{"Image name", "Age"}, common.SelectEnableFilterOpt,
+	)
 	if err != nil {
 		return nil, err
 	}
 	return &images[idx], nil
 }
 
-func (c *Cmd) getImagePrompts(ctx context.Context, filter string) ([]imageInfo, [][]string, error) {
+func (c *Cmd) getImagePrompts(ctx context.Context) ([]imageInfo, [][]string, error) {
 	res, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{
 		Filters: filters.NewArgs(filters.Arg("dangling", "false")),
 	})

@@ -53,7 +53,9 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		})
 
 		if cmd.Flags().Changed("download") {
-			dowloadFile(ctx, f, dstPath)
+			if err := downloadFile(f, dstPath); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -76,7 +78,7 @@ func formatBytesSize(numBytes int) string {
 		float64(numBytes)/float64(div), "KMGTPE"[exp])
 }
 
-func dowloadFile(ctx context.Context, f *capsule.ConfigFile, dstPath string) error {
+func downloadFile(f *capsule.ConfigFile, dstPath string) error {
 	path := path.Join(dstPath, path.Base(f.Path))
 	if err := os.WriteFile(path, f.GetContent(), 0644); err != nil {
 		return err

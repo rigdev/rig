@@ -11,7 +11,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -30,7 +30,12 @@ var _omitProjectToken = map[string]struct{}{
 
 var clientModule = fx.Module("client",
 	fx.Supply(&http.Client{}),
-	fx.Provide(func(ctx context.Context, cmd *cobra.Command, s *cmd_config.Service, cfg *cmd_config.Config) (rig.Client, error) {
+	fx.Provide(func(
+		ctx context.Context,
+		cmd *cobra.Command,
+		s *cmdconfig.Service,
+		cfg *cmdconfig.Config,
+	) (rig.Client, error) {
 
 		ai := &authInterceptor{cfg: cfg}
 		rigClient := rig.NewClient(
@@ -45,7 +50,7 @@ var clientModule = fx.Module("client",
 
 		return rigClient, nil
 	}),
-	fx.Provide(func(cfg *cmd_config.Config) []connect.Interceptor {
+	fx.Provide(func(cfg *cmdconfig.Config) []connect.Interceptor {
 		return []connect.Interceptor{&userAgentInterceptor{}, &authInterceptor{cfg: cfg}}
 	}),
 )
@@ -79,7 +84,7 @@ func (i *userAgentInterceptor) setUserAgent(h http.Header) {
 }
 
 type configSessionManager struct {
-	cfg *cmd_config.Config
+	cfg *cmdconfig.Config
 }
 
 func (s *configSessionManager) GetAccessToken() string {
@@ -99,7 +104,7 @@ func (s *configSessionManager) SetAccessToken(accessToken, refreshToken string) 
 }
 
 type authInterceptor struct {
-	cfg *cmd_config.Config
+	cfg *cmdconfig.Config
 	rig rig.Client
 }
 
@@ -131,7 +136,8 @@ func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
 		return
 	}
 
-	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) && i.cfg.GetCurrentContext().Project.ProjectID != "" {
+	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) &&
+		i.cfg.GetCurrentContext().Project.ProjectID != "" {
 		res, err := i.rig.Project().Use(ctx, &connect.Request[project.UseRequest]{
 			Msg: &project.UseRequest{
 				ProjectId: i.cfg.GetCurrentContext().Project.ProjectID,
@@ -139,7 +145,9 @@ func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
 		})
 		if err == nil {
 			i.cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
-			i.cfg.Save()
+			if err := i.cfg.Save(); err != nil {
+				fmt.Fprintf(os.Stderr, "error saving config: %v\n", err)
+			}
 		}
 	}
 

@@ -50,7 +50,7 @@ func main() {
 	}
 }
 
-func run(cmd *cobra.Command, args []string) error {
+func run(cmd *cobra.Command, _ []string) error {
 	cfgFile, err := cmd.Flags().GetString(flagConfigFile)
 	if err != nil {
 		return err
@@ -59,6 +59,9 @@ func run(cmd *cobra.Command, args []string) error {
 	scheme := manager.NewScheme()
 
 	cfg, err := config.NewService(cfgFile, scheme)
+	if err != nil {
+		return err
+	}
 
 	log := zap.New(zap.UseDevMode(cfg.Get().DevModeEnabled))
 

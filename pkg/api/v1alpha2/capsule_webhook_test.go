@@ -202,13 +202,17 @@ func TestValidateInterfaces(t *testing.T) {
 			},
 			expectedErrs: field.ErrorList{
 				field.Invalid(
-					infsPath.Index(0).Child("liveness"), &InterfaceProbe{}, "interface probes must contain one of `path`, `tcp` or `grpc`",
+					infsPath.Index(0).Child("liveness"),
+					&InterfaceProbe{},
+					"interface probes must contain one of `path`, `tcp` or `grpc`",
 				),
 				field.Invalid(
 					infsPath.Index(1).Child("readiness").Child("path"), "health2", "path must be an absolute path",
 				),
 				field.Invalid(
-					infsPath.Index(1).Child("readiness"), &InterfaceProbe{Path: "health2", TCP: true}, "interface probes must contain only one of `path`, `tcp` or `grpc`",
+					infsPath.Index(1).Child("readiness"),
+					&InterfaceProbe{Path: "health2", TCP: true},
+					"interface probes must contain only one of `path`, `tcp` or `grpc`",
 				),
 			},
 		},

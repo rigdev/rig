@@ -91,7 +91,7 @@ func (f settingsField) String() string {
 	}
 }
 
-func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	res, err := c.Rig.ProjectSettings().GetSettings(ctx, &connect.Request[settings.GetSettingsRequest]{})
 	if err != nil {
 		return err
@@ -171,7 +171,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) (*settings.Upda
 	case settingsEmailProvider:
 		return promptEmailProvider(s)
 	case settingsAddDockerRegistry:
-		return promptAddDockerRegistry(s)
+		return promptAddDockerRegistry()
 	case settingsDeleteDockerRegistry:
 		return promptDeleteDockerRegistry(s)
 	case templateEmailWelcome:
@@ -220,7 +220,9 @@ func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
 				Mailjet: &settings.MailjetInstance{},
 			}
 		}
-		promptEmailProviderFields(prov, field)
+		if err := promptEmailProviderFields(prov, field); err != nil {
+			return nil, err
+		}
 		return &settings.Update{
 			Field: &settings.Update_EmailProvider{
 				EmailProvider: prov,
@@ -238,7 +240,9 @@ func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
 				Smtp: &settings.SmtpInstance{},
 			}
 		}
-		promptEmailProviderFields(prov, field)
+		if err := promptEmailProviderFields(prov, field); err != nil {
+			return nil, err
+		}
 		return &settings.Update{
 			Field: &settings.Update_EmailProvider{
 				EmailProvider: prov,
@@ -271,7 +275,7 @@ func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) 
 	}, nil
 }
 
-func promptAddDockerRegistry(s *settings.Settings) (*settings.Update, error) {
+func promptAddDockerRegistry() (*settings.Update, error) {
 	host, err := common.PromptInput("Enter host:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
@@ -340,31 +344,47 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 
 		switch res {
 		case emailProviderPublicKey.String():
-			key, err := common.PromptInput("Enter public key:", common.ValidateNonEmptyOpt)
+			key, err := common.PromptInput(
+				"Enter public key:", common.ValidateNonEmptyOpt,
+			)
 			if err != nil {
 				return err
 			}
 			p.Credentials.PublicKey = key
 		case emailProviderPrivateKey.String():
-			key, err := common.PromptInput("Enter private key:", common.ValidateNonEmptyOpt)
+			key, err := common.PromptInput(
+				"Enter private key:", common.ValidateNonEmptyOpt,
+			)
 			if err != nil {
 				return err
 			}
 			p.Credentials.PrivateKey = key
 		case emailProviderFromEmail.String():
-			email, err := common.PromptInput("Enter from email:", common.ValidateEmailOpt, common.InputDefaultOpt(p.GetFrom()))
+			email, err := common.PromptInput(
+				"Enter from email:",
+				common.ValidateEmailOpt,
+				common.InputDefaultOpt(p.GetFrom()),
+			)
 			if err != nil {
 				return err
 			}
 			p.From = email
 		case emailProviderHost.String():
-			host, err := common.PromptInput("Enter host:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(p.GetInstance().GetSmtp().GetHost()))
+			host, err := common.PromptInput(
+				"Enter host:",
+				common.ValidateNonEmptyOpt,
+				common.InputDefaultOpt(p.GetInstance().GetSmtp().GetHost()),
+			)
 			if err != nil {
 				return err
 			}
 			p.GetInstance().GetSmtp().Host = host
 		case emailProviderPort.String():
-			port, err := common.PromptInput("Enter port:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort()))))
+			port, err := common.PromptInput(
+				"Enter port:",
+				common.ValidateNonEmptyOpt,
+				common.InputDefaultOpt(strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort()))),
+			)
 			if err != nil {
 				return err
 			}
@@ -399,13 +419,17 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 
 		switch res {
 		case tempalteFieldSubject.String():
-			subject, err := common.PromptInput("Enter subject:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetSubject()))
+			subject, err := common.PromptInput(
+				"Enter subject:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetSubject()),
+			)
 			if err != nil {
 				return nil, err
 			}
 			t.Subject = subject
 		case templateFieldBody.String():
-			body, err := common.PromptInput("Enter body:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetBody()))
+			body, err := common.PromptInput(
+				"Enter body:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetBody()),
+			)
 			if err != nil {
 				return nil, err
 			}

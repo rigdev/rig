@@ -3,6 +3,7 @@ package builddeploy
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmd_config"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -39,7 +40,7 @@ type Cmd struct {
 	fx.In
 
 	Rig          rig.Client
-	Cfg          *cmd_config.Config
+	Cfg          *cmdconfig.Config
 	DockerClient *client.Client
 }
 
@@ -71,14 +72,33 @@ func setupBuild(parent *cobra.Command) {
 	}
 	buildCreate.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
 	buildCreate.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy build after successful creation")
-	buildCreate.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a deployment if one is in progress")
-	buildCreate.Flags().BoolVarP(&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists")
-	buildCreate.Flags().BoolVarP(&remote, "remote", "r", false, "Rig will not look for the image locally but assumes it from a remote registry. If not set, Rig will search locally and then remotely")
+	buildCreate.Flags().BoolVarP(
+		&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a deployment if one is in progress",
+	)
+	buildCreate.Flags().BoolVarP(
+		&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists",
+	)
+	buildCreate.Flags().BoolVarP(
+		&remote, "remote", "r", false, "Rig will not look for the image locally but assumes it from a remote "+
+			"registry. If not set, Rig will search locally and then remotely",
+	)
 
-	buildCreate.RegisterFlagCompletionFunc("deploy", common.BoolCompletions)
-	buildCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
-	buildCreate.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions)
-	buildCreate.RegisterFlagCompletionFunc("remote", common.BoolCompletions)
+	if err := buildCreate.RegisterFlagCompletionFunc("deploy", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := buildCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := buildCreate.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := buildCreate.RegisterFlagCompletionFunc("remote", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	build.AddCommand(buildCreate)
 
 	buildGet := &cobra.Command{
@@ -111,19 +131,38 @@ If --image is given rig tries to create a new rig-build from the docker image (i
 Not both --build-id and --image can be given`,
 	}
 	capsuleDeploy.Flags().StringVarP(&buildID, "build-id", "b", "", "rig build id to deploy")
-	capsuleDeploy.Flags().StringVarP(&image, "image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist")
-	capsuleDeploy.Flags().BoolVarP(&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote registry. If not set, Rig will search locally and then remotely")
-	capsuleDeploy.Flags().BoolVarP(&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a rollout if one is in progress")
-	capsuleDeploy.RegisterFlagCompletionFunc(
+	capsuleDeploy.Flags().StringVarP(
+		&image,
+		"image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist",
+	)
+	capsuleDeploy.Flags().BoolVarP(
+		&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote "+
+			"registry. If not set, Rig will search locally and then remotely",
+	)
+	capsuleDeploy.Flags().BoolVarP(
+		&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a rollout if one is in progress",
+	)
+	if err := capsuleDeploy.RegisterFlagCompletionFunc(
 		"build-id",
 		base.CtxWrapCompletion(cmd.completions),
-	)
-	capsuleDeploy.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions)
+	); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := capsuleDeploy.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	parent.AddCommand(capsuleDeploy)
 }
 
-func (c *Cmd) completions(ctx context.Context, cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	ctx context.Context,
+	_ *cobra.Command,
+	args []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	if len(args) > 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}

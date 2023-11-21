@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	updates, err := common.GetUserAndPasswordUpdates(username, email, phoneNumber, password)
 	if err != nil {
 		return err

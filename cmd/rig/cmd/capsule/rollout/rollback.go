@@ -3,8 +3,6 @@ package rollout
 import (
 	"context"
 
-	"fmt"
-
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
@@ -13,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	rolloutID, err := c.getRollback(ctx)
 	if err != nil {
 		return err
@@ -41,7 +39,7 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) e
 	if err != nil {
 		return err
 	}
-	fmt.Printf("rollback to %v initiated. New rollout has ID %v\n", rolloutID, resp.Msg.GetRolloutId())
+	cmd.Printf("rollback to %v initiated. New rollout has ID %v\n", rolloutID, resp.Msg.GetRolloutId())
 
 	return nil
 }

@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	buildID, err := c.getBuildID(ctx, capsule_cmd.CapsuleID)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (c *Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) 
 			return "", err
 		}
 		builds := resp.Msg.GetBuilds()
-		return expandBuildID(ctx, builds, buildID)
+		return expandBuildID(builds, buildID)
 	}
 
 	if image != "" {
@@ -80,7 +80,7 @@ func (c *Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) 
 	return c.promptForImageOrBuild(ctx, capsuleID)
 }
 
-func expandBuildID(ctx context.Context, builds []*capsule.Build, buildID string) (string, error) {
+func expandBuildID(builds []*capsule.Build, buildID string) (string, error) {
 	if strings.HasPrefix(buildID, "sha256:") {
 		return expandByDigestPrefix(buildID, builds)
 	}
@@ -128,7 +128,8 @@ func expandByDigestName(buildID string, builds []*capsule.Build) (string, error)
 func expandByLatestTag(ref container_name.Reference, builds []*capsule.Build) (string, error) {
 	var latest *capsule.Build
 	for _, b := range builds {
-		if b.GetRepository() != fmt.Sprintf("%s/%s", ref.Context().RegistryStr(), ref.Context().RepositoryStr()) || b.GetTag() != ref.Identifier() {
+		if b.GetRepository() != fmt.Sprintf("%s/%s", ref.Context().RegistryStr(), ref.Context().RepositoryStr()) ||
+			b.GetTag() != ref.Identifier() {
 			continue
 		}
 		if latest == nil || latest.CreatedAt.AsTime().Before(b.CreatedAt.AsTime()) {

@@ -40,7 +40,7 @@ func (r *Capsule) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Capsule) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (r *Capsule) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	capsulelog.Info("validate update", "name", r.Name)
 	return r.validate()
 }
@@ -74,7 +74,7 @@ func (r *Capsule) validate() (admission.Warnings, error) {
 	allWarns = append(allWarns, warns...)
 	allErrs = append(allErrs, errs...)
 
-	errs = append(errs, r.Spec.Scale.Horizontal.validate(field.NewPath("scale").Child("horizontal"))...)
+	allErrs = append(allErrs, r.Spec.Scale.Horizontal.validate(field.NewPath("scale").Child("horizontal"))...)
 
 	return allWarns, allErrs.ToAggregate()
 }
@@ -230,9 +230,16 @@ func (r *Capsule) validateFiles() (admission.Warnings, field.ErrorList) {
 			errs = append(errs, field.Required(fPath.Child("ref"), "file reference is required"))
 		} else {
 			if f.Ref.Kind == "" {
-				errs = append(errs, field.Required(fPath.Child("ref").Child("kind"), "file reference kind is required"))
+				errs = append(errs, field.Required(
+					fPath.Child("ref").Child("kind"),
+					"file reference kind is required",
+				))
 			} else if f.Ref.Kind != "ConfigMap" && f.Ref.Kind != "Secret" {
-				errs = append(errs, field.Invalid(fPath.Child("ref").Child("kind"), f, "file reference kind must be either ConfigMap or Secret"))
+				errs = append(errs, field.Invalid(
+					fPath.Child("ref").Child("kind"),
+					f,
+					"file reference kind must be either ConfigMap or Secret"),
+				)
 			}
 
 			if f.Ref.Name == "" {
@@ -256,18 +263,28 @@ func (h *HorizontalScale) validate(fPath *field.Path) field.ErrorList {
 
 	if h.Instances.Max != nil {
 		if *h.Instances.Max < h.Instances.Min {
-			errs = append(errs, field.Invalid(fPath.Child("instances").Child("max"), *h.Instances.Max, "max cannot be smaller than min"))
+			errs = append(errs, field.Invalid(
+				fPath.Child("instances").Child("max"),
+				*h.Instances.Max,
+				"max cannot be smaller than min",
+			))
 		}
 	}
 
 	if h.CPUTarget != nil {
 		if u := h.CPUTarget.Utilization; u != nil {
 			if *u == 0 {
-				errs = append(errs, field.Invalid(fPath.Child("cpuTarget").Child("utilization"), *h, "cannot be zero"))
+				errs = append(errs, field.Invalid(
+					fPath.Child("cpuTarget").Child("utilization"), *h, "cannot be zero",
+				))
 			}
 
 			if *u > 100 {
-				errs = append(errs, field.Invalid(fPath.Child("cpuTarget").Child("utilization"), *h.CPUTarget.Utilization, "cannot be larger than 100"))
+				errs = append(errs, field.Invalid(
+					fPath.Child("cpuTarget").Child("utilization"),
+					*h.CPUTarget.Utilization,
+					"cannot be larger than 100",
+				))
 			}
 		}
 	}
