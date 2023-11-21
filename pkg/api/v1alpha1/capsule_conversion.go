@@ -172,7 +172,10 @@ func (dst *Capsule) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 
 	if v := srcSpec.Scale.Vertical; v != nil {
-		dst.Spec.Resources = &v1.ResourceRequirements{}
+		dst.Spec.Resources = &v1.ResourceRequirements{
+			Requests: v1.ResourceList{},
+			Limits:   v1.ResourceList{},
+		}
 
 		if v.CPU != nil {
 			if v.CPU.Request != nil {
