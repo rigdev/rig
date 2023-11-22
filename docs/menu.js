@@ -288,6 +288,36 @@ const sidebars = {
       value: "Additional Resources",
       className: "homepage-sidebar-divider",
     },
+    {
+      type: "category",
+      label: "API Reference",
+      link: { type: "doc", id: "api" },
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiSolidFile",
+      },
+      collapsed: true,
+      items: [
+        {
+          type: "doc",
+          id: "api/config/v1alpha1",
+          label: "config.rig.dev/v1alpha1",
+          className: "docpage-sidebar-item",
+        },
+        {
+          type: "doc",
+          id: "api/v1alpha1",
+          label: "rig.dev/v1alpha1",
+          className: "docpage-sidebar-item",
+        },
+        {
+          type: "doc",
+          id: "api/v1alpha2",
+          label: "rig.dev/v1alpha2",
+          className: "docpage-sidebar-item",
+        },
+      ],
+    },
 
     {
       type: "doc",

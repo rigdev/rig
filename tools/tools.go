@@ -3,6 +3,7 @@ package main
 import (
 	_ "github.com/bufbuild/buf/cmd/buf"
 	_ "github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go"
+	_ "github.com/elastic/crd-ref-docs"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/goreleaser/goreleaser"
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
