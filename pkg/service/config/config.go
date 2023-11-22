@@ -26,7 +26,6 @@ func NewService(path string, scheme *runtime.Scheme) (Service, error) {
 	cfg.Default()
 
 	return &service{cfg: cfg}, nil
-
 }
 
 type service struct {

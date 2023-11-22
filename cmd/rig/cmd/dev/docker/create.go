@@ -58,8 +58,8 @@ func (c *Cmd) create(ctx context.Context, _ *cobra.Command, _ []string) error {
 			"RIG_CLIENT_POSTGRES_USER=postgres",
 			"RIG_CLIENT_POSTGRES_PASSWORD=postgres",
 			"RIG_CLIENT_POSTGRES_INSECURE=true",
-			"RIG_AUTH_JWT_SECRET=shhhdonotshare",
-			"REPOSITORY_SECRET_POSTGRES_KEY=thisisasecret",
+			"RIG_AUTH_SECRET=shhhdonotshare",
+			"REPOSITORY_SECRET=thisisasecret",
 		},
 		ExposedPorts: nat.PortSet{
 			"4747/tcp": struct{}{},

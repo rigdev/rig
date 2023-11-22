@@ -2,19 +2,24 @@
 Rig Server config file
 */}}
 {{- define "rig-platform.config" -}}
+apiVersion: config.rig.dev/v1alpha1
+kind: PlatformConfig
+
 {{- with .Values.rig -}}
-{{- if and .auth.jwt.certificate_file .auth.jwt.certificate_key_file }}
+{{- if and .auth.certificateFile .auth.certificateKeyFile }}
 auth:
-  jwt:
-    certificate_file: {{ .auth.jwt.certificate_file | quote }}
-    certificate_key_file: {{ .auth.jwt.certificate_key_file | quote }}
+  certificateFile: {{ .auth.certificateFile | quote }}
+  certificateKeyFile: {{ .auth.certificateKeyFile | quote }}
 {{- end }}
+
 port: {{ $.Values.port }}
+
 {{- if $.Values.ingress.enabled }}
-public_url: {{ printf "https://%s" $.Values.ingress.host | quote }}
+publicUrl: {{ printf "https://%s" $.Values.ingress.host | quote }}
 {{- end }}
-telemetry:
-  enabled: {{ .telemetry.enabled }}
+
+telemetryEnabled: {{ .telemetryEnabled }}
+
 client:
   {{- if or .client.postgres.host $.Values.postgres.enabled }}
   postgres:
@@ -38,16 +43,9 @@ client:
     user: {{ .client.mongo.user | quote }}
   {{- end }}
 
-  {{- if .client.minio.host }}
-  minio:
-    host: {{ .client.minio.host | quote }}
-    endpoint: {{ .client.minio.endpoint | quote }}
-    secure: {{ .client.minio.secure }}
-  {{- end }}
-
-  {{- if .client.mailjet.api_key }}
+  {{- if .client.mailjet.apiKey }}
   mailjet:
-    api_key: {{ .client.mailjet.api_key | quote }}
+    apiKey: {{ .client.mailjet.apiKey | quote }}
   {{- end }}
 
   {{- if .client.smtp.host }}
@@ -57,34 +55,26 @@ client:
     username: {{ .client.smtp.username | quote }}
   {{- end }}
 
-  {{- if .client.operator.base_url }}
+  {{- if .client.operator.baseUrl }}
   operator:
-    base_url: {{ .client.operator.base_url }}
+    baseUrl: {{ .client.operator.baseUrl }}
   {{- end }}
-repository:
-  capsule: {{ include "rig-platform.repository" $ | nindent 4 }}
-  service_account: {{ include "rig-platform.repository" $ | nindent 4 }}
-  group: {{ include "rig-platform.repository" $ | nindent 4 }}
-  project: {{ include "rig-platform.repository" $ | nindent 4 }}
-  cluster_config: {{ include "rig-platform.repository" $ | nindent 4 }}
-  session: {{ include "rig-platform.repository" $ | nindent 4 }}
-  user: {{ include "rig-platform.repository" $ | nindent 4 }}
-  verification_code: {{ include "rig-platform.repository" $ | nindent 4 }}
-  secret: {{ include "rig-platform.repository" $ | nindent 4 }}
+
 cluster:
   type: k8s
-  {{- if .cluster.dev_registry.host }}
-  dev_registry:
-    host: {{ .cluster.dev_registry.host | quote }}
-    cluster_host: {{ default .cluster.dev_registry.host .cluster.dev_registry.cluster_host | quote }}
+  {{- if .cluster.devRegistry.host }}
+  devRegistry:
+    host: {{ .cluster.devRegistry.host | quote }}
+    clusterHost: {{ default .cluster.devRegistry.host .cluster.devRegistry.clusterHost | quote }}
   {{- end }}
+
   {{- if .cluster.git.url }}
   git:
     {{- with .cluster.git }}
     url: {{ .url | quote }}
     branch: {{ .branch | quote }}
-    {{- if .credentials.path_prefix }}
-    path_prefix: {{ .credentials.path_prefix | quote }}
+    {{- if .credentials.pathOrefix }}
+    pathPrefix: {{ .credentials.pathPrefix | quote }}
     {{- end }}
     {{- if .credentials.https.username }}
     credentials:
@@ -101,39 +91,21 @@ email:
 {{- end }}
 logging:
   level: {{ .logging.level | quote }}
-  {{- if .logging.dev_mode }}
-  dev_mode: {{ .logging.dev_mode }}
+  {{- if .logging.devMode }}
+  devMode: {{ .logging.devMode }}
   {{- end }}
 
 {{- end }}
 {{- end -}}
 
 {{/*
-Rig platform repository
-*/}}
-{{- define "rig-platform.repository" -}}
-{{- if or .Values.rig.client.mongo.host .Values.mongodb.enabled -}}
-store: "mongodb"
-{{- else -}}
-store: "postgres"
-{{- end -}}
-{{- end -}}
-
-{{/*
 Rig Server secret config
 */}}
 {{- define "rig-platform.config-secret" -}}
+apiVersion: config.rig.dev/v1alpha1
+kind: PlatformConfig
+
 {{- with .Values.rig -}}
-
-auth:
-
-  {{- with .auth.jwt }}
-  jwt:
-    {{- if not (and .certificate_file .certificate_key_file) }}
-    secret: {{ .secret | quote }}
-    {{- end }}
-  {{- end }}
-
 {{- with .client }}
 client:
   {{- if .postgres.password }}
@@ -144,13 +116,9 @@ client:
   mongo:
     password: {{ .mongo.password | quote }}
   {{- end }}
-  {{- if .minio.secret_access_key }}
-  minio:
-    secret_access_key: {{ .minio.secret_access_key | quote }}
-  {{- end }}
-  {{- if .mailjet.secret_key }}
+  {{- if .mailjet.secretKey }}
   mailjet:
-    secret_key: {{ .mailjet.secret_key | quote }}
+    secretKey: {{ .mailjet.secretKey | quote }}
   {{- end }}
   {{- if .smtp.password }}
   smtp:
@@ -158,22 +126,13 @@ client:
   {{- end }}
 {{- end }}
 
-{{- with .repository.secret }}
-{{- if .key }}
+{{- if .repository.secret }}
 repository:
-  secret:
-    {{- if $.Values.rig.client.mongo.host }}
-    mongodb:
-      key: {{ .key | quote }}
-    {{- else }}
-    postgres:
-      key: {{ .key | quote }}
-    {{- end }}
-{{- end }}
+  secret: {{ .repository.secret | quote }}
 {{- end }}
 
 {{- with .cluster.git.credentials }}
-{{- if or .https.password .ssh.private_key }}
+{{- if or .https.password .ssh.privateKey }}
 cluster:
   git:
     credentials:
@@ -181,15 +140,19 @@ cluster:
       https:
         password: {{ .https.password | quote }}
       {{- end }}
-      {{- if .ssh.private_key }}
+      {{- if .ssh.privateKey }}
       ssh:
-        private_key: {{ .ssh.private_key | quote }}
-        {{- if .ssh.private_key_password }}
-        private_key_password: {{ .ssh.private_key_password | quote }}
+        privateKey: {{ .ssh.privateKey | quote }}
+        {{- if .ssh.privateKeyPassword }}
+        privateKeyPassword: {{ .ssh.privateKeyPassword | quote }}
         {{- end }}
       {{- end }}
 {{- end }}
 {{- end }}
+auth:
+  {{- if not (and .auth.certificateFile .auth.certificateKeyFile) }}
+  secret: {{ .auth.secret | quote }}
+  {{- end }}
 
 {{- end -}}
 {{- end -}}
