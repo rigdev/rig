@@ -11,6 +11,7 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
@@ -147,9 +148,9 @@ func constructJSONFromModelAndEnvs(model interface{}, json *map[string]interface
 			}
 		default:
 			p := strings.Join(append(parts, tv), ".")
-			stringVal := getEnvValue(p)
-			if stringVal != nil {
-				(*json)[tv] = stringVal
+			val := getEnvValue(p)
+			if val != nil {
+				(*json)[tv] = val
 			}
 		}
 	}
@@ -178,6 +179,14 @@ func getEnvValue(keyString string) interface{} {
 	floatVal, err := strconv.ParseFloat(stringVal, 64)
 	if err == nil {
 		return floatVal
+	}
+
+	// Parse logging level
+	if key == "RIG_LOGGING_LEVEL" {
+		level, err := zapcore.ParseLevel(stringVal)
+		if err == nil {
+			return level
+		}
 	}
 
 	// default is string
