@@ -26,6 +26,9 @@ func NewService(path, secretPath string, scheme *runtime.Scheme) (Service, error
 	// Get default config.
 	cfg := v1alpha1.NewDefaultPlatform()
 
+	fmt.Println("LOGGING DEV MODE", cfg.Logging.DevMode)
+	fmt.Println("LOGGING LEVEL", cfg.Logging.Level)
+
 	bs, err := os.ReadFile(path)
 	if err == nil {
 		publicCfg, err := deserialize(bs, scheme)
@@ -39,6 +42,9 @@ func NewService(path, secretPath string, scheme *runtime.Scheme) (Service, error
 			return nil, fmt.Errorf("could not merge cfg into default: %w", err)
 		}
 	}
+
+	fmt.Println("LOGGING DEV MODE", cfg.Logging.DevMode)
+	fmt.Println("LOGGING LEVEL", cfg.Logging.Level)
 
 	var secret *v1alpha1.PlatformConfig
 	sbs, err := os.ReadFile(secretPath)
