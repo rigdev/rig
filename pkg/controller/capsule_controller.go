@@ -676,32 +676,37 @@ func (r *CapsuleReconciler) reconcileDeployment(
 		return err
 	}
 
-	deploy, err := createDeployment(capsule, r.Scheme, cfgs, checksums)
+	existingDeploy := &appsv1.Deployment{}
+	hasExistingDeployment := true
+	if err = r.Get(ctx, req.NamespacedName, existingDeploy); err != nil {
+		if kerrors.IsNotFound(err) {
+			hasExistingDeployment = false
+		} else {
+			status.Deployment.State = "failed"
+			status.Deployment.Message = err.Error()
+			return fmt.Errorf("could not fetch deployment: %w", err)
+		}
+	}
+
+	deploy, err := createDeployment(capsule, r.Scheme, cfgs, checksums, existingDeploy)
 	if err != nil {
 		return err
+	}
+
+	if !hasExistingDeployment {
+		log.Info("creating deployment")
+		if err := r.Create(ctx, deploy); err != nil {
+			status.Deployment.State = "failed"
+			status.Deployment.Message = err.Error()
+			return fmt.Errorf("could not create deployment: %w", err)
+		}
+		existingDeploy = deploy
 	}
 
 	if err != nil {
 		status.Deployment.State = "failed"
 		status.Deployment.Message = err.Error()
 		return err
-	}
-
-	existingDeploy := &appsv1.Deployment{}
-	if err = r.Get(ctx, req.NamespacedName, existingDeploy); err != nil {
-		if kerrors.IsNotFound(err) {
-			log.Info("creating deployment")
-			if err := r.Create(ctx, deploy); err != nil {
-				status.Deployment.State = "failed"
-				status.Deployment.Message = err.Error()
-				return fmt.Errorf("could not create deployment: %w", err)
-			}
-			existingDeploy = deploy
-		} else {
-			status.Deployment.State = "failed"
-			status.Deployment.Message = err.Error()
-			return fmt.Errorf("could not fetch deployment: %w", err)
-		}
 	}
 
 	// Edge case, this property is not carried over by k8s.
@@ -722,6 +727,7 @@ func createDeployment(
 	scheme *runtime.Scheme,
 	configs *configs,
 	checksums *checksums,
+	existingDeployment *appsv1.Deployment,
 ) (*appsv1.Deployment, error) {
 	var ports []v1.ContainerPort
 	for _, i := range capsule.Spec.Interfaces {
@@ -879,6 +885,17 @@ func createDeployment(
 		}
 	}
 
+	replicas := ptr.New(int32(capsule.Spec.Scale.Horizontal.Instances.Min))
+	hasHPA, err := shouldCreateHPA(capsule, scheme)
+	if err != nil {
+		return nil, err
+	}
+	if hasHPA {
+		if existingDeployment != nil && existingDeployment.Spec.Replicas != nil {
+			replicas = ptr.New(*existingDeployment.Spec.Replicas)
+		}
+	}
+
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsule.Name,
@@ -890,7 +907,7 @@ func createDeployment(
 					LabelCapsule: capsule.Name,
 				},
 			},
-			Replicas: ptr.New(int32(capsule.Spec.Scale.Horizontal.Instances.Min)),
+			Replicas: replicas,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: podAnnotations,
@@ -1410,6 +1427,14 @@ func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
 	)
 }
 
+func shouldCreateHPA(capsule *v1alpha2.Capsule, scheme *runtime.Scheme) (bool, error) {
+	_, res, err := createHPA(capsule, scheme)
+	if err != nil {
+		return false, err
+	}
+	return res, nil
+}
+
 func createHPA(
 	capsule *v1alpha2.Capsule,
 	scheme *runtime.Scheme,
@@ -1423,7 +1448,7 @@ func createHPA(
 			ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
 				Kind:       "Deployment",
 				Name:       capsule.Name,
-				APIVersion: appsv1.SchemeGroupVersion.Version,
+				APIVersion: appsv1.SchemeGroupVersion.String(),
 			},
 		},
 	}
@@ -1434,6 +1459,7 @@ func createHPA(
 	scale := capsule.Spec.Scale.Horizontal
 	if scale.Instances.Min == 0 {
 		// Cannot have autoscaler going to 0.
+		// TODO We should have some good documentation/userfeedback if min-replicas is set to 0
 		return hpa, false, nil
 	}
 
