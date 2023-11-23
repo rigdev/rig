@@ -1,5 +1,4 @@
 // Package v1alpha1 contains API Schema definitions for the config v1alpha1 API group
-// +kubebuilder:skip
 // +kubebuilder:object:generate=true
 // +groupName=config.rig.dev
 package v1alpha1

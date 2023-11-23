@@ -26,7 +26,7 @@ build-rig-operator: ## 🔨 Build rig-operator binary
 	$(GOBUILD) -o bin/rig-operator ./cmd/rig-operator
 
 .PHONY: gen
-gen: proto manifests generate-k8s ## 🪄 Run code generation (proto and k8s)
+gen: proto manifests generate-k8s docs-gen ## 🪄 Run code generation (proto and k8s)
 
 .PHONY: proto
 proto: proto-internal proto-public ## 🪄 Generate all protobuf
@@ -54,7 +54,7 @@ proto-public: gen/go/rig/go.mod buf protoc-gen-go protoc-gen-connect-go ## 🪄 
 .PHONY: manifests
 manifests: controller-gen ## 🪄 Generate k8s manifests
 	$(CONTROLLER_GEN) rbac:roleName=rig crd webhook \
-		paths="./pkg/api/...;./pkg/controller" \
+		paths="./pkg/api/v1alpha1;./pkg/api/v1alpha2;./pkg/controller" \
 		output:rbac:dir=deploy/kustomize/rbac \
 		output:webhook:dir=deploy/kustomize/webhook \
 		output:crd:dir=deploy/kustomize/crd/bases
@@ -69,6 +69,21 @@ generate-k8s: controller-gen ## 🪄 Generate runtime.Object implementations.
 .PHONY: docs
 docs: ## 📚 Generate docs
 	(cd docs && npm i && npm run start)
+
+.PHONY: docs-gen
+docs-gen: crd-ref-docs ## 📚 Generate api references
+	$(CRD_REF_DOCS) --renderer markdown \
+		--config ./docs/crd-ref-docs/config.yaml \
+		--source-path ./pkg/api/config/v1alpha1 \
+		--output-path ./docs/docs/api/config/v1alpha1.md
+	$(CRD_REF_DOCS) --renderer markdown \
+		--config ./docs/crd-ref-docs/config.yaml \
+		--source-path ./pkg/api/v1alpha1 \
+		--output-path ./docs/docs/api/v1alpha1.md
+	$(CRD_REF_DOCS) --renderer markdown \
+		--config ./docs/crd-ref-docs/v1alpha2-config.yaml \
+		--source-path ./pkg/api/v1alpha2 \
+		--output-path ./docs/docs/api/v1alpha2.md
 
 .PHONY: lint
 lint: golangci-lint ## 🚨 Run linting
@@ -255,3 +270,10 @@ golangci-lint: ## 📦 Download golangci-lint locally if necessary.
 	(test -s $(GOLANGCI_LINT) && \
 	$(GOLANGCI_LINT) --version | grep $(GOLANGCI_LINT_GO_MOD_VERSION)) || \
 	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint)
+
+CRD_REF_DOCS ?= $(TOOLSBIN)/crd-ref-docs
+
+.PHONY: crd-ref-docs
+crd-ref-docs: ## 📦 Download crd-ref-docs locally if necessary.
+	(test -s $(CRD_REF_DOCS)) || \
+	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/elastic/crd-ref-docs)

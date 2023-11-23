@@ -21,6 +21,8 @@
   --docusaurus-tag-list-border: var(--ifm-color-emphasis-100);
   --ifm-toc-border-color: var(--ifm-color-emphasis-200);
   --docusaurus-highlighted-code-line-bg: rgb(72, 77, 91);
+
+  --ifm-table-cell-padding: 0.4rem;
 }
 
 .alert--info {
@@ -131,7 +133,6 @@ table {
   color: #687076;
   font-size: 13px;
   margin-left: 0px;
-  text-transform: capitalize;
 }
 
 .homepage-sidebar-category {
