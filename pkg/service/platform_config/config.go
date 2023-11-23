@@ -27,9 +27,6 @@ func NewService(path, secretPath string, scheme *runtime.Scheme) (Service, error
 	// Get default config.
 	cfg := v1alpha1.NewDefaultPlatform()
 
-	fmt.Println("LOGGING LEVEL", cfg.Logging.Level)
-	fmt.Println("LOGGING DEV MODE", cfg.Logging.DevMode)
-
 	bs, err := os.ReadFile(path)
 	if err == nil {
 		publicCfg, err := deserialize(bs, scheme)
@@ -65,9 +62,6 @@ func NewService(path, secretPath string, scheme *runtime.Scheme) (Service, error
 	if err != nil {
 		return nil, fmt.Errorf("could not merge secret into config: %w", err)
 	}
-
-	fmt.Println("LOGGING LEVEL", cfg.Logging.Level)
-	fmt.Println("LOGGING DEV MODE", cfg.Logging.DevMode)
 
 	return &service{cfg: cfg}, nil
 }
@@ -193,6 +187,8 @@ func getEnvValue(keyString string) interface{} {
 		if err == nil {
 			return level
 		}
+
+		return zapcore.InfoLevel
 	}
 
 	// default is string
