@@ -163,6 +163,6 @@ rig:
     from: ""
 
   logging:
-    devMode: true
-    level: debug
+    devMode: false
+    level: info
 
