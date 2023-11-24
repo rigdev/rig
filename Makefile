@@ -185,17 +185,17 @@ release: goreleaser ## 🔖 Release project
 release-build: goreleaser ## 📸 Build release snapshot
 	$(GORELEASER) build -f ./build/package/goreleaser/goreleaser.yml --snapshot --clean
 
+##@ Release CI
+
+.PHONY: ci
+ci: gen setup-envtest gotestsum golangci-lint goreleaser ## Ensure tools are installed, go modules are downloaded and build cache is populated.
+	go build ./...
+
 ##@ Binaries
 
 TOOLSBIN ?= $(shell pwd)/tools/bin
 $(TOOLSBIN):
 	mkdir -p $(TOOLSBIN)
-
-.PHONY: tools
-tools: buf protoc-gen-go protoc-gen-connect-go goreleaser kind gotestsum ## 📦 Download all tools
-
-.PHONY: tools-ci
-tools-ci: buf protoc-gen-go protoc-gen-connect-go goreleaser gotestsum controller-gen setup-envtest ## 📦 Download tools used in CI
 
 BUF ?= $(TOOLSBIN)/buf
 BUF_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "github.com/bufbuild/buf " | cut -d ' ' -f2 | cut -c2-)

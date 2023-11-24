@@ -16,7 +16,7 @@ jobs:
 
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version-file: go.mod
           cache: false # this is handled in the golangci-lint-action
 
       - name: Cache tools
@@ -24,17 +24,16 @@ jobs:
         with:
           path: |
             tools/bin
-          key: ${{ runner.os }}-${{ github.job }}-tools-${{ hashFiles('tools/go.sum') }}
+          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-${{ github.job }}-tools-
+            ${{ runner.os }}-tools-
 
       - name: Generate code
-        run: make gen
+        run: make ci
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.55.2
           args: --timeout 3m
 
   test:
@@ -45,19 +44,19 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.0
+          go-version-file: go.mod
 
       - name: Cache tools
         uses: actions/cache@v3
         with:
           path: |
             tools/bin
-          key: ${{ runner.os }}-${{ github.job }}-tools-${{ hashFiles('tools/go.sum') }}
+          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-${{ github.job }}-tools-
+            ${{ runner.os }}-tools-
 
       - name: Run tests
-        run: make gen build test-all
+        run: make ci test-all
 
       - name: Test Summary
         uses: test-summary/action@v2
@@ -72,7 +71,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.21.0
+          go-version: '1.21'
 
       - name: Test cli import
         run: |
@@ -81,3 +80,34 @@ jobs:
           echo -e 'package main\nimport (\n	_ "github.com/rigdev/rig/cmd/rig/cmd"\n)\nfunc main() {\n}\n' > main.go
           go mod tidy
           go run ./main.go
+
+  generated-files-committed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+
+      - name: Cache tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            tools/bin
+          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-tools-
+
+      - name: Check for uncommitted changes after generating files
+        run: |
+          make ci
+          go mod tidy
+          cd tools && go mod tidy
+          GIT_STATUS="$(git status --porcelain)"
+          if [ -n "$GIT_STATUS" ]; then
+            echo "Repository has uncommited files:"
+            echo "$GIT_STATUS"
+            exit 1
+          fi
