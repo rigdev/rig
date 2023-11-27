@@ -860,6 +860,11 @@ func createDeployment(
 		VolumeMounts: volumeMounts,
 		Ports:        ports,
 		Resources:    makeResourceRequirements(capsule),
+		Args:         capsule.Spec.Args,
+	}
+
+	if capsule.Spec.Command != "" {
+		c.Command = []string{capsule.Spec.Command}
 	}
 
 	for _, i := range capsule.Spec.Interfaces {
