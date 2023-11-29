@@ -1,4 +1,4 @@
-package user
+package group
 
 import (
 	"context"
@@ -10,31 +10,30 @@ import (
 )
 
 func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) error {
-	uidentifier := ""
-	if len(args) >= 1 {
-		uidentifier = args[0]
-	}
-	u, uuid, err := common.GetUser(ctx, uidentifier, c.Rig)
-	if err != nil {
-		return err
+	var memberID string
+	var groupIDs []string
+	var err error
+	if len(args) == 0 {
+		memberID, groupIDs, err = common.GetMember(ctx, c.Rig)
+		if err != nil {
+			return err
+		}
 	}
 
-	var guid string
 	var gname string
-	if groupIdentifier == "" {
+	if groupID == "" {
 		groupsRes, err := c.Rig.Group().List(ctx, connect.NewRequest(&group.ListRequest{}))
 		if err != nil {
 			return err
 		}
 
 		gs := groupsRes.Msg.GetGroups()
-		ugs := u.GetUserInfo().GetGroupIds()
 		gsMap := make(map[string]string)
 		for _, g := range gs {
-			gsMap[g.GetGroupId()] = g.GetName()
+			gsMap[g.GetGroupId()] = ""
 		}
 
-		for _, g := range ugs {
+		for _, g := range groupIDs {
 			delete(gsMap, g)
 		}
 
@@ -43,34 +42,26 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 			return nil
 		}
 
-		var gnames []string
-		for _, gname := range gsMap {
-			gnames = append(gnames, gname)
+		var gIDs []string
+		for gID := range gsMap {
+			gIDs = append(gIDs, gID)
 		}
 
-		_, gname, err := common.PromptSelect("Select group", gnames)
+		_, groupID, err = common.PromptSelect("Select group", gIDs)
 		if err != nil {
 			return err
-		}
-
-		var ok bool
-		guid, ok = gsMap[gname]
-		if !ok {
-			return nil
 		}
 	} else {
-		g, id, err := common.GetGroup(ctx, groupIdentifier, c.Rig)
+		_, groupID, err = common.GetGroup(ctx, groupID, c.Rig)
 		if err != nil {
 			return err
 		}
-		guid = id
-		gname = g.GetName()
 	}
 
 	_, err = c.Rig.Group().AddMember(ctx, &connect.Request[group.AddMemberRequest]{
 		Msg: &group.AddMemberRequest{
-			GroupId: guid,
-			UserIds: []string{uuid},
+			GroupId:   groupID,
+			MemberIds: []string{memberID},
 		},
 	})
 	if err != nil {

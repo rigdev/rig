@@ -7,7 +7,6 @@ import "model/metadata.proto";
 
 message Group {
   string group_id = 1;
-  string name = 2;
   uint64 num_members = 5;
   map<string, bytes> metadata = 6;
   google.protobuf.Timestamp created_at = 7;
@@ -16,7 +15,7 @@ message Group {
 
 message Update {
   oneof field {
-    string name = 1;
+    string group_id = 1;
     model.Metadata set_metadata = 2;
     string delete_metadata_key = 3;
   }

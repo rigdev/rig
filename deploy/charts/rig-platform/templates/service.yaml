@@ -4,7 +4,7 @@ kind: Service
 metadata:
   name: rig-platform-load-balancer
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     rig.dev/capsule: rig-platform
   ports:

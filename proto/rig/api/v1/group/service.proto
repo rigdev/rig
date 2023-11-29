@@ -18,29 +18,15 @@ service Service {
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
   // Get group
   rpc Get(GetRequest) returns (GetResponse) {}
-  // Get a group by name
-  rpc GetByName(GetByNameRequest) returns (GetByNameResponse) {}
-  // Add User to Group
+  // Add a member to a group
   rpc AddMember(AddMemberRequest) returns (AddMemberResponse) {}
-  // Remove User from Group
+  // Remove member from Group
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse) {}
   // Get Group Members
   rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {}
   // Get Groups
-  rpc ListGroupsForUser(ListGroupsForUserRequest)
-      returns (ListGroupsForUserResponse) {}
-}
-
-// The request of a Groups.Lookup RPC
-message GetByNameRequest {
-  // The group name
-  string name = 1;
-}
-
-// The response of a Groups.Lookup RPC
-message GetByNameResponse {
-  // The group
-  api.v1.group.Group group = 1;
+  rpc ListGroupsForMember(ListGroupsForMemberRequest)
+      returns (ListGroupsForMemberResponse) {}
 }
 
 // The request of a Groups.Create RPC
@@ -99,14 +85,14 @@ message GetResponse {
 
 message AddMemberRequest {
   string group_id = 1;
-  repeated string user_ids = 2;
+  repeated string member_ids = 2;
 }
 
 message AddMemberResponse {}
 
 message RemoveMemberRequest {
   string group_id = 1;
-  string user_id = 2;
+  string member_id = 2;
 }
 
 message RemoveMemberResponse {}
@@ -121,12 +107,12 @@ message ListMembersResponse {
   uint64 total = 2;
 }
 
-message ListGroupsForUserRequest {
-  string user_id = 1;
+message ListGroupsForMemberRequest {
+  string member_id = 1;
   model.Pagination pagination = 2;
 }
 
-message ListGroupsForUserResponse {
+message ListGroupsForMemberResponse {
   repeated api.v1.group.Group groups = 1;
   uint64 total = 2;
 }

@@ -5,6 +5,7 @@ package model;
 import "google/protobuf/timestamp.proto";
 
 import "model/auth.proto";
+import "model/author.proto";
 
 message UserIdentifier {
   oneof identifier {
@@ -31,8 +32,21 @@ message UserEntry {
   google.protobuf.Timestamp created_at = 6;
 }
 
+message ServiceAccountEntry {
+  string service_account_id = 1;
+  string name = 2;
+  string client_id = 3;
+  repeated string group_ids = 4;
+  google.protobuf.Timestamp created_at = 5;
+  Author created_by = 6;
+}
+
+
 message MemberEntry {
-  UserEntry user = 1;
+  oneof entry {
+    UserEntry user = 1;
+    ServiceAccountEntry service_account = 2;
+  }
   google.protobuf.Timestamp joined_at = 5;
 }
 

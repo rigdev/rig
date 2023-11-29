@@ -14,18 +14,18 @@ import (
 )
 
 func (c *Cmd) listGroupsForUser(ctx context.Context, cmd *cobra.Command, args []string) error {
-	identifier := ""
-	if len(args) > 0 {
-		identifier = args[0]
-	}
-	_, uid, err := common.GetUser(ctx, identifier, c.Rig)
-	if err != nil {
-		return err
+	var memberID string
+	var err error
+	if len(args) == 0 {
+		memberID, _, err = common.GetMember(ctx, c.Rig)
+		if err != nil {
+			return err
+		}
 	}
 
-	resp, err := c.Rig.Group().ListGroupsForUser(ctx, &connect.Request[group.ListGroupsForUserRequest]{
-		Msg: &group.ListGroupsForUserRequest{
-			UserId: uid,
+	resp, err := c.Rig.Group().ListGroupsForMember(ctx, &connect.Request[group.ListGroupsForMemberRequest]{
+		Msg: &group.ListGroupsForMemberRequest{
+			MemberId: memberID,
 			Pagination: &model.Pagination{
 				Offset: uint32(offset),
 				Limit:  uint32(limit),
@@ -41,9 +41,9 @@ func (c *Cmd) listGroupsForUser(ctx context.Context, cmd *cobra.Command, args []
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Groups (%d)", resp.Msg.GetTotal()), "Name", "ID"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Groups (%d)", resp.Msg.GetTotal()), "ID"})
 	for i, g := range resp.Msg.GetGroups() {
-		t.AppendRow(table.Row{i + 1, g.GetName(), g.GetGroupId()})
+		t.AppendRow(table.Row{i + 1, g.GetGroupId()})
 	}
 	cmd.Println(t.Render())
 
