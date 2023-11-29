@@ -11,8 +11,8 @@ import (
 
 func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var err error
-	if name == "" {
-		name, err = common.PromptInput("Name:", common.ValidateNonEmptyOpt)
+	if groupID == "" {
+		groupID, err = common.PromptInput("Group ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
@@ -20,8 +20,8 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 
 	updates := []*group.Update{
 		{
-			Field: &group.Update_Name{
-				Name: name,
+			Field: &group.Update_GroupId{
+				GroupId: groupID,
 			},
 		},
 	}
@@ -35,6 +35,6 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		return err
 	}
 
-	cmd.Println("Created group:", name, res.Msg.GetGroup().GetGroupId())
+	cmd.Println("Created group:", groupID, res.Msg.GetGroup().GetGroupId())
 	return nil
 }
