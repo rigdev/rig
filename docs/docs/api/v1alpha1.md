@@ -24,7 +24,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `averageUtilizationPercentage` _integer_ |  |
+| `averageUtilizationPercentage` _integer_ | AverageUtilizationPercentage sets the utilization which when exceeded will trigger autoscaling. |
 
 
 #### Capsule
@@ -40,7 +40,7 @@ Capsule is the Schema for the capsules API
 | `apiVersion` _string_ | `rig.dev/v1alpha1`
 | `kind` _string_ | `Capsule`
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `spec` _[CapsuleSpec](#capsulespec)_ |  |
+| `spec` _[CapsuleSpec](#capsulespec)_ | Spec holds the specification of the Capsule. |
 
 
 #### CapsuleInterface
@@ -54,9 +54,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ |  |
-| `port` _integer_ |  |
-| `public` _[CapsulePublicInterface](#capsulepublicinterface)_ |  |
+| `name` _string_ | Name specifies a descriptive name of the interface. |
+| `port` _integer_ | Port specifies what port the interface should have. |
+| `public` _[CapsulePublicInterface](#capsulepublicinterface)_ | Public specifies if and how the interface should be published. |
 
 
 #### CapsuleInterfaceIngress
@@ -92,8 +92,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ |  |
-| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ |  |
+| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ | Ingress specifies that this interface should be exposed through an Ingress resource. The Ingress field is mutually exclusive with the LoadBalancer field. |
+| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a LoadBalancer Service. The LoadBalancer field is mutually exclusive with the Ingress field. |
 
 
 #### CapsuleSpec
@@ -107,18 +107,18 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `replicas` _integer_ |  |
-| `image` _string_ |  |
-| `command` _string_ |  |
-| `args` _string array_ |  |
-| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ |  |
-| `env` _[Env](#env)_ |  |
-| `files` _[File](#file) array_ |  |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |
-| `imagePullSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |
-| `horizontalScale` _[HorizontalScale](#horizontalscale)_ |  |
-| `serviceAccountName` _string_ |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |
+| `replicas` _integer_ | Replicas specifies how many replicas the Capsule should have. |
+| `image` _string_ | Image specifies what image the Capsule should run. |
+| `command` _string_ | Command is run as a command in the shell. If left unspecified, the container will run using what is specified as ENTRYPOINT in the Dockerfile. |
+| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command is left empty the arguments will be passed to the ENTRYPOINT of the docker image. |
+| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should have. Specifying interfaces will create the corresponding kubernetes Services and Ingresses depending on how the interface is configured. |
+| `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
+| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be based on ConfigMaps or Secrets. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources describes what resources the Capsule should have access to. |
+| `imagePullSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | ImagePullSecret is a reference to a secret holding docker credentials for the registry of the image. |
+| `horizontalScale` _[HorizontalScale](#horizontalscale)_ | HorizontalScale describes how the Capsule should scale out |
+| `serviceAccountName` _string_ | ServiceAccountName specifies the name of an existing ServiceAccount which the Capsule should run as. |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
 
 
 #### DeploymentStatus
@@ -177,9 +177,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ |  |
-| `configMap` _[FileContentRef](#filecontentref)_ |  |
-| `secret` _[FileContentRef](#filecontentref)_ |  |
+| `path` _string_ | Path specifies the full path where the File should be mounted including the file name. |
+| `configMap` _[FileContentRef](#filecontentref)_ | ConfigMap specifies that this file is based on a key in a ConfigMap. The ConfigMap field is mutually exclusive with Secret. |
+| `secret` _[FileContentRef](#filecontentref)_ | Secret specifies that this file is based on a key in a Secret. The Secret field is mutually exclusive with ConfigMap. |
 
 
 #### FileContentRef
@@ -193,8 +193,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ |  |
-| `key` _string_ |  |
+| `name` _string_ | Name specifies the name of the Secret or ConfigMap. |
+| `key` _string_ | Key specifies the key holding the file contents. |
 
 
 #### HorizontalScale
@@ -208,9 +208,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `minReplicas` _integer_ |  |
-| `maxReplicas` _integer_ |  |
-| `cpuTarget` _[CPUTarget](#cputarget)_ |  |
+| `minReplicas` _integer_ | MinReplicas is the minimum amount of replicas that the Capsule should have. |
+| `maxReplicas` _integer_ | MaxReplicas is the maximum amount of replicas that the Capsule should have. |
+| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
 
 
 #### OwnedResource
