@@ -32,7 +32,6 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		t.AppendHeader(table.Row{"Attribute", "Value"})
 		t.AppendRows([]table.Row{
 			{"ID", uid},
-			{"Name", g.GetName()},
 			{"#Members", g.GetNumMembers()},
 			{"Created at", g.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")},
 		})
@@ -56,9 +55,9 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Groups (%d)", resp.Msg.GetTotal()), "Name", "ID"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Groups (%d)", resp.Msg.GetTotal()), "ID"})
 	for i, g := range resp.Msg.GetGroups() {
-		t.AppendRow(table.Row{i + 1, g.GetName(), g.GetGroupId()})
+		t.AppendRow(table.Row{i + 1, g.GetGroupId()})
 	}
 	cmd.Println(t.Render())
 	return nil

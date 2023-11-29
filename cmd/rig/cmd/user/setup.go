@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
@@ -236,46 +235,6 @@ func Setup(parent *cobra.Command) {
 	}
 	user.AddCommand(migrate)
 
-	addUser := &cobra.Command{
-		Use:   "add-member [user-id | {email|username|phone}]",
-		Short: "Add a user to a group",
-		RunE:  base.CtxWrap(cmd.addMember),
-		Args:  cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.userCompletions),
-			common.MaxArgsCompletionFilter(1),
-		),
-	}
-	addUser.Flags().StringVarP(&groupIdentifier, "group", "g", "", "group to add the user to")
-	if err := addUser.RegisterFlagCompletionFunc(
-		"group",
-		base.CtxWrapCompletion(cmd.groupCompletions),
-	); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	user.AddCommand(addUser)
-
-	removeUser := &cobra.Command{
-		Use:   "remove-member [user-id | {email|username|phone}]",
-		Short: "Remove a user from a group",
-		RunE:  base.CtxWrap(cmd.removeMember),
-		Args:  cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.userCompletions),
-			common.MaxArgsCompletionFilter(1),
-		),
-	}
-	removeUser.Flags().StringVarP(&groupIdentifier, "group", "g", "", "group to remove the user from")
-	if err := removeUser.RegisterFlagCompletionFunc(
-		"group",
-		base.CtxWrapCompletion(cmd.groupCompletions),
-	); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	user.AddCommand(removeUser)
-
 	parent.AddCommand(user)
 }
 
@@ -382,35 +341,4 @@ func updateUserCompletions(_ *cobra.Command, _ []string, toComplete string) ([]s
 
 func formatUser(u *model.UserEntry) string {
 	return fmt.Sprintf("%s\t (ID: %s)", u.GetPrintableName(), u.GetUserId())
-}
-
-func (c *Cmd) groupCompletions(
-	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
-	toComplete string,
-) ([]string, cobra.ShellCompDirective) {
-	completions := []string{}
-	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{
-		Msg: &group.ListRequest{},
-	})
-	if err != nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	for _, g := range resp.Msg.GetGroups() {
-		if strings.HasPrefix(g.GetName(), toComplete) {
-			completions = append(completions, formatGroup(g))
-		}
-	}
-
-	if len(completions) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return completions, cobra.ShellCompDirectiveNoFileComp
-}
-
-func formatGroup(g *group.Group) string {
-	return fmt.Sprintf("%s\t (#Members: %v)", g.GetName(), g.GetNumMembers())
 }
