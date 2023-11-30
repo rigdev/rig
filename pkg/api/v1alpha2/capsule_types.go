@@ -8,16 +8,37 @@ import (
 
 // CapsuleSpec defines the desired state of Capsule
 type CapsuleSpec struct {
-	Image   string   `json:"image"`
-	Command string   `json:"command,omitempty"`
-	Args    []string `json:"args,omitempty"`
+	// Image specifies what image the Capsule should run.
+	Image string `json:"image"`
 
+	// Command is run as a command in the shell. If left unspecified, the
+	// container will run using what is specified as ENTRYPOINT in the
+	// Dockerfile.
+	Command string `json:"command,omitempty"`
+
+	// Args is a list of arguments either passed to the Command or if Command
+	// is left empty the arguments will be passed to the ENTRYPOINT of the
+	// docker image.
+	Args []string `json:"args,omitempty"`
+
+	// Interfaces specifies the list of interfaces the the container should
+	// have. Specifying interfaces will create the corresponding kubernetes
+	// Services and Ingresses depending on how the interface is configured.
 	Interfaces []CapsuleInterface `json:"interfaces,omitempty"`
 
-	Files        []File            `json:"files,omitempty"`
-	Scale        CapsuleScale      `json:"scale,omitempty"`
+	// Files is a list of files to mount in the container. These can either be
+	// based on ConfigMaps or Secrets.
+	Files []File `json:"files,omitempty"`
+
+	// Scale specifies the scaling of the Capsule.
+	Scale CapsuleScale `json:"scale,omitempty"`
+
+	// NodeSelector is a selector for what nodes the Capsule should live on.
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
-	Env          *Env              `json:"env,omitempty"`
+
+	// Env specifies configuration for how the container should obtain
+	// environment variables.
+	Env *Env `json:"env,omitempty"`
 }
 
 // Env defines what secrets and configmaps should be used for environment
@@ -41,84 +62,143 @@ type EnvReference struct {
 	Name string `json:"name"`
 }
 
+// CapsuleScale specifies the horizontal and vertical scaling of the Capsule.
 type CapsuleScale struct {
+	// Horizontal specifies the horizontal scaling of the Capsule.
 	Horizontal HorizontalScale `json:"horizontal,omitempty"`
-	Vertical   *VerticalScale  `json:"vertical,omitempty"`
+
+	// Vertical specifies the vertical scaling of the Capsule.
+	Vertical *VerticalScale `json:"vertical,omitempty"`
 }
 
-// HorizontalScale defines the policy for the number of replicas of the capsule
-// It can both be configured with autoscaling and with a static number of replicas
+// HorizontalScale defines the policy for the number of replicas of
+// the capsule It can both be configured with autoscaling and with a
+// static number of replicas
 type HorizontalScale struct {
-	Instances Instances  `json:"instances"`
+	// Instances specifies minimum and maximum amount of Capsule
+	// instances.
+	Instances Instances `json:"instances"`
+
+	// CPUTarget specifies that this Capsule should be scaled using CPU
+	// utilization.
 	CPUTarget *CPUTarget `json:"cpuTarget,omitempty"`
 }
 
+// Instances specifies the minimum and maximum amount of capsule
+// instances.
 type Instances struct {
-	Min uint32  `json:"min"`
+	// Min specifies the minimum amount of instances to run.
+	Min uint32 `json:"min"`
+
+	// Max specifies the maximum amount of instances to run. Omit to
+	// disable autoscaling.
 	Max *uint32 `json:"max,omitempty"`
 }
 
 // CPUTarget defines an autoscaler target for the CPU metric
 // If empty, no autoscaling will be done
 type CPUTarget struct {
+	// Utilization specifies the average CPU target. If the average
+	// exceeds this number new instances will be added.
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=100
 	Utilization *uint32 `json:"utilization,omitempty"`
 }
 
+// VerticalScale specifies the vertical scaling of the Capsule.
 type VerticalScale struct {
-	CPU    *ResourceLimits  `json:"cpu,omitempty"`
-	Memory *ResourceLimits  `json:"memory,omitempty"`
-	GPU    *ResourceRequest `json:"gpu,omitempty"`
+	// CPU specifies the CPU resource request and limit
+	CPU *ResourceLimits `json:"cpu,omitempty"`
+
+	// Memory specifies the Memory resource request and limit
+	Memory *ResourceLimits `json:"memory,omitempty"`
+
+	// GPU specifies the GPU resource request and limit
+	GPU *ResourceRequest `json:"gpu,omitempty"`
 }
 
+// ResourceLimits specifies the request and limit of a resource.
 type ResourceLimits struct {
+	// Request specifies the resource request.
 	Request *resource.Quantity `json:"request,omitempty"`
-	Limit   *resource.Quantity `json:"limit,omitempty"`
+	// Limit specifies the resource limit.
+	Limit *resource.Quantity `json:"limit,omitempty"`
 }
 
+// ResourceRequest specifies the request of a resource.
 type ResourceRequest struct {
+	// Request specifies the request of a resource.
 	Request resource.Quantity `json:"request,omitempty"`
 }
 
 // CapsuleInterface defines an interface for a capsule
 type CapsuleInterface struct {
+	// Name specifies a descriptive name of the interface.
 	Name string `json:"name"`
+
+	// Port specifies what port the interface should have.
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port"`
 
-	Liveness  *InterfaceProbe `json:"liveness,omitempty"`
+	// Liveness specifies that this interface should be used for
+	// liveness probing. Only one of the Capsule interfaces can be
+	// used as liveness probe.
+	Liveness *InterfaceProbe `json:"liveness,omitempty"`
+
+	// Readiness specifies that this interface should be used for
+	// readiness probing. Only one of the Capsule interfaces can be
+	// used as readiness probe.
 	Readiness *InterfaceProbe `json:"readiness,omitempty"`
 
+	// Public specifies if and how the interface should be published.
 	Public *CapsulePublicInterface `json:"public,omitempty"`
 }
 
+// InterfaceProbe specifies an interface probe
 type InterfaceProbe struct {
-	Path string              `json:"path,omitempty"`
-	TCP  bool                `json:"tcp,omitempty"`
+	// Path is the HTTP path of the probe. Path is mutually
+	// exclusive with the TCP and GCRP fields.
+	Path string `json:"path,omitempty"`
+
+	// TCP specifies that this is a simple TCP listen probe.
+	TCP bool `json:"tcp,omitempty"`
+
+	// GRPC specifies that this is a GRCP probe.
 	GRPC *InterfaceGRPCProbe `json:"grpc,omitempty"`
 }
 
+// InterfaceGRPCProbe specifies a GRPC probe.
 type InterfaceGRPCProbe struct {
+	// Service specifies the GRPC health probe service to probe. This is a
+	// used as service name as per standard GRPC health/v1.
 	Service string `json:"service"`
 }
 
 // CapsulePublicInterface defines how to publicly expose the interface
 type CapsulePublicInterface struct {
-	Ingress      *CapsuleInterfaceIngress      `json:"ingress,omitempty"`
+	// Ingress specifies that this interface should be exposed through an
+	// Ingress resource. The Ingress field is mutually exclusive with the
+	// LoadBalancer field.
+	Ingress *CapsuleInterfaceIngress `json:"ingress,omitempty"`
+
+	// LoadBalancer specifies that this interface should be exposed through a
+	// LoadBalancer Service. The LoadBalancer field is mutually exclusive with
+	// the Ingress field.
 	LoadBalancer *CapsuleInterfaceLoadBalancer `json:"loadBalancer,omitempty"`
 }
 
 // CapsuleInterfaceIngress defines that the interface should be exposed as http
 // ingress
 type CapsuleInterfaceIngress struct {
+	// Host specifies the DNS name of the Ingress resource
 	Host string `json:"host"`
 }
 
 // CapsuleInterfaceLoadBalancer defines that the interface should be exposed as
 // a L4 loadbalancer
 type CapsuleInterfaceLoadBalancer struct {
+	// Port is the external port on the LoadBalancer
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port"`
@@ -126,16 +206,25 @@ type CapsuleInterfaceLoadBalancer struct {
 
 // File defines a mounted file and where to retrieve the contents from
 type File struct {
-	Ref  *FileContentReference `json:"ref,omitempty"`
-	Path string                `json:"path"`
+	// Ref specifies a reference to a ConfigMap or Secret key which holds the contents of the file.
+	Ref *FileContentReference `json:"ref,omitempty"`
+
+	// Path specifies the full path where the File should be mounted including
+	// the file name.
+	Path string `json:"path"`
 }
 
 // FileContentRef defines the name of a config resource and the key from which
 // to retrieve the contents
 type FileContentReference struct {
+	// Kind of reference. Can be either ConfigMap or Secret.
 	Kind string `json:"kind"`
+
+	// Name of reference.
 	Name string `json:"name"`
-	Key  string `json:"key"`
+
+	// Key in reference which holds file contents.
+	Key string `json:"key"`
 }
 
 // CapsuleStatus defines the observed state of Capsule
@@ -168,7 +257,10 @@ type Capsule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CapsuleSpec    `json:"spec,omitempty"`
+	// Spec holds the specification of the Capsule.
+	Spec CapsuleSpec `json:"spec,omitempty"`
+
+	// Status holds the status of the Capsule
 	Status *CapsuleStatus `json:"status,omitempty"`
 }
 

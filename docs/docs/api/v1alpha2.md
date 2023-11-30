@@ -24,7 +24,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `utilization` _integer_ |  |
+| `utilization` _integer_ | Utilization specifies the average CPU target. If the average exceeds this number new instances will be added. |
 
 
 #### Capsule
@@ -40,7 +40,7 @@ Capsule is the Schema for the capsules API
 | `apiVersion` _string_ | `rig.dev/v1alpha2`
 | `kind` _string_ | `Capsule`
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `spec` _[CapsuleSpec](#capsulespec)_ |  |
+| `spec` _[CapsuleSpec](#capsulespec)_ | Spec holds the specification of the Capsule. |
 
 
 #### CapsuleInterface
@@ -54,11 +54,11 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ |  |
-| `port` _integer_ |  |
-| `liveness` _[InterfaceProbe](#interfaceprobe)_ |  |
-| `readiness` _[InterfaceProbe](#interfaceprobe)_ |  |
-| `public` _[CapsulePublicInterface](#capsulepublicinterface)_ |  |
+| `name` _string_ | Name specifies a descriptive name of the interface. |
+| `port` _integer_ | Port specifies what port the interface should have. |
+| `liveness` _[InterfaceProbe](#interfaceprobe)_ | Liveness specifies that this interface should be used for liveness probing. Only one of the Capsule interfaces can be used as liveness probe. |
+| `readiness` _[InterfaceProbe](#interfaceprobe)_ | Readiness specifies that this interface should be used for readiness probing. Only one of the Capsule interfaces can be used as readiness probe. |
+| `public` _[CapsulePublicInterface](#capsulepublicinterface)_ | Public specifies if and how the interface should be published. |
 
 
 #### CapsuleInterfaceIngress
@@ -94,23 +94,23 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ |  |
-| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ |  |
+| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ | Ingress specifies that this interface should be exposed through an Ingress resource. The Ingress field is mutually exclusive with the LoadBalancer field. |
+| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a LoadBalancer Service. The LoadBalancer field is mutually exclusive with the Ingress field. |
 
 
 #### CapsuleScale
 
 
 
-
+CapsuleScale specifies the horizontal and vertical scaling of the Capsule.
 
 _Appears in:_
 - [CapsuleSpec](#capsulespec)
 
 | Field | Description |
 | --- | --- |
-| `horizontal` _[HorizontalScale](#horizontalscale)_ |  |
-| `vertical` _[VerticalScale](#verticalscale)_ |  |
+| `horizontal` _[HorizontalScale](#horizontalscale)_ | Horizontal specifies the horizontal scaling of the Capsule. |
+| `vertical` _[VerticalScale](#verticalscale)_ | Vertical specifies the vertical scaling of the Capsule. |
 
 
 #### CapsuleSpec
@@ -124,14 +124,14 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `image` _string_ |  |
-| `command` _string_ |  |
-| `args` _string array_ |  |
-| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ |  |
-| `files` _[File](#file) array_ |  |
-| `scale` _[CapsuleScale](#capsulescale)_ |  |
-| `nodeSelector` _object (keys:string, values:string)_ |  |
-| `env` _[Env](#env)_ |  |
+| `image` _string_ | Image specifies what image the Capsule should run. |
+| `command` _string_ | Command is run as a command in the shell. If left unspecified, the container will run using what is specified as ENTRYPOINT in the Dockerfile. |
+| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command is left empty the arguments will be passed to the ENTRYPOINT of the docker image. |
+| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should have. Specifying interfaces will create the corresponding kubernetes Services and Ingresses depending on how the interface is configured. |
+| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be based on ConfigMaps or Secrets. |
+| `scale` _[CapsuleScale](#capsulescale)_ | Scale specifies the scaling of the Capsule. |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
+| `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
 
 
 #### DeploymentStatus
@@ -190,8 +190,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `ref` _[FileContentReference](#filecontentreference)_ |  |
-| `path` _string_ |  |
+| `ref` _[FileContentReference](#filecontentreference)_ | Ref specifies a reference to a ConfigMap or Secret key which holds the contents of the file. |
+| `path` _string_ | Path specifies the full path where the File should be mounted including the file name. |
 
 
 #### FileContentReference
@@ -205,9 +205,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `kind` _string_ |  |
-| `name` _string_ |  |
-| `key` _string_ |  |
+| `kind` _string_ | Kind of reference. Can be either ConfigMap or Secret. |
+| `name` _string_ | Name of reference. |
+| `key` _string_ | Key in reference which holds file contents. |
 
 
 #### HorizontalScale
@@ -221,30 +221,30 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `instances` _[Instances](#instances)_ |  |
-| `cpuTarget` _[CPUTarget](#cputarget)_ |  |
+| `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule instances. |
+| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
 
 
 #### Instances
 
 
 
-
+Instances specifies the minimum and maximum amount of capsule instances.
 
 _Appears in:_
 - [HorizontalScale](#horizontalscale)
 
 | Field | Description |
 | --- | --- |
-| `min` _integer_ |  |
-| `max` _integer_ |  |
+| `min` _integer_ | Min specifies the minimum amount of instances to run. |
+| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to disable autoscaling. |
 
 
 #### InterfaceGRPCProbe
 
 _Underlying type:_ _[struct{Service string "json:\"service\""}](#struct{service-string-"json:\"service\""})_
 
-
+InterfaceGRPCProbe specifies a GRPC probe.
 
 _Appears in:_
 - [InterfaceProbe](#interfaceprobe)
@@ -255,16 +255,16 @@ _Appears in:_
 
 
 
-
+InterfaceProbe specifies an interface probe
 
 _Appears in:_
 - [CapsuleInterface](#capsuleinterface)
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ |  |
-| `tcp` _boolean_ |  |
-| `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ |  |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
+| `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
+| `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
 
 
 #### OwnedResource
@@ -287,44 +287,44 @@ _Appears in:_
 
 
 
-
+ResourceLimits specifies the request and limit of a resource.
 
 _Appears in:_
 - [VerticalScale](#verticalscale)
 
 | Field | Description |
 | --- | --- |
-| `request` _[Quantity](#quantity)_ |  |
-| `limit` _[Quantity](#quantity)_ |  |
+| `request` _[Quantity](#quantity)_ | Request specifies the resource request. |
+| `limit` _[Quantity](#quantity)_ | Limit specifies the resource limit. |
 
 
 #### ResourceRequest
 
 
 
-
+ResourceRequest specifies the request of a resource.
 
 _Appears in:_
 - [VerticalScale](#verticalscale)
 
 | Field | Description |
 | --- | --- |
-| `request` _[Quantity](#quantity)_ |  |
+| `request` _[Quantity](#quantity)_ | Request specifies the request of a resource. |
 
 
 #### VerticalScale
 
 
 
-
+VerticalScale specifies the vertical scaling of the Capsule.
 
 _Appears in:_
 - [CapsuleScale](#capsulescale)
 
 | Field | Description |
 | --- | --- |
-| `cpu` _[ResourceLimits](#resourcelimits)_ |  |
-| `memory` _[ResourceLimits](#resourcelimits)_ |  |
-| `gpu` _[ResourceRequest](#resourcerequest)_ |  |
+| `cpu` _[ResourceLimits](#resourcelimits)_ | CPU specifies the CPU resource request and limit |
+| `memory` _[ResourceLimits](#resourcelimits)_ | Memory specifies the Memory resource request and limit |
+| `gpu` _[ResourceRequest](#resourcerequest)_ | GPU specifies the GPU resource request and limit |
 
 
