@@ -82,8 +82,11 @@ type PlatformConfig struct {
 	// generating urls for the platform when using oauth2.
 	PublicURL string `json:"publicUrl,omitempty"`
 
+	// TelemetryEnabled specifies wether or not we are allowed to collect usage
+	// data. Defaults to true.
 	TelemetryEnabled bool `json:"telemetryEnabled,omitempty"`
 
+	// Auth holds authentication configuration.
 	Auth Auth `json:"auth,omitempty"`
 
 	// Client holds configuration for clients used in the platform.
@@ -95,6 +98,7 @@ type PlatformConfig struct {
 	// OAuth holds configuration for oauth2 clients, namely google, github and facebook.
 	OAuth OAuth `json:"oauth,omitempty"`
 
+	// Cluster holds cluster specific configuration
 	Cluster Cluster `json:"cluster,omitempty"`
 
 	// Email holds configuration for sending emails. Either using mailjet or using SMTP
@@ -104,12 +108,21 @@ type PlatformConfig struct {
 	Logging Logging `json:"logging,omitempty"`
 }
 
+// Auth specifies authentication configuration.
 type Auth struct {
-	Secret             string `json:"secret,omitempty"`
-	CertificateFile    string `json:"certificateFile,omitempty"`
+	// Secret specifies a secret which will be used for jwt signatures.
+	Secret string `json:"secret,omitempty"`
+
+	// CertificateFile specifies a path to a PEM encoded certificate file which
+	// will be used for validating jwt signatures.
+	CertificateFile string `json:"certificateFile,omitempty"`
+
+	// CertificateKeyFile specifies a path to a PEM encoded certificate key
+	// which will be used for jwt signatures.
 	CertificateKeyFile string `json:"certificateKeyFile,omitempty"`
 }
 
+// Client holds various client configuration
 type Client struct {
 	// Postgres holds configuration for the postgres client.
 	Postgres ClientPostgres `json:"postgres,omitempty"`
@@ -130,137 +143,237 @@ type Client struct {
 	Operator ClientOperator `json:"operator,omitempty"`
 }
 
+// Logging specifies logging configuration.
 type Logging struct {
 	// DevModeEnabled enables verbose logs and changes the logging format to be
 	// more human readable.
 	DevMode bool `json:"devMode,omitempty"`
 
-	// Level sets the granularity of logging
+	// Level sets the granularity of logging.
 	Level zapcore.Level `json:"level,omitempty"`
 }
 
+// ClientPostgres specifies the configuration for the postgres client.
 type ClientPostgres struct {
-	User     string `json:"user,omitempty"`
+	// User is the database user used when connecting to the postgres database.
+	User string `json:"user,omitempty"`
+
+	// Password is the password used when connecting to the postgres database.
 	Password string `json:"password,omitempty"`
-	Host     string `json:"host,omitempty"`
-	Port     int    `json:"port,omitempty"`
+
+	// Host is the host where the postgres database can be reached.
+	Host string `json:"host,omitempty"`
+
+	// Port is the port of the postgres database server.
+	Port int `json:"port,omitempty"`
 
 	// Database in the postgres server to use
 	Database string `json:"database,omitempty"`
 
-	// Use SSL when connecting to the postgres server
+	// Insecure is wether to use SSL when connecting to the postgres server
 	Insecure bool `json:"insecure,omitempty"`
 }
 
+// ClientMongo specifies the configuration for the mongo client.
 type ClientMongo struct {
-	User     string `json:"user,omitempty"`
+	// User is the database user used when connecting to the mongodb server.
+	User string `json:"user,omitempty"`
+
+	// Password is used when connecting to the mongodb server.
 	Password string `json:"password,omitempty"`
+
 	// Host of the mongo server. This is both the host and port.
 	Host string `json:"host,omitempty"`
 }
 
+// ClientDocker specifies the configuration for the docker client.
 type ClientDocker struct {
+	// Host where the docker daemon can be reached.
 	Host string `json:"host,omitempty"`
 }
 
+// ClientMailjet specifes the configuration for the mailjet client.
 type ClientMailjet struct {
-	APIKey    string `json:"apiKey,omitempty"`
+	// APIKey is the mailjet API key
+	APIKey string `json:"apiKey,omitempty"`
+
+	// SecretKey is the mailjet secret key
 	SecretKey string `json:"secretKey,omitempty"`
 }
 
+// ClientSMTP specifies the configuration for the SMTP client.
 type ClientSMTP struct {
-	Host     string `json:"host,omitempty"`
-	Port     int    `json:"port,omitempty"`
+	// Host is the SMTP server host.
+	Host string `json:"host,omitempty"`
+
+	// Port is the SMTP server port to use.
+	Port int `json:"port,omitempty"`
+
+	// Username used when connecting to the SMTP server.
 	Username string `json:"username,omitempty"`
+
+	// Password used when connecting to the SMTP server.
 	Password string `json:"password,omitempty"`
 }
 
+// ClientOperator specifies the configuration for the operator client.
 type ClientOperator struct {
+	// BaseURL is the URL used to connect to the operator API
 	BaseURL string `json:"baseUrl,omitempty"`
 }
 
+// Repository specifies repository configuration
 type Repository struct {
-	// Type of db to use
-	Store  string `json:"store,omitempty"`
+	// Store is what database will be used can be either postgres or mongodb.
+	Store string `json:"store,omitempty"`
+
+	// Secret is a secret key used for encrypting sensitive data before saving
+	// it in the database.
 	Secret string `json:"secret,omitempty"`
 }
 
+// OAuth specifies configuration for different OAuth providers.
 type OAuth struct {
-	Google   OAuthClientCredentials `json:"google,omitempty"`
-	Github   OAuthClientCredentials `json:"github,omitempty"`
+	// Google specifies OAuth client configuration for google.
+	Google OAuthClientCredentials `json:"google,omitempty"`
+
+	// Github specifies OAuth client configuration for github.
+	Github OAuthClientCredentials `json:"github,omitempty"`
+
+	// Facebook specifies OAuth client configuration for facebook.
 	Facebook OAuthClientCredentials `json:"facebook,omitempty"`
 }
 
+// OAuthClientCredentials specifies a set of OAuth client credentials.
 type OAuthClientCredentials struct {
-	ClientID     string `json:"clientId,omitempty"`
+	// ClientID is the OAuth client ID.
+	ClientID string `json:"clientId,omitempty"`
+
+	// ClientSecret is the OAuth client secret.
 	ClientSecret string `json:"clientSecret,omitempty"`
 }
 
+// Cluster specifies cluster configuration
 type Cluster struct {
-	// Type of the cluster - either docker or k8s
+	// Type of the cluster - either `docker` or `k8s`.
 	Type ClusterType `json:"type,omitempty"`
 
+	// DevRegistry configuration
 	DevRegistry DevRegistry `json:"devRegistry,omitempty"`
-	Git         ClusterGit  `json:"git,omitempty"`
+
+	// Git sets up gitops write back for this cluster.
+	Git ClusterGit `json:"git,omitempty"`
 }
 
+// ClusterGit specifies configuration for git integration. This can be used to
+// tie rig into a gitops setup.
 type ClusterGit struct {
-	URL         string         `json:"url,omitempty"`
-	Branch      string         `json:"branch,omitempty"`
-	PathPrefix  string         `json:"pathPrefix,omitempty"`
+	// URL is the git repository URL.
+	URL string `json:"url,omitempty"`
+
+	// Branch to commit changes to.
+	Branch string `json:"branch,omitempty"`
+
+	// PathPrefix path to commit to in git repository.
+	PathPrefix string `json:"pathPrefix,omitempty"`
+
+	// Credentials to use when connecting to git.
 	Credentials GitCredentials `json:"credentials,omitempty"`
-	Author      GitAuthor      `json:"author,omitempty"`
-	Templates   GitTemplates   `json:"templates,omitempty"`
+
+	// Author used when creating commits.
+	Author GitAuthor `json:"author,omitempty"`
+
+	// Templates used for commit messages.
+	Templates GitTemplates `json:"templates,omitempty"`
 }
 
+// GitCredentials specifies how to authenticate against git.
 type GitCredentials struct {
+	// HTTPS specifies basic auth credentials.
 	HTTPS HTTPSCredential `json:"https,omitempty"`
-	SSH   SSHCredential   `json:"ssh,omitempty"`
+
+	// SSH specifies SSH credentials.
+	SSH SSHCredential `json:"ssh,omitempty"`
 }
 
+// HTTPSCredential specifies basic auth credentials
 type HTTPSCredential struct {
+	// Username is the basic auth user name
 	Username string `json:"username,omitempty"`
+
+	// Password is the basic auth password
 	Password string `json:"password,omitempty"`
 }
 
+// SSHCredential specifies SSH credentials
 type SSHCredential struct {
-	PrivateKey         string `json:"privateKey,omitempty"`
+	// PrivateKey is a PEM encoded SSH private key.
+	PrivateKey string `json:"privateKey,omitempty"`
+
+	// PrivateKeyPassword is an optional password for the SSH private key.
 	PrivateKeyPassword string `json:"password,omitempty"`
 }
 
+// GitAuthor specifies a git commit author
 type GitAuthor struct {
-	Name  string `json:"name,omitempty"`
+	// Name of author
+	Name string `json:"name,omitempty"`
+
+	// Email of author
 	Email string `json:"email,omitempty"`
 }
 
+// GitTemplates specifies the templates used for creating commits.
 type GitTemplates struct {
+	// Rollout specifies the template used for rollout commits.
 	Rollout string `json:"rollout,omitempty"`
-	Delete  string `json:"delete,omitempty"`
+
+	// Delete specifies the template used for delete commits.
+	Delete string `json:"delete,omitempty"`
 }
 
+// DevRegistry specifies configuration for the dev registry support.
 type DevRegistry struct {
-	Host        string `json:"host,omitempty"`
+	// Host is the host used in image names when pushing to the registry from
+	// outside of the cluster.
+	Host string `json:"host,omitempty"`
+
+	// ClusterHost is the host where the registry can be reached from within
+	// the cluster. Any image which is named after `Host` will be rename to use
+	// `ClusterHost` instead. This ensures that the image can be pulled from
+	// within the cluster.
 	ClusterHost string `json:"clusterHost,omitempty"`
 }
 
+// ClusterType is a cluster type.
 type ClusterType string
 
 const (
-	ClusterTypeDocker     ClusterType = "docker"
+	// ClusterTypeDocker is the docker cluster type.
+	ClusterTypeDocker ClusterType = "docker"
+	// ClusterTypeKubernetes is the kubernetes cluster type.
 	ClusterTypeKubernetes ClusterType = "k8s"
 )
 
+// Email holds configuration for sending emails. Either using mailjet or using SMTP
 type Email struct {
+	// From is who is set as the sender of rig emails.
 	From string `json:"from,omitempty"`
-	Type string `json:"type,omitempty"`
+
+	// Type is what client rig should use to send emails.
+	Type EmailType `json:"type,omitempty"`
 }
 
+// EmailType represents a type of mailing provider
 type EmailType string
 
 const (
+	// EmailTypeNoEmail disables mail sending.
 	EmailTypeNoEmail = ""
+	// EmailTypeMailjet uses the mailjet API for sending emails.
 	EmailTypeMailjet = "mailjet"
-	EmailTypeSMTP    = "smtp"
+	// EmailTypeSMTP uses regular SMTP for sending emails.
+	EmailTypeSMTP = "smtp"
 )
 
 func NewDefaultPlatform() *PlatformConfig {

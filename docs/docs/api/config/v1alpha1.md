@@ -18,16 +18,16 @@ Package v1alpha1 contains API Schema definitions for the config v1alpha1 API gro
 
 
 
-
+Auth specifies authentication configuration.
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
 
 | Field | Description |
 | --- | --- |
-| `secret` _string_ |  |
-| `certificateFile` _string_ |  |
-| `certificateKeyFile` _string_ |  |
+| `secret` _string_ | Secret specifies a secret which will be used for jwt signatures. |
+| `certificateFile` _string_ | CertificateFile specifies a path to a PEM encoded certificate file which will be used for validating jwt signatures. |
+| `certificateKeyFile` _string_ | CertificateKeyFile specifies a path to a PEM encoded certificate key which will be used for jwt signatures. |
 
 
 #### CertManagerConfig
@@ -49,7 +49,7 @@ _Appears in:_
 
 
 
-
+Client holds various client configuration
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
@@ -68,44 +68,44 @@ _Appears in:_
 
 
 
-
+ClientDocker specifies the configuration for the docker client.
 
 _Appears in:_
 - [Client](#client)
 
 | Field | Description |
 | --- | --- |
-| `host` _string_ |  |
+| `host` _string_ | Host where the docker daemon can be reached. |
 
 
 #### ClientMailjet
 
 
 
-
+ClientMailjet specifes the configuration for the mailjet client.
 
 _Appears in:_
 - [Client](#client)
 
 | Field | Description |
 | --- | --- |
-| `apiKey` _string_ |  |
-| `secretKey` _string_ |  |
+| `apiKey` _string_ | APIKey is the mailjet API key |
+| `secretKey` _string_ | SecretKey is the mailjet secret key |
 
 
 #### ClientMongo
 
 
 
-
+ClientMongo specifies the configuration for the mongo client.
 
 _Appears in:_
 - [Client](#client)
 
 | Field | Description |
 | --- | --- |
-| `user` _string_ |  |
-| `password` _string_ |  |
+| `user` _string_ | User is the database user used when connecting to the mongodb server. |
+| `password` _string_ | Password is used when connecting to the mongodb server. |
 | `host` _string_ | Host of the mongo server. This is both the host and port. |
 
 
@@ -113,92 +113,92 @@ _Appears in:_
 
 
 
-
+ClientOperator specifies the configuration for the operator client.
 
 _Appears in:_
 - [Client](#client)
 
 | Field | Description |
 | --- | --- |
-| `baseUrl` _string_ |  |
+| `baseUrl` _string_ | BaseURL is the URL used to connect to the operator API |
 
 
 #### ClientPostgres
 
 
 
-
+ClientPostgres specifies the configuration for the postgres client.
 
 _Appears in:_
 - [Client](#client)
 
 | Field | Description |
 | --- | --- |
-| `user` _string_ |  |
-| `password` _string_ |  |
-| `host` _string_ |  |
-| `port` _integer_ |  |
+| `user` _string_ | User is the database user used when connecting to the postgres database. |
+| `password` _string_ | Password is the password used when connecting to the postgres database. |
+| `host` _string_ | Host is the host where the postgres database can be reached. |
+| `port` _integer_ | Port is the port of the postgres database server. |
 | `database` _string_ | Database in the postgres server to use |
-| `insecure` _boolean_ | Use SSL when connecting to the postgres server |
+| `insecure` _boolean_ | Insecure is wether to use SSL when connecting to the postgres server |
 
 
 #### ClientSMTP
 
 
 
-
+ClientSMTP specifies the configuration for the SMTP client.
 
 _Appears in:_
 - [Client](#client)
 
 | Field | Description |
 | --- | --- |
-| `host` _string_ |  |
-| `port` _integer_ |  |
-| `username` _string_ |  |
-| `password` _string_ |  |
+| `host` _string_ | Host is the SMTP server host. |
+| `port` _integer_ | Port is the SMTP server port to use. |
+| `username` _string_ | Username used when connecting to the SMTP server. |
+| `password` _string_ | Password used when connecting to the SMTP server. |
 
 
 #### Cluster
 
 
 
-
+Cluster specifies cluster configuration
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
 
 | Field | Description |
 | --- | --- |
-| `type` _[ClusterType](#clustertype)_ | Type of the cluster - either docker or k8s |
-| `devRegistry` _[DevRegistry](#devregistry)_ |  |
-| `git` _[ClusterGit](#clustergit)_ |  |
+| `type` _[ClusterType](#clustertype)_ | Type of the cluster - either `docker` or `k8s`. |
+| `devRegistry` _[DevRegistry](#devregistry)_ | DevRegistry configuration |
+| `git` _[ClusterGit](#clustergit)_ | Git sets up gitops write back for this cluster. |
 
 
 #### ClusterGit
 
 
 
-
+ClusterGit specifies configuration for git integration. This can be used to tie rig into a gitops setup.
 
 _Appears in:_
 - [Cluster](#cluster)
 
 | Field | Description |
 | --- | --- |
-| `url` _string_ |  |
-| `branch` _string_ |  |
-| `pathPrefix` _string_ |  |
-| `credentials` _[GitCredentials](#gitcredentials)_ |  |
-| `author` _[GitAuthor](#gitauthor)_ |  |
-| `templates` _[GitTemplates](#gittemplates)_ |  |
+| `url` _string_ | URL is the git repository URL. |
+| `branch` _string_ | Branch to commit changes to. |
+| `pathPrefix` _string_ | PathPrefix path to commit to in git repository. |
+| `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. |
+| `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits. |
+| `templates` _[GitTemplates](#gittemplates)_ | Templates used for commit messages. |
 
 
 #### ClusterType
 
 _Underlying type:_ _string_
 
-
+ClusterType is a cluster type.
 
 _Appears in:_
 - [Cluster](#cluster)
@@ -209,31 +209,40 @@ _Appears in:_
 
 
 
-
+DevRegistry specifies configuration for the dev registry support.
 
 _Appears in:_
 - [Cluster](#cluster)
 
 | Field | Description |
 | --- | --- |
-| `host` _string_ |  |
-| `clusterHost` _string_ |  |
+| `host` _string_ | Host is the host used in image names when pushing to the registry from outside of the cluster. |
+| `clusterHost` _string_ | ClusterHost is the host where the registry can be reached from within the cluster. Any image which is named after `Host` will be rename to use `ClusterHost` instead. This ensures that the image can be pulled from within the cluster. |
 
 
 #### Email
 
 
 
-
+Email holds configuration for sending emails. Either using mailjet or using SMTP
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
 
 | Field | Description |
 | --- | --- |
-| `from` _string_ |  |
-| `type` _string_ |  |
+| `from` _string_ | From is who is set as the sender of rig emails. |
+| `type` _[EmailType](#emailtype)_ | Type is what client rig should use to send emails. |
 
+
+#### EmailType
+
+_Underlying type:_ _string_
+
+EmailType represents a type of mailing provider
+
+_Appears in:_
+- [Email](#email)
 
 
 
@@ -241,60 +250,60 @@ _Appears in:_
 
 
 
-
+GitAuthor specifies a git commit author
 
 _Appears in:_
 - [ClusterGit](#clustergit)
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ |  |
-| `email` _string_ |  |
+| `name` _string_ | Name of author |
+| `email` _string_ | Email of author |
 
 
 #### GitCredentials
 
 
 
-
+GitCredentials specifies how to authenticate against git.
 
 _Appears in:_
 - [ClusterGit](#clustergit)
 
 | Field | Description |
 | --- | --- |
-| `https` _[HTTPSCredential](#httpscredential)_ |  |
-| `ssh` _[SSHCredential](#sshcredential)_ |  |
+| `https` _[HTTPSCredential](#httpscredential)_ | HTTPS specifies basic auth credentials. |
+| `ssh` _[SSHCredential](#sshcredential)_ | SSH specifies SSH credentials. |
 
 
 #### GitTemplates
 
 
 
-
+GitTemplates specifies the templates used for creating commits.
 
 _Appears in:_
 - [ClusterGit](#clustergit)
 
 | Field | Description |
 | --- | --- |
-| `rollout` _string_ |  |
-| `delete` _string_ |  |
+| `rollout` _string_ | Rollout specifies the template used for rollout commits. |
+| `delete` _string_ | Delete specifies the template used for delete commits. |
 
 
 #### HTTPSCredential
 
 
 
-
+HTTPSCredential specifies basic auth credentials
 
 _Appears in:_
 - [GitCredentials](#gitcredentials)
 
 | Field | Description |
 | --- | --- |
-| `username` _string_ |  |
-| `password` _string_ |  |
+| `username` _string_ | Username is the basic auth user name |
+| `password` _string_ | Password is the basic auth password |
 
 
 #### IngressConfig
@@ -316,7 +325,7 @@ _Appears in:_
 
 
 
-
+Logging specifies logging configuration.
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
@@ -324,38 +333,38 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `devMode` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be more human readable. |
-| `level` _[Level](#level)_ | Level sets the granularity of logging |
+| `level` _[Level](#level)_ | Level sets the granularity of logging. |
 
 
 #### OAuth
 
 
 
-
+OAuth specifies configuration for different OAuth providers.
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
 
 | Field | Description |
 | --- | --- |
-| `google` _[OAuthClientCredentials](#oauthclientcredentials)_ |  |
-| `github` _[OAuthClientCredentials](#oauthclientcredentials)_ |  |
-| `facebook` _[OAuthClientCredentials](#oauthclientcredentials)_ |  |
+| `google` _[OAuthClientCredentials](#oauthclientcredentials)_ | Google specifies OAuth client configuration for google. |
+| `github` _[OAuthClientCredentials](#oauthclientcredentials)_ | Github specifies OAuth client configuration for github. |
+| `facebook` _[OAuthClientCredentials](#oauthclientcredentials)_ | Facebook specifies OAuth client configuration for facebook. |
 
 
 #### OAuthClientCredentials
 
 
 
-
+OAuthClientCredentials specifies a set of OAuth client credentials.
 
 _Appears in:_
 - [OAuth](#oauth)
 
 | Field | Description |
 | --- | --- |
-| `clientId` _string_ |  |
-| `clientSecret` _string_ |  |
+| `clientId` _string_ | ClientID is the OAuth client ID. |
+| `clientSecret` _string_ | ClientSecret is the OAuth client secret. |
 
 
 #### OperatorConfig
@@ -391,12 +400,12 @@ OperatorConfig is the Schema for the configs API
 | `kind` _string_ | `PlatformConfig`
 | `port` _integer_ | Port sets the port the platform should listen on |
 | `publicUrl` _string_ | PublicUrl sets the public url for the platform. This is used for generating urls for the platform when using oauth2. |
-| `telemetryEnabled` _boolean_ |  |
-| `auth` _[Auth](#auth)_ |  |
+| `telemetryEnabled` _boolean_ | TelemetryEnabled specifies wether or not we are allowed to collect usage data. Defaults to true. |
+| `auth` _[Auth](#auth)_ | Auth holds authentication configuration. |
 | `client` _[Client](#client)_ | Client holds configuration for clients used in the platform. |
 | `repository` _[Repository](#repository)_ | Repository specifies the type of db to use along with secret key |
 | `oauth` _[OAuth](#oauth)_ | OAuth holds configuration for oauth2 clients, namely google, github and facebook. |
-| `cluster` _[Cluster](#cluster)_ |  |
+| `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration |
 | `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
 | `logging` _[Logging](#logging)_ | Loggin holds information about the granularity of logging |
 
@@ -405,29 +414,29 @@ OperatorConfig is the Schema for the configs API
 
 
 
-
+Repository specifies repository configuration
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
 
 | Field | Description |
 | --- | --- |
-| `store` _string_ | Type of db to use |
-| `secret` _string_ |  |
+| `store` _string_ | Store is what database will be used can be either postgres or mongodb. |
+| `secret` _string_ | Secret is a secret key used for encrypting sensitive data before saving it in the database. |
 
 
 #### SSHCredential
 
 
 
-
+SSHCredential specifies SSH credentials
 
 _Appears in:_
 - [GitCredentials](#gitcredentials)
 
 | Field | Description |
 | --- | --- |
-| `privateKey` _string_ |  |
-| `password` _string_ |  |
+| `privateKey` _string_ | PrivateKey is a PEM encoded SSH private key. |
+| `password` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
 
 
