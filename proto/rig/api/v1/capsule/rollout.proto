@@ -115,6 +115,26 @@ message Interface {
   PublicInterface public = 4;
   Logging logging = 5;
   Authentication authentication = 6;
+  InterfaceProbe liveness = 7;
+  InterfaceProbe readiness = 8;
+}
+
+message InterfaceProbe {
+  message HTTP {
+    string path = 1;
+  }
+
+  message TCP {}
+
+  message GRPC {
+    string service = 1;
+  }
+
+  oneof kind {
+    HTTP http = 1;
+    TCP tcp = 2;
+    GRPC grpc = 3;
+  }
 }
 
 message PublicInterface {
