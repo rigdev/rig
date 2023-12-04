@@ -66,6 +66,7 @@ func (c *Cmd) source(ctx context.Context, _ *cobra.Command, args []string) error
 		},
 	}
 
+	// TODO: Make helper for this this!
 	_, err = c.Rig.Capsule().Deploy(ctx, req)
 
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
