@@ -227,6 +227,7 @@ message HorizontalScale {
   uint32 max_replicas = 1;
   uint32 min_replicas = 2;
   CPUTarget cpu_target = 3;
+  repeated CustomMetric custom_metrics = 4;
 }
 
 message CPUTarget {
@@ -235,4 +236,39 @@ message CPUTarget {
 
 message Rollback {
   uint64 rollback_id = 1;
+}
+
+message CustomMetric {
+  oneof metric {
+    InstanceMetric instance = 1;
+    ObjectMetric object = 2;
+  }
+}
+
+message InstanceMetric {
+  string metric_name = 1;
+  map<string, string> match_labels = 2;
+  string average_value = 3;
+}
+
+message ObjectMetric {
+  string metric_name = 1;
+  map<string, string> match_labels = 2;
+  string average_value = 3;
+  string value = 4;
+  ObjectReference object_reference = 5;
+}
+
+message ObjectReference {
+  string kind = 1;
+  string name = 2;
+  string api_version = 3;
+}
+
+enum LabelSelectorOperator {
+  OPERATOR_UNSPECIFIED = 0;
+  OPERATOR_IN = 1;
+  OPERATOR_NOT_IN = 2;
+  OPERATOR_EXISTS = 3;
+  OPERATOR_DOES_NOT_EXIST = 4;
 }

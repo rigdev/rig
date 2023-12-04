@@ -12,6 +12,7 @@ import "api/v1/capsule/event.proto";
 import "api/v1/capsule/metrics.proto";
 import "model/common.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 
 // The service to manage capsules.
 service Service {
@@ -59,22 +60,26 @@ service Service {
   // GetInstanceStatus returns the current status for the given instance
   rpc GetInstanceStatus(GetInstanceStatusRequest)
       returns (GetInstanceStatusResponse) {}
+
   // ListInstanceStatuses lists the status of all instances.
   rpc ListInstanceStatuses(ListInstanceStatusesRequest)
       returns (ListInstanceStatusesResponse) {}
 
-  // Execute executes a command in a given in instance, 
+  // Execute executes a command in a given in instance,
   // and returns the output along with an exit code.
   rpc Execute(stream ExecuteRequest) returns (stream ExecuteResponse) {}
+
+  rpc GetCustomInstanceMetrics(GetCustomInstanceMetricsRequest)
+      returns (GetCustomInstanceMetricsResponse) {}
 }
 
-message StreamData{
+message StreamData {
   bytes data = 1;
   bool closed = 2;
 }
 
-message ExecuteRequest{
-  message Start{
+message ExecuteRequest {
+  message Start {
     string capsule_id = 1;
     string instance_id = 2;
     string command = 3;
@@ -83,7 +88,7 @@ message ExecuteRequest{
     bool interactive = 6;
   }
 
-  message Resize{
+  message Resize {
     uint32 height = 1;
     uint32 width = 2;
   }
@@ -95,7 +100,7 @@ message ExecuteRequest{
   }
 }
 
-message ExecuteResponse{
+message ExecuteResponse {
   oneof response {
     StreamData stdout = 1;
     StreamData stderr = 2;
@@ -289,4 +294,18 @@ message CapsuleMetricsRequest {
 
 message CapsuleMetricsResponse {
   repeated InstanceMetrics instance_metrics = 1;
+}
+
+message GetCustomInstanceMetricsRequest {
+  string capsule_id = 1;
+}
+
+message GetCustomInstanceMetricsResponse {
+  repeated Metric metrics = 1;
+}
+
+message Metric {
+  string name = 1;
+  double latest_value = 2;
+  google.protobuf.Timestamp latest_timestamp = 3;
 }
