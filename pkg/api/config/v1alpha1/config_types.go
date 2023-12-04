@@ -32,6 +32,17 @@ type OperatorConfig struct {
 	// Ingress holds the configuration for ingress resources created by the
 	// operator.
 	Ingress IngressConfig `json:"ingress,omitempty"`
+
+	// PrometheusServiceMonitor defines if Rig should spawn a Prometheus ServiceMonitor per capsule
+	// for use with a Prometheus Operator stack.
+	PrometheusServiceMonitor *PrometheusServiceMonitor `json:"prometheusServiceMonitor,omitempty"`
+}
+
+type PrometheusServiceMonitor struct {
+	// The path which Prometheus should query on ports. Defaults to /metrics if not set.
+	Path string `json:"path,omitempty"`
+	// The port which Prometheus will query metrics on
+	Port int `json:"port"`
 }
 
 type CertManagerConfig struct {

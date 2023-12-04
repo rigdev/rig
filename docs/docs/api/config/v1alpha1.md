@@ -379,6 +379,7 @@ OperatorConfig is the Schema for the configs API
 | `leaderElectionEnabled` _boolean_ | LeaderElectionEnabled enables leader election when running multiple instances of the operator. |
 | `certManager` _[CertManagerConfig](#certmanagerconfig)_ | Certmanager holds configuration for how the operator should create certificates for ingress resources. |
 | `ingress` _[IngressConfig](#ingressconfig)_ | Ingress holds the configuration for ingress resources created by the operator. |
+| `prometheusServiceMonitor` _[PrometheusServiceMonitor](#prometheusservicemonitor)_ | PrometheusServiceMonitor defines if Rig should spawn a Prometheus ServiceMonitor per capsule for use with a Prometheus Operator stack. |
 
 
 ### PlatformConfig
@@ -403,6 +404,21 @@ OperatorConfig is the Schema for the configs API
 | `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration |
 | `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
 | `logging` _[Logging](#logging)_ | Loggin holds information about the granularity of logging |
+
+
+### PrometheusServiceMonitor
+
+
+
+
+
+_Appears in:_
+- [OperatorConfig](#operatorconfig)
+
+| Field | Description |
+| --- | --- |
+| `path` _string_ | The path which Prometheus should query on ports. Defaults to /metrics if not set. |
+| `port` _integer_ | The port which Prometheus will query metrics on |
 
 
 ### Repository
