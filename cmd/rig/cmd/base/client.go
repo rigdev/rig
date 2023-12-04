@@ -36,7 +36,6 @@ var clientModule = fx.Module("client",
 		s *cmdconfig.Service,
 		cfg *cmdconfig.Config,
 	) (rig.Client, error) {
-
 		ai := &authInterceptor{cfg: cfg}
 		rigClient := rig.NewClient(
 			rig.WithHost(s.Server),
@@ -115,29 +114,30 @@ func (i *authInterceptor) handleAuth(ctx context.Context, h http.Header, method 
 }
 
 func (i *authInterceptor) setProjectToken(ctx context.Context, h http.Header) {
-	if i.cfg.GetCurrentContext().Project.ProjectToken == "" {
-		return
+	if i.cfg.GetCurrentContext().Project.ProjectToken != "" {
+		c := jwt.StandardClaims{}
+		p := jwt.Parser{
+			SkipClaimsValidation: true,
+		}
+		_, _, err := p.ParseUnverified(
+			i.cfg.GetCurrentContext().Project.ProjectToken,
+			&c,
+		)
+		if err != nil {
+			i.cfg.GetCurrentContext().Project.ProjectToken = ""
+		} else {
+			// Don't use if invalid user id.
+			if i.cfg.GetCurrentAuth().UserID.String() != c.Subject {
+				i.cfg.GetCurrentContext().Project.ProjectToken = ""
+			}
+
+			if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) {
+				i.cfg.GetCurrentContext().Project.ProjectToken = ""
+			}
+		}
 	}
 
-	c := jwt.StandardClaims{}
-	p := jwt.Parser{
-		SkipClaimsValidation: true,
-	}
-	_, _, err := p.ParseUnverified(
-		i.cfg.GetCurrentContext().Project.ProjectToken,
-		&c,
-	)
-	if err != nil {
-		return
-	}
-
-	// Don't use if invalid user id.
-	if i.cfg.GetCurrentAuth().UserID.String() != c.Subject {
-		return
-	}
-
-	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) &&
-		i.cfg.GetCurrentContext().Project.ProjectID != "" {
+	if i.cfg.GetCurrentContext().Project.ProjectToken == "" && i.cfg.GetCurrentContext().Project.ProjectID != "" {
 		res, err := i.rig.Project().Use(ctx, &connect.Request[project.UseRequest]{
 			Msg: &project.UseRequest{
 				ProjectId: i.cfg.GetCurrentContext().Project.ProjectID,

@@ -15,6 +15,7 @@ import (
 
 var (
 	forceDeploy bool
+	remove      bool
 )
 
 type Cmd struct {
@@ -77,6 +78,18 @@ func Setup(parent *cobra.Command) {
 		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
 	)
 	env.AddCommand(envRemove)
+
+	envSource := &cobra.Command{
+		Use:   "source kind name",
+		Short: "Set or remove an environment source",
+		Args:  cobra.ExactArgs(2),
+		RunE:  base.CtxWrap(cmd.source),
+	}
+	envSource.Flags().BoolVarP(
+		&remove,
+		"remove", "r", false, "Remove the source instead of adding it",
+	)
+	env.AddCommand(envSource)
 
 	parent.AddCommand(env)
 }
