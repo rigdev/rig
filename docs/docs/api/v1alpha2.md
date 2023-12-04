@@ -134,21 +134,6 @@ _Appears in:_
 | `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
 
 
-#### DeploymentStatus
-
-
-
-
-
-_Appears in:_
-- [CapsuleStatus](#capsulestatus)
-
-| Field | Description |
-| --- | --- |
-| `state` _string_ |  |
-| `message` _string_ |  |
-
-
 #### Env
 
 
@@ -265,22 +250,6 @@ _Appears in:_
 | `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
 | `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
-
-
-#### OwnedResource
-
-
-
-
-
-_Appears in:_
-- [CapsuleStatus](#capsulestatus)
-
-| Field | Description |
-| --- | --- |
-| `ref` _[TypedLocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#typedlocalobjectreference-v1-core)_ |  |
-| `state` _string_ |  |
-| `message` _string_ |  |
 
 
 #### ResourceLimits

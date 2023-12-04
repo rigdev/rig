@@ -1,9 +1,9 @@
 processor:
   # RE2 regular expressions describing types that should be excluded from the generated documentation.
   ignoreTypes:
-    - "(Capsule)List$"
-    - "(Capsule)Scale$"
-    - "(Capsule)Status$"
+    - "Capsule(List|Scale)$"
+    - "(Capsule|Deployment)Status$"
+    - "OwnedResource$"
   # RE2 regular expressions describing type fields that should be excluded from the generated documentation.
   ignoreFields:
     - "status$"
