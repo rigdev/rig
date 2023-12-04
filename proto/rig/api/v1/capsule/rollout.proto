@@ -83,6 +83,18 @@ message ContainerSettings {
   string command = 2;
   repeated string args = 3;
   Resources resources = 4;
+  repeated EnvironmentSource environment_sources = 5;
+}
+
+message EnvironmentSource {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_CONFIG_MAP = 1;
+    KIND_SECRET = 2;
+  }
+
+  string name = 1;
+  Kind kind = 2;
 }
 
 message Resources {
