@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig/pkg/manager"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -67,6 +68,9 @@ func (s *K8sTestSuite) SetupSuite() {
 	})
 	require.NoError(t, err)
 
+	clientSet, err := clientset.NewForConfig(cfg)
+	require.NoError(t, err)
+
 	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme})
 	require.NoError(t, err)
 	require.NotNil(t, k8sClient)
@@ -81,6 +85,7 @@ func (s *K8sTestSuite) SetupSuite() {
 				CreateCertificateResources: true,
 			},
 		},
+		ClientSet: clientSet,
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager))

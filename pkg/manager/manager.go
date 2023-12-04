@@ -10,6 +10,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/service/config"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
@@ -44,7 +45,8 @@ func NewManager(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, e
 
 	logger := zap.New(zap.UseDevMode(cfg.DevModeEnabled))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme,
 		Metrics:                       metricsserver.Options{BindAddress: ":8080"},
 		HealthProbeBindAddress:        ":8081",
@@ -58,10 +60,16 @@ func NewManager(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, e
 		return nil, err
 	}
 
+	clientSet, err := clientset.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	cr := &controller.CapsuleReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Config: cfg,
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		Config:    cfg,
+		ClientSet: clientSet,
 	}
 
 	if err := cr.SetupWithManager(mgr); err != nil {
