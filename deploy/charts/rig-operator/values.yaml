@@ -8,6 +8,9 @@ config:
   ingress:
     annotations: {}
     className: ""
+  prometheusServiceMonitor:
+    path: ""
+    portName: ""
 
 replicaCount: 1
 

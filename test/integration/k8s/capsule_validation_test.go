@@ -5,18 +5,16 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	alpha1v2 "github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/stretchr/testify/assert"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	alpha1v2 "github.com/rigdev/rig/pkg/api/v1alpha2"
 )
 
 func (s *K8sTestSuite) TestCapsuleOpenAPIValidation() {
 	k8sClient := s.Client
 	t := s.Suite.T()
-
 	tests := []struct {
 		name         string
 		capsule      *alpha1v2.Capsule

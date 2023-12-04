@@ -4,6 +4,12 @@ import (
 	"os"
 
 	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/service/config"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
@@ -12,12 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-
-	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	"github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/service/config"
 )
 
 func NewScheme() *runtime.Scheme {
@@ -27,6 +27,7 @@ func NewScheme() *runtime.Scheme {
 	utilruntime.Must(v1alpha1.AddToScheme(s))
 	utilruntime.Must(v1alpha2.AddToScheme(s))
 	utilruntime.Must(certv1.AddToScheme(s))
+	utilruntime.Must(monitorv1.AddToScheme(s))
 	return s
 }
 
@@ -62,6 +63,7 @@ func NewManager(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, e
 		Scheme: mgr.GetScheme(),
 		Config: cfg,
 	}
+
 	if err := cr.SetupWithManager(mgr); err != nil {
 		return nil, err
 	}

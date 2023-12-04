@@ -129,6 +129,21 @@ _Appears in:_
 | `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
 
 
+### CustomMetric
+
+
+
+CustomMetric defines a custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on Exactly one of InstanceMetric and ObjectMetric must be provided
+
+_Appears in:_
+- [HorizontalScale](#horizontalscale)
+
+| Field | Description |
+| --- | --- |
+| `instanceMetric` _[InstanceMetric](#instancemetric)_ | InstanceMetric defines a custom instance-based metric (pod-metric in Kubernetes lingo) |
+| `objectMetric` _[ObjectMetric](#objectmetric)_ | ObjectMetric defines a custom object-based metric |
+
+
 ### Env
 
 
@@ -203,6 +218,18 @@ _Appears in:_
 | --- | --- |
 | `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule instances. |
 | `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
+| `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on |
+
+
+### InstanceMetric
+
+_Underlying type:_ _[struct{MetricName string "json:\"metricName\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\""; AverageValue string "json:\"averageValue\""}](#struct{metricname-string-"json:\"metricname\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"";-averagevalue-string-"json:\"averagevalue\""})_
+
+InstanceMetric defines a custom instance-based metric (pod-metric in Kubernetes lingo)
+
+_Appears in:_
+- [CustomMetric](#custommetric)
+
 
 
 ### Instances
@@ -245,6 +272,17 @@ _Appears in:_
 | `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
 | `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
+
+
+### ObjectMetric
+
+_Underlying type:_ _[struct{MetricName string "json:\"metricName\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\""; AverageValue string "json:\"averageValue,omitempty\""; Value string "json:\"value,omitempty\""; DescribedObject k8s.io/api/autoscaling/v2.CrossVersionObjectReference "json:\"objectReference\""}](#struct{metricname-string-"json:\"metricname\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"";-averagevalue-string-"json:\"averagevalue,omitempty\"";-value-string-"json:\"value,omitempty\"";-describedobject-k8sioapiautoscalingv2crossversionobjectreference-"json:\"objectreference\""})_
+
+ObjectMetric defines a custom object metric for the autoscaler
+
+_Appears in:_
+- [CustomMetric](#custommetric)
+
 
 
 ### ResourceLimits

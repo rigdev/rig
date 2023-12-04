@@ -1,6 +1,7 @@
 package v1alpha2
 
 import (
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,6 +83,9 @@ type HorizontalScale struct {
 	// CPUTarget specifies that this Capsule should be scaled using CPU
 	// utilization.
 	CPUTarget *CPUTarget `json:"cpuTarget,omitempty"`
+	// CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API
+	// which the autoscaler should scale on
+	CustomMetrics []CustomMetric `json:"customMetrics,omitempty"`
 }
 
 // Instances specifies the minimum and maximum amount of capsule
@@ -103,6 +107,47 @@ type CPUTarget struct {
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=100
 	Utilization *uint32 `json:"utilization,omitempty"`
+}
+
+// CustomMetric defines a custom metrics emitted by the custom.metrics.k8s.io API
+// which the autoscaler should scale on
+// Exactly one of InstanceMetric and ObjectMetric must be provided
+type CustomMetric struct {
+	// InstanceMetric defines a custom instance-based metric (pod-metric in Kubernetes lingo)
+	InstanceMetric *InstanceMetric `json:"instanceMetric,omitempty"`
+	// ObjectMetric defines a custom object-based metric
+	ObjectMetric *ObjectMetric `json:"objectMetric,omitempty"`
+}
+
+// InstanceMetric defines a custom instance-based metric (pod-metric in Kubernetes lingo)
+type InstanceMetric struct {
+	// +kubebuilder:validation:Required
+	// MetricName is the name of the metric
+	MetricName string `json:"metricName"`
+	// MatchLabels is a set of key, value pairs which filters the metric series
+	MatchLabels map[string]string `json:"matchLabels,omitempty"`
+	// +kubebuilder:validation:Required
+	// AverageValue defines the average value across all instances which the autoscaler scales towards
+	AverageValue string `json:"averageValue"`
+}
+
+// ObjectMetric defines a custom object metric for the autoscaler
+type ObjectMetric struct {
+	// +kubebuilder:validation:Required
+	// MetricName is the name of the metric
+	MetricName string `json:"metricName"`
+	// MatchLabels is a set of key, value pairs which filters the metric series
+	MatchLabels map[string]string `json:"matchLabels,omitempty"`
+	// AverageValue scales the number of instances towards making the value returned by the metric
+	// divided by the number of instances reach AverageValue
+	// Exactly one of 'Value' and 'AverageValue' must be set
+	AverageValue string `json:"averageValue,omitempty"`
+	// Value scales the number of instances towards making the value returned by the metric 'Value'
+	// Exactly one of 'Value' and 'AverageValue' must be set
+	Value string `json:"value,omitempty"`
+	// +kubebuilder:validation:Required
+	// DescribedObject is a reference to the object in the same namespace which is described by the metric
+	DescribedObject autoscalingv2.CrossVersionObjectReference `json:"objectReference"`
 }
 
 // VerticalScale specifies the vertical scaling of the Capsule.

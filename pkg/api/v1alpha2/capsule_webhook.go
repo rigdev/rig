@@ -3,6 +3,7 @@ package v1alpha2
 import (
 	"path"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -285,6 +286,50 @@ func (h *HorizontalScale) validate(fPath *field.Path) field.ErrorList {
 					*h.CPUTarget.Utilization,
 					"cannot be larger than 100",
 				))
+			}
+		}
+	}
+
+	for idx, m := range h.CustomMetrics {
+		fPath := fPath.Child("customMetrics").Index(idx)
+		if (m.InstanceMetric == nil) == (m.ObjectMetric == nil) {
+			errs = append(errs, field.Invalid(fPath, m, "exactly one of 'instanceMetric' and 'objectMetric' must be provided"))
+			continue
+		}
+
+		if m.InstanceMetric != nil {
+			_, err := resource.ParseQuantity(m.InstanceMetric.AverageValue)
+			errs = append(errs, field.Invalid(
+				fPath.Child("instanceMetric").Child("averageValue"),
+				m.InstanceMetric.AverageValue,
+				err.Error(),
+			))
+			continue
+		}
+		if m.ObjectMetric != nil {
+			fPath := fPath.Child("objectMetric")
+			if (m.ObjectMetric.AverageValue == "") == (m.ObjectMetric.Value == "") {
+				errs = append(errs, field.Invalid(
+					fPath,
+					m.ObjectMetric,
+					"exactly one of 'value' and 'averageValue' must be provided",
+				))
+				continue
+			}
+
+			if m.ObjectMetric.AverageValue != "" {
+				if _, err := resource.ParseQuantity(m.ObjectMetric.AverageValue); err != nil {
+					errs = append(errs, field.Invalid(
+						fPath.Child("averageValue"),
+						m.ObjectMetric.AverageValue,
+						err.Error(),
+					))
+				}
+			}
+			if m.ObjectMetric.Value != "" {
+				if _, err := resource.ParseQuantity(m.ObjectMetric.Value); err != nil {
+					errs = append(errs, field.Invalid(fPath.Child("value"), m.ObjectMetric.Value, err.Error()))
+				}
 			}
 		}
 	}
