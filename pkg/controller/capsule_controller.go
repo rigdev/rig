@@ -535,6 +535,7 @@ func (r *CapsuleReconciler) getConfigs(
 	ctx context.Context,
 	req ctrl.Request,
 	capsule *v1alpha2.Capsule,
+	status *v1alpha2.CapsuleStatus,
 ) (*configs, error) {
 	cfgs := &configs{
 		configMaps: map[string]*v1.ConfigMap{},
@@ -571,92 +572,97 @@ func (r *CapsuleReconciler) getConfigs(
 		cfgs.secrets[s.Name] = &s
 	}
 
+	env := capsule.Spec.Env
+	if env == nil {
+		env = &v1alpha2.Env{}
+	}
+
 	// Get automatic env
-	if capsule.Spec.Env == nil || !capsule.Spec.Env.DisableAutomatic {
-		if _, ok := cfgs.configMaps[req.NamespacedName.Name]; !ok {
-			var cm v1.ConfigMap
-			err := r.Get(ctx, req.NamespacedName, &cm)
-			if err != nil && !kerrors.IsNotFound(err) {
-				return nil, fmt.Errorf("could not get environment configmap: %w", err)
-			}
-			if err == nil {
-				cfgs.configMaps[req.NamespacedName.Name] = &cm
-			}
+	if !env.DisableAutomatic {
+		if err := r.getUsedSource(ctx, capsule, status, cfgs, "ConfigMap", req.NamespacedName.Name, false); err != nil {
+			return nil, err
 		}
 
-		if _, ok := cfgs.secrets[req.NamespacedName.Name]; !ok {
-			var s v1.Secret
-			err := r.Get(ctx, req.NamespacedName, &s)
-			if err != nil && !kerrors.IsNotFound(err) {
-				return nil, fmt.Errorf("could not get environment secret: %w", err)
-			}
-			if err == nil {
-				cfgs.secrets[req.NamespacedName.Name] = &s
-			}
+		if err := r.getUsedSource(ctx, capsule, status, cfgs, "Secret", req.NamespacedName.Name, false); err != nil {
+			return nil, err
 		}
 	}
 
 	// Get envs
-	if capsule.Spec.Env != nil {
-		for _, e := range capsule.Spec.Env.From {
-			switch e.Kind {
-			case "ConfigMap":
-				if _, ok := cfgs.configMaps[e.Name]; ok {
-					continue
-				}
-				var cm v1.ConfigMap
-				if err := r.Get(ctx, types.NamespacedName{
-					Name:      e.Name,
-					Namespace: capsule.Namespace,
-				}, &cm); err != nil {
-					return nil, fmt.Errorf("could not get referenced environment configmap: %w", err)
-				}
-				cfgs.configMaps[cm.Name] = &cm
-			case "Secret":
-				if _, ok := cfgs.secrets[e.Name]; ok {
-					continue
-				}
-				var s v1.Secret
-				if err := r.Get(ctx, types.NamespacedName{
-					Name:      e.Name,
-					Namespace: capsule.Namespace,
-				}, &s); err != nil {
-					return nil, fmt.Errorf("could not get referenced environment secret: %w", err)
-				}
-				cfgs.secrets[s.Name] = &s
-			}
+	for _, e := range env.From {
+		if err := r.getUsedSource(ctx, capsule, status, cfgs, e.Kind, e.Name, true); err != nil {
+			return nil, err
 		}
 	}
 
 	// Get files
 	for _, f := range capsule.Spec.Files {
-		switch f.Ref.Kind {
-		case "ConfigMap":
-			if _, ok := cfgs.configMaps[f.Ref.Name]; ok {
-				continue
-			}
-
-			var cm v1.ConfigMap
-			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.Ref.Name}, &cm)
-			if err != nil {
-				return nil, fmt.Errorf("could not get file configmap: %w", err)
-			}
-			cfgs.configMaps[cm.Name] = &cm
-		case "Secret":
-			if _, ok := cfgs.secrets[f.Ref.Name]; ok {
-				continue
-			}
-
-			var s v1.Secret
-			err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: f.Ref.Name}, &s)
-			if err != nil {
-				return nil, fmt.Errorf("could not get file secret: %w", err)
-			}
-			cfgs.secrets[s.Name] = &s
+		if err := r.getUsedSource(ctx, capsule, status, cfgs, f.Ref.Kind, f.Ref.Name, true); err != nil {
+			return nil, err
 		}
 	}
 
 	return cfgs, nil
+}
+
+func (r *CapsuleReconciler) getUsedSource(
+	ctx context.Context,
+	capsule *v1alpha2.Capsule,
+	status *v1alpha2.CapsuleStatus,
+	cfgs *configs,
+	kind string,
+	name string,
+	required bool,
+) (err error) {
+	ref := v1alpha2.UsedResource{
+		Ref: &v1.TypedLocalObjectReference{
+			Kind: kind,
+			Name: name,
+		},
+	}
+
+	defer func() {
+		if kerrors.IsNotFound(err) && !required {
+			ref.State = "missing"
+			err = nil
+		} else if err != nil {
+			ref.State = "error"
+			ref.Message = err.Error()
+		} else {
+			ref.State = "found"
+		}
+
+		status.UsedResources = append(status.UsedResources, ref)
+	}()
+
+	switch kind {
+	case "ConfigMap":
+		if _, ok := cfgs.configMaps[name]; ok {
+			return nil
+		}
+		var cm v1.ConfigMap
+		if err := r.Get(ctx, types.NamespacedName{
+			Name:      name,
+			Namespace: capsule.Namespace,
+		}, &cm); err != nil {
+			return fmt.Errorf("could not get referenced environment configmap: %w", err)
+		}
+		cfgs.configMaps[cm.Name] = &cm
+	case "Secret":
+		if _, ok := cfgs.secrets[name]; ok {
+			return nil
+		}
+		var s v1.Secret
+		if err := r.Get(ctx, types.NamespacedName{
+			Name:      name,
+			Namespace: capsule.Namespace,
+		}, &s); err != nil {
+			return fmt.Errorf("could not get referenced environment secret: %w", err)
+		}
+		cfgs.secrets[s.Name] = &s
+	}
+
+	return nil
 }
 
 func (r *CapsuleReconciler) reconcileDeployment(
@@ -666,7 +672,7 @@ func (r *CapsuleReconciler) reconcileDeployment(
 	capsule *v1alpha2.Capsule,
 	status *v1alpha2.CapsuleStatus,
 ) error {
-	cfgs, err := r.getConfigs(ctx, req, capsule)
+	cfgs, err := r.getConfigs(ctx, req, capsule, status)
 	if err != nil {
 		return err
 	}

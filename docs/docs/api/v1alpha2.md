@@ -276,6 +276,22 @@ _Appears in:_
 | `request` _[Quantity](#quantity)_ | Request specifies the request of a resource. |
 
 
+### UsedResource
+
+
+
+
+
+_Appears in:_
+- [CapsuleStatus](#capsulestatus)
+
+| Field | Description |
+| --- | --- |
+| `ref` _[TypedLocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#typedlocalobjectreference-v1-core)_ |  |
+| `state` _string_ |  |
+| `message` _string_ |  |
+
+
 ### VerticalScale
 
 

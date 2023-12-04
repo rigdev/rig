@@ -232,6 +232,7 @@ type CapsuleStatus struct {
 	Replicas           uint32            `json:"replicas,omitempty"`
 	ObservedGeneration int64             `json:"observedGeneration,omitempty"`
 	OwnedResources     []OwnedResource   `json:"ownedResources,omitempty"`
+	UsedResources      []UsedResource    `json:"usedResources,omitempty"`
 	Deployment         *DeploymentStatus `json:"deploymentStatus,omitempty"`
 }
 
@@ -244,6 +245,13 @@ type DeploymentStatus struct {
 type OwnedResource struct {
 	Ref *v1.TypedLocalObjectReference `json:"ref"`
 	// +kubebuilder:validation:Enum=created;failed
+	State   string `json:"state,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+type UsedResource struct {
+	Ref *v1.TypedLocalObjectReference `json:"ref"`
+	// +kubebuilder:validation:Enum=found;missing;error
 	State   string `json:"state,omitempty"`
 	Message string `json:"message,omitempty"`
 }
