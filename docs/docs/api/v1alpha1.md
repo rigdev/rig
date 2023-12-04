@@ -1,19 +1,14 @@
-# API Reference
 
-## Packages
-- [rig.dev/v1alpha1](#rigdevv1alpha1)
-
-
-## rig.dev/v1alpha1
+# rig.dev/v1alpha1
 
 Package v1alpha1 contains API Schema definitions for the  v1alpha1 API group
 
-### Resource Types
+## Resource Types
 - [Capsule](#capsule)
 
 
 
-#### CPUTarget
+### CPUTarget
 
 
 
@@ -27,7 +22,7 @@ _Appears in:_
 | `averageUtilizationPercentage` _integer_ | AverageUtilizationPercentage sets the utilization which when exceeded will trigger autoscaling. |
 
 
-#### Capsule
+### Capsule
 
 
 
@@ -43,7 +38,7 @@ Capsule is the Schema for the capsules API
 | `spec` _[CapsuleSpec](#capsulespec)_ | Spec holds the specification of the Capsule. |
 
 
-#### CapsuleInterface
+### CapsuleInterface
 
 
 
@@ -59,7 +54,7 @@ _Appears in:_
 | `public` _[CapsulePublicInterface](#capsulepublicinterface)_ | Public specifies if and how the interface should be published. |
 
 
-#### CapsuleInterfaceIngress
+### CapsuleInterfaceIngress
 
 _Underlying type:_ _[struct{Host string "json:\"host\""}](#struct{host-string-"json:\"host\""})_
 
@@ -70,7 +65,7 @@ _Appears in:_
 
 
 
-#### CapsuleInterfaceLoadBalancer
+### CapsuleInterfaceLoadBalancer
 
 _Underlying type:_ _[struct{Port int32 "json:\"port\""; NodePort int32 "json:\"nodePort,omitempty\""}](#struct{port-int32-"json:\"port\"";-nodeport-int32-"json:\"nodeport,omitempty\""})_
 
@@ -81,7 +76,7 @@ _Appears in:_
 
 
 
-#### CapsulePublicInterface
+### CapsulePublicInterface
 
 
 
@@ -96,7 +91,7 @@ _Appears in:_
 | `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a LoadBalancer Service. The LoadBalancer field is mutually exclusive with the Ingress field. |
 
 
-#### CapsuleSpec
+### CapsuleSpec
 
 
 
@@ -121,7 +116,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
 
 
-#### Env
+### Env
 
 
 
@@ -136,7 +131,7 @@ _Appears in:_
 | `from` _[EnvSource](#envsource) array_ | From holds a list of references to secrets and configmaps which should be mounted as environment variables. |
 
 
-#### EnvSource
+### EnvSource
 
 
 
@@ -151,7 +146,7 @@ _Appears in:_
 | `secretName` _string_ | SecretName is the name of a Secret in the same namespace as the Capsule |
 
 
-#### File
+### File
 
 
 
@@ -167,7 +162,7 @@ _Appears in:_
 | `secret` _[FileContentRef](#filecontentref)_ | Secret specifies that this file is based on a key in a Secret. The Secret field is mutually exclusive with ConfigMap. |
 
 
-#### FileContentRef
+### FileContentRef
 
 
 
@@ -182,7 +177,7 @@ _Appears in:_
 | `key` _string_ | Key specifies the key holding the file contents. |
 
 
-#### HorizontalScale
+### HorizontalScale
 
 
 

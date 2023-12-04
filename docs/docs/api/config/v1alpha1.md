@@ -1,20 +1,15 @@
-# API Reference
 
-## Packages
-- [config.rig.dev/v1alpha1](#configrigdevv1alpha1)
-
-
-## config.rig.dev/v1alpha1
+# config.rig.dev/v1alpha1
 
 Package v1alpha1 contains API Schema definitions for the config v1alpha1 API group
 
-### Resource Types
+## Resource Types
 - [OperatorConfig](#operatorconfig)
 - [PlatformConfig](#platformconfig)
 
 
 
-#### Auth
+### Auth
 
 
 
@@ -30,7 +25,7 @@ _Appears in:_
 | `certificateKeyFile` _string_ | CertificateKeyFile specifies a path to a PEM encoded certificate key which will be used for jwt signatures. |
 
 
-#### CertManagerConfig
+### CertManagerConfig
 
 
 
@@ -45,7 +40,7 @@ _Appears in:_
 | `createCertificateResources` _boolean_ | CreateCertificateResources specifies wether to create Certificate resources. If this is not enabled we will use ingress annotations. This is handy in environments where the ingress-shim isen't enabled. |
 
 
-#### Client
+### Client
 
 
 
@@ -64,7 +59,7 @@ _Appears in:_
 | `operator` _[ClientOperator](#clientoperator)_ | Operator sets the base url for the Operator client. |
 
 
-#### ClientDocker
+### ClientDocker
 
 
 
@@ -78,7 +73,7 @@ _Appears in:_
 | `host` _string_ | Host where the docker daemon can be reached. |
 
 
-#### ClientMailjet
+### ClientMailjet
 
 
 
@@ -93,7 +88,7 @@ _Appears in:_
 | `secretKey` _string_ | SecretKey is the mailjet secret key |
 
 
-#### ClientMongo
+### ClientMongo
 
 
 
@@ -109,7 +104,7 @@ _Appears in:_
 | `host` _string_ | Host of the mongo server. This is both the host and port. |
 
 
-#### ClientOperator
+### ClientOperator
 
 
 
@@ -123,7 +118,7 @@ _Appears in:_
 | `baseUrl` _string_ | BaseURL is the URL used to connect to the operator API |
 
 
-#### ClientPostgres
+### ClientPostgres
 
 
 
@@ -142,7 +137,7 @@ _Appears in:_
 | `insecure` _boolean_ | Insecure is wether to use SSL when connecting to the postgres server |
 
 
-#### ClientSMTP
+### ClientSMTP
 
 
 
@@ -159,7 +154,7 @@ _Appears in:_
 | `password` _string_ | Password used when connecting to the SMTP server. |
 
 
-#### Cluster
+### Cluster
 
 
 
@@ -175,7 +170,7 @@ _Appears in:_
 | `git` _[ClusterGit](#clustergit)_ | Git sets up gitops write back for this cluster. |
 
 
-#### ClusterGit
+### ClusterGit
 
 
 
@@ -194,7 +189,7 @@ _Appears in:_
 | `templates` _[GitTemplates](#gittemplates)_ | Templates used for commit messages. |
 
 
-#### ClusterType
+### ClusterType
 
 _Underlying type:_ _string_
 
@@ -205,7 +200,7 @@ _Appears in:_
 
 
 
-#### DevRegistry
+### DevRegistry
 
 
 
@@ -220,7 +215,7 @@ _Appears in:_
 | `clusterHost` _string_ | ClusterHost is the host where the registry can be reached from within the cluster. Any image which is named after `Host` will be rename to use `ClusterHost` instead. This ensures that the image can be pulled from within the cluster. |
 
 
-#### Email
+### Email
 
 
 
@@ -235,7 +230,7 @@ _Appears in:_
 | `type` _[EmailType](#emailtype)_ | Type is what client rig should use to send emails. |
 
 
-#### EmailType
+### EmailType
 
 _Underlying type:_ _string_
 
@@ -246,7 +241,7 @@ _Appears in:_
 
 
 
-#### GitAuthor
+### GitAuthor
 
 
 
@@ -261,7 +256,7 @@ _Appears in:_
 | `email` _string_ | Email of author |
 
 
-#### GitCredentials
+### GitCredentials
 
 
 
@@ -276,7 +271,7 @@ _Appears in:_
 | `ssh` _[SSHCredential](#sshcredential)_ | SSH specifies SSH credentials. |
 
 
-#### GitTemplates
+### GitTemplates
 
 
 
@@ -291,7 +286,7 @@ _Appears in:_
 | `delete` _string_ | Delete specifies the template used for delete commits. |
 
 
-#### HTTPSCredential
+### HTTPSCredential
 
 
 
@@ -306,7 +301,7 @@ _Appears in:_
 | `password` _string_ | Password is the basic auth password |
 
 
-#### IngressConfig
+### IngressConfig
 
 
 
@@ -321,7 +316,7 @@ _Appears in:_
 | `className` _string_ | ClassName specifies the default ingress class to use for all ingress resources created. |
 
 
-#### Logging
+### Logging
 
 
 
@@ -336,7 +331,7 @@ _Appears in:_
 | `level` _[Level](#level)_ | Level sets the granularity of logging. |
 
 
-#### OAuth
+### OAuth
 
 
 
@@ -352,7 +347,7 @@ _Appears in:_
 | `facebook` _[OAuthClientCredentials](#oauthclientcredentials)_ | Facebook specifies OAuth client configuration for facebook. |
 
 
-#### OAuthClientCredentials
+### OAuthClientCredentials
 
 
 
@@ -367,7 +362,7 @@ _Appears in:_
 | `clientSecret` _string_ | ClientSecret is the OAuth client secret. |
 
 
-#### OperatorConfig
+### OperatorConfig
 
 
 
@@ -386,7 +381,7 @@ OperatorConfig is the Schema for the configs API
 | `ingress` _[IngressConfig](#ingressconfig)_ | Ingress holds the configuration for ingress resources created by the operator. |
 
 
-#### PlatformConfig
+### PlatformConfig
 
 
 
@@ -410,7 +405,7 @@ OperatorConfig is the Schema for the configs API
 | `logging` _[Logging](#logging)_ | Loggin holds information about the granularity of logging |
 
 
-#### Repository
+### Repository
 
 
 
@@ -425,7 +420,7 @@ _Appears in:_
 | `secret` _string_ | Secret is a secret key used for encrypting sensitive data before saving it in the database. |
 
 
-#### SSHCredential
+### SSHCredential
 
 
 
