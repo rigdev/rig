@@ -1,19 +1,14 @@
-# API Reference
 
-## Packages
-- [rig.dev/v1alpha2](#rigdevv1alpha2)
-
-
-## rig.dev/v1alpha2
+# rig.dev/v1alpha2
 
 Package v1alpha2 contains API Schema definitions for the v1alpha2 API group
 
-### Resource Types
+## Resource Types
 - [Capsule](#capsule)
 
 
 
-#### CPUTarget
+### CPUTarget
 
 
 
@@ -27,7 +22,7 @@ _Appears in:_
 | `utilization` _integer_ | Utilization specifies the average CPU target. If the average exceeds this number new instances will be added. |
 
 
-#### Capsule
+### Capsule
 
 
 
@@ -43,7 +38,7 @@ Capsule is the Schema for the capsules API
 | `spec` _[CapsuleSpec](#capsulespec)_ | Spec holds the specification of the Capsule. |
 
 
-#### CapsuleInterface
+### CapsuleInterface
 
 
 
@@ -61,7 +56,7 @@ _Appears in:_
 | `public` _[CapsulePublicInterface](#capsulepublicinterface)_ | Public specifies if and how the interface should be published. |
 
 
-#### CapsuleInterfaceIngress
+### CapsuleInterfaceIngress
 
 _Underlying type:_ _[struct{Host string "json:\"host\""}](#struct{host-string-"json:\"host\""})_
 
@@ -72,7 +67,7 @@ _Appears in:_
 
 
 
-#### CapsuleInterfaceLoadBalancer
+### CapsuleInterfaceLoadBalancer
 
 _Underlying type:_ _[struct{Port int32 "json:\"port\""}](#struct{port-int32-"json:\"port\""})_
 
@@ -83,7 +78,7 @@ _Appears in:_
 
 
 
-#### CapsulePublicInterface
+### CapsulePublicInterface
 
 
 
@@ -98,7 +93,7 @@ _Appears in:_
 | `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a LoadBalancer Service. The LoadBalancer field is mutually exclusive with the Ingress field. |
 
 
-#### CapsuleScale
+### CapsuleScale
 
 
 
@@ -113,7 +108,7 @@ _Appears in:_
 | `vertical` _[VerticalScale](#verticalscale)_ | Vertical specifies the vertical scaling of the Capsule. |
 
 
-#### CapsuleSpec
+### CapsuleSpec
 
 
 
@@ -134,7 +129,7 @@ _Appears in:_
 | `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
 
 
-#### Env
+### Env
 
 
 
@@ -149,7 +144,7 @@ _Appears in:_
 | `from` _[EnvReference](#envreference) array_ | From holds a list of references to secrets and configmaps which should be mounted as environment variables. |
 
 
-#### EnvReference
+### EnvReference
 
 
 
@@ -164,7 +159,7 @@ _Appears in:_
 | `name` _string_ | Name is the name of a ConfigMap or Secret in the same namespace as the Capsule. |
 
 
-#### File
+### File
 
 
 
@@ -179,7 +174,7 @@ _Appears in:_
 | `path` _string_ | Path specifies the full path where the File should be mounted including the file name. |
 
 
-#### FileContentReference
+### FileContentReference
 
 
 
@@ -195,7 +190,7 @@ _Appears in:_
 | `key` _string_ | Key in reference which holds file contents. |
 
 
-#### HorizontalScale
+### HorizontalScale
 
 
 
@@ -210,7 +205,7 @@ _Appears in:_
 | `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
 
 
-#### Instances
+### Instances
 
 
 
@@ -225,7 +220,7 @@ _Appears in:_
 | `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to disable autoscaling. |
 
 
-#### InterfaceGRPCProbe
+### InterfaceGRPCProbe
 
 _Underlying type:_ _[struct{Service string "json:\"service\""}](#struct{service-string-"json:\"service\""})_
 
@@ -236,7 +231,7 @@ _Appears in:_
 
 
 
-#### InterfaceProbe
+### InterfaceProbe
 
 
 
@@ -252,7 +247,7 @@ _Appears in:_
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
 
 
-#### ResourceLimits
+### ResourceLimits
 
 
 
@@ -267,7 +262,7 @@ _Appears in:_
 | `limit` _[Quantity](#quantity)_ | Limit specifies the resource limit. |
 
 
-#### ResourceRequest
+### ResourceRequest
 
 
 
@@ -281,7 +276,7 @@ _Appears in:_
 | `request` _[Quantity](#quantity)_ | Request specifies the request of a resource. |
 
 
-#### VerticalScale
+### VerticalScale
 
 
 

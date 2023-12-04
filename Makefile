@@ -74,14 +74,17 @@ docs: ## 📚 Generate docs
 docs-gen: crd-ref-docs ## 📚 Generate api references
 	$(CRD_REF_DOCS) --renderer markdown \
 		--config ./docs/crd-ref-docs/config.yaml \
+		--templates-dir ./docs/crd-ref-docs/templates \
 		--source-path ./pkg/api/config/v1alpha1 \
 		--output-path ./docs/docs/api/config/v1alpha1.md
 	$(CRD_REF_DOCS) --renderer markdown \
 		--config ./docs/crd-ref-docs/config.yaml \
+		--templates-dir ./docs/crd-ref-docs/templates \
 		--source-path ./pkg/api/v1alpha1 \
 		--output-path ./docs/docs/api/v1alpha1.md
 	$(CRD_REF_DOCS) --renderer markdown \
 		--config ./docs/crd-ref-docs/v1alpha2-config.yaml \
+		--templates-dir ./docs/crd-ref-docs/templates \
 		--source-path ./pkg/api/v1alpha2 \
 		--output-path ./docs/docs/api/v1alpha2.md
 
