@@ -121,21 +121,6 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
 
 
-#### DeploymentStatus
-
-
-
-
-
-_Appears in:_
-- [CapsuleStatus](#capsulestatus)
-
-| Field | Description |
-| --- | --- |
-| `state` _string_ |  |
-| `message` _string_ |  |
-
-
 #### Env
 
 
@@ -211,22 +196,6 @@ _Appears in:_
 | `minReplicas` _integer_ | MinReplicas is the minimum amount of replicas that the Capsule should have. |
 | `maxReplicas` _integer_ | MaxReplicas is the maximum amount of replicas that the Capsule should have. |
 | `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
-
-
-#### OwnedResource
-
-
-
-
-
-_Appears in:_
-- [CapsuleStatus](#capsulestatus)
-
-| Field | Description |
-| --- | --- |
-| `ref` _[TypedLocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#typedlocalobjectreference-v1-core)_ |  |
-| `state` _string_ |  |
-| `message` _string_ |  |
 
 
 
