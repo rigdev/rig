@@ -64,7 +64,7 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./menu.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/rigdev/docs/edit/main/',
+          editUrl: 'https://github.com/rigdev/rig/edit/main/docs/',
           showLastUpdateAuthor: true,
           routeBasePath: '/', // Serve the docs at the site's root
           // breadcrumbs: false,
