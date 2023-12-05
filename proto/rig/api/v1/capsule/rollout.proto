@@ -264,11 +264,3 @@ message ObjectReference {
   string name = 2;
   string api_version = 3;
 }
-
-enum LabelSelectorOperator {
-  OPERATOR_UNSPECIFIED = 0;
-  OPERATOR_IN = 1;
-  OPERATOR_NOT_IN = 2;
-  OPERATOR_EXISTS = 3;
-  OPERATOR_DOES_NOT_EXIST = 4;
-}

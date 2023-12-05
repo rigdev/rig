@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	v2 "k8s.io/api/autoscaling/v2"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/rigdev/rig/pkg/ptr"
@@ -449,6 +450,106 @@ func Test_HorizontalScaleValidate(t *testing.T) {
 				CPUTarget: &CPUTarget{
 					Utilization: ptr.New(uint32(50)),
 				},
+			},
+		},
+		{
+			name: "both instance and object custom metric",
+			h: HorizontalScale{
+				Instances: Instances{
+					Min: 10,
+					Max: ptr.New(uint32(30)),
+				},
+				CustomMetrics: []CustomMetric{{
+					InstanceMetric: &InstanceMetric{
+						MetricName:   "metric",
+						AverageValue: "1",
+					},
+					ObjectMetric: &ObjectMetric{
+						MetricName:   "metric",
+						AverageValue: "1",
+						DescribedObject: v2.CrossVersionObjectReference{
+							Kind: "Service",
+							Name: "service",
+						},
+					},
+				}},
+			},
+			expectedErrs: []*field.Error{
+				field.Invalid(
+					path.Child("customMetrics").Index(0),
+					CustomMetric{
+						InstanceMetric: &InstanceMetric{
+							MetricName:   "metric",
+							AverageValue: "1",
+						},
+						ObjectMetric: &ObjectMetric{
+							MetricName:   "metric",
+							AverageValue: "1",
+							DescribedObject: v2.CrossVersionObjectReference{
+								Kind: "Service",
+								Name: "service",
+							},
+						},
+					},
+					"exactly one of 'instanceMetric' and 'objectMetric' must be provided",
+				),
+			},
+		},
+		{
+			name: "invalid instance metric averageValue",
+			h: HorizontalScale{
+				Instances: Instances{
+					Min: 10,
+					Max: ptr.New(uint32(30)),
+				},
+				CustomMetrics: []CustomMetric{{
+					InstanceMetric: &InstanceMetric{
+						MetricName:   "metric",
+						AverageValue: "p=np",
+					},
+				}},
+			},
+			expectedErrs: []*field.Error{
+				field.Invalid(
+					path.Child("customMetrics").Index(0).Child("instanceMetric").Child("averageValue"),
+					"p=np",
+					"quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'",
+				),
+			},
+		},
+		{
+			name: "invalid object metric, both value and averageValue",
+			h: HorizontalScale{
+				Instances: Instances{
+					Min: 10,
+					Max: ptr.New(uint32(30)),
+				},
+				CustomMetrics: []CustomMetric{{
+					ObjectMetric: &ObjectMetric{
+						MetricName:   "metric",
+						AverageValue: "1",
+						Value:        "2",
+						DescribedObject: v2.CrossVersionObjectReference{
+							Kind: "Service",
+							Name: "service",
+						},
+					},
+				}},
+			},
+			expectedErrs: []*field.Error{
+				field.Invalid(
+					path.Child("customMetrics").Index(0).Child("objectMetric"),
+					&ObjectMetric{
+						MetricName:   "metric",
+						AverageValue: "1",
+						Value:        "2",
+						DescribedObject: v2.CrossVersionObjectReference{
+							Kind: "Service",
+							Name: "service",
+						},
+					},
+					"exactly one of 'value' and 'averageValue' must be provided",
+				),
 			},
 		},
 	}

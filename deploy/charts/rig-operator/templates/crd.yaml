@@ -606,6 +606,91 @@ spec:
                             minimum: 1
                             type: integer
                         type: object
+                      customMetrics:
+                        description: CustomMetrics specifies custom metrics emitted
+                          by the custom.metrics.k8s.io API which the autoscaler should
+                          scale on
+                        items:
+                          description: CustomMetric defines a custom metrics emitted
+                            by the custom.metrics.k8s.io API which the autoscaler
+                            should scale on Exactly one of InstanceMetric and ObjectMetric
+                            must be provided
+                          properties:
+                            instanceMetric:
+                              description: InstanceMetric defines a custom instance-based
+                                metric (pod-metric in Kubernetes lingo)
+                              properties:
+                                averageValue:
+                                  description: AverageValue defines the average value
+                                    across all instances which the autoscaler scales
+                                    towards
+                                  type: string
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: MatchLabels is a set of key, value
+                                    pairs which filters the metric series
+                                  type: object
+                                metricName:
+                                  description: MetricName is the name of the metric
+                                  type: string
+                              required:
+                              - averageValue
+                              - metricName
+                              type: object
+                            objectMetric:
+                              description: ObjectMetric defines a custom object-based
+                                metric
+                              properties:
+                                averageValue:
+                                  description: AverageValue scales the number of instances
+                                    towards making the value returned by the metric
+                                    divided by the number of instances reach AverageValue
+                                    Exactly one of 'Value' and 'AverageValue' must
+                                    be set
+                                  type: string
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: MatchLabels is a set of key, value
+                                    pairs which filters the metric series
+                                  type: object
+                                metricName:
+                                  description: MetricName is the name of the metric
+                                  type: string
+                                objectReference:
+                                  description: DescribedObject is a reference to the
+                                    object in the same namespace which is described
+                                    by the metric
+                                  properties:
+                                    apiVersion:
+                                      description: apiVersion is the API version of
+                                        the referent
+                                      type: string
+                                    kind:
+                                      description: 'kind is the kind of the referent;
+                                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                                      type: string
+                                    name:
+                                      description: 'name is the name of the referent;
+                                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                                      type: string
+                                  required:
+                                  - kind
+                                  - name
+                                  type: object
+                                value:
+                                  description: Value scales the number of instances
+                                    towards making the value returned by the metric
+                                    'Value' Exactly one of 'Value' and 'AverageValue'
+                                    must be set
+                                  type: string
+                              required:
+                              - metricName
+                              - objectReference
+                              type: object
+                          type: object
+                        type: array
                       instances:
                         description: Instances specifies minimum and maximum amount
                           of Capsule instances.

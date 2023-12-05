@@ -417,8 +417,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ | The path which Prometheus should query on ports. Defaults to /metrics if not set. |
-| `port` _integer_ | The port which Prometheus will query metrics on |
+| `path` _string_ | Path is the path which Prometheus should query on ports. Defaults to /metrics if not set. |
+| `portName` _string_ | PortName is the name of the port which Prometheus will query metrics on |
 
 
 ### Repository

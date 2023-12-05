@@ -9,16 +9,15 @@ import (
 	"time"
 
 	"github.com/go-logr/logr/testr"
+	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/manager"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
-
-	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/manager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -111,5 +110,5 @@ func TestIntegrationK8s(t *testing.T) {
 		t.Skip()
 	}
 	t.Parallel()
-	suite.Run(t, new(K8sTestSuite))
+	suite.Run(t, &K8sTestSuite{})
 }

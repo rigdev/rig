@@ -39,10 +39,10 @@ type OperatorConfig struct {
 }
 
 type PrometheusServiceMonitor struct {
-	// The path which Prometheus should query on ports. Defaults to /metrics if not set.
+	// Path is the path which Prometheus should query on ports. Defaults to /metrics if not set.
 	Path string `json:"path,omitempty"`
-	// The port which Prometheus will query metrics on
-	Port int `json:"port"`
+	// PortName is the name of the port which Prometheus will query metrics on
+	PortName string `json:"portName"`
 }
 
 type CertManagerConfig struct {

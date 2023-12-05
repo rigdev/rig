@@ -25,13 +25,16 @@ import (
 	"slices"
 	"strings"
 
-	"golang.org/x/exp/maps"
-
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/go-logr/logr"
+	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/hash"
+	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
+	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
@@ -52,10 +55,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
-	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/ptr"
 )
 
 // CapsuleReconciler reconciles a Capsule object
@@ -178,6 +177,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		r.reconcileIngress,
 		r.reconcileLoadBalancer,
 		r.reconcileServiceAccount,
+		r.reconcilePrometheusServiceMonitor,
 	}
 
 	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
@@ -189,6 +189,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&netv1.Ingress{}).
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
 		Owns(&cmv1.Certificate{}).
+		Owns(&monitorv1.ServiceMonitor{}).
 		Watches(
 			&v1.ConfigMap{},
 			configEventHandler,
@@ -906,7 +907,6 @@ func createDeployment(
 			replicas = ptr.New(*existingDeployment.Spec.Replicas)
 		}
 	}
-
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsule.Name,
@@ -1039,6 +1039,9 @@ func createService(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      capsule.Name,
 			Namespace: capsule.Namespace,
+			Labels: map[string]string{
+				LabelCapsule: capsule.Name,
+			},
 		},
 		Spec: v1.ServiceSpec{
 			Selector: map[string]string{
@@ -1468,6 +1471,7 @@ func createHPA(
 	}
 
 	scale := capsule.Spec.Scale.Horizontal
+
 	if scale.Instances.Min == 0 {
 		// Cannot have autoscaler going to 0.
 		// TODO We should have some good documentation/userfeedback if min-replicas is set to 0
@@ -1489,6 +1493,62 @@ func createHPA(
 				},
 			},
 		})
+	}
+
+	for _, customMetric := range scale.CustomMetrics {
+		if customMetric.InstanceMetric != nil {
+			instanceMetric := customMetric.InstanceMetric
+			averageValue, err := resource.ParseQuantity(instanceMetric.AverageValue)
+			if err != nil {
+				return nil, false, err
+			}
+			metric := autoscalingv2.MetricSpec{
+				Type: autoscalingv2.PodsMetricSourceType,
+				Pods: &autoscalingv2.PodsMetricSource{
+					Metric: autoscalingv2.MetricIdentifier{
+						Name: instanceMetric.MetricName,
+					},
+					Target: autoscalingv2.MetricTarget{
+						Type:         autoscalingv2.AverageValueMetricType,
+						AverageValue: &averageValue,
+					},
+				},
+			}
+			if instanceMetric.MatchLabels != nil {
+				metric.Pods.Metric.Selector.MatchLabels = instanceMetric.MatchLabels
+			}
+			hpa.Spec.Metrics = append(hpa.Spec.Metrics, metric)
+		} else if customMetric.ObjectMetric != nil {
+			object := customMetric.ObjectMetric
+			metric := autoscalingv2.MetricSpec{
+				Type: autoscalingv2.ObjectMetricSourceType,
+				Object: &autoscalingv2.ObjectMetricSource{
+					DescribedObject: object.DescribedObject,
+					Metric: autoscalingv2.MetricIdentifier{
+						Name: object.MetricName,
+					},
+				},
+			}
+			if object.AverageValue != "" {
+				averageValue, err := resource.ParseQuantity(object.AverageValue)
+				if err != nil {
+					return nil, false, err
+				}
+				metric.Object.Target.Value = &averageValue
+				metric.Object.Target.Type = autoscalingv2.AverageValueMetricType
+			} else if object.Value != "" {
+				value, err := resource.ParseQuantity(object.Value)
+				if err != nil {
+					return nil, false, err
+				}
+				metric.Object.Target.Value = &value
+				metric.Object.Target.Type = autoscalingv2.ValueMetricType
+			}
+			if object.MatchLabels != nil {
+				metric.Object.Metric.Selector.MatchLabels = object.MatchLabels
+			}
+			hpa.Spec.Metrics = append(hpa.Spec.Metrics, metric)
+		}
 	}
 
 	if len(hpa.Spec.Metrics) == 0 {
@@ -1520,7 +1580,6 @@ func (r *CapsuleReconciler) reconcileServiceAccount(
 			if err := r.Create(ctx, sa); err != nil {
 				return fmt.Errorf("could not create service account: %w", err)
 			}
-
 			return nil
 		} else if err != nil {
 			return fmt.Errorf("could not fetch service account: %w", err)
@@ -1610,4 +1669,73 @@ func upsertIfNewer[T client.Object](
 
 	log.Info("resource is up-to-date")
 	return nil
+}
+
+func (r *CapsuleReconciler) reconcilePrometheusServiceMonitor(
+	ctx context.Context,
+	_ ctrl.Request,
+	log logr.Logger,
+	capsule *v1alpha2.Capsule,
+	status *v1alpha2.CapsuleStatus,
+) error {
+	if r.Config.PrometheusServiceMonitor == nil || r.Config.PrometheusServiceMonitor.PortName == "" {
+		return nil
+	}
+
+	serviceMonitor, err := r.createPrometheusServiceMonitor(capsule, r.Scheme)
+	if err != nil {
+		return err
+	}
+
+	existingServiceMonitor := &monitorv1.ServiceMonitor{}
+	if err = r.Get(ctx, client.ObjectKeyFromObject(serviceMonitor), existingServiceMonitor); err != nil {
+		if kerrors.IsNotFound(err) {
+			log.Info("creating prometheus service monitor")
+			if err := r.Create(ctx, serviceMonitor); err != nil {
+				return fmt.Errorf("could not create prometheus service monitor: %w", err)
+			}
+			return nil
+		} else if err != nil {
+			return fmt.Errorf("could not fetch prometheus service monitor: %w", err)
+		}
+	}
+
+	return upsertIfNewer(
+		ctx, r,
+		existingServiceMonitor,
+		serviceMonitor,
+		log, capsule, status,
+		func(t1, t2 *monitorv1.ServiceMonitor) bool {
+			return equality.Semantic.DeepEqual(t1.Annotations, t2.Annotations)
+		},
+	)
+}
+
+func (r *CapsuleReconciler) createPrometheusServiceMonitor(
+	capsule *v1alpha2.Capsule,
+	scheme *runtime.Scheme,
+) (*monitorv1.ServiceMonitor, error) {
+	s := &monitorv1.ServiceMonitor{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            capsule.Name,
+			Namespace:       capsule.Namespace,
+			ResourceVersion: "",
+		},
+		Spec: monitorv1.ServiceMonitorSpec{
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					LabelCapsule: capsule.Name,
+				},
+			},
+			Endpoints: []monitorv1.Endpoint{{
+				Port: r.Config.PrometheusServiceMonitor.PortName,
+				Path: r.Config.PrometheusServiceMonitor.Path,
+			}},
+		},
+	}
+	if err := controllerutil.SetControllerReference(capsule, s, scheme); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }

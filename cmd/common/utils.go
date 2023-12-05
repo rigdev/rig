@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-sdk"
