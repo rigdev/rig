@@ -99,12 +99,16 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if operatorDockerTag == "" {
 		operatorDockerTag = "latest"
 	}
+	operatorArgs := []string{"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag)}
+	if prometheus {
+		operatorArgs = append(operatorArgs, "--set", "config.prometheusServiceMonitor.portName=metrics")
+	}
 	if err := c.deployInner(ctx, deployParams{
 		dockerImage: "ghcr.io/rigdev/rig-operator",
 		dockerTag:   operatorDockerTag,
 		chartName:   "rig-operator",
 		chartPath:   operatorChartPath,
-		customArgs:  []string{"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag)},
+		customArgs:  operatorArgs,
 	}); err != nil {
 		return err
 	}
@@ -321,7 +325,7 @@ func setupK8s() error {
 	if err != nil {
 		return err
 	}
-	defer stdin.Close() // the doc says subProcess.Wait will close it, but I'm not sure, so I kept this line
+	defer stdin.Close()
 
 	if err = cmd.Start(); err != nil {
 		return err
@@ -339,6 +343,52 @@ func setupK8s() error {
 }
 
 func helmInstall() error {
+
+	if prometheus {
+		cmd := common.NewDefferredOutputCommand("Installing prometheus...")
+		cmd.Command(
+			"helm", "--kube-context", "kind-rig",
+			"upgrade", "--install", "kube-prometheus-stack", "kube-prometheus-stack",
+			"--repo", "https://prometheus-community.github.io/helm-charts",
+			"--create-namespace",
+			"--namespace", "prometheus",
+			"-f", "-",
+		)
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return err
+		}
+		defer stdin.Close()
+		value := `
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector:
+      matchExpressions:
+        - key: rig.dev/capsule
+          operator: Exists
+`
+		if err := cmd.Start(); err != nil {
+			return err
+		}
+		_, err = stdin.Write([]byte(value))
+		if err != nil {
+			return err
+		}
+		stdin.Close()
+		if err := cmd.Wait(); err != nil {
+			return err
+		}
+
+		if err := runCmd("Installing prometheus-adapter...",
+			"helm", "--kube-context", "kind-rig",
+			"upgrade", "--install", "prometheus-adapter", "prometheus-adapter",
+			"--repo", "https://prometheus-community.github.io/helm-charts",
+			"--namespace", "prometheus",
+			"--set", "prometheus.url=http://kube-prometheus-stack-prometheus.kube-system.svc",
+		); err != nil {
+			return err
+		}
+	}
 	if err := runCmd("Installing cert-manager...",
 		"helm", "--kube-context", "kind-rig",
 		"upgrade", "--install", "cert-manager", "cert-manager",
