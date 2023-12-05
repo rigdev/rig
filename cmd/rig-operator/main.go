@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -98,6 +99,12 @@ func run(cmd *cobra.Command, _ []string) error {
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(
 		grpcreflect.NewStaticReflector(capabilitiesconnect.ServiceName),
 	))
+
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	srv := &http.Server{
 		BaseContext: func(l net.Listener) context.Context {

@@ -236,7 +236,7 @@ func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {
 		}
 
 		gvk := gvks[0]
-		log = log.WithValues(gvk.Kind, o)
+		log := log.WithValues(gvk.Kind, o)
 
 		var (
 			filesRefField string
