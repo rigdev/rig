@@ -169,6 +169,9 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return fmt.Errorf("could not setup indexer for %s: %w", fieldEnvSecretName, err)
 	}
 
+	// TODO Better checking if ServiceMonitor exists
+	hasServiceMonitor := r.List(context.Background(), &monitorv1.ServiceMonitorList{}) == nil
+
 	r.reconcileSteps = []reconcileStepFunc{
 		r.reconcileHorizontalPodAutoscaler,
 		r.reconcileDeployment,
@@ -177,19 +180,23 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		r.reconcileIngress,
 		r.reconcileLoadBalancer,
 		r.reconcileServiceAccount,
-		r.reconcilePrometheusServiceMonitor,
 	}
 
 	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
 
-	return ctrl.NewControllerManagedBy(mgr).
+	b := ctrl.NewControllerManagedBy(mgr)
+	if hasServiceMonitor {
+		r.reconcileSteps = append(r.reconcileSteps, r.reconcilePrometheusServiceMonitor)
+		b = b.Owns(&monitorv1.ServiceMonitor{})
+	}
+
+	return b.
 		For(&v1alpha2.Capsule{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&v1.Service{}).
 		Owns(&netv1.Ingress{}).
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
 		Owns(&cmv1.Certificate{}).
-		Owns(&monitorv1.ServiceMonitor{}).
 		Watches(
 			&v1.ConfigMap{},
 			configEventHandler,
