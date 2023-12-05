@@ -120,8 +120,8 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 			"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
 			"--set", "rig.telemetry.enabled=false",
 			"--set", "postgres.enabled=true",
-			"--set", "rig.cluster.dev_registry.host=localhost:30000",
-			"--set", "rig.cluster.dev_registry.cluster_host=registry:5000",
+			"--set", "rig.cluster.devRegistry.host=localhost:30000",
+			"--set", "rig.cluster.devRegistry.clusterHost=registry:5000",
 			"--set", "loadBalancer.enabled=true",
 		},
 		// Restart to pick up new changes.
