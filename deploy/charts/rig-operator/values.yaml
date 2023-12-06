@@ -1,3 +1,6 @@
+# config will be rendered directly into a rig-operator config file. For more
+# information about what each of the options do see the reference documentation
+# at https://docs.rig.dev/api/config/v1alpha1#operatorconfig
 config:
   webhooksEnabled: true
   devModeEnabled: false
@@ -32,12 +35,18 @@ serviceAccount:
   name: ""
 
 # Refers to an existing secret containing a rig-operator config file. If left
-# unset, we will generate a config based on the fields set under .Values.config
+# unset, we will generate a config based on the fields set under
+# .Values.config. The secret should have a key config.yaml which contains the
+# full configfile.
 secretName: ""
 
 rbac:
+  # when enabled we will create all of the roles, clusterroles and accompaning
+  # bindings.
   create: true
 
+# install rig CRDs, disable if you prefer having CRDs installed separately from
+# the operator.
 installCRDs: true
 
 podAnnotations: {}
