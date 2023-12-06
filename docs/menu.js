@@ -132,13 +132,36 @@ const sidebars = {
       },
     },
     {
-      type: "doc",
-      id: "platform/scale",
+      type: "category",
+      link: {
+        type: "doc",
+        id: "platform/scale",
+      },
       label: "Scale",
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "BiArea",
       },
+      items: [
+        {
+          type: "doc",
+          id: "platform/custom-metrics",
+          label: "Custom Metrics",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "BiAbacus",
+          },
+        },
+        {
+          type: "doc",
+          id: "platform/custom-metrics-example",
+          label: "Custom Metrics - Example",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "BiHardHat",
+          },
+        },
+      ]
     },
     {
       type: "doc",
