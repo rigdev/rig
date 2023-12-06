@@ -8,6 +8,7 @@
 
 # test results
 /test-result.xml
+/cover.out
 
 # dependencies
 go.work.sum

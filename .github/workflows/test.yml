@@ -64,6 +64,10 @@ jobs:
           paths: "test-result.xml"
         if: always()
 
+      - uses: codecov/codecov-action@v3
+        with:
+          files: cover.out
+
   cli-import-test:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'

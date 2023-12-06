@@ -98,6 +98,7 @@ test: gotestsum ## ✅ Run unit tests
 		--format-hide-empty-pkg \
 		--hide-summary skipped \
 		--junitfile test-result.xml -- \
+		-coverprofile cover.out \
 		-short ./...
 
 ENVTEST_K8S_VERSION = 1.28.0
@@ -107,7 +108,8 @@ test-all: gotestsum setup-envtest ## ✅ Run all tests
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" \
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
-		--junitfile test-result.xml
+		--junitfile test-result.xml -- \
+		-coverprofile cover.out ./...
 
 .PHONY: test-integration
 test-integration: gotestsum setup-envtest ## ✅ Run integration tests
@@ -115,6 +117,8 @@ test-integration: gotestsum setup-envtest ## ✅ Run integration tests
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
 		--junitfile test-result.xml -- \
+		--junitfile test-result.xml -- \
+		-coverprofile cover.out \
 		-run "^TestIntegration" ./...
 
 TAG ?= dev
