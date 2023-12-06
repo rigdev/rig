@@ -33,7 +33,7 @@
     <img src="https://img.shields.io/badge/follow-%40Rig__dev-blue?logo=x" alt="Follow @Rig_dev" />
   </a>
 </p>
-[![Release](https://img.shields.io/github/release/golang-standards/project-layout.svg?style=flat-square)](https://github.com/golang-standards/project-layout/releases/latest)
+
 ## 🌟 What is Rig?
 
 Rig.dev offers an application platform for Kubernetes. We empower developers with our developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging, and scaling applications.
