@@ -378,13 +378,14 @@ prometheus:
 		if err := cmd.Wait(); err != nil {
 			return err
 		}
+		cmd.End(true)
 
 		if err := runCmd("Installing prometheus-adapter...",
 			"helm", "--kube-context", "kind-rig",
 			"upgrade", "--install", "prometheus-adapter", "prometheus-adapter",
 			"--repo", "https://prometheus-community.github.io/helm-charts",
 			"--namespace", "prometheus",
-			"--set", "prometheus.url=http://kube-prometheus-stack-prometheus.kube-system.svc",
+			"--set", "prometheus.url=http://kube-prometheus-stack-prometheus.prometheus.svc",
 		); err != nil {
 			return err
 		}
