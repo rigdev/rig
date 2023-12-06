@@ -14,18 +14,26 @@
 </p>
 
 <p align="center">
+  <a href="https://pkg.go.dev/github.com/rigdev/rig">
+    <img src="https://pkg.go.dev/badge/github.com/rigdev/rig.svg" alt="Go Reference">
+  </a>
+  <a href="https://goreportcard.com/badge/github.com/rigdev/rig">
+    <img src="https://goreportcard.com/badge/github.com/rigdev/rig" alt="Go Report">
+  </a>
+  <a href="https://github.com/rigdev/rig/releases/latest">
+    <img src="https://img.shields.io/github/release/rigdev/rig.svg" alt="Rig is released under the Apache2 license." />
+  </a>
   <a href="https://github.com/rigdev/rig/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-apache2-blue.svg" alt="Rig is released under the Apache2 license." />
   </a>
-
   <a href="https://discord.gg/Tn5wmXMM2U">
-    <img src="https://img.shields.io/badge/chat-on%20discord-7289DA.svg" alt="Discord Chat" />
+    <img src="https://img.shields.io/badge/join-discord-7289DA.svg?logo=discord&logoColor=ffffff" alt="Discord Chat" />
   </a>
   <a href="https://twitter.com/intent/follow?screen_name=Rig_dev">
-    <img src="https://img.shields.io/twitter/follow/rig.svg?label=Follow%20@Rig_dev" alt="Follow @Rig_dev" />
+    <img src="https://img.shields.io/badge/follow-%40Rig__dev-blue?logo=x" alt="Follow @Rig_dev" />
   </a>
 </p>
-
+[![Release](https://img.shields.io/github/release/golang-standards/project-layout.svg?style=flat-square)](https://github.com/golang-standards/project-layout/releases/latest)
 ## 🌟 What is Rig?
 
 Rig.dev offers an application platform for Kubernetes. We empower developers with our developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging, and scaling applications.
