@@ -378,7 +378,7 @@ OperatorConfig is the Schema for the configs API
 | --- | --- |
 | `apiVersion` _string_ | `config.rig.dev/v1alpha1`
 | `kind` _string_ | `OperatorConfig`
-| `webhooksEnabled` _boolean_ | WebhooksEnabled set wether or not webhooks should be enabled. When enabled a certificate should be mounted at the webhook server certificate path. Defaults to true if omitted. |
+| `webhooksEnabled` _boolean_ | WebhooksEnabled sets wether or not webhooks should be enabled. When enabled a certificate should be mounted at the webhook server certificate path. Defaults to true if omitted. |
 | `devModeEnabled` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be more human readable. |
 | `leaderElectionEnabled` _boolean_ | LeaderElectionEnabled enables leader election when running multiple instances of the operator. |
 | `certManager` _[CertManagerConfig](#certmanagerconfig)_ | Certmanager holds configuration for how the operator should create certificates for ingress resources. |

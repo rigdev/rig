@@ -12,7 +12,7 @@ import (
 type OperatorConfig struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// WebhooksEnabled set wether or not webhooks should be enabled. When
+	// WebhooksEnabled sets wether or not webhooks should be enabled. When
 	// enabled a certificate should be mounted at the webhook server
 	// certificate path. Defaults to true if omitted.
 	WebhooksEnabled *bool `json:"webhooksEnabled,omitempty"`
