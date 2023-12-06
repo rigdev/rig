@@ -14,11 +14,12 @@ var (
 )
 
 var (
-	requestCPU    string
-	requestMemory string
-	limitCPU      string
-	limitMemory   string
-	gpuType       string
+	requestCPU     string
+	requestMemory  string
+	limitCPU       string
+	limitMemory    string
+	gpuType        string
+	autoscalerPath string
 )
 
 var (
@@ -108,6 +109,11 @@ func Setup(parent *cobra.Command) {
 	scaleHorizontalAuto.Flags().BoolVarP(
 		&disable,
 		"disable", "d", false, "Disable the autoscaler, fixing the capsule with its current number of replicas",
+	)
+	scaleHorizontalAuto.Flags().StringVar(
+		&autoscalerPath,
+		"path", "", `If given, reads the configuration for the autoscaler from the file.Accepts json or yaml.
+If other flags are given as well, they overwrite their fields in the configuration at 'path'.`,
 	)
 	scaleHorizontal.AddCommand(scaleHorizontalAuto)
 

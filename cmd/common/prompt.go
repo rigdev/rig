@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -31,6 +32,12 @@ func ValidateIntOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateInt
 }
 
+func ValidateIntInRangeOpt(minInclusive, maxInclusive int) GetInputOption {
+	return func(inp *textinput.TextInput) {
+		inp.Validate = ValidateIntInRange(minInclusive, maxInclusive)
+	}
+}
+
 func ValidateNonEmptyOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateNonEmpty
 }
@@ -49,6 +56,10 @@ func ValidateEmailOpt(inp *textinput.TextInput) {
 
 func ValidateSystemNameOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateSystemName
+}
+
+func ValidateKubernetesNameOpt(inp *textinput.TextInput) {
+	inp.Validate = ValidateKubernetesName
 }
 
 func ValidateURLOpt(inp *textinput.TextInput) {
@@ -283,7 +294,10 @@ func PromptTableSelect(
 	}
 
 	if len(colLengths) != len(columnHeaders) {
-		return 0, errors.New("number of columns in 'choices' and 'columnHeaders' don't agree")
+		return 0, fmt.Errorf(
+			"number of columns in 'choices' (%v) and 'columnHeaders' (%v) don't agree",
+			len(colLengths), len(columnHeaders),
+		)
 	}
 
 	var header string

@@ -39,6 +39,7 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/equality"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -60,8 +61,9 @@ import (
 // CapsuleReconciler reconciles a Capsule object
 type CapsuleReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	Config *configv1alpha1.OperatorConfig
+	Scheme    *runtime.Scheme
+	Config    *configv1alpha1.OperatorConfig
+	ClientSet clientset.Interface
 
 	reconcileSteps []reconcileStepFunc
 }
@@ -169,8 +171,17 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return fmt.Errorf("could not setup indexer for %s: %w", fieldEnvSecretName, err)
 	}
 
-	// TODO Better checking if ServiceMonitor exists
-	hasServiceMonitor := r.List(context.Background(), &monitorv1.ServiceMonitorList{}) == nil
+	crds, err := r.ClientSet.ApiextensionsV1().CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	hasServiceMonitor := false
+	for _, crd := range crds.Items {
+		if crd.Name == "servicemonitors.monitoring.coreos.com" {
+			hasServiceMonitor = true
+			break
+		}
+	}
 
 	r.reconcileSteps = []reconcileStepFunc{
 		r.reconcileHorizontalPodAutoscaler,
@@ -1727,6 +1738,9 @@ func (r *CapsuleReconciler) createPrometheusServiceMonitor(
 			Name:            capsule.Name,
 			Namespace:       capsule.Namespace,
 			ResourceVersion: "",
+			Labels: map[string]string{
+				LabelCapsule: capsule.Name,
+			},
 		},
 		Spec: monitorv1.ServiceMonitorSpec{
 			Selector: metav1.LabelSelector{

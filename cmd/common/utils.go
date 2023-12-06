@@ -20,6 +20,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 func ValidateAll(_ string) error {
@@ -39,6 +40,19 @@ func ValidateInt(input string) error {
 		return err
 	}
 	return nil
+}
+
+func ValidateIntInRange(minInclusive, maxInclusive int) func(string) error {
+	return func(s string) error {
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			return err
+		}
+		if !(minInclusive <= n && n <= maxInclusive) {
+			return fmt.Errorf("must be between %v and %v", minInclusive, maxInclusive)
+		}
+		return nil
+	}
 }
 
 func ValidateNonEmpty(input string) error {
@@ -65,6 +79,13 @@ func ValidateSystemName(input string) error {
 		return errors.InvalidArgumentErrorf("invalid name; can only contain a-z, 0-9 and '-'")
 	}
 
+	return nil
+}
+
+func ValidateKubernetesName(input string) error {
+	if errs := validation.IsQualifiedName(input); errs != nil {
+		return errors.New(strings.Join(errs, "; "))
+	}
 	return nil
 }
 

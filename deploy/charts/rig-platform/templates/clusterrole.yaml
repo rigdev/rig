@@ -37,6 +37,13 @@ rules:
   verbs:
     - list
 - apiGroups:
+    - custom.metrics.k8s.io
+  resources:
+    - '*'
+  verbs:
+    - get
+    - list
+- apiGroups:
     - rig.dev
   resources:
     - capsules

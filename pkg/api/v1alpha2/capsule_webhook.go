@@ -298,13 +298,14 @@ func (h *HorizontalScale) validate(fPath *field.Path) field.ErrorList {
 		}
 
 		if m.InstanceMetric != nil {
-			_, err := resource.ParseQuantity(m.InstanceMetric.AverageValue)
-			errs = append(errs, field.Invalid(
-				fPath.Child("instanceMetric").Child("averageValue"),
-				m.InstanceMetric.AverageValue,
-				err.Error(),
-			))
-			continue
+			if _, err := resource.ParseQuantity(m.InstanceMetric.AverageValue); err != nil {
+				errs = append(errs, field.Invalid(
+					fPath.Child("instanceMetric").Child("averageValue"),
+					m.InstanceMetric.AverageValue,
+					err.Error(),
+				))
+				continue
+			}
 		}
 		if m.ObjectMetric != nil {
 			fPath := fPath.Child("objectMetric")
