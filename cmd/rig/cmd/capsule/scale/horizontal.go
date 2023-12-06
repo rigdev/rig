@@ -2,6 +2,7 @@ package scale
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
@@ -18,6 +19,7 @@ import (
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -78,7 +80,7 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
 	if err != nil {
-		return nil
+		return err
 	}
 	replicas := rollout.GetConfig().GetReplicas()
 	horizontal := rollout.GetConfig().GetHorizontalScale()
@@ -88,10 +90,16 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 
 	if autoscalerPath != "" {
 		bytes, err := os.ReadFile(autoscalerPath)
-		if err != nil {
+		var raw interface{}
+		if err := yaml.Unmarshal(bytes, &raw); err != nil {
 			return err
 		}
-		if err := yaml.Unmarshal(bytes, horizontal); err != nil {
+
+		if bytes, err = json.Marshal(raw); err != nil {
+			return err
+		}
+
+		if err := protojson.Unmarshal(bytes, horizontal); err != nil {
 			return err
 		}
 	}
@@ -176,11 +184,13 @@ func (c *Cmd) promptAutoscale(ctx context.Context, horizontal *capsule.Horizonta
 		}
 		switch idx {
 		case 0:
-			bytes, err := yaml.Marshal(horizontal)
-			if err != nil {
+			// TODO Fix this hack!
+			o := base.Flags.OutputType
+			base.Flags.OutputType = base.OutputTypeYAML
+			if err := base.FormatPrint(horizontal); err != nil {
 				return err
 			}
-			fmt.Println(string(bytes))
+			base.Flags.OutputType = o
 		case 1:
 			if err := validateAutoscaler(horizontal); err != nil {
 				fmt.Println(err)
@@ -340,7 +350,9 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 	}
 
 	resp, err := c.Rig.Project().GetObjectsByKind(ctx, connect.NewRequest(&project.GetObjectsByKindRequest{
-		Kind: kind,
+		Kind:          kind,
+		ProjectId:     c.Cfg.GetProject(),
+		EnvironmentId: base.Flags.Environment,
 	}))
 
 	var objName string
@@ -381,6 +393,8 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 				Name:       objName,
 				ApiVersion: api,
 			},
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		}))
 	if err != nil {
 		return nil, err

@@ -63,6 +63,10 @@ func formatJSON(v any) (string, error) {
 		bs, err := json.MarshalIndent(v, "", "  ")
 		return string(bs), err
 	}
+
+	if v, ok := v.(protoreflect.ProtoMessage); ok {
+		return protojson.Format(v), nil
+	}
 	bs, err := json.MarshalIndent(v, "", "  ")
 	return string(bs), err
 }
