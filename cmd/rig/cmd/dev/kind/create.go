@@ -19,6 +19,7 @@ import (
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 	"sigs.k8s.io/kind/pkg/cluster"
+	kindexec "sigs.k8s.io/kind/pkg/exec"
 )
 
 //go:embed config.yaml
@@ -292,6 +293,10 @@ func setupKindRigCluster() error {
 		"rig",
 		cluster.CreateWithRawConfig([]byte(config)),
 	); err != nil {
+		var rerr *kindexec.RunError
+		if errors.As(err, &rerr) {
+			return fmt.Errorf("%v: %v", rerr.Inner, string(rerr.Output))
+		}
 		return err
 	}
 
