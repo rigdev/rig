@@ -1,7 +1,3 @@
-# Default values for rig.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 image:
   repository: ghcr.io/rigdev/rig-platform
   pullPolicy: IfNotPresent
@@ -11,15 +7,6 @@ image:
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
-
-# Name of secret containing configuration for rig-sever. Set this if you use
-# a special mechanism for generating secrets. If left unset, we will create the
-# secret.
-secretName: ""
-
-# Wether or not to load secret parts of the configuration from environment
-# variables instead of a config file.
-useEnvForSecrets: false
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -97,6 +84,8 @@ mongodb:
   args:
 
 postgres:
+  # enables development postgres instance. When this is set we will also setup
+  # the required database connection configuration.
   enabled: false
   image:
     repository: postgres
@@ -107,8 +96,22 @@ postgres:
     className: ""
     size: 10Gi
 
-# Rig holds configuration for the rig server. This is used for generating
-# the rig-server config file.
+# Wether or not to load secret parts of the configuration from environment
+# variables instead of a config file.
+useEnvForSecrets: false
+
+# Name of secret containing configuration for rig-sever. Set this if you use a
+# special mechanism for generating secrets. If left unset, we will create the
+# secret. If `useEnvForSecrets` is true we will use the secret as environment
+# variables, otherwise we will mount the key `config.yaml` as a full
+# rig-platform config file.
+secretName: ""
+
+# Rig holds configuration for the rig server. This is used for generating the
+# rig-server config file. This configuration will be merged with any
+# configuration found in the secret denoted by `secretName`. For detailed
+# information about individual options, see the reference documentation at
+# https://docs.rig.dev/api/config/v1alpha1#platformconfig.
 rig:
   auth:
     secret: shhhdonotshare
@@ -134,8 +137,6 @@ rig:
     smtp:
       password: ""
     operator:
-      # if the rig-operator is installed in a non-standard way, please update
-      # this to point to the service of the rig-operator
       baseUrl: http://rig-operator:9000
 
   repository:
