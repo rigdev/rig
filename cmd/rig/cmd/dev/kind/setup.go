@@ -12,6 +12,7 @@ var (
 	platformChartPath string
 	operatorDockerTag string
 	operatorChartPath string
+	prometheus        bool
 )
 
 type Cmd struct {
@@ -59,6 +60,12 @@ func Setup(parent *cobra.Command) {
 	create.Flags().StringVar(
 		&operatorChartPath,
 		"operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.",
+	)
+	create.Flags().BoolVar(
+		&prometheus,
+		"prometheus", false,
+		`If set, will install a Prometheus instance and Prometheus adapter using the Prometheus operator.
+See https://github.com/prometheus-operator/prometheus-operator for information on the operator and its CRDs`,
 	)
 	kind.AddCommand(create)
 
