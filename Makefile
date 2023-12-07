@@ -96,10 +96,10 @@ lint: golangci-lint ## 🚨 Run linting
 test: gotestsum ## ✅ Run unit tests
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
-		--hide-summary skipped \
-		--junitfile test-result.xml -- \
-		-coverprofile cover.out \
-		-short ./...
+		--hide-summary skipped -- \
+		-race \
+		-short \
+		./...
 
 ENVTEST_K8S_VERSION = 1.28.0
 
@@ -109,17 +109,20 @@ test-all: gotestsum setup-envtest ## ✅ Run all tests
 	$(GOTESTSUM) \
 		--format-hide-empty-pkg \
 		--junitfile test-result.xml -- \
-		-coverprofile cover.out ./...
+		-race \
+		-coverprofile cover.out \
+		-coverpkg $$(go list ./... | grep rigdev/rig/pkg | tr "\n" ",") \
+		-covermode atomic \
+		./...
 
 .PHONY: test-integration
 test-integration: gotestsum setup-envtest ## ✅ Run integration tests
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(TOOLSBIN) -p path)" && \
 	$(GOTESTSUM) \
-		--format-hide-empty-pkg \
-		--junitfile test-result.xml -- \
-		--junitfile test-result.xml -- \
-		-coverprofile cover.out \
-		-run "^TestIntegration" ./...
+		--format-hide-empty-pkg -- \
+		-race \
+		-run "^TestIntegration" \
+		./...
 
 TAG ?= dev
 
