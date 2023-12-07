@@ -96,6 +96,12 @@ See https://github.com/prometheus-operator/prometheus-operator for information o
 		&operatorChartPath,
 		"operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.",
 	)
+	deploy.Flags().BoolVar(
+		&prometheus,
+		"prometheus", false,
+		//nolint:lll
+		"If set, will instruct the operator to create Prometheus ServiceMonitors for each capsule, scraping ports named 'metrics'.",
+	)
 
 	clean := &cobra.Command{
 		Use:   "clean",
