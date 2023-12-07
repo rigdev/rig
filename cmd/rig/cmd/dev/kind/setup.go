@@ -99,6 +99,7 @@ See https://github.com/prometheus-operator/prometheus-operator for information o
 	deploy.Flags().BoolVar(
 		&prometheus,
 		"prometheus", false,
+		//nolint:lll
 		"If set, will instruct the operator to create Prometheus ServiceMonitors for each capsule, scraping ports named 'metrics'.",
 	)
 
