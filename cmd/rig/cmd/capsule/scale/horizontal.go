@@ -12,6 +12,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
@@ -280,7 +281,7 @@ func (c *Cmd) promptCustomMetric(ctx context.Context) (*capsule.CustomMetric, er
 			Metric: metric,
 		}, nil
 	case 1:
-		metric, err := c.promptObjectMetric()
+		metric, err := c.promptObjectMetric(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -301,39 +302,9 @@ func (c *Cmd) promptInstanceMetric(ctx context.Context) (*capsule.CustomMetric_I
 		return nil, err
 	}
 
-	slices.SortFunc(metrics.Msg.GetMetrics(), func(m1, m2 *capsule.Metric) int {
-		return strings.Compare(m1.Name, m2.Name)
-	})
-
-	var choices [][]string
-	now := time.Now()
-	for _, m := range metrics.Msg.GetMetrics() {
-		choices = append(choices, []string{
-			m.Name,
-			fmt.Sprintf("%.2f", m.GetLatestValue()),
-			common.FormatDuration(now.Sub(m.GetLatestTimestamp().AsTime())),
-		})
-	}
-
-	var metricName string
-	if len(choices) == 0 {
-		metricName, err = common.PromptInput("Metric Name:", common.ValidateKubernetesNameOpt)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		idx, err := common.PromptTableSelect(
-			"Select metric:",
-			choices,
-			[]string{"Metric", "Latest value", "Age of latest value"},
-			common.SelectEnableFilterOpt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		metric := metrics.Msg.GetMetrics()[idx]
-		metricName = metric.Name
+	metricName, err := prompMetricName(metrics.Msg.GetMetrics())
+	if err != nil {
+		return nil, err
 	}
 
 	labelSelectors, err := promptLabelSelector()
@@ -355,9 +326,60 @@ func (c *Cmd) promptInstanceMetric(ctx context.Context) (*capsule.CustomMetric_I
 	}, nil
 }
 
-func (c *Cmd) promptObjectMetric() (*capsule.CustomMetric_Object, error) {
-	// TODO Fetch object metrics in the same way as instance metrics
-	name, err := common.PromptInput("Metric:", common.ValidateKubernetesNameOpt)
+func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Object, error) {
+	kind, err := common.PromptInput("Described object, kind:", common.ValidateKubernetesNameOpt)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.Rig.Project().GetObjectsByKind(ctx, connect.NewRequest(&project.GetObjectsByKindRequest{
+		Kind: kind,
+	}))
+
+	var objName string
+	if err != nil {
+		objName, err = common.PromptInput("Object name:")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		var names []string
+		for _, obj := range resp.Msg.GetObjects() {
+			names = append(names, obj.GetName())
+		}
+		_, objName, err = common.PromptSelect("Object by name:", names, common.SelectEnableFilterOpt)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	api, err := common.PromptInput("Described object, api version (optional):", func(inp *textinput.TextInput) {
+		inp.Validate = func(s string) error {
+			if s == "" {
+				return nil
+			}
+			return common.ValidateKubernetesName(s)
+		}
+	},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	metricResp, err := c.Rig.Project().GetCustomObjectMetrics(
+		ctx,
+		connect.NewRequest(&project.GetCustomObjectMetricsRequest{
+			ObjectReference: &capsule.ObjectReference{
+				Kind:       kind,
+				Name:       objName,
+				ApiVersion: api,
+			},
+		}))
+	if err != nil {
+		return nil, err
+	}
+
+	metricName, err := prompMetricName(metricResp.Msg.GetMetrics())
 	if err != nil {
 		return nil, err
 	}
@@ -377,32 +399,9 @@ func (c *Cmd) promptObjectMetric() (*capsule.CustomMetric_Object, error) {
 		return nil, err
 	}
 
-	kind, err := common.PromptInput("Described object, kind:", common.ValidateKubernetesNameOpt)
-	if err != nil {
-		return nil, err
-	}
-
-	objName, err := common.PromptInput("Described object, name:", common.ValidateKubernetesNameOpt)
-	if err != nil {
-		return nil, err
-	}
-
-	api, err := common.PromptInput("Described object, api version (optional):", func(inp *textinput.TextInput) {
-		inp.Validate = func(s string) error {
-			if s == "" {
-				return nil
-			}
-			return common.ValidateKubernetesName(s)
-		}
-	},
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	metric := &capsule.CustomMetric_Object{
 		Object: &capsule.ObjectMetric{
-			MetricName:  name,
+			MetricName:  metricName,
 			MatchLabels: labelSelectors,
 			ObjectReference: &capsule.ObjectReference{
 				Kind:       kind,
@@ -419,6 +418,36 @@ func (c *Cmd) promptObjectMetric() (*capsule.CustomMetric_Object, error) {
 	}
 
 	return metric, nil
+}
+
+func prompMetricName(metrics []*capsule.Metric) (string, error) {
+	slices.SortFunc(metrics, func(m1, m2 *capsule.Metric) int {
+		return strings.Compare(m1.Name, m2.Name)
+	})
+
+	var choices [][]string
+	now := time.Now()
+	for _, m := range metrics {
+		choices = append(choices, []string{
+			m.Name,
+			fmt.Sprintf("%.2f", m.GetLatestValue()),
+			common.FormatDuration(now.Sub(m.GetLatestTimestamp().AsTime())),
+		})
+	}
+
+	if len(choices) == 0 {
+		return common.PromptInput("Metric Name:", common.ValidateKubernetesNameOpt)
+	}
+	idx, err := common.PromptTableSelect(
+		"Select metric:",
+		choices,
+		[]string{"Metric", "Latest value", "Age of latest value"},
+		common.SelectEnableFilterOpt,
+	)
+	if err != nil {
+		return "", err
+	}
+	return metrics[idx].Name, nil
 }
 
 func promptLabelSelector() (map[string]string, error) {
