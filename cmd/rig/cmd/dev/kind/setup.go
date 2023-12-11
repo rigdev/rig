@@ -115,5 +115,17 @@ See https://github.com/prometheus-operator/prometheus-operator for information o
 	}
 	kind.AddCommand(clean)
 
+	runInit := &cobra.Command{
+		Use:   "run-init",
+		Short: "Runs the 'init' command on the rig-platform which creates the first admin user and project",
+		Args:  cobra.NoArgs,
+		RunE:  cmd.runInit,
+		Annotations: map[string]string{
+			base.OmitUser:    "",
+			base.OmitProject: "",
+		},
+	}
+	kind.AddCommand(runInit)
+
 	parent.AddCommand(kind)
 }

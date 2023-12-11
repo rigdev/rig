@@ -73,19 +73,9 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	fmt.Println()
 	fmt.Println("To use Rig you need to create at least one admin user.")
-	execCmd := exec.Command(
-		"kubectl", "exec", "--tty", "--stdin",
-		"--namespace", "rig-system",
-		"deploy/rig-platform", "--",
-		"rig-admin", "init",
-	)
-	execCmd.Stdin = os.Stdin
-	execCmd.Stdout = os.Stdout
-	execCmd.Stderr = os.Stderr
-	if err := execCmd.Run(); err != nil {
+	if err := c.runInit(cmd, args); err != nil {
 		return err
 	}
-
 	fmt.Println("Rig is now accessible on http://localhost:4747")
 
 	return nil
@@ -467,4 +457,17 @@ func runCmd(displayMessage string, arg string, args ...string) error {
 	}()
 	err = cmd.RunNew(arg, args...)
 	return err
+}
+
+func (c *Cmd) runInit(_ *cobra.Command, _ []string) error {
+	execCmd := exec.Command(
+		"kubectl", "exec", "--tty", "--stdin",
+		"--namespace", "rig-system",
+		"deploy/rig-platform", "--",
+		"rig-admin", "init",
+	)
+	execCmd.Stdin = os.Stdin
+	execCmd.Stdout = os.Stdout
+	execCmd.Stderr = os.Stderr
+	return execCmd.Run()
 }
