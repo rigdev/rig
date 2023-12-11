@@ -95,9 +95,7 @@ postgres:
   storage:
     className: ""
     size: 10Gi
-  # The default mount point for the postgres volume is /var/lib/postgresql
-  # If this is true it becomes /var/lib/postgresql/data
-  appendDataToMountPoint: false
+  mountPath: "/var/lib/postgresql"
 
 # Wether or not to load secret parts of the configuration from environment
 # variables instead of a config file.
@@ -169,4 +167,3 @@ rig:
   logging:
     devMode: false
     level: info
-
