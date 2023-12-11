@@ -37,11 +37,7 @@ spec:
                 name: {{ include "rig-platform.fullname" . }}-postgres
           volumeMounts:
             - name: data
-              {{- if .Values.postgres.appendDataToMountPoint }}
-              mountPath: /var/lib/postgresql/data
-              {{- else }}
-              mountPath: /var/lib/postgresql
-              {{ end }}
+              mountPath: {{ .Values.postgres.mountPath }} 
       volumes:
         - name: init
           configMap:
