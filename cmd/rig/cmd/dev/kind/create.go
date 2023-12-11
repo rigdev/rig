@@ -73,7 +73,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	fmt.Println()
 	fmt.Println("To use Rig you need to create at least one admin user.")
-	if err := c.runInit(ctx, cmd, args); err != nil {
+	if err := c.runInit(cmd, args); err != nil {
 		return err
 	}
 	fmt.Println("Rig is now accessible on http://localhost:4747")
@@ -459,7 +459,7 @@ func runCmd(displayMessage string, arg string, args ...string) error {
 	return err
 }
 
-func (c *Cmd) runInit(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) runInit(_ *cobra.Command, _ []string) error {
 	execCmd := exec.Command(
 		"kubectl", "exec", "--tty", "--stdin",
 		"--namespace", "rig-system",

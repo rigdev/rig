@@ -119,7 +119,7 @@ See https://github.com/prometheus-operator/prometheus-operator for information o
 		Use:   "run-init",
 		Short: "Runs the 'init' command on the rig-platform which creates the first admin user and project",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.runInit),
+		RunE:  cmd.runInit,
 		Annotations: map[string]string{
 			base.OmitUser:    "",
 			base.OmitProject: "",
