@@ -206,6 +206,8 @@ message DeployRequest {
   string capsule_id = 1;
   // Changes to include in the new rollout.
   repeated api.v1.capsule.Change changes = 2;
+  // Force deploy, aborting any existing rollouts that may be ongoing.
+  bool force = 3;
 }
 
 message DeployResponse {
