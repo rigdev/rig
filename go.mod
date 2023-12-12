@@ -41,7 +41,7 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20231205103107-666165393790
+	github.com/rigdev/rig-go-api v0.0.0-20231211205453-b6dec47ab608
 	github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea
 	github.com/rodaine/table v1.1.0
 	k8s.io/apiextensions-apiserver v0.28.4
