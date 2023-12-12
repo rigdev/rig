@@ -45,7 +45,6 @@ require (
 	github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea
 	github.com/rodaine/table v1.1.0
 	k8s.io/apiextensions-apiserver v0.28.4
-	k8s.io/kubectl v0.28.4
 	sigs.k8s.io/controller-runtime v0.16.3
 	sigs.k8s.io/kind v0.20.0
 )
