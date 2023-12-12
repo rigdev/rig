@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+message JobExecution {
+  string job_name = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp finished_at = 3;
+  JobState state = 4;
+  int32 retries = 5;
+  uint64 rollout_id = 6;
+  string capsule_id = 7;
+  string project_id = 8;
+}
+
+enum JobState {
+  JOB_STATE_UNSPECIFIED = 0;
+  JOB_STATE_ONGOING = 1;
+  JOB_STATE_COMPLETED = 2;
+  JOB_STATE_FAILED = 3;
+  JOB_STATE_TERMINATED = 4;
+}
+
+message CronJob {
+  string job_name = 1;
+  string schedule = 2;
+  int32 max_retries = 3;
+  google.protobuf.Duration timeout = 4;
+  oneof job_type {
+    JobURL url = 5;
+    JobCommand command = 6;
+  }
+}
+
+message JobURL {
+  uint64 port = 1;
+  string path = 2;
+  map<string, string> query_parameters = 3;
+}
+
+message JobCommand {
+  string command = 1;
+  repeated string args = 2;
+}
