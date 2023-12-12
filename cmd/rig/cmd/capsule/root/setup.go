@@ -18,6 +18,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/builddeploy"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/env"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/instance"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule/jobs"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/mount"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/network"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
@@ -179,6 +180,7 @@ func Setup(parent *cobra.Command) {
 	rollout.Setup(capsuleCmd)
 	env.Setup(capsuleCmd)
 	mount.Setup(capsuleCmd)
+	jobs.Setup(capsuleCmd)
 
 	parent.AddCommand(capsuleCmd)
 }

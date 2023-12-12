@@ -10,6 +10,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/service/config"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -29,6 +30,7 @@ func NewScheme() *runtime.Scheme {
 	utilruntime.Must(v1alpha2.AddToScheme(s))
 	utilruntime.Must(certv1.AddToScheme(s))
 	utilruntime.Must(monitorv1.AddToScheme(s))
+	utilruntime.Must(batchv1.AddToScheme(s))
 	return s
 }
 
