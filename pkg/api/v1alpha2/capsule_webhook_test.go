@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	v2 "k8s.io/api/autoscaling/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/rigdev/rig/pkg/ptr"
@@ -558,6 +559,109 @@ func Test_HorizontalScaleValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.h.validate(field.NewPath("spec").Child("scale").Child("horizontal"))
 			assert.Equal(t, tt.expectedErrs, err)
+		})
+	}
+}
+
+func Test_validateCronJobs(t *testing.T) {
+	tests := []struct {
+		name string
+		job  CronJob
+		err  field.ErrorList
+	}{
+		{
+			name: "good job",
+			job: CronJob{
+				Name:     "jobname",
+				Schedule: "* * * * *",
+				URL: &URL{
+					Port: 1234,
+					Path: "/some/path",
+				},
+			},
+			err: nil,
+		},
+		{
+			name: "too long name",
+			job: CronJob{
+				Name:     "abcdefghikjlmnopqrstuvwxyz01234567890123456789",
+				Schedule: "* * * * *",
+				URL: &URL{
+					Port: 1234,
+					Path: "/some/path",
+				},
+			},
+			err: field.ErrorList{
+				field.Invalid(
+					field.NewPath("spec").Child("cronJobs").Index(0).Child("name"),
+					"abcdefghikjlmnopqrstuvwxyz01234567890123456789",
+					"name cannot be longer than 43",
+				),
+			},
+		},
+		{
+			name: "neither URL nor Command",
+			job: CronJob{
+				Name:     "job",
+				Schedule: "* * * * *",
+			},
+			err: field.ErrorList{
+				field.Invalid(
+					field.NewPath("spec").Child("cronJobs").Index(0),
+					CronJob{Name: "job", Schedule: "* * * * *"},
+					"exactly one of 'url' and 'command' must be given",
+				),
+			},
+		},
+		{
+			name: "bad url",
+			job: CronJob{
+				Name:     "job",
+				Schedule: "* * * * *",
+				URL: &URL{
+					Port: 1234,
+					Path: "/some/bad/path**",
+				},
+			},
+			err: field.ErrorList{
+				field.Invalid(
+					field.NewPath("spec").Child("cronJobs").Index(0).Child("url").Child("path"),
+					"/some/bad/path**",
+					"url path is malformed",
+				),
+			},
+		},
+		{
+			name: "bad schedule",
+			job: CronJob{
+				Name:     "job",
+				Schedule: "69 * * * *",
+				URL: &URL{
+					Port: 1234,
+				},
+			},
+			err: field.ErrorList{
+				field.Invalid(
+					field.NewPath("spec").Child("cronJobs").Index(0).Child("schedule"),
+					"69 * * * *",
+					"end of range (69) above maximum (59): 69",
+				),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Capsule{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "somename",
+				},
+				Spec: CapsuleSpec{
+					CronJobs: []CronJob{tt.job},
+				},
+			}
+			err := c.validateCronJobs()
+			assert.Equal(t, tt.err, err)
 		})
 	}
 }

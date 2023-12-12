@@ -131,6 +131,26 @@ _Appears in:_
 | `scale` _[CapsuleScale](#capsulescale)_ | Scale specifies the scaling of the Capsule. |
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
 | `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
+| `cronJobs` _[CronJob](#cronjob) array_ |  |
+
+
+### CronJob
+
+
+
+
+
+_Appears in:_
+- [CapsuleSpec](#capsulespec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `schedule` _string_ |  |
+| `url` _[URL](#url)_ |  |
+| `command` _[JobCommand](#jobcommand)_ |  |
+| `maxRetries` _integer_ | Defaults to 6 |
+| `timeoutSeconds` _integer_ |  |
 
 
 ### CustomMetric
@@ -278,6 +298,21 @@ _Appears in:_
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
 
 
+### JobCommand
+
+
+
+
+
+_Appears in:_
+- [CronJob](#cronjob)
+
+| Field | Description |
+| --- | --- |
+| `command` _string_ |  |
+| `args` _string array_ |  |
+
+
 ### ObjectMetric
 
 _Underlying type:_ _[struct{MetricName string "json:\"metricName\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\""; AverageValue string "json:\"averageValue,omitempty\""; Value string "json:\"value,omitempty\""; DescribedObject k8s.io/api/autoscaling/v2.CrossVersionObjectReference "json:\"objectReference\""}](#struct{metricname-string-"json:\"metricname\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"";-averagevalue-string-"json:\"averagevalue,omitempty\"";-value-string-"json:\"value,omitempty\"";-describedobject-k8sioapiautoscalingv2crossversionobjectreference-"json:\"objectreference\""})_
@@ -316,6 +351,22 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `request` _[Quantity](#quantity)_ | Request specifies the request of a resource. |
+
+
+### URL
+
+
+
+
+
+_Appears in:_
+- [CronJob](#cronjob)
+
+| Field | Description |
+| --- | --- |
+| `port` _integer_ |  |
+| `path` _string_ |  |
+| `queryParameters` _object (keys:string, values:string)_ |  |
 
 
 ### UsedResource

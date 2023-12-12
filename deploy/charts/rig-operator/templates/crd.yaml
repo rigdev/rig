@@ -409,6 +409,49 @@ spec:
                   the container will run using what is specified as ENTRYPOINT in
                   the Dockerfile.
                 type: string
+              cronJobs:
+                items:
+                  properties:
+                    command:
+                      properties:
+                        args:
+                          items:
+                            type: string
+                          type: array
+                        command:
+                          type: string
+                      required:
+                      - command
+                      type: object
+                    maxRetries:
+                      description: Defaults to 6
+                      type: integer
+                    name:
+                      type: string
+                    schedule:
+                      type: string
+                    timeoutSeconds:
+                      type: integer
+                    url:
+                      properties:
+                        path:
+                          type: string
+                        port:
+                          type: integer
+                        queryParameters:
+                          additionalProperties:
+                            type: string
+                          type: object
+                      required:
+                      - path
+                      - port
+                      - queryParameters
+                      type: object
+                  required:
+                  - name
+                  - schedule
+                  type: object
+                type: array
               env:
                 description: Env specifies configuration for how the container should
                   obtain environment variables.

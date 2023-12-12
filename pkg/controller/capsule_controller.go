@@ -37,6 +37,7 @@ import (
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -84,6 +85,7 @@ const (
 
 	LabelSharedConfig = "rig.dev/shared-config"
 	LabelCapsule      = "rig.dev/capsule"
+	LabelCron         = "batch.kubernets.io/cronjob"
 
 	fieldFilesConfigMapName = ".spec.files.configMap.name"
 	fieldFilesSecretName    = ".spec.files.secret.name"
@@ -191,6 +193,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		r.reconcileIngress,
 		r.reconcileLoadBalancer,
 		r.reconcileServiceAccount,
+		r.reconcileCronJobs,
 	}
 
 	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
@@ -208,6 +211,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&netv1.Ingress{}).
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
 		Owns(&cmv1.Certificate{}).
+		Owns(&batchv1.CronJob{}).
 		Watches(
 			&v1.ConfigMap{},
 			configEventHandler,
@@ -1724,7 +1728,7 @@ func (r *CapsuleReconciler) reconcilePrometheusServiceMonitor(
 		serviceMonitor,
 		log, capsule, status,
 		func(t1, t2 *monitorv1.ServiceMonitor) bool {
-			return equality.Semantic.DeepEqual(t1.Annotations, t2.Annotations)
+			return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 		},
 	)
 }
@@ -1759,4 +1763,139 @@ func (r *CapsuleReconciler) createPrometheusServiceMonitor(
 	}
 
 	return s, nil
+}
+
+func (r *CapsuleReconciler) reconcileCronJobs(
+	ctx context.Context,
+	req ctrl.Request,
+	log logr.Logger,
+	capsule *v1alpha2.Capsule,
+	status *v1alpha2.CapsuleStatus,
+) error {
+	configs, err := r.getConfigs(ctx, req, capsule, status)
+	if err != nil {
+		return err
+	}
+
+	checksums, err := r.configChecksums(capsule, configs)
+	if err != nil {
+		return err
+	}
+
+	jobs, err := r.createCronJobs(capsule, r.Scheme, configs, checksums)
+	if err != nil {
+		return err
+	}
+
+	existingJobs := &batchv1.CronJobList{}
+	if err = r.List(ctx, existingJobs, &client.ListOptions{
+		LabelSelector: labels.SelectorFromSet(labels.Set{
+			LabelCapsule: capsule.Name,
+		}),
+	}); err != nil {
+		return err
+	}
+
+	// Create/update jobs
+	existingJobByName := map[string]*batchv1.CronJob{}
+	for _, j := range existingJobs.Items {
+		existingJobByName[j.Name] = &j
+	}
+	for _, job := range jobs {
+		existingCronJob, ok := existingJobByName[job.Name]
+		if !ok {
+			log.Info("creating cron job", "name", job.Name)
+			if err := r.Create(ctx, job); err != nil {
+				return fmt.Errorf("could not create cron job %s: %w", job.Name, err)
+			}
+			continue
+		}
+
+		if err := upsertIfNewer(
+			ctx, r,
+			existingCronJob,
+			job,
+			log, capsule, status,
+			func(t1, t2 *batchv1.CronJob) bool {
+				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
+			},
+		); err != nil {
+			return err
+		}
+	}
+
+	// Delete extraneous jobs
+	nameOfJobs := map[string]struct{}{}
+	for _, j := range jobs {
+		nameOfJobs[j.Name] = struct{}{}
+	}
+	for _, j := range existingJobs.Items {
+		if _, ok := nameOfJobs[j.Name]; !ok {
+			if err := r.Delete(ctx, &j); err != nil {
+				return fmt.Errorf("failed to delete cron job %s: %w", j.Name, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *CapsuleReconciler) createCronJobs(
+	capsule *v1alpha2.Capsule,
+	scheme *runtime.Scheme,
+	configs *configs,
+	checksums *checksums,
+) ([]*batchv1.CronJob, error) {
+	var res []*batchv1.CronJob
+	deployment, err := createDeployment(capsule, scheme, configs, checksums, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, job := range capsule.Spec.CronJobs {
+		template := deployment.Spec.Template.DeepCopy()
+		c := template.Spec.Containers[0]
+		c.Command = []string{job.Command.Command}
+		c.Args = job.Command.Args
+		template.Spec.Containers[0] = c
+		template.Spec.RestartPolicy = v1.RestartPolicyNever
+
+		annotations := map[string]string{}
+		maps.Copy(annotations, capsule.Annotations)
+
+		j := &batchv1.CronJob{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-%s", capsule.Name, job.Name),
+				Namespace: capsule.Namespace,
+				Labels: map[string]string{
+					LabelCapsule: capsule.Name,
+					LabelCron:    job.Name,
+				},
+				Annotations: annotations,
+			},
+			Spec: batchv1.CronJobSpec{
+				Schedule: job.Schedule,
+				JobTemplate: batchv1.JobTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: annotations,
+						Labels: map[string]string{
+							LabelCapsule: capsule.Name,
+							LabelCron:    job.Name,
+						},
+					},
+					Spec: batchv1.JobSpec{
+						ActiveDeadlineSeconds: ptr.Convert[uint, int64](job.TimeoutSeconds),
+						BackoffLimit:          ptr.Convert[uint, int32](job.MaxRetries),
+						Template:              *template,
+					},
+				},
+			},
+		}
+		if err := controllerutil.SetControllerReference(capsule, j, scheme); err != nil {
+			return nil, err
+		}
+		res = append(res, j)
+	}
+
+	return res, nil
 }

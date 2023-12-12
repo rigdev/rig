@@ -49,4 +49,13 @@ rules:
     - capsules
   verbs:
     - "*"
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - list
+  - get
+  - watch
 {{- end -}}

@@ -113,4 +113,16 @@ rules:
   - customresourcedefinitions
   verbs:
   - list
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 {{- end -}}
