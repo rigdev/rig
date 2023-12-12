@@ -16,8 +16,6 @@ rules:
     - pods/log
     - pods/exec
     - events
-    - jobs
-    - cronjobs
   verbs:
     - "*"
 - apiGroups:
