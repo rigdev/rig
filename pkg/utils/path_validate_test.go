@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValiateConfigFilePath(t *testing.T) {
@@ -59,6 +60,66 @@ func TestValiateConfigFilePath(t *testing.T) {
 			err := ValiateConfigFilePath(tc.path)
 			if errors.CodeOf(err) != errors.CodeOf(tc.expected) || errors.MessageOf(err) != errors.MessageOf(tc.expected) {
 				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func Test_ValidateURLPath(t *testing.T) {
+	tests := []struct {
+		name string
+		p    string
+		err  bool
+	}{
+		{
+			name: "empty",
+			p:    "",
+			err:  false,
+		},
+		{
+			name: "one segment",
+			p:    "/hej",
+			err:  false,
+		},
+		{
+			name: "multiple segments",
+			p:    "/h:~ej/12path/SomEWhe_r-e@",
+			err:  false,
+		},
+		{
+			name: "bad segment",
+			p:    "//hej",
+			err:  true,
+		},
+		{
+			name: "bad character",
+			p:    "/hej/hej?",
+			err:  true,
+		},
+		{
+			name: "path with escape characters",
+			p:    "/hej/hej%f35%0A",
+			err:  false,
+		},
+		{
+			name: "path with malformed escape characters",
+			p:    "/hej/hej%f35%0",
+			err:  true,
+		},
+		{
+			name: "just a slash",
+			p:    "/",
+			err:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateURLPath(tt.p)
+			if tt.err {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

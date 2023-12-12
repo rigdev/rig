@@ -40,6 +40,35 @@ type CapsuleSpec struct {
 	// Env specifies configuration for how the container should obtain
 	// environment variables.
 	Env *Env `json:"env,omitempty"`
+
+	CronJobs []CronJob `json:"cronJobs,omitempty"`
+}
+
+type CronJob struct {
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+	// +kubebuilder:validation:Required
+	Schedule string `json:"schedule"`
+
+	URL     *URL        `json:"url,omitempty"`
+	Command *JobCommand `json:"command,omitempty"`
+	// Defaults to 6
+	MaxRetries     *uint `json:"maxRetries,omitempty"`
+	TimeoutSeconds *uint `json:"timeoutSeconds,omitempty"`
+}
+
+type URL struct {
+	// +kubebuilder:validation:Required
+	Port uint16 `json:"port"`
+	// +kubebuilder:validation:Required
+	Path            string            `json:"path"`
+	QueryParameters map[string]string `json:"queryParameters"`
+}
+
+type JobCommand struct {
+	// +kubebuilder:validation:Required
+	Command string   `json:"command"`
+	Args    []string `json:"args,omitempty"`
 }
 
 // Env defines what secrets and configmaps should be used for environment

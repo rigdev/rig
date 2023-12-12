@@ -1,10 +1,15 @@
 package v1alpha2
 
 import (
+	"fmt"
 	"path"
+	"strings"
 
+	"github.com/rigdev/rig/pkg/utils"
+	"github.com/robfig/cron/v3"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -76,6 +81,7 @@ func (r *Capsule) validate() (admission.Warnings, error) {
 	allErrs = append(allErrs, errs...)
 
 	allErrs = append(allErrs, r.Spec.Scale.Horizontal.validate(field.NewPath("scale").Child("horizontal"))...)
+	allErrs = append(allErrs, r.validateCronJobs()...)
 
 	return allWarns, allErrs.ToAggregate()
 }
@@ -331,6 +337,63 @@ func (h *HorizontalScale) validate(fPath *field.Path) field.ErrorList {
 				if _, err := resource.ParseQuantity(m.ObjectMetric.Value); err != nil {
 					errs = append(errs, field.Invalid(fPath.Child("value"), m.ObjectMetric.Value, err.Error()))
 				}
+			}
+		}
+	}
+
+	return errs
+}
+
+func (r *Capsule) validateCronJobs() field.ErrorList {
+	var errs field.ErrorList
+
+	names := map[string]struct{}{}
+
+	path := field.NewPath("spec").Child("cronJobs")
+	for idx, job := range r.Spec.CronJobs {
+		jPath := path.Index(idx)
+		if _, ok := names[job.Name]; ok {
+			errs = append(errs, field.Invalid(jPath.Child("name"), job.Name, "names must be unique"))
+		}
+		names[job.Name] = struct{}{}
+
+		// https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+		// See section about name restrictions
+		if dnsErrs := validation.IsDNS1123Label(job.Name); dnsErrs != nil {
+			errs = append(errs, field.Invalid(jPath.Child("name"), job.Name, strings.Join(dnsErrs, "; ")))
+		}
+
+		// CronJob names is a max of 52, but we prepend '{capsulename}-' to the job name
+		// when constructing the CronJob
+		maxLength := 52 - 1 - len(r.Name)
+		if len(job.Name) > maxLength {
+			errs = append(
+				errs,
+				field.Invalid(
+					jPath.Child("name"),
+					job.Name,
+					fmt.Sprintf("name cannot be longer than %v", maxLength),
+				),
+			)
+		}
+
+		if _, err := cron.ParseStandard(job.Schedule); err != nil {
+			errs = append(errs, field.Invalid(jPath.Child("schedule"), job.Schedule, err.Error()))
+		}
+
+		if (job.URL == nil) == (job.Command == nil) {
+			errs = append(errs, field.Invalid(jPath, job, "exactly one of 'url' and 'command' must be given"))
+			continue
+		}
+
+		if job.URL != nil {
+			uPath := jPath.Child("url")
+			if !(1 <= job.URL.Port && job.URL.Port < 65535) {
+				errs = append(errs, field.Invalid(uPath.Child("port"), job.URL.Port, "port must be 1 <= port < 65535"))
+			}
+
+			if err := utils.ValidateURLPath(job.URL.Path); err != nil {
+				errs = append(errs, field.Invalid(uPath.Child("path"), job.URL.Path, err.Error()))
 			}
 		}
 	}

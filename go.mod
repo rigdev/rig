@@ -43,6 +43,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
 	github.com/rigdev/rig-go-api v0.0.0-20231211205453-b6dec47ab608
 	github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/rodaine/table v1.1.0
 	k8s.io/apiextensions-apiserver v0.28.4
 	sigs.k8s.io/controller-runtime v0.16.3

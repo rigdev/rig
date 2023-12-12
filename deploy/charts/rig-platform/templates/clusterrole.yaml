@@ -16,6 +16,8 @@ rules:
     - pods/log
     - pods/exec
     - events
+    - jobs
+    - cronjobs
   verbs:
     - "*"
 - apiGroups:
@@ -49,4 +51,13 @@ rules:
     - capsules
   verbs:
     - "*"
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - list
+  - get
+  - watch
 {{- end -}}

@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/rigdev/rig/pkg/errors"
@@ -37,6 +39,34 @@ func ValiateConfigFilePath(p string) error {
 		if s == "." || s == ".." {
 			return errors.InvalidArgumentErrorf("must not contain dots")
 		}
+	}
+
+	return nil
+}
+
+// ValidateURLPath validates the Path segment of an URL is correct
+// https://datatracker.ietf.org/doc/html/rfc3986#section-3.3
+func ValidateURLPath(p string) error {
+	if len(p) == 0 {
+		return nil
+	}
+
+	if len(p) >= 2 && p[:2] == "//" {
+		return errors.New("path cannot start with '//'")
+	}
+
+	hexEscapeRegex := "%[0-9a-fA-F]{2}"
+	pcharRegex := fmt.Sprintf("[A-Za-z0-9:@\\-._~]|(%s)", hexEscapeRegex)
+	urlRegex := fmt.Sprintf("(/(%s)*)+", pcharRegex)
+
+	r, err := regexp.Compile(urlRegex)
+	if err != nil {
+		return err
+	}
+	r.Longest()
+	match := r.FindString(p)
+	if len(p) != len(match) {
+		return errors.New("url path is malformed")
 	}
 
 	return nil
