@@ -356,6 +356,12 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	if len(stepErrs) == 0 {
 		status.ObservedGeneration = capsule.GetGeneration()
+	} else {
+		var errs []string
+		for _, e := range stepErrs {
+			errs = append(errs, e.Error())
+		}
+		status.Errors = errs
 	}
 
 	capsule.Status = status
