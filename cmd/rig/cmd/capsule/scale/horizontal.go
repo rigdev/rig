@@ -366,13 +366,15 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 		return nil, err
 	}
 
-	metricResp, err := c.Rig.Project().GetCustomObjectMetrics(ctx, connect.NewRequest(&project.GetCustomObjectMetricsRequest{
-		ObjectReference: &capsule.ObjectReference{
-			Kind:       kind,
-			Name:       objName,
-			ApiVersion: api,
-		},
-	}))
+	metricResp, err := c.Rig.Project().GetCustomObjectMetrics(
+		ctx,
+		connect.NewRequest(&project.GetCustomObjectMetricsRequest{
+			ObjectReference: &capsule.ObjectReference{
+				Kind:       kind,
+				Name:       objName,
+				ApiVersion: api,
+			},
+		}))
 	if err != nil {
 		return nil, err
 	}

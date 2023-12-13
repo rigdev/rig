@@ -31,7 +31,10 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if path == "" {
 		job, err = c.promptCronJob(allJobs)
 	} else {
-		c.cronJobFromPath(path)
+		job, err = c.cronJobFromPath(path)
+	}
+	if err != nil {
+		return err
 	}
 
 	for _, jj := range allJobs {
@@ -205,7 +208,7 @@ func promptCommand() (*capsule.CronJob_Command, error) {
 	return cmd, nil
 }
 
-func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) delete(ctx context.Context, _ *cobra.Command, args []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err
