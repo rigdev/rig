@@ -35,6 +35,7 @@ require (
 	github.com/distribution/reference v0.5.0
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/color v1.16.0
+	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/jedib0t/go-pretty/v6 v6.4.6

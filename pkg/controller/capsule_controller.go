@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"net/url"
 	"path"
 	"slices"
 	"strings"
@@ -1649,9 +1650,10 @@ func upsertIfNewer[T client.Object](
 	gvk := gvks[0]
 	log = log.WithValues(
 		"gvk", map[string]string{
-			"kind":    gvk.Kind,
-			"group":   gvk.Group,
-			"version": gvk.Version,
+			"kind":     gvk.Kind,
+			"group":    gvk.Group,
+			"version":  gvk.Version,
+			"obj_name": newObj.GetName(),
 		},
 	)
 
@@ -1673,20 +1675,20 @@ func upsertIfNewer[T client.Object](
 		return fmt.Errorf("found existing %s not owned by capsule", gvk.Kind)
 	}
 
-	orig := newObj.DeepCopyObject().(client.Object)
+	materializedObj := newObj.DeepCopyObject().(T)
 
 	// Dry run to fully materialize the new spec.
-	newObj.SetResourceVersion(currentObj.GetResourceVersion())
-	if err := r.Update(ctx, newObj, client.DryRunAll); err != nil {
+	materializedObj.SetResourceVersion(currentObj.GetResourceVersion())
+	if err := r.Update(ctx, materializedObj, client.DryRunAll); err != nil {
 		res.State = "failed"
 		res.Message = err.Error()
-		return fmt.Errorf("could not update %s: %w", gvk.Kind, err)
+		return fmt.Errorf("could not test update to %s: %w", gvk.Kind, err)
 	}
-	newObj.SetResourceVersion("")
 
-	if !equal(newObj, currentObj) {
+	materializedObj.SetResourceVersion("")
+	if !equal(materializedObj, currentObj) {
 		log.Info("updating resource")
-		if err := r.Update(ctx, orig); err != nil {
+		if err := r.Update(ctx, newObj); err != nil {
 			res.State = "failed"
 			res.Message = err.Error()
 			return fmt.Errorf("could not update %s: %w", gvk.Kind, err)
@@ -1802,9 +1804,9 @@ func (r *CapsuleReconciler) reconcileCronJobs(
 	}
 
 	// Create/update jobs
-	existingJobByName := map[string]*batchv1.CronJob{}
+	existingJobByName := map[string]batchv1.CronJob{}
 	for _, j := range existingJobs.Items {
-		existingJobByName[j.Name] = &j
+		existingJobByName[j.Name] = j
 	}
 	for _, job := range jobs {
 		existingCronJob, ok := existingJobByName[job.Name]
@@ -1818,8 +1820,7 @@ func (r *CapsuleReconciler) reconcileCronJobs(
 
 		if err := upsertIfNewer(
 			ctx, r,
-			existingCronJob,
-			job,
+			&existingCronJob, job,
 			log, capsule, status,
 			func(t1, t2 *batchv1.CronJob) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
@@ -1858,12 +1859,20 @@ func (r *CapsuleReconciler) createCronJobs(
 	}
 
 	for _, job := range capsule.Spec.CronJobs {
-		template := deployment.Spec.Template.DeepCopy()
-		c := template.Spec.Containers[0]
-		c.Command = []string{job.Command.Command}
-		c.Args = job.Command.Args
-		template.Spec.Containers[0] = c
-		template.Spec.RestartPolicy = v1.RestartPolicyNever
+		var template v1.PodTemplateSpec
+		if job.Command != nil {
+			template = *deployment.Spec.Template.DeepCopy()
+			c := template.Spec.Containers[0]
+			c.Command = []string{job.Command.Command}
+			c.Args = job.Command.Args
+			template.Spec.Containers[0] = c
+			template.Spec.RestartPolicy = v1.RestartPolicyNever
+
+		} else if job.URL != nil {
+			template = createURLCronJobTemplate(capsule, job)
+		} else {
+			return nil, fmt.Errorf("neither Command nor URL was set on job %s", job.Name)
+		}
 
 		annotations := map[string]string{}
 		maps.Copy(annotations, capsule.Annotations)
@@ -1891,7 +1900,7 @@ func (r *CapsuleReconciler) createCronJobs(
 					Spec: batchv1.JobSpec{
 						ActiveDeadlineSeconds: ptr.Convert[uint, int64](job.TimeoutSeconds),
 						BackoffLimit:          ptr.Convert[uint, int32](job.MaxRetries),
-						Template:              *template,
+						Template:              template,
 					},
 				},
 			},
@@ -1903,4 +1912,24 @@ func (r *CapsuleReconciler) createCronJobs(
 	}
 
 	return res, nil
+}
+
+func createURLCronJobTemplate(capsule *v1alpha2.Capsule, job v1alpha2.CronJob) v1.PodTemplateSpec {
+	args := []string{"-G", "--fail-with-body"}
+	for k, v := range job.URL.QueryParameters {
+		args = append(args, "-d", fmt.Sprintf("%v=%v", url.QueryEscape(k), url.QueryEscape(v)))
+	}
+	urlString := fmt.Sprintf("http://%s:%v%s", capsule.Name, job.URL.Port, job.URL.Path)
+	args = append(args, urlString)
+	return v1.PodTemplateSpec{
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{{
+				Name:    fmt.Sprintf("%s-%s", capsule.Name, job.Name),
+				Image:   "quay.io/curl/curl:latest",
+				Command: []string{"curl"},
+				Args:    args,
+			}},
+			RestartPolicy: v1.RestartPolicyNever,
+		},
+	}
 }
