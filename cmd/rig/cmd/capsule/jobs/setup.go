@@ -87,7 +87,7 @@ func Setup(parent *cobra.Command) {
 Possible states are ongoing, completed, failed, terminated.`,
 	)
 	executions.Flags().Uint32VarP(
-		&limit, "limit", "l", 0, "limits the number of outputs",
+		&limit, "limit", "l", 50, "limits the number of outputs",
 	)
 
 	jobs.AddCommand(executions)

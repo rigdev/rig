@@ -308,6 +308,7 @@ type CapsuleStatus struct {
 	OwnedResources     []OwnedResource   `json:"ownedResources,omitempty"`
 	UsedResources      []UsedResource    `json:"usedResources,omitempty"`
 	Deployment         *DeploymentStatus `json:"deploymentStatus,omitempty"`
+	Errors             []string          `json:"errors,omitempty"`
 }
 
 type DeploymentStatus struct {

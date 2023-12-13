@@ -823,6 +823,10 @@ spec:
                     - failed
                     type: string
                 type: object
+              errors:
+                items:
+                  type: string
+                type: array
               observedGeneration:
                 format: int64
                 type: integer
