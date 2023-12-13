@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (c *Cmd) executions(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) executions(ctx context.Context, _ *cobra.Command, _ []string) error {
 	from, to, err := parseFromTo()
 	if err != nil {
 		return err

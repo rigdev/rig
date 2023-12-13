@@ -15,7 +15,7 @@ import (
 
 const maxColLength = 20
 
-func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err

@@ -69,9 +69,18 @@ func Setup(parent *cobra.Command) {
 		RunE:  base.CtxWrap(cmd.executions),
 	}
 	executions.Flags().StringVarP(&jobName, "job", "j", "", "Name of the job to fetch executions from")
-	executions.Flags().StringVarP(&fromStr, "from", "f", "", "If set, only include executions started after this date. Layout is 2006-01-02 15:04:05")
-	executions.Flags().StringVarP(&toStr, "to", "t", "", "If set, only include executions started before this date. Layout is 2006-01-02 15:04:05")
-	executions.Flags().StringVarP(&since, "since", "s", "", "A duration. If set, only include executions younger than 'since'. Cannot be used if either --from or --to is used.")
+	executions.Flags().StringVarP(
+		&fromStr, "from", "f", "",
+		"If set, only include executions started after this date. Layout is 2006-01-02 15:04:05",
+	)
+	executions.Flags().StringVarP(
+		&toStr, "to", "t", "",
+		"If set, only include executions started before this date. Layout is 2006-01-02 15:04:05",
+	)
+	executions.Flags().StringVarP(
+		&since, "since", "s", "",
+		"A duration. If set, only include executions younger than 'since'. Cannot be used if either --from or --to is used.",
+	)
 	executions.Flags().StringVar(
 		&states, "states", "",
 		`If set, filter executions based on state. Can be a , seperated list of states.

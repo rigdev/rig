@@ -20,7 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (c *Cmd) add(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
 	if err != nil {
 		return err
@@ -29,9 +29,9 @@ func (c *Cmd) add(ctx context.Context, cmd *cobra.Command, args []string) error 
 	allJobs := rollout.GetConfig().GetCronJobs()
 	var job *capsule.CronJob
 	if path == "" {
-		job, err = c.promptCronJob(ctx, allJobs)
+		job, err = c.promptCronJob(allJobs)
 	} else {
-		c.cronJobFromPath(ctx, path)
+		c.cronJobFromPath(path)
 	}
 
 	for _, jj := range allJobs {
@@ -60,7 +60,7 @@ func (c *Cmd) add(ctx context.Context, cmd *cobra.Command, args []string) error 
 	return nil
 }
 
-func (c *Cmd) cronJobFromPath(ctx context.Context, path string) (*capsule.CronJob, error) {
+func (c *Cmd) cronJobFromPath(path string) (*capsule.CronJob, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (c *Cmd) cronJobFromPath(ctx context.Context, path string) (*capsule.CronJo
 	return &job, nil
 }
 
-func (c *Cmd) promptCronJob(ctx context.Context, existingJobs []*capsule.CronJob) (*capsule.CronJob, error) {
+func (c *Cmd) promptCronJob(existingJobs []*capsule.CronJob) (*capsule.CronJob, error) {
 	job := &capsule.CronJob{}
 
 	var existingNames []string
