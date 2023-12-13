@@ -62,7 +62,7 @@ type URL struct {
 	Port uint16 `json:"port"`
 	// +kubebuilder:validation:Required
 	Path            string            `json:"path"`
-	QueryParameters map[string]string `json:"queryParameters"`
+	QueryParameters map[string]string `json:"queryParameters,omitempty"`
 }
 
 type JobCommand struct {

@@ -445,7 +445,6 @@ spec:
                       required:
                       - path
                       - port
-                      - queryParameters
                       type: object
                   required:
                   - name

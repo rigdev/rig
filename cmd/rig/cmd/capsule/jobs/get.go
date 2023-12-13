@@ -31,11 +31,15 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 	tbl := table.New("Name", "Schedule", "Command", "Timeout", "Max Retries")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	for _, j := range cronJobs {
+		timeoutString := "-"
+		if t := j.GetTimeout(); t != nil {
+			timeoutString = t.AsDuration().String()
+		}
 		row := formatRow([]any{
 			j.GetJobName(),
 			j.GetSchedule(),
 			formatCommand(j),
-			j.GetTimeout().AsDuration().String(),
+			timeoutString,
 			j.GetMaxRetries(),
 		})
 		tbl.AddRow(row...)
@@ -47,7 +51,7 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 func formatCommand(j *capsule.CronJob) string {
 	if url := j.GetUrl(); url != nil {
-		return fmt.Sprintf("%v:%s", url.GetPort(), url.GetPath())
+		return fmt.Sprintf(":%v%s", url.GetPort(), url.GetPath())
 	}
 	if cmd := j.GetCommand(); cmd != nil {
 		return cmd.GetCommand() + " " + strings.Join(cmd.GetArgs(), " ")
