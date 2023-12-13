@@ -169,6 +169,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
+| `name` _string_ |  |
+| `url` _string_ |  |
 | `type` _[ClusterType](#clustertype)_ | Type of the cluster - either `docker` or `k8s`. |
 | `devRegistry` _[DevRegistry](#devregistry)_ | DevRegistry configuration |
 | `git` _[ClusterGit](#clustergit)_ | Git sets up gitops write back for this cluster. |
@@ -243,6 +245,22 @@ EmailType represents a type of mailing provider
 _Appears in:_
 - [Email](#email)
 
+
+
+### Environment
+
+
+
+
+
+_Appears in:_
+- [PlatformConfig](#platformconfig)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `cluster` _string_ |  |
+| `namespace_template` _string_ |  |
 
 
 ### GitAuthor
@@ -409,6 +427,8 @@ OperatorConfig is the Schema for the configs API
 | `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration |
 | `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
 | `logging` _[Logging](#logging)_ | Loggin holds information about the granularity of logging |
+| `clusters` _[Cluster](#cluster) array_ |  |
+| `environments` _[Environment](#environment) array_ |  |
 
 
 ### PrometheusServiceMonitor

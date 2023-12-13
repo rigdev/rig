@@ -125,6 +125,10 @@ type PlatformConfig struct {
 
 	// Loggin holds information about the granularity of logging
 	Logging Logging `json:"logging,omitempty"`
+
+	Clusters []Cluster `json:"clusters,omitempty"`
+
+	Environments []Environment `json:"environments,omitempty"`
 }
 
 // Auth specifies authentication configuration.
@@ -274,6 +278,10 @@ type OAuthClientCredentials struct {
 
 // Cluster specifies cluster configuration
 type Cluster struct {
+	Name string `json:"name,omitempty"`
+
+	URL string `json:"url,omitempty"`
+
 	// Type of the cluster - either `docker` or `k8s`.
 	Type ClusterType `json:"type,omitempty"`
 
@@ -282,6 +290,14 @@ type Cluster struct {
 
 	// Git sets up gitops write back for this cluster.
 	Git ClusterGit `json:"git,omitempty"`
+}
+
+type Environment struct {
+	Name string `json:"name,omitempty"`
+
+	Cluster string `json:"cluster,omitempty"`
+
+	NamespaceTemplate string `json:"namespace_template,omitempty"`
 }
 
 // ClusterGit specifies configuration for git integration. This can be used to
@@ -474,6 +490,13 @@ Capsule deleted by {{ .Initiator.Name }}.
 		Email: Email{
 			From: "",
 			Type: EmailTypeNoEmail,
+		},
+		Environments: []Environment{
+			{
+				Name:              "Local",
+				Cluster:           "default",
+				NamespaceTemplate: "{{ .Project.Name }}",
+			},
 		},
 	}
 
