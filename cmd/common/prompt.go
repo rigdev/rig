@@ -32,6 +32,10 @@ func ValidateIntOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateInt
 }
 
+func ValidateUIntOpt(inp *textinput.TextInput) {
+	inp.Validate = ValidateUInt
+}
+
 func ValidateIntInRangeOpt(minInclusive, maxInclusive int) GetInputOption {
 	return func(inp *textinput.TextInput) {
 		inp.Validate = ValidateIntInRange(minInclusive, maxInclusive)
@@ -90,23 +94,41 @@ func ValidatePortOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidatePort
 }
 
+func ValidateURLPathOpt(inp *textinput.TextInput) {
+	inp.Validate = utils.ValidateURLPath
+}
+
+func ValidateLengthOpt(minLength, maxLength int) GetInputOption {
+	return func(inp *textinput.TextInput) {
+		inp.Validate = ValidateLength(minLength, maxLength)
+	}
+
+}
+
 func ValidateAndOpt(validators ...func(string) error) GetInputOption {
 	return func(inp *textinput.TextInput) {
-		inp.Validate = func(s string) error {
-			for _, v := range validators {
-				if err := v(s); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
+		inp.Validate = ValidateAnd(validators...)
 	}
+}
+
+func ValidateAllowEmptyOpt(validator func(string) error) GetInputOption {
+	return func(inp *textinput.TextInput) {
+		inp.Validate = ValidateAllowEmpty(validator)
+	}
+}
+
+func ValidateCronExpressionOpt(inp *textinput.TextInput) {
+	inp.Validate = ValidateCronExpression
 }
 
 func ValidateUniqueOpt(values []string) GetInputOption {
 	return func(inp *textinput.TextInput) {
 		inp.Validate = ValidateUnique(values)
 	}
+}
+
+func ValidateDurationOpt(inp *textinput.TextInput) {
+	inp.Validate = ValidateDuration
 }
 
 func InputDefaultOpt(def string) GetInputOption {

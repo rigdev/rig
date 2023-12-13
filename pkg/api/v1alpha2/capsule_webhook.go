@@ -344,6 +344,12 @@ func (h *HorizontalScale) validate(fPath *field.Path) field.ErrorList {
 	return errs
 }
 
+func MaxAllowedCronJobName(capsuleName string) int {
+	// CronJob names is a max of 52, but we prepend '{capsulename}-' to the job name
+	// when constructing the CronJob
+	return 52 - 1 - len(capsuleName)
+}
+
 func (r *Capsule) validateCronJobs() field.ErrorList {
 	var errs field.ErrorList
 
@@ -363,9 +369,7 @@ func (r *Capsule) validateCronJobs() field.ErrorList {
 			errs = append(errs, field.Invalid(jPath.Child("name"), job.Name, strings.Join(dnsErrs, "; ")))
 		}
 
-		// CronJob names is a max of 52, but we prepend '{capsulename}-' to the job name
-		// when constructing the CronJob
-		maxLength := 52 - 1 - len(r.Name)
+		maxLength := MaxAllowedCronJobName(r.Name)
 		if len(job.Name) > maxLength {
 			errs = append(
 				errs,

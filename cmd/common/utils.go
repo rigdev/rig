@@ -19,6 +19,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
+	"github.com/robfig/cron"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -39,6 +40,19 @@ func ValidateInt(input string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func ValidateUInt(input string) error {
+	n, err := strconv.Atoi(input)
+	if err != nil {
+		return err
+	}
+
+	if n < 0 {
+		return errors.New("cannot be negative")
+	}
+
 	return nil
 }
 
@@ -154,6 +168,45 @@ func ValidateUnique(values []string) func(string) error {
 		}
 		return nil
 	}
+}
+
+func ValidateLength(minLength, maxLength int) func(string) error {
+	return func(s string) error {
+		if !(minLength <= len(s) && len(s) <= maxLength) {
+			return fmt.Errorf("length must be betwen %v and %v", minLength, maxLength)
+		}
+		return nil
+	}
+}
+
+func ValidateCronExpression(s string) error {
+	_, err := cron.Parse(s)
+	return err
+}
+
+func ValidateAnd(validators ...func(s string) error) func(s string) error {
+	return func(s string) error {
+		for _, v := range validators {
+			if err := v(s); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func ValidateAllowEmpty(validator func(string) error) func(s string) error {
+	return func(s string) error {
+		if len(s) == 0 {
+			return nil
+		}
+		return validator(s)
+	}
+}
+
+func ValidateDuration(s string) error {
+	_, err := time.ParseDuration(s)
+	return err
 }
 
 func parseBool(s string) (bool, error) {
