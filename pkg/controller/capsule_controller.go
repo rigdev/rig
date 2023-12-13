@@ -1035,7 +1035,6 @@ func (r *CapsuleReconciler) reconcileService(
 			log.Info("Found existing service not owned by capsule. Will not delete it.")
 		} else {
 			log.Info("Found existing service not owned by capsule. Will not update it.")
-			return errors.New("found existing service not owned by capsule")
 		}
 	} else {
 		if len(capsule.Spec.Interfaces) == 0 {
