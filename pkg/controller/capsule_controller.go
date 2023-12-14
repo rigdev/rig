@@ -1292,27 +1292,45 @@ func (r *CapsuleReconciler) createIngress(
 			ing.Spec.Rules = append(ing.Spec.Rules, netv1.IngressRule{
 				Host: inf.Public.Ingress.Host,
 				IngressRuleValue: netv1.IngressRuleValue{
-					HTTP: &netv1.HTTPIngressRuleValue{
-						Paths: []netv1.HTTPIngressPath{
-							{
-								PathType: ptr.New(netv1.PathTypePrefix),
-								Path:     "/",
-								Backend: netv1.IngressBackend{
-									Service: &netv1.IngressServiceBackend{
-										Name: capsule.Name,
-										Port: netv1.ServiceBackendPort{
-											Name: inf.Name,
-										},
-									},
+					HTTP: &netv1.HTTPIngressRuleValue{},
+				},
+			})
+
+			if len(inf.Public.Ingress.PathPrefixes) == 0 {
+				ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = []netv1.HTTPIngressPath{
+					{
+						PathType: ptr.New(netv1.PathTypePrefix),
+						Path:     "/",
+						Backend: netv1.IngressBackend{
+							Service: &netv1.IngressServiceBackend{
+								Name: capsule.Name,
+								Port: netv1.ServiceBackendPort{
+									Name: inf.Name,
 								},
 							},
 						},
 					},
-				},
-			})
-			if inf.Public.Ingress.PathPrefix != "" {
-				ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Path = inf.Public.Ingress.PathPrefix
+				}
+			} else {
+				for _, prefix := range inf.Public.Ingress.PathPrefixes {
+					ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = append(
+						ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths,
+						netv1.HTTPIngressPath{
+							PathType: ptr.New(netv1.PathTypePrefix),
+							Path:     prefix,
+							Backend: netv1.IngressBackend{
+								Service: &netv1.IngressServiceBackend{
+									Name: capsule.Name,
+									Port: netv1.ServiceBackendPort{
+										Name: inf.Name,
+									},
+								},
+							},
+						},
+					)
+				}
 			}
+
 			if len(ing.Spec.TLS) == 0 {
 				ing.Spec.TLS = []netv1.IngressTLS{{
 					SecretName: fmt.Sprintf("%s-tls", capsule.Name),
