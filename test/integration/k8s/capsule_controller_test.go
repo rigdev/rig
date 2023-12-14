@@ -405,8 +405,8 @@ func (s *K8sTestSuite) TestController() {
 
 	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
 		Ingress: &v1alpha2.CapsuleInterfaceIngress{
-			Host:       "test.com",
-			PathPrefix: "/test",
+			Host:         "test.com",
+			PathPrefixes: []string{"/test"},
 		},
 	}
 	assert.NoError(t, k8sClient.Update(ctx, &capsule))
