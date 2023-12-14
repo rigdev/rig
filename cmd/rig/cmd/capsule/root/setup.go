@@ -38,6 +38,7 @@ var (
 	interactive bool
 	forceDeploy bool
 	follow      bool
+	deleteCmd   bool
 )
 
 var (
@@ -136,30 +137,24 @@ func Setup(parent *cobra.Command) {
 	capsuleGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
 	capsuleCmd.AddCommand(capsuleGet)
 
-	capsuleConfig := &cobra.Command{
-		Use:   "config",
-		Short: "Configure the capsule",
-		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.config),
+	capsuleCmdArgs := &cobra.Command{
+		Use:   "cmd [some-command arg1 arg2]",
+		Short: "Add command and arguments to the capsule",
+		RunE:  base.CtxWrap(cmd.cmdArgs),
 	}
-	capsuleConfig.Flags().Bool(
-		"auto-add-service-account", false, "automatically add the rig service account to the capsule",
-	)
-	capsuleConfig.Flags().StringVar(&command, "cmd", "", "Container CMD to run")
-	capsuleConfig.Flags().StringSliceVar(&args, "args", []string{}, "Container CMD args")
-	capsuleConfig.Flags().BoolVarP(
+	capsuleCmdArgs.Flags().BoolVarP(
 		&forceDeploy,
 		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
 	)
-	if err := capsuleConfig.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
+	capsuleCmdArgs.Flags().BoolVarP(
+		&deleteCmd,
+		"delete", "d", false, "If set deletes the command and args from the capsule",
+	)
+	if err := capsuleCmdArgs.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if err := capsuleConfig.RegisterFlagCompletionFunc("auto-add-service-account", common.BoolCompletions); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	capsuleCmd.AddCommand(capsuleConfig)
+	capsuleCmd.AddCommand(capsuleCmdArgs)
 
 	capsuleLogs := &cobra.Command{
 		Use:   "logs",
