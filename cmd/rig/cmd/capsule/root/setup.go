@@ -42,9 +42,7 @@ var (
 )
 
 var (
-	command string
-	args    []string
-	since   string
+	since string
 )
 
 var omitCapsuleIDAnnotation = map[string]string{
