@@ -62,7 +62,7 @@ _Appears in:_
 
 ### CapsuleInterfaceIngress
 
-_Underlying type:_ _[struct{Host string "json:\"host\""}](#struct{host-string-"json:\"host\""})_
+_Underlying type:_ _[struct{Host string "json:\"host\""; PathPrefix string "json:\"pathPrefix,omitempty\""}](#struct{host-string-"json:\"host\"";-pathprefix-string-"json:\"pathprefix,omitempty\""})_
 
 CapsuleInterfaceIngress defines that the interface should be exposed as http ingress
 
