@@ -265,8 +265,12 @@ type CapsulePublicInterface struct {
 // CapsuleInterfaceIngress defines that the interface should be exposed as http
 // ingress
 type CapsuleInterfaceIngress struct {
-	// Host specifies the DNS name of the Ingress resource
+	// Host specifies the DNS name of the Ingress resource.
 	Host string `json:"host"`
+
+	// PathPrefix specifies a path prefix which requests should match in order
+	// to hit this ingress.
+	PathPrefix string `json:"pathPrefix,omitempty"`
 }
 
 // CapsuleInterfaceLoadBalancer defines that the interface should be exposed as

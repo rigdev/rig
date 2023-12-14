@@ -1310,6 +1310,9 @@ func (r *CapsuleReconciler) createIngress(
 					},
 				},
 			})
+			if inf.Public.Ingress.PathPrefix != "" {
+				ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths[0].Path = inf.Public.Ingress.PathPrefix
+			}
 			if len(ing.Spec.TLS) == 0 {
 				ing.Spec.TLS = []netv1.IngressTLS{{
 					SecretName: fmt.Sprintf("%s-tls", capsule.Name),

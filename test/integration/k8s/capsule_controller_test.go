@@ -405,7 +405,8 @@ func (s *K8sTestSuite) TestController() {
 
 	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
 		Ingress: &v1alpha2.CapsuleInterfaceIngress{
-			Host: "test.com",
+			Host:       "test.com",
+			PathPrefix: "/test",
 		},
 	}
 	assert.NoError(t, k8sClient.Update(ctx, &capsule))
@@ -426,7 +427,7 @@ func (s *K8sTestSuite) TestController() {
 					IngressRuleValue: netv1.IngressRuleValue{
 						HTTP: &netv1.HTTPIngressRuleValue{
 							Paths: []netv1.HTTPIngressPath{{
-								Path:     "/",
+								Path:     "/test",
 								PathType: &pt,
 								Backend: netv1.IngressBackend{
 									Service: &netv1.IngressServiceBackend{
