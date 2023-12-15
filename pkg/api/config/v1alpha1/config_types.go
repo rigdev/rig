@@ -303,10 +303,14 @@ type Cluster struct {
 }
 
 type Environment struct {
+	// Name of the environment.
 	Name string `json:"name,omitempty"`
 
+	// Cluster name the environment is hosted in.
 	Cluster string `json:"cluster,omitempty"`
 
+	// NamespaceTemplate is used to generate the namespace name when configuring resources.
+	// Default is to set the namespace equal to the project name.
 	NamespaceTemplate string `json:"namespace_template,omitempty"`
 }
 
