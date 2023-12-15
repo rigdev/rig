@@ -169,8 +169,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ |  |
-| `url` _string_ |  |
+| `name` _string_ | Name of the cluster. The name is used as a reference for the cluster through the documentation and API endpoints. |
+| `url` _string_ | URL to communicate to the cluster. If set, a Token and CertificateAuthority should be provided as well. |
+| `token` _string_ | Token for communicating with the cluster. Available through a service-account's secret. |
+| `certificateAuthority` _string_ | Certificate authority for communicating with the cluster. Available through a service-account's secret. |
 | `type` _[ClusterType](#clustertype)_ | Type of the cluster - either `docker` or `k8s`. |
 | `devRegistry` _[DevRegistry](#devregistry)_ | DevRegistry configuration |
 | `git` _[ClusterGit](#clustergit)_ | Git sets up gitops write back for this cluster. |

@@ -278,9 +278,19 @@ type OAuthClientCredentials struct {
 
 // Cluster specifies cluster configuration
 type Cluster struct {
+	// Name of the cluster. The name is used as a reference for the cluster through the documentation
+	// and API endpoints.
 	Name string `json:"name,omitempty"`
 
+	// URL to communicate to the cluster. If set, a Token and CertificateAuthority should
+	// be provided as well.
 	URL string `json:"url,omitempty"`
+
+	// Token for communicating with the cluster. Available through a service-account's secret.
+	Token string `json:"token,omitempty"`
+
+	// Certificate authority for communicating with the cluster. Available through a service-account's secret.
+	CertificateAuthority string `json:"certificateAuthority,omitempty"`
 
 	// Type of the cluster - either `docker` or `k8s`.
 	Type ClusterType `json:"type,omitempty"`
