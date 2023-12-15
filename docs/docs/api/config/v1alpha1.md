@@ -403,6 +403,7 @@ OperatorConfig is the Schema for the configs API
 | `devModeEnabled` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be more human readable. |
 | `leaderElectionEnabled` _boolean_ | LeaderElectionEnabled enables leader election when running multiple instances of the operator. |
 | `certManager` _[CertManagerConfig](#certmanagerconfig)_ | Certmanager holds configuration for how the operator should create certificates for ingress resources. |
+| `service` _[ServiceConfig](#serviceconfig)_ | Service holds the configuration for service resources created by the operator. |
 | `ingress` _[IngressConfig](#ingressconfig)_ | Ingress holds the configuration for ingress resources created by the operator. |
 | `prometheusServiceMonitor` _[PrometheusServiceMonitor](#prometheusservicemonitor)_ | PrometheusServiceMonitor defines if Rig should spawn a Prometheus ServiceMonitor per capsule for use with a Prometheus Operator stack. |
 
@@ -476,6 +477,20 @@ _Appears in:_
 | --- | --- |
 | `privateKey` _string_ | PrivateKey is a PEM encoded SSH private key. |
 | `password` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
+
+
+### ServiceConfig
+
+
+
+
+
+_Appears in:_
+- [OperatorConfig](#operatorconfig)
+
+| Field | Description |
+| --- | --- |
+| `type` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ | Type of the service to generate. By default, services are of type ClusterIP. Valid values are ClusterIP, NodePort. |
 
 
 
