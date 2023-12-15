@@ -405,8 +405,7 @@ func (s *K8sTestSuite) TestController() {
 
 	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
 		Ingress: &v1alpha2.CapsuleInterfaceIngress{
-			Host:         "test.com",
-			PathPrefixes: []string{"/test"},
+			Host: "test.com",
 		},
 	}
 	assert.NoError(t, k8sClient.Update(ctx, &capsule))
@@ -427,7 +426,7 @@ func (s *K8sTestSuite) TestController() {
 					IngressRuleValue: netv1.IngressRuleValue{
 						HTTP: &netv1.HTTPIngressRuleValue{
 							Paths: []netv1.HTTPIngressPath{{
-								Path:     "/test",
+								Path:     "/",
 								PathType: &pt,
 								Backend: netv1.IngressBackend{
 									Service: &netv1.IngressServiceBackend{
@@ -464,6 +463,61 @@ func (s *K8sTestSuite) TestController() {
 				DNSNames: []string{
 					"test.com",
 				},
+			},
+		},
+	})
+
+	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+	capsule.Spec.Interfaces[0].Public.Ingress.PathPrefixes = []string{"/test1", "/test2"}
+	assert.NoError(t, k8sClient.Update(ctx, &capsule))
+
+	expectResources(ctx, t, k8sClient, []client.Object{
+		&netv1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: ns.Name,
+				OwnerReferences: []metav1.OwnerReference{
+					capsuleOwnerRef,
+				},
+			},
+			Spec: netv1.IngressSpec{
+				Rules: []netv1.IngressRule{{
+					Host: "test.com",
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: []netv1.HTTPIngressPath{
+								{
+									Path:     "/test1",
+									PathType: &pt,
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: "test",
+											Port: netv1.ServiceBackendPort{
+												Name: "http",
+											},
+										},
+									},
+								},
+								{
+									Path:     "/test2",
+									PathType: &pt,
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: "test",
+											Port: netv1.ServiceBackendPort{
+												Name: "http",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}},
+				TLS: []netv1.IngressTLS{{
+					Hosts:      []string{"test.com"},
+					SecretName: "test-tls",
+				}},
 			},
 		},
 	})
