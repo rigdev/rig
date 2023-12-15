@@ -76,3 +76,10 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+serviceMonitor:
+  # toggles wether or not to create a `ServiceMonitor` resource. This requires
+  # that the prometheus operator CRDs are available in the cluster.
+  enabled: false
+  # labels set on the `ServiceMonitor`
+  labels: {}

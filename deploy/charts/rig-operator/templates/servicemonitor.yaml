@@ -1,0 +1,16 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "rig-operator.fullname" . }}
+  labels:
+    {{- include "rig-operator.labels" . | nindent 4 }}
+    {{- if .Values.serviceMonitor.labels }}
+    {{ .Values.serviceMonitor.labels | toYaml }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels: {{- include "rig-operator.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: metrics
+{{- end }}
