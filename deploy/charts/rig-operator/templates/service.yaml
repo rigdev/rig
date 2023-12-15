@@ -1,5 +1,3 @@
-# TODO: add condition for metrics
-{{- if .Values.config.webhooksEnabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,10 +6,12 @@ metadata:
 spec:
   type: ClusterIP
   ports:
+    {{- if .Values.config.webhooksEnabled }}
     - name: webhooks
       port: 9443
       targetPort: webhooks
       protocol: TCP
+    {{- end }}
     - name: grpc
       port: 9000
       targetPort: http
@@ -21,4 +21,3 @@ spec:
       targetPort: metrics
       protocol: TCP
   selector: {{ include "rig-operator.selectorLabels" . | nindent 4 }}
-{{- end }}
