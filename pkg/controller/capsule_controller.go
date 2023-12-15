@@ -70,7 +70,7 @@ type CapsuleReconciler struct {
 	reconcileSteps []reconcileStepFunc
 }
 
-type reconciler struct {
+type reconcileRequest struct {
 	scheme *runtime.Scheme
 	config *configv1alpha1.OperatorConfig
 	client client.Client
@@ -85,7 +85,7 @@ type reconciler struct {
 
 type reconcileStepFunc func(
 	ctx context.Context,
-	r *reconciler,
+	r *reconcileRequest,
 ) error
 
 const (
@@ -348,7 +348,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := log.FromContext(ctx)
 	log.Info("reconciliation started")
 
-	reconciler := &reconciler{
+	reconciler := &reconcileRequest{
 		req:     req,
 		logger:  log,
 		capsule: v1alpha2.Capsule{},
@@ -410,7 +410,7 @@ type checksums struct {
 	files     string
 }
 
-func reconcilerSetup(ctx context.Context, r *reconciler) error {
+func reconcilerSetup(ctx context.Context, r *reconcileRequest) error {
 	if err := r.setConfigs(ctx); err != nil {
 		return err
 	}
@@ -421,7 +421,7 @@ func reconcilerSetup(ctx context.Context, r *reconciler) error {
 	return nil
 }
 
-func (r *reconciler) setConfigChecksums() error {
+func (r *reconcileRequest) setConfigChecksums() error {
 	sharedEnv, err := r.configSharedEnvChecksum()
 	if err != nil {
 		return err
@@ -455,7 +455,7 @@ func (r *reconciler) setConfigChecksums() error {
 	return nil
 }
 
-func (r *reconciler) configSharedEnvChecksum() (string, error) {
+func (r *reconcileRequest) configSharedEnvChecksum() (string, error) {
 	if !r.configs.hasSharedConfig() {
 		return "", nil
 	}
@@ -481,7 +481,7 @@ func (r *reconciler) configSharedEnvChecksum() (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (r *reconciler) configAutoEnvChecksum(
+func (r *reconcileRequest) configAutoEnvChecksum(
 	configMap *v1.ConfigMap,
 	secret *v1.Secret,
 ) (string, error) {
@@ -505,7 +505,7 @@ func (r *reconciler) configAutoEnvChecksum(
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (r *reconciler) configEnvChecksum() (string, error) {
+func (r *reconcileRequest) configEnvChecksum() (string, error) {
 	if r.capsule.Spec.Env == nil || len(r.capsule.Spec.Env.From) == 0 {
 		return "", nil
 	}
@@ -527,7 +527,7 @@ func (r *reconciler) configEnvChecksum() (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (r *reconciler) configFilesChecksum() (string, error) {
+func (r *reconcileRequest) configFilesChecksum() (string, error) {
 	if len(r.capsule.Spec.Files) == 0 {
 		return "", nil
 	}
@@ -582,7 +582,7 @@ func (r *reconciler) configFilesChecksum() (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (r *reconciler) setConfigs(ctx context.Context) error {
+func (r *reconcileRequest) setConfigs(ctx context.Context) error {
 	r.configs = configs{
 		configMaps: map[string]*v1.ConfigMap{},
 		secrets:    map[string]*v1.Secret{},
@@ -651,7 +651,7 @@ func (r *reconciler) setConfigs(ctx context.Context) error {
 	return nil
 }
 
-func (r *reconciler) setUsedSource(
+func (r *reconcileRequest) setUsedSource(
 	ctx context.Context,
 	kind string,
 	name string,
@@ -708,7 +708,7 @@ func (r *reconciler) setUsedSource(
 	return nil
 }
 
-func reconcileDeployment(ctx context.Context, r *reconciler) error {
+func reconcileDeployment(ctx context.Context, r *reconcileRequest) error {
 	existingDeploy := &appsv1.Deployment{}
 	hasExistingDeployment := true
 	if err := r.client.Get(ctx, r.req.NamespacedName, existingDeploy); err != nil {
@@ -755,7 +755,7 @@ func reconcileDeployment(ctx context.Context, r *reconciler) error {
 	return err
 }
 
-func (r *reconciler) createDeployment(existingDeployment *appsv1.Deployment) (*appsv1.Deployment, error) {
+func (r *reconcileRequest) createDeployment(existingDeployment *appsv1.Deployment) (*appsv1.Deployment, error) {
 	var ports []v1.ContainerPort
 	for _, i := range r.capsule.Spec.Interfaces {
 		ports = append(ports, v1.ContainerPort{
@@ -999,7 +999,7 @@ func makeResourceRequirements(capsule *v1alpha2.Capsule) v1.ResourceRequirements
 	return res
 }
 
-func reconcileService(ctx context.Context, r *reconciler) error {
+func reconcileService(ctx context.Context, r *reconcileRequest) error {
 	service, err := r.createService()
 	if err != nil {
 		return err
@@ -1044,7 +1044,7 @@ func reconcileService(ctx context.Context, r *reconciler) error {
 	return nil
 }
 
-func (r *reconciler) createService() (*v1.Service, error) {
+func (r *reconcileRequest) createService() (*v1.Service, error) {
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.capsule.Name,
@@ -1057,6 +1057,7 @@ func (r *reconciler) createService() (*v1.Service, error) {
 			Selector: map[string]string{
 				LabelCapsule: r.capsule.Name,
 			},
+			Type: r.config.Service.Type,
 		},
 	}
 
@@ -1075,7 +1076,7 @@ func (r *reconciler) createService() (*v1.Service, error) {
 	return svc, nil
 }
 
-func reconcileCertificate(ctx context.Context, r *reconciler) error {
+func reconcileCertificate(ctx context.Context, r *reconcileRequest) error {
 	crt, err := r.createCertificate()
 	if err != nil {
 		return err
@@ -1133,12 +1134,12 @@ func reconcileCertificate(ctx context.Context, r *reconciler) error {
 	return nil
 }
 
-func (r *reconciler) shouldCreateCertificateRessource() bool {
+func (r *reconcileRequest) shouldCreateCertificateRessource() bool {
 	return r.config.Certmanager != nil &&
 		r.config.Certmanager.CreateCertificateResources
 }
 
-func (r *reconciler) createCertificate() (*cmv1.Certificate, error) {
+func (r *reconcileRequest) createCertificate() (*cmv1.Certificate, error) {
 	crt := &cmv1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.capsule.Name,
@@ -1169,11 +1170,11 @@ func (r *reconciler) createCertificate() (*cmv1.Certificate, error) {
 	return crt, nil
 }
 
-func (r *reconciler) ingressIsSupported() bool {
+func (r *reconcileRequest) ingressIsSupported() bool {
 	return r.config.Certmanager != nil && r.config.Certmanager.ClusterIssuer != ""
 }
 
-func reconcileIngress(ctx context.Context, r *reconciler) error {
+func reconcileIngress(ctx context.Context, r *reconcileRequest) error {
 	ing, err := r.createIngress()
 	if err != nil {
 		return err
@@ -1224,7 +1225,7 @@ func reconcileIngress(ctx context.Context, r *reconciler) error {
 	return nil
 }
 
-func (r *reconciler) capsuleHasIngress() bool {
+func (r *reconcileRequest) capsuleHasIngress() bool {
 	for _, inf := range r.capsule.Spec.Interfaces {
 		if inf.Public != nil && inf.Public.Ingress != nil {
 			return true
@@ -1233,7 +1234,7 @@ func (r *reconciler) capsuleHasIngress() bool {
 	return false
 }
 
-func (r *reconciler) createIngress() (*netv1.Ingress, error) {
+func (r *reconcileRequest) createIngress() (*netv1.Ingress, error) {
 	ing := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        r.capsule.Name,
@@ -1312,7 +1313,7 @@ func (r *reconciler) createIngress() (*netv1.Ingress, error) {
 	return ing, nil
 }
 
-func reconcileLoadBalancer(ctx context.Context, r *reconciler) error {
+func reconcileLoadBalancer(ctx context.Context, r *reconcileRequest) error {
 	svc, err := r.createLoadBalancer()
 	if err != nil {
 		return err
@@ -1360,7 +1361,7 @@ func reconcileLoadBalancer(ctx context.Context, r *reconciler) error {
 	return nil
 }
 
-func (r *reconciler) capsuleHasLoadBalancer() bool {
+func (r *reconcileRequest) capsuleHasLoadBalancer() bool {
 	for _, inf := range r.capsule.Spec.Interfaces {
 		if inf.Public != nil && inf.Public.LoadBalancer != nil {
 			return true
@@ -1369,7 +1370,7 @@ func (r *reconciler) capsuleHasLoadBalancer() bool {
 	return false
 }
 
-func (r *reconciler) createLoadBalancer() (*v1.Service, error) {
+func (r *reconcileRequest) createLoadBalancer() (*v1.Service, error) {
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-lb", r.capsule.Name),
@@ -1400,7 +1401,7 @@ func (r *reconciler) createLoadBalancer() (*v1.Service, error) {
 	return svc, nil
 }
 
-func reconcileHorizontalPodAutoscaler(ctx context.Context, r *reconciler) error {
+func reconcileHorizontalPodAutoscaler(ctx context.Context, r *reconcileRequest) error {
 	hpa, shouldHaveHPA, err := r.createHPA()
 	if err != nil {
 		return err
@@ -1437,7 +1438,7 @@ func reconcileHorizontalPodAutoscaler(ctx context.Context, r *reconciler) error 
 	)
 }
 
-func (r *reconciler) shouldCreateHPA() (bool, error) {
+func (r *reconcileRequest) shouldCreateHPA() (bool, error) {
 	_, res, err := r.createHPA()
 	if err != nil {
 		return false, err
@@ -1445,7 +1446,7 @@ func (r *reconciler) shouldCreateHPA() (bool, error) {
 	return res, nil
 }
 
-func (r *reconciler) createHPA() (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
+func (r *reconcileRequest) createHPA() (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.capsule.Name,
@@ -1555,7 +1556,7 @@ func (r *reconciler) createHPA() (*autoscalingv2.HorizontalPodAutoscaler, bool, 
 	return hpa, true, nil
 }
 
-func reconcileServiceAccount(ctx context.Context, r *reconciler) error {
+func reconcileServiceAccount(ctx context.Context, r *reconcileRequest) error {
 	sa, err := r.createServiceAccount()
 	if err != nil {
 		return err
@@ -1579,7 +1580,7 @@ func reconcileServiceAccount(ctx context.Context, r *reconciler) error {
 	})
 }
 
-func (r *reconciler) createServiceAccount() (*v1.ServiceAccount, error) {
+func (r *reconcileRequest) createServiceAccount() (*v1.ServiceAccount, error) {
 	sa := &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.capsule.Name,
@@ -1595,7 +1596,7 @@ func (r *reconciler) createServiceAccount() (*v1.ServiceAccount, error) {
 
 func upsertIfNewer[T client.Object](
 	ctx context.Context,
-	r *reconciler,
+	r *reconcileRequest,
 	currentObj T,
 	newObj T,
 	equal func(t1 T, t2 T) bool,
@@ -1657,7 +1658,7 @@ func upsertIfNewer[T client.Object](
 	return nil
 }
 
-func reconcilePrometheusServiceMonitor(ctx context.Context, r *reconciler) error {
+func reconcilePrometheusServiceMonitor(ctx context.Context, r *reconcileRequest) error {
 	if r.config.PrometheusServiceMonitor == nil || r.config.PrometheusServiceMonitor.PortName == "" {
 		return nil
 	}
@@ -1690,7 +1691,7 @@ func reconcilePrometheusServiceMonitor(ctx context.Context, r *reconciler) error
 	)
 }
 
-func (r *reconciler) createPrometheusServiceMonitor() (*monitorv1.ServiceMonitor, error) {
+func (r *reconcileRequest) createPrometheusServiceMonitor() (*monitorv1.ServiceMonitor, error) {
 	s := &monitorv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            r.capsule.Name,
@@ -1719,7 +1720,7 @@ func (r *reconciler) createPrometheusServiceMonitor() (*monitorv1.ServiceMonitor
 	return s, nil
 }
 
-func reconcileCronJobs(ctx context.Context, r *reconciler) error {
+func reconcileCronJobs(ctx context.Context, r *reconcileRequest) error {
 	jobs, err := r.createCronJobs()
 	if err != nil {
 		return err
@@ -1776,7 +1777,7 @@ func reconcileCronJobs(ctx context.Context, r *reconciler) error {
 	return nil
 }
 
-func (r *reconciler) createCronJobs() ([]*batchv1.CronJob, error) {
+func (r *reconcileRequest) createCronJobs() ([]*batchv1.CronJob, error) {
 	var res []*batchv1.CronJob
 	deployment, err := r.createDeployment(nil)
 	if err != nil {

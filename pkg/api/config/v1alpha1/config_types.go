@@ -3,7 +3,8 @@ package v1alpha1
 import (
 	"github.com/rigdev/rig/pkg/ptr"
 	"go.uber.org/zap/zapcore"
-	v1 "k8s.io/api/networking/v1"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -29,6 +30,10 @@ type OperatorConfig struct {
 	// Certmanager holds configuration for how the operator should create
 	// certificates for ingress resources.
 	Certmanager *CertManagerConfig `json:"certManager,omitempty"`
+
+	// Service holds the configuration for service resources created by the
+	// operator.
+	Service ServiceConfig `json:"service,omitempty"`
 
 	// Ingress holds the configuration for ingress resources created by the
 	// operator.
@@ -56,6 +61,12 @@ type CertManagerConfig struct {
 	CreateCertificateResources bool `json:"createCertificateResources,omitempty"`
 }
 
+type ServiceConfig struct {
+	// Type of the service to generate. By default, services are of type ClusterIP.
+	// Valid values are ClusterIP, NodePort.
+	Type corev1.ServiceType `json:"type"`
+}
+
 type IngressConfig struct {
 	// Annotations for all ingress resources created.
 	Annotations map[string]string `json:"annotations"`
@@ -66,7 +77,7 @@ type IngressConfig struct {
 
 	// PathType defines how ingress paths should be interpreted.
 	// Allowed values: Exact, Prefix, ImplementationSpecific
-	PathType v1.PathType `json:"pathType"`
+	PathType networkingv1.PathType `json:"pathType"`
 }
 
 func (c *OperatorConfig) Default() {
@@ -76,11 +87,14 @@ func (c *OperatorConfig) Default() {
 	if c.LeaderElectionEnabled == nil {
 		c.LeaderElectionEnabled = ptr.New(true)
 	}
+	if c.Service.Type == "" {
+		c.Service.Type = corev1.ServiceTypeClusterIP
+	}
 	if c.Ingress.Annotations == nil {
 		c.Ingress.Annotations = map[string]string{}
 	}
 	if c.Ingress.PathType == "" {
-		c.Ingress.PathType = v1.PathTypeExact
+		c.Ingress.PathType = networkingv1.PathTypeExact
 	}
 }
 
