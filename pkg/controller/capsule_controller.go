@@ -70,12 +70,22 @@ type CapsuleReconciler struct {
 	reconcileSteps []reconcileStepFunc
 }
 
+type reconciler struct {
+	scheme *runtime.Scheme
+	config *configv1alpha1.OperatorConfig
+	client client.Client
+
+	req       ctrl.Request
+	logger    logr.Logger
+	capsule   v1alpha2.Capsule
+	status    v1alpha2.CapsuleStatus
+	checksums checksums
+	configs   configs
+}
+
 type reconcileStepFunc func(
 	ctx context.Context,
-	req ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
+	r *reconciler,
 ) error
 
 const (
@@ -187,21 +197,22 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	r.reconcileSteps = []reconcileStepFunc{
-		r.reconcileHorizontalPodAutoscaler,
-		r.reconcileDeployment,
-		r.reconcileService,
-		r.reconcileCertificate,
-		r.reconcileIngress,
-		r.reconcileLoadBalancer,
-		r.reconcileServiceAccount,
-		r.reconcileCronJobs,
+		reconcilerSetup,
+		reconcileHorizontalPodAutoscaler,
+		reconcileDeployment,
+		reconcileService,
+		reconcileCertificate,
+		reconcileIngress,
+		reconcileLoadBalancer,
+		reconcileServiceAccount,
+		reconcileCronJobs,
 	}
 
 	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
 
 	b := ctrl.NewControllerManagedBy(mgr)
 	if hasServiceMonitor {
-		r.reconcileSteps = append(r.reconcileSteps, r.reconcilePrometheusServiceMonitor)
+		r.reconcileSteps = append(r.reconcileSteps, reconcilePrometheusServiceMonitor)
 		b = b.Owns(&monitorv1.ServiceMonitor{})
 	}
 
@@ -337,36 +348,44 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := log.FromContext(ctx)
 	log.Info("reconciliation started")
 
-	capsule := &v1alpha2.Capsule{}
-	if err := r.Get(ctx, req.NamespacedName, capsule); err != nil {
+	reconciler := &reconciler{
+		req:     req,
+		logger:  log,
+		capsule: v1alpha2.Capsule{},
+		status: v1alpha2.CapsuleStatus{
+			Deployment: &v1alpha2.DeploymentStatus{},
+		},
+		client: r.Client,
+		scheme: r.Scheme,
+		config: r.Config,
+	}
+	if err := r.Get(ctx, req.NamespacedName, &reconciler.capsule); err != nil {
 		if kerrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
-	status := &v1alpha2.CapsuleStatus{
-		Deployment: &v1alpha2.DeploymentStatus{},
-	}
 	var stepErrs []error
 	for _, sf := range r.reconcileSteps {
-		if err := sf(ctx, req, log, capsule, status); err != nil {
+		if err := sf(ctx, reconciler); err != nil {
 			stepErrs = append(stepErrs, err)
 		}
 	}
 
 	if len(stepErrs) == 0 {
-		status.ObservedGeneration = capsule.GetGeneration()
+		reconciler.status.ObservedGeneration = reconciler.capsule.GetGeneration()
 	} else {
 		var errs []string
 		for _, e := range stepErrs {
 			errs = append(errs, e.Error())
 		}
-		status.Errors = errs
+		reconciler.status.Errors = errs
 	}
 
-	capsule.Status = status
-	if err := r.Status().Update(ctx, capsule); err != nil {
+	reconciler.capsule.Status = &reconciler.status
+
+	if err := r.Status().Update(ctx, &reconciler.capsule); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -391,62 +410,70 @@ type checksums struct {
 	files     string
 }
 
-func (r *CapsuleReconciler) configChecksums(
-	capsule *v1alpha2.Capsule,
-	configs *configs,
-) (*checksums, error) {
-	sharedEnv, err := r.configSharedEnvChecksum(configs)
+func reconcilerSetup(ctx context.Context, r *reconciler) error {
+	if err := r.setConfigs(ctx); err != nil {
+		return err
+	}
+	if err := r.setConfigChecksums(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *reconciler) setConfigChecksums() error {
+	sharedEnv, err := r.configSharedEnvChecksum()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	autoEnv, err := r.configAutoEnvChecksum(
-		configs.configMaps[capsule.GetName()],
-		configs.secrets[capsule.GetName()],
+		r.configs.configMaps[r.capsule.GetName()],
+		r.configs.secrets[r.capsule.GetName()],
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	env, err := r.configEnvChecksum(capsule, configs)
+	env, err := r.configEnvChecksum()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	files, err := r.configFilesChecksum(capsule, configs)
+	files, err := r.configFilesChecksum()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &checksums{
+	r.checksums = checksums{
 		sharedEnv: sharedEnv,
 		autoEnv:   autoEnv,
 		env:       env,
 		files:     files,
-	}, nil
+	}
+
+	return nil
 }
 
-func (r *CapsuleReconciler) configSharedEnvChecksum(
-	configs *configs,
-) (string, error) {
-	if !configs.hasSharedConfig() {
+func (r *reconciler) configSharedEnvChecksum() (string, error) {
+	if !r.configs.hasSharedConfig() {
 		return "", nil
 	}
 
 	h := sha256.New()
 
-	configMaps := slices.Clone(configs.sharedEnvConfigMaps)
+	configMaps := slices.Clone(r.configs.sharedEnvConfigMaps)
 	slices.Sort(configMaps)
-	secrets := slices.Clone(configs.sharedEnvSecrets)
+	secrets := slices.Clone(r.configs.sharedEnvSecrets)
 	slices.Sort(secrets)
 
 	for _, name := range configMaps {
-		if err := hash.ConfigMap(h, configs.configMaps[name]); err != nil {
+		if err := hash.ConfigMap(h, r.configs.configMaps[name]); err != nil {
 			return "", err
 		}
 	}
 	for _, name := range secrets {
-		if err := hash.Secret(h, configs.secrets[name]); err != nil {
+		if err := hash.Secret(h, r.configs.secrets[name]); err != nil {
 			return "", err
 		}
 	}
@@ -454,7 +481,7 @@ func (r *CapsuleReconciler) configSharedEnvChecksum(
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (r *CapsuleReconciler) configAutoEnvChecksum(
+func (r *reconciler) configAutoEnvChecksum(
 	configMap *v1.ConfigMap,
 	secret *v1.Secret,
 ) (string, error) {
@@ -478,23 +505,20 @@ func (r *CapsuleReconciler) configAutoEnvChecksum(
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (r *CapsuleReconciler) configEnvChecksum(
-	capsule *v1alpha2.Capsule,
-	configs *configs,
-) (string, error) {
-	if capsule.Spec.Env == nil || len(capsule.Spec.Env.From) == 0 {
+func (r *reconciler) configEnvChecksum() (string, error) {
+	if r.capsule.Spec.Env == nil || len(r.capsule.Spec.Env.From) == 0 {
 		return "", nil
 	}
 
 	h := sha256.New()
-	for _, e := range capsule.Spec.Env.From {
+	for _, e := range r.capsule.Spec.Env.From {
 		switch e.Kind {
 		case "ConfigMap":
-			if err := hash.ConfigMap(h, configs.configMaps[e.Name]); err != nil {
+			if err := hash.ConfigMap(h, r.configs.configMaps[e.Name]); err != nil {
 				return "", err
 			}
 		case "Secret":
-			if err := hash.Secret(h, configs.secrets[e.Name]); err != nil {
+			if err := hash.Secret(h, r.configs.secrets[e.Name]); err != nil {
 				return "", err
 			}
 		}
@@ -503,17 +527,14 @@ func (r *CapsuleReconciler) configEnvChecksum(
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (r *CapsuleReconciler) configFilesChecksum(
-	capsule *v1alpha2.Capsule,
-	configs *configs,
-) (string, error) {
-	if len(capsule.Spec.Files) == 0 {
+func (r *reconciler) configFilesChecksum() (string, error) {
+	if len(r.capsule.Spec.Files) == 0 {
 		return "", nil
 	}
 
 	referencedKeysBySecretName := map[string]map[string]struct{}{}
 	referencedKeysByConfigMapName := map[string]map[string]struct{}{}
-	for _, f := range capsule.Spec.Files {
+	for _, f := range r.capsule.Spec.Files {
 		switch f.Ref.Kind {
 		case "ConfigMap":
 			if _, ok := referencedKeysByConfigMapName[f.Ref.Name]; ok {
@@ -543,7 +564,7 @@ func (r *CapsuleReconciler) configFilesChecksum(
 		if err := hash.SecretKeys(
 			h,
 			maps.Keys(referencedKeysBySecretName[name]),
-			configs.secrets[name],
+			r.configs.secrets[name],
 		); err != nil {
 			return "", err
 		}
@@ -552,7 +573,7 @@ func (r *CapsuleReconciler) configFilesChecksum(
 		if err := hash.ConfigMapKeys(
 			h,
 			maps.Keys(referencedKeysByConfigMapName[name]),
-			configs.configMaps[name],
+			r.configs.configMaps[name],
 		); err != nil {
 			return "", err
 		}
@@ -561,85 +582,77 @@ func (r *CapsuleReconciler) configFilesChecksum(
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (r *CapsuleReconciler) getConfigs(
-	ctx context.Context,
-	req ctrl.Request,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) (*configs, error) {
-	cfgs := &configs{
+func (r *reconciler) setConfigs(ctx context.Context) error {
+	r.configs = configs{
 		configMaps: map[string]*v1.ConfigMap{},
 		secrets:    map[string]*v1.Secret{},
 	}
 
 	// Get shared env
 	var configMapList v1.ConfigMapList
-	if err := r.Client.List(ctx, &configMapList, &client.ListOptions{
-		Namespace: req.Namespace,
+	if err := r.client.List(ctx, &configMapList, &client.ListOptions{
+		Namespace: r.req.Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			LabelSharedConfig: "true",
 		}),
 	}); err != nil {
-		return nil, fmt.Errorf("could not list shared env configmaps: %w", err)
+		return fmt.Errorf("could not list shared env configmaps: %w", err)
 	}
-	cfgs.sharedEnvConfigMaps = make([]string, len(configMapList.Items))
+	r.configs.sharedEnvConfigMaps = make([]string, len(configMapList.Items))
 	for i, cm := range configMapList.Items {
-		cfgs.sharedEnvConfigMaps[i] = cm.GetName()
-		cfgs.configMaps[cm.Name] = &cm
+		r.configs.sharedEnvConfigMaps[i] = cm.GetName()
+		r.configs.configMaps[cm.Name] = &cm
 	}
 	var secretList v1.SecretList
-	if err := r.Client.List(ctx, &secretList, &client.ListOptions{
-		Namespace: req.Namespace,
+	if err := r.client.List(ctx, &secretList, &client.ListOptions{
+		Namespace: r.req.Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			LabelSharedConfig: "true",
 		}),
 	}); err != nil {
-		return nil, fmt.Errorf("could not list shared env secrets: %w", err)
+		return fmt.Errorf("could not list shared env secrets: %w", err)
 	}
-	cfgs.sharedEnvSecrets = make([]string, len(secretList.Items))
+	r.configs.sharedEnvSecrets = make([]string, len(secretList.Items))
 	for i, s := range secretList.Items {
-		cfgs.sharedEnvSecrets[i] = s.GetName()
-		cfgs.secrets[s.Name] = &s
+		r.configs.sharedEnvSecrets[i] = s.GetName()
+		r.configs.secrets[s.Name] = &s
 	}
 
-	env := capsule.Spec.Env
+	env := r.capsule.Spec.Env
 	if env == nil {
 		env = &v1alpha2.Env{}
 	}
 
 	// Get automatic env
 	if !env.DisableAutomatic {
-		if err := r.getUsedSource(ctx, capsule, status, cfgs, "ConfigMap", req.NamespacedName.Name, false); err != nil {
-			return nil, err
+		if err := r.setUsedSource(ctx, "ConfigMap", r.req.NamespacedName.Name, false); err != nil {
+			return err
 		}
 
-		if err := r.getUsedSource(ctx, capsule, status, cfgs, "Secret", req.NamespacedName.Name, false); err != nil {
-			return nil, err
+		if err := r.setUsedSource(ctx, "Secret", r.req.NamespacedName.Name, false); err != nil {
+			return err
 		}
 	}
 
 	// Get envs
 	for _, e := range env.From {
-		if err := r.getUsedSource(ctx, capsule, status, cfgs, e.Kind, e.Name, true); err != nil {
-			return nil, err
+		if err := r.setUsedSource(ctx, e.Kind, e.Name, true); err != nil {
+			return err
 		}
 	}
 
 	// Get files
-	for _, f := range capsule.Spec.Files {
-		if err := r.getUsedSource(ctx, capsule, status, cfgs, f.Ref.Kind, f.Ref.Name, true); err != nil {
-			return nil, err
+	for _, f := range r.capsule.Spec.Files {
+		if err := r.setUsedSource(ctx, f.Ref.Kind, f.Ref.Name, true); err != nil {
+			return err
 		}
 	}
 
-	return cfgs, nil
+	return nil
 }
 
-func (r *CapsuleReconciler) getUsedSource(
+func (r *reconciler) setUsedSource(
 	ctx context.Context,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-	cfgs *configs,
 	kind string,
 	name string,
 	required bool,
@@ -662,111 +675,89 @@ func (r *CapsuleReconciler) getUsedSource(
 			ref.State = "found"
 		}
 
-		status.UsedResources = append(status.UsedResources, ref)
+		r.status.UsedResources = append(r.status.UsedResources, ref)
 	}()
 
 	switch kind {
 	case "ConfigMap":
-		if _, ok := cfgs.configMaps[name]; ok {
+		if _, ok := r.configs.configMaps[name]; ok {
 			return nil
 		}
 		var cm v1.ConfigMap
-		if err := r.Get(ctx, types.NamespacedName{
+		if err := r.client.Get(ctx, types.NamespacedName{
 			Name:      name,
-			Namespace: capsule.Namespace,
+			Namespace: r.capsule.Namespace,
 		}, &cm); err != nil {
 			return fmt.Errorf("could not get referenced environment configmap: %w", err)
 		}
-		cfgs.configMaps[cm.Name] = &cm
+		r.configs.configMaps[cm.Name] = &cm
 	case "Secret":
-		if _, ok := cfgs.secrets[name]; ok {
+		if _, ok := r.configs.secrets[name]; ok {
 			return nil
 		}
 		var s v1.Secret
-		if err := r.Get(ctx, types.NamespacedName{
+		if err := r.client.Get(ctx, types.NamespacedName{
 			Name:      name,
-			Namespace: capsule.Namespace,
+			Namespace: r.capsule.Namespace,
 		}, &s); err != nil {
 			return fmt.Errorf("could not get referenced environment secret: %w", err)
 		}
-		cfgs.secrets[s.Name] = &s
+		r.configs.secrets[s.Name] = &s
 	}
 
 	return nil
 }
 
-func (r *CapsuleReconciler) reconcileDeployment(
-	ctx context.Context,
-	req ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	cfgs, err := r.getConfigs(ctx, req, capsule, status)
-	if err != nil {
-		return err
-	}
-
-	checksums, err := r.configChecksums(capsule, cfgs)
-	if err != nil {
-		return err
-	}
-
+func reconcileDeployment(ctx context.Context, r *reconciler) error {
 	existingDeploy := &appsv1.Deployment{}
 	hasExistingDeployment := true
-	if err = r.Get(ctx, req.NamespacedName, existingDeploy); err != nil {
+	if err := r.client.Get(ctx, r.req.NamespacedName, existingDeploy); err != nil {
 		if kerrors.IsNotFound(err) {
 			hasExistingDeployment = false
 		} else {
-			status.Deployment.State = "failed"
-			status.Deployment.Message = err.Error()
+			r.status.Deployment.State = "failed"
+			r.status.Deployment.Message = err.Error()
 			return fmt.Errorf("could not fetch deployment: %w", err)
 		}
 	}
 
-	deploy, err := createDeployment(capsule, r.Scheme, cfgs, checksums, existingDeploy)
+	deploy, err := r.createDeployment(existingDeploy)
 	if err != nil {
 		return err
 	}
 
 	if !hasExistingDeployment {
-		log.Info("creating deployment")
-		if err := r.Create(ctx, deploy); err != nil {
-			status.Deployment.State = "failed"
-			status.Deployment.Message = err.Error()
+		r.logger.Info("creating deployment")
+		if err := r.client.Create(ctx, deploy); err != nil {
+			r.status.Deployment.State = "failed"
+			r.status.Deployment.Message = err.Error()
 			return fmt.Errorf("could not create deployment: %w", err)
 		}
 		existingDeploy = deploy
 	}
 
 	if err != nil {
-		status.Deployment.State = "failed"
-		status.Deployment.Message = err.Error()
+		r.status.Deployment.State = "failed"
+		r.status.Deployment.Message = err.Error()
 		return err
 	}
 
 	// Edge case, this property is not carried over by k8s.
 	delete(existingDeploy.Spec.Template.Annotations, "kubectl.kubernetes.io/restartedAt")
 
-	err = upsertIfNewer(ctx, r, existingDeploy, deploy, log, capsule, status, func(t1, t2 *appsv1.Deployment) bool {
+	err = upsertIfNewer(ctx, r, existingDeploy, deploy, func(t1, t2 *appsv1.Deployment) bool {
 		return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 	})
 	if err != nil {
-		status.Deployment.State = "failed"
-		status.Deployment.Message = err.Error()
+		r.status.Deployment.State = "failed"
+		r.status.Deployment.Message = err.Error()
 	}
 	return err
 }
 
-func createDeployment(
-	capsule *v1alpha2.Capsule,
-	scheme *runtime.Scheme,
-	configs *configs,
-	checksums *checksums,
-	existingDeployment *appsv1.Deployment,
-) (*appsv1.Deployment, error) {
+func (r *reconciler) createDeployment(existingDeployment *appsv1.Deployment) (*appsv1.Deployment, error) {
 	var ports []v1.ContainerPort
-	for _, i := range capsule.Spec.Interfaces {
+	for _, i := range r.capsule.Spec.Interfaces {
 		ports = append(ports, v1.ContainerPort{
 			Name:          i.Name,
 			ContainerPort: i.Port,
@@ -775,7 +766,7 @@ func createDeployment(
 
 	var volumes []v1.Volume
 	var volumeMounts []v1.VolumeMount
-	for _, f := range capsule.Spec.Files {
+	for _, f := range r.capsule.Spec.Files {
 		var name string
 		switch f.Ref.Kind {
 		case "ConfigMap":
@@ -823,40 +814,40 @@ func createDeployment(
 	}
 
 	podAnnotations := map[string]string{}
-	maps.Copy(podAnnotations, capsule.Annotations)
-	if checksums.files != "" {
-		podAnnotations[AnnotationChecksumFiles] = checksums.files
+	maps.Copy(podAnnotations, r.capsule.Annotations)
+	if r.checksums.files != "" {
+		podAnnotations[AnnotationChecksumFiles] = r.checksums.files
 	}
-	if checksums.autoEnv != "" {
-		podAnnotations[AnnotationChecksumAutoEnv] = checksums.autoEnv
+	if r.checksums.autoEnv != "" {
+		podAnnotations[AnnotationChecksumAutoEnv] = r.checksums.autoEnv
 	}
-	if checksums.env != "" {
-		podAnnotations[AnnotationChecksumEnv] = checksums.env
+	if r.checksums.env != "" {
+		podAnnotations[AnnotationChecksumEnv] = r.checksums.env
 	}
-	if checksums.sharedEnv != "" {
-		podAnnotations[AnnotationChecksumSharedEnv] = checksums.sharedEnv
+	if r.checksums.sharedEnv != "" {
+		podAnnotations[AnnotationChecksumSharedEnv] = r.checksums.sharedEnv
 	}
 
 	var envFrom []v1.EnvFromSource
-	if capsule.Spec.Env == nil || !capsule.Spec.Env.DisableAutomatic {
-		if _, ok := configs.configMaps[capsule.GetName()]; ok {
+	if r.capsule.Spec.Env == nil || !r.capsule.Spec.Env.DisableAutomatic {
+		if _, ok := r.configs.configMaps[r.capsule.GetName()]; ok {
 			envFrom = append(envFrom, v1.EnvFromSource{
 				ConfigMapRef: &v1.ConfigMapEnvSource{
-					LocalObjectReference: v1.LocalObjectReference{Name: capsule.GetName()},
+					LocalObjectReference: v1.LocalObjectReference{Name: r.capsule.GetName()},
 				},
 			})
 		}
-		if _, ok := configs.secrets[capsule.GetName()]; ok {
+		if _, ok := r.configs.secrets[r.capsule.GetName()]; ok {
 			envFrom = append(envFrom, v1.EnvFromSource{
 				SecretRef: &v1.SecretEnvSource{
-					LocalObjectReference: v1.LocalObjectReference{Name: capsule.GetName()},
+					LocalObjectReference: v1.LocalObjectReference{Name: r.capsule.GetName()},
 				},
 			})
 		}
 	}
 
-	if capsule.Spec.Env != nil {
-		for _, e := range capsule.Spec.Env.From {
+	if r.capsule.Spec.Env != nil {
+		for _, e := range r.capsule.Spec.Env.From {
 			switch e.Kind {
 			case "ConfigMap":
 				envFrom = append(envFrom, v1.EnvFromSource{
@@ -874,14 +865,14 @@ func createDeployment(
 		}
 	}
 
-	for _, name := range configs.sharedEnvConfigMaps {
+	for _, name := range r.configs.sharedEnvConfigMaps {
 		envFrom = append(envFrom, v1.EnvFromSource{
 			ConfigMapRef: &v1.ConfigMapEnvSource{
 				LocalObjectReference: v1.LocalObjectReference{Name: name},
 			},
 		})
 	}
-	for _, name := range configs.sharedEnvSecrets {
+	for _, name := range r.configs.sharedEnvSecrets {
 		envFrom = append(envFrom, v1.EnvFromSource{
 			SecretRef: &v1.SecretEnvSource{
 				LocalObjectReference: v1.LocalObjectReference{Name: name},
@@ -890,20 +881,20 @@ func createDeployment(
 	}
 
 	c := v1.Container{
-		Name:         capsule.Name,
-		Image:        capsule.Spec.Image,
+		Name:         r.capsule.Name,
+		Image:        r.capsule.Spec.Image,
 		EnvFrom:      envFrom,
 		VolumeMounts: volumeMounts,
 		Ports:        ports,
-		Resources:    makeResourceRequirements(capsule),
-		Args:         capsule.Spec.Args,
+		Resources:    makeResourceRequirements(&r.capsule),
+		Args:         r.capsule.Spec.Args,
 	}
 
-	if capsule.Spec.Command != "" {
-		c.Command = []string{capsule.Spec.Command}
+	if r.capsule.Spec.Command != "" {
+		c.Command = []string{r.capsule.Spec.Command}
 	}
 
-	for _, i := range capsule.Spec.Interfaces {
+	for _, i := range r.capsule.Spec.Interfaces {
 		if i.Liveness != nil {
 			c.LivenessProbe = &v1.Probe{
 				ProbeHandler: v1.ProbeHandler{
@@ -926,8 +917,8 @@ func createDeployment(
 		}
 	}
 
-	replicas := ptr.New(int32(capsule.Spec.Scale.Horizontal.Instances.Min))
-	hasHPA, err := shouldCreateHPA(capsule, scheme)
+	replicas := ptr.New(int32(r.capsule.Spec.Scale.Horizontal.Instances.Min))
+	hasHPA, err := r.shouldCreateHPA()
 	if err != nil {
 		return nil, err
 	}
@@ -938,13 +929,13 @@ func createDeployment(
 	}
 	d := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      capsule.Name,
-			Namespace: capsule.Namespace,
+			Name:      r.capsule.Name,
+			Namespace: r.capsule.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					LabelCapsule: capsule.Name,
+					LabelCapsule: r.capsule.Name,
 				},
 			},
 			Replicas: replicas,
@@ -952,20 +943,20 @@ func createDeployment(
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: podAnnotations,
 					Labels: map[string]string{
-						LabelCapsule: capsule.Name,
+						LabelCapsule: r.capsule.Name,
 					},
 				},
 				Spec: v1.PodSpec{
 					Containers:         []v1.Container{c},
-					ServiceAccountName: capsule.Name,
+					ServiceAccountName: r.capsule.Name,
 					Volumes:            volumes,
-					NodeSelector:       capsule.Spec.NodeSelector,
+					NodeSelector:       r.capsule.Spec.NodeSelector,
 				},
 			},
 		},
 	}
 
-	if err := controllerutil.SetControllerReference(capsule, d, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(&r.capsule, d, r.scheme); err != nil {
 		return nil, fmt.Errorf("could not set owner reference on deployment: %w", err)
 	}
 
@@ -1008,27 +999,21 @@ func makeResourceRequirements(capsule *v1alpha2.Capsule) v1.ResourceRequirements
 	return res
 }
 
-func (r *CapsuleReconciler) reconcileService(
-	ctx context.Context,
-	req ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	service, err := createService(capsule, r.Scheme)
+func reconcileService(ctx context.Context, r *reconciler) error {
+	service, err := r.createService()
 	if err != nil {
 		return err
 	}
 
 	existingService := &v1.Service{}
-	if err := r.Get(ctx, req.NamespacedName, existingService); err != nil {
+	if err := r.client.Get(ctx, r.req.NamespacedName, existingService); err != nil {
 		if kerrors.IsNotFound(err) {
-			if len(capsule.Spec.Interfaces) == 0 {
+			if len(r.capsule.Spec.Interfaces) == 0 {
 				return nil
 			}
 
-			log.Info("creating service")
-			if err := r.Create(ctx, service); err != nil {
+			r.logger.Info("creating service")
+			if err := r.client.Create(ctx, service); err != nil {
 				return fmt.Errorf("could not create service: %w", err)
 			}
 			existingService = service
@@ -1037,20 +1022,20 @@ func (r *CapsuleReconciler) reconcileService(
 		}
 	}
 
-	if !IsOwnedBy(capsule, existingService) {
-		if len(capsule.Spec.Interfaces) == 0 {
-			log.Info("Found existing service not owned by capsule. Will not delete it.")
+	if !IsOwnedBy(&r.capsule, existingService) {
+		if len(r.capsule.Spec.Interfaces) == 0 {
+			r.logger.Info("Found existing service not owned by capsule. Will not delete it.")
 		} else {
-			log.Info("Found existing service not owned by capsule. Will not update it.")
+			r.logger.Info("Found existing service not owned by capsule. Will not update it.")
 		}
 	} else {
-		if len(capsule.Spec.Interfaces) == 0 {
-			log.Info("deleting service")
-			if err := r.Delete(ctx, existingService); err != nil {
+		if len(r.capsule.Spec.Interfaces) == 0 {
+			r.logger.Info("deleting service")
+			if err := r.client.Delete(ctx, existingService); err != nil {
 				return fmt.Errorf("could not delete service: %w", err)
 			}
 		} else {
-			return upsertIfNewer(ctx, r, existingService, service, log, capsule, status, func(t1, t2 *v1.Service) bool {
+			return upsertIfNewer(ctx, r, existingService, service, func(t1, t2 *v1.Service) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			})
 		}
@@ -1059,26 +1044,23 @@ func (r *CapsuleReconciler) reconcileService(
 	return nil
 }
 
-func createService(
-	capsule *v1alpha2.Capsule,
-	scheme *runtime.Scheme,
-) (*v1.Service, error) {
+func (r *reconciler) createService() (*v1.Service, error) {
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      capsule.Name,
-			Namespace: capsule.Namespace,
+			Name:      r.capsule.Name,
+			Namespace: r.capsule.Namespace,
 			Labels: map[string]string{
-				LabelCapsule: capsule.Name,
+				LabelCapsule: r.capsule.Name,
 			},
 		},
 		Spec: v1.ServiceSpec{
 			Selector: map[string]string{
-				LabelCapsule: capsule.Name,
+				LabelCapsule: r.capsule.Name,
 			},
 		},
 	}
 
-	for _, inf := range capsule.Spec.Interfaces {
+	for _, inf := range r.capsule.Spec.Interfaces {
 		svc.Spec.Ports = append(svc.Spec.Ports, v1.ServicePort{
 			Name:       inf.Name,
 			Port:       inf.Port,
@@ -1086,42 +1068,36 @@ func createService(
 		})
 	}
 
-	if err := controllerutil.SetControllerReference(capsule, svc, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(&r.capsule, svc, r.scheme); err != nil {
 		return nil, fmt.Errorf("could not set owner reference on service: %w", err)
 	}
 
 	return svc, nil
 }
 
-func (r *CapsuleReconciler) reconcileCertificate(
-	ctx context.Context,
-	req ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	crt, err := r.createCertificate(capsule, r.Scheme)
+func reconcileCertificate(ctx context.Context, r *reconciler) error {
+	crt, err := r.createCertificate()
 	if err != nil {
 		return err
 	}
 
 	existingCrt := &cmv1.Certificate{}
-	if err := r.Get(ctx, req.NamespacedName, existingCrt); err != nil {
+	if err := r.client.Get(ctx, r.req.NamespacedName, existingCrt); err != nil {
 		if kerrors.IsNotFound(err) {
-			if !capsuleHasIngress(capsule) {
+			if !r.capsuleHasIngress() {
 				return nil
 			}
 			if !r.ingressIsSupported() {
-				log.V(1).Info("not creating certificate as ingress is not supported: cert-manager config missing")
+				r.logger.V(1).Info("not creating certificate as ingress is not supported: cert-manager config missing")
 				return nil
 			}
 			if !r.shouldCreateCertificateRessource() {
-				log.V(1).Info("not creating certificate as operator is configured to use ingress annotations")
+				r.logger.V(1).Info("not creating certificate as operator is configured to use ingress annotations")
 				return nil
 			}
 
-			log.Info("creating certificate")
-			if err := r.Create(ctx, crt); err != nil {
+			r.logger.Info("creating certificate")
+			if err := r.client.Create(ctx, crt); err != nil {
 				return fmt.Errorf("could not create certificate: %w", err)
 			}
 			existingCrt = crt
@@ -1130,26 +1106,26 @@ func (r *CapsuleReconciler) reconcileCertificate(
 		}
 	}
 
-	if !IsOwnedBy(capsule, existingCrt) {
-		if capsuleHasIngress(capsule) {
-			log.Info("Found existing certificate not owned by capsule. Will not update it.")
+	if !IsOwnedBy(&r.capsule, existingCrt) {
+		if r.capsuleHasIngress() {
+			r.logger.Info("Found existing certificate not owned by capsule. Will not update it.")
 			return errors.New("found existing certificate not owned by capsule")
 		}
-		log.Info("Found existing certificate not owned by capsule. Will not delete it.")
+		r.logger.Info("Found existing certificate not owned by capsule. Will not delete it.")
 	} else {
-		if r.ingressIsSupported() && r.shouldCreateCertificateRessource() && capsuleHasIngress(capsule) {
-			return upsertIfNewer(ctx, r, existingCrt, crt, log, capsule, status, func(t1, t2 *cmv1.Certificate) bool {
+		if r.ingressIsSupported() && r.shouldCreateCertificateRessource() && r.capsuleHasIngress() {
+			return upsertIfNewer(ctx, r, existingCrt, crt, func(t1, t2 *cmv1.Certificate) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			})
 		}
 		if !r.ingressIsSupported() {
-			log.V(1).Info("deleting certificate as ingress is not supported: cert-manager config missing")
+			r.logger.V(1).Info("deleting certificate as ingress is not supported: cert-manager config missing")
 		} else if !r.shouldCreateCertificateRessource() {
-			log.V(1).Info("deleting certificate becausee operator is configured to use ingress annotations")
+			r.logger.V(1).Info("deleting certificate becausee operator is configured to use ingress annotations")
 		} else {
-			log.Info("deleting certificate")
+			r.logger.Info("deleting certificate")
 		}
-		if err := r.Delete(ctx, existingCrt); err != nil {
+		if err := r.client.Delete(ctx, existingCrt); err != nil {
 			return fmt.Errorf("could not delete certificate: %w", err)
 		}
 	}
@@ -1157,75 +1133,65 @@ func (r *CapsuleReconciler) reconcileCertificate(
 	return nil
 }
 
-func (r *CapsuleReconciler) shouldCreateCertificateRessource() bool {
-	return r.Config.Certmanager != nil &&
-		r.Config.Certmanager.CreateCertificateResources
+func (r *reconciler) shouldCreateCertificateRessource() bool {
+	return r.config.Certmanager != nil &&
+		r.config.Certmanager.CreateCertificateResources
 }
 
-func (r *CapsuleReconciler) createCertificate(
-	capsule *v1alpha2.Capsule,
-	scheme *runtime.Scheme,
-) (*cmv1.Certificate, error) {
+func (r *reconciler) createCertificate() (*cmv1.Certificate, error) {
 	crt := &cmv1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      capsule.Name,
-			Namespace: capsule.Namespace,
+			Name:      r.capsule.Name,
+			Namespace: r.capsule.Namespace,
 		},
 		Spec: cmv1.CertificateSpec{
-			SecretName: fmt.Sprintf("%s-tls", capsule.Name),
+			SecretName: fmt.Sprintf("%s-tls", r.capsule.Name),
 		},
 	}
 
-	if r.Config.Certmanager != nil {
+	if r.config.Certmanager != nil {
 		crt.Spec.IssuerRef = cmmetav1.ObjectReference{
 			Kind: cmv1.ClusterIssuerKind,
-			Name: r.Config.Certmanager.ClusterIssuer,
+			Name: r.config.Certmanager.ClusterIssuer,
 		}
 	}
 
-	for _, inf := range capsule.Spec.Interfaces {
+	for _, inf := range r.capsule.Spec.Interfaces {
 		if inf.Public != nil && inf.Public.Ingress != nil {
 			crt.Spec.DNSNames = append(crt.Spec.DNSNames, inf.Public.Ingress.Host)
 		}
 	}
 
-	if err := controllerutil.SetControllerReference(capsule, crt, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(&r.capsule, crt, r.scheme); err != nil {
 		return nil, fmt.Errorf("could not set owner reference on certificate: %w", err)
 	}
 
 	return crt, nil
 }
 
-func (r *CapsuleReconciler) ingressIsSupported() bool {
-	cm := r.Config.Certmanager
-	return cm != nil && cm.ClusterIssuer != ""
+func (r *reconciler) ingressIsSupported() bool {
+	return r.config.Certmanager != nil && r.config.Certmanager.ClusterIssuer != ""
 }
 
-func (r *CapsuleReconciler) reconcileIngress(
-	ctx context.Context,
-	req ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	ing, err := r.createIngress(capsule, r.Scheme)
+func reconcileIngress(ctx context.Context, r *reconciler) error {
+	ing, err := r.createIngress()
 	if err != nil {
 		return err
 	}
 
 	existingIng := &netv1.Ingress{}
-	if err := r.Get(ctx, req.NamespacedName, existingIng); err != nil {
+	if err := r.client.Get(ctx, r.req.NamespacedName, existingIng); err != nil {
 		if kerrors.IsNotFound(err) {
-			if !capsuleHasIngress(capsule) {
+			if !r.capsuleHasIngress() {
 				return nil
 			}
 			if !r.ingressIsSupported() {
-				log.V(1).Info("ingress not supported: cert-manager config missing")
+				r.logger.V(1).Info("ingress not supported: cert-manager config missing")
 				return nil
 			}
 
-			log.Info("creating ingress")
-			if err := r.Create(ctx, ing); err != nil {
+			r.logger.Info("creating ingress")
+			if err := r.client.Create(ctx, ing); err != nil {
 				return fmt.Errorf("could not create ingress: %w", err)
 			}
 			existingIng = ing
@@ -1234,23 +1200,23 @@ func (r *CapsuleReconciler) reconcileIngress(
 		}
 	}
 
-	if !IsOwnedBy(capsule, existingIng) {
-		if capsuleHasIngress(capsule) {
-			log.Info("Found existing ingress not owned by capsule. Will not update it.")
+	if !IsOwnedBy(&r.capsule, existingIng) {
+		if r.capsuleHasIngress() {
+			r.logger.Info("Found existing ingress not owned by capsule. Will not update it.")
 			return errors.New("found existing ingress not owned by capsule")
 		}
-		log.Info("Found existing ingress not owned by capsule. Will not delete it.")
+		r.logger.Info("Found existing ingress not owned by capsule. Will not delete it.")
 	} else {
-		if r.ingressIsSupported() && capsuleHasIngress(capsule) {
-			return upsertIfNewer(ctx, r, existingIng, ing, log, capsule, status, func(t1, t2 *netv1.Ingress) bool {
+		if r.ingressIsSupported() && r.capsuleHasIngress() {
+			return upsertIfNewer(ctx, r, existingIng, ing, func(t1, t2 *netv1.Ingress) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			})
 		}
 		if !r.ingressIsSupported() {
-			log.V(1).Info("ingress not supported: cert-manager config missing")
+			r.logger.V(1).Info("ingress not supported: cert-manager config missing")
 		}
-		log.Info("deleting ingress")
-		if err := r.Delete(ctx, existingIng); err != nil {
+		r.logger.Info("deleting ingress")
+		if err := r.client.Delete(ctx, existingIng); err != nil {
 			return fmt.Errorf("could not delete ingress: %w", err)
 		}
 	}
@@ -1258,8 +1224,8 @@ func (r *CapsuleReconciler) reconcileIngress(
 	return nil
 }
 
-func capsuleHasIngress(capsule *v1alpha2.Capsule) bool {
-	for _, inf := range capsule.Spec.Interfaces {
+func (r *reconciler) capsuleHasIngress() bool {
+	for _, inf := range r.capsule.Spec.Interfaces {
 		if inf.Public != nil && inf.Public.Ingress != nil {
 			return true
 		}
@@ -1267,111 +1233,104 @@ func capsuleHasIngress(capsule *v1alpha2.Capsule) bool {
 	return false
 }
 
-func (r *CapsuleReconciler) createIngress(
-	capsule *v1alpha2.Capsule,
-	scheme *runtime.Scheme,
-) (*netv1.Ingress, error) {
+func (r *reconciler) createIngress() (*netv1.Ingress, error) {
 	ing := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        capsule.Name,
-			Namespace:   capsule.Namespace,
-			Annotations: r.Config.Ingress.Annotations,
+			Name:        r.capsule.Name,
+			Namespace:   r.capsule.Namespace,
+			Annotations: r.config.Ingress.Annotations,
 		},
 	}
 
-	if r.Config.Ingress.ClassName != "" {
-		ing.Spec.IngressClassName = ptr.New(r.Config.Ingress.ClassName)
+	if r.config.Ingress.ClassName != "" {
+		ing.Spec.IngressClassName = ptr.New(r.config.Ingress.ClassName)
 	}
 
 	if r.ingressIsSupported() && !r.shouldCreateCertificateRessource() {
-		ing.Annotations["cert-manager.io/cluster-issuer"] = r.Config.Certmanager.ClusterIssuer
+		ing.Annotations["cert-manager.io/cluster-issuer"] = r.config.Certmanager.ClusterIssuer
 	}
 
-	for _, inf := range capsule.Spec.Interfaces {
-		if inf.Public != nil && inf.Public.Ingress != nil {
-			ing.Spec.Rules = append(ing.Spec.Rules, netv1.IngressRule{
-				Host: inf.Public.Ingress.Host,
-				IngressRuleValue: netv1.IngressRuleValue{
-					HTTP: &netv1.HTTPIngressRuleValue{},
-				},
-			})
+	for _, inf := range r.capsule.Spec.Interfaces {
+		if inf.Public == nil || inf.Public.Ingress == nil {
+			continue
+		}
 
-			if len(inf.Public.Ingress.PathPrefixes) == 0 {
-				ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = []netv1.HTTPIngressPath{
-					{
+		ing.Spec.Rules = append(ing.Spec.Rules, netv1.IngressRule{
+			Host: inf.Public.Ingress.Host,
+			IngressRuleValue: netv1.IngressRuleValue{
+				HTTP: &netv1.HTTPIngressRuleValue{},
+			},
+		})
+
+		if len(inf.Public.Ingress.PathPrefixes) == 0 {
+			ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = []netv1.HTTPIngressPath{
+				{
+					PathType: ptr.New(netv1.PathTypePrefix),
+					Path:     "/",
+					Backend: netv1.IngressBackend{
+						Service: &netv1.IngressServiceBackend{
+							Name: r.capsule.Name,
+							Port: netv1.ServiceBackendPort{
+								Name: inf.Name,
+							},
+						},
+					},
+				},
+			}
+		} else {
+			for _, prefix := range inf.Public.Ingress.PathPrefixes {
+				ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = append(
+					ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths,
+					netv1.HTTPIngressPath{
 						PathType: ptr.New(netv1.PathTypePrefix),
-						Path:     "/",
+						Path:     prefix,
 						Backend: netv1.IngressBackend{
 							Service: &netv1.IngressServiceBackend{
-								Name: capsule.Name,
+								Name: r.capsule.Name,
 								Port: netv1.ServiceBackendPort{
 									Name: inf.Name,
 								},
 							},
 						},
 					},
-				}
-			} else {
-				for _, prefix := range inf.Public.Ingress.PathPrefixes {
-					ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = append(
-						ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths,
-						netv1.HTTPIngressPath{
-							PathType: ptr.New(netv1.PathTypePrefix),
-							Path:     prefix,
-							Backend: netv1.IngressBackend{
-								Service: &netv1.IngressServiceBackend{
-									Name: capsule.Name,
-									Port: netv1.ServiceBackendPort{
-										Name: inf.Name,
-									},
-								},
-							},
-						},
-					)
-				}
+				)
 			}
-
-			if len(ing.Spec.TLS) == 0 {
-				ing.Spec.TLS = []netv1.IngressTLS{{
-					SecretName: fmt.Sprintf("%s-tls", capsule.Name),
-				}}
-			}
-			ing.Spec.TLS[0].Hosts = append(ing.Spec.TLS[0].Hosts, inf.Public.Ingress.Host)
 		}
+
+		if len(ing.Spec.TLS) == 0 {
+			ing.Spec.TLS = []netv1.IngressTLS{{
+				SecretName: fmt.Sprintf("%s-tls", r.capsule.Name),
+			}}
+		}
+		ing.Spec.TLS[0].Hosts = append(ing.Spec.TLS[0].Hosts, inf.Public.Ingress.Host)
 	}
 
-	if err := controllerutil.SetControllerReference(capsule, ing, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(&r.capsule, ing, r.scheme); err != nil {
 		return nil, fmt.Errorf("could not set owner reference on ingress: %w", err)
 	}
 
 	return ing, nil
 }
 
-func (r *CapsuleReconciler) reconcileLoadBalancer(
-	ctx context.Context,
-	req ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	svc, err := createLoadBalancer(capsule, r.Scheme)
+func reconcileLoadBalancer(ctx context.Context, r *reconciler) error {
+	svc, err := r.createLoadBalancer()
 	if err != nil {
 		return err
 	}
 
 	nsName := types.NamespacedName{
-		Name:      fmt.Sprintf("%s-lb", req.NamespacedName.Name),
-		Namespace: req.NamespacedName.Namespace,
+		Name:      fmt.Sprintf("%s-lb", r.req.NamespacedName.Name),
+		Namespace: r.req.NamespacedName.Namespace,
 	}
 	existingSvc := &v1.Service{}
-	if err := r.Get(ctx, nsName, existingSvc); err != nil {
+	if err := r.client.Get(ctx, nsName, existingSvc); err != nil {
 		if kerrors.IsNotFound(err) {
-			if !capsuleHasLoadBalancer(capsule) {
+			if !r.capsuleHasLoadBalancer() {
 				return nil
 			}
 
-			log.Info("creating loadbalancer service")
-			if err := r.Create(ctx, svc); err != nil {
+			r.logger.Info("creating loadbalancer service")
+			if err := r.client.Create(ctx, svc); err != nil {
 				return fmt.Errorf("could not create loadbalancer: %w", err)
 			}
 			existingSvc = svc
@@ -1380,20 +1339,20 @@ func (r *CapsuleReconciler) reconcileLoadBalancer(
 		}
 	}
 
-	if !IsOwnedBy(capsule, existingSvc) {
-		if capsuleHasLoadBalancer(capsule) {
-			log.Info("Found existing loadbalancer service not owned by capsule. Will not update it.")
+	if !IsOwnedBy(&r.capsule, existingSvc) {
+		if r.capsuleHasLoadBalancer() {
+			r.logger.Info("Found existing loadbalancer service not owned by capsule. Will not update it.")
 			return errors.New("found existing loadbalancer service not owned by capsule")
 		}
-		log.Info("Found existing loadbalancer service not owned by capsule. Will not delete it.")
+		r.logger.Info("Found existing loadbalancer service not owned by capsule. Will not delete it.")
 	} else {
-		if capsuleHasLoadBalancer(capsule) {
-			return upsertIfNewer(ctx, r, existingSvc, svc, log, capsule, status, func(t1, t2 *v1.Service) bool {
+		if r.capsuleHasLoadBalancer() {
+			return upsertIfNewer(ctx, r, existingSvc, svc, func(t1, t2 *v1.Service) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			})
 		}
-		log.Info("deleting loadbalancer service")
-		if err := r.Delete(ctx, existingSvc); err != nil {
+		r.logger.Info("deleting loadbalancer service")
+		if err := r.client.Delete(ctx, existingSvc); err != nil {
 			return fmt.Errorf("could not delete loadbalancer service: %w", err)
 		}
 	}
@@ -1401,8 +1360,8 @@ func (r *CapsuleReconciler) reconcileLoadBalancer(
 	return nil
 }
 
-func capsuleHasLoadBalancer(capsule *v1alpha2.Capsule) bool {
-	for _, inf := range capsule.Spec.Interfaces {
+func (r *reconciler) capsuleHasLoadBalancer() bool {
+	for _, inf := range r.capsule.Spec.Interfaces {
 		if inf.Public != nil && inf.Public.LoadBalancer != nil {
 			return true
 		}
@@ -1410,24 +1369,21 @@ func capsuleHasLoadBalancer(capsule *v1alpha2.Capsule) bool {
 	return false
 }
 
-func createLoadBalancer(
-	capsule *v1alpha2.Capsule,
-	scheme *runtime.Scheme,
-) (*v1.Service, error) {
+func (r *reconciler) createLoadBalancer() (*v1.Service, error) {
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-lb", capsule.Name),
-			Namespace: capsule.Namespace,
+			Name:      fmt.Sprintf("%s-lb", r.capsule.Name),
+			Namespace: r.capsule.Namespace,
 		},
 		Spec: v1.ServiceSpec{
 			Type: v1.ServiceTypeLoadBalancer,
 			Selector: map[string]string{
-				LabelCapsule: capsule.Name,
+				LabelCapsule: r.capsule.Name,
 			},
 		},
 	}
 
-	for _, inf := range capsule.Spec.Interfaces {
+	for _, inf := range r.capsule.Spec.Interfaces {
 		if inf.Public != nil && inf.Public.LoadBalancer != nil {
 			svc.Spec.Ports = append(svc.Spec.Ports, v1.ServicePort{
 				Name:       inf.Name,
@@ -1437,30 +1393,24 @@ func createLoadBalancer(
 		}
 	}
 
-	if err := controllerutil.SetControllerReference(capsule, svc, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(&r.capsule, svc, r.scheme); err != nil {
 		return nil, fmt.Errorf("could not set owner reference on loadbalancer service: %w", err)
 	}
 
 	return svc, nil
 }
 
-func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
-	ctx context.Context,
-	_ ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	hpa, shouldHaveHPA, err := createHPA(capsule, r.Scheme)
+func reconcileHorizontalPodAutoscaler(ctx context.Context, r *reconciler) error {
+	hpa, shouldHaveHPA, err := r.createHPA()
 	if err != nil {
 		return err
 	}
 	existingHPA := &autoscalingv2.HorizontalPodAutoscaler{}
-	if err = r.Get(ctx, client.ObjectKeyFromObject(hpa), existingHPA); err != nil {
+	if err = r.client.Get(ctx, client.ObjectKeyFromObject(hpa), existingHPA); err != nil {
 		if kerrors.IsNotFound(err) {
 			if shouldHaveHPA {
-				log.Info("creating horizontal pod autoscaler")
-				if err := r.Create(ctx, hpa); err != nil {
+				r.logger.Info("creating horizontal pod autoscaler")
+				if err := r.client.Create(ctx, hpa); err != nil {
 					return fmt.Errorf("could not create horizontal pod autoscaler: %w", err)
 				}
 			}
@@ -1471,7 +1421,7 @@ func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
 	}
 
 	if !shouldHaveHPA {
-		if err := r.Delete(ctx, existingHPA); err != nil {
+		if err := r.client.Delete(ctx, existingHPA); err != nil {
 			return err
 		}
 	}
@@ -1481,45 +1431,39 @@ func (r *CapsuleReconciler) reconcileHorizontalPodAutoscaler(
 		r,
 		existingHPA,
 		hpa,
-		log,
-		capsule,
-		status,
 		func(t1, t2 *autoscalingv2.HorizontalPodAutoscaler) bool {
 			return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 		},
 	)
 }
 
-func shouldCreateHPA(capsule *v1alpha2.Capsule, scheme *runtime.Scheme) (bool, error) {
-	_, res, err := createHPA(capsule, scheme)
+func (r *reconciler) shouldCreateHPA() (bool, error) {
+	_, res, err := r.createHPA()
 	if err != nil {
 		return false, err
 	}
 	return res, nil
 }
 
-func createHPA(
-	capsule *v1alpha2.Capsule,
-	scheme *runtime.Scheme,
-) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
+func (r *reconciler) createHPA() (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      capsule.Name,
-			Namespace: capsule.Namespace,
+			Name:      r.capsule.Name,
+			Namespace: r.capsule.Namespace,
 		},
 		Spec: autoscalingv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
 				Kind:       "Deployment",
-				Name:       capsule.Name,
+				Name:       r.capsule.Name,
 				APIVersion: appsv1.SchemeGroupVersion.String(),
 			},
 		},
 	}
-	if err := controllerutil.SetControllerReference(capsule, hpa, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(&r.capsule, hpa, r.scheme); err != nil {
 		return nil, true, err
 	}
 
-	scale := capsule.Spec.Scale.Horizontal
+	scale := r.capsule.Spec.Scale.Horizontal
 
 	if scale.Instances.Min == 0 {
 		// Cannot have autoscaler going to 0.
@@ -1610,23 +1554,17 @@ func createHPA(
 	return hpa, true, nil
 }
 
-func (r *CapsuleReconciler) reconcileServiceAccount(
-	ctx context.Context,
-	_ ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	sa, err := createServiceAccount(capsule, r.Scheme)
+func reconcileServiceAccount(ctx context.Context, r *reconciler) error {
+	sa, err := r.createServiceAccount()
 	if err != nil {
 		return err
 	}
 
 	existingSA := &v1.ServiceAccount{}
-	if err = r.Get(ctx, client.ObjectKeyFromObject(sa), existingSA); err != nil {
+	if err = r.client.Get(ctx, client.ObjectKeyFromObject(sa), existingSA); err != nil {
 		if kerrors.IsNotFound(err) {
-			log.Info("creating service account")
-			if err := r.Create(ctx, sa); err != nil {
+			r.logger.Info("creating service account")
+			if err := r.client.Create(ctx, sa); err != nil {
 				return fmt.Errorf("could not create service account: %w", err)
 			}
 			return nil
@@ -1635,19 +1573,19 @@ func (r *CapsuleReconciler) reconcileServiceAccount(
 		}
 	}
 
-	return upsertIfNewer(ctx, r, existingSA, sa, log, capsule, status, func(t1, t2 *v1.ServiceAccount) bool {
+	return upsertIfNewer(ctx, r, existingSA, sa, func(t1, t2 *v1.ServiceAccount) bool {
 		return equality.Semantic.DeepEqual(t1.Annotations, t2.Annotations)
 	})
 }
 
-func createServiceAccount(capsule *v1alpha2.Capsule, scheme *runtime.Scheme) (*v1.ServiceAccount, error) {
+func (r *reconciler) createServiceAccount() (*v1.ServiceAccount, error) {
 	sa := &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      capsule.Name,
-			Namespace: capsule.Namespace,
+			Name:      r.capsule.Name,
+			Namespace: r.capsule.Namespace,
 		},
 	}
-	if err := controllerutil.SetControllerReference(capsule, sa, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(&r.capsule, sa, r.scheme); err != nil {
 		return nil, err
 	}
 
@@ -1656,20 +1594,17 @@ func createServiceAccount(capsule *v1alpha2.Capsule, scheme *runtime.Scheme) (*v
 
 func upsertIfNewer[T client.Object](
 	ctx context.Context,
-	r *CapsuleReconciler,
+	r *reconciler,
 	currentObj T,
 	newObj T,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
 	equal func(t1 T, t2 T) bool,
 ) error {
-	gvks, _, err := r.Scheme.ObjectKinds(currentObj)
+	gvks, _, err := r.scheme.ObjectKinds(currentObj)
 	if err != nil {
 		return fmt.Errorf("could not get object kinds for object: %w", err)
 	}
 	gvk := gvks[0]
-	log = log.WithValues(
+	log := r.logger.WithValues(
 		"gvk", map[string]string{
 			"kind":     gvk.Kind,
 			"group":    gvk.Group,
@@ -1686,10 +1621,10 @@ func upsertIfNewer[T client.Object](
 		State: "created",
 	}
 	defer func() {
-		status.OwnedResources = append(status.OwnedResources, res)
+		r.status.OwnedResources = append(r.status.OwnedResources, res)
 	}()
 
-	if !IsOwnedBy(capsule, newObj) {
+	if !IsOwnedBy(&r.capsule, newObj) {
 		log.Info("Found existing resource not owned by capsule. Will not update it.")
 		res.State = "failed"
 		res.Message = "found existing resource not owned by capsule"
@@ -1700,7 +1635,7 @@ func upsertIfNewer[T client.Object](
 
 	// Dry run to fully materialize the new spec.
 	materializedObj.SetResourceVersion(currentObj.GetResourceVersion())
-	if err := r.Update(ctx, materializedObj, client.DryRunAll); err != nil {
+	if err := r.client.Update(ctx, materializedObj, client.DryRunAll); err != nil {
 		res.State = "failed"
 		res.Message = err.Error()
 		return fmt.Errorf("could not test update to %s: %w", gvk.Kind, err)
@@ -1709,7 +1644,7 @@ func upsertIfNewer[T client.Object](
 	materializedObj.SetResourceVersion("")
 	if !equal(materializedObj, currentObj) {
 		log.Info("updating resource")
-		if err := r.Update(ctx, newObj); err != nil {
+		if err := r.client.Update(ctx, newObj); err != nil {
 			res.State = "failed"
 			res.Message = err.Error()
 			return fmt.Errorf("could not update %s: %w", gvk.Kind, err)
@@ -1721,27 +1656,21 @@ func upsertIfNewer[T client.Object](
 	return nil
 }
 
-func (r *CapsuleReconciler) reconcilePrometheusServiceMonitor(
-	ctx context.Context,
-	_ ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	if r.Config.PrometheusServiceMonitor == nil || r.Config.PrometheusServiceMonitor.PortName == "" {
+func reconcilePrometheusServiceMonitor(ctx context.Context, r *reconciler) error {
+	if r.config.PrometheusServiceMonitor == nil || r.config.PrometheusServiceMonitor.PortName == "" {
 		return nil
 	}
 
-	serviceMonitor, err := r.createPrometheusServiceMonitor(capsule, r.Scheme)
+	serviceMonitor, err := r.createPrometheusServiceMonitor()
 	if err != nil {
 		return err
 	}
 
 	existingServiceMonitor := &monitorv1.ServiceMonitor{}
-	if err = r.Get(ctx, client.ObjectKeyFromObject(serviceMonitor), existingServiceMonitor); err != nil {
+	if err = r.client.Get(ctx, client.ObjectKeyFromObject(serviceMonitor), existingServiceMonitor); err != nil {
 		if kerrors.IsNotFound(err) {
-			log.Info("creating prometheus service monitor")
-			if err := r.Create(ctx, serviceMonitor); err != nil {
+			r.logger.Info("creating prometheus service monitor")
+			if err := r.client.Create(ctx, serviceMonitor); err != nil {
 				return fmt.Errorf("could not create prometheus service monitor: %w", err)
 			}
 			return nil
@@ -1754,71 +1683,51 @@ func (r *CapsuleReconciler) reconcilePrometheusServiceMonitor(
 		ctx, r,
 		existingServiceMonitor,
 		serviceMonitor,
-		log, capsule, status,
 		func(t1, t2 *monitorv1.ServiceMonitor) bool {
 			return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 		},
 	)
 }
 
-func (r *CapsuleReconciler) createPrometheusServiceMonitor(
-	capsule *v1alpha2.Capsule,
-	scheme *runtime.Scheme,
-) (*monitorv1.ServiceMonitor, error) {
+func (r *reconciler) createPrometheusServiceMonitor() (*monitorv1.ServiceMonitor, error) {
 	s := &monitorv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            capsule.Name,
-			Namespace:       capsule.Namespace,
+			Name:            r.capsule.Name,
+			Namespace:       r.capsule.Namespace,
 			ResourceVersion: "",
 			Labels: map[string]string{
-				LabelCapsule: capsule.Name,
+				LabelCapsule: r.capsule.Name,
 			},
 		},
 		Spec: monitorv1.ServiceMonitorSpec{
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					LabelCapsule: capsule.Name,
+					LabelCapsule: r.capsule.Name,
 				},
 			},
 			Endpoints: []monitorv1.Endpoint{{
-				Port: r.Config.PrometheusServiceMonitor.PortName,
-				Path: r.Config.PrometheusServiceMonitor.Path,
+				Port: r.config.PrometheusServiceMonitor.PortName,
+				Path: r.config.PrometheusServiceMonitor.Path,
 			}},
 		},
 	}
-	if err := controllerutil.SetControllerReference(capsule, s, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(&r.capsule, s, r.scheme); err != nil {
 		return nil, err
 	}
 
 	return s, nil
 }
 
-func (r *CapsuleReconciler) reconcileCronJobs(
-	ctx context.Context,
-	req ctrl.Request,
-	log logr.Logger,
-	capsule *v1alpha2.Capsule,
-	status *v1alpha2.CapsuleStatus,
-) error {
-	configs, err := r.getConfigs(ctx, req, capsule, status)
-	if err != nil {
-		return err
-	}
-
-	checksums, err := r.configChecksums(capsule, configs)
-	if err != nil {
-		return err
-	}
-
-	jobs, err := r.createCronJobs(capsule, r.Scheme, configs, checksums)
+func reconcileCronJobs(ctx context.Context, r *reconciler) error {
+	jobs, err := r.createCronJobs()
 	if err != nil {
 		return err
 	}
 
 	existingJobs := &batchv1.CronJobList{}
-	if err = r.List(ctx, existingJobs, &client.ListOptions{
+	if err = r.client.List(ctx, existingJobs, &client.ListOptions{
 		LabelSelector: labels.SelectorFromSet(labels.Set{
-			LabelCapsule: capsule.Name,
+			LabelCapsule: r.capsule.Name,
 		}),
 	}); err != nil {
 		return err
@@ -1832,8 +1741,8 @@ func (r *CapsuleReconciler) reconcileCronJobs(
 	for _, job := range jobs {
 		existingCronJob, ok := existingJobByName[job.Name]
 		if !ok {
-			log.Info("creating cron job", "name", job.Name)
-			if err := r.Create(ctx, job); err != nil {
+			r.logger.Info("creating cron job", "name", job.Name)
+			if err := r.client.Create(ctx, job); err != nil {
 				return fmt.Errorf("could not create cron job %s: %w", job.Name, err)
 			}
 			continue
@@ -1842,7 +1751,6 @@ func (r *CapsuleReconciler) reconcileCronJobs(
 		if err := upsertIfNewer(
 			ctx, r,
 			&existingCronJob, job,
-			log, capsule, status,
 			func(t1, t2 *batchv1.CronJob) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			},
@@ -1858,7 +1766,7 @@ func (r *CapsuleReconciler) reconcileCronJobs(
 	}
 	for _, j := range existingJobs.Items {
 		if _, ok := nameOfJobs[j.Name]; !ok {
-			if err := r.Delete(ctx, &j); err != nil {
+			if err := r.client.Delete(ctx, &j); err != nil {
 				return fmt.Errorf("failed to delete cron job %s: %w", j.Name, err)
 			}
 		}
@@ -1867,19 +1775,14 @@ func (r *CapsuleReconciler) reconcileCronJobs(
 	return nil
 }
 
-func (r *CapsuleReconciler) createCronJobs(
-	capsule *v1alpha2.Capsule,
-	scheme *runtime.Scheme,
-	configs *configs,
-	checksums *checksums,
-) ([]*batchv1.CronJob, error) {
+func (r *reconciler) createCronJobs() ([]*batchv1.CronJob, error) {
 	var res []*batchv1.CronJob
-	deployment, err := createDeployment(capsule, scheme, configs, checksums, nil)
+	deployment, err := r.createDeployment(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, job := range capsule.Spec.CronJobs {
+	for _, job := range r.capsule.Spec.CronJobs {
 		var template v1.PodTemplateSpec
 		if job.Command != nil {
 			template = *deployment.Spec.Template.DeepCopy()
@@ -1890,20 +1793,36 @@ func (r *CapsuleReconciler) createCronJobs(
 			template.Spec.RestartPolicy = v1.RestartPolicyNever
 
 		} else if job.URL != nil {
-			template = createURLCronJobTemplate(capsule, job)
+			args := []string{"-G", "--fail-with-body"}
+			for k, v := range job.URL.QueryParameters {
+				args = append(args, "-d", fmt.Sprintf("%v=%v", url.QueryEscape(k), url.QueryEscape(v)))
+			}
+			urlString := fmt.Sprintf("http://%s:%v%s", r.capsule.Name, job.URL.Port, job.URL.Path)
+			args = append(args, urlString)
+			template = v1.PodTemplateSpec{
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{{
+						Name:    fmt.Sprintf("%s-%s", r.capsule.Name, job.Name),
+						Image:   "quay.io/curl/curl:latest",
+						Command: []string{"curl"},
+						Args:    args,
+					}},
+					RestartPolicy: v1.RestartPolicyNever,
+				},
+			}
 		} else {
 			return nil, fmt.Errorf("neither Command nor URL was set on job %s", job.Name)
 		}
 
 		annotations := map[string]string{}
-		maps.Copy(annotations, capsule.Annotations)
+		maps.Copy(annotations, r.capsule.Annotations)
 
 		j := &batchv1.CronJob{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-%s", capsule.Name, job.Name),
-				Namespace: capsule.Namespace,
+				Name:      fmt.Sprintf("%s-%s", r.capsule.Name, job.Name),
+				Namespace: r.capsule.Namespace,
 				Labels: map[string]string{
-					LabelCapsule: capsule.Name,
+					LabelCapsule: r.capsule.Name,
 					LabelCron:    job.Name,
 				},
 				Annotations: annotations,
@@ -1914,7 +1833,7 @@ func (r *CapsuleReconciler) createCronJobs(
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: annotations,
 						Labels: map[string]string{
-							LabelCapsule: capsule.Name,
+							LabelCapsule: r.capsule.Name,
 							LabelCron:    job.Name,
 						},
 					},
@@ -1926,31 +1845,11 @@ func (r *CapsuleReconciler) createCronJobs(
 				},
 			},
 		}
-		if err := controllerutil.SetControllerReference(capsule, j, scheme); err != nil {
+		if err := controllerutil.SetControllerReference(&r.capsule, j, r.scheme); err != nil {
 			return nil, err
 		}
 		res = append(res, j)
 	}
 
 	return res, nil
-}
-
-func createURLCronJobTemplate(capsule *v1alpha2.Capsule, job v1alpha2.CronJob) v1.PodTemplateSpec {
-	args := []string{"-G", "--fail-with-body"}
-	for k, v := range job.URL.QueryParameters {
-		args = append(args, "-d", fmt.Sprintf("%v=%v", url.QueryEscape(k), url.QueryEscape(v)))
-	}
-	urlString := fmt.Sprintf("http://%s:%v%s", capsule.Name, job.URL.Port, job.URL.Path)
-	args = append(args, urlString)
-	return v1.PodTemplateSpec{
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{{
-				Name:    fmt.Sprintf("%s-%s", capsule.Name, job.Name),
-				Image:   "quay.io/curl/curl:latest",
-				Command: []string{"curl"},
-				Args:    args,
-			}},
-			RestartPolicy: v1.RestartPolicyNever,
-		},
-	}
 }
