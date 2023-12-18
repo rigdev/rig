@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"github.com/rigdev/rig/pkg/ptr"
 	"go.uber.org/zap/zapcore"
+	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -62,6 +63,10 @@ type IngressConfig struct {
 	// ClassName specifies the default ingress class to use for all ingress
 	// resources created.
 	ClassName string `json:"className"`
+
+	// PathType defines how ingress paths should be interpreted.
+	// Allowed values: Exact, Prefix, ImplementationSpecific
+	PathType v1.PathType `json:"pathType"`
 }
 
 func (c *OperatorConfig) Default() {
@@ -73,6 +78,9 @@ func (c *OperatorConfig) Default() {
 	}
 	if c.Ingress.Annotations == nil {
 		c.Ingress.Annotations = map[string]string{}
+	}
+	if c.Ingress.PathType == "" {
+		c.Ingress.PathType = v1.PathTypeExact
 	}
 }
 

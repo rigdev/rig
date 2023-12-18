@@ -268,9 +268,9 @@ type CapsuleInterfaceIngress struct {
 	// Host specifies the DNS name of the Ingress resource.
 	Host string `json:"host"`
 
-	// PathPrefix specifies a list of path prefixes. In order for a request to
+	// Paths specifies a list of paths. In order for a request to
 	// hit the ingress at least one of these must match the request.
-	PathPrefixes []string `json:"pathPrefixes,omitempty"`
+	Paths []string `json:"paths,omitempty"`
 }
 
 // CapsuleInterfaceLoadBalancer defines that the interface should be exposed as

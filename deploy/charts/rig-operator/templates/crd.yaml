@@ -217,13 +217,6 @@ spec:
                               description: Host specifies the DNS name of the Ingress
                                 resource
                               type: string
-                            pathPrefixes:
-                              description: PathPrefix specifies a list of path prefixes.
-                                In order for a request to hit the ingress at least
-                                one of these must match the request.
-                              items:
-                                type: string
-                              type: array
                           required:
                           - host
                           type: object
@@ -578,8 +571,15 @@ spec:
                           properties:
                             host:
                               description: Host specifies the DNS name of the Ingress
-                                resource
+                                resource.
                               type: string
+                            paths:
+                              description: Paths specifies a list of paths. In order
+                                for a request to hit the ingress at least one of these
+                                must match the request.
+                              items:
+                                type: string
+                              type: array
                           required:
                           - host
                           type: object

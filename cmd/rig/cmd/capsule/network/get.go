@@ -3,6 +3,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -49,7 +50,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		case *capsule.RoutingMethod_Ingress_:
 			t.AppendRow(table.Row{fmt.Sprintf("#%v", n), i.GetName(), i.GetPort(), "Ingress"})
 			t.AppendRow(table.Row{"Host", "", "", v.Ingress.GetHost()})
-			t.AppendRow(table.Row{"Path Prefix", "", "", v.Ingress.GetPathPrefix()})
+			t.AppendRow(table.Row{"Paths", "", "", strings.Join(v.Ingress.GetPaths(), " ")})
 			t.AppendRow(table.Row{"TLS", "", "", v.Ingress.GetTls()})
 		case *capsule.RoutingMethod_LoadBalancer_:
 			t.AppendRow(table.Row{fmt.Sprintf("#%v", n), i.GetName(), i.GetPort(), "LoadBalancer"})

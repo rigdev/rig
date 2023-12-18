@@ -410,7 +410,7 @@ func (s *K8sTestSuite) TestController() {
 	}
 	assert.NoError(t, k8sClient.Update(ctx, &capsule))
 
-	pt := netv1.PathTypePrefix
+	pt := netv1.PathTypeExact
 	expectResources(ctx, t, k8sClient, []client.Object{
 		&netv1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
@@ -468,7 +468,7 @@ func (s *K8sTestSuite) TestController() {
 	})
 
 	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
-	capsule.Spec.Interfaces[0].Public.Ingress.PathPrefixes = []string{"/test1", "/test2"}
+	capsule.Spec.Interfaces[0].Public.Ingress.Paths = []string{"/test1", "/test2"}
 	assert.NoError(t, k8sClient.Update(ctx, &capsule))
 
 	expectResources(ctx, t, k8sClient, []client.Object{

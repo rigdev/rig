@@ -1262,10 +1262,10 @@ func (r *reconciler) createIngress() (*netv1.Ingress, error) {
 			},
 		})
 
-		if len(inf.Public.Ingress.PathPrefixes) == 0 {
+		if len(inf.Public.Ingress.Paths) == 0 {
 			ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = []netv1.HTTPIngressPath{
 				{
-					PathType: ptr.New(netv1.PathTypePrefix),
+					PathType: ptr.New(r.config.Ingress.PathType),
 					Path:     "/",
 					Backend: netv1.IngressBackend{
 						Service: &netv1.IngressServiceBackend{
@@ -1278,12 +1278,12 @@ func (r *reconciler) createIngress() (*netv1.Ingress, error) {
 				},
 			}
 		} else {
-			for _, prefix := range inf.Public.Ingress.PathPrefixes {
+			for _, path := range inf.Public.Ingress.Paths {
 				ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = append(
 					ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths,
 					netv1.HTTPIngressPath{
-						PathType: ptr.New(netv1.PathTypePrefix),
-						Path:     prefix,
+						PathType: ptr.New(r.config.Ingress.PathType),
+						Path:     path,
 						Backend: netv1.IngressBackend{
 							Service: &netv1.IngressServiceBackend{
 								Name: r.capsule.Name,
@@ -1522,6 +1522,7 @@ func (r *reconciler) createHPA() (*autoscalingv2.HorizontalPodAutoscaler, bool, 
 					},
 				},
 			}
+
 			if object.AverageValue != "" {
 				averageValue, err := resource.ParseQuantity(object.AverageValue)
 				if err != nil {
