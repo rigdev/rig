@@ -3,6 +3,7 @@ package scale
 import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -34,12 +35,14 @@ type Cmd struct {
 	fx.In
 
 	Rig rig.Client
+	Cfg *cmdconfig.Config
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
 }
 
 func Setup(parent *cobra.Command) {

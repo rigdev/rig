@@ -115,7 +115,9 @@ func (c *Cmd) completions(
 
 	resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule_api.ListRolloutsRequest]{
 		Msg: &capsule_api.ListRolloutsRequest{
-			CapsuleId: capsule.CapsuleID,
+			CapsuleId:     capsule.CapsuleID,
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		},
 	})
 	if err != nil {

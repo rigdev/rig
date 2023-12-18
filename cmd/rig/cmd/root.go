@@ -48,6 +48,7 @@ func Run() error {
 		Short: "CLI tool for managing your Rig projects",
 	}
 	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
+	rootCmd.PersistentFlags().StringVarP(&base.Flags.Environment, "environment", "e", base.Flags.Environment, "")
 
 	license := &cobra.Command{
 		Use:               "license",

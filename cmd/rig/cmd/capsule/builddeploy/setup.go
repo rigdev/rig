@@ -180,6 +180,7 @@ func (c *Cmd) completions(
 	resp, err := c.Rig.Capsule().ListBuilds(ctx, &connect.Request[capsule_api.ListBuildsRequest]{
 		Msg: &capsule_api.ListBuildsRequest{
 			CapsuleId: capsule.CapsuleID,
+			ProjectId: c.Cfg.GetProject(),
 		},
 	})
 	if err != nil {

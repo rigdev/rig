@@ -166,6 +166,7 @@ func (c *Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef i
 			Image:          imageRef.Image,
 			Digest:         digest,
 			SkipImageCheck: skipImageCheck,
+			ProjectId:      c.Cfg.GetProject(),
 		},
 	})
 	if err != nil {

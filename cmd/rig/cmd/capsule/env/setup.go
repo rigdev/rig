@@ -110,7 +110,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	r, err := capsule.GetCurrentRollout(ctx, c.Rig)
+	r, err := capsule.GetCurrentRollout(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

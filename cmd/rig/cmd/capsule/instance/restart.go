@@ -5,6 +5,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 )
@@ -22,8 +23,10 @@ func (c *Cmd) restart(ctx context.Context, cmd *cobra.Command, args []string) er
 
 	if _, err := c.Rig.Capsule().RestartInstance(ctx, &connect.Request[capsule.RestartInstanceRequest]{
 		Msg: &capsule.RestartInstanceRequest{
-			CapsuleId:  capsule_cmd.CapsuleID,
-			InstanceId: instanceID,
+			CapsuleId:     capsule_cmd.CapsuleID,
+			InstanceId:    instanceID,
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		},
 	}); err != nil {
 		return err

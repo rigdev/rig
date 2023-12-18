@@ -34,9 +34,11 @@ func (e *OutputType) Type() string {
 type FlagsStruct struct {
 	OutputType     OutputType
 	NonInteractive bool
+	Environment    string
 }
 
 var Flags = FlagsStruct{
 	OutputType:     OutputTypePretty,
 	NonInteractive: false,
+	Environment:    "default",
 }

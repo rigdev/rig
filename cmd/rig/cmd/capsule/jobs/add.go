@@ -12,6 +12,7 @@ import (
 	"github.com/google/shlex"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/spf13/cobra"
@@ -21,7 +22,7 @@ import (
 )
 
 func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
-	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
+	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return err
 	}
@@ -45,7 +46,7 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	allJobs = append(allJobs, job)
 
-	if err := capsule_cmd.Deploy(ctx, c.Rig, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
+	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
 			Field: &capsule.Change_CronJobs{
@@ -54,6 +55,8 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 				},
 			},
 		}},
+		ProjectId:     c.Cfg.GetProject(),
+		EnvironmentId: base.Flags.Environment,
 	}), false); err != nil {
 		return err
 	}
@@ -209,7 +212,7 @@ func promptCommand() (*capsule.CronJob_Command, error) {
 }
 
 func (c *Cmd) delete(ctx context.Context, _ *cobra.Command, args []string) error {
-	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
+	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return err
 	}
@@ -246,7 +249,7 @@ func (c *Cmd) delete(ctx context.Context, _ *cobra.Command, args []string) error
 		return fmt.Errorf("no job with name %s", job)
 	}
 
-	if err := capsule_cmd.Deploy(ctx, c.Rig, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
+	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
 			Field: &capsule.Change_CronJobs{

@@ -8,7 +8,7 @@ import (
 )
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
-	r, err := capsule.GetCurrentRollout(ctx, c.Rig)
+	r, err := capsule.GetCurrentRollout(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return err
 	}

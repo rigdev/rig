@@ -12,29 +12,23 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
 )
 
 var CapsuleID string
 
-func GetCurrentContainerResources(ctx context.Context, client rig.Client) (*capsule.ContainerSettings, uint32, error) {
-	resp, err := client.Capsule().Get(ctx, connect.NewRequest(&capsule.GetRequest{
-		CapsuleId: CapsuleID,
-	}))
+func GetCurrentContainerResources(
+	ctx context.Context,
+	client rig.Client,
+	cfg *cmdconfig.Config,
+) (*capsule.ContainerSettings, uint32, error) {
+	rollout, err := GetCurrentRollout(ctx, client, cfg)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	r, err := client.Capsule().GetRollout(ctx, connect.NewRequest(&capsule.GetRolloutRequest{
-		CapsuleId: CapsuleID,
-		RolloutId: resp.Msg.GetCapsule().GetCurrentRollout(),
-	}))
-	if err != nil {
-		return nil, 0, err
-	}
-
-	container := r.Msg.GetRollout().GetConfig().GetContainerSettings()
+	container := rollout.GetConfig().GetContainerSettings()
 	if container == nil {
 		container = &capsule.ContainerSettings{}
 	}
@@ -44,12 +38,21 @@ func GetCurrentContainerResources(ctx context.Context, client rig.Client) (*caps
 
 	utils.FeedDefaultResources(container.Resources)
 
-	return container, r.Msg.GetRollout().GetConfig().GetReplicas(), nil
+	return container, rollout.GetConfig().GetReplicas(), nil
 }
 
-func GetCurrentNetwork(ctx context.Context, client rig.Client) (*capsule.Network, error) {
+func GetCurrentNetwork(ctx context.Context, client rig.Client, cfg *cmdconfig.Config) (*capsule.Network, error) {
+	rollout, err := GetCurrentRollout(ctx, client, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return rollout.GetConfig().GetNetwork(), nil
+}
+
+func GetCurrentRollout(ctx context.Context, client rig.Client, cfg *cmdconfig.Config) (*capsule.Rollout, error) {
 	resp, err := client.Capsule().Get(ctx, connect.NewRequest(&capsule.GetRequest{
 		CapsuleId: CapsuleID,
+		ProjectId: cfg.GetProject(),
 	}))
 	if err != nil {
 		return nil, err
@@ -58,25 +61,7 @@ func GetCurrentNetwork(ctx context.Context, client rig.Client) (*capsule.Network
 	r, err := client.Capsule().GetRollout(ctx, connect.NewRequest(&capsule.GetRolloutRequest{
 		CapsuleId: CapsuleID,
 		RolloutId: resp.Msg.GetCapsule().GetCurrentRollout(),
-	}))
-	if err != nil {
-		return nil, err
-	}
-
-	return r.Msg.GetRollout().GetConfig().GetNetwork(), nil
-}
-
-func GetCurrentRollout(ctx context.Context, client rig.Client) (*capsule.Rollout, error) {
-	resp, err := client.Capsule().Get(ctx, connect.NewRequest(&capsule.GetRequest{
-		CapsuleId: CapsuleID,
-	}))
-	if err != nil {
-		return nil, err
-	}
-
-	r, err := client.Capsule().GetRollout(ctx, connect.NewRequest(&capsule.GetRolloutRequest{
-		CapsuleId: CapsuleID,
-		RolloutId: resp.Msg.GetCapsule().GetCurrentRollout(),
+		ProjectId: cfg.GetProject(),
 	}))
 	if err != nil {
 		return nil, err
@@ -105,6 +90,7 @@ func PromptAbortAndDeploy(
 	ctx context.Context,
 	capsuleID string,
 	rig rig.Client,
+	cfg *cmdconfig.Config,
 	req *connect.Request[capsule.DeployRequest],
 ) (*connect.Response[capsule.DeployResponse], error) {
 	deploy, err := common.PromptConfirm("Rollout already in progress, would you like to cancel it and redeploy?", false)
@@ -116,18 +102,20 @@ func PromptAbortAndDeploy(
 		return nil, errors.FailedPreconditionErrorf("rollout already in progress")
 	}
 
-	return AbortAndDeploy(ctx, rig, capsuleID, req)
+	return AbortAndDeploy(ctx, rig, cfg, capsuleID, req)
 }
 
 func AbortAndDeploy(
 	ctx context.Context,
 	rig rig.Client,
+	cfg *cmdconfig.Config,
 	capsuleID string,
 	req *connect.Request[capsule.DeployRequest],
 ) (*connect.Response[capsule.DeployResponse], error) {
 	cc, err := rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
 			CapsuleId: capsuleID,
+			ProjectId: cfg.GetProject(),
 		},
 	})
 	if err != nil {
@@ -138,6 +126,7 @@ func AbortAndDeploy(
 		Msg: &capsule.AbortRolloutRequest{
 			CapsuleId: capsuleID,
 			RolloutId: cc.Msg.GetCapsule().GetCurrentRollout(),
+			ProjectId: cfg.GetProject(),
 		},
 	}); err != nil {
 		return nil, err
@@ -149,6 +138,7 @@ func AbortAndDeploy(
 func Deploy(
 	ctx context.Context,
 	rig rig.Client,
+	cfg *cmdconfig.Config,
 	capsuleID string,
 	req *connect.Request[capsule.DeployRequest],
 	forceDeploy bool,
@@ -156,9 +146,9 @@ func Deploy(
 	_, err := rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 		if forceDeploy {
-			_, err = AbortAndDeploy(ctx, rig, capsuleID, req)
+			_, err = AbortAndDeploy(ctx, rig, cfg, capsuleID, req)
 		} else {
-			_, err = PromptAbortAndDeploy(ctx, capsuleID, rig, req)
+			_, err = PromptAbortAndDeploy(ctx, capsuleID, rig, cfg, req)
 		}
 	}
 	if err != nil {

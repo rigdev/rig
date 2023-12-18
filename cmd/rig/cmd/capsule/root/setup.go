@@ -191,7 +191,9 @@ func (c *Cmd) completions(
 	}
 
 	resp, err := c.Rig.Capsule().List(ctx, &connect.Request[capsule_api.ListRequest]{
-		Msg: &capsule_api.ListRequest{},
+		Msg: &capsule_api.ListRequest{
+			ProjectId: c.Cfg.GetProject(),
+		},
 	})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
@@ -232,6 +234,7 @@ func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []str
 
 	resp, err := c.Rig.Capsule().List(ctx, connect.NewRequest(&capsule_api.ListRequest{
 		Pagination: &model.Pagination{},
+		ProjectId:  c.Cfg.GetProject(),
 	}))
 	if err != nil {
 		return err
