@@ -166,7 +166,7 @@ message RoutingMethod {
   message Ingress {
     string host = 1;
     bool tls = 2;
-    string path_prefix = 3;
+    repeated string paths = 3;
   }
 
   oneof kind {
