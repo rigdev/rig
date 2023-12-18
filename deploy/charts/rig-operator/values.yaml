@@ -11,6 +11,7 @@ config:
   ingress:
     annotations: {}
     className: ""
+    pathType: Prefix
   prometheusServiceMonitor:
     path: ""
     portName: ""

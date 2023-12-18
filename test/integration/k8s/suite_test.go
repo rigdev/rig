@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig/pkg/manager"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -83,6 +84,9 @@ func (s *K8sTestSuite) SetupSuite() {
 			Certmanager: &configv1alpha1.CertManagerConfig{
 				ClusterIssuer:              "test",
 				CreateCertificateResources: true,
+			},
+			Ingress: configv1alpha1.IngressConfig{
+				PathType: netv1.PathTypeExact,
 			},
 		},
 		ClientSet: clientSet,

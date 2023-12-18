@@ -318,6 +318,7 @@ _Appears in:_
 | --- | --- |
 | `annotations` _object (keys:string, values:string)_ | Annotations for all ingress resources created. |
 | `className` _string_ | ClassName specifies the default ingress class to use for all ingress resources created. |
+| `pathType` _[PathType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#pathtype-v1-networking)_ | PathType defines how ingress paths should be interpreted. Allowed values: Exact, Prefix, ImplementationSpecific |
 
 
 ### Logging
