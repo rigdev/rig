@@ -8,6 +8,8 @@ config:
   certManager:
     clusterIssuer: ""
     createCertificateResources: false
+  service:
+    type: ClusterIP
   ingress:
     annotations: {}
     className: ""
