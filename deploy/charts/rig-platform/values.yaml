@@ -144,7 +144,21 @@ rig:
     store: postgres
     secret: ""
 
+  email:
+    type: ""
+    from: ""
+
+  logging:
+    devMode: false
+    level: info
+
+  environments:
+    - name: default
+      cluster: default
+      namespace_template: "{{ .Project.Name }}",
+
   cluster:
+    name: default
     devRegistry:
       host: ""
       clusterHost: ""
@@ -159,11 +173,3 @@ rig:
         ssh:
           privateKey: ""
           privateKeyPassword: ""
-
-  email:
-    type: ""
-    from: ""
-
-  logging:
-    devMode: false
-    level: info

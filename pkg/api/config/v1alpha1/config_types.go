@@ -118,6 +118,7 @@ type PlatformConfig struct {
 	OAuth OAuth `json:"oauth,omitempty"`
 
 	// Cluster holds cluster specific configuration
+	// Deprecated: Use `clusters` instead.
 	Cluster Cluster `json:"cluster,omitempty"`
 
 	// Email holds configuration for sending emails. Either using mailjet or using SMTP
@@ -125,6 +126,12 @@ type PlatformConfig struct {
 
 	// Loggin holds information about the granularity of logging
 	Logging Logging `json:"logging,omitempty"`
+
+	// Clusters the platform has access to.
+	Clusters []Cluster `json:"clusters,omitempty"`
+
+	// Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups).
+	Environments []Environment `json:"environments,omitempty"`
 }
 
 // Auth specifies authentication configuration.
@@ -274,6 +281,20 @@ type OAuthClientCredentials struct {
 
 // Cluster specifies cluster configuration
 type Cluster struct {
+	// Name of the cluster. The name is used as a reference for the cluster through the documentation
+	// and API endpoints.
+	Name string `json:"name,omitempty"`
+
+	// URL to communicate to the cluster. If set, a Token and CertificateAuthority should
+	// be provided as well.
+	URL string `json:"url,omitempty"`
+
+	// Token for communicating with the cluster. Available through a service-account's secret.
+	Token string `json:"token,omitempty"`
+
+	// Certificate authority for communicating with the cluster. Available through a service-account's secret.
+	CertificateAuthority string `json:"certificateAuthority,omitempty"`
+
 	// Type of the cluster - either `docker` or `k8s`.
 	Type ClusterType `json:"type,omitempty"`
 
@@ -282,6 +303,19 @@ type Cluster struct {
 
 	// Git sets up gitops write back for this cluster.
 	Git ClusterGit `json:"git,omitempty"`
+}
+
+// Environment configuration of a single environment.
+type Environment struct {
+	// Name of the environment.
+	Name string `json:"name,omitempty"`
+
+	// Cluster name the environment is hosted in.
+	Cluster string `json:"cluster,omitempty"`
+
+	// NamespaceTemplate is used to generate the namespace name when configuring resources.
+	// Default is to set the namespace equal to the project name.
+	NamespaceTemplate string `json:"namespace_template,omitempty"`
 }
 
 // ClusterGit specifies configuration for git integration. This can be used to
@@ -474,6 +508,13 @@ Capsule deleted by {{ .Initiator.Name }}.
 		Email: Email{
 			From: "",
 			Type: EmailTypeNoEmail,
+		},
+		Environments: []Environment{
+			{
+				Name:              "default",
+				Cluster:           "default",
+				NamespaceTemplate: "{{ .Project.Name }}",
+			},
 		},
 	}
 

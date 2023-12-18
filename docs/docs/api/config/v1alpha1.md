@@ -169,6 +169,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
+| `name` _string_ | Name of the cluster. The name is used as a reference for the cluster through the documentation and API endpoints. |
+| `url` _string_ | URL to communicate to the cluster. If set, a Token and CertificateAuthority should be provided as well. |
+| `token` _string_ | Token for communicating with the cluster. Available through a service-account's secret. |
+| `certificateAuthority` _string_ | Certificate authority for communicating with the cluster. Available through a service-account's secret. |
 | `type` _[ClusterType](#clustertype)_ | Type of the cluster - either `docker` or `k8s`. |
 | `devRegistry` _[DevRegistry](#devregistry)_ | DevRegistry configuration |
 | `git` _[ClusterGit](#clustergit)_ | Git sets up gitops write back for this cluster. |
@@ -243,6 +247,22 @@ EmailType represents a type of mailing provider
 _Appears in:_
 - [Email](#email)
 
+
+
+### Environment
+
+
+
+Environment configuration of a single environment.
+
+_Appears in:_
+- [PlatformConfig](#platformconfig)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name of the environment. |
+| `cluster` _string_ | Cluster name the environment is hosted in. |
+| `namespace_template` _string_ | NamespaceTemplate is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. |
 
 
 ### GitAuthor
@@ -406,9 +426,11 @@ OperatorConfig is the Schema for the configs API
 | `client` _[Client](#client)_ | Client holds configuration for clients used in the platform. |
 | `repository` _[Repository](#repository)_ | Repository specifies the type of db to use along with secret key |
 | `oauth` _[OAuth](#oauth)_ | OAuth holds configuration for oauth2 clients, namely google, github and facebook. |
-| `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration |
+| `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration Deprecated: Use `clusters` instead. |
 | `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
 | `logging` _[Logging](#logging)_ | Loggin holds information about the granularity of logging |
+| `clusters` _[Cluster](#cluster) array_ | Clusters the platform has access to. |
+| `environments` _[Environment](#environment) array_ | Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups). |
 
 
 ### PrometheusServiceMonitor

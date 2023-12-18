@@ -65,6 +65,7 @@ message RolloutConfig {
   repeated ConfigFile config_files = 9;
   HorizontalScale horizontal_scale = 10;
   repeated CronJob cron_jobs = 11;
+  string environment_id = 12;
 }
 
 message ConfigFile {
