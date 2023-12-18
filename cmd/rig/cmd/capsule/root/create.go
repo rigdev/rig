@@ -8,6 +8,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -217,7 +218,8 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 
 	res, err := c.Rig.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
 		Msg: &capsule.CreateRequest{
-			Name: capsule_cmd.CapsuleID,
+			Name:      capsule_cmd.CapsuleID,
+			ProjectId: c.Cfg.GetProject(),
 		},
 	})
 	if err != nil {
@@ -232,6 +234,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 			Msg: &capsule.CreateBuildRequest{
 				CapsuleId: capsuleID,
 				Image:     image,
+				ProjectId: c.Cfg.GetProject(),
 			},
 		})
 		if err != nil {
@@ -256,8 +259,10 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId: capsuleID,
-			Changes:   init,
+			CapsuleId:     capsuleID,
+			Changes:       init,
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		},
 	}
 
@@ -265,9 +270,9 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		_, err = c.Rig.Capsule().Deploy(ctx, req)
 		if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 			if forceDeploy {
-				_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
+				_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req)
 			} else {
-				_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+				_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, c.Cfg, req)
 			}
 		}
 		if err != nil {

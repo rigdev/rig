@@ -13,6 +13,7 @@ func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	cc, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
+			ProjectId: c.Cfg.GetProject(),
 		},
 	})
 	if err != nil {
@@ -23,6 +24,7 @@ func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		Msg: &capsule.AbortRolloutRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			RolloutId: cc.Msg.GetCapsule().GetCurrentRollout(),
+			ProjectId: c.Cfg.GetProject(),
 		},
 	}); err != nil {
 		return err

@@ -11,11 +11,11 @@ import (
 )
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	rollout, err := capsule.GetCurrentRollout(ctx, c.Rig)
+	rollout, err := capsule.GetCurrentRollout(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return err
 	}
-	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, c.Rig)
+	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return err
 	}

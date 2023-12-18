@@ -120,6 +120,8 @@ message GetCustomObjectMetricsRequest {
 
 message GetCustomObjectMetricsResponse {
   repeated api.v1.capsule.Metric metrics = 1;
+  string project_id = 2;
+  string environment_id = 3;
 }
 
 message KubernetesObject {
@@ -130,6 +132,8 @@ message KubernetesObject {
 message GetObjectsByKindRequest {
   string kind = 1;
   string api_version = 2;
+  string project_id = 3;
+  string environment_id = 4;
 }
 
 message GetObjectsByKindResponse {

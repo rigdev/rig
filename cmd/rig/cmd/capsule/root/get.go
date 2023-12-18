@@ -21,6 +21,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 				Offset: uint32(offset),
 				Limit:  uint32(limit),
 			},
+			ProjectId: c.Cfg.GetProject(),
 		},
 	})
 	if err != nil {
@@ -54,6 +55,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 				Msg: &capsule.GetRolloutRequest{
 					CapsuleId: cc.GetCapsuleId(),
 					RolloutId: cc.GetCurrentRollout(),
+					ProjectId: c.Cfg.GetProject(),
 				},
 			})
 			if errors.IsNotFound(err) {
@@ -82,6 +84,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 			Msg: &capsule.GetRolloutRequest{
 				CapsuleId: cc.GetCapsuleId(),
 				RolloutId: cc.GetCurrentRollout(),
+				ProjectId: c.Cfg.GetProject(),
 			},
 		})
 		if errors.IsNotFound(err) {

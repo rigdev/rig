@@ -67,6 +67,13 @@ type Config struct {
 	filePath string
 }
 
+func (cfg *Config) GetProject() string {
+	if c := cfg.GetCurrentContext(); c != nil {
+		return c.Project.ProjectID
+	}
+	return ""
+}
+
 func (cfg *Config) GetCurrentContext() *Context {
 	for _, c := range cfg.Contexts {
 		if c.Name == cfg.CurrentContextName {

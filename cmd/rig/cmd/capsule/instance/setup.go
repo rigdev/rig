@@ -132,7 +132,9 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 
 	res, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
-			CapsuleId: capsuleID,
+			CapsuleId:     capsuleID,
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		},
 	})
 	if err != nil {
@@ -174,7 +176,9 @@ func (c *Cmd) completions(
 
 	resp, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
-			CapsuleId: capsule_cmd.CapsuleID,
+			CapsuleId:     capsule_cmd.CapsuleID,
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		},
 	})
 	if err != nil {

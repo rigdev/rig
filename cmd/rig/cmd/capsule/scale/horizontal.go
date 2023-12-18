@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -22,7 +23,7 @@ import (
 )
 
 func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
+	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return nil
 	}
@@ -55,14 +56,16 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 				},
 			},
 		},
+		ProjectId:     c.Cfg.GetProject(),
+		EnvironmentId: base.Flags.Environment,
 	})
 
 	_, err = c.Rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 		if forceDeploy {
-			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
+			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req)
 		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, c.Cfg, req)
 		}
 	}
 	if err != nil {
@@ -73,7 +76,7 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 }
 
 func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig)
+	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return nil
 	}
@@ -130,14 +133,16 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 				},
 			},
 		},
+		ProjectId:     c.Cfg.GetProject(),
+		EnvironmentId: base.Flags.Environment,
 	})
 
 	_, err = c.Rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 		if forceDeploy {
-			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, capsule_cmd.CapsuleID, req)
+			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req)
 		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, req)
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, c.Cfg, req)
 		}
 	}
 	if err != nil {
@@ -296,7 +301,9 @@ func (c *Cmd) promptCustomMetric(ctx context.Context) (*capsule.CustomMetric, er
 func (c *Cmd) promptInstanceMetric(ctx context.Context) (*capsule.CustomMetric_Instance, error) {
 	metrics, err := c.Rig.Capsule().
 		GetCustomInstanceMetrics(ctx, connect.NewRequest(&capsule.GetCustomInstanceMetricsRequest{
-			CapsuleId: capsule_cmd.CapsuleID,
+			CapsuleId:     capsule_cmd.CapsuleID,
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		}))
 	if err != nil {
 		return nil, err
@@ -333,7 +340,9 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 	}
 
 	resp, err := c.Rig.Project().GetObjectsByKind(ctx, connect.NewRequest(&project.GetObjectsByKindRequest{
-		Kind: kind,
+		Kind:          kind,
+		ProjectId:     c.Cfg.GetProject(),
+		EnvironmentId: base.Flags.Environment,
 	}))
 
 	var objName string
@@ -374,6 +383,8 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 				Name:       objName,
 				ApiVersion: api,
 			},
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		}))
 	if err != nil {
 		return nil, err

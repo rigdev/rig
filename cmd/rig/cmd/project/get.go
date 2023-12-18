@@ -11,8 +11,12 @@ import (
 )
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	req := &project.GetRequest{}
-	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: req})
+	req := &project.GetRequest{
+		ProjectId: c.Cfg.GetProject(),
+	}
+	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{
+		Msg: req,
+	})
 	if err != nil {
 		return err
 	}

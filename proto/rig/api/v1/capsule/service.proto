@@ -356,6 +356,8 @@ message GetJobExecutionsRequest {
   google.protobuf.Timestamp created_from = 5;
   google.protobuf.Timestamp created_to = 6;
   model.Pagination pagination = 7;
+  string project_id = 8;
+  string environment_id = 9;
 }
 
 message GetJobExecutionsResponse {

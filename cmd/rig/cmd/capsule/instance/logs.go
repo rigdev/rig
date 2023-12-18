@@ -6,6 +6,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -29,10 +30,12 @@ func (c *Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error
 
 	s, err := c.Rig.Capsule().Logs(ctx, &connect.Request[capsule.LogsRequest]{
 		Msg: &capsule.LogsRequest{
-			CapsuleId:  capsule_cmd.CapsuleID,
-			InstanceId: instanceID,
-			Follow:     follow,
-			Since:      durationpb.New(duration),
+			CapsuleId:     capsule_cmd.CapsuleID,
+			InstanceId:    instanceID,
+			Follow:        follow,
+			Since:         durationpb.New(duration),
+			ProjectId:     c.Cfg.GetProject(),
+			EnvironmentId: base.Flags.Environment,
 		},
 	})
 	if err != nil {

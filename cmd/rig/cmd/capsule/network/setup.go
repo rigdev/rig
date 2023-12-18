@@ -82,7 +82,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	n, err := capsule.GetCurrentNetwork(ctx, c.Rig)
+	n, err := capsule.GetCurrentNetwork(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
