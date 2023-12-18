@@ -128,9 +128,6 @@ type PlatformConfig struct {
 	// Repository specifies the type of db to use along with secret key
 	Repository Repository `json:"repository,omitempty"`
 
-	// OAuth holds configuration for oauth2 clients, namely google, github and facebook.
-	OAuth OAuth `json:"oauth,omitempty"`
-
 	// Cluster holds cluster specific configuration
 	// Deprecated: Use `clusters` instead.
 	Cluster Cluster `json:"cluster,omitempty"`
@@ -160,6 +157,52 @@ type Auth struct {
 	// CertificateKeyFile specifies a path to a PEM encoded certificate key
 	// which will be used for jwt signatures.
 	CertificateKeyFile string `json:"certificateKeyFile,omitempty"`
+
+	// DisablePasswords disables password authentication. This makes sense if
+	// you want to require SSO, as login method.
+	DisablePasswords bool `json:"disablePasswords,omitempty"`
+
+	// SSO specifies single sign on configuration.
+	SSO *SSO `json:"sso,omitempty"`
+}
+
+// SSO specifies single sign on configuration.
+type SSO struct {
+	// OIDCProviders specifies enabled OIDCProviders which can be used for
+	// login.
+	OIDCProviders []OIDCProvider
+}
+
+// OIDCProvider specifies an OIDC provider.
+type OIDCProvider struct {
+	// Name is the name of the OIDC provider. This will be shown in the login
+	// window.
+	Name string `json:"name"`
+
+	// IssuerURL is the URL for the OIDC issuer endpoint.
+	IssuerURL string `json:"issuerURL"`
+
+	// ClientID is the OAuth client ID.
+	ClientID string `json:"clientId"`
+
+	// ClientSecret is the OAuth client secret.
+	ClientSecret string `json:"clientSecret"`
+
+	// AllowedDomains is a list of email domains to allow. If left empty any
+	// successful authentication on the provider is allowed.
+	AllowedDomains []string `json:"allowedDomains,omitempty"`
+
+	// GroupsClaim is the path to a claim in the JWT containing a string or
+	// list of strings of group names.
+	GroupsClaim string `json:"groupsClaim,omitempty"`
+
+	// DisableJITGroups disables creation of groups found through OIDC in rig.
+	DisableJITGroups *bool `json:"disableJITGroups,omitempty"`
+
+	// GroupMapping is a mapping from OIDC provided group names to group names
+	// used in rig. If an OIDC provided group name is not provided in this
+	// mapping we will use the OIDC provided groupname in rig.
+	GroupMapping map[string]string `json:"groupMapping,omitempty"`
 }
 
 // Client holds various client configuration
@@ -270,27 +313,6 @@ type Repository struct {
 	// Secret is a secret key used for encrypting sensitive data before saving
 	// it in the database.
 	Secret string `json:"secret,omitempty"`
-}
-
-// OAuth specifies configuration for different OAuth providers.
-type OAuth struct {
-	// Google specifies OAuth client configuration for google.
-	Google OAuthClientCredentials `json:"google,omitempty"`
-
-	// Github specifies OAuth client configuration for github.
-	Github OAuthClientCredentials `json:"github,omitempty"`
-
-	// Facebook specifies OAuth client configuration for facebook.
-	Facebook OAuthClientCredentials `json:"facebook,omitempty"`
-}
-
-// OAuthClientCredentials specifies a set of OAuth client credentials.
-type OAuthClientCredentials struct {
-	// ClientID is the OAuth client ID.
-	ClientID string `json:"clientId,omitempty"`
-
-	// ClientSecret is the OAuth client secret.
-	ClientSecret string `json:"clientSecret,omitempty"`
 }
 
 // Cluster specifies cluster configuration
@@ -483,20 +505,6 @@ func NewDefaultPlatform() *PlatformConfig {
 		Repository: Repository{
 			Store:  "postgres",
 			Secret: "",
-		},
-		OAuth: OAuth{
-			Google: OAuthClientCredentials{
-				ClientID:     "",
-				ClientSecret: "",
-			},
-			Github: OAuthClientCredentials{
-				ClientID:     "",
-				ClientSecret: "",
-			},
-			Facebook: OAuthClientCredentials{
-				ClientID:     "",
-				ClientSecret: "",
-			},
 		},
 		Cluster: Cluster{
 			Type: ClusterTypeDocker,
