@@ -39,8 +39,6 @@ func (c *Cmd) executions(ctx context.Context, _ *cobra.Command, _ []string) erro
 			Limit:      limit,
 			Descending: true,
 		},
-		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.Flags.Environment,
 	}))
 	if err != nil {
 		return err

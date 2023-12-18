@@ -340,9 +340,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 	}
 
 	resp, err := c.Rig.Project().GetObjectsByKind(ctx, connect.NewRequest(&project.GetObjectsByKindRequest{
-		Kind:          kind,
-		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.Flags.Environment,
+		Kind: kind,
 	}))
 
 	var objName string
@@ -383,8 +381,6 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 				Name:       objName,
 				ApiVersion: api,
 			},
-			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
 		}))
 	if err != nil {
 		return nil, err
