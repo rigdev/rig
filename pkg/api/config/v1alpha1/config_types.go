@@ -118,6 +118,7 @@ type PlatformConfig struct {
 	OAuth OAuth `json:"oauth,omitempty"`
 
 	// Cluster holds cluster specific configuration
+	// Deprecated: Use `clusters` instead.
 	Cluster Cluster `json:"cluster,omitempty"`
 
 	// Email holds configuration for sending emails. Either using mailjet or using SMTP
@@ -126,8 +127,10 @@ type PlatformConfig struct {
 	// Loggin holds information about the granularity of logging
 	Logging Logging `json:"logging,omitempty"`
 
+	// Clusters the platform has access to.
 	Clusters []Cluster `json:"clusters,omitempty"`
 
+	// Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups).
 	Environments []Environment `json:"environments,omitempty"`
 }
 
@@ -302,6 +305,7 @@ type Cluster struct {
 	Git ClusterGit `json:"git,omitempty"`
 }
 
+// Environment configuration of a single environment.
 type Environment struct {
 	// Name of the environment.
 	Name string `json:"name,omitempty"`
@@ -507,7 +511,7 @@ Capsule deleted by {{ .Initiator.Name }}.
 		},
 		Environments: []Environment{
 			{
-				Name:              "Local",
+				Name:              "default",
 				Cluster:           "default",
 				NamespaceTemplate: "{{ .Project.Name }}",
 			},
