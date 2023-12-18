@@ -260,9 +260,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ |  |
-| `cluster` _string_ |  |
-| `namespace_template` _string_ |  |
+| `name` _string_ | Name of the environment. |
+| `cluster` _string_ | Cluster name the environment is hosted in. |
+| `namespace_template` _string_ | NamespaceTemplate is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. |
 
 
 ### GitAuthor
