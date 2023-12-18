@@ -19,7 +19,11 @@ import (
 
 var CapsuleID string
 
-func GetCurrentContainerResources(ctx context.Context, client rig.Client, cfg *cmdconfig.Config) (*capsule.ContainerSettings, uint32, error) {
+func GetCurrentContainerResources(
+	ctx context.Context,
+	client rig.Client,
+	cfg *cmdconfig.Config,
+) (*capsule.ContainerSettings, uint32, error) {
 	rollout, err := GetCurrentRollout(ctx, client, cfg)
 	if err != nil {
 		return nil, 0, err
