@@ -27,6 +27,8 @@ _Appears in:_
 | `secret` _string_ | Secret specifies a secret which will be used for jwt signatures. |
 | `certificateFile` _string_ | CertificateFile specifies a path to a PEM encoded certificate file which will be used for validating jwt signatures. |
 | `certificateKeyFile` _string_ | CertificateKeyFile specifies a path to a PEM encoded certificate key which will be used for jwt signatures. |
+| `disablePasswords` _boolean_ | DisablePasswords disables password authentication. This makes sense if you want to require SSO, as login method. |
+| `sso` _[SSO](#sso)_ | SSO specifies single sign on configuration. |
 
 
 ### CertManagerConfig
@@ -356,35 +358,25 @@ _Appears in:_
 | `level` _[Level](#level)_ | Level sets the granularity of logging. |
 
 
-### OAuth
+### OIDCProvider
 
 
 
-OAuth specifies configuration for different OAuth providers.
+OIDCProvider specifies an OIDC provider.
 
 _Appears in:_
-- [PlatformConfig](#platformconfig)
+- [SSO](#sso)
 
 | Field | Description |
 | --- | --- |
-| `google` _[OAuthClientCredentials](#oauthclientcredentials)_ | Google specifies OAuth client configuration for google. |
-| `github` _[OAuthClientCredentials](#oauthclientcredentials)_ | Github specifies OAuth client configuration for github. |
-| `facebook` _[OAuthClientCredentials](#oauthclientcredentials)_ | Facebook specifies OAuth client configuration for facebook. |
-
-
-### OAuthClientCredentials
-
-
-
-OAuthClientCredentials specifies a set of OAuth client credentials.
-
-_Appears in:_
-- [OAuth](#oauth)
-
-| Field | Description |
-| --- | --- |
+| `name` _string_ | Name is the name of the OIDC provider. This will be shown in the login window. |
+| `issuerURL` _string_ | IssuerURL is the URL for the OIDC issuer endpoint. |
 | `clientId` _string_ | ClientID is the OAuth client ID. |
 | `clientSecret` _string_ | ClientSecret is the OAuth client secret. |
+| `allowedDomains` _string array_ | AllowedDomains is a list of email domains to allow. If left empty any successful authentication on the provider is allowed. |
+| `groupsClaim` _string_ | GroupsClaim is the path to a claim in the JWT containing a string or list of strings of group names. |
+| `disableJITGroups` _boolean_ | DisableJITGroups disables creation of groups found through OIDC in rig. |
+| `groupMapping` _object (keys:string, values:string)_ | GroupMapping is a mapping from OIDC provided group names to group names used in rig. If an OIDC provided group name is not provided in this mapping we will use the OIDC provided groupname in rig. |
 
 
 ### OperatorConfig
@@ -426,7 +418,6 @@ OperatorConfig is the Schema for the configs API
 | `auth` _[Auth](#auth)_ | Auth holds authentication configuration. |
 | `client` _[Client](#client)_ | Client holds configuration for clients used in the platform. |
 | `repository` _[Repository](#repository)_ | Repository specifies the type of db to use along with secret key |
-| `oauth` _[OAuth](#oauth)_ | OAuth holds configuration for oauth2 clients, namely google, github and facebook. |
 | `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration Deprecated: Use `clusters` instead. |
 | `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
 | `logging` _[Logging](#logging)_ | Loggin holds information about the granularity of logging |
@@ -477,6 +468,20 @@ _Appears in:_
 | --- | --- |
 | `privateKey` _string_ | PrivateKey is a PEM encoded SSH private key. |
 | `password` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
+
+
+### SSO
+
+
+
+SSO specifies single sign on configuration.
+
+_Appears in:_
+- [Auth](#auth)
+
+| Field | Description |
+| --- | --- |
+| `OIDCProviders` _[OIDCProvider](#oidcprovider) array_ | OIDCProviders specifies enabled OIDCProviders which can be used for login. |
 
 
 ### ServiceConfig
