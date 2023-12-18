@@ -253,7 +253,7 @@ _Appears in:_
 
 
 
-
+Environment configuration of a single environment.
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
@@ -426,11 +426,11 @@ OperatorConfig is the Schema for the configs API
 | `client` _[Client](#client)_ | Client holds configuration for clients used in the platform. |
 | `repository` _[Repository](#repository)_ | Repository specifies the type of db to use along with secret key |
 | `oauth` _[OAuth](#oauth)_ | OAuth holds configuration for oauth2 clients, namely google, github and facebook. |
-| `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration |
+| `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration Deprecated: Use `clusters` instead. |
 | `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
 | `logging` _[Logging](#logging)_ | Loggin holds information about the granularity of logging |
-| `clusters` _[Cluster](#cluster) array_ |  |
-| `environments` _[Environment](#environment) array_ |  |
+| `clusters` _[Cluster](#cluster) array_ | Clusters the platform has access to. |
+| `environments` _[Environment](#environment) array_ | Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups). |
 
 
 ### PrometheusServiceMonitor
