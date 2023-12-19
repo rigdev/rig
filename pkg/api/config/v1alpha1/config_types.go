@@ -81,7 +81,7 @@ type IngressConfig struct {
 
 	// SkipTLS disables TLS configuration for ingress resources. This is useful
 	// if a 3rd-party component is handling the HTTPS TLS termination and certificates.
-	SkipTLS bool `json:"skip_tls"`
+	SkipTLS bool `json:"skipTls"`
 }
 
 func (c *OperatorConfig) Default() {

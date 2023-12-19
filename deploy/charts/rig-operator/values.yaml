@@ -14,7 +14,7 @@ config:
     annotations: {}
     className: ""
     pathType: Prefix
-    skip_tls: false
+    skipTls: false
   prometheusServiceMonitor:
     path: ""
     portName: ""
