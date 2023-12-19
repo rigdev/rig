@@ -57,7 +57,7 @@ type CertManagerConfig struct {
 
 	// CreateCertificateResources specifies wether to create Certificate
 	// resources. If this is not enabled we will use ingress annotations. This
-	// is handy in environments where the ingress-shim isen't enabled.
+	// is handy in environments where the ingress-shim isn't enabled.
 	CreateCertificateResources bool `json:"createCertificateResources,omitempty"`
 }
 
@@ -78,6 +78,10 @@ type IngressConfig struct {
 	// PathType defines how ingress paths should be interpreted.
 	// Allowed values: Exact, Prefix, ImplementationSpecific
 	PathType networkingv1.PathType `json:"pathType"`
+
+	// DisableTLS for ingress resources generated. This is useful if a 3rd-party component
+	// is handling the HTTPS TLS termination and certificates.
+	DisableTLS bool `json:"disableTLS"`
 }
 
 func (c *OperatorConfig) Default() {

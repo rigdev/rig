@@ -43,7 +43,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `clusterIssuer` _string_ | ClusterIssuer to use for issueing ingress certificates |
-| `createCertificateResources` _boolean_ | CreateCertificateResources specifies wether to create Certificate resources. If this is not enabled we will use ingress annotations. This is handy in environments where the ingress-shim isen't enabled. |
+| `createCertificateResources` _boolean_ | CreateCertificateResources specifies wether to create Certificate resources. If this is not enabled we will use ingress annotations. This is handy in environments where the ingress-shim isn't enabled. |
 
 
 ### Client
@@ -341,6 +341,7 @@ _Appears in:_
 | `annotations` _object (keys:string, values:string)_ | Annotations for all ingress resources created. |
 | `className` _string_ | ClassName specifies the default ingress class to use for all ingress resources created. |
 | `pathType` _[PathType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#pathtype-v1-networking)_ | PathType defines how ingress paths should be interpreted. Allowed values: Exact, Prefix, ImplementationSpecific |
+| `disableTLS` _boolean_ | DisableTLS for ingress resources generated. This is useful if a 3rd-party component is handling the HTTPS TLS termination and certificates. |
 
 
 ### Logging
