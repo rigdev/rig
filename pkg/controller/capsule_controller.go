@@ -1137,7 +1137,7 @@ func reconcileCertificate(ctx context.Context, r *reconcileRequest) error {
 func (r *reconcileRequest) shouldCreateCertificateRessource() bool {
 	return r.config.Certmanager != nil &&
 		r.config.Certmanager.CreateCertificateResources &&
-		!r.config.Ingress.SkipTLS
+		!r.config.Ingress.DisableTLS
 }
 
 func (r *reconcileRequest) createCertificate() (*cmv1.Certificate, error) {
@@ -1248,7 +1248,7 @@ func (r *reconcileRequest) createIngress() (*netv1.Ingress, error) {
 		ing.Spec.IngressClassName = ptr.New(r.config.Ingress.ClassName)
 	}
 
-	if r.ingressIsSupported() && !r.config.Ingress.SkipTLS && !r.shouldCreateCertificateRessource() {
+	if r.ingressIsSupported() && !r.config.Ingress.DisableTLS && !r.shouldCreateCertificateRessource() {
 		ing.Annotations["cert-manager.io/cluster-issuer"] = r.config.Certmanager.ClusterIssuer
 	}
 
@@ -1299,7 +1299,7 @@ func (r *reconcileRequest) createIngress() (*netv1.Ingress, error) {
 			}
 		}
 
-		if !r.config.Ingress.SkipTLS {
+		if !r.config.Ingress.DisableTLS {
 			if len(ing.Spec.TLS) == 0 {
 				ing.Spec.TLS = []netv1.IngressTLS{{
 					SecretName: fmt.Sprintf("%s-tls", r.capsule.Name),

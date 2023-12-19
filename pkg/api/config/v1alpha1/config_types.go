@@ -79,9 +79,9 @@ type IngressConfig struct {
 	// Allowed values: Exact, Prefix, ImplementationSpecific
 	PathType networkingv1.PathType `json:"pathType"`
 
-	// SkipTLS disables TLS configuration for ingress resources. This is useful
-	// if a 3rd-party component is handling the HTTPS TLS termination and certificates.
-	SkipTLS bool `json:"skipTls"`
+	// DisableTLS for ingress resources generated. This is useful if a 3rd-party component
+	// is handling the HTTPS TLS termination and certificates.
+	DisableTLS bool `json:"disableTLS"`
 }
 
 func (c *OperatorConfig) Default() {
