@@ -1172,7 +1172,7 @@ func (r *reconcileRequest) createCertificate() (*cmv1.Certificate, error) {
 }
 
 func (r *reconcileRequest) ingressIsSupported() bool {
-	return r.config.Certmanager != nil && r.config.Certmanager.ClusterIssuer != ""
+	return r.config.Ingress.DisableTLS || (r.config.Certmanager != nil && r.config.Certmanager.ClusterIssuer != "")
 }
 
 func reconcileIngress(ctx context.Context, r *reconcileRequest) error {
