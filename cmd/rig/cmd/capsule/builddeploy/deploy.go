@@ -67,6 +67,7 @@ func (c *Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) 
 		// TODO Figure out pagination
 		resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
 			CapsuleId: capsuleID,
+			ProjectId: c.Cfg.GetProject(),
 		}))
 		if err != nil {
 			return "", err
@@ -245,6 +246,7 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 			Msg: &capsule.GetRolloutRequest{
 				CapsuleId: capsuleID,
 				RolloutId: rolloutID,
+				ProjectId: c.Cfg.GetProject(),
 			},
 		})
 		if err != nil {
@@ -258,6 +260,7 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 				Pagination: &model.Pagination{
 					Offset: uint32(eventCount),
 				},
+				ProjectId: c.Cfg.GetProject(),
 			},
 		})
 		if err != nil {
