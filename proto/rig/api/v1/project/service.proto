@@ -3,7 +3,7 @@ syntax = "proto3";
 package api.v1.project;
 
 import "api/v1/project/project.proto";
-import "api/v1/capsule/rollout.proto";
+import "api/v1/capsule/change.proto";
 import "api/v1/capsule/service.proto";
 import "model/common.proto";
 import "google/protobuf/timestamp.proto";
