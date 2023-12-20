@@ -21,8 +21,8 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, _ []string) erro
 	req := connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
-			Field: &capsule.Change_Rollback{
-				Rollback: &capsule.Rollback{
+			Field: &capsule.Change_Rollback_{
+				Rollback: &capsule.Change_Rollback{
 					RollbackId: rolloutID,
 				},
 			},

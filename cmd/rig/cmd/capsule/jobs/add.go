@@ -49,8 +49,8 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
-			Field: &capsule.Change_CronJobs{
-				CronJobs: &capsule.CronJobs{
+			Field: &capsule.Change_CronJobs_{
+				CronJobs: &capsule.Change_CronJobs{
 					Jobs: allJobs,
 				},
 			},
@@ -252,8 +252,8 @@ func (c *Cmd) delete(ctx context.Context, _ *cobra.Command, args []string) error
 	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
-			Field: &capsule.Change_CronJobs{
-				CronJobs: &capsule.CronJobs{
+			Field: &capsule.Change_CronJobs_{
+				CronJobs: &capsule.Change_CronJobs{
 					Jobs: jobs,
 				},
 			},
@@ -263,5 +263,4 @@ func (c *Cmd) delete(ctx context.Context, _ *cobra.Command, args []string) error
 	}
 
 	return nil
-
 }
