@@ -1731,6 +1731,7 @@ func reconcileCronJobs(ctx context.Context, r *reconcileRequest) error {
 
 	existingJobs := &batchv1.CronJobList{}
 	if err = r.client.List(ctx, existingJobs, &client.ListOptions{
+		Namespace: r.req.Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			LabelCapsule: r.capsule.Name,
 		}),
