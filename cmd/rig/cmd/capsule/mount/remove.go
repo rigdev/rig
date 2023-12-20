@@ -2,6 +2,8 @@ package mount
 
 import (
 	"context"
+	"fmt"
+	"slices"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -16,7 +18,22 @@ func (c *Cmd) remove(ctx context.Context, _ *cobra.Command, args []string) error
 	var path string
 	var err error
 	if len(args) != 1 {
-		path, err = common.PromptInput("mount path:", common.ValidateAbsPathOpt)
+		rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
+		if err != nil {
+			return err
+		}
+		var paths []string
+		for _, path := range rollout.GetConfig().GetConfigFiles() {
+			paths = append(paths, path.GetPath())
+		}
+
+		slices.Sort(paths)
+		if len(paths) == 0 {
+			fmt.Println("Capsule has no mounted files")
+			return nil
+		}
+
+		_, path, err = common.PromptSelect("Mount path:", paths)
 		if err != nil {
 			return err
 		}
