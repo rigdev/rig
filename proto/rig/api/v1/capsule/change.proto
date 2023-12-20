@@ -1,0 +1,175 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+import "google/protobuf/timestamp.proto";
+import "model/author.proto";
+import "api/v1/capsule/job.proto";
+
+message Change {
+  message ConfigFile {
+    string path = 1;
+    bytes content = 2;
+    bool is_secret = 3;
+  }
+
+  message Rollback {
+    uint64 rollback_id = 1;
+  }
+
+  message CronJobs {
+    repeated CronJob jobs = 1;
+  }
+
+  message EnvironmentVariable {
+    string name = 1;
+    string value = 2;
+  }
+
+  oneof field {
+    uint32 replicas = 1;
+    string build_id = 2;
+    Network network = 3;
+    ContainerSettings container_settings = 4;
+    bool auto_add_rig_service_accounts = 5;
+    ConfigFile set_config_file = 6;
+    string remove_config_file = 7;
+    HorizontalScale horizontal_scale = 8;
+    Rollback rollback = 9;
+    CronJobs cron_jobs = 10;
+    EnvironmentVariable set_environment_variable = 11;
+    string remove_environment_variable = 12;
+    EnvironmentSource set_environment_source = 13;
+    EnvironmentSource remove_environment_source = 14;
+  }
+}
+
+message ContainerSettings {
+  map<string, string> environment_variables = 1;
+  string command = 2;
+  repeated string args = 3;
+  Resources resources = 4;
+  repeated EnvironmentSource environment_sources = 5;
+}
+
+message Resources {
+  ResourceList requests = 1;
+  ResourceList limits = 2;
+  GpuLimits gpu_limits = 3;
+}
+
+message ResourceList {
+  // Unit: milli-CPUs
+  uint32 cpu_millis = 1;
+  // Unit: Bytes
+  uint64 memory_bytes = 2;
+}
+
+message GpuLimits {
+  // gpu resource type - fx. nvidia.com/gpu
+  string type = 1;
+  // number of gpus
+  uint32 count = 2;
+}
+
+message EnvironmentSource {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_CONFIG_MAP = 1;
+    KIND_SECRET = 2;
+  }
+
+  string name = 1;
+  Kind kind = 2;
+}
+
+message Network {
+  repeated Interface interfaces = 1;
+}
+
+message Interface {
+  uint32 port = 1;
+  string name = 2;
+  PublicInterface public = 4;
+  InterfaceProbe liveness = 7;
+  InterfaceProbe readiness = 8;
+}
+
+message InterfaceProbe {
+  message HTTP {
+    string path = 1;
+  }
+
+  message TCP {}
+
+  message GRPC {
+    string service = 1;
+  }
+
+  oneof kind {
+    HTTP http = 1;
+    TCP tcp = 2;
+    GRPC grpc = 3;
+  }
+}
+
+message PublicInterface {
+  bool enabled = 1;
+  RoutingMethod method = 2;
+}
+
+message RoutingMethod {
+  message LoadBalancer {
+    uint32 port = 1;
+    uint32 node_port = 2;
+  }
+
+  message Ingress {
+    string host = 1;
+    bool tls = 2;
+    repeated string paths = 3;
+  }
+
+  oneof kind {
+    LoadBalancer load_balancer = 1;
+    Ingress ingress = 2;
+  }
+}
+
+message HorizontalScale {
+  uint32 max_replicas = 1;
+  uint32 min_replicas = 2;
+  CPUTarget cpu_target = 3;
+  repeated CustomMetric custom_metrics = 4;
+}
+
+message CPUTarget {
+  uint32 average_utilization_percentage = 1;
+}
+
+message CustomMetric {
+  oneof metric {
+    InstanceMetric instance = 1;
+    ObjectMetric object = 2;
+  }
+}
+
+message InstanceMetric {
+  string metric_name = 1;
+  map<string, string> match_labels = 2;
+  string average_value = 3;
+}
+
+message ObjectMetric {
+  string metric_name = 1;
+  map<string, string> match_labels = 2;
+  string average_value = 3;
+  string value = 4;
+  ObjectReference object_reference = 5;
+}
+
+message ObjectReference {
+  string kind = 1;
+  string name = 2;
+  string api_version = 3;
+}
