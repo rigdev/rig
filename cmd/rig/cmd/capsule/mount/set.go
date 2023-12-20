@@ -27,8 +27,17 @@ func (c *Cmd) set(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
+	if err != nil {
+		return err
+	}
+
+	var paths []string
+	for _, p := range rollout.GetConfig().GetConfigFiles() {
+		paths = append(paths, p.GetPath())
+	}
 	if dstPath == "" {
-		dstPath, err = common.PromptInput("Destination path", common.ValidateAbsPathOpt)
+		dstPath, err = common.PromptInput("Destination path", common.ValidateAbsPathOpt, common.ValidateUniqueOpt(paths))
 		if err != nil {
 			return err
 		}
