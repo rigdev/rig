@@ -23,13 +23,13 @@ func (c *Cmd) removeMember(ctx context.Context, cmd *cobra.Command, args []strin
 	var memberID *group.MemberID
 	if userID != "" {
 		memberID = &group.MemberID{
-			MemberID: &group.MemberID_UserId{
+			Kind: &group.MemberID_UserId{
 				UserId: userID,
 			},
 		}
 	} else if serviceAccountID != "" {
 		memberID = &group.MemberID{
-			MemberID: &group.MemberID_ServiceAccountId{
+			Kind: &group.MemberID_ServiceAccountId{
 				ServiceAccountId: serviceAccountID,
 			},
 		}
