@@ -6,6 +6,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -25,7 +26,7 @@ func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error
 		found := false
 		for _, c := range resp.Msg.GetServiceAccounts() {
 			if c.GetServiceAccountId() == args[0] {
-				serviceAccounts = []*service_account.Entry{c}
+				serviceAccounts = []*model.ServiceAccountEntry{c}
 				found = true
 				break
 			}
@@ -42,7 +43,7 @@ func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{"Service Accounts", "Name", "ID", "ClientID"})
 	for i, cred := range serviceAccounts {
-		t.AppendRow(table.Row{i + 1, cred.GetServiceAccount().GetName(), cred.GetServiceAccountId(), cred.GetClientId()})
+		t.AppendRow(table.Row{i + 1, cred.GetName(), cred.GetServiceAccountId(), cred.GetClientId()})
 	}
 
 	cmd.Println(t.Render())

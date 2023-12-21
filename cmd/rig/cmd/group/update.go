@@ -15,15 +15,15 @@ type groupField int64
 
 const (
 	groupUndefined groupField = iota
-	groupName
+	groupIDField
 	groupSetMetaData
 	groupDeleteMetaData
 )
 
 func (f groupField) String() string {
 	switch f {
-	case groupName:
-		return "Name"
+	case groupIDField:
+		return "Group ID"
 	case groupSetMetaData:
 		return "Set Metadata"
 	case groupDeleteMetaData:
@@ -44,7 +44,7 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	fields := []string{
-		groupName.String(),
+		groupIDField.String(),
 		groupSetMetaData.String(),
 		groupDeleteMetaData.String(),
 		"Done",
@@ -79,22 +79,22 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 		return err
 	}
 
-	cmd.Printf("Group %s updated\n", g.GetName())
+	cmd.Printf("Group %s updated\n", g.GetGroupId())
 	return nil
 }
 
 func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 	switch f {
-	case groupName:
-		name, err := common.PromptInput("Name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(g.GetName()))
+	case groupIDField:
+		name, err := common.PromptInput("ID:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(g.GetGroupId()))
 		if err != nil {
 			return nil, err
 		}
 
-		if name != g.GetName() {
+		if name != g.GetGroupId() {
 			return &group.Update{
-				Field: &group.Update_Name{
-					Name: name,
+				Field: &group.Update_GroupId{
+					GroupId: groupID,
 				},
 			}, nil
 		}

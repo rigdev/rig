@@ -29,6 +29,6 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 		return err
 	}
 
-	cmd.Printf("Group %s deleted\n", g.GetName())
+	cmd.Printf("Group %s deleted\n", g.GetGroupId())
 	return nil
 }

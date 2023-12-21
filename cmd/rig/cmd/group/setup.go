@@ -3,10 +3,12 @@ package group
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/group"
+	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
@@ -22,7 +24,7 @@ var (
 )
 
 var (
-	name string
+	groupID string
 )
 
 type Cmd struct {
@@ -40,7 +42,7 @@ func initCmd(c Cmd) {
 func Setup(parent *cobra.Command) {
 	group := &cobra.Command{
 		Use:               "group",
-		Short:             "Manage user groups",
+		Short:             "Manage groups",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
@@ -50,11 +52,11 @@ func Setup(parent *cobra.Command) {
 		RunE:  base.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
-	create.Flags().StringVarP(&name, "name", "n", "", "name of the group")
+	create.Flags().StringVarP(&groupID, "id", "i", "", "id of the group")
 	group.AddCommand(create)
 
 	deleteCmd := &cobra.Command{
-		Use:   "delete [group-id | group-name]",
+		Use:   "delete [group-id]",
 		Short: "Delete a group",
 		RunE:  base.CtxWrap(cmd.delete),
 		Args:  cobra.MaximumNArgs(1),
@@ -66,7 +68,7 @@ func Setup(parent *cobra.Command) {
 	group.AddCommand(deleteCmd)
 
 	update := &cobra.Command{
-		Use:   "update [group-id | group-name]",
+		Use:   "update [group-id]",
 		Short: "Update a group",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  base.CtxWrap(cmd.update),
@@ -78,7 +80,7 @@ func Setup(parent *cobra.Command) {
 	group.AddCommand(update)
 
 	get := &cobra.Command{
-		Use:     "get [group-id | group-name]",
+		Use:     "get [group-id]",
 		Short:   "Get one or multiple groups",
 		Args:    cobra.MaximumNArgs(1),
 		Aliases: []string{"ls"},
@@ -93,7 +95,7 @@ func Setup(parent *cobra.Command) {
 	group.AddCommand(get)
 
 	getMembers := &cobra.Command{
-		Use:   "get-members [group-id | group-name]",
+		Use:   "get-members [group-id]",
 		Short: "Get members of a group",
 		RunE:  base.CtxWrap(cmd.listMembers),
 		Args:  cobra.MaximumNArgs(1),
@@ -106,19 +108,57 @@ func Setup(parent *cobra.Command) {
 	getMembers.Flags().IntVar(&offset, "offset", 0, "offset the number of members to return")
 	group.AddCommand(getMembers)
 
-	getGroupsForUser := &cobra.Command{
-		Use:   "get-groups-for-user [user-id | {email|username|phone}]",
-		Short: "Get groups that a user is a member of",
+	getGroupsForMember := &cobra.Command{
+		Use:   "get-groups-for-member [member-id]",
+		Short: "Get groups that a user or service account is a member of",
 		RunE:  base.CtxWrap(cmd.listGroupsForUser),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.userCompletions),
+			base.CtxWrapCompletion(cmd.memberCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	getGroupsForUser.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
-	getGroupsForUser.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
-	group.AddCommand(getGroupsForUser)
+	getGroupsForMember.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
+	getGroupsForMember.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
+	group.AddCommand(getGroupsForMember)
+
+	addUser := &cobra.Command{
+		Use:   "add-member [member-id]",
+		Short: "Add a member to a group",
+		RunE:  base.CtxWrap(cmd.addMember),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.CtxWrapCompletion(cmd.memberCompletions),
+			common.MaxArgsCompletionFilter(1),
+		),
+	}
+	if err := addUser.RegisterFlagCompletionFunc(
+		"group",
+		base.CtxWrapCompletion(cmd.completions),
+	); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	group.AddCommand(addUser)
+
+	removeUser := &cobra.Command{
+		Use:   "remove-member [member-id]",
+		Short: "Remove a member from a group",
+		RunE:  base.CtxWrap(cmd.removeMember),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(
+			base.CtxWrapCompletion(cmd.memberCompletions),
+			common.MaxArgsCompletionFilter(1),
+		),
+	}
+	if err := removeUser.RegisterFlagCompletionFunc(
+		"group",
+		base.CtxWrapCompletion(cmd.completions),
+	); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	group.AddCommand(removeUser)
 
 	parent.AddCommand(group)
 }
@@ -138,7 +178,7 @@ func (c *Cmd) completions(
 	}
 
 	for _, g := range resp.Msg.GetGroups() {
-		if strings.HasPrefix(g.GetName(), toComplete) {
+		if strings.HasPrefix(g.GetGroupId(), toComplete) {
 			completions = append(completions, formatGroup(g))
 		}
 	}
@@ -151,10 +191,10 @@ func (c *Cmd) completions(
 }
 
 func formatGroup(g *group.Group) string {
-	return fmt.Sprintf("%s\t (#Members: %v)", g.GetName(), g.GetNumMembers())
+	return fmt.Sprintf("%s\t (#Members: %v)", g.GetGroupId(), g.GetNumMembers())
 }
 
-func (c *Cmd) userCompletions(
+func (c *Cmd) memberCompletions(
 	ctx context.Context,
 	_ *cobra.Command,
 	_ []string,
@@ -168,9 +208,22 @@ func (c *Cmd) userCompletions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
+	saResp, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
+		Msg: &service_account.ListRequest{},
+	})
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
 	for _, u := range resp.Msg.GetUsers() {
-		if strings.HasPrefix(u.GetPrintableName(), toComplete) {
+		if strings.HasPrefix(u.GetUserId(), toComplete) {
 			completions = append(completions, formatUser(u))
+		}
+	}
+
+	for _, sa := range saResp.Msg.GetServiceAccounts() {
+		if strings.HasPrefix(sa.GetServiceAccountId(), toComplete) {
+			completions = append(completions, formatServiceAccount(sa))
 		}
 	}
 
@@ -182,5 +235,9 @@ func (c *Cmd) userCompletions(
 }
 
 func formatUser(u *model.UserEntry) string {
-	return fmt.Sprintf("%s\t (ID: %s)", u.GetPrintableName(), u.GetUserId())
+	return fmt.Sprintf("%s\t (%s)", u.GetUserId(), u.GetPrintableName())
+}
+
+func formatServiceAccount(u *model.ServiceAccountEntry) string {
+	return fmt.Sprintf("%s\t (%s)", u.GetServiceAccountId(), u.GetName())
 }

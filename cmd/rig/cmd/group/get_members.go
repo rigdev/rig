@@ -7,6 +7,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/group"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
@@ -38,7 +39,12 @@ func (c *Cmd) listMembers(ctx context.Context, cmd *cobra.Command, args []string
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{fmt.Sprintf("Members (%d)", resp.Msg.GetTotal()), "Identifier", "ID"})
 	for i, m := range resp.Msg.GetMembers() {
-		t.AppendRow(table.Row{i + 1, m.GetUser().GetPrintableName(), m.GetUser().GetUserId()})
+		switch v := m.GetEntry().(type) {
+		case *model.MemberEntry_User:
+			t.AppendRow(table.Row{i + 1, v.User.GetPrintableName(), v.User.GetUserId()})
+		case *model.MemberEntry_ServiceAccount:
+			t.AppendRow(table.Row{i + 1, v.ServiceAccount.GetName(), v.ServiceAccount.GetServiceAccountId()})
+		}
 	}
 	cmd.Println(t.Render())
 	return nil

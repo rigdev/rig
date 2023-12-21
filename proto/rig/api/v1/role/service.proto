@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package api.v1.role;
+
+import "api/v1/role/role.proto";
+import "model/common.proto";
+
+service Service {
+  // Create a new role
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  // Delete role
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+  // List roles
+  rpc List(ListRequest) returns (ListResponse) {}
+  // Update role
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+  // Get role
+  rpc Get(GetRequest) returns (GetResponse) {}
+  // Assign a role
+  rpc Assign(AssignRequest) returns (AssignResponse) {}
+  // Retract a role
+  rpc Retract(RetractRequest) returns (RetractResponse) {}
+}
+
+message CreateRequest {
+  string role_id = 1;
+  repeated api.v1.role.Update initializers = 2;
+}
+
+message CreateResponse {
+  api.v1.role.Role role = 1;
+}
+
+message DeleteRequest {
+  string role_id = 1;
+}
+
+message DeleteResponse {}
+
+message ListRequest {
+  model.Pagination pagination = 1;
+}
+
+message ListResponse {
+  repeated api.v1.role.Role roles = 1;
+}
+
+message UpdateRequest {
+  string role_id = 1;
+  repeated api.v1.role.Update updates = 2;
+}
+
+message UpdateResponse {}
+
+message GetRequest {
+  string role_id = 1;
+}
+
+message GetResponse {
+  api.v1.role.Role role = 1;
+}
+
+message AssignRequest {
+  string role_id = 1;
+  api.v1.role.EntityID entity_id = 2;
+}
+
+message AssignResponse {}
+
+message RetractRequest {
+  string role_id = 1;
+  api.v1.role.EntityID entity_id = 2;
+}
+
+message RetractResponse {}
+
+
+

@@ -7,6 +7,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/spf13/cobra"
@@ -100,6 +101,6 @@ func (c *Cmd) completions(
 	return completions, cobra.ShellCompDirectiveDefault
 }
 
-func formatServiceAccount(acc *service_account.Entry) string {
-	return fmt.Sprintf("%s\t (Name: %s)", acc.GetServiceAccountId(), acc.GetServiceAccount().GetName())
+func formatServiceAccount(acc *model.ServiceAccountEntry) string {
+	return fmt.Sprintf("%s\t (Name: %s)", acc.GetServiceAccountId(), acc.GetName())
 }

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package api.v1.service_account;
 import "api/v1/service_account/service_account.proto";
+import "model/user.proto";
 
 // The service to manage your project Service Accounts
 service Service {
@@ -31,7 +32,7 @@ message CreateResponse {
 message ListRequest {}
 
 message ListResponse {
-  repeated api.v1.service_account.Entry service_accounts = 1;
+  repeated model.ServiceAccountEntry service_accounts = 1;
 }
 
 message DeleteRequest {

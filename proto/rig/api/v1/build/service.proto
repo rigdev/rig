@@ -3,7 +3,6 @@ syntax = "proto3";
 package api.v1.build;
 
 import "google/protobuf/timestamp.proto";
-import "model/author.proto";
 import "api/v1/capsule/build.proto";
 import "model/common.proto";
 
@@ -11,15 +10,15 @@ service Service {
   rpc GetImageInfo(GetImageInfoRequest) returns (GetImageInfoResponse) {}
   rpc GetRepositoryInfo(GetRepositoryInfoRequest)
       returns (GetRepositoryInfoResponse) {}
-  rpc GetBuild(GetBuildRequest) returns (GetBuildResponse) {}
+  rpc Get(GetRequest) returns (GetResponse) {}
   // Create a new build.
   // Builds are immutable and cannot change. Create a new build to make
   // changes from an existing one.
-  rpc CreateBuild(CreateBuildRequest) returns (CreateBuildResponse) {}
+  rpc Create(CreateRequest) returns (CreateResponse) {}
   // List builds for a capsule.
-  rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse) {}
+  rpc List(ListRequest) returns (ListResponse) {}
   // Delete a build.
-  rpc DeleteBuild(DeleteBuildRequest) returns (DeleteBuildResponse) {}
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
 }
 
 message GetImageInfoRequest {
@@ -54,7 +53,7 @@ message Tag {
   google.protobuf.Timestamp image_created_at = 2;
 }
 
-message CreateBuildRequest {
+message CreateRequest {
   string capsule_id = 1;
   string image = 2;
   string digest = 3;
@@ -63,33 +62,33 @@ message CreateBuildRequest {
   bool skip_image_check = 6;
 }
 
-message CreateBuildResponse {
+message CreateResponse {
   string build_id = 1;
   bool created_new_build = 2;
 }
 
-message ListBuildsRequest {
+message ListRequest {
   string capsule_id = 1;
   model.Pagination pagination = 2;
 }
 
-message ListBuildsResponse {
+message ListResponse {
   repeated api.v1.capsule.Build builds = 1;
   uint64 total = 2;
 }
 
-message DeleteBuildRequest {
+message DeleteRequest {
   string capsule_id = 1;
   string build_id = 2;
 }
 
-message DeleteBuildResponse {}
+message DeleteResponse {}
 
-message GetBuildRequest {
+message GetRequest {
   string capsule_id = 1;
   string build_id = 2;
 }
 
-message GetBuildResponse {
+message GetResponse {
   api.v1.capsule.Build build = 1;
 }
