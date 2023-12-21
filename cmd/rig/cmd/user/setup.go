@@ -34,8 +34,6 @@ var (
 	credFilePath  string
 	usersFilePath string
 	hashingKey    string
-
-	groupIdentifier string
 )
 
 type Cmd struct {
