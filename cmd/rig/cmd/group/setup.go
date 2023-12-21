@@ -52,7 +52,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  base.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
-	create.Flags().StringVarP(&groupID, "id", "i", "", "id of the group")
+	create.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
 	group.AddCommand(create)
 
 	deleteCmd := &cobra.Command{
@@ -132,8 +132,9 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
+	addUser.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
 	if err := addUser.RegisterFlagCompletionFunc(
-		"group",
+		"group-id",
 		base.CtxWrapCompletion(cmd.completions),
 	); err != nil {
 		fmt.Println(err)
@@ -151,8 +152,9 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
+	removeUser.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
 	if err := removeUser.RegisterFlagCompletionFunc(
-		"group",
+		"group-id",
 		base.CtxWrapCompletion(cmd.completions),
 	); err != nil {
 		fmt.Println(err)
