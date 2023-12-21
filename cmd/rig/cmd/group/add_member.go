@@ -66,7 +66,7 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 	if userID != "" {
 		req.MemberIds = []*group.MemberID{
 			{
-				MemberID: &group.MemberID_UserId{
+				Kind: &group.MemberID_UserId{
 					UserId: userID,
 				},
 			},
@@ -74,7 +74,7 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 	} else if serviceAccountID != "" {
 		req.MemberIds = []*group.MemberID{
 			{
-				MemberID: &group.MemberID_ServiceAccountId{
+				Kind: &group.MemberID_ServiceAccountId{
 					ServiceAccountId: serviceAccountID,
 				},
 			},
