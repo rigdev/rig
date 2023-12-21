@@ -15,7 +15,7 @@ message Role {
 }
 
 message EntityID {
-  oneof entity_id {
+  oneof kind {
     string user_id = 1;
     string service_account_id = 2;
     string group_id = 3;
