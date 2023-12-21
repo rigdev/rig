@@ -34,13 +34,9 @@ message Scope {
 }
 
 message Update {
-  message Permissions {
-    repeated Permission permissions = 1;
-  }
-
   oneof update { 
     Permission add_permission = 1;
-    Permissions remove_permission = 2;
+    Permission remove_permission = 2;
     model.Metadata set_metadata = 3;
     string delete_metadata_key = 4;
   }
