@@ -15,6 +15,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	"github.com/distribution/reference"
 	"github.com/rigdev/rig-go-api/api/v1/group"
+	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/errors"
@@ -219,7 +220,51 @@ func parseBool(s string) (bool, error) {
 	return false, errors.InvalidArgumentErrorf("invalid bool format")
 }
 
-func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User, string, error) {
+func GetMember(ctx context.Context, rc rig.Client) (string, string, []string, error) {
+	i, _, err := PromptSelect("Select Member Type", []string{"User", "Service Account"})
+	if err != nil {
+		return "", "", nil, err
+	}
+	if i == 0 {
+		u, userID, err := GetUser(ctx, "", rc)
+		if err != nil {
+			return "", "", nil, err
+		}
+		id, err := uuid.Parse(userID)
+		if err != nil {
+			return "", "", nil, err
+		}
+		return string(id), "", u.UserInfo.GetGroupIds(), nil
+	} else if i == 1 {
+		saResp, err := rc.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
+			Msg: &service_account.ListRequest{},
+		})
+		if err != nil {
+			return "", "", nil, err
+		}
+
+		var sas []string
+		for _, sa := range saResp.Msg.GetServiceAccounts() {
+			sas = append(sas, sa.GetName())
+		}
+
+		i, _, err := PromptSelect("Select Service Account", sas)
+		if err != nil {
+			return "", "", nil, err
+		}
+
+		serviceAccount := saResp.Msg.GetServiceAccounts()[i]
+		id, err := uuid.Parse(serviceAccount.GetServiceAccountId())
+		if err != nil {
+			return "", "", nil, err
+		}
+		return "", string(id), serviceAccount.GetGroupIds(), nil
+	}
+
+	return "", "", nil, nil
+}
+
+func GetUser(ctx context.Context, identifier string, rc rig.Client) (*user.User, string, error) {
 	var err error
 	if identifier == "" {
 		identifier, err = PromptInput("User Identifier:", ValidateSystemNameOpt)
@@ -236,7 +281,7 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 			return nil, "", err
 		}
 
-		res, err := nc.User().GetByIdentifier(ctx, connect.NewRequest(&user.GetByIdentifierRequest{
+		res, err := rc.User().GetByIdentifier(ctx, connect.NewRequest(&user.GetByIdentifierRequest{
 			Identifier: ident,
 		}))
 		if err != nil {
@@ -245,7 +290,7 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 		resID = res.Msg.GetUser().GetUserId()
 		u = res.Msg.GetUser()
 	} else {
-		res, err := nc.User().Get(ctx, connect.NewRequest(&user.GetRequest{
+		res, err := rc.User().Get(ctx, connect.NewRequest(&user.GetRequest{
 			UserId: id.String(),
 		}))
 		if err != nil {
@@ -258,37 +303,23 @@ func GetUser(ctx context.Context, identifier string, nc rig.Client) (*user.User,
 	return u, resID, nil
 }
 
-func GetGroup(ctx context.Context, identifier string, nc rig.Client) (*group.Group, string, error) {
+func GetGroup(ctx context.Context, id string, nc rig.Client) (*group.Group, string, error) {
 	var err error
-	if identifier == "" {
-		identifier, err = PromptInput("Group Identifier:", ValidateSystemNameOpt)
+	if id == "" {
+		id, err = PromptInput("Group Id:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}
 	}
 	var g *group.Group
-	var resID string
-	id, err := uuid.Parse(identifier)
+	res, err := nc.Group().Get(ctx, connect.NewRequest(&group.GetRequest{
+		GroupId: id,
+	}))
 	if err != nil {
-		res, err := nc.Group().GetByName(ctx, connect.NewRequest(&group.GetByNameRequest{
-			Name: identifier,
-		}))
-		if err != nil {
-			return nil, "", err
-		}
-		resID = res.Msg.GetGroup().GetGroupId()
-		g = res.Msg.GetGroup()
-	} else {
-		res, err := nc.Group().Get(ctx, connect.NewRequest(&group.GetRequest{
-			GroupId: id.String(),
-		}))
-		if err != nil {
-			return nil, "", err
-		}
-		resID = id.String()
-		g = res.Msg.GetGroup()
+		return nil, "", err
 	}
-	return g, resID, nil
+	g = res.Msg.GetGroup()
+	return g, id, nil
 }
 
 func FormatField(s string) string {
