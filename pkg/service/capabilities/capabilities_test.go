@@ -19,8 +19,12 @@ type mockConfig struct {
 	cfg *v1alpha1.OperatorConfig
 }
 
-func (c *mockConfig) Get() *v1alpha1.OperatorConfig {
+func (c *mockConfig) Operator() *v1alpha1.OperatorConfig {
 	return c.cfg
+}
+
+func (c *mockConfig) Platform() *v1alpha1.PlatformConfig {
+	return nil
 }
 
 func TestGet(t *testing.T) {

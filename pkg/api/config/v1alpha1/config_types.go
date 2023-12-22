@@ -84,7 +84,14 @@ type IngressConfig struct {
 	DisableTLS bool `json:"disableTLS"`
 }
 
-func (c *OperatorConfig) Default() {
+func (c *OperatorConfig) Default() *OperatorConfig {
+	if c == nil {
+		return c
+	}
+	c.SetGroupVersionKind(schema.FromAPIVersionAndKind(
+		GroupVersion.Identifier(),
+		"OperatorConfig",
+	))
 	if c.WebhooksEnabled == nil {
 		c.WebhooksEnabled = ptr.New(true)
 	}
@@ -100,6 +107,7 @@ func (c *OperatorConfig) Default() {
 	if c.Ingress.PathType == "" {
 		c.Ingress.PathType = networkingv1.PathTypeExact
 	}
+	return c
 }
 
 func init() {

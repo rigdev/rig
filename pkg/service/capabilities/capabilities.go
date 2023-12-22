@@ -21,7 +21,7 @@ type service struct {
 func (s *service) Get() (*capabilities.GetResponse, error) {
 	res := &capabilities.GetResponse{}
 
-	cfg := s.cfg.Get()
+	cfg := s.cfg.Operator()
 
 	if cfg.Certmanager != nil && cfg.Certmanager.ClusterIssuer != "" {
 		res.Ingress = true

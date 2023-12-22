@@ -3,36 +3,19 @@ package manager
 import (
 	"os"
 
-	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	"github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/service/config"
-	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-)
 
-func NewScheme() *runtime.Scheme {
-	s := runtime.NewScheme()
-	utilruntime.Must(clientsetscheme.AddToScheme(s))
-	utilruntime.Must(configv1alpha1.AddToScheme(s))
-	utilruntime.Must(v1alpha1.AddToScheme(s))
-	utilruntime.Must(v1alpha2.AddToScheme(s))
-	utilruntime.Must(certv1.AddToScheme(s))
-	utilruntime.Must(monitorv1.AddToScheme(s))
-	utilruntime.Must(batchv1.AddToScheme(s))
-	return s
-}
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/service/config"
+)
 
 func getEnvWithDefault(env, def string) string {
 	v := os.Getenv(env)
@@ -42,8 +25,8 @@ func getEnvWithDefault(env, def string) string {
 	return v
 }
 
-func NewManager(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, error) {
-	cfg := cfgS.Get()
+func New(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, error) {
+	cfg := cfgS.Operator()
 
 	logger := zap.New(zap.UseDevMode(cfg.DevModeEnabled))
 

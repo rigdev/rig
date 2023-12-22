@@ -11,7 +11,7 @@ import (
 	"github.com/go-logr/logr/testr"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/manager"
+	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	netv1 "k8s.io/api/networking/v1"
@@ -61,7 +61,7 @@ func (s *K8sTestSuite) SetupSuite() {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	scheme := manager.NewScheme()
+	scheme := scheme.New()
 	manager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:  scheme,
 		Metrics: server.Options{BindAddress: "0"},
