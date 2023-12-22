@@ -37,13 +37,13 @@ func (c *Cmd) listMembers(ctx context.Context, cmd *cobra.Command, args []string
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Members (%d)", resp.Msg.GetTotal()), "Identifier", "ID"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Members (%d)", resp.Msg.GetTotal()), "Identifier", "ID", "Kind"})
 	for i, m := range resp.Msg.GetMembers() {
 		switch v := m.GetEntry().(type) {
 		case *model.MemberEntry_User:
-			t.AppendRow(table.Row{i + 1, v.User.GetPrintableName(), v.User.GetUserId()})
+			t.AppendRow(table.Row{i + 1, v.User.GetPrintableName(), v.User.GetUserId(), "User"})
 		case *model.MemberEntry_ServiceAccount:
-			t.AppendRow(table.Row{i + 1, v.ServiceAccount.GetName(), v.ServiceAccount.GetServiceAccountId()})
+			t.AppendRow(table.Row{i + 1, v.ServiceAccount.GetName(), v.ServiceAccount.GetServiceAccountId(), "ServiceAccount"})
 		}
 	}
 	cmd.Println(t.Render())

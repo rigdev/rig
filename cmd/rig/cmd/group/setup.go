@@ -210,6 +210,8 @@ func (c *Cmd) memberCompletions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
+	fmt.Println(resp.Msg.GetUsers())
+
 	saResp, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
 		Msg: &service_account.ListRequest{},
 	})
