@@ -267,7 +267,7 @@ func GetMember(ctx context.Context, rc rig.Client) (string, string, []string, er
 func GetUser(ctx context.Context, identifier string, rc rig.Client) (*user.User, string, error) {
 	var err error
 	if identifier == "" {
-		identifier, err = PromptInput("User Identifier:", ValidateSystemNameOpt)
+		identifier, err = PromptInput("User Identifier:", ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, "", err
 		}
