@@ -51,6 +51,8 @@ cloud.google.com/go/storage v1.30.1 h1:uOdMxAs8HExqBlnLtnQyP0YkvbiDpdGShGKtx6U/o
 cloud.google.com/go/storage v1.30.1/go.mod h1:NfxhC0UJE1aXSx7CIIbCf7y9HKT7BiccwkR7+P7gN8E=
 connectrpc.com/connect v1.14.0 h1:PDS+J7uoz5Oui2VEOMcfz6Qft7opQM9hPiKvtGC01pA=
 connectrpc.com/connect v1.14.0/go.mod h1:uoAq5bmhhn43TwhaKdGKN/bZcGtzPW1v+ngDTn5u+8s=
+connectrpc.com/grpcreflect v1.2.0 h1:Q6og1S7HinmtbEuBvARLNwYmTbhEGRpHDhqrPNlmK+U=
+connectrpc.com/grpcreflect v1.2.0/go.mod h1:nwSOKmE8nU5u/CidgHtPYk1PFI3U9ignz7iDMxOYkSY=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 firebase.google.com/go v3.13.0+incompatible h1:3TdYC3DDi6aHn20qoRkxwGqNgdjtblwVAyRLQwGn/+4=
 firebase.google.com/go v3.13.0+incompatible/go.mod h1:xlah6XbEyW6tbfSklcfe5FHJIwjt8toICdV5Wh9ptHs=
@@ -74,10 +76,6 @@ github.com/benbjohnson/clock v1.3.0 h1:ip6w0uFQkncKQ979AypyG0ER7mqUSBdKLOgAle/AT
 github.com/benbjohnson/clock v1.3.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/bufbuild/connect-go v1.10.0 h1:QAJ3G9A1OYQW2Jbk3DeoJbkCxuKArrvZgDt47mjdTbg=
-github.com/bufbuild/connect-go v1.10.0/go.mod h1:CAIePUgkDR5pAFaylSMtNK45ANQjp9JvpluG20rhpV8=
-github.com/bufbuild/connect-grpcreflect-go v1.0.0 h1:zWsLFYqrT1O2sNJFYfTXI5WxbAyiY2dvevvnJHPtV5A=
-github.com/bufbuild/connect-grpcreflect-go v1.0.0/go.mod h1:825I20H8bfE9rLnBH/046JSpmm3uwpNYdG4duCARetc=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cert-manager/cert-manager v1.13.1 h1:hRST6l3G/Y3IDnn3H4zb6unDrZmtTPqaaz3TTGgfXNE=
 github.com/cert-manager/cert-manager v1.13.1/go.mod h1:pJe/sqGZ6yX0kYcsAv3e2EQH+xn8Ag8WOLGl/qYWAps=
@@ -366,10 +364,10 @@ github.com/prometheus/common v0.45.0 h1:2BGz0eBc2hdMDLnO/8n0jeB3oPrt2D08CekT0lne
 github.com/prometheus/common v0.45.0/go.mod h1:YJmSTw9BoKxJplESWWxlbyttQR4uaEcGyv9MZjVOJsY=
 github.com/prometheus/procfs v0.11.1 h1:xRC8Iq1yyca5ypa9n1EZnWZkt7dwcoRPQwX/5gwaUuI=
 github.com/prometheus/procfs v0.11.1/go.mod h1:eesXgaPo1q7lBpVMoMy0ZOFTth9hBn4W/y0/p/ScXhY=
-github.com/rigdev/rig-go-api v0.0.0-20231221101024-6b6e50a118c2 h1:d38l9jF/N1KXWhodyeiH6IYKdKA1Ek40/1OF/2YI+8A=
-github.com/rigdev/rig-go-api v0.0.0-20231221101024-6b6e50a118c2/go.mod h1:fraLUk9ekeQvvu5bOmUmpNAsBqG2QzqWU9wzGbPwB/w=
-github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea h1:CSXoyGPNq5TccvT6wO4ND/hQeFZSzboHRlEd4IJ4arM=
-github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea/go.mod h1:PP9+YzQQQjPzGhnoVJ/N4C+nLx15dX+KLrJWyGVvV6c=
+github.com/rigdev/rig-go-api v0.0.0-20231228102241-8221adb75941 h1:bnGEeH6CAqCbESxg1LgTpeDw2+rKuyMLRz0WjaWSUtc=
+github.com/rigdev/rig-go-api v0.0.0-20231228102241-8221adb75941/go.mod h1:1tdBX2y2+lLY5qJcSGtF7q3kju8nAXNiGsX/mYs1k/0=
+github.com/rigdev/rig-go-sdk v0.0.0-20231228102537-94f393f23fd3 h1:MLCEW4U+GgSrsdaLcnCpC2BGRgwTTVPD6Ly15aso+EI=
+github.com/rigdev/rig-go-sdk v0.0.0-20231228102537-94f393f23fd3/go.mod h1:Ar+Y6JVi+zpxvDdj3n5jBQ/mx10Wld0vYQ2hei7uG0w=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.4 h1:8TfxU8dW6PdqD27gjM8MVNuicgxIjxpm4K7x4jp8sis=

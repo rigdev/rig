@@ -4,8 +4,6 @@ go 1.21
 
 require (
 	cloud.google.com/go/storage v1.30.1 // indirect
-	github.com/bufbuild/connect-go v1.10.0 // indirect
-	github.com/bufbuild/connect-grpcreflect-go v1.0.0
 	github.com/docker/docker v24.0.2+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/google/uuid v1.4.0
@@ -31,6 +29,7 @@ require (
 
 require (
 	connectrpc.com/connect v1.14.0
+	connectrpc.com/grpcreflect v1.2.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/cert-manager/cert-manager v1.13.1
 	github.com/distribution/reference v0.5.0
@@ -44,8 +43,8 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20231221101024-6b6e50a118c2
-	github.com/rigdev/rig-go-sdk v0.0.0-20231113094237-39bfb34449ea
+	github.com/rigdev/rig-go-api v0.0.0-20231228102241-8221adb75941
+	github.com/rigdev/rig-go-sdk v0.0.0-20231228102537-94f393f23fd3
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rodaine/table v1.1.0
