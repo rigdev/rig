@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-api/api/v1/user"
@@ -23,9 +23,7 @@ var (
 	limit  int
 )
 
-var (
-	groupID string
-)
+var groupID string
 
 type Cmd struct {
 	fx.In

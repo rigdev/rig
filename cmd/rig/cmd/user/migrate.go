@@ -8,8 +8,8 @@ import (
 	"io"
 	"os"
 
+	"connectrpc.com/connect"
 	firebase "firebase.google.com/go"
-	"github.com/bufbuild/connect-go"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"

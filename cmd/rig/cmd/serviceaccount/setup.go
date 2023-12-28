@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
@@ -19,9 +19,7 @@ var (
 	limit  int
 )
 
-var (
-	name string
-)
+var name string
 
 type Cmd struct {
 	fx.In

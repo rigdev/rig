@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"

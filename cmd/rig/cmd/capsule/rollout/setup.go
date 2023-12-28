@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -22,9 +22,7 @@ var (
 	rolloutID int
 )
 
-var (
-	forceDeploy bool
-)
+var forceDeploy bool
 
 type Cmd struct {
 	fx.In

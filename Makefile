@@ -29,19 +29,11 @@ build-rig-operator: ## 🔨 Build rig-operator binary
 gen: proto manifests generate-k8s docs-gen ## 🪄 Run code generation (proto and k8s)
 
 .PHONY: proto
-proto: proto-internal proto-public ## 🪄 Generate all protobuf
+proto: proto-public ## 🪄 Generate all protobuf
 
 gen/go/rig/go.mod:
 	@mkdir -p gen/go/rig
 	@printf "module github.com/rigdev/rig-go-api\n\ngo 1.20\n" > $@
-
-.PHONY: proto-internal
-proto-internal: buf protoc-gen-go protoc-gen-connect-go ## 🪄 Generate internal protobuf
-	@find . \
-		-path './gen/go/*' \
-		-not -path './gen/go/rig/*' \
-		-type f -name '*.go' -delete
-	$(BUF) generate proto/internal --template proto/buf.gen.internal.yaml
 
 .PHONY: proto-public
 proto-public: gen/go/rig/go.mod buf protoc-gen-go protoc-gen-connect-go ## 🪄 Generate public protobuf
@@ -224,12 +216,12 @@ protoc-gen-go: ## 📦 Download protoc-gen-go locally if necessary.
 	(cd tools && GOBIN=$(TOOLSBIN) go install google.golang.org/protobuf/cmd/protoc-gen-go)
 
 PROTOC_GEN_CONNECT_GO ?= $(TOOLSBIN)/protoc-gen-connect-go
-PROTOC_GEN_CONNECT_GO_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "github.com/bufbuild " | cut -d ' ' -f2)
+PROTOC_GEN_CONNECT_GO_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "connectrpc.com/connect " | cut -d ' ' -f2)
 
 .PHONY: protoc-gen-connect-go
 protoc-gen-connect-go: ## 📦 Download protoc-gen-connect-go locally if necessary.
 	(test -s $(PROTOC_GEN_CONNECT_GO) && $(PROTOC_GEN_CONNECT_GO) --version | grep "$(PROTOC_GEN_CONNECT_GO_GO_MOD_VERSION)") || \
-	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go)
+	(cd tools && GOBIN=$(TOOLSBIN) go install connectrpc.com/connect/cmd/protoc-gen-connect-go)
 
 GORELEASER ?= $(TOOLSBIN)/goreleaser
 GORELEASER_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "github.com/goreleaser/goreleaser " | cut -d ' ' -f2)

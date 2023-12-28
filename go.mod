@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	cloud.google.com/go/storage v1.30.1 // indirect
-	github.com/bufbuild/connect-go v1.10.0
+	github.com/bufbuild/connect-go v1.10.0 // indirect
 	github.com/bufbuild/connect-grpcreflect-go v1.0.0
 	github.com/docker/docker v24.0.2+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -23,13 +23,14 @@ require (
 	golang.org/x/sync v0.5.0 // indirect
 	google.golang.org/api v0.140.0
 	google.golang.org/grpc v1.57.0 // indirect
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.32.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4
 )
 
 require (
+	connectrpc.com/connect v1.14.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/cert-manager/cert-manager v1.13.1
 	github.com/distribution/reference v0.5.0

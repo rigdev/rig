@@ -3,7 +3,7 @@ package serviceaccount
 import (
 	"context"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"

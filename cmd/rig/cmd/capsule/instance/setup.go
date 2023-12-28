@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -30,9 +30,7 @@ var (
 	interactive bool
 )
 
-var (
-	since string
-)
+var since string
 
 type Cmd struct {
 	fx.In
