@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
+	"connectrpc.com/grpcreflect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
