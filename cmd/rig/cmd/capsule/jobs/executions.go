@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
@@ -104,7 +104,6 @@ func parseFromTo() (time.Time, time.Time, error) {
 		from = time.Now().Add(-sinceDuration)
 	}
 	return from, to, nil
-
 }
 
 func stateToStr(s capsule.JobState) string {

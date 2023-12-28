@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
 	container_name "github.com/google/go-containerregistry/pkg/name"

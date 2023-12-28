@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -27,9 +27,7 @@ var (
 	value string
 )
 
-var (
-	useProject bool
-)
+var useProject bool
 
 type Cmd struct {
 	fx.In
@@ -256,7 +254,7 @@ func (c *Cmd) useProjectCompletion(
 }
 
 func formatProject(p *project.Project) string {
-	var age = "-"
+	age := "-"
 	if p.GetCreatedAt().IsValid() {
 		age = p.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")
 	}

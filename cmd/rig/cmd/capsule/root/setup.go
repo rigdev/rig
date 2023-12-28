@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/docker/docker/client"
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
@@ -41,9 +41,7 @@ var (
 	deleteCmd   bool
 )
 
-var (
-	since string
-)
+var since string
 
 var omitCapsuleIDAnnotation = map[string]string{
 	"OMIT_CAPSULE_ID": "true",
