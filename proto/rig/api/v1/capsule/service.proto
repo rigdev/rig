@@ -74,6 +74,7 @@ service Service {
   rpc GetCustomInstanceMetrics(GetCustomInstanceMetricsRequest)
       returns (GetCustomInstanceMetricsResponse) {}
 
+  // Get list of job executions performed by the Capsule.
   rpc GetJobExecutions(GetJobExecutionsRequest)
       returns (GetJobExecutionsResponse) {}
 }
