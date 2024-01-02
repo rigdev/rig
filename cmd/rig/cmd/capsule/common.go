@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
@@ -50,24 +51,25 @@ func GetCurrentNetwork(ctx context.Context, client rig.Client, cfg *cmdconfig.Co
 }
 
 func GetCurrentRollout(ctx context.Context, client rig.Client, cfg *cmdconfig.Config) (*capsule.Rollout, error) {
-	resp, err := client.Capsule().Get(ctx, connect.NewRequest(&capsule.GetRequest{
+	r, err := client.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
 		CapsuleId: CapsuleID,
-		ProjectId: cfg.GetProject(),
+		Pagination: &model.Pagination{
+			Offset:     0,
+			Limit:      1,
+			Descending: true,
+		},
+		ProjectId:     cfg.GetProject(),
+		EnvironmentId: base.Flags.Environment,
 	}))
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := client.Capsule().GetRollout(ctx, connect.NewRequest(&capsule.GetRolloutRequest{
-		CapsuleId: CapsuleID,
-		RolloutId: resp.Msg.GetCapsule().GetCurrentRollout(),
-		ProjectId: cfg.GetProject(),
-	}))
-	if err != nil {
-		return nil, err
+	for _, r := range r.Msg.GetRollouts() {
+		return r, nil
 	}
 
-	return r.Msg.GetRollout(), nil
+	return nil, errors.New("no rollout for capsule")
 }
 
 func Truncated(str string, max int) string {

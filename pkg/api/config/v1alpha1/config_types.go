@@ -511,6 +511,7 @@ func NewDefaultPlatform() *PlatformConfig {
 			Secret: "",
 		},
 		Cluster: Cluster{
+			Name: "default",
 			Type: ClusterTypeDocker,
 			Git: ClusterGit{
 				Branch:     "main",
