@@ -61,7 +61,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  base.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
-	create.Flags().StringVarP(&email, "email", "e", "", "email of the user")
+	create.Flags().StringVarP(&email, "email", "E", "", "email of the user")
 	create.Flags().StringVarP(&username, "username", "u", "", "username of the user")
 	create.Flags().StringVarP(&phoneNumber, "phone", "P", "", "phone number of the user")
 	create.Flags().StringVarP(&password, "password", "p", "", "password of the user")
