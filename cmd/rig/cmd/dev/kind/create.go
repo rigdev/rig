@@ -114,9 +114,11 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 		customArgs: []string{
 			"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
 			"--set", "rig.telemetry.enabled=false",
-			"--set", "postgres.enabled=true",
 			"--set", "rig.cluster.devRegistry.host=localhost:30000",
 			"--set", "rig.cluster.devRegistry.clusterHost=registry:5000",
+			"--set", "rig.cluster.type=k8s",
+			"--set", "rig.cluster.name=default",
+			"--set", "postgres.enabled=true",
 			"--set", "loadBalancer.enabled=true",
 		},
 		// Restart to pick up new changes.
@@ -198,7 +200,7 @@ func (c *Cmd) deployInner(ctx context.Context, p deployParams) error {
 		"--kube-context", "kind-rig",
 		"upgrade", "--install", p.chartName, chart,
 		"--namespace", "rig-system",
-		"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag),
+		"--set", fmt.Sprintf("image.tag=%s", p.dockerTag),
 		"--create-namespace",
 	}
 	cArgs = append(cArgs, p.customArgs...)
