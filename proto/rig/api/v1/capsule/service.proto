@@ -295,7 +295,6 @@ message GetRolloutRequest {
   string capsule_id = 1;
   uint64 rollout_id = 2;
   string project_id = 3;
-  string environment_id = 4;
 }
 
 message GetRolloutResponse {
@@ -306,7 +305,6 @@ message AbortRolloutRequest {
   string capsule_id = 1;
   uint64 rollout_id = 2;
   string project_id = 3;
-  string environment_id = 4;
 }
 
 message AbortRolloutResponse {}
