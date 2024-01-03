@@ -38,7 +38,6 @@ service Service {
 message VerifyEmailRequest {
   string code = 1;
   string email = 2;
-  string project_id = 3;
 }
 
 // the response of a Public.VerifyEmail RPC
@@ -48,7 +47,6 @@ message VerifyEmailResponse {}
 message VerifyPhoneNumberRequest {
   string code = 1;
   string phone_number = 2;
-  string project_id = 3;
 }
 
 // the response of a Public.VerifyPhoneNumber RPC
@@ -57,7 +55,6 @@ message VerifyPhoneNumberResponse {}
 message UserPassword {
   model.UserIdentifier identifier = 1;
   string password = 2;
-  string project_id = 3;
 }
 
 message ClientCredentials {
@@ -111,7 +108,6 @@ message RegisterResponse {
 
 message SendPasswordResetRequest {
   model.UserIdentifier identifier = 1;
-  string project_id = 2;
 }
 
 message SendPasswordResetResponse {}
@@ -121,7 +117,6 @@ message ResetPasswordRequest {
   string code = 1;
   string new_password = 2;
   model.UserIdentifier identifier = 3;
-  string project_id = 4;
 }
 
 // The response of a Public.ResetPassword RPC
@@ -146,9 +141,6 @@ message RefreshTokenResponse {
 
 // The request of a Public.AuthenticationServiceGetAuthConfigRequest RPC
 message GetAuthConfigRequest {
-  // Optional redirect address for OAuth2
-  string redirect_addr = 1;
-  string project_id = 2;
 }
 
 // The response of a Public.AuthenticationServiceGetAuthConfigRequest RPC
@@ -161,8 +153,6 @@ message GetAuthConfigResponse {
   bool validate_password = 3;
   // Array of supported login methods.
   repeated model.LoginType login_types = 4;
-  // Array of supported oauth providers.
-  repeated authentication.OauthProvider oauth_providers = 5;
   // True if new users can sign up.
   bool allows_register = 7;
 }

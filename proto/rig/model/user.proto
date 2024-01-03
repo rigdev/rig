@@ -62,14 +62,8 @@ message RegisterMethod {
     model.LoginType login_type = 1;
   }
 
-  message Migration {
-    string from = 1;
-  }
-
   oneof method {
     System system = 1;
     Signup signup = 2;
-    OauthProvider oauth_provider = 3;
-    Migration migration = 4;
   }
 }
