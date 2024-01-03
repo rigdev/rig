@@ -2,11 +2,6 @@ syntax = "proto3";
 
 package api.v1.authentication;
 
-message OauthProvider {
-  string name = 1;
-  string provider_url = 2;
-}
-
 message Token {
   string access_token = 1;
   string refresh_token = 2;

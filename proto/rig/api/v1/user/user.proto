@@ -16,16 +16,6 @@ enum VerificationType {
   VERIFICATION_TYPE_RESET_PASSWORD = 3;
 }
 
-enum DeviceInfo {
-  DEVICE_INFO_UNSPECIFIED = 0;
-  DEVICE_INFO_IOS = 1;
-  DEVICE_INFO_MACOS = 2;
-  DEVICE_INFO_WINDOWS = 3;
-  DEVICE_INFO_WEB = 4;
-  DEVICE_INFO_LINUX = 5;
-  DEVICE_INFO_ANDROID = 6;
-}
-
 message VerificationCode {
   model.HashingInstance code = 1;
   google.protobuf.Timestamp sent_at = 2;
@@ -39,8 +29,6 @@ message VerificationCode {
 message Profile {
   string first_name = 1;
   string last_name = 2;
-  string preferred_language = 3;
-  string country = 4;
 }
 
 message User {
@@ -73,17 +61,9 @@ message Update {
   }
 }
 
-enum Permissionship {
-  PERMISSIONSHIP_UNSPECIFIED = 0;
-  PERMISSIONSHIP_NO_PERMISSION = 1;
-  PERMISSIONSHIP_HAS_PERMISSION = 2;
-  PERMISSIONSHIP_CONDITIONAL_PERMISSION = 3;
-}
-
 message AuthMethod {
   oneof method {
     model.LoginType login_type = 1;
-    model.OauthProvider oauth_provider = 2;
   }
 }
 
@@ -101,5 +81,4 @@ message Session {
   google.protobuf.Timestamp renewed_at = 6;
   string country = 7;
   int32 postal_code = 8;
-  DeviceInfo device = 9;
 }
