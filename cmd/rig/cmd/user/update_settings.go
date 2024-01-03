@@ -43,33 +43,11 @@ func loginTypeFromString(s string) model.LoginType {
 	}
 }
 
-func oauthProviderToString(o model.OauthProvider) string {
-	switch o {
-	case model.OauthProvider_OAUTH_PROVIDER_GOOGLE:
-		return "Google"
-	case model.OauthProvider_OAUTH_PROVIDER_FACEBOOK:
-		return "Facebook"
-	case model.OauthProvider_OAUTH_PROVIDER_GITHUB:
-		return "Github"
-	default:
-		return "Unknown"
-	}
-}
-
-func oauthProviderFromString(s string) model.OauthProvider {
-	switch s {
-	case "Google":
-		return model.OauthProvider_OAUTH_PROVIDER_GOOGLE
-	case "Facebook":
-		return model.OauthProvider_OAUTH_PROVIDER_FACEBOOK
-	case "Github":
-		return model.OauthProvider_OAUTH_PROVIDER_GITHUB
-	default:
-		return model.OauthProvider_OAUTH_PROVIDER_UNSPECIFIED
-	}
-}
-
-type settingsField int64
+type (
+	settingsField      int32
+	templateField      int32
+	emailProviderField int32
+)
 
 const (
 	settingsUndefined settingsField = iota
@@ -81,8 +59,54 @@ const (
 	settingsVerificationCodeTTL
 	settingsPasswordHashing
 	settingsLoginMechanisms
-	settingsOauthSettings
+	settingsEmailProvider
+	templateEmailWelcome
+	templateVerifyEmail
+	templateResetPasswordEmail
 )
+
+const (
+	templateFieldUndefined templateField = iota
+	tempalteFieldSubject
+	templateFieldBody
+)
+
+const (
+	emailProviderFieldUndefined emailProviderField = iota
+	emailProviderPublicKey
+	emailProviderPrivateKey
+	emailProviderFromEmail
+	emailProviderHost
+	emailProviderPort
+)
+
+func (f templateField) String() string {
+	switch f {
+	case tempalteFieldSubject:
+		return "Subject"
+	case templateFieldBody:
+		return "Body"
+	default:
+		return "Undefined"
+	}
+}
+
+func (f emailProviderField) String() string {
+	switch f {
+	case emailProviderPublicKey:
+		return "Public Key"
+	case emailProviderPrivateKey:
+		return "Private Key"
+	case emailProviderFromEmail:
+		return "From Email"
+	case emailProviderHost:
+		return "Host"
+	case emailProviderPort:
+		return "Port"
+	default:
+		return "Undefined"
+	}
+}
 
 func (f settingsField) String() string {
 	switch f {
@@ -102,8 +126,14 @@ func (f settingsField) String() string {
 		return "Password Hashing"
 	case settingsLoginMechanisms:
 		return "Login Mechanisms"
-	case settingsOauthSettings:
-		return "Oauth Settings"
+	case settingsEmailProvider:
+		return "Email Provider"
+	case templateEmailWelcome:
+		return "Welcome Email Template"
+	case templateVerifyEmail:
+		return "Verify Email Template"
+	case templateResetPasswordEmail:
+		return "Reset Password Email Template"
 	default:
 		return "Unknown"
 	}
@@ -146,7 +176,10 @@ func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, _ []string
 		settingsVerificationCodeTTL.String(),
 		settingsPasswordHashing.String(),
 		settingsLoginMechanisms.String(),
-		settingsOauthSettings.String(),
+		settingsEmailProvider.String(),
+		templateEmailWelcome.String(),
+		templateVerifyEmail.String(),
+		templateResetPasswordEmail.String(),
 		"Done",
 	}
 
@@ -302,12 +335,33 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 			return nil, nil
 		}
 		return []*settings.Update{u}, nil
-	case settingsOauthSettings:
-		u, err := getOauthSettingsUpdate(s.GetOauthSettings())
+	case settingsEmailProvider:
+		u, err := promptEmailProvider(s)
 		if err != nil {
 			return nil, nil
 		}
-		return u, nil
+		return []*settings.Update{u}, nil
+	case templateEmailWelcome:
+		u, err := promptTemplate(s.GetTemplates().GetWelcomeEmail())
+		if err != nil {
+			return nil, nil
+		}
+
+		return []*settings.Update{u}, nil
+	case templateResetPasswordEmail:
+		u, err := promptTemplate(s.GetTemplates().GetResetPasswordEmail())
+		if err != nil {
+			return nil, nil
+		}
+
+		return []*settings.Update{u}, nil
+	case templateVerifyEmail:
+		u, err := promptTemplate(s.GetTemplates().GetVerifyEmail())
+		if err != nil {
+			return nil, nil
+		}
+
+		return []*settings.Update{u}, nil
 	default:
 		return nil, nil
 	}
@@ -469,196 +523,6 @@ func getLoginMechanismsUpdate(current []model.LoginType) (*settings.Update, erro
 	}, nil
 }
 
-func getOauthSettingsUpdate(current *settings.OauthSettings) ([]*settings.Update, error) {
-	fields := []string{
-		oauthProviderToString(model.OauthProvider_OAUTH_PROVIDER_GOOGLE),
-		oauthProviderToString(model.OauthProvider_OAUTH_PROVIDER_FACEBOOK),
-		oauthProviderToString(model.OauthProvider_OAUTH_PROVIDER_GITHUB),
-		"Callbacks",
-		"Done",
-	}
-
-	updates := []*settings.Update{}
-	google := &settings.OauthProviderUpdate{
-		Provider:      model.OauthProvider_OAUTH_PROVIDER_GOOGLE,
-		Credentials:   &model.ProviderCredentials{},
-		AllowLogin:    current.GetGoogle().GetAllowLogin(),
-		AllowRegister: current.GetGoogle().GetAllowRegister(),
-	}
-	facebook := &settings.OauthProviderUpdate{
-		Provider:      model.OauthProvider_OAUTH_PROVIDER_FACEBOOK,
-		Credentials:   &model.ProviderCredentials{},
-		AllowLogin:    current.GetFacebook().GetAllowLogin(),
-		AllowRegister: current.GetFacebook().GetAllowRegister(),
-	}
-	github := &settings.OauthProviderUpdate{
-		Provider:      model.OauthProvider_OAUTH_PROVIDER_GITHUB,
-		Credentials:   &model.ProviderCredentials{},
-		AllowLogin:    current.GetGithub().GetAllowLogin(),
-		AllowRegister: current.GetGithub().GetAllowRegister(),
-	}
-	callbacks := current.GetCallbackUrls()
-	for {
-		_, res, err := common.PromptSelect("Choose Oauth provider", fields)
-		if err != nil {
-			return nil, err
-		}
-		if res == "Done" {
-			break
-		}
-		if res == "Callbacks" {
-			callbacks = updateCallbacks(callbacks)
-			updates = append(updates, &settings.Update{
-				Field: &settings.Update_CallbackUrls_{
-					CallbackUrls: &settings.Update_CallbackUrls{
-						CallbackUrls: callbacks,
-					},
-				},
-			})
-			continue
-		}
-
-		oauthProvider := oauthProviderFromString(res)
-		switch oauthProvider {
-		case model.OauthProvider_OAUTH_PROVIDER_GOOGLE:
-			google, err = updateOauthProvider(google)
-			if err != nil {
-				fmt.Println(err.Error())
-				continue
-			}
-			updates = append(updates, &settings.Update{
-				Field: &settings.Update_OauthProvider{
-					OauthProvider: google,
-				},
-			})
-		case model.OauthProvider_OAUTH_PROVIDER_FACEBOOK:
-			facebook, err = updateOauthProvider(facebook)
-			if err != nil {
-				fmt.Println(err.Error())
-				continue
-			}
-			updates = append(updates, &settings.Update{
-				Field: &settings.Update_OauthProvider{
-					OauthProvider: facebook,
-				},
-			})
-		case model.OauthProvider_OAUTH_PROVIDER_GITHUB:
-			github, err = updateOauthProvider(github)
-			if err != nil {
-				fmt.Println(err.Error())
-				continue
-			}
-			updates = append(updates, &settings.Update{
-				Field: &settings.Update_OauthProvider{
-					OauthProvider: github,
-				},
-			})
-		default:
-			return nil, errors.New("invalid oauth provider")
-		}
-	}
-	return updates, nil
-}
-
-func updateOauthProvider(u *settings.OauthProviderUpdate) (*settings.OauthProviderUpdate, error) {
-	fmt.Println("Current Oauth Provider Settings: ", u)
-
-	allowLogin, err := common.PromptInput(
-		"Allow Login:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowLogin())),
-	)
-	if err != nil {
-		return nil, err
-	}
-	allowLoginBool, _ := strconv.ParseBool(allowLogin)
-	u.AllowLogin = allowLoginBool
-
-	allowRegister, err := common.PromptInput(
-		"Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(strconv.FormatBool(u.GetAllowRegister())),
-	)
-	if err != nil {
-		return nil, err
-	}
-	allowRegisterBool, _ := strconv.ParseBool(allowRegister)
-	u.AllowRegister = allowRegisterBool
-
-	clientID, err := common.PromptInput(
-		"Client ID:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.GetCredentials().GetPublicKey()),
-	)
-	if err != nil {
-		return nil, err
-	}
-	u.Credentials.PublicKey = clientID
-
-	clientSecret, err := common.PromptInput(
-		"Client Secret:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(u.Credentials.GetPrivateKey()),
-	)
-	if err != nil {
-		return nil, err
-	}
-	u.Credentials.PrivateKey = clientSecret
-
-	return u, nil
-}
-
-func updateCallbacks(current []string) []string {
-	fmt.Println("Current Callbacks: ", current)
-
-	fields := []string{
-		"Add",
-		"Edit",
-		"Remove",
-		"Done",
-	}
-	for {
-		_, res, err := common.PromptSelect("Choose action", fields)
-		if err != nil {
-			fmt.Println(err.Error())
-			break
-		}
-		if res == "Done" {
-			break
-		}
-		if res == "Add" {
-			callback, err := common.PromptInput("Callback:", common.ValidateNonEmptyOpt)
-			if err != nil {
-				fmt.Println(err.Error())
-				continue
-			}
-			current = append(current, callback)
-		}
-		if res == "Edit" {
-			if len(current) == 0 {
-				fmt.Println("No callbacks to edit")
-				continue
-			}
-			i, res, err := common.PromptSelect("Choose callback to edit", current)
-			if err != nil {
-				fmt.Println(err.Error())
-				continue
-			}
-			callback, err := common.PromptInput("Callback:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(res))
-			if err != nil {
-				fmt.Println(err.Error())
-				continue
-			}
-			current[i] = callback
-		}
-		if res == "Remove" {
-			if len(current) == 0 {
-				fmt.Println("No callbacks to remove")
-				continue
-			}
-			i, _, err := common.PromptSelect("Choose callback to remove", current)
-			if err != nil {
-				fmt.Println(err.Error())
-				continue
-			}
-			current = slices.Delete(current, i, i+1)
-		}
-	}
-	return current
-}
-
 func parseSettingsUpdate() (*settings.Update, error) {
 	switch field {
 	case common.FormatField(settingsAllowRegister.String()):
@@ -753,33 +617,227 @@ func parseSettingsUpdate() (*settings.Update, error) {
 				},
 			},
 		}, nil
-	case common.FormatField(settingsOauthSettings.String()):
+	case common.FormatField(settingsEmailProvider.String()):
 		jsonValue := []byte(value)
-		oauthUpdate := settings.OauthProviderUpdate{}
-		err := protojson.Unmarshal(jsonValue, &oauthUpdate)
-		if err != nil {
+		prov := settings.EmailProvider{}
+		if err := protojson.Unmarshal(jsonValue, &prov); err != nil {
 			return nil, err
 		}
 		return &settings.Update{
-			Field: &settings.Update_OauthProvider{
-				OauthProvider: &oauthUpdate,
+			Field: &settings.Update_EmailProvider{
+				EmailProvider: &prov,
 			},
 		}, nil
-	case "callbacks":
+	case "template":
 		jsonValue := []byte(value)
-		callbacks := []string{}
-		err := json.Unmarshal(jsonValue, &callbacks)
-		if err != nil {
+		t := settings.Template{}
+		if err := protojson.Unmarshal(jsonValue, &t); err != nil {
 			return nil, err
 		}
 		return &settings.Update{
-			Field: &settings.Update_CallbackUrls_{
-				CallbackUrls: &settings.Update_CallbackUrls{
-					CallbackUrls: callbacks,
-				},
+			Field: &settings.Update_Template{
+				Template: &t,
 			},
 		}, nil
 	default:
 		return nil, nil
 	}
+}
+
+func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
+	_, field, err := common.PromptSelect("Choose a type:", []string{
+		"MailJet",
+		"Smtp",
+		"Default",
+	})
+	if err != nil {
+		return nil, nil
+	}
+
+	switch field {
+	case "Default":
+		prov := &settings.EmailProvider{
+			Instance: &settings.EmailInstance{
+				Instance: &settings.EmailInstance_Default{
+					Default: &settings.DefaultInstance{},
+				},
+			},
+		}
+		return &settings.Update{
+			Field: &settings.Update_EmailProvider{
+				EmailProvider: prov,
+			},
+		}, nil
+	case "MailJet":
+		prov := &settings.EmailProvider{
+			Instance:    s.GetEmailProvider().GetInstance(),
+			From:        s.GetEmailProvider().GetFrom(),
+			Credentials: &model.ProviderCredentials{},
+		}
+		if prov.GetInstance() == nil || prov.GetInstance().GetMailjet() == nil {
+			prov.GetInstance().Instance = &settings.EmailInstance_Mailjet{
+				Mailjet: &settings.MailjetInstance{},
+			}
+		}
+		if err := promptEmailProviderFields(prov, field); err != nil {
+			return nil, err
+		}
+		return &settings.Update{
+			Field: &settings.Update_EmailProvider{
+				EmailProvider: prov,
+			},
+		}, nil
+
+	case "Smtp":
+		prov := &settings.EmailProvider{
+			Instance:    s.GetEmailProvider().GetInstance(),
+			From:        s.GetEmailProvider().GetFrom(),
+			Credentials: &model.ProviderCredentials{},
+		}
+		if prov.GetInstance() == nil || prov.GetInstance().GetSmtp() == nil {
+			prov.GetInstance().Instance = &settings.EmailInstance_Smtp{
+				Smtp: &settings.SmtpInstance{},
+			}
+		}
+		if err := promptEmailProviderFields(prov, field); err != nil {
+			return nil, err
+		}
+		return &settings.Update{
+			Field: &settings.Update_EmailProvider{
+				EmailProvider: prov,
+			},
+		}, nil
+	default:
+		return nil, nil
+	}
+}
+
+func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
+	var fields []string
+	if prov == "MailJet" {
+		fields = []string{
+			emailProviderPublicKey.String(),
+			emailProviderPrivateKey.String(),
+			emailProviderFromEmail.String(),
+			"Done",
+		}
+	} else if prov == "Smtp" {
+		fields = []string{
+			emailProviderPublicKey.String(),
+			emailProviderPrivateKey.String(),
+			emailProviderFromEmail.String(),
+			emailProviderHost.String(),
+			emailProviderPort.String(),
+			"Done",
+		}
+	}
+
+	for {
+		_, res, err := common.PromptSelect("Choose a field to update:", fields)
+		if err != nil {
+			return err
+		}
+		if res == "Done" {
+			break
+		}
+
+		switch res {
+		case emailProviderPublicKey.String():
+			key, err := common.PromptInput(
+				"Enter public key:", common.ValidateNonEmptyOpt,
+			)
+			if err != nil {
+				return err
+			}
+			p.Credentials.PublicKey = key
+		case emailProviderPrivateKey.String():
+			key, err := common.PromptInput(
+				"Enter private key:", common.ValidateNonEmptyOpt,
+			)
+			if err != nil {
+				return err
+			}
+			p.Credentials.PrivateKey = key
+		case emailProviderFromEmail.String():
+			email, err := common.PromptInput(
+				"Enter from email:",
+				common.ValidateEmailOpt,
+				common.InputDefaultOpt(p.GetFrom()),
+			)
+			if err != nil {
+				return err
+			}
+			p.From = email
+		case emailProviderHost.String():
+			host, err := common.PromptInput(
+				"Enter host:",
+				common.ValidateNonEmptyOpt,
+				common.InputDefaultOpt(p.GetInstance().GetSmtp().GetHost()),
+			)
+			if err != nil {
+				return err
+			}
+			p.GetInstance().GetSmtp().Host = host
+		case emailProviderPort.String():
+			port, err := common.PromptInput(
+				"Enter port:",
+				common.ValidateNonEmptyOpt,
+				common.InputDefaultOpt(strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort()))),
+			)
+			if err != nil {
+				return err
+			}
+			// parse port as int64
+			portInt, err := strconv.Atoi(port)
+			if err != nil {
+				return err
+			}
+			p.GetInstance().GetSmtp().Port = int64(portInt)
+		default:
+			return nil
+		}
+	}
+	return nil
+}
+
+func promptTemplate(t *settings.Template) (*settings.Update, error) {
+	fields := []string{
+		tempalteFieldSubject.String(),
+		templateFieldBody.String(),
+		"Done",
+	}
+
+	for {
+		_, res, err := common.PromptSelect("Choose a field to update:", fields)
+		if err != nil {
+			return nil, err
+		}
+		if res == "Done" {
+			break
+		}
+
+		switch res {
+		case tempalteFieldSubject.String():
+			subject, err := common.PromptInput(
+				"Enter subject:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetSubject()),
+			)
+			if err != nil {
+				return nil, err
+			}
+			t.Subject = subject
+		case templateFieldBody.String():
+			body, err := common.PromptInput(
+				"Enter body:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetBody()),
+			)
+			if err != nil {
+				return nil, err
+			}
+			t.Body = body
+		}
+	}
+	return &settings.Update{
+		Field: &settings.Update_Template{
+			Template: t,
+		},
+	}, nil
 }

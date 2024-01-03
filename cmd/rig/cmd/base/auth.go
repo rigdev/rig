@@ -12,7 +12,6 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
-	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
@@ -211,7 +210,6 @@ func login(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error {
 				UserPassword: &authentication.UserPassword{
 					Identifier: id,
 					Password:   pw,
-					ProjectId:  auth.RigProjectID,
 				},
 			},
 		},

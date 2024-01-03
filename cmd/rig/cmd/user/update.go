@@ -39,8 +39,6 @@ const (
 	userProfileUndefined userProfileField = iota
 	userProfileFirstName
 	userProfileLastName
-	userProfilePreferredLanguage
-	userProfileCountry
 )
 
 func (f userField) String() string {
@@ -76,10 +74,6 @@ func (f userProfileField) String() string {
 		return "First name"
 	case userProfileLastName:
 		return "Last name"
-	case userProfilePreferredLanguage:
-		return "Preferred language"
-	case userProfileCountry:
-		return "Country"
 	default:
 		return "Unknown"
 	}
@@ -298,16 +292,12 @@ func getUserProfileUpdate(p *user.Profile) (*user.Update, error) {
 	fields := []string{
 		userProfileFirstName.String(),
 		userProfileLastName.String(),
-		userProfilePreferredLanguage.String(),
-		userProfileCountry.String(),
 		"Done",
 	}
 
 	pp := &user.Profile{
-		FirstName:         p.GetFirstName(),
-		LastName:          p.GetLastName(),
-		PreferredLanguage: p.GetPreferredLanguage(),
-		Country:           p.GetCountry(),
+		FirstName: p.GetFirstName(),
+		LastName:  p.GetLastName(),
 	}
 	for {
 		i, res, err := common.PromptSelect("Choose a field to update:", fields)
@@ -357,28 +347,6 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 		}
 		if lastName != defLastName {
 			p.LastName = lastName
-		}
-	case userProfilePreferredLanguage:
-		defPreferredLanguage := p.GetPreferredLanguage()
-		preferredLanguage, err := common.PromptInput(
-			"Preferred language:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defPreferredLanguage),
-		)
-		if err != nil {
-			return err
-		}
-		if preferredLanguage != defPreferredLanguage {
-			p.PreferredLanguage = preferredLanguage
-		}
-	case userProfileCountry:
-		defCountry := p.GetCountry()
-		country, err := common.PromptInput(
-			"Country:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defCountry),
-		)
-		if err != nil {
-			return err
-		}
-		if country != defCountry {
-			p.Country = country
 		}
 	}
 	return nil

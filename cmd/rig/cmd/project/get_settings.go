@@ -33,14 +33,6 @@ func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, _ []string) e
 
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{"Attribute", "Value"})
-	t.AppendRows([]table.Row{
-		{"Email Provider", set.GetEmailProvider().GetInstance().String()},
-		{" - Client ID", set.GetEmailProvider().GetClientId()},
-		{" - From Email", set.GetEmailProvider().GetFrom()},
-		{"Text Provider", set.GetTextProvider().GetInstance().String()},
-		{" - Client ID", set.GetTextProvider().GetClientId()},
-		{" - From Phone", set.GetTextProvider().GetFrom()},
-	})
 	t.AppendRows(dockerRegistries)
 
 	cmd.Println(t.Render())

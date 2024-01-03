@@ -29,31 +29,6 @@ func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, _ []string) e
 		}
 		rowsLogin = append(rowsLogin, table.Row{"", l})
 	}
-
-	oauthSettings := settings.GetOauthSettings()
-	rowsOAuth := []table.Row{}
-	if oauthSettings.GetGoogle().GetAllowRegister() {
-		if len(rowsOAuth) == 0 {
-			rowsOAuth = append(rowsOAuth, table.Row{"Oauth Providers", "Google"})
-		} else {
-			rowsOAuth = append(rowsOAuth, table.Row{"", "Google"})
-		}
-	}
-	if oauthSettings.GetFacebook().GetAllowRegister() {
-		if len(rowsOAuth) == 0 {
-			rowsOAuth = append(rowsOAuth, table.Row{"Oauth Providers", "Facebook"})
-		} else {
-			rowsOAuth = append(rowsOAuth, table.Row{"", "Facebook"})
-		}
-	}
-	if oauthSettings.GetGithub().GetAllowRegister() {
-		if len(rowsOAuth) == 0 {
-			rowsOAuth = append(rowsOAuth, table.Row{"Oauth Providers", "Github"})
-		} else {
-			rowsOAuth = append(rowsOAuth, table.Row{"", "Github"})
-		}
-	}
-
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{"Attribute", "Value"})
 	t.AppendRow(table.Row{"Allow Register", settings.GetAllowRegister()})
@@ -64,9 +39,6 @@ func (c *Cmd) getSettings(ctx context.Context, cmd *cobra.Command, _ []string) e
 	t.AppendRow(table.Row{"Verification Code TTL", settings.GetVerificationCodeTtl().AsDuration()})
 	t.AppendRow(table.Row{"Password hashing", settings.GetPasswordHashing().GetMethod()})
 	for _, r := range rowsLogin {
-		t.AppendRow(r)
-	}
-	for _, r := range rowsOAuth {
 		t.AppendRow(r)
 	}
 	cmd.Println(t.Render())

@@ -50,7 +50,6 @@ func (c *Cmd) listSessions(ctx context.Context, cmd *cobra.Command, args []strin
 			i + 1,
 			s.GetSessionId(),
 			s.GetSession().GetAuthMethod().GetMethod(),
-			s.GetSession().GetDevice(),
 		})
 	}
 
