@@ -6,6 +6,7 @@ import "google/protobuf/duration.proto";
 
 import "model/common.proto";
 import "model/auth.proto";
+import "model/credentials.proto";
 
 message Update {
   message LoginMechanisms {
@@ -21,6 +22,9 @@ message Update {
     google.protobuf.Duration verification_code_ttl = 6;
     model.HashingConfig password_hashing = 7;
     LoginMechanisms login_mechanisms = 8;
+    EmailProvider email_provider = 9;
+    TextProvider text_provider = 10;
+    Template template = 11;
   }
 }
 
@@ -53,4 +57,85 @@ message Settings {
   model.HashingConfig password_hashing = 7;
   repeated model.LoginType login_mechanisms = 8;
   bool send_welcome_mail = 10;
+  EmailProviderEntry email_provider = 11;
+  TextProviderEntry text_provider = 12;
+  Templates templates = 13;
+}
+
+enum TemplateType {
+  TEMPLATE_TYPE_UNSPECIFIED = 0;
+  TEMPLATE_TYPE_WELCOME_EMAIL = 1;
+  TEMPLATE_TYPE_EMAIL_VERIFICATION = 2;
+  TEMPLATE_TYPE_EMAIL_RESET_PASSWORD = 3;
+  TEMPLATE_TYPE_WELCOME_TEXT = 4;
+  TEMPLATE_TYPE_TEXT_VERIFICATION = 5;
+  TEMPLATE_TYPE_TEXT_RESET_PASSWORD = 6;
+}
+
+message DefaultInstance {}
+
+message MailjetInstance {}
+
+message TwilioInstance {}
+
+message SmtpInstance {
+  string host = 1;
+  int64 port = 2;
+}
+
+message EmailInstance {
+  oneof instance {
+    DefaultInstance default = 1;
+    MailjetInstance mailjet = 2;
+    SmtpInstance smtp = 3;
+  }
+}
+
+message TextInstance {
+  oneof instance {
+    DefaultInstance default = 1;
+    TwilioInstance twilio = 2;
+  }
+}
+
+message EmailProvider {
+  string from = 1;
+  model.ProviderCredentials credentials = 2;
+  EmailInstance instance = 3;
+}
+
+message EmailProviderEntry {
+  string from = 1;
+  string client_id = 2;
+  string secret_id = 3;
+  EmailInstance instance = 4;
+}
+
+message TextProvider {
+  string from = 1;
+  model.ProviderCredentials credentials = 2;
+  TextInstance instance = 3;
+}
+
+message TextProviderEntry {
+  string from = 1;
+  string client_id = 2;
+  string secret_id = 3;
+  TextInstance instance = 4;
+}
+
+message Template {
+  string body = 1;
+  string subject = 2;
+  TemplateType type = 3;
+  repeated string format = 4;
+}
+
+message Templates {
+  Template welcome_email = 1;
+  Template welcome_text = 2;
+  Template reset_password_email = 3;
+  Template reset_password_text = 4;
+  Template verify_email = 5;
+  Template verify_phone_number = 6;
 }
