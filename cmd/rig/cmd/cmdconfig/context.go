@@ -76,13 +76,7 @@ func CreateContext(cfg *Config, name, url string) error {
 		Name:        name,
 		ServiceName: name,
 		UserName:    name,
-		Project: struct {
-			ProjectID    string `yaml:"project_id"`
-			ProjectToken string `yaml:"project_token"`
-		}{
-			ProjectID:    "",
-			ProjectToken: "",
-		},
+		ProjectID:   "",
 	})
 
 	cfg.Services = append(cfg.Services, &Service{

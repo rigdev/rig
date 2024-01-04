@@ -40,17 +40,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	cmd.Printf("Successfully created project %s with id %s \n", name, p.GetProjectId())
 
 	if useProject {
-		res, err := c.Rig.Project().Use(ctx, &connect.Request[project.UseRequest]{
-			Msg: &project.UseRequest{
-				ProjectId: p.GetProjectId(),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		c.Cfg.GetCurrentContext().Project.ProjectID = p.GetProjectId()
-		c.Cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
+		c.Cfg.GetCurrentContext().ProjectID = p.GetProjectId()
 		if err := c.Cfg.Save(); err != nil {
 			return err
 		}

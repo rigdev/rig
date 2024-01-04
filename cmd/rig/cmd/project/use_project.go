@@ -25,17 +25,7 @@ func (c *Cmd) use(ctx context.Context, cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	res, err := c.Rig.Project().Use(ctx, &connect.Request[project.UseRequest]{
-		Msg: &project.UseRequest{
-			ProjectId: projectID,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	c.Cfg.GetCurrentContext().Project.ProjectID = projectID
-	c.Cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
+	c.Cfg.GetCurrentContext().ProjectID = projectID
 	if err := c.Cfg.Save(); err != nil {
 		return err
 	}
