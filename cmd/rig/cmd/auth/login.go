@@ -8,14 +8,13 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
 func (c *Cmd) login(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	res, err := c.loginWithRetry(ctx, authUserIdentifier, authPassword, auth.RigProjectID)
+	res, err := c.loginWithRetry(ctx, authUserIdentifier, authPassword)
 	if err != nil {
 		return err
 	}
@@ -39,7 +38,7 @@ func (c *Cmd) login(ctx context.Context, cmd *cobra.Command, _ []string) error {
 
 func (c *Cmd) loginWithRetry(
 	ctx context.Context,
-	identifierStr, password, project string,
+	identifierStr, password string,
 ) (*connect.Response[authentication.LoginResponse], error) {
 	shouldPromptIdentifier := identifierStr == ""
 	shouldPromptPassword := password == ""
@@ -68,7 +67,6 @@ func (c *Cmd) loginWithRetry(
 					UserPassword: &authentication.UserPassword{
 						Identifier: identifier,
 						Password:   password,
-						ProjectId:  project,
 					},
 				},
 			},

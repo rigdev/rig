@@ -38,7 +38,6 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 			{"Username", u.GetUserInfo().GetUsername()},
 			{"First name", u.GetProfile().GetFirstName()},
 			{"Last name", u.GetProfile().GetLastName()},
-			{"Country", u.GetProfile().GetCountry()},
 			{"Is Email verified", u.GetIsEmailVerified()},
 			{"Is Phone verified", u.GetIsPhoneVerified()},
 			{"Created at", u.GetUserInfo().GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")},
