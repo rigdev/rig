@@ -20,10 +20,7 @@ type Context struct {
 	Name        string `yaml:"name"`
 	ServiceName string `yaml:"service"`
 	UserName    string `yaml:"user"`
-	Project     struct {
-		ProjectID    string `yaml:"project_id"`
-		ProjectToken string `yaml:"project_token"`
-	} `yaml:"project"`
+	ProjectID   string `yaml:"project_id"`
 
 	service *Service
 	auth    *Auth
@@ -69,7 +66,7 @@ type Config struct {
 
 func (cfg *Config) GetProject() string {
 	if c := cfg.GetCurrentContext(); c != nil {
-		return c.Project.ProjectID
+		return c.ProjectID
 	}
 	return ""
 }

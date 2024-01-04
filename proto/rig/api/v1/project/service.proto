@@ -22,9 +22,6 @@ service Service {
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
   // Get public key of system
   rpc PublicKey(PublicKeyRequest) returns (PublicKeyResponse) {}
-  // Use generates a project token for editing the project as the current
-  // user.
-  rpc Use(UseRequest) returns (UseResponse) {}
   // Get License Information
   rpc GetLicenseInfo(GetLicenseInfoRequest) returns (GetLicenseInfoResponse) {}
 
@@ -93,14 +90,6 @@ message PublicKeyRequest {
 message PublicKeyResponse {
   // The id of the project
   string public_key = 1;
-}
-
-message UseRequest {
-  string project_id = 1;
-}
-
-message UseResponse {
-  string project_token = 1;
 }
 
 message GetLicenseInfoRequest {

@@ -78,7 +78,7 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 		}
 	}
 
-	pid := cfg.GetCurrentContext().Project.ProjectID
+	pid := cfg.GetCurrentContext().ProjectID
 	if pid == "" || uuid.UUID(pid).IsNil() {
 		use, err := common.PromptConfirm("You have not selected a project. Would you like to select one now?", true)
 		if err != nil {
@@ -96,7 +96,7 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 
 	found := false
 	for _, p := range res.Msg.GetProjects() {
-		if p.GetProjectId() == cfg.GetCurrentContext().Project.ProjectID {
+		if p.GetProjectId() == cfg.GetCurrentContext().ProjectID {
 			found = true
 			break
 		}
@@ -157,17 +157,7 @@ func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *
 	}
 
 	if useProject {
-		res, err := rc.Project().Use(ctx, &connect.Request[project.UseRequest]{
-			Msg: &project.UseRequest{
-				ProjectId: p.GetProjectId(),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		cfg.GetCurrentContext().Project.ProjectID = p.GetProjectId()
-		cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
+		cfg.GetCurrentContext().ProjectID = p.GetProjectId()
 		if err := cfg.Save(); err != nil {
 			return err
 		}
@@ -254,17 +244,7 @@ func useProject(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error
 
 	projectID = listRes.Msg.GetProjects()[i].GetProjectId()
 
-	res, err := rc.Project().Use(ctx, &connect.Request[project.UseRequest]{
-		Msg: &project.UseRequest{
-			ProjectId: projectID,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	cfg.GetCurrentContext().Project.ProjectID = projectID
-	cfg.GetCurrentContext().Project.ProjectToken = res.Msg.GetProjectToken()
+	cfg.GetCurrentContext().ProjectID = projectID
 	if err := cfg.Save(); err != nil {
 		return err
 	}
