@@ -36,6 +36,7 @@ message GetByIdentifierResponse {
 message CreateRequest {
   // Initial fields to set.
   repeated api.v1.user.Update initializers = 1;
+  string initial_group_id = 2;
 }
 
 // The response of a Users.Create RPC
