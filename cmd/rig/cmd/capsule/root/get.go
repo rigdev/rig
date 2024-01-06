@@ -48,56 +48,33 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		Capsule *capsule.Capsule `json:"capsule" yaml:"capsule"`
 		Rollout *capsule.Rollout `json:"rollout" yaml:"rollout"`
 	}
-	if base.Flags.OutputType != base.OutputTypePretty {
-		var res []output
-		for _, cc := range capsules {
-			r, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
-				Msg: &capsule.GetRolloutRequest{
-					CapsuleId: cc.GetCapsuleId(),
-					RolloutId: cc.GetCurrentRollout(),
-					ProjectId: c.Cfg.GetProject(),
-				},
-			})
-			if errors.IsNotFound(err) {
-				// OK, default values.
-				r = &connect.Response[capsule.GetRolloutResponse]{}
-			} else if err != nil {
-				return err
-			}
-
-			res = append(res, output{
-				Capsule: cc,
-				Rollout: r.Msg.GetRollout(),
-			})
-		}
-
-		if capsule_cmd.CapsuleID != "" {
-			return base.FormatPrint(res[0])
-		}
-		return base.FormatPrint(res)
-	}
-
-	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Capsules (%d)", resp.Msg.GetTotal()), "Replicas", "Build ID"})
+	var outputs []output
 	for _, cc := range capsules {
-		r, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
-			Msg: &capsule.GetRolloutRequest{
-				CapsuleId: cc.GetCapsuleId(),
-				RolloutId: cc.GetCurrentRollout(),
-				ProjectId: c.Cfg.GetProject(),
-			},
-		})
+		r, err := capsule_cmd.GetCurrentRolloutOfCapsule(ctx, c.Rig, c.Cfg, cc.GetCapsuleId())
 		if errors.IsNotFound(err) {
 			// OK, default values.
-			r = &connect.Response[capsule.GetRolloutResponse]{}
+			r = &capsule.Rollout{}
 		} else if err != nil {
 			return err
 		}
 
+		outputs = append(outputs, output{
+			Capsule: cc,
+			Rollout: r,
+		})
+	}
+
+	if base.Flags.OutputType != base.OutputTypePretty {
+		return base.FormatPrint(outputs)
+	}
+
+	t := table.NewWriter()
+	t.AppendHeader(table.Row{fmt.Sprintf("Capsules (%d)", resp.Msg.GetTotal()), "Replicas", "Build ID"})
+	for _, o := range outputs {
 		t.AppendRow(table.Row{
-			cc.GetCapsuleId(),
-			r.Msg.GetRollout().GetConfig().GetReplicas(),
-			r.Msg.GetRollout().GetConfig().GetBuildId(),
+			o.Capsule.GetCapsuleId(),
+			o.Rollout.GetConfig().GetReplicas(),
+			o.Rollout.GetConfig().GetBuildId(),
 		})
 	}
 	cmd.Println(t.Render())

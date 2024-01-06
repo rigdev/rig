@@ -51,8 +51,12 @@ func GetCurrentNetwork(ctx context.Context, client rig.Client, cfg *cmdconfig.Co
 }
 
 func GetCurrentRollout(ctx context.Context, client rig.Client, cfg *cmdconfig.Config) (*capsule.Rollout, error) {
+	return GetCurrentRolloutOfCapsule(ctx, client, cfg, CapsuleID)
+}
+
+func GetCurrentRolloutOfCapsule(ctx context.Context, client rig.Client, cfg *cmdconfig.Config, capsuleID string) (*capsule.Rollout, error) {
 	r, err := client.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
-		CapsuleId: CapsuleID,
+		CapsuleId: capsuleID,
 		Pagination: &model.Pagination{
 			Offset:     0,
 			Limit:      1,
