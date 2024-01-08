@@ -54,7 +54,12 @@ func GetCurrentRollout(ctx context.Context, client rig.Client, cfg *cmdconfig.Co
 	return GetCurrentRolloutOfCapsule(ctx, client, cfg, CapsuleID)
 }
 
-func GetCurrentRolloutOfCapsule(ctx context.Context, client rig.Client, cfg *cmdconfig.Config, capsuleID string) (*capsule.Rollout, error) {
+func GetCurrentRolloutOfCapsule(
+	ctx context.Context,
+	client rig.Client,
+	cfg *cmdconfig.Config,
+	capsuleID string,
+) (*capsule.Rollout, error) {
 	r, err := client.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
 		CapsuleId: capsuleID,
 		Pagination: &model.Pagination{
