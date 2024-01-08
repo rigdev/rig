@@ -13,17 +13,19 @@ import (
 	"time"
 
 	"connectrpc.com/grpcreflect"
-	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
-	"github.com/rigdev/rig/pkg/build"
-	"github.com/rigdev/rig/pkg/handler/api/capabilities"
-	"github.com/rigdev/rig/pkg/manager"
-	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
-	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
+	"github.com/rigdev/rig/pkg/build"
+	"github.com/rigdev/rig/pkg/handler/api/capabilities"
+	"github.com/rigdev/rig/pkg/manager"
+	"github.com/rigdev/rig/pkg/scheme"
+	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
+	"github.com/rigdev/rig/pkg/service/config"
 )
 
 const (
@@ -57,18 +59,18 @@ func run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	scheme := manager.NewScheme()
+	scheme := scheme.New()
 
-	cfg, err := config.NewService(cfgFile, scheme)
+	cfg, err := config.NewService(scheme, cfgFile)
 	if err != nil {
 		return err
 	}
 
-	log := zap.New(zap.UseDevMode(cfg.Get().DevModeEnabled))
+	log := zap.New(zap.UseDevMode(cfg.Operator().DevModeEnabled))
 
 	ctrl.SetLogger(log)
 
-	mgr, err := manager.NewManager(cfg, scheme)
+	mgr, err := manager.New(cfg, scheme)
 	if err != nil {
 		return err
 	}
