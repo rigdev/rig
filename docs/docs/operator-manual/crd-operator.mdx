@@ -4,19 +4,19 @@ import ThemedImage from '@theme/ThemedImage';
 
 # CRD & Operator
 
-The foundation of Rig is our Capsule CRD (CustomResourceDefinition). The Rig Operator will spawn all derived Kubernetes resources as defined by a Capsule resource. It will also watch these derived resources and undo any changes applied to them which conflicts with their Capsule parent. Updating these resources can only be done by updating the corresponding capsule spec. The resources we spawn are
+The foundation of Rig is our Capsule CRD (CustomResourceDefinition). The Rig Operator will spawn all derived Kubernetes resources as defined by a Capsule resource. It will also watch these derived resources and undo any changes applied to them which conflicts with their Capsule parent. Updating these resources can only be done by updating the corresponding capsule spec. The resources we (can) spawn are
 
 - [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
 - [Service](https://kubernetes.io/docs/concepts/services-networking/service/)
 - [TLS Certificate](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.Certificate)
 - [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 - [Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [Cron Job](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
 
 ConfigMaps and Secrets used by a capsule is not owned by the capsule though. These will be created by the Platform and can be updated independently of the capsules. The operator, however, will watch those config files and redeploy instances if configs or secrets they depend on have been changed.
 
 ## Capsule Spec
-
-This is a complete example of the `Capsule` CRD spec
+You can find a documentation of the capsule spec [here](/api). This is a complete example of the `Capsule` CRD spec
 <Tabs>
 <TabItem value="v1alpha2" label="v1alpha2">
 
@@ -58,6 +58,43 @@ spec:
       instances:
         max: 5
         min: 2
+      customMetrics:
+        - instanceMetric:
+            metricName: some-metric
+            averageValue: 10
+        - objectMetric:
+            metricName: some-metric
+            describedObject:
+              kind: Service
+              name: some-service
+            value: 3
+    vertical:
+      cpu:
+        request: 2.5
+        limit: 5
+      memory:
+        request: 500M
+        limit: 2G
+      gpu:
+        request: 1
+        limit: 2
+  cronJobs:
+    - name: some-bash-job
+      schedule: 30 12 * * *
+      command:
+        command: ./cmd 
+        args: ['arg1', 'arg2']
+      maxRetries: 3
+      timeoutSeconds: 600
+    - name: some-http-job
+      schedule: 1/10 * * * *
+      url:
+        port: 1234
+        path: /some/path
+        queryParameters:
+          key1: value1
+          key2: value2
+      timeoutSeconds: 60
 ```
 </TabItem>
 <TabItem value="v1alpha1" label="v1alpha1">
