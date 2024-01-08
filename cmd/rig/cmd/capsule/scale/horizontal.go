@@ -90,6 +90,10 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 
 	if autoscalerPath != "" {
 		bytes, err := os.ReadFile(autoscalerPath)
+		if err != nil {
+			return err
+		}
+
 		var raw interface{}
 		if err := yaml.Unmarshal(bytes, &raw); err != nil {
 			return err
