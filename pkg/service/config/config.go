@@ -91,7 +91,7 @@ func (b *serviceBuilder) build() (*service, error) {
 	if err := getCFGFromEnv(&pCFGFromEnv); err != nil {
 		return nil, err
 	}
-	if err := mergo.Merge(b.oCFG, oCFGFromEnv, mergo.WithOverride); err != nil {
+	if err := mergo.Merge(b.pCFG, pCFGFromEnv, mergo.WithOverride); err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
 	}
 
