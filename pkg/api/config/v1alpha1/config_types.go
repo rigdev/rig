@@ -364,6 +364,9 @@ type Environment struct {
 	// NamespaceTemplate is used to generate the namespace name when configuring resources.
 	// Default is to set the namespace equal to the project name.
 	NamespaceTemplate string `json:"namespace_template,omitempty"`
+
+	// Default is true if this environment should be preferred for per-environment operations.
+	Default bool `json:"default,omitempty"`
 }
 
 // ClusterGit specifies configuration for git integration. This can be used to

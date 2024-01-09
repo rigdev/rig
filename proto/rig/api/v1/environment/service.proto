@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package api.v1.environment;
+
+import "api/v1/environment/environment.proto";
+import "model/common.proto";
+
+service Service {
+  // List available environments.
+  rpc List(ListRequest) returns (ListResponse) {}
+}
+
+message ListRequest {
+  model.Pagination pagination = 2;
+}
+
+message ListResponse {
+  repeated api.v1.environment.Environment environments = 1;
+}
