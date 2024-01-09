@@ -30,6 +30,13 @@ func NewService(scheme *runtime.Scheme, filePaths ...string) (Service, error) {
 		build()
 }
 
+func NewServiceFromConfigs(op *v1alpha1.OperatorConfig, platform *v1alpha1.PlatformConfig) Service {
+	return &service{
+		oCFG: op,
+		pCFG: platform,
+	}
+}
+
 type service struct {
 	oCFG *v1alpha1.OperatorConfig
 	pCFG *v1alpha1.PlatformConfig
