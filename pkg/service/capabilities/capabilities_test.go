@@ -13,9 +13,9 @@ import (
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestGet(t *testing.T) {
@@ -24,17 +24,15 @@ func TestGet(t *testing.T) {
 		name      string
 		cfg       *v1alpha1.OperatorConfig
 		response  *capabilities.GetResponse
-		crdList   []apiextensionsv1.CustomResourceDefinition
+		crdErr    error
 		apiGroups []metav1.APIGroup
 		err       error
 	}{
 		{
-			name:     "if cert manager config is missing ingress is false",
-			cfg:      &v1alpha1.OperatorConfig{},
-			response: &capabilities.GetResponse{Ingress: false},
-			crdList: []apiextensionsv1.CustomResourceDefinition{{
-				ObjectMeta: metav1.ObjectMeta{Name: "some-crd"},
-			}},
+			name:      "if cert manager config is missing ingress is false",
+			cfg:       &v1alpha1.OperatorConfig{},
+			response:  &capabilities.GetResponse{Ingress: false},
+			crdErr:    errors.NewNotFound(schema.GroupResource{}, "oof"),
 			apiGroups: []metav1.APIGroup{{Name: "metrics.k8s.io"}, {Name: "some.other.io"}},
 			err:       nil,
 		},
@@ -50,14 +48,7 @@ func TestGet(t *testing.T) {
 				HasPrometheusServiceMonitor: true,
 				HasCustomMetrics:            true,
 			},
-			crdList: []apiextensionsv1.CustomResourceDefinition{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "some-crd"},
-				},
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "servicemonitors.monitoring.coreos.com"},
-				},
-			},
+			crdErr:    nil,
 			apiGroups: []metav1.APIGroup{{Name: "metrics.k8s.io"}, {Name: "custom.metrics.k8s.io"}},
 		},
 	}
@@ -71,11 +62,7 @@ func TestGet(t *testing.T) {
 			mockDiscovery := mockdiscovery.NewMockDiscoveryInterface(t)
 
 			mockCfg.EXPECT().Operator().Return(tt.cfg)
-			mockClient.EXPECT().List(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, l client.ObjectList, _ ...client.ListOption) error {
-				ll := l.(*apiextensionsv1.CustomResourceDefinitionList)
-				ll.Items = tt.crdList
-				return nil
-			})
+			mockClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(tt.crdErr)
 			mockDiscovery.EXPECT().ServerGroups().Return(&metav1.APIGroupList{
 				Groups: tt.apiGroups,
 			}, nil)

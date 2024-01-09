@@ -6,6 +6,7 @@ import (
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -57,16 +58,14 @@ func (s *service) Get(ctx context.Context) (*capabilities.GetResponse, error) {
 }
 
 func (s *service) hasServiceMonitor(ctx context.Context) (bool, error) {
-	crdList := &apiextensionsv1.CustomResourceDefinitionList{}
-	if err := s.client.List(ctx, crdList); err != nil {
+	if err := s.client.Get(ctx, client.ObjectKey{
+		Name: "servicemonitors.monitoring.coreos.com",
+	}, &apiextensionsv1.CustomResourceDefinition{}); errors.IsNotFound(err) {
+		return false, nil
+	} else if err != nil {
 		return false, err
 	}
-	for _, crd := range crdList.Items {
-		if crd.Name == "servicemonitors.monitoring.coreos.com" {
-			return true, nil
-		}
-	}
-	return false, nil
+	return true, nil
 }
 
 func (s *service) hasCustomMetricsAPI() (bool, error) {
