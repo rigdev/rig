@@ -14,7 +14,7 @@ spec:
     {{- end }}
     - name: grpc
       port: 9000
-      targetPort: http
+      targetPort: grpc
       protocol: TCP
     - name: metrics
       port: 8080

@@ -13,12 +13,6 @@ import (
 	"time"
 
 	"connectrpc.com/grpcreflect"
-	"github.com/spf13/cobra"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
@@ -26,6 +20,13 @@ import (
 	"github.com/rigdev/rig/pkg/scheme"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
+	"github.com/spf13/cobra"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const (
@@ -70,11 +71,6 @@ func run(cmd *cobra.Command, _ []string) error {
 
 	ctrl.SetLogger(log)
 
-	mgr, err := manager.New(cfg, scheme)
-	if err != nil {
-		return err
-	}
-
 	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
@@ -88,8 +84,27 @@ func run(cmd *cobra.Command, _ []string) error {
 		cancel()
 	}()
 
-	capabilitiesSvc := svccapabilities.NewService(cfg)
+	restConfig := ctrl.GetConfigOrDie()
+
+	clientSet, err := clientset.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+
+	cc, err := client.New(restConfig, client.Options{
+		Scheme: scheme,
+	})
+	if err != nil {
+		return err
+	}
+
+	capabilitiesSvc := svccapabilities.NewService(cfg, cc, clientSet.DiscoveryClient)
 	capabilitiesH := capabilities.NewHandler(capabilitiesSvc)
+
+	mgr, err := manager.New(cfg, scheme, capabilitiesSvc)
+	if err != nil {
+		return err
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle(capabilitiesconnect.NewServiceHandler(

@@ -3,6 +3,11 @@ package manager
 import (
 	"os"
 
+	"github.com/rigdev/rig/pkg/api/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/service/capabilities"
+	"github.com/rigdev/rig/pkg/service/config"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -10,11 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-
-	"github.com/rigdev/rig/pkg/api/v1alpha1"
-	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/service/config"
 )
 
 func getEnvWithDefault(env, def string) string {
@@ -25,7 +25,11 @@ func getEnvWithDefault(env, def string) string {
 	return v
 }
 
-func New(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, error) {
+func New(
+	cfgS config.Service,
+	scheme *runtime.Scheme,
+	capabilitiesService capabilities.Service,
+) (manager.Manager, error) {
 	cfg := cfgS.Operator()
 
 	logger := zap.New(zap.UseDevMode(cfg.DevModeEnabled))
@@ -51,10 +55,11 @@ func New(cfgS config.Service, scheme *runtime.Scheme) (manager.Manager, error) {
 	}
 
 	cr := &controller.CapsuleReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		Config:    cfg,
-		ClientSet: clientSet,
+		Client:              mgr.GetClient(),
+		Scheme:              mgr.GetScheme(),
+		Config:              cfg,
+		ClientSet:           clientSet,
+		CapabilitiesService: capabilitiesService,
 	}
 
 	if err := cr.SetupWithManager(mgr); err != nil {
