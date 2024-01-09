@@ -20,10 +20,10 @@ type handler struct {
 
 // Get implements capabilitiesconnect.ServiceClient.
 func (h *handler) Get(
-	_ context.Context,
+	ctx context.Context,
 	_ *connect.Request[capabilities.GetRequest],
 ) (*connect.Response[capabilities.GetResponse], error) {
-	res, err := h.capabilities.Get()
+	res, err := h.capabilities.Get(ctx)
 	if err != nil {
 		return nil, err
 	}

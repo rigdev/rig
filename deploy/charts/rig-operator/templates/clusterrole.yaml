@@ -113,6 +113,7 @@ rules:
   - customresourcedefinitions
   verbs:
   - list
+  - get
 - apiGroups:
   - batch
   resources:

@@ -26,7 +26,7 @@ build-rig-operator: ## 🔨 Build rig-operator binary
 	$(GOBUILD) -o bin/rig-operator ./cmd/rig-operator
 
 .PHONY: gen
-gen: proto manifests generate-k8s docs-gen ## 🪄 Run code generation (proto and k8s)
+gen: proto manifests generate-k8s docs-gen mocks ## 🪄 Run code generation (proto and k8s)
 
 .PHONY: proto
 proto: proto-public ## 🪄 Generate all protobuf
@@ -42,6 +42,23 @@ proto-public: gen/go/rig/go.mod buf protoc-gen-go protoc-gen-connect-go ## 🪄 
 		-type f -name '*.go' -delete
 	$(BUF) generate proto/rig --template proto/buf.gen.yaml
 	@(cd gen/go/rig/; go get -u ./...)
+
+.PHONY: mocks
+mocks: mockery mocks-clean ## 🪄 Generate mocks
+	$(MOCKERY)
+
+.PHONY: mocks-clean
+mocks-clean: ## 🧹 Clean mocks
+	@find . -type f -name 'mock_*.go' -delete
+
+MOCKERY ?= $(TOOLSBIN)/mockery
+MOCKERY_GO_MOD_VERSION ?= $(shell cat tools/go.mod | grep -E "github.com/vektra/mockery/v2 " | cut -d ' ' -f2 | cut -c2-)
+
+.PHONY: mockery
+mockery: ## 📦 Download mockery locally if necessary.
+	(test -s $(MOCKERY) && $(MOCKERY) --version | grep "$(MOCKERY_GO_MOD_VERSION)") || \
+	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/vektra/mockery/v2)
+
 
 .PHONY: manifests
 manifests: controller-gen ## 🪄 Generate k8s manifests

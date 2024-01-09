@@ -34,6 +34,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/hash"
 	"github.com/rigdev/rig/pkg/ptr"
+	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/utils"
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
@@ -63,9 +64,10 @@ import (
 // CapsuleReconciler reconciles a Capsule object
 type CapsuleReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	Config    *configv1alpha1.OperatorConfig
-	ClientSet clientset.Interface
+	Scheme              *runtime.Scheme
+	Config              *configv1alpha1.OperatorConfig
+	ClientSet           clientset.Interface
+	CapabilitiesService capabilities.Service
 
 	reconcileSteps []reconcileStepFunc
 }
@@ -106,6 +108,9 @@ const (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// TODO Where to get the context from?
+	ctx := context.Background()
+
 	if err := mgr.GetFieldIndexer().IndexField(
 		context.Background(),
 		&v1alpha2.Capsule{},
@@ -184,16 +189,9 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return fmt.Errorf("could not setup indexer for %s: %w", fieldEnvSecretName, err)
 	}
 
-	crds, err := r.ClientSet.ApiextensionsV1().CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{})
+	capabilities, err := r.CapabilitiesService.Get(ctx)
 	if err != nil {
 		return err
-	}
-	hasServiceMonitor := false
-	for _, crd := range crds.Items {
-		if crd.Name == "servicemonitors.monitoring.coreos.com" {
-			hasServiceMonitor = true
-			break
-		}
 	}
 
 	r.reconcileSteps = []reconcileStepFunc{
@@ -211,7 +209,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
 
 	b := ctrl.NewControllerManagedBy(mgr)
-	if hasServiceMonitor {
+	if capabilities.GetHasPrometheusServiceMonitor() {
 		r.reconcileSteps = append(r.reconcileSteps, reconcilePrometheusServiceMonitor)
 		b = b.Owns(&monitorv1.ServiceMonitor{})
 	}

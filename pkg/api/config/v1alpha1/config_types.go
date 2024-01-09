@@ -514,7 +514,7 @@ func NewDefaultPlatform() *PlatformConfig {
 				SecretKey: "",
 			},
 			Operator: ClientOperator{
-				BaseURL: "",
+				BaseURL: "rig-operator:9000",
 			},
 		},
 		Repository: Repository{

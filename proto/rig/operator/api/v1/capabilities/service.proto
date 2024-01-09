@@ -11,4 +11,6 @@ message GetRequest {}
 
 message GetResponse {
     bool ingress = 1;
+    bool has_prometheus_service_monitor = 2;
+    bool has_custom_metrics = 3;
 }

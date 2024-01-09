@@ -1,0 +1,12 @@
+with-expecter: true
+dir: "gen/mocks/{{.PackagePath}}"
+packages:
+  github.com/rigdev/rig/pkg/service/config:
+    interfaces:
+      Service: {}
+  sigs.k8s.io/controller-runtime/pkg/client:
+    interfaces:
+      Client: {}
+  k8s.io/client-go/discovery:
+    interfaces: 
+      DiscoveryInterface: {}

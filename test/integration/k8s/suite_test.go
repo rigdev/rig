@@ -12,6 +12,8 @@ import (
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/scheme"
+	"github.com/rigdev/rig/pkg/service/capabilities"
+	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	netv1 "k8s.io/api/networking/v1"
@@ -77,19 +79,29 @@ func (s *K8sTestSuite) SetupSuite() {
 	require.NotNil(t, k8sClient)
 	s.Client = k8sClient
 
-	capsuleReconciler := &controller.CapsuleReconciler{
-		Client: manager.GetClient(),
-		Scheme: scheme,
-		Config: &configv1alpha1.OperatorConfig{
-			Certmanager: &configv1alpha1.CertManagerConfig{
-				ClusterIssuer:              "test",
-				CreateCertificateResources: true,
-			},
-			Ingress: configv1alpha1.IngressConfig{
-				PathType: netv1.PathTypeExact,
-			},
+	opConfig := &configv1alpha1.OperatorConfig{
+		Certmanager: &configv1alpha1.CertManagerConfig{
+			ClusterIssuer:              "test",
+			CreateCertificateResources: true,
 		},
-		ClientSet: clientSet,
+		Ingress: configv1alpha1.IngressConfig{
+			PathType: netv1.PathTypeExact,
+		},
+	}
+
+	configService := config.NewServiceFromConfigs(opConfig, nil)
+
+	cc, err := client.New(cfg, client.Options{
+		Scheme: scheme,
+	})
+	require.NoError(t, err)
+
+	capsuleReconciler := &controller.CapsuleReconciler{
+		Client:              manager.GetClient(),
+		Scheme:              scheme,
+		Config:              opConfig,
+		ClientSet:           clientSet,
+		CapabilitiesService: capabilities.NewService(configService, cc, clientSet.Discovery()),
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
