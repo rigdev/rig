@@ -1,8 +1,6 @@
 # Database
 
-Rig uses a database to store its data. Rig currently supports two database
-backends, either mongodb or postgres. This article explains how to configure
-each of them.
+Rig uses a postgres database to store its data. This article explains how to configure it.
 
 When installing the rig helm chart the value `postgres.enabled` toggles a small
 single instance postgres. This is only meant for development environments and
@@ -42,20 +40,6 @@ If you end up having to wipe the database, it's thus important that you also wip
 DROP TABLE schema_migrations;
 ```
 :::
-
-## MongoDB
-
-To connect to your own MongoDB database, you need to fill out the following
-section of your helm values:
-
-```yaml
-rig:
-  client:
-    mongo:
-      host: <host-and-port>
-      user: <username>
-      password: <password>
-```
 
 ## Encryption at rest
 
