@@ -4,7 +4,8 @@
 /dist
 
 # generated code
-/gen
+/gen/*
+!/gen/mocks
 
 # test results
 /test-result.xml
