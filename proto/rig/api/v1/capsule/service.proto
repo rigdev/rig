@@ -230,10 +230,15 @@ message DeployRequest {
   string project_id = 4;
   string environment_id = 5;
   string message = 6;
+  bool dry_run = 7;
+  // If not zero, this will constrain the rollout only to be created if the currently running rollout matches this
+  // identifier. If this check fails, the request will return an `Aborted` error.
+  uint64 current_rollout_id = 8;
 }
 
 message DeployResponse {
   uint64 rollout_id = 1;
+  map<string, string> resource_yaml = 2;
 }
 
 message ListInstancesRequest {
