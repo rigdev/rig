@@ -77,8 +77,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 			r.GetConfig().GetReplicas(),
 			fmt.Sprint(
 				strings.TrimPrefix(r.GetStatus().GetState().String(), "ROLLOUT_STATE_"),
-				" - ",
-				r.GetStatus().GetMessage(),
+				// " - ",
+				// r.GetStatus().GetMessage(),
 			),
 			r.GetConfig().GetCreatedBy().GetPrintableName(),
 		})

@@ -46,6 +46,7 @@ message RolloutConfig {
   HorizontalScale horizontal_scale = 10;
   repeated CronJob cron_jobs = 11;
   string environment_id = 12;
+  string message = 13;
 }
 
 message ConfigFile {
@@ -59,5 +60,4 @@ message ConfigFile {
 message RolloutStatus {
   RolloutState state = 1;
   google.protobuf.Timestamp updated_at = 2;
-  string message = 3;
 }
