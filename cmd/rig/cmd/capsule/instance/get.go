@@ -2,6 +2,7 @@ package instance
 
 import (
 	"context"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
@@ -60,13 +61,17 @@ func instanceStatusToTableRows(instance *instance.Status) [][]any {
 	stages := instance.GetStages()
 
 	rows[0][1] = stages.GetSchedule().GetInfo().GetName()
-	rows[1][1] = stages.GetSchedule().GetInfo().GetState().String()
+	rows[1][1] = formatStageState(stages.GetSchedule().GetInfo().GetState())
 
 	rows[0][2] = stages.GetPreparing().GetInfo().GetName()
-	rows[1][2] = stages.GetPreparing().GetInfo().GetState().String()
+	rows[1][2] = formatStageState(stages.GetPreparing().GetInfo().GetState())
 
 	rows[0][3] = stages.GetRunning().GetInfo().GetName()
-	rows[1][3] = stages.GetRunning().GetInfo().GetState().String()
+	rows[1][3] = formatStageState(stages.GetRunning().GetInfo().GetState())
 
 	return rows
+}
+
+func formatStageState(s instance.StageState) string {
+	return strings.TrimPrefix(s.String(), "STAGE_STATE_")
 }
