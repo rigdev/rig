@@ -73,7 +73,6 @@ message GetResponse {
 // The request of a Namespace.List RPC
 message ListRequest {
   model.Pagination pagination = 1;
-  string project_id = 2;
 }
 
 message ListResponse {
