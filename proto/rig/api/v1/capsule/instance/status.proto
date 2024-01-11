@@ -120,6 +120,8 @@ message RunningStep {
 message ReadyStep {
   StepInfo info = 1;
   ReadyState state = 2;
+  google.protobuf.Timestamp failed_at = 3;
+  uint32 fail_count = 4;
 }
 
 enum ReadyState {
