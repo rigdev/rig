@@ -230,6 +230,7 @@ message DeployRequest {
   string project_id = 4;
   string environment_id = 5;
   string message = 6;
+  uint64 current_rollout_id = 7;
 }
 
 message DeployResponse {
