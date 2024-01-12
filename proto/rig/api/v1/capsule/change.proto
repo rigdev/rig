@@ -26,6 +26,11 @@ message Change {
     string value = 2;
   }
 
+  message CommandArguments {
+    string command = 2;
+    repeated string args = 3;
+  }
+
   oneof field {
     uint32 replicas = 1;
     string build_id = 2;
@@ -41,6 +46,7 @@ message Change {
     string remove_environment_variable = 12;
     EnvironmentSource set_environment_source = 13;
     EnvironmentSource remove_environment_source = 14;
+    CommandArguments command_arguments = 15;
   }
 }
 
