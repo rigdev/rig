@@ -196,6 +196,7 @@ func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (str
 	resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
 		CapsuleId:  capsuleID,
 		Pagination: &model.Pagination{},
+		ProjectId:  c.Cfg.GetProject(),
 	}))
 	if err != nil {
 		return "", err
@@ -260,7 +261,8 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 				Pagination: &model.Pagination{
 					Offset: uint32(eventCount),
 				},
-				ProjectId: c.Cfg.GetProject(),
+				ProjectId:     c.Cfg.GetProject(),
+				EnvironmentId: base.Flags.Environment,
 			},
 		})
 		if err != nil {

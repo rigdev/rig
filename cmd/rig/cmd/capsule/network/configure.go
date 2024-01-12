@@ -74,10 +74,12 @@ func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error 
 	resp, err := c.Rig.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
 		CapsuleId: capsuleID,
 		Pagination: &model.Pagination{
-			Offset:     1,
+			Offset:     0,
 			Limit:      1,
 			Descending: true,
 		},
+		ProjectId:     c.Cfg.GetProject(),
+		EnvironmentId: base.Flags.Environment,
 	}))
 	if err != nil {
 		return err
@@ -132,6 +134,8 @@ func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error 
 				Network: network,
 			},
 		}},
+		ProjectId:     c.Cfg.GetProject(),
+		EnvironmentId: base.Flags.Environment,
 	})
 	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req, forceDeploy); err != nil {
 		return err

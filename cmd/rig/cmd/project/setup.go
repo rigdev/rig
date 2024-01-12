@@ -39,7 +39,6 @@ type Cmd struct {
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	fmt.Println("initCmd project")
 	cmd.Rig = c.Rig
 	cmd.Cfg = c.Cfg
 }
