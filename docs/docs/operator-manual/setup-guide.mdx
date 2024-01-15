@@ -96,8 +96,6 @@ helm upgrade --install rig-platform rig-platform \\
   --version ${RIG_PLATFORM_CHART_VERSION} \\
   --namespace rig-system \\
   --create-namespace \\
-  --set rig.clusters.prod.type=k8s \\
-  --set rig.environments.prod.cluster=prod \\
   --set postgres.enabled=true  # Remove to not start a new PostgreSQL database.
 `}
 </code>
