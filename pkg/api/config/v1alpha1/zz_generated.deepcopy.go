@@ -423,13 +423,17 @@ func (in *PlatformConfig) DeepCopyInto(out *PlatformConfig) {
 	out.Logging = in.Logging
 	if in.Clusters != nil {
 		in, out := &in.Clusters, &out.Clusters
-		*out = make([]Cluster, len(*in))
-		copy(*out, *in)
+		*out = make(map[string]Cluster, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	if in.Environments != nil {
 		in, out := &in.Environments, &out.Environments
-		*out = make([]Environment, len(*in))
-		copy(*out, *in)
+		*out = make(map[string]Environment, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 }
 

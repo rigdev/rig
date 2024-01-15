@@ -147,14 +147,14 @@ type PlatformConfig struct {
 	// Email holds configuration for sending emails. Either using mailjet or using SMTP
 	Email Email `json:"email,omitempty"`
 
-	// Loggin holds information about the granularity of logging
+	// Logging holds information about the granularity of logging
 	Logging Logging `json:"logging,omitempty"`
 
 	// Clusters the platform has access to.
-	Clusters []Cluster `json:"clusters,omitempty"`
+	Clusters map[string]Cluster `json:"clusters,omitempty"`
 
 	// Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups).
-	Environments []Environment `json:"environments,omitempty"`
+	Environments map[string]Environment `json:"environments,omitempty"`
 }
 
 // Auth specifies authentication configuration.
@@ -329,10 +329,6 @@ type Repository struct {
 
 // Cluster specifies cluster configuration
 type Cluster struct {
-	// Name of the cluster. The name is used as a reference for the cluster through the documentation
-	// and API endpoints.
-	Name string `json:"name,omitempty"`
-
 	// URL to communicate to the cluster. If set, a Token and CertificateAuthority should
 	// be provided as well.
 	URL string `json:"url,omitempty"`
@@ -355,9 +351,6 @@ type Cluster struct {
 
 // Environment configuration of a single environment.
 type Environment struct {
-	// Name of the environment.
-	Name string `json:"name,omitempty"`
-
 	// Cluster name the environment is hosted in.
 	Cluster string `json:"cluster,omitempty"`
 
@@ -522,7 +515,6 @@ func NewDefaultPlatform() *PlatformConfig {
 			Secret: "",
 		},
 		Cluster: Cluster{
-			Name: "default",
 			Type: ClusterTypeDocker,
 			Git: ClusterGit{
 				Branch:     "main",
@@ -547,9 +539,8 @@ Capsule deleted by {{ .Initiator.Name }}.
 			From: "",
 			Type: EmailTypeNoEmail,
 		},
-		Environments: []Environment{
-			{
-				Name:              "default",
+		Environments: map[string]Environment{
+			"default": {
 				Cluster:           "default",
 				NamespaceTemplate: "{{ .Project.Name }}",
 			},
