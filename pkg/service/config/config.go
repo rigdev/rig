@@ -24,13 +24,13 @@ type Service interface {
 }
 
 func NewService(scheme *runtime.Scheme, filePaths ...string) (Service, error) {
-	b, err := newServiceBuilder(scheme)
-	if err != nil {
-		return nil, err
-	}
-	return b.
-		withDecoder(serializer.NewCodecFactory(scheme).UniversalDeserializer()).
+	decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+	merger := obj.NewMerger(scheme)
+
+	return newServiceBuilder().
+		withDecoder(decoder).
 		withFiles(filePaths...).
+		withMerger(merger).
 		build()
 }
 
@@ -58,20 +58,15 @@ type serviceBuilder struct {
 	oCFG      *v1alpha1.OperatorConfig
 	pCFG      *v1alpha1.PlatformConfig
 	decoder   runtime.Decoder
-	filePaths []string
 	merger    obj.Merger
+	filePaths []string
 }
 
-func newServiceBuilder(scheme *runtime.Scheme) (*serviceBuilder, error) {
-	merger, err := obj.NewMerger(scheme)
-	if err != nil {
-		return nil, err
-	}
+func newServiceBuilder() *serviceBuilder {
 	return &serviceBuilder{
-		oCFG:   (&v1alpha1.OperatorConfig{}).Default(),
-		pCFG:   v1alpha1.NewDefaultPlatform(),
-		merger: merger,
-	}, nil
+		oCFG: (&v1alpha1.OperatorConfig{}).Default(),
+		pCFG: v1alpha1.NewDefaultPlatform(),
+	}
 }
 
 func (b *serviceBuilder) withDecoder(decoder runtime.Decoder) *serviceBuilder {
@@ -81,6 +76,11 @@ func (b *serviceBuilder) withDecoder(decoder runtime.Decoder) *serviceBuilder {
 
 func (b *serviceBuilder) withFiles(filePaths ...string) *serviceBuilder {
 	b.filePaths = append(b.filePaths, filePaths...)
+	return b
+}
+
+func (b *serviceBuilder) withMerger(merger obj.Merger) *serviceBuilder {
+	b.merger = merger
 	return b
 }
 
@@ -100,24 +100,17 @@ func (b *serviceBuilder) build() (*service, error) {
 	if err := getCFGFromEnv(&oCFGFromEnv); err != nil {
 		return nil, err
 	}
-	oOut, err := b.merger.Merge(&oCFGFromEnv, b.oCFG)
-	if err != nil {
+	if err := b.merger.Merge(&oCFGFromEnv, b.oCFG); err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
 	}
-
-	b.oCFG = oOut.(*v1alpha1.OperatorConfig)
 
 	var pCFGFromEnv v1alpha1.PlatformConfig
 	if err := getCFGFromEnv(&pCFGFromEnv); err != nil {
 		return nil, err
 	}
-
-	pOut, err := b.merger.Merge(&pCFGFromEnv, b.pCFG)
-	if err != nil {
+	if err := b.merger.Merge(&pCFGFromEnv, b.pCFG); err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
 	}
-
-	b.pCFG = pOut.(*v1alpha1.PlatformConfig)
 
 	return &service{oCFG: b.oCFG, pCFG: b.pCFG}, nil
 }
@@ -149,10 +142,8 @@ func (b *serviceBuilder) decode(data []byte) error {
 		default:
 			return fmt.Errorf("unsupport api version: %s", gvk.Version)
 		}
-		if out, err := b.merger.Merge(decodedCFG, b.oCFG); err != nil {
+		if err := b.merger.Merge(decodedCFG, b.oCFG); err != nil {
 			return fmt.Errorf("could not merge operator config: %w", err)
-		} else {
-			b.oCFG = out.(*v1alpha1.OperatorConfig)
 		}
 	case "PlatformConfig":
 		var decodedCFG *v1alpha1.PlatformConfig
@@ -169,10 +160,8 @@ func (b *serviceBuilder) decode(data []byte) error {
 		default:
 			return fmt.Errorf("unsupported api version: %s", gvk.Version)
 		}
-		if out, err := b.merger.Merge(decodedCFG, b.pCFG); err != nil {
+		if err := b.merger.Merge(decodedCFG, b.pCFG); err != nil {
 			return fmt.Errorf("could not merge platform config: %w", err)
-		} else {
-			b.pCFG = out.(*v1alpha1.PlatformConfig)
 		}
 	default:
 		return fmt.Errorf("unsupported kind: %s", gvk.Kind)
