@@ -113,8 +113,10 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 		chartPath:   platformChartPath,
 		customArgs: []string{
 			"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
-			"--set", "rig.cluster.devRegistry.host=localhost:30000",
-			"--set", "rig.cluster.devRegistry.clusterHost=registry:5000",
+			"--set", "rig.clusters.kind.type=k8s",
+			"--set", "rig.clusters.kind.devRegistry.host=localhost:30000",
+			"--set", "rig.clusters.kind.devRegistry.clusterHost=registry:5000",
+			"--set", "rig.environments.kind.cluster=kind",
 			"--set", "postgres.enabled=true",
 			"--set", "loadBalancer.enabled=true",
 		},
@@ -332,7 +334,6 @@ func setupK8s() error {
 }
 
 func helmInstall() error {
-
 	if prometheus {
 		cmd := common.NewDefferredOutputCommand("Installing prometheus...")
 		cmd.Command(

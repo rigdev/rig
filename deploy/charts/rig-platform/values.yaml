@@ -153,23 +153,27 @@ rig:
     level: info
 
   environments:
-    - name: default
-      cluster: default
-      namespace_template: "{{ .Project.Name }}"
+    {}
+    # prod:
+    #   cluster: prod
+    #   namespace_template: "{{ .Project.Name }}"
+    #   default: true
 
-  cluster:
-    name: default
-    devRegistry:
-      host: ""
-      clusterHost: ""
-    git:
-      url: ""
-      branch: main
-      pathPrefix: ""
-      credentials:
-        https:
-          username: ""
-          password: ""
-        ssh:
-          privateKey: ""
-          privateKeyPassword: ""
+  clusters:
+    {}
+    # prod:
+    #   kind: k8s
+    #   devRegistry:
+    #     host: ""
+    #     clusterHost: ""
+    #   git:
+    #     url: ""
+    #     branch: ""
+    #     pathPrefix: ""
+    #     credentials:
+    #       https:
+    #         username: ""
+    #         password: ""
+    #       ssh:
+    #         privateKey: ""
+    #         privateKeyPassword: ""
