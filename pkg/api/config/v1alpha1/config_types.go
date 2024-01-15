@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"fmt"
+
 	"github.com/rigdev/rig/pkg/ptr"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
@@ -514,36 +516,9 @@ func NewDefaultPlatform() *PlatformConfig {
 			Store:  "postgres",
 			Secret: "",
 		},
-		Cluster: Cluster{
-			Type: ClusterTypeDocker,
-			Git: ClusterGit{
-				Branch:     "main",
-				PathPrefix: `apps/{{ .Project.Name }}/{{ .Capsule.Name }}/`,
-				Templates: GitTemplates{
-					Rollout: `Rig Platform rollout #{{ .Rollout.ID }} of {{ .Capsule.Name }}
-
-Rollout initiated by {{ .Initiator.Name }} at {{ .Rollout.CreatedAt }}.
-`,
-					Delete: `Rig Platform delete of {{ .Capsule.Name }}
-
-Capsule deleted by {{ .Initiator.Name }}.
-`,
-				},
-				Author: GitAuthor{
-					Name:  "rig-platform-change-roller",
-					Email: "roll@rig.dev",
-				},
-			},
-		},
 		Email: Email{
 			From: "",
 			Type: EmailTypeNoEmail,
-		},
-		Environments: map[string]Environment{
-			"default": {
-				Cluster:           "default",
-				NamespaceTemplate: "{{ .Project.Name }}",
-			},
 		},
 	}
 
@@ -554,4 +529,12 @@ Capsule deleted by {{ .Initiator.Name }}.
 	})
 
 	return cfg
+}
+
+func (cfg *PlatformConfig) Validate() error {
+	if cfg.Cluster.Type != "" && len(cfg.Clusters) != 0 {
+		return fmt.Errorf("only one of `cluster` and `clusters` must be set")
+	}
+
+	return nil
 }

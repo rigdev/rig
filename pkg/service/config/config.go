@@ -148,7 +148,7 @@ func (b *serviceBuilder) decode(data []byte) error {
 			}
 			decodedCFG = cfg
 		default:
-			return fmt.Errorf("unsupport api version: %s", gvk.Version)
+			return fmt.Errorf("unsupported api version: %s", gvk.Version)
 		}
 		if err := mergo.Merge(b.pCFG, decodedCFG, mergo.WithOverride); err != nil {
 			return fmt.Errorf("could not merge platform config: %w", err)
