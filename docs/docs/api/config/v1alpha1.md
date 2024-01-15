@@ -369,7 +369,6 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is the name of the OIDC provider. This will be shown in the login window. |
 | `issuerURL` _string_ | IssuerURL is the URL for the OIDC issuer endpoint. |
 | `clientId` _string_ | ClientID is the OAuth client ID. |
 | `clientSecret` _string_ | ClientSecret is the OAuth client secret. |
@@ -481,7 +480,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `OIDCProviders` _[OIDCProvider](#oidcprovider) array_ | OIDCProviders specifies enabled OIDCProviders which can be used for login. |
+| `oidcProviders` _object (keys:string, values:[OIDCProvider](#oidcprovider))_ | OIDCProviders specifies enabled OIDCProviders which can be used for login. |
 
 
 ### ServiceConfig
