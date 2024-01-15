@@ -100,22 +100,24 @@ func (b *serviceBuilder) build() (*service, error) {
 	if err := getCFGFromEnv(&oCFGFromEnv); err != nil {
 		return nil, err
 	}
-	if out, err := b.merger.Merge(&oCFGFromEnv, b.oCFG); err != nil {
+	oOut, err := b.merger.Merge(&oCFGFromEnv, b.oCFG)
+	if err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
-	} else {
-		b.oCFG = out.(*v1alpha1.OperatorConfig)
 	}
+
+	b.oCFG = oOut.(*v1alpha1.OperatorConfig)
 
 	var pCFGFromEnv v1alpha1.PlatformConfig
 	if err := getCFGFromEnv(&pCFGFromEnv); err != nil {
 		return nil, err
 	}
 
-	if out, err := b.merger.Merge(&pCFGFromEnv, b.pCFG); err != nil {
+	pOut, err := b.merger.Merge(&pCFGFromEnv, b.pCFG)
+	if err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
-	} else {
-		b.pCFG = out.(*v1alpha1.PlatformConfig)
 	}
+
+	b.pCFG = pOut.(*v1alpha1.PlatformConfig)
 
 	return &service{oCFG: b.oCFG, pCFG: b.pCFG}, nil
 }
