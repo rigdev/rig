@@ -6,6 +6,8 @@ package api.v1.cluster;
 service Service {
   // GetConfig returns the config for the cluster
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
+  // GetConfigs returns the configs for all clusters
+  rpc GetConfig(GetConfigsRequest) returns (GetConfigsResponse) {}
 }
 
 message GetConfigRequest {
@@ -19,6 +21,12 @@ message GetConfigResponse {
     Registry registry = 3;
   }
   bool ingress = 4;
+}
+
+message GetConfigsRequest {}
+
+message GetConfigsResponse {
+  repeated GetConfigResponse clusters = 1;
 }
 
 message DockerDaemon {}
