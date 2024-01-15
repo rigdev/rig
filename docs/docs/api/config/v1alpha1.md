@@ -171,7 +171,6 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name of the cluster. The name is used as a reference for the cluster through the documentation and API endpoints. |
 | `url` _string_ | URL to communicate to the cluster. If set, a Token and CertificateAuthority should be provided as well. |
 | `token` _string_ | Token for communicating with the cluster. Available through a service-account's secret. |
 | `certificateAuthority` _string_ | Certificate authority for communicating with the cluster. Available through a service-account's secret. |
@@ -262,7 +261,6 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name of the environment. |
 | `cluster` _string_ | Cluster name the environment is hosted in. |
 | `namespace_template` _string_ | NamespaceTemplate is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. |
 | `default` _boolean_ | Default is true if this environment should be preferred for per-environment operations. |
@@ -422,9 +420,9 @@ OperatorConfig is the Schema for the configs API
 | `repository` _[Repository](#repository)_ | Repository specifies the type of db to use along with secret key |
 | `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration Deprecated: Use `clusters` instead. |
 | `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
-| `logging` _[Logging](#logging)_ | Loggin holds information about the granularity of logging |
-| `clusters` _[Cluster](#cluster) array_ | Clusters the platform has access to. |
-| `environments` _[Environment](#environment) array_ | Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups). |
+| `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
+| `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
+| `environments` _object (keys:string, values:[Environment](#environment))_ | Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups). |
 
 
 ### PrometheusServiceMonitor
