@@ -177,30 +177,26 @@ type Auth struct {
 	DisablePasswords bool `json:"disablePasswords,omitempty"`
 
 	// SSO specifies single sign on configuration.
-	SSO *SSO `json:"sso,omitempty"`
+	SSO SSO `json:"sso,omitempty"`
 }
 
 // SSO specifies single sign on configuration.
 type SSO struct {
 	// OIDCProviders specifies enabled OIDCProviders which can be used for
 	// login.
-	OIDCProviders []OIDCProvider
+	OIDCProviders map[string]OIDCProvider `json:"oidcProviders,omitempty"`
 }
 
 // OIDCProvider specifies an OIDC provider.
 type OIDCProvider struct {
-	// Name is the name of the OIDC provider. This will be shown in the login
-	// window.
-	Name string `json:"name"`
-
 	// IssuerURL is the URL for the OIDC issuer endpoint.
-	IssuerURL string `json:"issuerURL"`
+	IssuerURL string `json:"issuerURL,omitempty"`
 
 	// ClientID is the OAuth client ID.
-	ClientID string `json:"clientId"`
+	ClientID string `json:"clientId,omitempty"`
 
 	// ClientSecret is the OAuth client secret.
-	ClientSecret string `json:"clientSecret"`
+	ClientSecret string `json:"clientSecret,omitempty"`
 
 	// AllowedDomains is a list of email domains to allow. If left empty any
 	// successful authentication on the provider is allowed.
