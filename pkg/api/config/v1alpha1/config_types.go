@@ -55,7 +55,7 @@ type PrometheusServiceMonitor struct {
 
 type CertManagerConfig struct {
 	// ClusterIssuer to use for issueing ingress certificates
-	ClusterIssuer string `json:"clusterIssuer"`
+	ClusterIssuer string `json:"clusterIssuer,omitempty"`
 
 	// CreateCertificateResources specifies wether to create Certificate
 	// resources. If this is not enabled we will use ingress annotations. This
@@ -66,7 +66,7 @@ type CertManagerConfig struct {
 type ServiceConfig struct {
 	// Type of the service to generate. By default, services are of type ClusterIP.
 	// Valid values are ClusterIP, NodePort.
-	Type corev1.ServiceType `json:"type"`
+	Type corev1.ServiceType `json:"type,omitempty"`
 }
 
 type IngressConfig struct {
@@ -75,11 +75,11 @@ type IngressConfig struct {
 
 	// ClassName specifies the default ingress class to use for all ingress
 	// resources created.
-	ClassName string `json:"className"`
+	ClassName string `json:"className,omitempty"`
 
 	// PathType defines how ingress paths should be interpreted.
 	// Allowed values: Exact, Prefix, ImplementationSpecific
-	PathType networkingv1.PathType `json:"pathType"`
+	PathType networkingv1.PathType `json:"pathType,omitempty"`
 
 	// DisableTLS for ingress resources generated. This is useful if a 3rd-party component
 	// is handling the HTTPS TLS termination and certificates.

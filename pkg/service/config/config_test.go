@@ -145,7 +145,9 @@ ingress:
 				t.Setenv(k, v)
 			}
 
-			s, err := newServiceBuilder().
+			b, err := newServiceBuilder(scheme.New())
+			require.NoError(t, err)
+			s, err := b.
 				withDecoder(serializer.NewCodecFactory(sch).UniversalDeserializer()).
 				withFiles(fileNames...).
 				build()

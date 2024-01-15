@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/imdario/mergo"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/obj"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,7 +24,11 @@ type Service interface {
 }
 
 func NewService(scheme *runtime.Scheme, filePaths ...string) (Service, error) {
-	return newServiceBuilder().
+	b, err := newServiceBuilder(scheme)
+	if err != nil {
+		return nil, err
+	}
+	return b.
 		withDecoder(serializer.NewCodecFactory(scheme).UniversalDeserializer()).
 		withFiles(filePaths...).
 		build()
@@ -55,13 +59,19 @@ type serviceBuilder struct {
 	pCFG      *v1alpha1.PlatformConfig
 	decoder   runtime.Decoder
 	filePaths []string
+	merger    obj.Merger
 }
 
-func newServiceBuilder() *serviceBuilder {
-	return &serviceBuilder{
-		oCFG: (&v1alpha1.OperatorConfig{}).Default(),
-		pCFG: v1alpha1.NewDefaultPlatform(),
+func newServiceBuilder(scheme *runtime.Scheme) (*serviceBuilder, error) {
+	merger, err := obj.NewMerger(scheme)
+	if err != nil {
+		return nil, err
 	}
+	return &serviceBuilder{
+		oCFG:   (&v1alpha1.OperatorConfig{}).Default(),
+		pCFG:   v1alpha1.NewDefaultPlatform(),
+		merger: merger,
+	}, nil
 }
 
 func (b *serviceBuilder) withDecoder(decoder runtime.Decoder) *serviceBuilder {
@@ -85,21 +95,26 @@ func (b *serviceBuilder) build() (*service, error) {
 			return nil, err
 		}
 	}
-
 	var oCFGFromEnv v1alpha1.OperatorConfig
+	oCFGFromEnv.Default()
 	if err := getCFGFromEnv(&oCFGFromEnv); err != nil {
 		return nil, err
 	}
-	if err := mergo.Merge(b.oCFG, oCFGFromEnv, mergo.WithOverride); err != nil {
+	if out, err := b.merger.Merge(&oCFGFromEnv, b.oCFG); err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
+	} else {
+		b.oCFG = out.(*v1alpha1.OperatorConfig)
 	}
 
 	var pCFGFromEnv v1alpha1.PlatformConfig
 	if err := getCFGFromEnv(&pCFGFromEnv); err != nil {
 		return nil, err
 	}
-	if err := mergo.Merge(b.pCFG, pCFGFromEnv, mergo.WithOverride); err != nil {
+
+	if out, err := b.merger.Merge(&pCFGFromEnv, b.pCFG); err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
+	} else {
+		b.pCFG = out.(*v1alpha1.PlatformConfig)
 	}
 
 	return &service{oCFG: b.oCFG, pCFG: b.pCFG}, nil
@@ -132,8 +147,10 @@ func (b *serviceBuilder) decode(data []byte) error {
 		default:
 			return fmt.Errorf("unsupport api version: %s", gvk.Version)
 		}
-		if err := mergo.Merge(b.oCFG, decodedCFG, mergo.WithOverride); err != nil {
+		if out, err := b.merger.Merge(decodedCFG, b.oCFG); err != nil {
 			return fmt.Errorf("could not merge operator config: %w", err)
+		} else {
+			b.oCFG = out.(*v1alpha1.OperatorConfig)
 		}
 	case "PlatformConfig":
 		var decodedCFG *v1alpha1.PlatformConfig
@@ -150,8 +167,10 @@ func (b *serviceBuilder) decode(data []byte) error {
 		default:
 			return fmt.Errorf("unsupported api version: %s", gvk.Version)
 		}
-		if err := mergo.Merge(b.pCFG, decodedCFG, mergo.WithOverride); err != nil {
+		if out, err := b.merger.Merge(decodedCFG, b.pCFG); err != nil {
 			return fmt.Errorf("could not merge platform config: %w", err)
+		} else {
+			b.pCFG = out.(*v1alpha1.PlatformConfig)
 		}
 	default:
 		return fmt.Errorf("unsupported kind: %s", gvk.Kind)
