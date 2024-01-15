@@ -13,6 +13,7 @@ var (
 	operatorDockerTag string
 	operatorChartPath string
 	prometheus        bool
+	vpa               bool
 )
 
 type Cmd struct {
@@ -67,6 +68,12 @@ func Setup(parent *cobra.Command) {
 		`If set, will install a Prometheus instance and Prometheus adapter using the Prometheus operator.
 See https://github.com/prometheus-operator/prometheus-operator for information on the operator and its CRDs`,
 	)
+	create.Flags().BoolVar(
+		&vpa,
+		"vpa", false,
+		`If set, will install the VerticalPodAutoscaler CRD + Recommender in the cluster.
+The operator will be configured to spawn a VerticalPodAutoscaler resource per capsule.`,
+	)
 	kind.AddCommand(create)
 
 	deploy := &cobra.Command{
@@ -101,6 +108,11 @@ See https://github.com/prometheus-operator/prometheus-operator for information o
 		"prometheus", false,
 		//nolint:lll
 		"If set, will instruct the operator to create Prometheus ServiceMonitors for each capsule, scraping ports named 'metrics'.",
+	)
+	deploy.Flags().BoolVar(
+		&vpa,
+		"vpa", false,
+		`If set, the operator will be configured to spawn a VerticalPodAutoscaler resource per capsule.`,
 	)
 
 	clean := &cobra.Command{

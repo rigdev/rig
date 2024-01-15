@@ -10,6 +10,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -27,6 +28,7 @@ func New() *runtime.Scheme {
 	utilruntime.Must(v1alpha1.AddToScheme(s))
 	utilruntime.Must(v1alpha2.AddToScheme(s))
 	utilruntime.Must(apiextensionsv1.AddToScheme(s))
+	utilruntime.Must(vpav1.AddToScheme(s))
 
 	return s
 }

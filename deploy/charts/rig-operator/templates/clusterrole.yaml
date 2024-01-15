@@ -43,6 +43,7 @@ rules:
   - autoscaling
   resources:
   - horizontalpodautoscalers
+  - verticalpodautoscalers
   verbs:
   - create
   - delete
@@ -118,6 +119,18 @@ rules:
   - batch
   resources:
   - cronjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - autoscaling.k8s.io
+  resources:
+  - verticalpodautoscalers
   verbs:
   - create
   - delete

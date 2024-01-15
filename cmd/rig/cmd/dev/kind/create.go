@@ -93,6 +93,9 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if prometheus {
 		operatorArgs = append(operatorArgs, "--set", "config.prometheusServiceMonitor.portName=metrics")
 	}
+	if vpa {
+		operatorArgs = append(operatorArgs, "--set", "config.verticalPodAutoscaler.enabled=true")
+	}
 	if err := c.deployInner(ctx, deployParams{
 		dockerImage: "ghcr.io/rigdev/rig-operator",
 		dockerTag:   operatorDockerTag,
@@ -399,6 +402,24 @@ prometheus:
 		"--set", "args={--kubelet-insecure-tls}",
 	); err != nil {
 		return err
+	}
+
+	if vpa {
+		if err := runCmd("Installing Vertical Pod Autoscaler CRD", "kubectl", "apply", "-f",
+			"https://raw.githubusercontent.com/kubernetes/autoscaler/master/vertical-pod-autoscaler/deploy/vpa-v1-crd-gen.yaml",
+		); err != nil {
+			return err
+		}
+		if err := runCmd("Installing Vertical Pod Autoscaler RBAC", "kubectl", "apply", "-f",
+			"https://raw.githubusercontent.com/kubernetes/autoscaler/master/vertical-pod-autoscaler/deploy/vpa-rbac.yaml",
+		); err != nil {
+			return err
+		}
+		if err := runCmd("Installing Vertical Pod Autosscaler Recommender", "kubectl", "apply", "-f",
+			"https://raw.githubusercontent.com/kubernetes/autoscaler/master/vertical-pod-autoscaler/deploy/recommender-deployment.yaml", //nolint:lll
+		); err != nil {
+			return err
+		}
 	}
 
 	return nil

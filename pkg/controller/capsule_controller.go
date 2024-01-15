@@ -52,6 +52,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -204,6 +205,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		reconcileLoadBalancer,
 		reconcileServiceAccount,
 		reconcileCronJobs,
+		reconcileVPA,
 	}
 
 	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
@@ -222,6 +224,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
 		Owns(&cmv1.Certificate{}).
 		Owns(&batchv1.CronJob{}).
+		Owns(&vpav1.VerticalPodAutoscaler{}).
 		Watches(
 			&v1.ConfigMap{},
 			configEventHandler,

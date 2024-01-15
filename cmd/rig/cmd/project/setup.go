@@ -41,6 +41,7 @@ var cmd Cmd
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Cfg = c.Cfg
+	fmt.Println("project", cmd.Cfg.GetProject())
 }
 
 func Setup(parent *cobra.Command) {

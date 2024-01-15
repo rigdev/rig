@@ -60,4 +60,12 @@ rules:
   - list
   - get
   - watch
+- apiGroups:
+  - autoscaling.k8s.io
+  resources:
+  - verticalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
 {{- end -}}
