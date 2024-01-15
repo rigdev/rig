@@ -7,7 +7,7 @@ service Service {
   // GetConfig returns the config for the cluster
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
   // GetConfigs returns the configs for all clusters
-  rpc GetConfig(GetConfigsRequest) returns (GetConfigsResponse) {}
+  rpc GetConfigs(GetConfigsRequest) returns (GetConfigsResponse) {}
 }
 
 message GetConfigRequest {
