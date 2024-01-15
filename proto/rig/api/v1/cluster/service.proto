@@ -8,7 +8,9 @@ service Service {
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
 }
 
-message GetConfigRequest {}
+message GetConfigRequest {
+  string environment_id = 1;
+}
 
 message GetConfigResponse {
   ClusterType cluster_type = 1;
