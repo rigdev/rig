@@ -215,7 +215,8 @@ func (c *Cmd) addFile(ctx context.Context, containerName string, path string, co
 		return err
 	}
 
-	if err := c.DockerClient.CopyToContainer(ctx, containerName, "/", bufio.NewReader(&buffer), types.CopyToContainerOptions{}); err != nil {
+	if err := c.DockerClient.CopyToContainer(ctx, containerName, "/", bufio.NewReader(&buffer),
+		types.CopyToContainerOptions{}); err != nil {
 		return err
 	}
 
