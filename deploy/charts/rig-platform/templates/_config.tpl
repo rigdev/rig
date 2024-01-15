@@ -61,14 +61,21 @@ client:
   {{- end }}
 
 
+environments:
 {{- if .environments }}
-environments: {{ toYaml .environments | nindent 2 }}
+{{ toYaml .environments | indent 2 }}
+{{- else }}
+  prod:
+    cluster: prod
 {{- end }}
 
+clusters:
 {{- if .clusters }}
-clusters: {{ toYaml .clusters | nindent 2 }}
+{{ toYaml .clusters | indent 2 }}
+{{- else }}
+  prod:
+    type: k8s
 {{- end }}
-
 
 {{- if .email.type }}
 email:
