@@ -1,12 +1,17 @@
 package docker
 
 import (
+	"archive/tar"
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	//nolint:revive
 	_ "embed"
@@ -47,9 +52,19 @@ func (c *Cmd) create(ctx context.Context, _ *cobra.Command, _ []string) error {
 				Target: "/var/lib/postgresql/data",
 			},
 		},
-	}, "rig-platform-postgres"); err != nil {
+	}, "rig-platform-postgres", nil); err != nil {
 		return err
 	}
+
+	cfg := `apiversion: config.rig.dev/v1alpha1
+kind: PlatformConfig
+clusters:
+  docker:
+    type: docker
+environments:
+  docker:
+    cluster: docker
+`
 
 	if err := c.ensureContainer(ctx, &container.Config{
 		Image: fmt.Sprint("ghcr.io/rigdev/rig-platform:", platformDockerTag),
@@ -80,7 +95,7 @@ func (c *Cmd) create(ctx context.Context, _ *cobra.Command, _ []string) error {
 				Target: "/var/run/docker.sock",
 			},
 		},
-	}, "rig-platform"); err != nil {
+	}, "rig-platform", []byte(cfg)); err != nil {
 		return err
 	}
 
@@ -100,6 +115,7 @@ func (c *Cmd) ensureContainer(
 	cc *container.Config,
 	chc *container.HostConfig,
 	containerName string,
+	config []byte,
 ) error {
 	create := true
 	_, err := c.DockerClient.ContainerInspect(ctx, containerName)
@@ -156,10 +172,83 @@ func (c *Cmd) ensureContainer(
 		fmt.Printf("OK\n")
 	}
 
+	if config != nil {
+		if err := c.addFile(ctx, containerName, "/etc/rig/config.yaml", config); err != nil {
+			return err
+		}
+
+		if err := c.addFile(ctx, containerName, "/etc/rig/secret-config.yaml", config); err != nil {
+			return err
+		}
+	}
+
 	if err := c.DockerClient.ContainerStart(ctx, containerName, types.ContainerStartOptions{}); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (c *Cmd) addFile(ctx context.Context, containerName string, path string, content []byte) error {
+	var buffer bytes.Buffer
+
+	tw := tar.NewWriter(&buffer)
+	defer tw.Close()
+
+	header, err := tar.FileInfoHeader(&fileInfo{
+		name: path,
+		size: int64(len(content)),
+	}, "")
+	if err != nil {
+		return err
+	}
+
+	if err := tw.WriteHeader(header); err != nil {
+		return err
+	}
+
+	if _, err := tw.Write(content); err != nil {
+		return err
+	}
+
+	if err := tw.Close(); err != nil {
+		return err
+	}
+
+	if err := c.DockerClient.CopyToContainer(ctx, containerName, "/", bufio.NewReader(&buffer),
+		types.CopyToContainerOptions{}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type fileInfo struct {
+	name string
+	size int64
+}
+
+func (info *fileInfo) Name() string {
+	return info.name
+}
+
+func (info *fileInfo) Size() int64 {
+	return info.size
+}
+
+func (info *fileInfo) IsDir() bool {
+	return false
+}
+
+func (info *fileInfo) Mode() fs.FileMode {
+	return 0o644
+}
+
+func (info *fileInfo) ModTime() time.Time {
+	return time.Now()
+}
+
+func (info *fileInfo) Sys() any {
 	return nil
 }
 

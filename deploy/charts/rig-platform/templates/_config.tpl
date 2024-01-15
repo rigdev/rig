@@ -60,29 +60,15 @@ client:
     baseUrl: {{ .client.operator.baseUrl }}
   {{- end }}
 
-cluster:
-  type: k8s
-  {{- if .cluster.devRegistry.host }}
-  devRegistry:
-    host: {{ .cluster.devRegistry.host | quote }}
-    clusterHost: {{ default .cluster.devRegistry.host .cluster.devRegistry.clusterHost | quote }}
-  {{- end }}
 
-  {{- if .cluster.git.url }}
-  git:
-    {{- with .cluster.git }}
-    url: {{ .url | quote }}
-    branch: {{ .branch | quote }}
-    {{- if .credentials.pathOrefix }}
-    pathPrefix: {{ .credentials.pathPrefix | quote }}
-    {{- end }}
-    {{- if .credentials.https.username }}
-    credentials:
-      https:
-        username: {{ .credentials.https.username | quote }}
-    {{- end }}
-    {{- end }}
-  {{- end }}
+{{- if .environments }}
+environments: {{ toYaml .environments | nindent 2 }}
+{{- end }}
+
+{{- if .clusters }}
+clusters: {{ toYaml .clusters | nindent 2 }}
+{{- end }}
+
 
 {{- if .email.type }}
 email:
@@ -131,6 +117,7 @@ repository:
   secret: {{ .repository.secret | quote }}
 {{- end }}
 
+{{- if and .cluster .cluster.git }}
 {{- with .cluster.git.credentials }}
 {{- if or .https.password .ssh.privateKey }}
 cluster:
@@ -147,6 +134,7 @@ cluster:
         privateKeyPassword: {{ .ssh.privateKeyPassword | quote }}
         {{- end }}
       {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 auth:
