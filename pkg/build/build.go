@@ -2,15 +2,26 @@ package build
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	version = "dev"
+	version = ""
 	commit  = "none"
 	date    = "unknown"
 )
+
+func init() {
+	if version != "" {
+		return
+	}
+	version = "dev"
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		version = bi.Main.Version
+	}
+}
 
 func Version() string {
 	return version
