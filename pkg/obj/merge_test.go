@@ -7,10 +7,8 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
 func TestMerger(t *testing.T) {
@@ -72,22 +70,17 @@ func TestMerger(t *testing.T) {
 		},
 	}
 
-	s := scheme.New()
-
-	merger, err := obj.NewMerger(s)
-	require.NoError(t, err)
-
-	serializer.NewCodecFactory(s)
+	merger := obj.NewMerger(scheme.New())
 
 	for i := range tests {
 		test := tests[i]
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			obj, err := merger.Merge(test.src, test.dst)
+			err := merger.Merge(test.src, test.dst)
 			assert.NoError(t, err)
 
-			assert.Equal(t, test.expected, obj)
+			assert.Equal(t, test.expected, test.dst)
 		})
 	}
 }

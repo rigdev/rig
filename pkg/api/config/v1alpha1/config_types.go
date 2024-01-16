@@ -71,7 +71,7 @@ type ServiceConfig struct {
 
 type IngressConfig struct {
 	// Annotations for all ingress resources created.
-	Annotations map[string]string `json:"annotations"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// ClassName specifies the default ingress class to use for all ingress
 	// resources created.

@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/scheme"
 )
 
@@ -122,6 +123,8 @@ ingress:
 	}
 
 	sch := scheme.New()
+	merger := obj.NewMerger(sch)
+	decoder := serializer.NewCodecFactory(sch).UniversalDeserializer()
 
 	for i := range tests {
 		test := tests[i]
@@ -145,11 +148,10 @@ ingress:
 				t.Setenv(k, v)
 			}
 
-			b, err := newServiceBuilder(scheme.New())
-			require.NoError(t, err)
-			s, err := b.
-				withDecoder(serializer.NewCodecFactory(sch).UniversalDeserializer()).
+			s, err := newServiceBuilder().
+				withDecoder(decoder).
 				withFiles(fileNames...).
+				withMerger(merger).
 				build()
 			if test.err != nil {
 				require.ErrorAs(t, err, &test.err)
