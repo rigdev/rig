@@ -284,11 +284,16 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 }
 
 func (c *Cmd) pushLocalImageToDevRegistry(ctx context.Context, image string) (string, string, error) {
-	resp, err := c.Rig.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{}))
+	resp, err := c.Rig.Cluster().GetConfigs(ctx, connect.NewRequest(&cluster.GetConfigsRequest{}))
 	if err != nil {
 		return "", "", err
 	}
-	config := resp.Msg
+
+	clusters := resp.Msg.Clusters
+	if len(clusters) != 1 {
+		return "", "", errors.New("cannot push local images to dev registry if there are more than one cluster")
+	}
+	config := clusters[0]
 
 	switch config.GetDevRegistry().(type) {
 	case *cluster.GetConfigResponse_Docker:
@@ -316,6 +321,7 @@ func (c *Cmd) pushLocalImageToDevRegistry(ctx context.Context, image string) (st
 	}
 
 	return newImageName, digest, nil
+
 }
 
 func makeDevRegistryImageName(image string, devRegistryHost string) (string, error) {
