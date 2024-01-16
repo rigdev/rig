@@ -17,10 +17,11 @@ type Auth struct {
 }
 
 type Context struct {
-	Name        string `yaml:"name"`
-	ServiceName string `yaml:"service"`
-	UserName    string `yaml:"user"`
-	ProjectID   string `yaml:"project_id"`
+	Name          string `yaml:"name"`
+	ServiceName   string `yaml:"service"`
+	UserName      string `yaml:"user"`
+	ProjectID     string `yaml:"project_id"`
+	EnvironmentID string `yaml:"environment_id"`
 
 	service *Service
 	auth    *Auth
@@ -62,6 +63,13 @@ type Config struct {
 	CurrentContextName string `yaml:"current_context"`
 
 	filePath string
+}
+
+func (cfg *Config) GetEnvironment() string {
+	if c := cfg.GetCurrentContext(); c != nil {
+		return c.EnvironmentID
+	}
+	return ""
 }
 
 func (cfg *Config) GetProject() string {

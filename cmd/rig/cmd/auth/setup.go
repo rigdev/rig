@@ -32,6 +32,10 @@ func Setup(parent *cobra.Command) {
 		Use:               "auth",
 		Short:             "Manage authentication for the current user",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		Annotations: map[string]string{
+			base.OmitProject:     "",
+			base.OmitEnvironment: "",
+		},
 	}
 
 	login := &cobra.Command{
@@ -39,8 +43,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Login with user identifier and password",
 		Args:  cobra.NoArgs,
 		Annotations: map[string]string{
-			base.OmitUser:    "",
-			base.OmitProject: "",
+			base.OmitUser: "",
 		},
 		RunE: base.CtxWrap(cmd.login),
 	}
@@ -53,9 +56,6 @@ func Setup(parent *cobra.Command) {
 		Short: "Get user information associated with the current user",
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.get),
-		Annotations: map[string]string{
-			base.OmitProject: "",
-		},
 	}
 	auth.AddCommand(get)
 

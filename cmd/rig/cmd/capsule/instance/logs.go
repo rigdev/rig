@@ -35,7 +35,7 @@ func (c *Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error
 			Follow:        follow,
 			Since:         durationpb.New(duration),
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
+			EnvironmentId: base.GetEnvironment(c.Cfg),
 		},
 	})
 	if err != nil {

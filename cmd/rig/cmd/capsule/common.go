@@ -68,7 +68,7 @@ func GetCurrentRolloutOfCapsule(
 			Descending: true,
 		},
 		ProjectId:     cfg.GetProject(),
-		EnvironmentId: base.Flags.Environment,
+		EnvironmentId: base.GetEnvironment(cfg),
 	}))
 	if err != nil {
 		return nil, err

@@ -41,10 +41,6 @@ func Setup(parent *cobra.Command) {
 		Short: "Create a rig cluster in Kind for local development",
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.create),
-		Annotations: map[string]string{
-			base.OmitUser:    "",
-			base.OmitProject: "",
-		},
 	}
 	create.Flags().StringVarP(
 		&platformDockerTag,
@@ -81,10 +77,6 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 		Short: "Deploy a new (or specific) version of Rig to the kind cluster",
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.deploy),
-		Annotations: map[string]string{
-			base.OmitUser:    "",
-			base.OmitProject: "",
-		},
 	}
 	kind.AddCommand(deploy)
 	deploy.Flags().StringVarP(
@@ -120,10 +112,6 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 		Short: "Deletes the rig kind-cluster",
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.clean),
-		Annotations: map[string]string{
-			base.OmitUser:    "",
-			base.OmitProject: "",
-		},
 	}
 	kind.AddCommand(clean)
 
@@ -132,10 +120,6 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 		Short: "Runs the 'init' command on the rig-platform which creates the first admin user and project",
 		Args:  cobra.NoArgs,
 		RunE:  cmd.runInit,
-		Annotations: map[string]string{
-			base.OmitUser:    "",
-			base.OmitProject: "",
-		},
 	}
 	kind.AddCommand(runInit)
 

@@ -29,11 +29,6 @@ var (
 
 	field string
 	value string
-
-	platform      string
-	credFilePath  string
-	usersFilePath string
-	hashingKey    string
 )
 
 type Cmd struct {
@@ -53,6 +48,10 @@ func Setup(parent *cobra.Command) {
 		Use:               "user",
 		Short:             "Manage users in your projects",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		Annotations: map[string]string{
+			base.OmitProject:     "",
+			base.OmitEnvironment: "",
+		},
 	}
 
 	create := &cobra.Command{
@@ -184,8 +183,8 @@ func Setup(parent *cobra.Command) {
 					"  verification-code-ttl 	- int (minutes) \n" +
 					"  password-hashing 		- json \n" +
 					"  login-mechanisms 		- json \n" +
-					"  oauth-settings 		- json \n" +
-					"  callbacks 			- json \n\n" +
+					"  email-provider 		- json \n" +
+					"  template 			- json \n\n" +
 
 					"Multi-Valued fields should be input as JSON \n"),
 			)
@@ -197,51 +196,19 @@ func Setup(parent *cobra.Command) {
 	}
 	user.AddCommand(updateSettings)
 
-	migrate := &cobra.Command{
-		Use:   "migrate",
-		Short: "Migrate users from another platform",
-		RunE:  base.CtxWrap(cmd.migrate),
-		Args:  cobra.NoArgs,
-	}
-	migrate.Flags().StringVarP(&platform, "platform", "p", "Firebase", "platform to migrate from")
-	migrate.Flags().StringVarP(&credFilePath, "cred-file", "c", "", "path to the credentials file")
-	migrate.Flags().StringVarP(&usersFilePath, "users-file", "u", "", "path to the users file")
-	migrate.Flags().StringVarP(&hashingKey, "hashing-key", "k", "", "key to use for hashing")
-	migrate.MarkFlagsMutuallyExclusive("cred-file", "users-file")
-	migrate.SetHelpFunc(
-		func(cmd *cobra.Command, args []string) {
-			cmd.Printf(
-				("Usage:\n" +
-					"  rig user migrate [flags] \n\n" +
-					"Flags: \n" +
-					"  -p, --platform string   platform to migrate from \n" +
-					"  -c, --cred-file string  path to the credentials file \n" +
-					"  -u, --users-file string path to the users file \n" +
-					"  -h, --help 		 	  help for migrate \n" +
-					"  -k, --hashing-key string key to use for hashing \n\n" +
-
-					"Available platforms: \n" +
-					"  Firebase \n\n" +
-
-					"File paths should be absolute \n"),
-			)
-		},
-	)
-	if err := migrate.RegisterFlagCompletionFunc("platform", migrateCompletions); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	user.AddCommand(migrate)
-
 	parent.AddCommand(user)
 }
 
 func (c *Cmd) userCompletions(
 	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
+	cmd *cobra.Command,
+	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
 	resp, err := c.Rig.User().List(ctx, &connect.Request[user.ListRequest]{
 		Msg: &user.ListRequest{},
 	})
@@ -263,23 +230,6 @@ func (c *Cmd) userCompletions(
 	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
-func migrateCompletions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	options := []string{"Firebase"}
-	var completions []string
-
-	for _, o := range options {
-		if strings.HasPrefix(o, toComplete) {
-			completions = append(completions, o)
-		}
-	}
-
-	if len(completions) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return completions, cobra.ShellCompDirectiveDefault
-}
-
 func updateSettingsCompletions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	options := []string{
 		"allow-register",
@@ -291,8 +241,8 @@ func updateSettingsCompletions(_ *cobra.Command, _ []string, toComplete string) 
 		"verification-code-ttl",
 		"password-hashing",
 		"login-mechanisms",
-		"oauth-settings",
-		"callbacks",
+		"email-provider",
+		"template",
 	}
 
 	var completions []string

@@ -58,7 +58,7 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 			},
 		}},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.Flags.Environment,
+		EnvironmentId: base.GetEnvironment(c.Cfg),
 	}), false); err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 			},
 		}},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.Flags.Environment,
+		EnvironmentId: base.GetEnvironment(c.Cfg),
 	}), false); err != nil {
 		return err
 	}

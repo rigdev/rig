@@ -48,6 +48,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		Capsule *capsule.Capsule `json:"capsule" yaml:"capsule"`
 		Rollout *capsule.Rollout `json:"rollout" yaml:"rollout"`
 	}
+
 	var outputs []output
 	for _, cc := range capsules {
 		r, err := capsule_cmd.GetCurrentRolloutOfCapsule(ctx, c.Rig, c.Cfg, cc.GetCapsuleId())

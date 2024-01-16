@@ -43,10 +43,6 @@ var (
 
 var since string
 
-var omitCapsuleIDAnnotation = map[string]string{
-	"OMIT_CAPSULE_ID": "true",
-}
-
 type Cmd struct {
 	fx.In
 
@@ -84,11 +80,13 @@ func Setup(parent *cobra.Command) {
 	}
 
 	capsuleCreate := &cobra.Command{
-		Use:         "create",
-		Short:       "Create a new capsule",
-		Args:        cobra.NoArgs,
-		RunE:        base.CtxWrap(cmd.create),
-		Annotations: omitCapsuleIDAnnotation,
+		Use:   "create",
+		Short: "Create a new capsule",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.create),
+		Annotations: map[string]string{
+			base.OmitCapsule: "",
+		},
 	}
 	capsuleCreate.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode")
 	capsuleCreate.Flags().BoolVarP(
@@ -117,7 +115,10 @@ func Setup(parent *cobra.Command) {
 		Use:   "delete",
 		Short: "Delete a capsule",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.delete),
+		Annotations: map[string]string{
+			base.OmitEnvironment: "",
+		},
+		RunE: base.CtxWrap(cmd.delete),
 	}
 	capsuleCmd.AddCommand(capsuleDelete)
 
@@ -126,8 +127,10 @@ func Setup(parent *cobra.Command) {
 		Short:             "Get one or more capsules",
 		PersistentPreRunE: base.PersistentPreRunE,
 		Args:              cobra.NoArgs,
-		Annotations:       omitCapsuleIDAnnotation,
-		RunE:              base.CtxWrap(cmd.get),
+		Annotations: map[string]string{
+			base.OmitCapsule: "",
+		},
+		RunE: base.CtxWrap(cmd.get),
 	}
 	capsuleGet.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	capsuleGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
@@ -178,10 +181,14 @@ func Setup(parent *cobra.Command) {
 
 func (c *Cmd) completions(
 	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
+	cmd *cobra.Command,
+	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
 	var capsuleIDs []string
 
 	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
@@ -222,7 +229,7 @@ func formatCapsule(c *capsule_api.Capsule) string {
 }
 
 func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	if cmd.Annotations["OMIT_CAPSULE_ID"] != "" {
+	if _, ok := cmd.Annotations[base.OmitCapsule]; !ok {
 		return nil
 	}
 

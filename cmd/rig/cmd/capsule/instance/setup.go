@@ -132,7 +132,7 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 		Msg: &capsule.ListInstancesRequest{
 			CapsuleId:     capsuleID,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
+			EnvironmentId: base.GetEnvironment(c.Cfg),
 		},
 	})
 	if err != nil {
@@ -158,10 +158,15 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 
 func (c *Cmd) completions(
 	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
+	cmd *cobra.Command,
+	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
+
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
 	if capsule_cmd.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -176,7 +181,7 @@ func (c *Cmd) completions(
 		Msg: &capsule.ListInstancesRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
+			EnvironmentId: base.GetEnvironment(c.Cfg),
 		},
 	})
 	if err != nil {

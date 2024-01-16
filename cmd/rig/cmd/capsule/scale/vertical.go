@@ -45,7 +45,7 @@ func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error 
 			},
 		},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.Flags.Environment,
+		EnvironmentId: base.GetEnvironment(c.Cfg),
 	})
 
 	_, err = c.Rig.Capsule().Deploy(ctx, req)

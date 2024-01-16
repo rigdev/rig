@@ -1,4 +1,4 @@
-package project
+package config
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) use(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) useProject(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var projectID string
 	var err error
 	if len(args) == 0 {

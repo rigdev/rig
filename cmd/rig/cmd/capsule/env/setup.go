@@ -96,11 +96,16 @@ func Setup(parent *cobra.Command) {
 
 func (c *Cmd) completions(
 	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
+	cmd *cobra.Command,
+	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	err := base.Provide(cmd, args, initCmd)
+	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

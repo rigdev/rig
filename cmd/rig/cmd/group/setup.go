@@ -42,6 +42,10 @@ func Setup(parent *cobra.Command) {
 		Use:               "group",
 		Short:             "Manage groups",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		Annotations: map[string]string{
+			base.OmitProject:     "",
+			base.OmitEnvironment: "",
+		},
 	}
 
 	create := &cobra.Command{
@@ -165,10 +169,14 @@ func Setup(parent *cobra.Command) {
 
 func (c *Cmd) completions(
 	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
+	cmd *cobra.Command,
+	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
 	completions := []string{}
 	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{
 		Msg: &group.ListRequest{},
@@ -196,10 +204,14 @@ func formatGroup(g *group.Group) string {
 
 func (c *Cmd) memberCompletions(
 	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
+	cmd *cobra.Command,
+	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
 	completions := []string{}
 	resp, err := c.Rig.User().List(ctx, &connect.Request[user.ListRequest]{
 		Msg: &user.ListRequest{},
@@ -207,8 +219,6 @@ func (c *Cmd) memberCompletions(
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
-
-	fmt.Println(resp.Msg.GetUsers())
 
 	saResp, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
 		Msg: &service_account.ListRequest{},
