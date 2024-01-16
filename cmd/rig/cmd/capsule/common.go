@@ -78,7 +78,7 @@ func GetCurrentRolloutOfCapsule(
 		return r, nil
 	}
 
-	return nil, errors.New("no rollout for capsule")
+	return nil, errors.NotFoundErrorf("no rollout for capsule")
 }
 
 func Truncated(str string, max int) string {

@@ -16,15 +16,15 @@ func (c *Cmd) set(ctx context.Context, _ *cobra.Command, args []string) error {
 		return errors.InvalidArgumentErrorf("expected key and value arguments")
 	}
 
+	cs := &capsule.ContainerSettings{}
+
 	r, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
-	cs := r.GetConfig().GetContainerSettings()
-
-	if cs == nil {
-		cs = &capsule.ContainerSettings{}
+	if r.GetConfig().GetContainerSettings() != nil {
+		cs = r.GetConfig().GetContainerSettings()
 	}
 
 	if cs.GetEnvironmentVariables() == nil {

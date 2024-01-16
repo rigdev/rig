@@ -27,12 +27,12 @@ func (c *Cmd) set(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	var paths []string
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
-	var paths []string
 	for _, p := range rollout.GetConfig().GetConfigFiles() {
 		paths = append(paths, p.GetPath())
 	}

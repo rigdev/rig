@@ -19,14 +19,17 @@ func (c *Cmd) cmdArgs(ctx context.Context, cmd *cobra.Command, args []string) er
 		return errors.InvalidArgumentErrorf("cannot both supply arguments and --delete")
 	}
 
+	containerSettings := &capsule.ContainerSettings{}
+
 	r, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
-	containerSettings := r.GetConfig().GetContainerSettings()
-	if containerSettings == nil {
-		containerSettings = &capsule.ContainerSettings{}
+
+	if r.GetConfig().GetContainerSettings() != nil {
+		containerSettings = r.GetConfig().GetContainerSettings()
 	}
+
 	containerSettings.Command = args[0]
 	containerSettings.Args = args[1:]
 

@@ -15,6 +15,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -22,12 +23,17 @@ import (
 )
 
 func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
+	allJobs := []*capsule.CronJob{}
+
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
-	allJobs := rollout.GetConfig().GetCronJobs()
+	if rollout.GetConfig() != nil {
+		allJobs = rollout.GetConfig().GetCronJobs()
+	}
+
 	var job *capsule.CronJob
 	if path == "" {
 		job, err = c.promptCronJob(allJobs)
@@ -207,9 +213,12 @@ func promptCommand() (*capsule.CronJob_Command, error) {
 	return cmd, nil
 }
 
-func (c *Cmd) delete(ctx context.Context, _ *cobra.Command, args []string) error {
+func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if errors.IsNotFound(err) {
+		cmd.Println("No jobs set")
+		return nil
+	} else if err != nil {
 		return err
 	}
 

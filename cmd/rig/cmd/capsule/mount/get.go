@@ -10,12 +10,16 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	r, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if errors.IsNotFound(err) {
+		cmd.Println("No config files mounted")
+		return nil
+	} else if err != nil {
 		return err
 	}
 

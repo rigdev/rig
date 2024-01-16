@@ -22,15 +22,15 @@ func (c *Cmd) source(ctx context.Context, _ *cobra.Command, args []string) error
 		return errors.InvalidArgumentErrorf("expected kind and name arguments")
 	}
 
+	cs := &capsule.ContainerSettings{}
+
 	r, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
-	cs := r.GetConfig().GetContainerSettings()
-
-	if cs == nil {
-		cs = &capsule.ContainerSettings{}
+	if r.GetConfig().GetContainerSettings() != nil {
+		cs = r.GetConfig().GetContainerSettings()
 	}
 
 	kind, ok := _kinds[strings.ToLower(args[0])]

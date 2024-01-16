@@ -25,14 +25,15 @@ import (
 )
 
 func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) error {
+	horizontal := &capsule.HorizontalScale{}
+
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return nil
 	}
 
-	horizontal := rollout.GetConfig().GetHorizontalScale()
-	if horizontal == nil {
-		horizontal = &capsule.HorizontalScale{}
+	if rollout.GetConfig() != nil {
+		horizontal = rollout.GetConfig().GetHorizontalScale()
 	}
 
 	if horizontal.CpuTarget != nil && !overwriteAutoscaler {
@@ -78,14 +79,17 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 }
 
 func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) error {
+	var replicas uint32
+	horizontal := &capsule.HorizontalScale{}
+
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
-	replicas := rollout.GetConfig().GetReplicas()
-	horizontal := rollout.GetConfig().GetHorizontalScale()
-	if horizontal == nil {
-		horizontal = &capsule.HorizontalScale{}
+
+	if rollout.GetConfig() != nil {
+		replicas = rollout.GetConfig().GetReplicas()
+		horizontal = rollout.GetConfig().GetHorizontalScale()
 	}
 
 	if autoscalerPath != "" {
