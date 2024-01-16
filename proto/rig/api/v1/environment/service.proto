@@ -16,4 +16,5 @@ message ListRequest {
 
 message ListResponse {
   repeated api.v1.environment.Environment environments = 1;
+  string platform_verison = 2;
 }

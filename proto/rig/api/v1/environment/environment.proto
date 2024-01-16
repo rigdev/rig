@@ -5,4 +5,5 @@ package api.v1.environment;
 message Environment {
   string environment_id = 1;
   bool default = 2;
+  string operator_version = 3;
 }

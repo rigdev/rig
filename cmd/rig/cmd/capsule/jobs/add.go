@@ -44,8 +44,6 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 		}
 	}
 
-	allJobs = append(allJobs, job)
-
 	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
