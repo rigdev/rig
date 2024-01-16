@@ -49,10 +49,8 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
-			Field: &capsule.Change_CronJobs_{
-				CronJobs: &capsule.Change_CronJobs{
-					Jobs: allJobs,
-				},
+			Field: &capsule.Change_AddCronJob{
+				AddCronJob: job,
 			},
 		}},
 		ProjectId:     c.Cfg.GetProject(),
@@ -236,13 +234,11 @@ func (c *Cmd) delete(ctx context.Context, _ *cobra.Command, args []string) error
 	}
 
 	found := false
-	jobs := rollout.GetConfig().GetCronJobs()
-	for idx, j := range rollout.GetConfig().GetCronJobs() {
+	for _, j := range rollout.GetConfig().GetCronJobs() {
 		if j.GetJobName() != job {
 			continue
 		}
 		found = true
-		jobs = append(jobs[:idx], jobs[idx+1:]...)
 	}
 
 	if !found {
@@ -252,9 +248,9 @@ func (c *Cmd) delete(ctx context.Context, _ *cobra.Command, args []string) error
 	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
-			Field: &capsule.Change_CronJobs_{
-				CronJobs: &capsule.Change_CronJobs{
-					Jobs: jobs,
+			Field: &capsule.Change_RemoveCronJob_{
+				RemoveCronJob: &capsule.Change_RemoveCronJob{
+					JobName: job,
 				},
 			},
 		}},
