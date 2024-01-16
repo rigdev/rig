@@ -9,15 +9,19 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
 
 const maxColLength = 20
 
-func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if errors.IsNotFound(err) {
+		cmd.Println("No cron jobs set")
+		return nil
+	} else if err != nil {
 		return err
 	}
 

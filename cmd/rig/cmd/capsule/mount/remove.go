@@ -14,14 +14,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) remove(ctx context.Context, _ *cobra.Command, args []string) error {
+func (c *Cmd) remove(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var path string
 	var err error
 	if len(args) != 1 {
 		rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-		if err != nil {
+		if errors.IsNotFound(err) {
+			cmd.Println("No config files mounted")
+			return nil
+		} else if err != nil {
 			return err
 		}
+
 		var paths []string
 		for _, path := range rollout.GetConfig().GetConfigFiles() {
 			paths = append(paths, path.GetPath())

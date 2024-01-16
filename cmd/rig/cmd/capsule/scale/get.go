@@ -7,12 +7,16 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	rollout, err := capsule.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if errors.IsNotFound(err) {
+		cmd.Println("No scale is set")
+		return nil
+	} else if err != nil {
 		return err
 	}
 	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, c.Rig, c.Cfg)

@@ -25,7 +25,10 @@ func (c *Cmd) remove(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	r, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if errors.IsNotFound(err) {
+		cmd.Println("No environment variables set")
+		return nil
+	} else if err != nil {
 		return err
 	}
 

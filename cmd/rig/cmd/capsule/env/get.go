@@ -4,12 +4,16 @@ import (
 	"context"
 
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
 	r, err := capsule.GetCurrentRollout(ctx, c.Rig, c.Cfg)
-	if err != nil {
+	if errors.IsNotFound(err) {
+		cmd.Println("No environment variables set")
+		return nil
+	} else if err != nil {
 		return err
 	}
 
