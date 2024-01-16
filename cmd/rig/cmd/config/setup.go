@@ -14,8 +14,9 @@ import (
 type Cmd struct {
 	fx.In
 
-	Rig rig.Client
-	Cfg *cmdconfig.Config
+	Rig        rig.Client
+	Cfg        *cmdconfig.Config
+	PromptInfo *base.PromptInformation
 }
 
 var cmd Cmd
@@ -23,6 +24,7 @@ var cmd Cmd
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Cfg = c.Cfg
+	cmd.PromptInfo = c.PromptInfo
 }
 
 func Setup(parent *cobra.Command) {

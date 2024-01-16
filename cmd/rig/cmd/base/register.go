@@ -32,9 +32,10 @@ var Module = fx.Module(
 			client.WithAPIVersionNegotiation(),
 		)
 	}),
+	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
 )
 
-func getContext(cfg *cmdconfig.Config) (*cmdconfig.Context, error) {
+func getContext(cfg *cmdconfig.Config, promptInfo *PromptInformation) (*cmdconfig.Context, error) {
 	if cfg.CurrentContextName == "" {
 		if len(cfg.Contexts) > 0 {
 			fmt.Println("No context selected, please select one")
@@ -42,6 +43,7 @@ func getContext(cfg *cmdconfig.Config) (*cmdconfig.Context, error) {
 				return nil, err
 			}
 		} else {
+			promptInfo.ContextCreation = true
 			fmt.Println("No context available, please create one")
 			if err := cmdconfig.CreateDefaultContext(cfg); err != nil {
 				return nil, err
@@ -51,6 +53,7 @@ func getContext(cfg *cmdconfig.Config) (*cmdconfig.Context, error) {
 
 	c := cfg.GetCurrentContext()
 	if c == nil {
+		// This shouldn't happen as we prompt for a config if one is missing above
 		return nil, fmt.Errorf("no current context in config, run `rig config init`")
 	}
 

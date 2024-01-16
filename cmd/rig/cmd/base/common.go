@@ -12,6 +12,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+type PromptInformation struct {
+	ContextCreation bool
+}
+
 const (
 	RFC3339NanoFixed  = "2006-01-02T15:04:05.000000000Z07:00"
 	RFC3339MilliFixed = "2006-01-02T15:04:05.000Z07:00"

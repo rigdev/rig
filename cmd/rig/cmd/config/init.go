@@ -9,6 +9,10 @@ import (
 )
 
 func (c *Cmd) init(_ *cobra.Command, _ []string) error {
+	if c.PromptInfo.ContextCreation {
+		return nil
+	}
+
 	if ok, err := common.PromptConfirm("Do you want to configure a new context?", true); err != nil {
 		return err
 	} else if !ok {
