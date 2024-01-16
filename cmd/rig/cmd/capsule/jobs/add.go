@@ -142,6 +142,8 @@ func (c *Cmd) promptCronJob(existingJobs []*capsule.CronJob) (*capsule.CronJob, 
 			return nil, err
 		}
 		job.MaxRetries = int32(retries)
+	} else {
+		job.MaxRetries = 6 // TODO Find a better way of handling defaults
 	}
 
 	ds, err := common.PromptInput("Timeout Duration (optional)", common.ValidateAllowEmptyOpt(common.ValidateDuration))
