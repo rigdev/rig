@@ -46,7 +46,7 @@ func (c *Cmd) capsuleEvents(ctx context.Context, cmd *cobra.Command, args []stri
 			},
 			RolloutId:     rollout,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
+			EnvironmentId: base.GetEnvironment(c.Cfg),
 		},
 	})
 	if err != nil {

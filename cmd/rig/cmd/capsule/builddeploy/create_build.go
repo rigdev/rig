@@ -40,7 +40,7 @@ func (c *Cmd) createBuild(ctx context.Context, cmd *cobra.Command, _ []string) e
 				},
 			}},
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
+			EnvironmentId: base.GetEnvironment(c.Cfg),
 		},
 	}
 

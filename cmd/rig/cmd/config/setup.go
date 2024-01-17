@@ -1,8 +1,13 @@
 package config
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
+	"connectrpc.com/connect"
+	"github.com/rigdev/rig-go-api/api/v1/environment"
+	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
@@ -32,6 +37,10 @@ func Setup(parent *cobra.Command) {
 		Use:               "config",
 		Short:             "Manage Rig CLI configuration",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		Annotations: map[string]string{
+			base.OmitProject:     "",
+			base.OmitEnvironment: "",
+		},
 	}
 
 	init := &cobra.Command{
@@ -40,9 +49,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  cmd.init,
 		Annotations: map[string]string{
-			base.OmitProject: "",
-			base.OmitUser:    "",
-		},
+			base.OmitUser: ""},
 	}
 	config.AddCommand(init)
 
@@ -52,8 +59,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cmd.useContext,
 		Annotations: map[string]string{
-			base.OmitProject: "",
-			base.OmitUser:    "",
+			base.OmitUser: "",
 		},
 		ValidArgsFunction: common.Complete(
 			cmd.completions,
@@ -61,11 +67,36 @@ func Setup(parent *cobra.Command) {
 		),
 	}
 	config.AddCommand(useContext)
+
+	useProject := &cobra.Command{
+		Use:   "use-project [project-id]",
+		Short: "Set the project to query for project-scoped resources",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.CtxWrap(cmd.useProject),
+		ValidArgsFunction: common.Complete(base.CtxWrapCompletion(cmd.useProjectCompletion),
+			common.MaxArgsCompletionFilter(1)),
+	}
+	config.AddCommand(useProject)
+
+	useEnvironment := &cobra.Command{
+		Use:   "use-environment [environment-id]",
+		Short: "Set the environment to query for environment-scoped resources",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.CtxWrap(cmd.useEnvironment),
+		ValidArgsFunction: common.Complete(base.CtxWrapCompletion(cmd.useEnvironmentCompletion),
+			common.MaxArgsCompletionFilter(1)),
+	}
+	config.AddCommand(useEnvironment)
+
 	parent.AddCommand(config)
 }
 
-func (c *Cmd) completions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	names := []string{}
+
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
 
 	for _, ctx := range c.Cfg.Contexts {
 		if strings.HasPrefix(ctx.Name, toComplete) {
@@ -82,4 +113,94 @@ func (c *Cmd) completions(_ *cobra.Command, _ []string, toComplete string) ([]st
 	}
 
 	return names, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (c *Cmd) useProjectCompletion(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var projectIDs []string
+
+	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resp, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{
+		Msg: &project.ListRequest{},
+	})
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	for _, p := range resp.Msg.GetProjects() {
+		if strings.HasPrefix(p.GetProjectId(), toComplete) {
+			projectIDs = append(projectIDs, formatProject(p))
+		}
+	}
+
+	if len(projectIDs) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return projectIDs, cobra.ShellCompDirectiveNoFileComp
+}
+
+func formatProject(p *project.Project) string {
+	age := "-"
+	if p.GetCreatedAt().IsValid() {
+		age = p.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")
+	}
+
+	return fmt.Sprintf("%v\t (ID: %v, Created At: %v)", p.GetName(), p.GetProjectId(), age)
+}
+
+func (c *Cmd) useEnvironmentCompletion(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var environmentIDs []string
+
+	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resp, err := c.Rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{
+		Msg: &environment.ListRequest{},
+	})
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	for _, p := range resp.Msg.GetEnvironments() {
+		if strings.HasPrefix(p.GetEnvironmentId(), toComplete) {
+			environmentIDs = append(environmentIDs, formatEnvironment(p))
+		}
+	}
+
+	if len(environmentIDs) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return environmentIDs, cobra.ShellCompDirectiveNoFileComp
+}
+
+func formatEnvironment(e *environment.Environment) string {
+	operatorVersion := "-"
+	if e.GetOperatorVersion() != "" {
+		operatorVersion = e.GetOperatorVersion()
+	}
+
+	return fmt.Sprintf("%v\t (Operator Version: %v)", e.GetEnvironmentId(), operatorVersion)
 }

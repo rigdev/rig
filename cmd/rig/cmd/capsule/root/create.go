@@ -262,7 +262,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 			CapsuleId:     capsuleID,
 			Changes:       init,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
+			EnvironmentId: base.GetEnvironment(c.Cfg),
 		},
 	}
 

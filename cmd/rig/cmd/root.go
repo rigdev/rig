@@ -57,7 +57,8 @@ func Run() error {
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		RunE:              base.CtxWrap(cmd.getLicenseInfo),
 		Annotations: map[string]string{
-			base.OmitProject: "",
+			base.OmitProject:     "",
+			base.OmitEnvironment: "",
 		},
 	}
 	rootCmd.AddCommand(license)

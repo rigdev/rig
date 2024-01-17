@@ -33,10 +33,6 @@ func Setup(parent *cobra.Command) {
 		Short: "Create a Rig cluster in Docker for local development",
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.create),
-		Annotations: map[string]string{
-			base.OmitUser:    "",
-			base.OmitProject: "",
-		},
 	}
 	create.Flags().StringVarP(
 		&platformDockerTag,

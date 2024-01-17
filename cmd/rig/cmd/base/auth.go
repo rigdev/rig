@@ -7,6 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
+	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
@@ -18,23 +19,32 @@ import (
 )
 
 var (
-	OmitUser    = "OMIT_USER"
-	OmitProject = "OMIT_PROJECT"
+	OmitUser        = "OMIT_USER"
+	OmitProject     = "OMIT_PROJECT"
+	OmitEnvironment = "OMIT_ENVIRONMENT"
+	OmitCapsule     = "OMIT_CAPSULE"
 )
 
-func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config) error {
+func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config, interactive bool) error {
 	if skipChecks(cmd) {
 		return nil
 	}
 
-	if _, ok := cmd.Annotations[OmitUser]; !ok {
-		if err := authUser(ctx, rc, cfg); err != nil {
+	annotations := GetAllAnnotations(cmd)
+
+	if _, ok := annotations[OmitUser]; !ok {
+		if err := authUser(ctx, rc, cfg, interactive); err != nil {
 			return err
 		}
 	}
 
-	if _, ok := cmd.Annotations[OmitProject]; !ok {
-		if err := authProject(ctx, cmd, rc, cfg); err != nil {
+	if _, ok := annotations[OmitProject]; !ok {
+		if err := authProject(ctx, cmd, rc, cfg, interactive); err != nil {
+			return err
+		}
+	}
+	if _, ok := annotations[OmitEnvironment]; !ok {
+		if err := authEnvironment(ctx, cmd, rc, cfg, interactive); err != nil {
 			return err
 		}
 	}
@@ -42,11 +52,84 @@ func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdc
 	return nil
 }
 
-func authUser(ctx context.Context, rig rig.Client, cfg *cmdconfig.Config) error {
+func authEnvironment(ctx context.Context,
+	cmd *cobra.Command,
+	rig rig.Client,
+	cfg *cmdconfig.Config,
+	interactive bool) error {
+	environmentID := GetEnvironment(cfg)
+	if environmentID == "" && !interactive {
+		return errors.FailedPreconditionErrorf("Please select an environment or use the --environment flag")
+	}
+
+	if environmentID == "" {
+		use, err := common.PromptConfirm("You have not selected an environment. Would you like to select one now?", true)
+		if err != nil {
+			return err
+		}
+
+		if !use {
+			return errors.FailedPreconditionErrorf("Please select an environment or use the --environment flag")
+		}
+
+		environmentID, err = promptForEnvironment(ctx, rig)
+		if err != nil {
+			return err
+		}
+		cfg.GetCurrentContext().EnvironmentID = environmentID
+		if err := cfg.Save(); err != nil {
+			return err
+		}
+		cmd.Println("Changed environment successfully!")
+	}
+
+	res, err := rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
+	if err != nil {
+		return nil
+	}
+
+	found := false
+	for _, e := range res.Msg.GetEnvironments() {
+		if e.GetEnvironmentId() == environmentID {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		use, err := common.PromptConfirm(
+			"Your selected environment is not available. Would you like to select a new one?", true)
+		if err != nil {
+			return err
+		}
+
+		if !use {
+			return errors.FailedPreconditionErrorf("Select an environment or use the --environment flag")
+		}
+
+		environmentID, err = promptForEnvironment(ctx, rig)
+		if err != nil {
+			return err
+		}
+		cfg.GetCurrentContext().EnvironmentID = environmentID
+		if err := cfg.Save(); err != nil {
+			return err
+		}
+		cmd.Println("Changed environment successfully!")
+	}
+
+	return nil
+}
+
+func authUser(ctx context.Context, rig rig.Client, cfg *cmdconfig.Config, interactive bool) error {
 	user := cfg.GetCurrentAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil
 	}
+	if !interactive {
+		return errors.UnauthenticatedErrorf("Login to continue")
+	}
+
 	loginBool, err := common.PromptConfirm("You are not logged in. Would you like to login now?", true)
 	if err != nil {
 		return err
@@ -57,13 +140,21 @@ func authUser(ctx context.Context, rig rig.Client, cfg *cmdconfig.Config) error 
 	return login(ctx, rig, cfg)
 }
 
-func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *cmdconfig.Config) error {
+func authProject(ctx context.Context,
+	cmd *cobra.Command,
+	rig rig.Client,
+	cfg *cmdconfig.Config,
+	interactive bool) error {
+	if (cfg.GetCurrentContext().ProjectID == "" || uuid.UUID(cfg.GetCurrentContext().ProjectID).IsNil()) && !interactive {
+		return errors.FailedPreconditionErrorf("Select a project to continue")
+	}
+
 	res, err := rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return err
 	}
 
-	if len(res.Msg.GetProjects()) == 0 {
+	if len(res.Msg.Projects) == 0 {
 		create, err := common.PromptConfirm("You have no projects. Would you like to create on now?", true)
 		if err != nil {
 			return err
@@ -72,7 +163,11 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 			return errors.FailedPreconditionErrorf("Create and select a project to continue")
 		}
 
-		err = createProject(ctx, cmd, rig, cfg)
+		if err := createProject(ctx, cmd, rig, cfg); err != nil {
+			return err
+		}
+
+		res, err = rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 		if err != nil {
 			return err
 		}
@@ -88,8 +183,7 @@ func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *c
 			return errors.FailedPreconditionErrorf("Select a project to continue")
 		}
 
-		err = useProject(ctx, rig, cfg)
-		if err != nil {
+		if err := useProject(ctx, rig, cfg); err != nil {
 			return err
 		}
 	}
@@ -252,4 +346,25 @@ func useProject(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error
 	fmt.Println("Changed project successfully!")
 
 	return nil
+}
+
+func promptForEnvironment(ctx context.Context, rc rig.Client) (string, error) {
+	res, err := rc.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
+	if err != nil {
+		return "", err
+	}
+
+	var es []string
+	for _, e := range res.Msg.GetEnvironments() {
+		es = append(es, e.GetEnvironmentId())
+	}
+
+	i, _, err := common.PromptSelect("Environment: ", es)
+	if err != nil {
+		return "", err
+	}
+
+	environment := res.Msg.GetEnvironments()[i].GetEnvironmentId()
+
+	return environment, nil
 }

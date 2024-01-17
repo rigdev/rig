@@ -76,7 +76,7 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 			},
 		},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.Flags.Environment,
+		EnvironmentId: base.GetEnvironment(c.Cfg),
 	}
 
 	stream := c.Rig.Capsule().Execute(ctx)

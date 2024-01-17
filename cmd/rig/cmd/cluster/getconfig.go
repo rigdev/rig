@@ -12,7 +12,9 @@ import (
 )
 
 func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
-	resp, err := c.Rig.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{}))
+	resp, err := c.Rig.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{
+		EnvironmentId: base.GetEnvironment(c.Cfg),
+	}))
 	if err != nil {
 		return err
 	}

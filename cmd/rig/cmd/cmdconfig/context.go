@@ -73,10 +73,11 @@ func CreateContext(cfg *Config, name, url string) error {
 	}
 
 	cfg.Contexts = append(cfg.Contexts, &Context{
-		Name:        name,
-		ServiceName: name,
-		UserName:    name,
-		ProjectID:   "",
+		Name:          name,
+		ServiceName:   name,
+		UserName:      name,
+		ProjectID:     "",
+		EnvironmentID: "",
 	})
 
 	cfg.Services = append(cfg.Services, &Service{

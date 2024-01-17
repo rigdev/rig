@@ -35,6 +35,19 @@ var Module = fx.Module(
 	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
 )
 
+func GetAllAnnotations(cmd *cobra.Command) map[string]string {
+	res := make(map[string]string)
+	for p := cmd; p != nil; p = p.Parent() {
+		for k, v := range p.Annotations {
+			if _, ok := res[k]; ok {
+				continue
+			}
+			res[k] = v
+		}
+	}
+	return res
+}
+
 func getContext(cfg *cmdconfig.Config, promptInfo *PromptInformation) (*cmdconfig.Context, error) {
 	if cfg.CurrentContextName == "" {
 		if len(cfg.Contexts) > 0 {
@@ -86,6 +99,23 @@ func computeNumOfPreRuns(cmd *cobra.Command) int {
 	return res
 }
 
+func Provide(cmd *cobra.Command, args []string, invokes ...any) error {
+	for _, invoke := range invokes {
+		options = append(options, fx.Invoke(invoke))
+	}
+
+	allOpts := []fx.Option{
+		Module,
+		fx.NopLogger,
+		fx.Provide(func() *cobra.Command { return cmd }),
+		fx.Provide(func() []string { return args }),
+		// provide a flag to indicate that we cannot prompt for resource creation
+		fx.Provide(func() bool { return false }),
+	}
+	allOpts = append(allOpts, options...)
+	return fx.New(allOpts...).Err()
+}
+
 func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	if firstPreRun {
 		firstPreRun = false
@@ -99,6 +129,8 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 			fx.NopLogger,
 			fx.Provide(func() *cobra.Command { return cmd }),
 			fx.Provide(func() []string { return args }),
+			// provide a flag to indicate that we can prompt for resource creation
+			fx.Provide(func() bool { return true }),
 		}
 		allOpts = append(allOpts, options...)
 		return fx.New(allOpts...).Err()

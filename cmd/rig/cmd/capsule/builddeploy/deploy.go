@@ -38,7 +38,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, _ []string) error 
 				Field: &capsule.Change_BuildId{BuildId: buildID},
 			}},
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
+			EnvironmentId: base.GetEnvironment(c.Cfg),
 		},
 	}
 
@@ -262,7 +262,7 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 					Offset: uint32(eventCount),
 				},
 				ProjectId:     c.Cfg.GetProject(),
-				EnvironmentId: base.Flags.Environment,
+				EnvironmentId: base.GetEnvironment(c.Cfg),
 			},
 		})
 		if err != nil {

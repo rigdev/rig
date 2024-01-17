@@ -1,6 +1,10 @@
 package base
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+)
 
 type OutputType string
 
@@ -40,5 +44,12 @@ type FlagsStruct struct {
 var Flags = FlagsStruct{
 	OutputType:     OutputTypePretty,
 	NonInteractive: false,
-	Environment:    "default",
+	Environment:    "",
+}
+
+func GetEnvironment(cfg *cmdconfig.Config) string {
+	if Flags.Environment != "" {
+		return Flags.Environment
+	}
+	return cfg.GetEnvironment()
 }

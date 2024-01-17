@@ -38,6 +38,10 @@ func Setup(parent *cobra.Command) {
 		Use:               "service-account",
 		Short:             "Manage service accounts",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		Annotations: map[string]string{
+			base.OmitProject:     "",
+			base.OmitEnvironment: "",
+		},
 	}
 
 	create := &cobra.Command{
@@ -74,10 +78,14 @@ func Setup(parent *cobra.Command) {
 
 func (c *Cmd) completions(
 	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
+	cmd *cobra.Command,
+	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
+	if err := base.Provide(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
 	var completions []string
 	accs, err := c.Rig.ServiceAccount().List(ctx, &connect.Request[service_account.ListRequest]{
 		Msg: &service_account.ListRequest{},

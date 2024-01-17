@@ -110,6 +110,9 @@ func setupBuild(parent *cobra.Command) {
 			base.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
+		Annotations: map[string]string{
+			base.OmitEnvironment: "",
+		},
 	}
 	buildGet.Flags().IntVar(&offset, "offset", 0, "offset")
 	buildGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
@@ -159,7 +162,7 @@ Not both --build-id and --image can be given`,
 
 func (c *Cmd) completions(
 	ctx context.Context,
-	_ *cobra.Command,
+	cmd *cobra.Command,
 	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
@@ -168,6 +171,10 @@ func (c *Cmd) completions(
 	}
 
 	if capsule.CapsuleID == "" {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	if err := base.Provide(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

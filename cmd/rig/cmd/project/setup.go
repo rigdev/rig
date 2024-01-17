@@ -1,13 +1,10 @@
 package project
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
-	"connectrpc.com/connect"
-	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
@@ -49,6 +46,9 @@ func Setup(parent *cobra.Command) {
 		Use:               "project",
 		Short:             "Manage Rig projects",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		Annotations: map[string]string{
+			base.OmitEnvironment: "",
+		},
 	}
 
 	getSettings := &cobra.Command{
@@ -168,18 +168,6 @@ func Setup(parent *cobra.Command) {
 	listProjects.Flags().IntVarP(&limit, "limit", "l", 10, "Limit")
 	project.AddCommand(listProjects)
 
-	use := &cobra.Command{
-		Use:   "use [project-id | project-name]",
-		Short: "Set the project to query for project-scoped resources",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.use),
-		Annotations: map[string]string{
-			base.OmitProject: "",
-		},
-		ValidArgsFunction: base.CtxWrapCompletion(cmd.useProjectCompletion),
-	}
-	project.AddCommand(use)
-
 	parent.AddCommand(project)
 }
 
@@ -219,45 +207,4 @@ func projectUpdateFieldsCompletion(
 	}
 
 	return completions, cobra.ShellCompDirectiveNoFileComp
-}
-
-func (c *Cmd) useProjectCompletion(
-	ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
-	toComplete string,
-) ([]string, cobra.ShellCompDirective) {
-	var projectIDs []string
-
-	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	resp, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{
-		Msg: &project.ListRequest{},
-	})
-	if err != nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	for _, p := range resp.Msg.GetProjects() {
-		if strings.HasPrefix(p.GetProjectId(), toComplete) {
-			projectIDs = append(projectIDs, formatProject(p))
-		}
-	}
-
-	if len(projectIDs) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return projectIDs, cobra.ShellCompDirectiveNoFileComp
-}
-
-func formatProject(p *project.Project) string {
-	age := "-"
-	if p.GetCreatedAt().IsValid() {
-		age = p.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")
-	}
-
-	return fmt.Sprintf("%v\t (ID: %v, Created At: %v)", p.GetName(), p.GetProjectId(), age)
 }

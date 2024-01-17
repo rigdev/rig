@@ -26,7 +26,7 @@ func (c *Cmd) restart(ctx context.Context, cmd *cobra.Command, args []string) er
 			CapsuleId:     capsule_cmd.CapsuleID,
 			InstanceId:    instanceID,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.Flags.Environment,
+			EnvironmentId: base.GetEnvironment(c.Cfg),
 		},
 	}); err != nil {
 		return err
