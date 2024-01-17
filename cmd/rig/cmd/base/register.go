@@ -109,6 +109,8 @@ func Provide(cmd *cobra.Command, args []string, invokes ...any) error {
 		fx.NopLogger,
 		fx.Provide(func() *cobra.Command { return cmd }),
 		fx.Provide(func() []string { return args }),
+		// provide a flag to indicate that we cannot prompt for resource creation
+		fx.Provide(func() bool { return false }),
 	}
 	allOpts = append(allOpts, options...)
 	return fx.New(allOpts...).Err()
@@ -127,6 +129,8 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 			fx.NopLogger,
 			fx.Provide(func() *cobra.Command { return cmd }),
 			fx.Provide(func() []string { return args }),
+			// provide a flag to indicate that we can prompt for resource creation
+			fx.Provide(func() bool { return true }),
 		}
 		allOpts = append(allOpts, options...)
 		return fx.New(allOpts...).Err()

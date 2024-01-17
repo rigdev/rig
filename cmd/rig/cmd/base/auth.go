@@ -25,7 +25,7 @@ var (
 	OmitCapsule     = "OMIT_CAPSULE"
 )
 
-func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config) error {
+func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config, interactive bool) error {
 	if skipChecks(cmd) {
 		return nil
 	}
@@ -33,18 +33,18 @@ func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdc
 	annotations := GetAllAnnotations(cmd)
 
 	if _, ok := annotations[OmitUser]; !ok {
-		if err := authUser(ctx, rc, cfg); err != nil {
+		if err := authUser(ctx, rc, cfg, interactive); err != nil {
 			return err
 		}
 	}
 
 	if _, ok := annotations[OmitProject]; !ok {
-		if err := authProject(ctx, cmd, rc, cfg); err != nil {
+		if err := authProject(ctx, cmd, rc, cfg, interactive); err != nil {
 			return err
 		}
 	}
 	if _, ok := annotations[OmitEnvironment]; !ok {
-		if err := authEnvironment(ctx, cmd, rc, cfg); err != nil {
+		if err := authEnvironment(ctx, cmd, rc, cfg, interactive); err != nil {
 			return err
 		}
 	}
@@ -52,8 +52,16 @@ func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdc
 	return nil
 }
 
-func authEnvironment(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *cmdconfig.Config) error {
+func authEnvironment(ctx context.Context,
+	cmd *cobra.Command,
+	rig rig.Client,
+	cfg *cmdconfig.Config,
+	interactive bool) error {
 	environmentID := GetEnvironment(cfg)
+	if environmentID == "" && !interactive {
+		return errors.FailedPreconditionErrorf("Please select an environment or use the --environment flag")
+	}
+
 	if environmentID == "" {
 		use, err := common.PromptConfirm("You have not selected an environment. Would you like to select one now?", true)
 		if err != nil {
@@ -113,11 +121,15 @@ func authEnvironment(ctx context.Context, cmd *cobra.Command, rig rig.Client, cf
 	return nil
 }
 
-func authUser(ctx context.Context, rig rig.Client, cfg *cmdconfig.Config) error {
+func authUser(ctx context.Context, rig rig.Client, cfg *cmdconfig.Config, interactive bool) error {
 	user := cfg.GetCurrentAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil
 	}
+	if !interactive {
+		return errors.UnauthenticatedErrorf("Login to continue")
+	}
+
 	loginBool, err := common.PromptConfirm("You are not logged in. Would you like to login now?", true)
 	if err != nil {
 		return err
@@ -128,7 +140,15 @@ func authUser(ctx context.Context, rig rig.Client, cfg *cmdconfig.Config) error 
 	return login(ctx, rig, cfg)
 }
 
-func authProject(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *cmdconfig.Config) error {
+func authProject(ctx context.Context,
+	cmd *cobra.Command,
+	rig rig.Client,
+	cfg *cmdconfig.Config,
+	interactive bool) error {
+	if (cfg.GetCurrentContext().ProjectID == "" || uuid.UUID(cfg.GetCurrentContext().ProjectID).IsNil()) && !interactive {
+		return errors.FailedPreconditionErrorf("Select a project to continue")
+	}
+
 	res, err := rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return err

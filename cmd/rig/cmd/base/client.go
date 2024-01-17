@@ -20,6 +20,7 @@ var clientModule = fx.Module("client",
 		cmd *cobra.Command,
 		s *cmdconfig.Service,
 		cfg *cmdconfig.Config,
+		interactive bool,
 	) (rig.Client, error) {
 		rigClient := rig.NewClient(
 			rig.WithHost(s.Server),
@@ -27,7 +28,7 @@ var clientModule = fx.Module("client",
 			rig.WithSessionManager(&configSessionManager{cfg: cfg}),
 		)
 
-		if err := CheckAuth(ctx, cmd, rigClient, cfg); err != nil {
+		if err := CheckAuth(ctx, cmd, rigClient, cfg, interactive); err != nil {
 			return nil, err
 		}
 
