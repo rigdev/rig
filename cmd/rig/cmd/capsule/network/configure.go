@@ -88,6 +88,7 @@ func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error 
 	if len(rollouts) == 0 {
 		return errors.New("capsule has no rollouts")
 	}
+
 	network := rollouts[0].GetConfig().GetNetwork()
 	if network == nil {
 		rollouts[0].Config.Network = &capsule.Network{}

@@ -50,6 +50,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rodaine/table v1.1.0
 	k8s.io/apiextensions-apiserver v0.28.4
+	k8s.io/autoscaler/vertical-pod-autoscaler v1.0.0
 	sigs.k8s.io/controller-runtime v0.16.3
 	sigs.k8s.io/kind v0.20.0
 	sigs.k8s.io/kustomize/kyaml v0.16.0
