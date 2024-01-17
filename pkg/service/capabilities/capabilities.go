@@ -54,12 +54,29 @@ func (s *service) Get(ctx context.Context) (*capabilities.GetResponse, error) {
 	}
 	res.HasCustomMetrics = ok
 
+	ok, err = s.hasVPA(ctx)
+	if err != nil {
+		return nil, err
+	}
+	res.HasVerticalPodAutoscaler = ok
+
 	return res, nil
 }
 
 func (s *service) hasServiceMonitor(ctx context.Context) (bool, error) {
 	if err := s.client.Get(ctx, client.ObjectKey{
 		Name: "servicemonitors.monitoring.coreos.com",
+	}, &apiextensionsv1.CustomResourceDefinition{}); errors.IsNotFound(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (s *service) hasVPA(ctx context.Context) (bool, error) {
+	if err := s.client.Get(ctx, client.ObjectKey{
+		Name: "verticalpodautoscalers.autoscaling.k8s.io",
 	}, &apiextensionsv1.CustomResourceDefinition{}); errors.IsNotFound(err) {
 		return false, nil
 	} else if err != nil {
