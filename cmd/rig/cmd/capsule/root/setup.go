@@ -229,7 +229,7 @@ func formatCapsule(c *capsule_api.Capsule) string {
 }
 
 func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	if _, ok := cmd.Annotations[base.OmitCapsule]; !ok {
+	if _, ok := cmd.Annotations[base.OmitCapsule]; ok {
 		return nil
 	}
 
