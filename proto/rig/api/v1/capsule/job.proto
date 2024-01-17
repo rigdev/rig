@@ -15,6 +15,7 @@ message JobExecution {
   string capsule_id = 7;
   string project_id = 8;
   string execution_id = 9;
+  string environment_id = 10;
 }
 
 enum JobState {
