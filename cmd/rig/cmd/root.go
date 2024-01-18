@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/rigdev/rig-go-api/api/v1/environment"
 	project_api "github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
@@ -63,6 +64,19 @@ func Run() error {
 	}
 	rootCmd.AddCommand(license)
 
+	version := &cobra.Command{
+		Use:               "version",
+		Short:             "print version information",
+		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		RunE:              base.CtxWrap(cmd.version),
+		Annotations: map[string]string{
+			base.OmitProject:     "",
+			base.OmitEnvironment: "",
+		},
+	}
+	version.Flags().BoolP("full", "v", false, "print full version")
+	rootCmd.AddCommand(version)
+
 	dev.Setup(rootCmd)
 	capsule_root.Setup(rootCmd)
 	auth.Setup(rootCmd)
@@ -72,7 +86,6 @@ func Run() error {
 	cluster.Setup(rootCmd)
 	config.Setup(rootCmd)
 	project.Setup(rootCmd)
-	rootCmd.AddCommand(build.VersionCommand())
 
 	cobra.EnableTraverseRunHooks = true
 	return rootCmd.Execute()
@@ -110,6 +123,30 @@ func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, _ []string
 	})
 
 	cmd.Println(t.Render())
+
+	return nil
+}
+
+func (c *Cmd) version(ctx context.Context, cmd *cobra.Command, _ []string) error {
+	full, err := cmd.Flags().GetBool("full")
+	if err != nil {
+		return err
+	}
+
+	if full {
+		cmd.Println(build.VersionStringFull())
+	} else {
+		cmd.Println(build.VersionString())
+	}
+
+	if full {
+		resp, err := c.Rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
+		if err != nil {
+			cmd.Println("Unable to get platform version", err)
+		} else {
+			cmd.Println("Platform version:", resp.Msg.GetPlatformVersion())
+		}
+	}
 
 	return nil
 }
