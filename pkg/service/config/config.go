@@ -96,7 +96,6 @@ func (b *serviceBuilder) build() (*service, error) {
 		}
 	}
 	var oCFGFromEnv v1alpha1.OperatorConfig
-	oCFGFromEnv.Default()
 	if err := getCFGFromEnv(&oCFGFromEnv); err != nil {
 		return nil, err
 	}
@@ -111,6 +110,7 @@ func (b *serviceBuilder) build() (*service, error) {
 	if err := b.merger.Merge(&pCFGFromEnv, b.pCFG); err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
 	}
+	b.oCFG.Default()
 
 	return &service{oCFG: b.oCFG, pCFG: b.pCFG}, nil
 }
@@ -137,7 +137,6 @@ func (b *serviceBuilder) decode(data []byte) error {
 					target: "OperatorConfig",
 				}
 			}
-			cfg.Default()
 			decodedCFG = cfg
 		default:
 			return fmt.Errorf("unsupport api version: %s", gvk.Version)
