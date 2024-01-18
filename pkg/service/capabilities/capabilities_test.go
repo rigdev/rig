@@ -47,6 +47,7 @@ func TestGet(t *testing.T) {
 				Ingress:                     true,
 				HasPrometheusServiceMonitor: true,
 				HasCustomMetrics:            true,
+				HasVerticalPodAutoscaler:    true,
 			},
 			crdErr:    nil,
 			apiGroups: []metav1.APIGroup{{Name: "metrics.k8s.io"}, {Name: "custom.metrics.k8s.io"}},

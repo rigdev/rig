@@ -216,6 +216,10 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		b = b.Owns(&monitorv1.ServiceMonitor{})
 	}
 
+	if r.Config.VerticalPodAutoscaler.Enabled {
+		b = b.Owns(&vpav1.VerticalPodAutoscaler{})
+	}
+
 	return b.
 		For(&v1alpha2.Capsule{}).
 		Owns(&appsv1.Deployment{}).
@@ -224,7 +228,6 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
 		Owns(&cmv1.Certificate{}).
 		Owns(&batchv1.CronJob{}).
-		Owns(&vpav1.VerticalPodAutoscaler{}).
 		Watches(
 			&v1.ConfigMap{},
 			configEventHandler,
