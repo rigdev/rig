@@ -1266,10 +1266,14 @@ func (r *reconcileRequest) createIngress() (*netv1.Ingress, error) {
 		})
 
 		if len(inf.Public.Ingress.Paths) == 0 {
+			path := ""
+			if r.config.Ingress.PathType == netv1.PathTypeExact || r.config.Ingress.PathType == netv1.PathTypePrefix {
+				path = "/"
+			}
 			ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = []netv1.HTTPIngressPath{
 				{
 					PathType: ptr.New(r.config.Ingress.PathType),
-					Path:     "/",
+					Path:     path,
 					Backend: netv1.IngressBackend{
 						Service: &netv1.IngressServiceBackend{
 							Name: r.capsule.Name,
