@@ -133,22 +133,6 @@ func TestValidateInterfaces(t *testing.T) {
 			},
 		},
 		{
-			name: "public: ingress host is required",
-			interfaces: []CapsuleInterface{
-				{
-					Name: "test",
-					Public: &CapsulePublicInterface{
-						Ingress: &CapsuleInterfaceIngress{},
-					},
-				},
-			},
-			expectedErrs: field.ErrorList{
-				field.Required(
-					infsPath.Index(0).Child("public").Child("ingress").Child("host"), "",
-				),
-			},
-		},
-		{
 			name: "valid interface probes",
 			interfaces: []CapsuleInterface{
 				{

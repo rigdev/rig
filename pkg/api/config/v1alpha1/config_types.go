@@ -92,7 +92,11 @@ type IngressConfig struct {
 
 	// DisableTLS for ingress resources generated. This is useful if a 3rd-party component
 	// is handling the HTTPS TLS termination and certificates.
-	DisableTLS bool `json:"disableTLS"`
+	DisableTLS *bool `json:"disableTLS,omitempty"`
+}
+
+func (cfg IngressConfig) IsTLSDisabled() bool {
+	return cfg.DisableTLS != nil && *cfg.DisableTLS
 }
 
 func (c *OperatorConfig) Default() *OperatorConfig {
