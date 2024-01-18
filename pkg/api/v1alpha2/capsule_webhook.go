@@ -136,9 +136,6 @@ func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
 			if public.Ingress != nil && public.LoadBalancer != nil {
 				errs = append(errs, field.Invalid(publicPath, public, "ingress and loadBalancer are mutually exclusive"))
 			}
-			if public.Ingress != nil && public.Ingress.Host == "" {
-				errs = append(errs, field.Required(publicPath.Child("ingress").Child("host"), ""))
-			}
 		}
 
 		if inf.Liveness != nil {
