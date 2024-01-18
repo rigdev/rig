@@ -248,6 +248,8 @@ message ListInstancesRequest {
   model.Pagination pagination = 2;
   string project_id = 3;
   string environment_id = 4;
+  bool include_deleted = 5;
+  bool exclude_existing = 6;
 }
 
 message ListInstancesResponse {
@@ -271,6 +273,8 @@ message ListInstanceStatusesRequest {
   model.Pagination pagination = 2;
   string project_id = 3;
   string environment_id = 4;
+  bool include_deleted = 5;
+  bool exclude_existing = 6;
 }
 
 message ListInstanceStatusesResponse {
