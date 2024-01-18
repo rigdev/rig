@@ -111,7 +111,7 @@ func parseFromTo() (time.Time, time.Time, error) {
 func stateToStr(s capsule.JobState) string {
 	switch s {
 	case capsule.JobState_JOB_STATE_UNSPECIFIED:
-		return "unspecified"
+		return "unknown"
 	case capsule.JobState_JOB_STATE_ONGOING:
 		return "ongoing"
 	case capsule.JobState_JOB_STATE_COMPLETED:
@@ -143,6 +143,8 @@ func parseStates() ([]capsule.JobState, error) {
 			res = append(res, capsule.JobState_JOB_STATE_FAILED)
 		case "terminated":
 			res = append(res, capsule.JobState_JOB_STATE_TERMINATED)
+		case "unknown":
+			res = append(res, capsule.JobState_JOB_STATE_UNSPECIFIED)
 		default:
 			return nil, fmt.Errorf("unknown state %q", s)
 		}
