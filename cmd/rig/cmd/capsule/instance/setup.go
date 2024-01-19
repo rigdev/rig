@@ -67,7 +67,10 @@ func Setup(parent *cobra.Command) {
 	}
 	getInstances.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	getInstances.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	getInstances.Flags().BoolVar(&includeDeleted, "include-deleted", false, "includes instances which have been deleted in the past 7 days")
+	getInstances.Flags().BoolVar(
+		&includeDeleted, "include-deleted", false,
+		"includes instances which have been deleted in the past 7 days",
+	)
 	getInstances.Flags().BoolVar(&excludeExisting, "exclude-existing", false, "only return instances which are deleted")
 	instance.AddCommand(getInstances)
 
