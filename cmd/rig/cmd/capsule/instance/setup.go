@@ -25,9 +25,11 @@ var (
 )
 
 var (
-	follow      bool
-	tty         bool
-	interactive bool
+	follow          bool
+	tty             bool
+	interactive     bool
+	excludeExisting bool
+	includeDeleted  bool
 )
 
 var since string
@@ -53,7 +55,7 @@ func Setup(parent *cobra.Command) {
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
-	GetInstances := &cobra.Command{
+	getInstances := &cobra.Command{
 		Use:   "get [instance-id]",
 		Short: "Get one or more instances",
 		Args:  cobra.MaximumNArgs(1),
@@ -63,9 +65,14 @@ func Setup(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	GetInstances.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
-	GetInstances.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	instance.AddCommand(GetInstances)
+	getInstances.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
+	getInstances.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
+	getInstances.Flags().BoolVar(
+		&includeDeleted, "include-deleted", false,
+		"includes instances which have been deleted in the past 7 days",
+	)
+	getInstances.Flags().BoolVar(&excludeExisting, "exclude-existing", false, "only return instances which are deleted")
+	instance.AddCommand(getInstances)
 
 	restartInstance := &cobra.Command{
 		Use:   "restart [instance-id]",

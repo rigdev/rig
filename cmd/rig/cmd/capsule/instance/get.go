@@ -23,8 +23,10 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 			Offset: uint32(offset),
 			Limit:  uint32(limit),
 		},
-		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		ProjectId:       c.Cfg.GetProject(),
+		EnvironmentId:   base.GetEnvironment(c.Cfg),
+		ExcludeExisting: excludeExisting,
+		IncludeDeleted:  includeDeleted,
 	}))
 	if err != nil {
 		return err
@@ -37,7 +39,7 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
-	tbl := table2.New("ID", "Scheduling", "Preparing", "Running")
+	tbl := table2.New("ID", "Scheduling", "Preparing", "Running", "Deleted")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	for _, i := range instances {
 		for _, r := range instanceStatusToTableRows(i) {
@@ -50,7 +52,7 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 }
 
 func instanceStatusToTableRows(instance *instance.Status) [][]any {
-	rowLength := 4
+	rowLength := 5
 	rows := [][]any{
 		make([]any, rowLength),
 		make([]any, rowLength),
@@ -69,9 +71,15 @@ func instanceStatusToTableRows(instance *instance.Status) [][]any {
 	rows[0][3] = stages.GetRunning().GetInfo().GetName()
 	rows[1][3] = formatStageState(stages.GetRunning().GetInfo().GetState())
 
+	rows[0][4] = stages.GetDeleted().GetInfo().GetName()
+	rows[1][4] = formatStageState(stages.GetDeleted().GetInfo().GetState())
+
 	return rows
 }
 
 func formatStageState(s instance.StageState) string {
-	return strings.TrimPrefix(s.String(), "STAGE_STATE_")
+	if s == instance.StageState_STAGE_STATE_UNSPECIFIED {
+		return ""
+	}
+	return strings.ToLower(strings.TrimPrefix(s.String(), "STAGE_STATE_"))
 }
