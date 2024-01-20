@@ -39,7 +39,7 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20240118090859-6eb924ed27a3
+	github.com/rigdev/rig-go-api v0.0.0-20240119102317-710e997e400e
 	github.com/rigdev/rig-go-sdk v0.0.0-20240116134743-e20a2ab8d187
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
