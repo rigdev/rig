@@ -338,8 +338,8 @@ github.com/prometheus/common v0.45.0 h1:2BGz0eBc2hdMDLnO/8n0jeB3oPrt2D08CekT0lne
 github.com/prometheus/common v0.45.0/go.mod h1:YJmSTw9BoKxJplESWWxlbyttQR4uaEcGyv9MZjVOJsY=
 github.com/prometheus/procfs v0.11.1 h1:xRC8Iq1yyca5ypa9n1EZnWZkt7dwcoRPQwX/5gwaUuI=
 github.com/prometheus/procfs v0.11.1/go.mod h1:eesXgaPo1q7lBpVMoMy0ZOFTth9hBn4W/y0/p/ScXhY=
-github.com/rigdev/rig-go-api v0.0.0-20240118090859-6eb924ed27a3 h1:gEaVkZk7+McjkvkoaZHWe/hKJ9pIV9nJJXnSDtjdlE4=
-github.com/rigdev/rig-go-api v0.0.0-20240118090859-6eb924ed27a3/go.mod h1:1tdBX2y2+lLY5qJcSGtF7q3kju8nAXNiGsX/mYs1k/0=
+github.com/rigdev/rig-go-api v0.0.0-20240119102317-710e997e400e h1:lWJGpR2mpbuyObLL5LEMSxYj0k7zFLaE69hijbayw0k=
+github.com/rigdev/rig-go-api v0.0.0-20240119102317-710e997e400e/go.mod h1:1tdBX2y2+lLY5qJcSGtF7q3kju8nAXNiGsX/mYs1k/0=
 github.com/rigdev/rig-go-sdk v0.0.0-20240116134743-e20a2ab8d187 h1:Q8lRmPMVqgRChJdVzNkhb5C5notZ6GXNWcrMOIQ5AZM=
 github.com/rigdev/rig-go-sdk v0.0.0-20240116134743-e20a2ab8d187/go.mod h1:FMC04kV0udj5U+ayoDbudav2OK1lNERHJ+ZYTRPruSM=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
