@@ -47,7 +47,11 @@ func (cfg *Config) CreateContext(name, url string) error {
 		names = append(names, c.Name)
 	}
 
-	name, err := common.PromptInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt(name), common.ValidateUniqueOpt(names))
+	name, err := common.PromptInput("Name:",
+		common.ValidateSystemNameOpt,
+		common.InputDefaultOpt(name),
+		common.ValidateUniqueOpt(names),
+	)
 	if err != nil {
 		return err
 	}
