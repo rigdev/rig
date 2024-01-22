@@ -22,7 +22,7 @@ func (cfg *Config) SelectContext() error {
 	var labels []string
 	for _, c := range cfg.Contexts {
 		if c.Name == cfg.CurrentContextName {
-			labels = append(labels, c.Name+"*")
+			labels = append(labels, c.Name+"  (Current)")
 		} else {
 			labels = append(labels, c.Name)
 		}
@@ -42,7 +42,12 @@ func (cfg *Config) CreateDefaultContext() error {
 }
 
 func (cfg *Config) CreateContext(name, url string) error {
-	name, err := common.PromptInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt(name))
+	var names []string
+	for _, c := range cfg.Contexts {
+		names = append(names, c.Name)
+	}
+
+	name, err := common.PromptInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt(name), common.ValidateUniqueOpt(names))
 	if err != nil {
 		return err
 	}
