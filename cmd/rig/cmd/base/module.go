@@ -6,7 +6,6 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
-	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,10 +33,6 @@ var Module = fx.Module(
 		)
 	}),
 	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
-	fx.Provide(auth.NewService),
-	fx.Invoke(func(s *auth.Service, cmd *cobra.Command, i Interactive) error {
-		return s.CheckAuth(context.TODO(), cmd, bool(i))
-	}),
 )
 
 type Interactive bool

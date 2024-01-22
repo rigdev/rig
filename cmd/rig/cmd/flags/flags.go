@@ -5,6 +5,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 )
 
+//nolint:revive
 type FlagsStruct struct {
 	OutputType     common.OutputType
 	NonInteractive bool

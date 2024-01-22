@@ -186,7 +186,8 @@ func (s *Service) authUser(ctx context.Context, interactive bool) error {
 }
 
 func (s *Service) authProject(ctx context.Context, interactive bool) error {
-	if (s.cfg.GetCurrentContext().ProjectID == "" || uuid.UUID(s.cfg.GetCurrentContext().ProjectID).IsNil()) && !interactive {
+	if (s.cfg.GetCurrentContext().ProjectID == "" ||
+		uuid.UUID(s.cfg.GetCurrentContext().ProjectID).IsNil()) && !interactive {
 		return errors.FailedPreconditionErrorf("Select a project to continue")
 	}
 

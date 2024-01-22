@@ -9,6 +9,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
 
@@ -20,12 +22,27 @@ var clientModule = fx.Module("client",
 	}),
 )
 
-func newRigClient(s *cmdconfig.Service, cfg *cmdconfig.Config) rig.Client {
-	return rig.NewClient(
+func newRigClient(
+	cmd *cobra.Command,
+	s *cmdconfig.Service,
+	cfg *cmdconfig.Config,
+	interactive Interactive,
+) (rig.Client, *auth.Service, error) {
+	r := rig.NewClient(
 		rig.WithHost(s.Server),
 		rig.WithInterceptors(&userAgentInterceptor{}),
 		rig.WithSessionManager(&configSessionManager{cfg: cfg}),
 	)
+
+	a := auth.NewService(r, cfg)
+
+	if !SkipChecks(cmd) {
+		if err := a.CheckAuth(context.TODO(), cmd, bool(interactive)); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return r, a, nil
 }
 
 type userAgentInterceptor struct{}
