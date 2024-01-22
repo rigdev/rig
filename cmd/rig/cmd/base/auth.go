@@ -69,20 +69,6 @@ func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdc
 	}
 }
 
-// type authFunc func(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config, interactive bool) error
-
-// func retryOnAuthErr(f authFunc, ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config, interactive bool) error {
-// 	for {
-// 		err := f(ctx, cmd, rc, cfg, interactive)
-// 		if err == nil {
-// 			return nil
-// 		}
-// 		if err := handleAuthError(cfg, err, interactive); err != nil {
-// 			return err
-// 		}
-// 	}
-// }
-
 func handleAuthError(cfg *cmdconfig.Config, origErr error, interactive bool) (bool, error) {
 	if !errors.IsUnauthenticated(origErr) {
 		return false, origErr
