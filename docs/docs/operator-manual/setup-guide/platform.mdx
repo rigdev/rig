@@ -47,3 +47,54 @@ client:
 See the [Database](/operator-manual/database) article for more information about how to connect to your
 own database, and other configuration options.
 :::
+
+
+## Configuration
+
+In addition to database, the Rig Platform has a wide range of configuration options.
+The configuration is easily provided as part of a values file for the Helm Chart.
+
+The entire config is described [here](https://github.com/rigdev/rig/blob/main/deploy/charts/rig-platform/values.yaml),
+but is simply a YAML file with configuration parameters.
+
+### Applying the configuration
+
+To apply a config to a cluster, save the file as `platform.yaml` run the following command:
+
+<pre><code className="language-bash">{`helm upgrade --install rig-platform rig-platform \\
+  --repo https://charts.rig.dev \\
+  --version ${RIG_PLATFORM_CHART_VERSION} \\
+  --namespace rig-system \\
+  --create-namespace \\
+  -f platform.yaml
+`}</code></pre>
+
+This can be done several times, after each change.
+
+## Platform Initialization
+
+After installing the Rig Platform you'll need to run the following command to setup an admin user
+
+```bash
+kubectl exec -it -n rig-system deploy/rig-platform rig-admin init
+```
+
+## Connect to the Rig Platform remotely
+
+### Dashboard
+
+Accessing the Dashboard is best done using an Ingress, but can also be done using port-forwarding:
+
+```bash
+kubectl port-forward -n rig-system service/rig-platform 4747
+```
+
+### CLI
+
+After setting up Rig, users who want to connect to it remotely can run the following command using their local Rig CLI
+
+```bash
+rig config init
+```
+which will guide the user trough connecting to Rig.
+

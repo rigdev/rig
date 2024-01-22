@@ -60,23 +60,8 @@ For real-world scenarios, we recommend using the extended installation guides, a
 - [Rig Operator Setup guide](/operator-manual/setup-guide/operator)
 - [Rig Platform Setup guide](/operator-manual/setup-guide/platform)
 
-## Connect to the Rig Platform remotely
-After setting up Rig, users who want to connect to it remotely can run the following command using their local Rig CLI
-```bash
-rig config init
-```
-which will guide the user trough connecting to Rig.
 
-
-
-After installing the Rig Platform you'll need to run the following command to setup an admin user
-
-```bash
-kubectl exec -it --namespace rig-system deploy/rig-platform \
-  -- rig-admin init
-```
-
-### Configuration
+## Configuration
 
 The Rig Operator and Platform both have a `values.yaml` file which specify how
 to configure their respective Helm charts. The `values` files and their
