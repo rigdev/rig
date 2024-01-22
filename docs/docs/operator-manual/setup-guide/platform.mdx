@@ -1,0 +1,49 @@
+import {
+RIG_PLATFORM_CHART_VERSION
+} from "../../../src/constants/versions"
+
+# Rig guide
+
+## Setup Installation
+
+The Rig Platform is installed using a Helm chart, into any Kubernetes cluster that has
+the Rig Operator installed.
+
+## Dependencies
+
+### Rig Operator
+
+Ensure you have already [installed the Rig Operator](/operator-manual/setup-guide/operator)
+before installing the Platform, as the Platform itself is installed as a Capsule.
+
+### PostgreSQL
+
+The Platform depends on a single PostgreSQL database, for where it will store all of its
+configuration.
+
+#### In-cluster database
+
+It's possible to have the Helm Chart spin up a database by setting the following flag
+when running `helm`: `--set postgres.enabled=true`. This is not recommended for production
+environments though.
+
+#### Managed database
+
+The better option is to use a managed database in the cluster environment you're
+already running in. It can also be a new database within an existing PostgreSQL instance.
+Add the following section to your `platform.yaml` file:
+
+```yaml
+client:
+  postgres:
+    database: "rig"  ## change if different database is used.
+    host: <host or ip>
+    user: <db user>
+    password: <db password>
+    # insecure: false  ## set only if DB connection is insecure
+```
+
+:::info Note
+See the [Database](/operator-manual/database) article for more information about how to connect to your
+own database, and other configuration options.
+:::

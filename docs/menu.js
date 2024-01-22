@@ -228,7 +228,7 @@ const sidebars = {
     },
     {
       type: "category",
-      label: "Setup-guide",
+      label: "Setup Guide",
       link: { type: "doc", id: "operator-manual/setup-guide" },
       className: "homepage-sidebar-item",
       customProps: {
@@ -236,6 +236,18 @@ const sidebars = {
       },
       collapsed: true,
       items: [
+        {
+          type: "doc",
+          id: "operator-manual/setup-guide/operator",
+          label: "Operator",
+          className: "docpage-sidebar-item",
+        },
+        {
+          type: "doc",
+          id: "operator-manual/setup-guide/platform",
+          label: "Platform",
+          className: "docpage-sidebar-item",
+        },
         {
           type: "doc",
           id: "operator-manual/database",
