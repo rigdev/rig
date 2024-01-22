@@ -34,6 +34,10 @@ message Change {
   message RemoveCronJob {
     string job_name = 1;
   }
+
+  message RemoveInterface {
+    string interface_name = 1;
+  }
   
   oneof field {
     uint32 replicas = 1;
@@ -52,6 +56,8 @@ message Change {
     CommandArguments command_arguments = 15;
     CronJob add_cron_job = 16;
     RemoveCronJob remove_cron_job = 17;
+    Interface add_interface = 18;
+    RemoveInterface remove_interface = 19;
   }
 }
 
