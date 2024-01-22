@@ -30,8 +30,9 @@ var useProject bool
 type Cmd struct {
 	fx.In
 
-	Rig rig.Client
-	Cfg *cmdconfig.Config
+	Rig  rig.Client
+	Cfg  *cmdconfig.Config
+	Auth *auth.Service
 }
 
 var cmd Cmd
@@ -39,6 +40,7 @@ var cmd Cmd
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Cfg = c.Cfg
+	cmd.Auth = c.Auth
 }
 
 func Setup(parent *cobra.Command) {
