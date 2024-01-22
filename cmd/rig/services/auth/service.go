@@ -205,7 +205,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 			return errors.FailedPreconditionErrorf("Create and select a project to continue")
 		}
 
-		if err := s.createProject(ctx); err != nil {
+		if err := s.CreateProject(ctx, "", nil); err != nil {
 			return err
 		}
 
@@ -260,10 +260,13 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 	return nil
 }
 
-func (s *Service) createProject(ctx context.Context) error {
-	name, err := common.PromptInput("Project name:", common.ValidateNonEmptyOpt)
-	if err != nil {
-		return err
+func (s *Service) CreateProject(ctx context.Context, name string, useNewProject *bool) error {
+	var err error
+	if name == "" {
+		name, err = common.PromptInput("Project name:", common.ValidateNonEmptyOpt)
+		if err != nil {
+			return err
+		}
 	}
 
 	initializers := []*project.Update{
@@ -287,12 +290,15 @@ func (s *Service) createProject(ctx context.Context) error {
 	p := res.Msg.GetProject()
 	fmt.Printf("Successfully created project %s with id %s \n", name, p.GetProjectId())
 
-	useProject, err := common.PromptConfirm("Would you like to use this project now?", true)
-	if err != nil {
-		return err
+	if useNewProject == nil {
+		ok, err := common.PromptConfirm("Would you like to use this project now?", true)
+		if err != nil {
+			return err
+		}
+		useNewProject = &ok
 	}
 
-	if useProject {
+	if *useNewProject {
 		s.cfg.GetCurrentContext().ProjectID = p.GetProjectId()
 		if err := s.cfg.Save(); err != nil {
 			return err
