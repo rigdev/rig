@@ -75,7 +75,10 @@ func handleAuthError(cfg *cmdconfig.Config, origErr error, interactive bool) (bo
 	}
 
 	cmdContext := cfg.GetCurrentContext()
-	s := fmt.Sprintf("There seems to be an issue with the authentication information stored in your current context '%s'", cmdContext.Name)
+	s := fmt.Sprintf(
+		"There seems to be an issue with the authentication information stored in your current context '%s'",
+		cmdContext.Name,
+	)
 	if !interactive {
 		return false, fmt.Errorf("%s: %s", s, origErr)
 	}
@@ -165,7 +168,7 @@ func authEnvironment(ctx context.Context,
 	return nil
 }
 
-func authUser(ctx context.Context, cmd *cobra.Command, rig rig.Client, cfg *cmdconfig.Config, interactive bool) error {
+func authUser(ctx context.Context, _ *cobra.Command, rig rig.Client, cfg *cmdconfig.Config, interactive bool) error {
 	user := cfg.GetCurrentAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil
