@@ -32,24 +32,71 @@ func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdc
 
 	annotations := GetAllAnnotations(cmd)
 
-	if _, ok := annotations[OmitUser]; !ok {
-		if err := authUser(ctx, rc, cfg, interactive); err != nil {
-			return err
+	for {
+		if _, ok := annotations[OmitUser]; !ok {
+			err := authUser(ctx, cmd, rc, cfg, interactive)
+			retry, err := handleAuthError(cfg, err, interactive)
+			if err != nil {
+				return err
+			}
+			if retry {
+				continue
+			}
 		}
+
+		if _, ok := annotations[OmitProject]; !ok {
+			err := authProject(ctx, cmd, rc, cfg, interactive)
+			retry, err := handleAuthError(cfg, err, interactive)
+			if err != nil {
+				return err
+			}
+			if retry {
+				continue
+			}
+		}
+		if _, ok := annotations[OmitEnvironment]; !ok {
+			err := authEnvironment(ctx, cmd, rc, cfg, interactive)
+			retry, err := handleAuthError(cfg, err, interactive)
+			if err != nil {
+				return err
+			}
+			if retry {
+				continue
+			}
+		}
+
+		return nil
+	}
+}
+
+func handleAuthError(cfg *cmdconfig.Config, origErr error, interactive bool) (bool, error) {
+	if !errors.IsUnauthenticated(origErr) {
+		return false, origErr
 	}
 
-	if _, ok := annotations[OmitProject]; !ok {
-		if err := authProject(ctx, cmd, rc, cfg, interactive); err != nil {
-			return err
-		}
+	cmdContext := cfg.GetCurrentContext()
+	s := fmt.Sprintf(
+		"There seems to be an issue with the authentication information stored in your current context '%s'",
+		cmdContext.Name,
+	)
+	if !interactive {
+		return false, fmt.Errorf("%s: %s", s, origErr)
 	}
-	if _, ok := annotations[OmitEnvironment]; !ok {
-		if err := authEnvironment(ctx, cmd, rc, cfg, interactive); err != nil {
-			return err
-		}
+	fmt.Println(s)
+	ok, err := common.PromptConfirm("Do you wish to rebuild this context before proceeding?", true)
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return false, origErr
 	}
 
-	return nil
+	cfg.DeleteContext(cmdContext.Name)
+	if err := cfg.CreateContext(cmdContext.Name, cmdContext.GetService().Server); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func authEnvironment(ctx context.Context,
@@ -121,7 +168,7 @@ func authEnvironment(ctx context.Context,
 	return nil
 }
 
-func authUser(ctx context.Context, rig rig.Client, cfg *cmdconfig.Config, interactive bool) error {
+func authUser(ctx context.Context, _ *cobra.Command, rig rig.Client, cfg *cmdconfig.Config, interactive bool) error {
 	user := cfg.GetCurrentAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil

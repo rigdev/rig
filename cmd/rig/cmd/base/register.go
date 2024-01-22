@@ -52,13 +52,13 @@ func getContext(cfg *cmdconfig.Config, promptInfo *PromptInformation) (*cmdconfi
 	if cfg.CurrentContextName == "" {
 		if len(cfg.Contexts) > 0 {
 			fmt.Println("No context selected, please select one")
-			if err := cmdconfig.SelectContext(cfg); err != nil {
+			if err := cfg.SelectContext(); err != nil {
 				return nil, err
 			}
 		} else {
 			promptInfo.ContextCreation = true
 			fmt.Println("No context available, please create one")
-			if err := cmdconfig.CreateDefaultContext(cfg); err != nil {
+			if err := cfg.CreateDefaultContext(); err != nil {
 				return nil, err
 			}
 		}

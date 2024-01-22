@@ -7,7 +7,7 @@ import (
 	"github.com/rigdev/rig/pkg/uuid"
 )
 
-func UseContext(cfg *Config, name string) error {
+func (cfg *Config) UseContext(name string) error {
 	for _, c := range cfg.Contexts {
 		if c.Name == name {
 			cfg.CurrentContextName = c.Name
@@ -18,7 +18,7 @@ func UseContext(cfg *Config, name string) error {
 	return fmt.Errorf("unknown context '%v'", name)
 }
 
-func SelectContext(cfg *Config) error {
+func (cfg *Config) SelectContext() error {
 	var labels []string
 	for _, c := range cfg.Contexts {
 		if c.Name == cfg.CurrentContextName {
@@ -37,11 +37,11 @@ func SelectContext(cfg *Config) error {
 	return cfg.Save()
 }
 
-func CreateDefaultContext(cfg *Config) error {
-	return CreateContext(cfg, "local", "http://localhost:4747/")
+func (cfg *Config) CreateDefaultContext() error {
+	return cfg.CreateContext("local", "http://localhost:4747/")
 }
 
-func CreateContext(cfg *Config, name, url string) error {
+func (cfg *Config) CreateContext(name, url string) error {
 	name, err := common.PromptInput("Name:", common.ValidateSystemNameOpt, common.InputDefaultOpt(name))
 	if err != nil {
 		return err
@@ -99,14 +99,4 @@ func CreateContext(cfg *Config, name, url string) error {
 	}
 
 	return cfg.Save()
-}
-
-func ConfigInit(cfg *Config) error {
-	if ok, err := common.PromptConfirm("Do you want to configure a new Rig context?", true); err != nil {
-		return err
-	} else if !ok {
-		return nil
-	}
-
-	return CreateDefaultContext(cfg)
 }
