@@ -369,10 +369,12 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
+| `name` _string_ | Name is a human-readable name of the provider. If set this will be used instead of the provider id (the key in `PlatformConfig.Auth.SSO.OIDCProviders`) |
 | `issuerURL` _string_ | IssuerURL is the URL for the OIDC issuer endpoint. |
-| `clientId` _string_ | ClientID is the OAuth client ID. |
+| `clientID` _string_ | ClientID is the OAuth client ID. |
 | `clientSecret` _string_ | ClientSecret is the OAuth client secret. |
 | `allowedDomains` _string array_ | AllowedDomains is a list of email domains to allow. If left empty any successful authentication on the provider is allowed. |
+| `scopes` _string array_ | Scopes is a list of additional scopes other than `openid`, `email` and `profile`. |
 | `groupsClaim` _string_ | GroupsClaim is the path to a claim in the JWT containing a string or list of strings of group names. |
 | `disableJITGroups` _boolean_ | DisableJITGroups disables creation of groups found through OIDC in rig. |
 | `groupMapping` _object (keys:string, values:string)_ | GroupMapping is a mapping from OIDC provided group names to group names used in rig. If an OIDC provided group name is not provided in this mapping we will use the OIDC provided groupname in rig. |
@@ -413,7 +415,7 @@ OperatorConfig is the Schema for the configs API
 | `apiVersion` _string_ | `config.rig.dev/v1alpha1`
 | `kind` _string_ | `PlatformConfig`
 | `port` _integer_ | Port sets the port the platform should listen on |
-| `publicUrl` _string_ | PublicUrl sets the public url for the platform. This is used for generating urls for the platform when using oauth2. |
+| `publicURL` _string_ | PublicUrl sets the public url for the platform. This is used for generating urls for the platform when using oauth2. |
 | `telemetryEnabled` _boolean_ | TelemetryEnabled specifies wether or not we are allowed to collect usage data. Defaults to true. |
 | `auth` _[Auth](#auth)_ | Auth holds authentication configuration. |
 | `client` _[Client](#client)_ | Client holds configuration for clients used in the platform. |

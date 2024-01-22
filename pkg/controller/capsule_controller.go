@@ -1119,6 +1119,7 @@ func reconcileCertificate(ctx context.Context, r *reconcileRequest) error {
 		r.logger.Info("Found existing certificate not owned by capsule. Will not delete it.")
 	} else {
 		if r.ingressIsSupported() && r.shouldCreateCertificateRessource() && r.capsuleHasIngress() {
+			crt.ResourceVersion = existingCrt.ResourceVersion
 			return upsertIfNewer(ctx, r, existingCrt, crt, func(t1, t2 *cmv1.Certificate) bool {
 				return equality.Semantic.DeepEqual(t1.Spec, t2.Spec)
 			})

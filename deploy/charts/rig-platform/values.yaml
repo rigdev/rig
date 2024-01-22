@@ -118,6 +118,20 @@ rig:
     secret: shhhdonotshare
     certificateFile: ""
     certificateKeyFile: ""
+    sso:
+      oidcProviders: {}
+      # each key is considered a provider ID
+      # oidc1:
+      #   name: "My OIDC Provider"
+      #   issuerURL: "https://accounts.google.com
+      #   clientID: my-client-id
+      #   clientSecret: my-client-secret
+      #   allowedDomains:
+      #     - mydomain.com
+      #   groupsClaim: groups
+      #   disableJITGroups: false
+      #   groupMapping:
+      #     OIDCProvidedGroup: MyRigGroup
 
   telemetryEnabled: true
 
