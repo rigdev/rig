@@ -6,6 +6,7 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -33,20 +34,13 @@ var Module = fx.Module(
 		)
 	}),
 	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
+	fx.Provide(auth.NewService),
+	fx.Invoke(func(s *auth.Service, cmd *cobra.Command, i Interactive) error {
+		return s.CheckAuth(context.TODO(), cmd, bool(i))
+	}),
 )
 
-func GetAllAnnotations(cmd *cobra.Command) map[string]string {
-	res := make(map[string]string)
-	for p := cmd; p != nil; p = p.Parent() {
-		for k, v := range p.Annotations {
-			if _, ok := res[k]; ok {
-				continue
-			}
-			res[k] = v
-		}
-	}
-	return res
-}
+type Interactive bool
 
 func getContext(cfg *cmdconfig.Config, promptInfo *PromptInformation) (*cmdconfig.Context, error) {
 	if cfg.CurrentContextName == "" {
@@ -110,7 +104,7 @@ func Provide(cmd *cobra.Command, args []string, invokes ...any) error {
 		fx.Provide(func() *cobra.Command { return cmd }),
 		fx.Provide(func() []string { return args }),
 		// provide a flag to indicate that we cannot prompt for resource creation
-		fx.Provide(func() bool { return false }),
+		fx.Provide(func() Interactive { return false }),
 	}
 	allOpts = append(allOpts, options...)
 	return fx.New(allOpts...).Err()
@@ -123,14 +117,14 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	}
 	preRunsLeft--
 
-	if preRunsLeft == 0 && !skipChecks(cmd) {
+	if preRunsLeft == 0 && !SkipChecks(cmd) {
 		allOpts := []fx.Option{
 			Module,
 			fx.NopLogger,
 			fx.Provide(func() *cobra.Command { return cmd }),
 			fx.Provide(func() []string { return args }),
 			// provide a flag to indicate that we can prompt for resource creation
-			fx.Provide(func() bool { return true }),
+			fx.Provide(func() Interactive { return true }),
 		}
 		allOpts = append(allOpts, options...)
 		return fx.New(allOpts...).Err()

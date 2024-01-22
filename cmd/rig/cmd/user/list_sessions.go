@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -34,8 +34,8 @@ func (c *Cmd) listSessions(ctx context.Context, cmd *cobra.Command, args []strin
 		return err
 	}
 
-	if base.Flags.OutputType != base.OutputTypePretty {
-		return base.FormatPrint(resp.Msg.GetSessions())
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(resp.Msg.GetSessions(), flags.Flags.OutputType)
 	}
 
 	t := table.NewWriter()

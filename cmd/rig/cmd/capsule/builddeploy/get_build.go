@@ -10,8 +10,8 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -31,8 +31,8 @@ func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, _ []string) erro
 		return err
 	}
 
-	if base.Flags.OutputType != base.OutputTypePretty {
-		return base.FormatPrint(resp.Msg.GetBuilds())
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(resp.Msg.GetBuilds(), flags.Flags.OutputType)
 	}
 
 	t := table.NewWriter()

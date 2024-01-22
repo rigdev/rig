@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -38,7 +39,6 @@ var cmd Cmd
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Cfg = c.Cfg
-	fmt.Println("project", cmd.Cfg.GetProject())
 }
 
 func Setup(parent *cobra.Command) {
@@ -47,7 +47,7 @@ func Setup(parent *cobra.Command) {
 		Short:             "Manage Rig projects",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
-			base.OmitEnvironment: "",
+			auth.OmitEnvironment: "",
 		},
 	}
 
@@ -98,7 +98,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.create),
 		Annotations: map[string]string{
-			base.OmitProject: "",
+			auth.OmitProject: "",
 		},
 	}
 	createProject.Flags().StringVarP(&name, "name", "n", "", "Project name")
@@ -161,7 +161,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.list),
 		Annotations: map[string]string{
-			base.OmitProject: "",
+			auth.OmitProject: "",
 		},
 	}
 	listProjects.Flags().IntVar(&offset, "offset", 0, "Offset")

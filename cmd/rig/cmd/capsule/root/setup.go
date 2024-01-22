@@ -24,6 +24,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -85,7 +86,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.create),
 		Annotations: map[string]string{
-			base.OmitCapsule: "",
+			auth.OmitCapsule: "",
 		},
 	}
 	capsuleCreate.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode")
@@ -116,7 +117,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Delete a capsule",
 		Args:  cobra.NoArgs,
 		Annotations: map[string]string{
-			base.OmitEnvironment: "",
+			auth.OmitEnvironment: "",
 		},
 		RunE: base.CtxWrap(cmd.delete),
 	}
@@ -128,7 +129,7 @@ func Setup(parent *cobra.Command) {
 		PersistentPreRunE: base.PersistentPreRunE,
 		Args:              cobra.NoArgs,
 		Annotations: map[string]string{
-			base.OmitCapsule: "",
+			auth.OmitCapsule: "",
 		},
 		RunE: base.CtxWrap(cmd.get),
 	}
@@ -229,7 +230,7 @@ func formatCapsule(c *capsule_api.Capsule) string {
 }
 
 func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	if _, ok := cmd.Annotations[base.OmitCapsule]; ok {
+	if _, ok := cmd.Annotations[auth.OmitCapsule]; ok {
 		return nil
 	}
 

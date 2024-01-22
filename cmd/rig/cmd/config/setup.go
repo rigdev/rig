@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -38,8 +39,8 @@ func Setup(parent *cobra.Command) {
 		Short:             "Manage Rig CLI configuration",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
-			base.OmitProject:     "",
-			base.OmitEnvironment: "",
+			auth.OmitProject:     "",
+			auth.OmitEnvironment: "",
 		},
 	}
 
@@ -49,7 +50,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  cmd.init,
 		Annotations: map[string]string{
-			base.OmitUser: ""},
+			auth.OmitUser: ""},
 	}
 	config.AddCommand(init)
 
@@ -59,7 +60,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cmd.useContext,
 		Annotations: map[string]string{
-			base.OmitUser: "",
+			auth.OmitUser: "",
 		},
 		ValidArgsFunction: common.Complete(
 			cmd.completions,

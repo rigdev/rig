@@ -7,7 +7,8 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -36,8 +37,8 @@ func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error
 		}
 	}
 
-	if base.Flags.OutputType != base.OutputTypePretty {
-		return base.FormatPrint(serviceAccounts)
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(serviceAccounts, flags.Flags.OutputType)
 	}
 
 	t := table.NewWriter()

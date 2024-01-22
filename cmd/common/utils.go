@@ -21,6 +21,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/robfig/cron"
+	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -408,4 +409,17 @@ func FormatDuration(d time.Duration) string {
 	days := int(math.Floor(d.Hours())) / 24
 	hours := int(math.Floor(d.Hours())) % 24
 	return fmt.Sprintf("%vd %vh", days, hours)
+}
+
+func GetAllAnnotations(cmd *cobra.Command) map[string]string {
+	res := make(map[string]string)
+	for p := cmd; p != nil; p = p.Parent() {
+		for k, v := range p.Annotations {
+			if _, ok := res[k]; ok {
+				continue
+			}
+			res[k] = v
+		}
+	}
+	return res
 }

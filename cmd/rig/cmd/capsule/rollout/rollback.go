@@ -6,8 +6,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, _ []string) erro
 			},
 		}},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 
 	resp, err := c.Rig.Capsule().Deploy(ctx, req)
@@ -59,7 +59,7 @@ func (c *Cmd) getRollback(ctx context.Context) (uint64, error) {
 			Descending: true,
 		},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 	if err != nil {
 		return 0, err

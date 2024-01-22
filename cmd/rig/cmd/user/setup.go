@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -49,8 +50,8 @@ func Setup(parent *cobra.Command) {
 		Short:             "Manage users in your projects",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
-			base.OmitProject:     "",
-			base.OmitEnvironment: "",
+			auth.OmitProject:     "",
+			auth.OmitEnvironment: "",
 		},
 	}
 

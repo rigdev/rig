@@ -5,8 +5,9 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -24,13 +25,13 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if base.Flags.OutputType != base.OutputTypePretty {
+	if flags.Flags.OutputType != common.OutputTypePretty {
 		obj := scaleObj{
 			Replicas:      rollout.GetConfig().GetReplicas(),
 			ContainerSize: containerSettings.GetResources(),
 			Autoscaler:    rollout.GetConfig().GetHorizontalScale(),
 		}
-		return base.FormatPrint(obj)
+		return common.FormatPrint(obj, flags.Flags.OutputType)
 	}
 
 	limits := containerSettings.GetResources().GetLimits()

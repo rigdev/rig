@@ -4,6 +4,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -28,13 +29,13 @@ func initCmd(c Cmd) {
 }
 
 func Setup(parent *cobra.Command) {
-	auth := &cobra.Command{
+	authCmd := &cobra.Command{
 		Use:               "auth",
 		Short:             "Manage authentication for the current user",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
-			base.OmitProject:     "",
-			base.OmitEnvironment: "",
+			auth.OmitProject:     "",
+			auth.OmitEnvironment: "",
 		},
 	}
 
@@ -43,13 +44,13 @@ func Setup(parent *cobra.Command) {
 		Short: "Login with user identifier and password",
 		Args:  cobra.NoArgs,
 		Annotations: map[string]string{
-			base.OmitUser: "",
+			auth.OmitUser: "",
 		},
 		RunE: base.CtxWrap(cmd.login),
 	}
 	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
 	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
-	auth.AddCommand(login)
+	authCmd.AddCommand(login)
 
 	get := &cobra.Command{
 		Use:   "get",
@@ -57,7 +58,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.get),
 	}
-	auth.AddCommand(get)
+	authCmd.AddCommand(get)
 
-	parent.AddCommand(auth)
+	parent.AddCommand(authCmd)
 }

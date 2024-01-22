@@ -10,8 +10,8 @@ import (
 	"github.com/moby/term"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -76,7 +76,7 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 			},
 		},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}
 
 	stream := c.Rig.Capsule().Execute(ctx)

@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	project_api "github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_root "github.com/rigdev/rig/cmd/rig/cmd/capsule/root"
@@ -16,10 +17,12 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/config"
 	"github.com/rigdev/rig/cmd/rig/cmd/dev"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/cmd/group"
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
 	"github.com/rigdev/rig/cmd/rig/cmd/serviceaccount"
 	"github.com/rigdev/rig/cmd/rig/cmd/user"
+	auth_service "github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -48,8 +51,8 @@ func Run() error {
 		Use:   "rig",
 		Short: "CLI tool for managing your Rig projects",
 	}
-	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
-	rootCmd.PersistentFlags().StringVarP(&base.Flags.Environment, "environment", "e", base.Flags.Environment, "")
+	rootCmd.PersistentFlags().VarP(&flags.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
+	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Environment, "environment", "e", flags.Flags.Environment, "")
 
 	license := &cobra.Command{
 		Use:               "license",
@@ -58,8 +61,8 @@ func Run() error {
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		RunE:              base.CtxWrap(cmd.getLicenseInfo),
 		Annotations: map[string]string{
-			base.OmitProject:     "",
-			base.OmitEnvironment: "",
+			auth_service.OmitProject:     "",
+			auth_service.OmitEnvironment: "",
 		},
 	}
 	rootCmd.AddCommand(license)
@@ -70,8 +73,8 @@ func Run() error {
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		RunE:              base.CtxWrap(cmd.version),
 		Annotations: map[string]string{
-			base.OmitProject:     "",
-			base.OmitEnvironment: "",
+			auth_service.OmitProject:     "",
+			auth_service.OmitEnvironment: "",
 		},
 	}
 	version.Flags().BoolP("full", "v", false, "print full version")
@@ -104,7 +107,7 @@ func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, _ []string
 		expiresAt = resp.Msg.GetExpiresAt()
 	}
 
-	if base.Flags.OutputType != base.OutputTypePretty {
+	if flags.Flags.OutputType != common.OutputTypePretty {
 		obj := struct {
 			Plan      string    `json:"plan" yaml:"plan"`
 			ExpiresAt time.Time `json:"expires_at" yaml:"expires_at"`
@@ -112,7 +115,7 @@ func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, _ []string
 			Plan:      plan.String(),
 			ExpiresAt: expiresAt.AsTime(),
 		}
-		return base.FormatPrint(obj)
+		return common.FormatPrint(obj, flags.Flags.OutputType)
 	}
 
 	t := table.NewWriter()

@@ -9,8 +9,9 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/capsule/instance"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/common"
 	cmd_capsule "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	table2 "github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +24,7 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 			Limit:  uint32(limit),
 		},
 		ProjectId:       c.Cfg.GetProject(),
-		EnvironmentId:   base.GetEnvironment(c.Cfg),
+		EnvironmentId:   flags.GetEnvironment(c.Cfg),
 		ExcludeExisting: excludeExisting,
 		IncludeDeleted:  includeDeleted,
 	}))
@@ -32,8 +33,8 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 	instances := resp.Msg.GetInstances()
 
-	if base.Flags.OutputType != base.OutputTypePretty {
-		return base.FormatPrint(instances)
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(instances, flags.Flags.OutputType)
 	}
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
