@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 )
 
@@ -19,5 +18,5 @@ func (c *Cmd) init(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("aborted")
 	}
 
-	return cmdconfig.CreateDefaultContext(c.Cfg)
+	return c.Cfg.CreateDefaultContext()
 }

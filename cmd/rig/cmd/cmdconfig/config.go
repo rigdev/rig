@@ -117,6 +117,30 @@ func (cfg *Config) GetCurrentService() *Service {
 	return nil
 }
 
+func (cfg *Config) DeleteContext(name string) bool {
+	found := false
+	for idx, c := range cfg.Contexts {
+		if c.Name == name {
+			cfg.Contexts = append(cfg.Contexts[:idx], cfg.Contexts[idx+1:]...)
+			found = true
+		}
+	}
+
+	for idx, s := range cfg.Services {
+		if s.Name == name {
+			cfg.Services = append(cfg.Services[:idx], cfg.Services[idx+1:]...)
+		}
+	}
+
+	for idx, u := range cfg.Users {
+		if u.Name == name {
+			cfg.Users = append(cfg.Users[:idx], cfg.Users[idx+1:]...)
+		}
+	}
+
+	return found
+}
+
 func (cfg Config) Save() error {
 	bs, err := yaml.Marshal(cfg)
 	if err != nil {
