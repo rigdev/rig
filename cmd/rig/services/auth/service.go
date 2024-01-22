@@ -1,4 +1,4 @@
-package base
+package auth
 
 import (
 	"context"
@@ -13,10 +13,23 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
+
+type Service struct {
+	rig rig.Client
+	cfg *cmdconfig.Config
+}
+
+func NewService(rig rig.Client, cfg *cmdconfig.Config) *Service {
+	return &Service{
+		rig: rig,
+		cfg: cfg,
+	}
+}
 
 var (
 	OmitUser        = "OMIT_USER"
@@ -25,64 +38,53 @@ var (
 	OmitCapsule     = "OMIT_CAPSULE"
 )
 
-func CheckAuth(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config, interactive bool) error {
-	if skipChecks(cmd) {
-		return nil
+func (s *Service) CheckAuth(ctx context.Context, cmd *cobra.Command, interactive bool) error {
+	annotations := common.GetAllAnnotations(cmd)
+
+	var funcs []func(context.Context, bool) error
+	if _, ok := annotations[OmitUser]; !ok {
+		funcs = append(funcs, s.authUser)
+	}
+	if _, ok := annotations[OmitProject]; !ok {
+		funcs = append(funcs, s.authProject)
+	}
+	if _, ok := annotations[OmitEnvironment]; !ok {
+		funcs = append(funcs, s.authEnvironment)
 	}
 
-	annotations := GetAllAnnotations(cmd)
-
 	for {
-		if _, ok := annotations[OmitUser]; !ok {
-			err := authUser(ctx, cmd, rc, cfg, interactive)
-			retry, err := handleAuthError(cfg, err, interactive)
+		var retry bool
+		var err error
+		for _, f := range funcs {
+			retry, err = s.handleAuthError(f(ctx, interactive), interactive)
 			if err != nil {
 				return err
 			}
 			if retry {
-				continue
+				break
 			}
 		}
-
-		if _, ok := annotations[OmitProject]; !ok {
-			err := authProject(ctx, cmd, rc, cfg, interactive)
-			retry, err := handleAuthError(cfg, err, interactive)
-			if err != nil {
-				return err
-			}
-			if retry {
-				continue
-			}
+		if retry {
+			continue
 		}
-		if _, ok := annotations[OmitEnvironment]; !ok {
-			err := authEnvironment(ctx, cmd, rc, cfg, interactive)
-			retry, err := handleAuthError(cfg, err, interactive)
-			if err != nil {
-				return err
-			}
-			if retry {
-				continue
-			}
-		}
-
 		return nil
 	}
 }
 
-func handleAuthError(cfg *cmdconfig.Config, origErr error, interactive bool) (bool, error) {
+func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error) {
 	if !errors.IsUnauthenticated(origErr) {
 		return false, origErr
 	}
 
-	cmdContext := cfg.GetCurrentContext()
-	s := fmt.Sprintf(
+	cmdContext := s.cfg.GetCurrentContext()
+	str := fmt.Sprintf(
 		"There seems to be an issue with the authentication information stored in your current context '%s'",
 		cmdContext.Name,
 	)
 	if !interactive {
-		return false, fmt.Errorf("%s: %s", s, origErr)
+		return false, fmt.Errorf("%s: %s", str, origErr)
 	}
-	fmt.Println(s)
+	fmt.Println(str)
 	ok, err := common.PromptConfirm("Do you wish to rebuild this context before proceeding?", true)
 	if err != nil {
 		return false, err
@@ -91,20 +93,16 @@ func handleAuthError(cfg *cmdconfig.Config, origErr error, interactive bool) (bo
 		return false, origErr
 	}
 
-	cfg.DeleteContext(cmdContext.Name)
-	if err := cfg.CreateContext(cmdContext.Name, cmdContext.GetService().Server); err != nil {
+	s.cfg.DeleteContext(cmdContext.Name)
+	if err := s.cfg.CreateContext(cmdContext.Name, cmdContext.GetService().Server); err != nil {
 		return false, err
 	}
 
 	return true, nil
 }
 
-func authEnvironment(ctx context.Context,
-	cmd *cobra.Command,
-	rig rig.Client,
-	cfg *cmdconfig.Config,
-	interactive bool) error {
-	environmentID := GetEnvironment(cfg)
+func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
+	environmentID := flags.GetEnvironment(s.cfg)
 	if environmentID == "" && !interactive {
 		return errors.FailedPreconditionErrorf("Please select an environment or use the --environment flag")
 	}
@@ -119,18 +117,18 @@ func authEnvironment(ctx context.Context,
 			return errors.FailedPreconditionErrorf("Please select an environment or use the --environment flag")
 		}
 
-		environmentID, err = promptForEnvironment(ctx, rig)
+		environmentID, err = s.promptForEnvironment(ctx)
 		if err != nil {
 			return err
 		}
-		cfg.GetCurrentContext().EnvironmentID = environmentID
-		if err := cfg.Save(); err != nil {
+		s.cfg.GetCurrentContext().EnvironmentID = environmentID
+		if err := s.cfg.Save(); err != nil {
 			return err
 		}
-		cmd.Println("Changed environment successfully!")
+		fmt.Println("Changed environment successfully!")
 	}
 
-	res, err := rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
+	res, err := s.rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
 	if err != nil {
 		return nil
 	}
@@ -154,22 +152,22 @@ func authEnvironment(ctx context.Context,
 			return errors.FailedPreconditionErrorf("Select an environment or use the --environment flag")
 		}
 
-		environmentID, err = promptForEnvironment(ctx, rig)
+		environmentID, err = s.promptForEnvironment(ctx)
 		if err != nil {
 			return err
 		}
-		cfg.GetCurrentContext().EnvironmentID = environmentID
-		if err := cfg.Save(); err != nil {
+		s.cfg.GetCurrentContext().EnvironmentID = environmentID
+		if err := s.cfg.Save(); err != nil {
 			return err
 		}
-		cmd.Println("Changed environment successfully!")
+		fmt.Println("Changed environment successfully!")
 	}
 
 	return nil
 }
 
-func authUser(ctx context.Context, _ *cobra.Command, rig rig.Client, cfg *cmdconfig.Config, interactive bool) error {
-	user := cfg.GetCurrentAuth().UserID
+func (s *Service) authUser(ctx context.Context, interactive bool) error {
+	user := s.cfg.GetCurrentAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil
 	}
@@ -184,19 +182,16 @@ func authUser(ctx context.Context, _ *cobra.Command, rig rig.Client, cfg *cmdcon
 	if !loginBool {
 		return errors.UnauthenticatedErrorf("Login to continue")
 	}
-	return login(ctx, rig, cfg)
+	return s.login(ctx)
 }
 
-func authProject(ctx context.Context,
-	cmd *cobra.Command,
-	rig rig.Client,
-	cfg *cmdconfig.Config,
-	interactive bool) error {
-	if (cfg.GetCurrentContext().ProjectID == "" || uuid.UUID(cfg.GetCurrentContext().ProjectID).IsNil()) && !interactive {
+func (s *Service) authProject(ctx context.Context, interactive bool) error {
+	if (s.cfg.GetCurrentContext().ProjectID == "" ||
+		uuid.UUID(s.cfg.GetCurrentContext().ProjectID).IsNil()) && !interactive {
 		return errors.FailedPreconditionErrorf("Select a project to continue")
 	}
 
-	res, err := rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
+	res, err := s.rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return err
 	}
@@ -210,17 +205,17 @@ func authProject(ctx context.Context,
 			return errors.FailedPreconditionErrorf("Create and select a project to continue")
 		}
 
-		if err := createProject(ctx, cmd, rig, cfg); err != nil {
+		if err := s.createProject(ctx); err != nil {
 			return err
 		}
 
-		res, err = rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
+		res, err = s.rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 		if err != nil {
 			return err
 		}
 	}
 
-	pid := cfg.GetCurrentContext().ProjectID
+	pid := s.cfg.GetCurrentContext().ProjectID
 	if pid == "" || uuid.UUID(pid).IsNil() {
 		use, err := common.PromptConfirm("You have not selected a project. Would you like to select one now?", true)
 		if err != nil {
@@ -230,14 +225,14 @@ func authProject(ctx context.Context,
 			return errors.FailedPreconditionErrorf("Select a project to continue")
 		}
 
-		if err := useProject(ctx, rig, cfg); err != nil {
+		if err := s.useProject(ctx); err != nil {
 			return err
 		}
 	}
 
 	found := false
 	for _, p := range res.Msg.GetProjects() {
-		if p.GetProjectId() == cfg.GetCurrentContext().ProjectID {
+		if p.GetProjectId() == s.cfg.GetCurrentContext().ProjectID {
 			found = true
 			break
 		}
@@ -256,7 +251,7 @@ func authProject(ctx context.Context,
 		// }
 
 		if use {
-			err = useProject(ctx, rig, cfg)
+			err = s.useProject(ctx)
 			if err != nil {
 				return err
 			}
@@ -265,7 +260,7 @@ func authProject(ctx context.Context,
 	return nil
 }
 
-func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *cmdconfig.Config) error {
+func (s *Service) createProject(ctx context.Context) error {
 	name, err := common.PromptInput("Project name:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return err
@@ -279,7 +274,7 @@ func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *
 		},
 	}
 
-	res, err := rc.Project().Create(ctx, &connect.Request[project.CreateRequest]{
+	res, err := s.rig.Project().Create(ctx, &connect.Request[project.CreateRequest]{
 		Msg: &project.CreateRequest{
 			Initializers: initializers,
 			ProjectId:    name,
@@ -290,7 +285,7 @@ func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *
 	}
 
 	p := res.Msg.GetProject()
-	cmd.Printf("Successfully created project %s with id %s \n", name, p.GetProjectId())
+	fmt.Printf("Successfully created project %s with id %s \n", name, p.GetProjectId())
 
 	useProject, err := common.PromptConfirm("Would you like to use this project now?", true)
 	if err != nil {
@@ -298,18 +293,18 @@ func createProject(ctx context.Context, cmd *cobra.Command, rc rig.Client, cfg *
 	}
 
 	if useProject {
-		cfg.GetCurrentContext().ProjectID = p.GetProjectId()
-		if err := cfg.Save(); err != nil {
+		s.cfg.GetCurrentContext().ProjectID = p.GetProjectId()
+		if err := s.cfg.Save(); err != nil {
 			return err
 		}
 
-		cmd.Println("Changed project successfully!")
+		fmt.Println("Changed project successfully!")
 	}
 
 	return nil
 }
 
-func login(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error {
+func (s *Service) login(ctx context.Context) error {
 	u, err := common.PromptInput("Enter Username or Email:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return err
@@ -335,7 +330,7 @@ func login(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error {
 		return err
 	}
 
-	res, err := rc.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
+	res, err := s.rig.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
 		Msg: &authentication.LoginRequest{
 			Method: &authentication.LoginRequest_UserPassword{
 				UserPassword: &authentication.UserPassword{
@@ -354,10 +349,10 @@ func login(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error {
 		return err
 	}
 
-	cfg.GetCurrentAuth().UserID = uid
-	cfg.GetCurrentAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
-	cfg.GetCurrentAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
-	if err := cfg.Save(); err != nil {
+	s.cfg.GetCurrentAuth().UserID = uid
+	s.cfg.GetCurrentAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
+	s.cfg.GetCurrentAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
+	if err := s.cfg.Save(); err != nil {
 		return err
 	}
 
@@ -365,10 +360,10 @@ func login(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error {
 	return nil
 }
 
-func useProject(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error {
+func (s *Service) useProject(ctx context.Context) error {
 	var projectID string
 	var err error
-	listRes, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
+	listRes, err := s.rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return err
 	}
@@ -385,8 +380,8 @@ func useProject(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error
 
 	projectID = listRes.Msg.GetProjects()[i].GetProjectId()
 
-	cfg.GetCurrentContext().ProjectID = projectID
-	if err := cfg.Save(); err != nil {
+	s.cfg.GetCurrentContext().ProjectID = projectID
+	if err := s.cfg.Save(); err != nil {
 		return err
 	}
 
@@ -395,8 +390,8 @@ func useProject(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) error
 	return nil
 }
 
-func promptForEnvironment(ctx context.Context, rc rig.Client) (string, error) {
-	res, err := rc.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
+func (s *Service) promptForEnvironment(ctx context.Context) (string, error) {
+	res, err := s.rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
 	if err != nil {
 		return "", err
 	}

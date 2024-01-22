@@ -58,20 +58,6 @@ func (cfg *Config) CreateContext(name, url string) error {
 		return err
 	}
 
-	for _, s := range cfg.Services {
-		if s.Server == server {
-			if ok, err := common.PromptConfirm(
-				"Context with this server already exists. Do you want activate this context now?", true,
-			); err != nil {
-				return err
-			} else if ok {
-				cfg.CurrentContextName = name
-			}
-
-			return cfg.Save()
-		}
-	}
-
 	cfg.Contexts = append(cfg.Contexts, &Context{
 		Name:          name,
 		ServiceName:   name,

@@ -11,8 +11,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -40,15 +41,15 @@ func (c *Cmd) executions(ctx context.Context, _ *cobra.Command, _ []string) erro
 			Descending: true,
 		},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 	if err != nil {
 		return err
 	}
 
 	executions := resp.Msg.GetJobExecutions()
-	if base.Flags.OutputType != base.OutputTypePretty {
-		return base.FormatPrint(executions)
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(executions, flags.Flags.OutputType)
 	}
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()

@@ -11,8 +11,9 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +28,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 				Descending: true,
 			},
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	})
 	if err != nil {
@@ -53,8 +54,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	if base.Flags.OutputType != base.OutputTypePretty {
-		return base.FormatPrint(rollouts)
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(rollouts, flags.Flags.OutputType)
 	}
 
 	t := table.NewWriter()

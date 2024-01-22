@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -139,7 +140,7 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 		Msg: &capsule.ListInstancesRequest{
 			CapsuleId:     capsuleID,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	})
 	if err != nil {
@@ -188,7 +189,7 @@ func (c *Cmd) completions(
 		Msg: &capsule.ListInstancesRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	})
 	if err != nil {

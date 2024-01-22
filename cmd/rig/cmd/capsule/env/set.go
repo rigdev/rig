@@ -5,8 +5,8 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -43,7 +43,7 @@ func (c *Cmd) set(ctx context.Context, _ *cobra.Command, args []string) error {
 				},
 			},
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}
 

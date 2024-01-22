@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
 )
@@ -68,7 +69,7 @@ func GetCurrentRolloutOfCapsule(
 			Descending: true,
 		},
 		ProjectId:     cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(cfg),
+		EnvironmentId: flags.GetEnvironment(cfg),
 	}))
 	if err != nil {
 		return nil, err

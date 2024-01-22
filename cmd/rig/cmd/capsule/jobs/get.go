@@ -7,8 +7,9 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
@@ -26,8 +27,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	}
 
 	cronJobs := rollout.GetConfig().GetCronJobs()
-	if base.Flags.OutputType != base.OutputTypePretty {
-		return base.FormatPrint(cronJobs)
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(cronJobs, flags.Flags.OutputType)
 	}
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()

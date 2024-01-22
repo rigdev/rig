@@ -9,8 +9,8 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +46,7 @@ func (c *Cmd) capsuleEvents(ctx context.Context, cmd *cobra.Command, args []stri
 			},
 			RolloutId:     rollout,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	})
 	if err != nil {

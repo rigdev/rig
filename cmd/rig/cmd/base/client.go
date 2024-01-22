@@ -9,35 +9,41 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
 
 var clientModule = fx.Module("client",
 	fx.Supply(&http.Client{}),
-	fx.Provide(func(
-		ctx context.Context,
-		cmd *cobra.Command,
-		s *cmdconfig.Service,
-		cfg *cmdconfig.Config,
-		interactive bool,
-	) (rig.Client, error) {
-		rigClient := rig.NewClient(
-			rig.WithHost(s.Server),
-			rig.WithInterceptors(&userAgentInterceptor{}),
-			rig.WithSessionManager(&configSessionManager{cfg: cfg}),
-		)
-
-		if err := CheckAuth(ctx, cmd, rigClient, cfg, interactive); err != nil {
-			return nil, err
-		}
-
-		return rigClient, nil
-	}),
+	fx.Provide(newRigClient),
 	fx.Provide(func(cfg *cmdconfig.Config) []connect.Interceptor {
 		return []connect.Interceptor{&userAgentInterceptor{}}
 	}),
 )
+
+func newRigClient(
+	cmd *cobra.Command,
+	s *cmdconfig.Service,
+	cfg *cmdconfig.Config,
+	interactive Interactive,
+) (rig.Client, *auth.Service, error) {
+	r := rig.NewClient(
+		rig.WithHost(s.Server),
+		rig.WithInterceptors(&userAgentInterceptor{}),
+		rig.WithSessionManager(&configSessionManager{cfg: cfg}),
+	)
+
+	a := auth.NewService(r, cfg)
+
+	if !SkipChecks(cmd) {
+		if err := a.CheckAuth(context.TODO(), cmd, bool(interactive)); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return r, a, nil
+}
 
 type userAgentInterceptor struct{}
 

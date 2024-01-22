@@ -9,7 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -24,8 +24,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 			return err
 		}
 
-		if base.Flags.OutputType != base.OutputTypePretty {
-			return base.FormatPrint(u)
+		if flags.Flags.OutputType != common.OutputTypePretty {
+			return common.FormatPrint(u, flags.Flags.OutputType)
 		}
 
 		t := table.NewWriter()
@@ -57,8 +57,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	if base.Flags.OutputType != base.OutputTypePretty {
-		return base.FormatPrint(resp.Msg.GetUsers())
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(resp.Msg.GetUsers(), flags.Flags.OutputType)
 	}
 
 	t := table.NewWriter()

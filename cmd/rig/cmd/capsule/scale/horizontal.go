@@ -15,8 +15,8 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -60,7 +60,7 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 			},
 		},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 
 	_, err = c.Rig.Capsule().Deploy(ctx, req)
@@ -150,7 +150,7 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 			},
 		},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 
 	_, err = c.Rig.Capsule().Deploy(ctx, req)
@@ -193,12 +193,12 @@ func (c *Cmd) promptAutoscale(ctx context.Context, horizontal *capsule.Horizonta
 		switch idx {
 		case 0:
 			// TODO Fix this hack!
-			o := base.Flags.OutputType
-			base.Flags.OutputType = base.OutputTypeYAML
-			if err := base.FormatPrint(horizontal); err != nil {
+			o := flags.Flags.OutputType
+			flags.Flags.OutputType = common.OutputTypeYAML
+			if err := common.FormatPrint(horizontal, flags.Flags.OutputType); err != nil {
 				return err
 			}
-			base.Flags.OutputType = o
+			flags.Flags.OutputType = o
 		case 1:
 			if err := validateAutoscaler(horizontal); err != nil {
 				fmt.Println(err)
@@ -321,7 +321,7 @@ func (c *Cmd) promptInstanceMetric(ctx context.Context) (*capsule.CustomMetric_I
 		GetCustomInstanceMetrics(ctx, connect.NewRequest(&capsule.GetCustomInstanceMetricsRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		}))
 	if err != nil {
 		return nil, err
@@ -360,7 +360,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 	resp, err := c.Rig.Project().GetObjectsByKind(ctx, connect.NewRequest(&project.GetObjectsByKindRequest{
 		Kind:          kind,
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 
 	var objName string
@@ -402,7 +402,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 				ApiVersion: api,
 			},
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		}))
 	if err != nil {
 		return nil, err

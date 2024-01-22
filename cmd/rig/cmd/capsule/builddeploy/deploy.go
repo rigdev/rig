@@ -21,6 +21,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -38,7 +39,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, _ []string) error 
 				Field: &capsule.Change_BuildId{BuildId: buildID},
 			}},
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}
 
@@ -262,7 +263,7 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 					Offset: uint32(eventCount),
 				},
 				ProjectId:     c.Cfg.GetProject(),
-				EnvironmentId: base.GetEnvironment(c.Cfg),
+				EnvironmentId: flags.GetEnvironment(c.Cfg),
 			},
 		})
 		if err != nil {

@@ -15,6 +15,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -111,7 +112,7 @@ func setupBuild(parent *cobra.Command) {
 			common.MaxArgsCompletionFilter(1),
 		),
 		Annotations: map[string]string{
-			base.OmitEnvironment: "",
+			auth.OmitEnvironment: "",
 		},
 	}
 	buildGet.Flags().IntVar(&offset, "offset", 0, "offset")

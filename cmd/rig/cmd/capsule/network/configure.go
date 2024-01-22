@@ -13,8 +13,8 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -57,7 +57,7 @@ func (c *Cmd) configure(ctx context.Context, cmd *cobra.Command, args []string) 
 				},
 			}},
 			ProjectId:     c.Cfg.GetProject(),
-			EnvironmentId: base.GetEnvironment(c.Cfg),
+			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}
 
@@ -79,7 +79,7 @@ func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error 
 			Descending: true,
 		},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error 
 			},
 		}},
 		ProjectId:     c.Cfg.GetProject(),
-		EnvironmentId: base.GetEnvironment(c.Cfg),
+		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req, forceDeploy); err != nil {
 		return err
