@@ -23,6 +23,21 @@ The rig-operator helm chart uses cert-manager to create a certificate for the
 CRD webhooks. These are self-signed and doesn't require any special
 configuration of cert-manager.
 
+To see if cert-manager is already installed, run the following command:
+
+```bash
+kubectl api-resources | grep cert-manager.io/v1
+```
+
+This should show an output similar to the below if the APIs are available.
+
+```
+[...]
+certificates                      cert,certs   cert-manager.io/v1                     true         Certificate
+clusterissuers                                 cert-manager.io/v1                     false        ClusterIssuer
+[...]
+```
+
 If you want to enable ingress support, then you will need to further configure
 cert-manager and rig-operator to be able to generate certificates for
 workloads. See [the section about ingress](/operator-manual/ingress) for more
