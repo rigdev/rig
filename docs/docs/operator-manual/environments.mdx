@@ -1,0 +1,91 @@
+import ThemedImage from "@theme/ThemedImage";
+
+# Environments
+
+The Rig Platform supports a multi-environment architecture out-of-box.
+
+Environments are associated to a single cluster, meaning Rig supports multiple clusters
+through environments.
+
+While any mix-and-match are supported, it essentially boils down to two variants,
+singletenancy and multitenancy. There are no limits to the number of environments,
+clusters or environments per cluster.
+
+## Singletenancy
+
+In a singletenancy setup, the given cluster hosts only a single environments. A simple
+example of this is two clusters, production and staging, that respectively hosts a
+production and a staging environment.
+
+<ThemedImage
+  alt="Singletenancy"
+  customProps={{
+    zoom: false,
+  }}
+  sources={{
+    light: "/img/operator-manual/environments-single-light.svg",
+    dark: "/img/operator-manual/environments-single-dark.svg",
+  }}
+/>
+
+In this setup, the Rig Platform communicates with both clusters, to configures the two
+environments individually. The configuration for the Rig Platform Helms values file
+looks like this:
+
+```yaml
+rig:
+  clusters:
+    staging:
+      type: k8s
+    production:
+      type: k8s
+  environments:
+    staging:
+      cluster: staging
+    production:
+      cluster: production
+      default: true
+```
+:::info Default environment
+The `default` marker is used by the Dashboard and CLI for which to pick when nodes
+environment is specified, e.g. loading the dashboard will in this case show the production
+environment.
+:::
+
+## Multitenancy
+
+In a multitenancy setup, a single cluster is hosting a number of environments. This is
+a convening way of sharing node resources across environments and simplifying the overall
+infrastructure.
+
+<ThemedImage
+  alt="Multitenancy"
+  customProps={{
+    zoom: false,
+  }}
+  sources={{
+    light: "/img/operator-manual/environments-multi-light.svg",
+    dark: "/img/operator-manual/environments-multi-dark.svg",
+  }}
+/>
+
+When communicating with the cluster, it's important that the namespace generated is
+unique across environments, so resources don't end up conflicting. This is done
+by using the `namespace_template` property, that by default is configured to
+`"{{ .Project.Name }}"`. In the example below, the environment is suffixed to all
+namespace names.
+
+```yaml
+rig:
+  clusters:
+    production:
+      type: k8s
+  environments:
+    staging:
+      cluster: production
+      namespace_template: "{{ .Project.Name }}-{{ .Environment.Name }}"
+    production:
+      cluster: production
+      namespace_template: "{{ .Project.Name }}-{{ .Environment.Name }}"
+      default: true
+```
