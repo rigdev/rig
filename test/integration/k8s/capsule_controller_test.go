@@ -4,44 +4,48 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"testing"
 	"time"
 
+	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/google/uuid"
 	"github.com/nsf/jsondiff"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/hash"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
-	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/hash"
-	netv1 "k8s.io/api/networking/v1"
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
-
 	//+kubebuilder:scaffold:imports
 
 	"github.com/rigdev/rig/pkg/ptr"
 )
 
+var (
+	nsName = types.NamespacedName{
+		Name:      "test",
+		Namespace: "nginx",
+	}
+)
+
 func (s *K8sTestSuite) TestControllerSharedSecrets() {
-	k8sClient := s.Client
-	t := s.Suite.T()
 	ctx := context.Background()
 	nsName := types.NamespacedName{
 		Name:      uuid.NewString(),
 		Namespace: "default",
 	}
 
-	by(t, "Creating a capsule")
+	s.by("Creating a capsule")
 
 	capsule := v1alpha2.Capsule{
 		ObjectMeta: metav1.ObjectMeta{
@@ -61,8 +65,8 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 		},
 	}
 
-	require.NoError(t, k8sClient.Create(ctx, &capsule))
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.Require().NoError(s.Client.Create(ctx, &capsule))
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
@@ -81,7 +85,7 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 		},
 	})
 
-	by(t, "Creating a namespace capsule environment secret")
+	s.by("Creating a namespace capsule environment secret")
 
 	secret := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -96,9 +100,9 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 		},
 	}
 
-	require.NoError(t, k8sClient.Create(ctx, &secret))
+	s.Require().NoError(s.Client.Create(ctx, &secret))
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
@@ -126,21 +130,21 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 		},
 	})
 
-	by(t, "Creating a specific capsule environment secret")
+	s.by("Creating a specific capsule environment secret")
 
-	require.NoError(t, k8sClient.Delete(ctx, &secret))
-	require.Eventually(t, func() bool {
+	s.Require().NoError(s.Client.Delete(ctx, &secret))
+	s.Require().Eventually(func() bool {
 		return kerrors.IsNotFound(
-			k8sClient.Get(ctx, client.ObjectKeyFromObject(&secret), &v1.Secret{}),
+			s.Client.Get(ctx, client.ObjectKeyFromObject(&secret), &v1.Secret{}),
 		)
 	}, waitFor, tick)
 
 	secret.Name = uuid.NewString()
 	delete(secret.Labels, controller.LabelSharedConfig)
 	secret.ResourceVersion = ""
-	require.NoError(t, k8sClient.Create(ctx, &secret))
+	s.Require().NoError(s.Client.Create(ctx, &secret))
 
-	require.NoError(t, k8sClient.Get(ctx, nsName, &capsule))
+	s.Require().NoError(s.Client.Get(ctx, nsName, &capsule))
 	capsule.Spec.Env = &v1alpha2.Env{
 		From: []v1alpha2.EnvReference{
 			{
@@ -150,9 +154,9 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 		},
 	}
 
-	require.NoError(t, k8sClient.Update(ctx, &capsule))
+	s.Require().NoError(s.Client.Update(ctx, &capsule))
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
@@ -180,14 +184,14 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 		},
 	})
 
-	by(t, "Creating an auto env secret")
+	s.by("Creating an auto env secret")
 
 	autoSecret := secret.DeepCopy()
 	autoSecret.Name = nsName.Name
 	autoSecret.ResourceVersion = ""
-	require.NoError(t, k8sClient.Create(ctx, autoSecret))
+	s.Require().NoError(s.Client.Create(ctx, autoSecret))
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
@@ -222,13 +226,13 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 		},
 	})
 
-	by(t, "Disabling automatic env")
+	s.by("Disabling automatic env")
 
-	require.NoError(t, k8sClient.Get(ctx, nsName, &capsule))
+	s.Require().NoError(s.Client.Get(ctx, nsName, &capsule))
 	capsule.Spec.Env.DisableAutomatic = true
-	require.NoError(t, k8sClient.Update(ctx, &capsule))
+	s.Require().NoError(s.Client.Update(ctx, &capsule))
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
@@ -258,21 +262,37 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 }
 
 func (s *K8sTestSuite) TestController() {
-	k8sClient := s.Client
-	t := s.Suite.T()
-
-	by(t, "Creating namespace")
-
 	ctx := context.Background()
-	nsName := types.NamespacedName{
-		Name:      "test",
-		Namespace: "nginx",
+	s.testCreateCapsule(ctx)
+	s.testInterface(ctx)
+	s.testIngress(ctx)
+	s.testLoadbalancer(ctx)
+	s.testEnvVar(ctx)
+	s.testConfigMap(ctx)
+	s.testHPA(ctx)
+	s.testCronJob(ctx)
+	s.testDeleteCapsule(ctx)
+}
+
+func (s *K8sTestSuite) getCapsule(ctx context.Context) (v1alpha2.Capsule, metav1.OwnerReference) {
+	var capsule v1alpha2.Capsule
+	s.Assert().NoError(s.Client.Get(ctx, nsName, &capsule))
+	return capsule, metav1.OwnerReference{
+		Kind:               "Capsule",
+		APIVersion:         v1alpha2.GroupVersion.Identifier(),
+		UID:                capsule.UID,
+		Name:               nsName.Name,
+		Controller:         ptr.New(true),
+		BlockOwnerDeletion: ptr.New(true),
 	}
+}
 
+func (s *K8sTestSuite) testCreateCapsule(ctx context.Context) {
+	s.by("Creating namespace")
 	ns := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: nsName.Namespace}}
-	assert.NoError(t, k8sClient.Create(ctx, ns))
+	s.Assert().NoError(s.Client.Create(ctx, ns))
 
-	by(t, "Creating a capsule")
+	s.by("Creating a capsule")
 
 	capsule := v1alpha2.Capsule{
 		ObjectMeta: metav1.ObjectMeta{
@@ -292,18 +312,18 @@ func (s *K8sTestSuite) TestController() {
 		},
 	}
 
-	assert.NoError(t, k8sClient.Create(ctx, &capsule))
+	s.Assert().NoError(s.Client.Create(ctx, &capsule))
 
 	var deploy appsv1.Deployment
-	assert.Eventually(t, func() bool {
-		if err := k8sClient.Get(ctx, nsName, &deploy); err != nil {
+	s.Assert().Eventually(func() bool {
+		if err := s.Client.Get(ctx, nsName, &deploy); err != nil {
 			return false
 		}
 		return true
 	}, waitFor, tick)
 
-	if assert.Len(t, deploy.Spec.Template.Spec.Containers, 1) {
-		assert.Equal(t, deploy.Spec.Template.Spec.Containers[0].Image, "nginx:1.25.1")
+	if s.Assert().Len(deploy.Spec.Template.Spec.Containers, 1) {
+		s.Assert().Equal(deploy.Spec.Template.Spec.Containers[0].Image, "nginx:1.25.1")
 	}
 
 	capsuleOwnerRef := metav1.OwnerReference{
@@ -315,15 +335,15 @@ func (s *K8sTestSuite) TestController() {
 		BlockOwnerDeletion: ptr.New(true),
 	}
 
-	if assert.Len(t, deploy.OwnerReferences, 1) {
-		assert.Equal(t, capsuleOwnerRef, deploy.OwnerReferences[0])
+	if s.Assert().Len(deploy.OwnerReferences, 1) {
+		s.Assert().Equal(capsuleOwnerRef, deploy.OwnerReferences[0])
 	}
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -339,26 +359,26 @@ func (s *K8sTestSuite) TestController() {
 		},
 	})
 
-	err := k8sClient.Get(ctx, nsName, &v1.Service{})
-	assert.True(t, kerrors.IsNotFound(err))
+	err := s.Client.Get(ctx, nsName, &v1.Service{})
+	s.Assert().True(kerrors.IsNotFound(err))
+}
 
-	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
-
-	by(t, "Adding an interface")
-
+func (s *K8sTestSuite) testInterface(ctx context.Context) {
+	s.by("Adding an interface")
+	capsule, capsuleOwnerRef := s.getCapsule(ctx)
 	capsule.Spec.Interfaces = []v1alpha2.CapsuleInterface{
 		{
 			Name: "http",
 			Port: 80,
 		},
 	}
-	assert.NoError(t, k8sClient.Update(ctx, &capsule))
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -381,7 +401,7 @@ func (s *K8sTestSuite) TestController() {
 		&v1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -396,26 +416,26 @@ func (s *K8sTestSuite) TestController() {
 		},
 	})
 
-	err = k8sClient.Get(ctx, nsName, &netv1.Ingress{})
-	assert.True(t, kerrors.IsNotFound(err))
+	err := s.Client.Get(ctx, nsName, &netv1.Ingress{})
+	s.Assert().True(kerrors.IsNotFound(err))
+}
 
-	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
-
-	by(t, "Enabling ingress")
-
+func (s *K8sTestSuite) testIngress(ctx context.Context) {
+	s.by("Enabling ingress")
+	capsule, capsuleOwnerRef := s.getCapsule(ctx)
 	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
 		Ingress: &v1alpha2.CapsuleInterfaceIngress{
 			Host: "test.com",
 		},
 	}
-	assert.NoError(t, k8sClient.Update(ctx, &capsule))
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
 
 	pt := netv1.PathTypeExact
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&netv1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -449,7 +469,7 @@ func (s *K8sTestSuite) TestController() {
 		&cmv1.Certificate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -467,15 +487,15 @@ func (s *K8sTestSuite) TestController() {
 		},
 	})
 
-	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
 	capsule.Spec.Interfaces[0].Public.Ingress.Paths = []string{"/test1", "/test2"}
-	assert.NoError(t, k8sClient.Update(ctx, &capsule))
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&netv1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -521,20 +541,20 @@ func (s *K8sTestSuite) TestController() {
 			},
 		},
 	})
+}
 
-	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
-
-	by(t, "Changing ingress to loadbalancer")
-
+func (s *K8sTestSuite) testLoadbalancer(ctx context.Context) {
+	s.by("Changing ingress to loadbalancer")
+	capsule, capsuleOwnerRef := s.getCapsule(ctx)
 	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
 		LoadBalancer: &v1alpha2.CapsuleInterfaceLoadBalancer{
 			Port: 1,
 		},
 	}
-	assert.NoError(t, k8sClient.Update(ctx, &capsule))
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
 
-	assert.Eventually(t, func() bool {
-		if err := k8sClient.Get(ctx, nsName, &netv1.Ingress{}); err != nil {
+	s.Assert().Eventually(func() bool {
+		if err := s.Client.Get(ctx, nsName, &netv1.Ingress{}); err != nil {
 			if kerrors.IsNotFound(err) {
 				return true
 			}
@@ -542,11 +562,11 @@ func (s *K8sTestSuite) TestController() {
 		return false
 	}, waitFor, tick)
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&v1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-lb", nsName.Name),
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -561,9 +581,11 @@ func (s *K8sTestSuite) TestController() {
 			},
 		},
 	})
+}
 
-	by(t, "Adding an environment variable configmap")
-
+func (s *K8sTestSuite) testEnvVar(ctx context.Context) {
+	s.by("Adding an environment variable configmap")
+	_, capsuleOwnerRef := s.getCapsule(ctx)
 	cm := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nsName.Name,
@@ -574,12 +596,12 @@ func (s *K8sTestSuite) TestController() {
 		},
 	}
 
-	require.NoError(t, k8sClient.Create(ctx, cm))
+	s.Require().NoError(s.Client.Create(ctx, cm))
 
 	h := sha256.New()
-	require.NoError(t, hash.ConfigMap(h, cm))
+	s.Require().NoError(hash.ConfigMap(h, cm))
 
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
@@ -610,11 +632,14 @@ func (s *K8sTestSuite) TestController() {
 		},
 	})
 
-	assert.NoError(t, k8sClient.Delete(ctx, cm))
+	s.Assert().NoError(s.Client.Delete(ctx, cm))
+}
 
-	by(t, "Adding a configfile configmap")
+func (s *K8sTestSuite) testConfigMap(ctx context.Context) {
+	s.by("Adding a configfile configmap")
+	capsule, capsuleOwnerRef := s.getCapsule(ctx)
 
-	cm = &v1.ConfigMap{
+	cm := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-files", nsName.Name),
 			Namespace: nsName.Namespace,
@@ -625,8 +650,8 @@ func (s *K8sTestSuite) TestController() {
 		},
 	}
 
-	assert.NoError(t, k8sClient.Create(ctx, cm))
-	assert.NoError(t, k8sClient.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+	s.Assert().NoError(s.Client.Create(ctx, cm))
+	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
 
 	capsule.Spec.Files = []v1alpha2.File{{
 		Path: "/etc/test/test.yaml",
@@ -637,15 +662,15 @@ func (s *K8sTestSuite) TestController() {
 		},
 	}}
 
-	assert.NoError(t, k8sClient.Update(ctx, &capsule))
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
 
-	h = sha256.New()
-	assert.NoError(t, hash.ConfigMapKeys(h, []string{"test.yaml"}, cm))
-	expectResources(ctx, t, k8sClient, []client.Object{
+	h := sha256.New()
+	s.Assert().NoError(hash.ConfigMapKeys(h, []string{"test.yaml"}, cm))
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -674,14 +699,14 @@ func (s *K8sTestSuite) TestController() {
 
 	cm.Data["test.yaml"] = "test2"
 
-	assert.NoError(t, k8sClient.Update(ctx, cm))
+	s.Assert().NoError(s.Client.Update(ctx, cm))
 	h = sha256.New()
-	assert.NoError(t, hash.ConfigMapKeys(h, []string{"test.yaml"}, cm))
-	expectResources(ctx, t, k8sClient, []client.Object{
+	s.Assert().NoError(hash.ConfigMapKeys(h, []string{"test.yaml"}, cm))
+	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      nsName.Name,
-				Namespace: ns.Name,
+				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
@@ -708,11 +733,226 @@ func (s *K8sTestSuite) TestController() {
 		},
 	})
 
-	by(t, "Deleting the capsule")
+	err := s.Client.Get(ctx, nsName, &autoscalingv2.HorizontalPodAutoscaler{})
+	s.Assert().True(kerrors.IsNotFound(err))
+	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+}
 
-	assert.NoError(t, k8sClient.Delete(ctx, &capsule))
-	assert.Eventually(t, func() bool {
-		if err := k8sClient.Get(ctx, nsName, &capsule); err != nil {
+func (s *K8sTestSuite) testHPA(ctx context.Context) {
+	s.by("Adding an HPA")
+	capsule, capsuleOwnerRef := s.getCapsule(ctx)
+	capsule.Spec.Scale.Horizontal.CPUTarget = &v1alpha2.CPUTarget{
+		Utilization: ptr.New(uint32(80)),
+	}
+	capsule.Spec.Scale.Horizontal.CustomMetrics = []v1alpha2.CustomMetric{
+		{
+			InstanceMetric: &v1alpha2.InstanceMetric{
+				MetricName:   "some-metric",
+				AverageValue: "10",
+			},
+		},
+		{
+			ObjectMetric: &v1alpha2.ObjectMetric{
+				MetricName: "object-metric",
+				Value:      "5",
+				DescribedObject: autoscalingv2.CrossVersionObjectReference{
+					Kind: "Service",
+					Name: "my-service",
+				},
+			},
+		},
+	}
+	capsule.Spec.Scale.Horizontal.Instances.Max = ptr.New(uint32(3))
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	s.expectResources(ctx, []client.Object{
+		&autoscalingv2.HorizontalPodAutoscaler{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: nsName.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					capsuleOwnerRef,
+				},
+			},
+			Spec: autoscalingv2.HorizontalPodAutoscalerSpec{
+				ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
+					Kind:       "Deployment",
+					Name:       nsName.Name,
+					APIVersion: appsv1.SchemeGroupVersion.String(),
+				},
+				MinReplicas: ptr.New(int32(1)),
+				MaxReplicas: 3,
+				Metrics: []autoscalingv2.MetricSpec{
+					{
+						Type: autoscalingv2.ResourceMetricSourceType,
+						Resource: &autoscalingv2.ResourceMetricSource{
+							Name: v1.ResourceCPU,
+							Target: autoscalingv2.MetricTarget{
+								Type:               autoscalingv2.UtilizationMetricType,
+								AverageUtilization: ptr.New(int32(80)),
+							},
+						},
+					},
+					{
+						Type: autoscalingv2.PodsMetricSourceType,
+						Pods: &autoscalingv2.PodsMetricSource{
+							Metric: autoscalingv2.MetricIdentifier{
+								Name: "some-metric",
+							},
+							Target: autoscalingv2.MetricTarget{
+								Type:         autoscalingv2.AverageValueMetricType,
+								AverageValue: ptr.New(resource.MustParse("10")),
+							},
+						},
+					},
+					{
+						Type: autoscalingv2.ObjectMetricSourceType,
+						Object: &autoscalingv2.ObjectMetricSource{
+							DescribedObject: autoscalingv2.CrossVersionObjectReference{
+								Kind: "Service",
+								Name: "my-service",
+							},
+							Target: autoscalingv2.MetricTarget{
+								Type:  autoscalingv2.ValueMetricType,
+								Value: ptr.New(resource.MustParse("5")),
+							},
+							Metric: autoscalingv2.MetricIdentifier{
+								Name: "object-metric",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	s.by("Deleting the HPA")
+	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+	capsule.Spec.Scale.Horizontal.CPUTarget = nil
+	capsule.Spec.Scale.Horizontal.CustomMetrics = nil
+	capsule.Spec.Scale.Horizontal.Instances.Max = ptr.New(uint32(1))
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	s.Assert().Eventually(func() bool {
+		if err := s.Client.Get(ctx, nsName, &autoscalingv2.HorizontalPodAutoscaler{}); err != nil {
+			if kerrors.IsNotFound(err) {
+				return true
+			}
+		}
+		return false
+	}, waitFor, tick)
+
+}
+
+func (s *K8sTestSuite) testCronJob(ctx context.Context) {
+	s.by("Creating Cron Jobs")
+	capsule, capsuleOwnerRef := s.getCapsule(ctx)
+	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+	capsule.Spec.CronJobs = []v1alpha2.CronJob{
+		{
+			Name:     "job1",
+			Schedule: "* * * * *",
+			URL: &v1alpha2.URL{
+				Port: 8000,
+				Path: "/some/path",
+			},
+		},
+		{
+			Name:     "job2",
+			Schedule: "10 * * * *",
+			Command: &v1alpha2.JobCommand{
+				Command: "./cmd",
+				Args:    []string{"arg1", "arg2"},
+			},
+			MaxRetries:     ptr.New(uint(1)),
+			TimeoutSeconds: ptr.New(uint(10)),
+		},
+	}
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	deployment := appsv1.Deployment{}
+	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &deployment))
+	podTemplate := deployment.Spec.Template.DeepCopy()
+	podTemplate.Spec.Containers[0].Command = []string{"./cmd"}
+	podTemplate.Spec.Containers[0].Args = []string{"arg1", "arg2"}
+	podTemplate.Spec.RestartPolicy = v1.RestartPolicyNever
+	job1 := &batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job1",
+			Namespace: nsName.Namespace,
+			Labels: map[string]string{
+				controller.LabelCapsule: nsName.Name,
+				controller.LabelCron:    "job1",
+			},
+			OwnerReferences: []metav1.OwnerReference{capsuleOwnerRef},
+		},
+		Spec: batchv1.CronJobSpec{
+			Schedule: "* * * * *",
+			JobTemplate: batchv1.JobTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						controller.LabelCapsule: nsName.Name,
+						controller.LabelCron:    "job1",
+					},
+					// Annotations:                map[string]string{},
+				},
+				Spec: batchv1.JobSpec{
+					ActiveDeadlineSeconds: nil,
+					BackoffLimit:          nil,
+					Template: v1.PodTemplateSpec{
+						Spec: v1.PodSpec{
+							Containers: []v1.Container{{
+								Name:    fmt.Sprintf("%s-%s", nsName.Name, "job1"),
+								Image:   "quay.io/curl/curl:latest",
+								Command: []string{"curl"},
+								Args:    []string{"-G", "--fail-with-body", "http://test:8000/some/path"},
+							}},
+							RestartPolicy: v1.RestartPolicyNever,
+						},
+					},
+				},
+			},
+		},
+	}
+	job2 := &batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job2",
+			Namespace: nsName.Namespace,
+			Labels: map[string]string{
+				controller.LabelCapsule: nsName.Name,
+				controller.LabelCron:    "job2",
+			},
+			OwnerReferences: []metav1.OwnerReference{capsuleOwnerRef},
+		},
+		Spec: batchv1.CronJobSpec{
+			Schedule: "10 * * * *",
+			JobTemplate: batchv1.JobTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						controller.LabelCapsule: nsName.Name,
+						controller.LabelCron:    "job2",
+					},
+				},
+				Spec: batchv1.JobSpec{
+					ActiveDeadlineSeconds: ptr.New(int64(10)),
+					BackoffLimit:          ptr.New(int32(1)),
+					Template:              *podTemplate,
+				},
+			},
+		},
+	}
+	s.expectResources(ctx, []client.Object{job1, job2})
+
+	s.by("Deleting one Cron Job")
+	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+	capsule.Spec.CronJobs = capsule.Spec.CronJobs[:1]
+	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	s.expectResources(ctx, []client.Object{job1})
+}
+
+func (s *K8sTestSuite) testDeleteCapsule(ctx context.Context) {
+	capsule, _ := s.getCapsule(ctx)
+	s.by("Deleting the capsule")
+	s.Assert().NoError(s.Client.Delete(ctx, &capsule))
+	s.Assert().Eventually(func() bool {
+		if err := s.Client.Get(ctx, nsName, &capsule); err != nil {
 			if kerrors.IsNotFound(err) {
 				return true
 			}
@@ -721,31 +961,31 @@ func (s *K8sTestSuite) TestController() {
 	}, waitFor, tick)
 }
 
-func by(t *testing.T, msg string) {
-	t.Log("STEP: ", msg)
+func (s *K8sTestSuite) by(msg string) {
+	s.T().Log("STEP: ", msg)
 }
 
-func expectResources(ctx context.Context, t *testing.T, k8sClient client.Client, resources []client.Object) {
+func (s *K8sTestSuite) expectResources(ctx context.Context, resources []client.Object) {
 	for _, r := range resources {
 		c := 0
 		cp := r.DeepCopyObject().(client.Object)
 		for {
-			err := k8sClient.Get(ctx, client.ObjectKeyFromObject(r), cp)
+			err := s.Client.Get(ctx, client.ObjectKeyFromObject(r), cp)
 			if kerrors.IsNotFound(err) {
 				time.Sleep(100 * time.Millisecond)
 				continue
 			} else if err != nil {
-				require.NoError(t, err)
+				s.Require().NoError(err)
 			}
 
 			// Clear this property.
 			cp.SetCreationTimestamp(metav1.Time{})
 
 			bs1, err := json.Marshal(r)
-			require.NoError(t, err)
+			s.Require().NoError(err)
 
 			bs2, err := json.Marshal(cp)
-			require.NoError(t, err)
+			s.Require().NoError(err)
 
 			opt := jsondiff.DefaultConsoleOptions()
 			diff, change := jsondiff.Compare(bs2, bs1, &opt)
@@ -754,7 +994,7 @@ func expectResources(ctx context.Context, t *testing.T, k8sClient client.Client,
 			if jsondiff.SupersetMatch == diff {
 				break
 			} else if c > 20 {
-				require.Equal(t, jsondiff.SupersetMatch, diff, change)
+				s.Require().Equal(jsondiff.SupersetMatch, diff, change)
 			}
 
 			time.Sleep(250 * time.Millisecond)
