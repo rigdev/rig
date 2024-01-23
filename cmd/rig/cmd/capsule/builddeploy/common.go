@@ -10,7 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
@@ -160,15 +160,15 @@ func (c *Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef i
 		}
 	}
 
-	res, err := c.Rig.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
-		Msg: &capsule.CreateBuildRequest{
+	res, err := c.Rig.Build().Create(ctx, connect.NewRequest(
+		&build.CreateRequest{
 			CapsuleId:      capsuleID,
 			Image:          imageRef.Image,
 			Digest:         digest,
 			SkipImageCheck: skipImageCheck,
 			ProjectId:      c.Cfg.GetProject(),
-		},
-	})
+		}),
+	)
 	if err != nil {
 		return "", err
 	}

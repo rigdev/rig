@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"connectrpc.com/connect"
+	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -230,13 +231,13 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 
 	if image != "" {
 		var buildID string
-		res, err := c.Rig.Capsule().CreateBuild(ctx, &connect.Request[capsule.CreateBuildRequest]{
-			Msg: &capsule.CreateBuildRequest{
+		res, err := c.Rig.Build().Create(ctx, connect.NewRequest(
+			&build.CreateRequest{
 				CapsuleId: capsuleID,
 				Image:     image,
 				ProjectId: c.Cfg.GetProject(),
-			},
-		})
+			}),
+		)
 		if err != nil {
 			return err
 		}

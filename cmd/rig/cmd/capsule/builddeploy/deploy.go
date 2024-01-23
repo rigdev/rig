@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/registry"
 	container_name "github.com/google/go-containerregistry/pkg/name"
 	"github.com/jedib0t/go-pretty/v6/progress"
+	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
@@ -66,7 +67,7 @@ func (c *Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) 
 
 	if buildID != "" {
 		// TODO Figure out pagination
-		resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
+		resp, err := c.Rig.Build().List(ctx, connect.NewRequest(&build.ListRequest{
 			CapsuleId: capsuleID,
 			ProjectId: c.Cfg.GetProject(),
 		}))
@@ -194,7 +195,7 @@ func (c *Cmd) promptForImageOrBuild(ctx context.Context, capsuleID string) (stri
 }
 
 func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (string, error) {
-	resp, err := c.Rig.Capsule().ListBuilds(ctx, connect.NewRequest(&capsule.ListBuildsRequest{
+	resp, err := c.Rig.Build().List(ctx, connect.NewRequest(&build.ListRequest{
 		CapsuleId:  capsuleID,
 		Pagination: &model.Pagination{},
 		ProjectId:  c.Cfg.GetProject(),
