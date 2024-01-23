@@ -256,7 +256,6 @@ const sidebars = {
         },
       ],
     },
-
     {
       type: "doc",
       id: "operator-manual/architecture",
@@ -264,6 +263,15 @@ const sidebars = {
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "BiSolidLayout",
+      },
+    },
+    {
+      type: "doc",
+      id: "operator-manual/environments",
+      label: "Environments",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiSolidServer",
       },
     },
     {
