@@ -174,6 +174,15 @@ const sidebars = {
     },
     {
       type: "doc",
+      id: "platform/cronjobs",
+      label: "Cron Jobs",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiCalendar",
+      },
+    },
+    {
+      type: "doc",
       id: "platform/ci-cd",
       label: "CI/CD",
       className: "homepage-sidebar-item",
