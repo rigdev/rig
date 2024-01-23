@@ -87,6 +87,10 @@ func (s *K8sTestSuite) SetupSuite() {
 		Ingress: configv1alpha1.IngressConfig{
 			PathType: netv1.PathTypeExact,
 		},
+		PrometheusServiceMonitor: &configv1alpha1.PrometheusServiceMonitor{
+			Path:     "metrics",
+			PortName: "metricsport",
+		},
 	}
 
 	configService := config.NewServiceFromConfigs(opConfig, nil)
