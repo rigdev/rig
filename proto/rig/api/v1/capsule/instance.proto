@@ -4,6 +4,8 @@ package api.v1.capsule;
 
 import "google/protobuf/timestamp.proto";
 
+// Deprecated???
+
 enum State {
   STATE_UNSPECIFIED = 0;
   STATE_PENDING = 1;
@@ -186,7 +188,7 @@ message ContainerStateTerminated {
   // Time at which the container last terminated
   // +optional
   google.protobuf.Timestamp finished_at = 6;
-  // Container's ID in the format '<type>://<container_id>'
+  // Container's ID in the format 'type://container_id'
   // +optional
   string container_id = 7;
 }

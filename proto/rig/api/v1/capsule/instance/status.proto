@@ -4,139 +4,159 @@ package api.v1.capsule.instance;
 
 import "google/protobuf/timestamp.proto";
 
-// Status is a representation of the current state of an instance
+// Status is a representation of the current state of an instance.
 message Status {
-  string instance_id = 1;
-  Stages stages = 2;
-
-  uint64 rollout_id = 3;
-  string image = 4;
-  google.protobuf.Timestamp created_at = 6;
+  string instance_id = 1; // Instance ID.
+  Stages stages = 2; // Stages of the instance.
+  uint64 rollout_id = 3; // Rollout ID.
+  string image = 4; // Image of the instance.
+  google.protobuf.Timestamp created_at = 6; // Creation time of the instance.
 }
 
+// The different stages of the instance.
 message Stages {
-  SchedulingStage schedule = 1;
-  PreparingStage preparing = 2;
-  RunningStage running = 3;
-  DeletedStage deleted = 4;
+  SchedulingStage schedule = 1; // Scheduling stage.
+  PreparingStage preparing = 2; // Preparing stage.
+  RunningStage running = 3; // Running stage.
+  DeletedStage deleted = 4; // Deleted stage.
 }
 
+// Meta information about a stage.
 message StageInfo {
-  string name = 1;
-  google.protobuf.Timestamp updated_at = 2;
-  StageState state = 3;
+  string name = 1; // Name of the stage.
+  google.protobuf.Timestamp updated_at = 2; // Last update time of the stage.
+  StageState state = 3; // State of the stage.
 }
 
+// Different states a stage can be in.
 enum StageState {
-  STAGE_STATE_UNSPECIFIED = 0;
-  STAGE_STATE_ONGOING = 1;
-  STAGE_STATE_FAILED = 2;
-  STAGE_STATE_DONE = 3;
-  STAGE_STATE_RUNNING = 4;
+  STAGE_STATE_UNSPECIFIED = 0; // Unspecified state.
+  STAGE_STATE_ONGOING = 1; // Stage is ongoing.
+  STAGE_STATE_FAILED = 2; // Stage has failed.
+  STAGE_STATE_DONE = 3; // Stage is done.
+  STAGE_STATE_RUNNING = 4; // Stage is running.
 }
 
+// The scheduling stage.
 message SchedulingStage {
-  StageInfo info = 1;
-  repeated SchedulingStep steps = 2;
+  StageInfo info = 1; // Meta information about the stage.
+  repeated SchedulingStep steps = 2; // Steps of the stage.
 }
 
+// A step of the scheduling stage.
 message SchedulingStep {
   oneof step {
-    GenericStep generic = 1;
-    PlacementStep placement = 2;
+    GenericStep generic = 1; // Generic step.
+    PlacementStep placement = 2; // Placement step - On what node should the instance run.
   }
 }
 
+// Placement step.
 message PlacementStep {
-  StepInfo info = 1;
-  string node = 2;
+  StepInfo info = 1; // Meta information about the step.
+  string node = 2; // Node on which the instance should run.
 }
 
+// A generic step.
 message GenericStep {
   StepInfo info = 1;
 }
 
+// Meta data about a step.
 message StepInfo {
-  string name = 1;
-  string message = 2;
-  google.protobuf.Timestamp updated_at = 3;
-  StepState state = 4;
+  string name = 1; // Name of the step.
+  string message = 2; // Message of the step.
+  google.protobuf.Timestamp updated_at = 3; // Last update time of the step.
+  StepState state = 4; // State of the step.
 }
 
+// Different states a step can be in.
 enum StepState {
-  STEP_STATE_UNSPECIFIED = 0;
-  STEP_STATE_ONGOING = 1;
-  STEP_STATE_FAILED = 2;
-  STEP_STATE_DONE = 3;
-  STEP_STATE_RUNNING = 4;
+  STEP_STATE_UNSPECIFIED = 0; // Unspecified state.
+  STEP_STATE_ONGOING = 1; // Step is ongoing.
+  STEP_STATE_FAILED = 2; // Step has failed.
+  STEP_STATE_DONE = 3; // Step is done.
+  STEP_STATE_RUNNING = 4; // Step is running.
 }
 
+// Different states of a placement step
 enum PlacementState {
-  SCHEDULING_STATE_UNSPECIFIED = 0;
-  SCHEDULING_STATE_UNSCHEDULEABLE = 1;
-  SCHEDULING_STATE_DONE = 2;
+  SCHEDULING_STATE_UNSPECIFIED = 0; // Unspecified state.
+  SCHEDULING_STATE_UNSCHEDULEABLE = 1; // If the instance is unschedulable. 
+  SCHEDULING_STATE_DONE = 2; // If the instance is scheduled.
 }
 
+// The preparing stage
 message PreparingStage {
-  StageInfo info = 1;
-  repeated PreparingStep steps = 2;
+  StageInfo info = 1; // Meta information about the stage.
+  repeated PreparingStep steps = 2; // Steps of the stage.
 }
 
+
+// A step of the preparing stage.
 message PreparingStep {
   oneof step {
-    GenericStep generic = 1;
-    ImagePullingStep image_pulling = 2;
+    GenericStep generic = 1; // Generic step.
+    ImagePullingStep image_pulling = 2; // Image pulling step.
   }
 }
 
+// An image pulling step of the preparing stage.
 message ImagePullingStep {
-  StepInfo info = 1;
-  ImagePullingState state = 2;
-  string image = 3;
+  StepInfo info = 1; // Meta information about the step.
+  ImagePullingState state = 2; // State of the step.
+  string image = 3; // Image that is being pulled.
 }
 
+// Different states of an image pulling step.
 enum ImagePullingState {
-  IMAGE_PULLING_STATE_UNSPECIFIED = 0;
-  IMAGE_PULLING_STATE_PULLING = 1;
-  IMAGE_PULLING_STATE_ERROR = 2;
-  IMAGE_PULLING_STATE_BACK_OFF = 3;
-  IMAGE_PULLING_STATE_DONE = 4;
+  IMAGE_PULLING_STATE_UNSPECIFIED = 0; // Unspecified state.
+  IMAGE_PULLING_STATE_PULLING = 1; // Image is being pulled.
+  IMAGE_PULLING_STATE_ERROR = 2; // Image pulling has failed.
+  IMAGE_PULLING_STATE_BACK_OFF = 3; // Image pulling is in back off.
+  IMAGE_PULLING_STATE_DONE = 4; // Image pulling is done.
 }
 
+// The running stage of the instance
 message RunningStage {
-  StageInfo info = 1;
-  repeated RunningStep steps = 2;
-  uint32 restarts = 3;
-  ContainerTermination last_container_termination = 4;
+  StageInfo info = 1; // Meta information about the stage.
+  repeated RunningStep steps = 2; // Steps of the stage.
+  uint32 restarts = 3; // Number of restarts of the instance.
+  ContainerTermination last_container_termination = 4; // Information about the last container termination.
 }
 
+// A step of the running stage.
 message RunningStep {
   oneof step {
-    GenericStep generic = 1;
-    ReadyStep ready = 2;
-    ExecutingStep executing = 3;
+    GenericStep generic = 1; // Generic step.
+    ReadyStep ready = 2; // Ready step.
+    ExecutingStep executing = 3; // Executing step.
   }
 }
 
+// A ready step of the running stage.
 message ReadyStep {
-  StepInfo info = 1;
-  ReadyState state = 2;
-  google.protobuf.Timestamp failed_at = 3;
-  uint32 fail_count = 4;
+  StepInfo info = 1; // Meta information about the step.
+  ReadyState state = 2; // State of the step.
+  google.protobuf.Timestamp failed_at = 3; // Time at which the step failed.
+  uint32 fail_count = 4; // Number of times the step has failed.
 }
 
+// Different states of a ready step.
 enum ReadyState {
-  READY_STATE_UNSPECIFIED = 0;
-  READY_STATE_CRASH_LOOP_BACKOFF = 1;
-  READY_STATE_NOT_READY = 2;
-  READY_STATE_READY = 3;
+  READY_STATE_UNSPECIFIED = 0; // Unspecified state.
+  READY_STATE_CRASH_LOOP_BACKOFF = 1; // If the instance is in crash loop backoff.
+  READY_STATE_NOT_READY = 2; // If the instance is not ready.
+  READY_STATE_READY = 3; // If the instance is ready.
 }
 
+// An executing step of the running stage.
 message ExecutingStep {
-  StepInfo info = 1;
-  google.protobuf.Timestamp started_at = 2;
+  StepInfo info = 1; // Meta information about the step.
+  google.protobuf.Timestamp started_at = 2; // Time at which the step started.
 }
 
+// Information about the last container termination.
 message ContainerTermination {
   // Exit status from the last termination of the container
   int32 exit_code = 1;
@@ -155,7 +175,7 @@ message ContainerTermination {
   // Time at which the container last terminated
   // +optional
   google.protobuf.Timestamp finished_at = 6;
-  // Container's ID in the format '<type>://<container_id>'
+  // Container's ID in the format 'type://container_id'
   // +optional
   string container_id = 7;
 }

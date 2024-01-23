@@ -7,63 +7,73 @@ import "google/protobuf/timestamp.proto";
 import "model/auth.proto";
 import "model/author.proto";
 
+// different fields that can identify a user.
 message UserIdentifier {
   oneof identifier {
-    string username = 1;
-    string email = 2;
-    string phone_number = 3;
+    string username = 1; // username is unique.
+    string email = 2; // email is unique.
+    string phone_number = 3; // Deprecated: text is not supported - phone number is unique.
   }
 }
 
+// Userinfo - placed in models to prevent cyclic imports.
 message UserInfo {
-  string email = 1;
-  string username = 2;
-  string phone_number = 3;
-  google.protobuf.Timestamp created_at = 5;
-  repeated string group_ids = 6;
+  string email = 1; // email of the user.
+  string username = 2; // username of the user.
+  string phone_number = 3; // Deprecated: text is not supported - phone number of the user.
+  google.protobuf.Timestamp created_at = 5; // when the user was created.
+  repeated string group_ids = 6; // groups the user belongs to.
 }
 
+// Entry model of a user - placed in models to prevent cyclic imports.
 message UserEntry {
-  string user_id = 1;
-  string printable_name = 2;
-  RegisterInfo register_info = 3;
-  bool verified = 4;
-  repeated string group_ids = 5;
-  google.protobuf.Timestamp created_at = 6;
+  string user_id = 1; // unique id of the user.
+  string printable_name = 2; // pretty printable name of a user.
+  RegisterInfo register_info = 3; // how the user was registered.
+  bool verified = 4; // whether the user is verified.
+  repeated string group_ids = 5; // groups the user belongs to.
+  google.protobuf.Timestamp created_at = 6; // when the user was created.
 }
 
+// Entry model of a service account - placed in models to prevent cyclic imports.
 message ServiceAccountEntry {
-  string service_account_id = 1;
-  string name = 2;
-  string client_id = 3;
-  repeated string group_ids = 4;
-  google.protobuf.Timestamp created_at = 5;
-  Author created_by = 6;
+  string service_account_id = 1; // unique id of the service account.
+  string name = 2; // name of the service account.
+  string client_id = 3; // client id of the service account.
+  repeated string group_ids = 4; // groups the service account belongs to.
+  google.protobuf.Timestamp created_at = 5; // when the service account was created.
+  Author created_by = 6; // who created the service account.
 }
 
 
+// Entry model of a group member - placed in models to prevent cyclic imports.
 message MemberEntry {
+  // The user or service account.
   oneof entry {
-    UserEntry user = 1;
-    ServiceAccountEntry service_account = 2;
+    UserEntry user = 1; // if the member is a user.
+    ServiceAccountEntry service_account = 2; // if the member is a service account.
   }
-  google.protobuf.Timestamp joined_at = 5;
+  google.protobuf.Timestamp joined_at = 5; // when the member joined the group.
 }
 
+// Registering information of a user.
 message RegisterInfo {
-  string creater_id = 1;
-  RegisterMethod method = 2;
+  string creater_id = 1; // Who created the user.
+  RegisterMethod method = 2; // How the user was registered.
 }
 
+// Method used to register a user.
 message RegisterMethod {
+  // if the user was created by the system.
   message System {}
 
+  // if the user was created by signing up.
   message Signup {
-    model.LoginType login_type = 1;
+    model.LoginType login_type = 1; // The login type used to sign up.
   }
 
   oneof method {
-    System system = 1;
-    Signup signup = 2;
+    System system = 1; // system created the user.
+    Signup signup = 2; // user signed up.
   }
 }

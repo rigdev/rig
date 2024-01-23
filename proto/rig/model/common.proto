@@ -2,43 +2,50 @@ syntax = "proto3";
 
 package model;
 
+// Bcrypt hashing configuration.
 message BcryptHashingConfig {
-  int32 cost = 1;
+  int32 cost = 1; // The cost of the hashing algorithm.
 }
 
+// Bcrypt hashing instance.
 message BcryptHashingInstance {}
 
+// Scrypt hashing configuration.
 message ScryptHashingConfig {
-  string signer_key = 1;
-  string salt_separator = 2;
-  int32 rounds = 3;
-  int32 mem_cost = 4;
-  int32 p = 5;
-  int32 key_len = 6;
+  string signer_key = 1; // The key used to sign the salt.
+  string salt_separator = 2; // The salt separator.
+  int32 rounds = 3; // The number of rounds in the algorithm.
+  int32 mem_cost = 4; // The memory cost of the algorithm.
+  int32 p = 5; // The parallelization factor of the algorithm.
+  int32 key_len = 6; // The length of the key.
 }
 
+// Scrypt hashing instance.
 message ScryptHashingInstance {
-  bytes salt = 1;
+  bytes salt = 1; // The salt used to hash the password.
 }
 
+// Hashing configuration.
 message HashingConfig {
-  oneof method {
-    BcryptHashingConfig bcrypt = 1;
-    ScryptHashingConfig scrypt = 2;
+  oneof method { 
+    BcryptHashingConfig bcrypt = 1; // if bcrypt is set, use bcrypt.
+    ScryptHashingConfig scrypt = 2; // if scrypt is set, use scrypt.
   }
 }
 
+// Hashing instance.
 message HashingInstance {
-  HashingConfig config = 1;
-  bytes hash = 2;
+  HashingConfig config = 1; // The hashing configuration.
+  bytes hash = 2; // A hash
   oneof instance {
-    BcryptHashingInstance bcrypt = 3;
-    ScryptHashingInstance scrypt = 4;
+    BcryptHashingInstance bcrypt = 3; // if bcrypt is set, this bcrypt instance was used.
+    ScryptHashingInstance scrypt = 4; // if scrypt is set, this scrypt instance was used.
   }
 }
 
+// Pagination option.
 message Pagination {
-  uint32 offset = 1;
-  uint32 limit = 2;
-  bool descending = 3;
+  uint32 offset = 1; // Where to start the pagination.
+  uint32 limit = 2; // How many items to return.
+  bool descending = 3; // Whether to sort in descending order.
 }

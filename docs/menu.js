@@ -330,7 +330,7 @@ const sidebars = {
     },
     {
       type: "category",
-      label: "API Reference",
+      label: "Reference Documentation",
       link: { type: "doc", id: "api" },
       className: "homepage-sidebar-item",
       customProps: {
@@ -338,6 +338,12 @@ const sidebars = {
       },
       collapsed: true,
       items: [
+        {
+          type: "doc",
+          id: "api/platform-api",
+          label: "Platform API Reference",
+          className: "docpage-sidebar-item",
+        },
         {
           type: "doc",
           id: "api/config/v1alpha1",

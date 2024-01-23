@@ -5,25 +5,29 @@ package api.v1.group;
 import "google/protobuf/timestamp.proto";
 import "model/metadata.proto";
 
+// Group is a named collection of users and service accounts with optional metadata.
 message Group {
-  string group_id = 1;
-  uint64 num_members = 5;
-  map<string, bytes> metadata = 6;
-  google.protobuf.Timestamp created_at = 7;
-  google.protobuf.Timestamp updated_at = 8;
+  string group_id = 1; // Unique name of the group.
+  uint64 num_members = 5; // Number of members.
+  map<string, bytes> metadata = 6; // Metadata of the group.
+  google.protobuf.Timestamp created_at = 7; // Creation time of the group.
+  google.protobuf.Timestamp updated_at = 8; // Last update time of the group.
 }
 
+// An update msg for a group.
 message Update {
   oneof field {
-    string group_id = 1;
-    model.Metadata set_metadata = 2;
-    string delete_metadata_key = 3;
+    string group_id = 1; // Update the unique group name.
+    model.Metadata set_metadata = 2; // Update or create a metadata entry.
+    string delete_metadata_key = 3; // Delete a metadata entry.
   }
 }
 
+
+// MemberID is a union of service account id and user id.
 message MemberID {
   oneof kind {
-    string service_account_id = 1;
-    string user_id  = 2;
+    string service_account_id = 1; // ID of a service account.
+    string user_id  = 2; // ID of a user.
   }
 }

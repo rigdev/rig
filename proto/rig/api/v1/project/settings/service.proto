@@ -4,6 +4,7 @@ package api.v1.project.settings;
 
 import "api/v1/project/settings/settings.proto";
 
+// Service for setting and retrieving project-wide settings.
 service Service {
   // Gets the users settings for the current project.
   rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse) {}
@@ -11,14 +12,18 @@ service Service {
   rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {}
 }
 
+// Empty get settings request
 message GetSettingsRequest {}
 
+// Response for getting settings for the project.
 message GetSettingsResponse {
-  api.v1.project.settings.Settings settings = 1;
+  api.v1.project.settings.Settings settings = 1; // The settings.
 }
 
+// Request for  updating settings for a project.
 message UpdateSettingsRequest {
-  repeated api.v1.project.settings.Update updates = 1;
+  repeated api.v1.project.settings.Update updates = 1; // The updates to apply.
 }
 
+// Empty response for updating a project's settings.
 message UpdateSettingsResponse {}

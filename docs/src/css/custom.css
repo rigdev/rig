@@ -139,7 +139,8 @@ table {
   color: #687076;
   font-size: 13px;
   text-transform: capitalize;
-  text-indent: 5px;
+  text-indent: 3px;
+  margin-left: 5px;
 }
 
 .homepage-sidebar-divider {

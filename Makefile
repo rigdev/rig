@@ -97,6 +97,30 @@ docs-gen: crd-ref-docs ## 📚 Generate api references
 		--source-path ./pkg/api/v1alpha2 \
 		--output-path ./docs/docs/api/v1alpha2.md
 
+PWD ?= $(shell pwd)
+
+.PHONY: docs-api-gen
+docs-api-gen: api-ref-docs  ## 📚 Generate api references
+	@protoc --plugin=protoc-gen-doc=$(API_REF_DOCS) \
+		--doc_out=$(PWD)/docs/docs/api \
+		--doc_opt=$(PWD)/docs/api-ref-docs/templates/service.tmpl,platform-api.md \
+		-I $(PWD)/proto/rig \
+		$(PWD)/proto/rig/api/v1/authentication/*.proto \
+		$(PWD)/proto/rig/api/v1/build/*.proto \
+		$(PWD)/proto/rig/api/v1/capsule/*.proto \
+		$(PWD)/proto/rig/api/v1/capsule/instance/*.proto \
+		$(PWD)/proto/rig/api/v1/capsule/rollout/status.proto \
+		$(PWD)/proto/rig/api/v1/cluster/*.proto \
+		$(PWD)/proto/rig/api/v1/environment/*.proto \
+		$(PWD)/proto/rig/api/v1/group/*.proto \
+		$(PWD)/proto/rig/api/v1/project/*.proto \
+		$(PWD)/proto/rig/api/v1/project/settings/*.proto \
+		$(PWD)/proto/rig/api/v1/role/*.proto \
+		$(PWD)/proto/rig/api/v1/service_account/*.proto \
+		$(PWD)/proto/rig/api/v1/user/*.proto \
+		$(PWD)/proto/rig/api/v1/user/settings/*.proto \
+		$(PWD)/proto/rig/model/*.proto 
+
 .PHONY: lint
 lint: golangci-lint ## 🚨 Run linting
 	$(GOLANGCI_LINT) run
@@ -296,3 +320,40 @@ CRD_REF_DOCS ?= $(TOOLSBIN)/crd-ref-docs
 crd-ref-docs: ## 📦 Download crd-ref-docs locally if necessary.
 	(test -s $(CRD_REF_DOCS)) || \
 	(cd tools && GOBIN=$(TOOLSBIN) go install github.com/elastic/crd-ref-docs)
+
+API_REF_DOCS ?= $(TOOLSBIN)/protoc-gen-docs
+
+.PHONY: api-ref-docs
+api-ref-docs: ## 📦 Download api-ref-docs locally if necessary.
+ifeq ($(shell uname -m),arm64)
+	$(MAKE) api-ref-docs-darwin-arm64
+else 
+	ifeq ($(shell uname -m),x86_64)
+		$(MAKE) api-ref-docs-linux-amd64
+	else 
+		$(error "Unsupported architecture $(shell uname -m)")
+	endif
+endif
+
+.PHONY: api-ref-docs-darwin-arm64
+api-ref-docs-darwin-arm64: ## 📦 Download api-ref-docs locally for DARWIN arm64 if necessary.
+	(test -s $(API_REF_DOCS)) || \
+	(cd tools && \
+	mkdir protoc-gen-docs && \
+	cd protoc-gen-docs && \
+	wget -c https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_arm64.tar.gz -O - | tar -xz && \
+	cd .. && \
+	mv protoc-gen-docs/protoc-gen-doc $(TOOLSBIN)/protoc-gen-docs && \
+	rm -rf protoc-gen-docs)
+
+.PHONY: api-ref-docs-linux-amd64
+api-ref-docs-linux-amd64: ## 📦 Download api-ref-docs locally for LINUX amd64 if necessary.
+	(API_REF_DOCS ?= $(TOOLSBIN)/protoc-gen-docs) || \
+	(cd tools && \
+	mkdir protoc-gen-docs && \
+	cd protoc-gen-docs && \
+	wget -c https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_linux_amd64.tar.gz -O - | tar -xz && \
+	cd .. && \
+	mv protoc-gen-docs/protoc-gen-doc $(TOOLSBIN)/protoc-gen-docs && \
+	rm -rf protoc-gen-docs)
+	

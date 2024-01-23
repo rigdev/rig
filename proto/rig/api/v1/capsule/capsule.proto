@@ -5,11 +5,13 @@ package api.v1.capsule;
 import "model/author.proto";
 import "google/protobuf/timestamp.proto";
 
+// Environment wide capsule abstraction
 message Capsule {
-  string capsule_id = 1;
-  uint64 current_rollout = 5;
-  google.protobuf.Timestamp updated_at = 6;
-  model.Author updated_by = 7;
+  string capsule_id = 1; // ID of the capsule
+  uint64 current_rollout = 5; // Current rollout of the capsule
+  google.protobuf.Timestamp updated_at = 6; // Last time the capsule was updated
+  model.Author updated_by = 7;  // Author of the last update
 }
 
+// Legacy update message
 message Update {}

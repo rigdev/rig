@@ -5,73 +5,88 @@ package api.v1.role;
 import "api/v1/role/role.proto";
 import "model/common.proto";
 
+// Service to manage roles that controls the RBAC.
 service Service {
-  // Create a new role
+  // Create a new role.
   rpc Create(CreateRequest) returns (CreateResponse) {}
-  // Delete role
+  // Delete role.
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
-  // List roles
+  // List roles.
   rpc List(ListRequest) returns (ListResponse) {}
   // Update role
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
-  // Get role
+  // Get role.
   rpc Get(GetRequest) returns (GetResponse) {}
-  // Assign a role
+  // Assign a role.
   rpc Assign(AssignRequest) returns (AssignResponse) {}
-  // Retract a role
+  // Revoke a role.
   rpc Revoke(RevokeRequest) returns (RevokeResponse) {}
 }
 
+// Request to create a role.
 message CreateRequest {
-  string role_id = 1;
-  repeated api.v1.role.Permission permissions = 2;
+  string role_id = 1; // The id / name of the role to create.
+  repeated api.v1.role.Permission permissions = 2; // The permissions to assign to the role.
 }
 
+// Response to create a role.
 message CreateResponse {
-  api.v1.role.Role role = 1;
+  api.v1.role.Role role = 1; // The created role.
 }
 
+// Request to delete a role.
 message DeleteRequest {
-  string role_id = 1;
+  string role_id = 1; // The id / name of the role to delete.
 }
 
+// Empty Response to delete a role.
 message DeleteResponse {}
 
+// Request to list roles.
 message ListRequest {
-  model.Pagination pagination = 1;
+  model.Pagination pagination = 1; // Pagination options.
 }
 
+// Response to list roles.
 message ListResponse {
-  repeated api.v1.role.Role roles = 1;
+  repeated api.v1.role.Role roles = 1; // The retrieved roles.
 }
 
+// Request to update a role.
 message UpdateRequest {
-  string role_id = 1;
-  repeated api.v1.role.Update updates = 2;
+  string role_id = 1; // the role to update.
+  repeated api.v1.role.Update updates = 2; // The updates to apply to the role.
 }
 
+// Empty update response.
 message UpdateResponse {}
 
+// Request to retrieve a role.
 message GetRequest {
-  string role_id = 1;
+  string role_id = 1; // The role to retrieve.
 }
 
+// Response to getting a role.
 message GetResponse {
-  api.v1.role.Role role = 1;
+  api.v1.role.Role role = 1; // The retrieved role.
 }
 
+// Assign a role to an entity.
 message AssignRequest {
-  string role_id = 1;
-  api.v1.role.EntityID entity_id = 2;
+  string role_id = 1; // The role to assign.
+  api.v1.role.EntityID entity_id = 2; // The entity to assign the role to.
 }
 
+// Empty response of assigning a role to an entity.
 message AssignResponse {}
 
+// Revoke a role from an entity.
 message RevokeRequest {
-  string role_id = 1;
-  api.v1.role.EntityID entity_id = 2;
+  string role_id = 1; // The role to revoke.
+  api.v1.role.EntityID entity_id = 2; // The entity to revoke the role from.
 }
 
+// Empty response for revoking a role.
 message RevokeResponse {}
 
 
