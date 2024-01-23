@@ -8,25 +8,12 @@ import "api/v1/capsule/rollout/status.proto";
 import "api/v1/capsule/job.proto";
 import "api/v1/capsule/change.proto";
 
-// Different states a rollout can be in.
-enum RolloutState {
-  ROLLOUT_STATE_UNSPECIFIED = 0; // Default value.
-  ROLLOUT_STATE_PENDING = 1; // Pending rollout.
-  ROLLOUT_STATE_PREPARING = 6; // Preparing rollout.
-  ROLLOUT_STATE_APPLYING = 2; // Applying rollout.
-  ROLLOUT_STATE_RESOURCE_CREATION = 8; // Creating resources.
-  ROLLOUT_STATE_INSTANCE_ROLL_OUT = 7; // Rolling out instances.
-  ROLLOUT_STATE_DONE = 3; // Rollout is done.
-  ROLLOUT_STATE_ABORTED = 4; // Rollout is aborted.
-  ROLLOUT_STATE_FAILED = 5; // Rollout failed.
-}
 
 // The rollout model.
 message Rollout {
   uint64 rollout_id = 1; // Unique indentifier for the rollout.
   RolloutConfig config = 2; // The rollout config.
-  RolloutStatus status = 3; // The rollout status.
-  api.v1.capsule.rollout.Status rollout_status = 4; // The rollout status.
+  api.v1.capsule.rollout.Status status = 4; // The rollout status.
 }
 
 enum EventType {
@@ -57,9 +44,4 @@ message ConfigFile {
   model.Author updated_by = 3;
   google.protobuf.Timestamp updated_at = 4;
   bool is_secret = 5;
-}
-
-message RolloutStatus {
-  RolloutState state = 1;
-  google.protobuf.Timestamp updated_at = 2;
 }

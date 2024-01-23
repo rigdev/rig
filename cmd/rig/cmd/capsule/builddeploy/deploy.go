@@ -275,7 +275,7 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 		}
 		eventCount += len(eventRes.Msg.GetEvents())
 
-		switch res.Msg.GetRollout().GetRolloutStatus().GetState() {
+		switch res.Msg.GetRollout().GetStatus().GetState() {
 		case rollout.State_STATE_RUNNING, rollout.State_STATE_STOPPED:
 			fmt.Printf("[%v] %v\n", time.Now().UTC().Format(time.RFC822), "Deployment complete")
 			return nil
