@@ -60,6 +60,7 @@ message CreateRequest {
   api.v1.capsule.Origin origin = 4;
   map<string, string> labels = 5;
   bool skip_image_check = 6;
+  string project_id = 7;
 }
 
 message CreateResponse {
@@ -70,6 +71,7 @@ message CreateResponse {
 message ListRequest {
   string capsule_id = 1;
   model.Pagination pagination = 2;
+  string project_id = 3;
 }
 
 message ListResponse {
@@ -80,6 +82,7 @@ message ListResponse {
 message DeleteRequest {
   string capsule_id = 1;
   string build_id = 2;
+  string project_id = 3;
 }
 
 message DeleteResponse {}
@@ -87,6 +90,7 @@ message DeleteResponse {}
 message GetRequest {
   string capsule_id = 1;
   string build_id = 2;
+  string project_id = 3;
 }
 
 message GetResponse {
