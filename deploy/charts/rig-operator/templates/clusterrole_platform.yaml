@@ -1,0 +1,71 @@
+{{- if .Values.rbac.platform.create_token -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.rbac.platform.service_account }}
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+    - ""
+  resources:
+    - pods
+    - services
+    - configmaps
+    - secrets
+    - namespaces
+    - pods/log
+    - pods/exec
+    - events
+    - jobs
+    - cronjobs
+  verbs:
+    - "*"
+- apiGroups:
+    - apps
+  resources:
+    - deployments
+  verbs:
+    - "*"
+- apiGroups:
+    - networking.k8s.io
+  resources:
+    - ingresses
+  verbs:
+    - "*"
+- apiGroups:
+    - metrics.k8s.io
+  resources:
+    - pods
+  verbs:
+    - list
+- apiGroups:
+    - custom.metrics.k8s.io
+  resources:
+    - '*'
+  verbs:
+    - get
+    - list
+- apiGroups:
+    - rig.dev
+  resources:
+    - capsules
+  verbs:
+    - "*"
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
+  - autoscaling.k8s.io
+  resources:
+  - verticalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+{{- end -}}

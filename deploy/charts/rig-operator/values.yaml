@@ -48,6 +48,11 @@ rbac:
   # when enabled we will create all of the roles, clusterroles and accompaning
   # bindings.
   create: true
+  platform:
+    # If true, a rig-platform service-account and secret will be created,
+    # with a service-account token for external communication of a Rig Platform.
+    create_token: false
+    service_account: "rig-platform-token"
 
 # install rig CRDs, disable if you prefer having CRDs installed separately from
 # the operator.
