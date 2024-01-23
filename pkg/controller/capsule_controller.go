@@ -1433,9 +1433,7 @@ func reconcileHorizontalPodAutoscaler(ctx context.Context, r *reconcileRequest) 
 	}
 
 	if !shouldHaveHPA {
-		if err := r.client.Delete(ctx, existingHPA); err != nil {
-			return err
-		}
+		return r.client.Delete(ctx, existingHPA)
 	}
 
 	return upsertIfNewer(
@@ -1563,6 +1561,9 @@ func (r *reconcileRequest) createHPA() (*autoscalingv2.HorizontalPodAutoscaler, 
 
 	hpa.Spec.MinReplicas = ptr.New(int32(scale.Instances.Min))
 	hpa.Spec.MaxReplicas = int32(*scale.Instances.Max)
+	if err := controllerutil.SetControllerReference(&r.capsule, hpa, r.scheme); err != nil {
+		return nil, false, fmt.Errorf("could not set owner reference on horizontal pod autoscaler: %w", err)
+	}
 
 	return hpa, true, nil
 }
