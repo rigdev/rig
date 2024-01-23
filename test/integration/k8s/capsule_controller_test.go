@@ -263,7 +263,7 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 
 func (s *K8sTestSuite) TestController() {
 	ctx := context.Background()
-	s.testCapsule(ctx)
+	s.testCreateCapsule(ctx)
 	s.testInterface(ctx)
 	s.testIngress(ctx)
 	s.testLoadbalancer(ctx)
@@ -287,7 +287,7 @@ func (s *K8sTestSuite) getCapsule(ctx context.Context) (v1alpha2.Capsule, metav1
 	}
 }
 
-func (s *K8sTestSuite) testCapsule(ctx context.Context) {
+func (s *K8sTestSuite) testCreateCapsule(ctx context.Context) {
 	s.by("Creating namespace")
 	ns := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: nsName.Namespace}}
 	s.Assert().NoError(s.Client.Create(ctx, ns))
