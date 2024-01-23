@@ -10,6 +10,7 @@ import (
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/google/uuid"
 	"github.com/nsf/jsondiff"
+	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/hash"
@@ -271,6 +272,7 @@ func (s *K8sTestSuite) TestController() {
 	s.testConfigMap(ctx)
 	s.testHPA(ctx)
 	s.testCronJob(ctx)
+	s.testPrometheusServiceMonitor(ctx)
 	s.testDeleteCapsule(ctx)
 }
 
@@ -945,6 +947,35 @@ func (s *K8sTestSuite) testCronJob(ctx context.Context) {
 	capsule.Spec.CronJobs = capsule.Spec.CronJobs[:1]
 	s.Assert().NoError(s.Client.Update(ctx, &capsule))
 	s.expectResources(ctx, []client.Object{job1})
+}
+
+func (s *K8sTestSuite) testPrometheusServiceMonitor(ctx context.Context) {
+	s.by("Creating Prometheus Service Monitor")
+	_, capsuleOwnerRef := s.getCapsule(ctx)
+	s.expectResources(ctx, []client.Object{
+		&monitorv1.ServiceMonitor{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      nsName.Name,
+				Namespace: nsName.Namespace,
+				Labels: map[string]string{
+					controller.LabelCapsule: nsName.Name,
+				},
+				OwnerReferences: []metav1.OwnerReference{capsuleOwnerRef},
+			},
+			Spec: monitorv1.ServiceMonitorSpec{
+				Selector: metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						controller.LabelCapsule: nsName.Name,
+					},
+				},
+				Endpoints: []monitorv1.Endpoint{{
+					Port: "metricsport",
+					Path: "metrics",
+				}},
+			},
+		},
+	})
 }
 
 func (s *K8sTestSuite) testDeleteCapsule(ctx context.Context) {
