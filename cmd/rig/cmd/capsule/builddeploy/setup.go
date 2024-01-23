@@ -9,6 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/docker/docker/client"
+	"github.com/rigdev/rig-go-api/api/v1/build"
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -185,12 +186,12 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	resp, err := c.Rig.Capsule().ListBuilds(ctx, &connect.Request[capsule_api.ListBuildsRequest]{
-		Msg: &capsule_api.ListBuildsRequest{
+	resp, err := c.Rig.Build().List(ctx, connect.NewRequest(
+		&build.ListRequest{
 			CapsuleId: capsule.CapsuleID,
 			ProjectId: c.Cfg.GetProject(),
-		},
-	})
+		}),
+	)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

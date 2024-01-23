@@ -7,7 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -16,8 +16,8 @@ import (
 )
 
 func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	resp, err := c.Rig.Capsule().ListBuilds(ctx, &connect.Request[capsule.ListBuildsRequest]{
-		Msg: &capsule.ListBuildsRequest{
+	resp, err := c.Rig.Build().List(ctx, connect.NewRequest(
+		&build.ListRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Pagination: &model.Pagination{
 				Offset:     uint32(offset),
@@ -25,8 +25,8 @@ func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, _ []string) erro
 				Descending: true,
 			},
 			ProjectId: c.Cfg.GetProject(),
-		},
-	})
+		}),
+	)
 	if err != nil {
 		return err
 	}
