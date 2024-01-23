@@ -30,14 +30,6 @@ service Service {
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
   // Lists all capsules for current project.
   rpc List(ListRequest) returns (ListResponse) {}
-  // Create a new build.
-  // Builds are immutable and cannot change. Create a new build to make
-  // changes from an existing one.
-  rpc CreateBuild(CreateBuildRequest) returns (CreateBuildResponse) {}
-  // List builds for a capsule.
-  rpc ListBuilds(ListBuildsRequest) returns (ListBuildsResponse) {}
-  // Delete a build.
-  rpc DeleteBuild(DeleteBuildRequest) returns (DeleteBuildResponse) {}
   // Deploy changes to a capsule.
   // When deploying, a new rollout will be initiated. Only one rollout can be
   // running at a single point in time.
@@ -186,40 +178,6 @@ message ListResponse {
   repeated api.v1.capsule.Capsule capsules = 1;
   uint64 total = 2;
 }
-
-message CreateBuildRequest {
-  string capsule_id = 1;
-  string image = 2;
-  string digest = 3;
-  api.v1.capsule.Origin origin = 4;
-  map<string, string> labels = 5;
-  bool skip_image_check = 6;
-  string project_id = 7;
-}
-
-message CreateBuildResponse {
-  string build_id = 1;
-  bool created_new_build = 2;
-}
-
-message ListBuildsRequest {
-  string capsule_id = 1;
-  model.Pagination pagination = 2;
-  string project_id = 3;
-}
-
-message ListBuildsResponse {
-  repeated api.v1.capsule.Build builds = 1;
-  uint64 total = 2;
-}
-
-message DeleteBuildRequest {
-  string capsule_id = 1;
-  string build_id = 2;
-  string project_id = 3;
-}
-
-message DeleteBuildResponse {}
 
 message DeployRequest {
   string capsule_id = 1;
