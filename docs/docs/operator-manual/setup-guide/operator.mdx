@@ -1,0 +1,132 @@
+import {
+RIG_OPERATOR_CHART_VERSION
+} from "../../../src/constants/versions"
+
+# Rig Operator
+
+## Setup guide
+
+Installing the Rig Operator is a easy as any other Kubernetes operator. We've made a
+Helm chart available the makes it easy to get all the resources up and running.
+
+## Dependencies
+
+The rig-operator uses the kubernetes APIs and a few additional APIs to provide
+some very easy-to-use APIs for spinning up workloads.
+
+- [cert-manager](https://cert-manager.io/).
+- [metrics-server](https://github.com/kubernetes-sigs/metrics-server).
+
+### cert-manager
+
+The rig-operator helm chart uses cert-manager to create a certificate for the
+CRD webhooks. These are self-signed and doesn't require any special
+configuration of cert-manager.
+
+To see if cert-manager is already installed, run the following command:
+
+```bash
+kubectl api-resources | grep cert-manager.io/v1
+```
+
+This should show an output similar to the below if the APIs are available.
+
+```
+[...]
+certificates                      cert,certs   cert-manager.io/v1                     true         Certificate
+clusterissuers                                 cert-manager.io/v1                     false        ClusterIssuer
+[...]
+```
+
+If you want to enable ingress support, then you will need to further configure
+cert-manager and rig-operator to be able to generate certificates for
+workloads. See [the section about ingress](/operator-manual/ingress) for more
+information about this.
+
+### metrics-server
+
+The rig-operator creates
+[`HorizontalPodAutoscaler`](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+resources, configured to use the metrics APIs provided by metrics-server.
+
+In some environments (eg. GKE) this is installed in the kubernetes cluster when
+you create it. To check wether the metrics APIs are available run
+
+```bash
+kubectl api-resources | grep metrics
+```
+
+This should show an output similar to the below if the APIs are available.
+
+```
+nodes          metrics.k8s.io/v1beta1       false        NodeMetrics
+pods           metrics.k8s.io/v1beta1       true         PodMetrics
+```
+
+If you dont see this output you can install the metrics-server using the
+[official
+instructions](https://github.com/kubernetes-sigs/metrics-server#installation).
+
+## Installation
+
+When the dependencies are installed, you can now install the operator:
+
+<pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
+  --repo https://charts.rig.dev \\
+  --version ${RIG_OPERATOR_CHART_VERSION} \\
+  --namespace rig-system \\
+  --create-namespace
+`}</code></pre>
+
+
+## Configuration
+
+The Rig Operator has a lot of configuration options, for how to treat Capsules in
+the current cluster. The configuration is easily provided as part of a values file for
+the Helm Chart.
+
+The entire config is described [here](https://github.com/rigdev/rig/blob/main/deploy/charts/rig-operator/values.yaml),
+but is simply a YAML file with configuration parameters.
+
+### Example - External Platform token
+
+To configure the operator to generate access for a Rig Platform deployed *outside*
+cluster, a ServiceAccount with a Secret (token) can easily be configured:
+
+```yaml
+rbac:
+  platform:
+    create_token: true
+```
+
+After creation, the Secret containing the token and CA authority can be read:
+
+```bash
+kubectl get -n rig-system secret/rig-platform-token -o='jsonpath={.data.token}' | base64 -d
+kubectl get -n rig-system secret/rig-platform-token -o='jsonpath={.data.ca\.crt}' | base64 -d
+```
+
+### Example - Configure Service-Type
+
+To configure the operator to produce Service resources with ServiceType `NodePort` instead of `ClusterIP`,
+the following operator will do that for us:
+
+```yaml
+config:
+  service:
+    type: NodePort
+```
+
+### Applying the configuration
+
+To apply a config to a cluster, save the file as `operator.yaml` run the following command:
+
+<pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
+  --repo https://charts.rig.dev \\
+  --version ${RIG_OPERATOR_CHART_VERSION} \\
+  --namespace rig-system \\
+  --create-namespace \\
+  -f operator.yaml
+`}</code></pre>
+
+This can be done several times, after each change.

@@ -90,6 +90,7 @@ p {
 a {
   font-size: 14px;
   font-weight: 500;
+  text-decoration: underline;
 }
 
 table {
@@ -228,4 +229,16 @@ html[data-theme="dark"] .header-github-link:before {
 
 .markdown a:hover {
   opacity: 0.6;
+}
+
+.menu__link {
+  text-decoration: unset;
+}
+
+.table-of-contents__link {
+  text-decoration: unset;
+}
+
+.card {
+  text-decoration: unset;
 }

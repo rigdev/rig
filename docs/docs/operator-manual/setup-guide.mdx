@@ -14,106 +14,54 @@ complex APIs of Kubernetes.
 Rig consists of two components which together gives the full experience of
 Rig.dev.
 
-- rig-operator: our open source components which provide higher level APIs in
+- **rig-operator**: our open source components which provide higher level APIs in
   kubernetes, which encapsulate multiple low level resources in a single CRD.
-- rig-platform: our paid product which further builds on the primitives
+- **rig-platform**: our paid product which further builds on the primitives
   provided by rig-operator.
 
 Each of these components have their own requirements and offer options for
 configuration to make it fit into your kubernetes cluster.
 
-## Requirements: rig-operator
+## Quick Installation
 
-The rig-operator uses the kubernetes APIs and a few additional APIs to provide
-some very easy-to-use APIs for spinning up workloads.
+For a quick installation in an existing Kubernetes cluster, you can follow the
+steps here. For a more in-depth guide, see the next section.
 
-- [cert-manager](https://cert-manager.io/).
-- [metrics-server](https://github.com/kubernetes-sigs/metrics-server).
-
-### cert-manager
-
-The rig-operator helm chart uses cert-manager to create a certificate for the
-CRD webhooks. These are self-signed and doesn't require any special
-configuration of cert-manager.
-
-If you want to enable ingress support, then you will need to further configure
-cert-manager and rig-operator to be able to generate certificates for
-workloads. See [the section about ingress](/operator-manual/ingress) for more
-information about this.
-
-### metrics-server
-
-The rig-operator creates
-[`HorizontalPodAutoscaler`](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-resources, configured to use the metrics APIs provided by metrics-server.
-
-In some environments (eg. GKE) this is installed in the kubernetes cluster when
-you create it. To check wether the metrics APIs are available run
-
-```bash
-kubectl api-resources | grep metrics
-```
-
-This should show an output similar to the below if the APIs are available.
-
-```
-nodes          metrics.k8s.io/v1beta1       false        NodeMetrics
-pods           metrics.k8s.io/v1beta1       true         PodMetrics
-```
-
-If you dont see this output you can install the metrics-server using the
-[official
-instructions](https://github.com/kubernetes-sigs/metrics-server#installation).
-
-## Requirements: rig-platform
-
-The rig-platform needs a database for holding its data and the metrics APIs for
-showing graphs in the dashboard, and then it needs the rig-operator and the
-APIs it provides.
-
-If you installed rig-operator and its requirements, then you already have the
-metrics APIs available.
-
-### Database
-
-Support is available for connecting to an existing PostgreSQL
-database. Alternatively, a PostgreSQL database can be deployed for you as part
-of the installation (not recommended for production environments).
-
-## Installation
-
-We will install the Rig Platform using [Helm](https://helm.sh). This also
-installs the Rig Operator, which enables support for Capsules within the
-cluster.
-
-<pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
-  --repo https://charts.rig.dev \\
-  --version ${RIG_OPERATOR_CHART_VERSION} \\
-  --namespace rig-system \\
-  --create-namespace
-helm upgrade --install rig-platform rig-platform \\
-  --repo https://charts.rig.dev \\
-  --version ${RIG_PLATFORM_CHART_VERSION} \\
-  --namespace rig-system \\
-  --create-namespace \\
-  --set postgres.enabled=true  # Remove to not start a new PostgreSQL database.
-`}
-</code>
-</pre>
+1. Install dependencies:
+    1. Install Certificate Manager if missing: https://cert-manager.io/
+    2. Install Metrics Server if missing: https://github.com/kubernetes-sigs/metrics-server
+2. Install the Rig Operator:
+  <pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
+    --repo https://charts.rig.dev \\
+    --version ${RIG_OPERATOR_CHART_VERSION} \\
+    --namespace rig-system \\
+    --create-namespace`}</code></pre>
+3. Install the Rig Platform:
+  <pre><code className="language-bash">{`helm upgrade --install rig-platform rig-platform \\
+    --repo https://charts.rig.dev \\
+    --version ${RIG_PLATFORM_CHART_VERSION} \\
+    --namespace rig-system \\
+    --create-namespace \\
+    --set postgres.enabled=true`}</code></pre>
+4. Bootstrap your first user and project by running:
+  ```bash
+  kubectl exec -it -n rig-system deploy/rig-platform -- rig-admin init
+    ```
 
 :::info Note
-See the [Database](/operator-manual/database) article for more information about how to connect to your
-own database, and other configuration options.
+As part of the quick installation, a small PostgresSQL instance is installed in your
+cluster, for the Platform to use. This is *not* recommended for production environments.
 :::
 
-After installing the Rig Platform you'll need to run the following command to setup an admin user
+## Extended installation guides
 
-```bash
-kubectl exec -it --namespace rig-system deploy/rig-platform \
-  -- rig-admin init
-```
+For real-world scenarios, we recommend using the extended installation guides, available here:
 
-### Configuration
+- [Rig Operator Setup guide](/operator-manual/setup-guide/operator)
+- [Rig Platform Setup guide](/operator-manual/setup-guide/platform)
+
+
+## Configuration
 
 The Rig Operator and Platform both have a `values.yaml` file which specify how
 to configure their respective Helm charts. The `values` files and their
@@ -124,10 +72,3 @@ defaults can be found here
 
 To overwrite a default value when deploying, use `--set FIELD=VALUE` flags when
 running `helm`.
-
-### Connect to the Rig Platform remotely
-After setting up Rig, users who want to connect to it remotely can run the following command using their local Rig CLI
-```bash
-rig config init
-```
-which will guide the user trough connecting to Rig.
