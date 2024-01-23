@@ -2,10 +2,12 @@ syntax = "proto3";
 
 package api.v1.capsule;
 
+// Deprecated: sidecar configuration
 message Sidecar {
   repeated SidecarInterface interfaces = 1;
 }
 
+// Deprecated: sidecar interface configuration
 message SidecarInterface {
   uint32 port = 1;
   uint32 proxy_port = 2;

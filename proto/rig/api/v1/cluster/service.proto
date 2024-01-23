@@ -4,38 +4,45 @@ package api.v1.cluster;
 
 // The service to your cluster running Rig.
 service Service {
-  // GetConfig returns the config for the cluster
+  // GetConfig returns the config for the cluster.
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
-  // GetConfigs returns the configs for all clusters
+  // GetConfigs returns the configs for all clusters.
   rpc GetConfigs(GetConfigsRequest) returns (GetConfigsResponse) {}
 }
 
+// request for getting cluster config for an environment.
 message GetConfigRequest {
-  string environment_id = 1;
+  string environment_id = 1; // The environment to get cluster config for.
 }
 
+// response for getting cluster config for an environment.
 message GetConfigResponse {
-  ClusterType cluster_type = 1;
+  ClusterType cluster_type = 1; // Type of the cluster.
+  // dev registry of the cluster. This is either a Docker daemon or a registry.
   oneof dev_registry {
-    DockerDaemon docker = 2;
-    Registry registry = 3;
+    DockerDaemon docker = 2; // Docker.
+    Registry registry = 3; // Registry.
   }
-  bool ingress = 4;
+  bool ingress = 4; // if true, the cluster has an ingress controller.
 }
 
+// Empty Request for getting the configs of all clusters.
 message GetConfigsRequest {}
 
+// Empty Response for getting the configs of all clusters.
 message GetConfigsResponse {
   repeated GetConfigResponse clusters = 1;
 }
 
+// Docker daemon dev registry
 message DockerDaemon {}
 
+// Registry dev registry
 message Registry {
   string host = 1;
 }
 
-
+// Cluster type - Docker or kubernetes.
 enum ClusterType {
   CLUSTER_TYPE_UNSPECIFIED = 0;
   CLUSTER_TYPE_DOCKER = 1;

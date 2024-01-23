@@ -4,15 +4,18 @@ package api.v1.capsule;
 
 import "google/protobuf/timestamp.proto";
 
-message Log {
-  google.protobuf.Timestamp timestamp = 1;
-  LogMessage message = 2;
-  string instance_id = 3;
+// Log of an instance
+message Log { 
+  google.protobuf.Timestamp timestamp = 1; // Timestamp of the log
+  LogMessage message = 2; // Message of the log
+  string instance_id = 3; // Instance ID of the log
 }
 
+
+// The actual log message
 message LogMessage {
   oneof message {
-    bytes stdout = 1;
-    bytes stderr = 2;
+    bytes stdout = 1; // If the log is stdout
+    bytes stderr = 2; // If the log is stderr
   }
 }

@@ -8,122 +8,129 @@ import "api/v1/capsule/service.proto";
 import "model/common.proto";
 import "google/protobuf/timestamp.proto";
 
-// The service to manage your project in Users
+// The service to manage your projects.
 service Service {
-  // Create project
+  // Create project.
   rpc Create(CreateRequest) returns (CreateResponse) {}
-  // Delete project (everything in Users)
+  // Delete project.
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
-  // Get project
+  // Get project.
   rpc Get(GetRequest) returns (GetResponse) {}
-  // Get project list
+  // Get project list.
   rpc List(ListRequest) returns (ListResponse) {}
-  // Update updates the profile of the project
+  // Update updates the profile of the project.
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
-  // Get public key of system
+  // Get public key.
   rpc PublicKey(PublicKeyRequest) returns (PublicKeyResponse) {}
-  // Get License Information
+  // Get License Information.
   rpc GetLicenseInfo(GetLicenseInfoRequest) returns (GetLicenseInfoResponse) {}
-
+  // Returns all objects of a given kind.
   rpc GetObjectsByKind(GetObjectsByKindRequest)
       returns (GetObjectsByKindResponse) {}
-
+  // Returns all metrics of a given custom object.
   rpc GetCustomObjectMetrics(GetCustomObjectMetricsRequest)
       returns (GetCustomObjectMetricsResponse) {}
 }
 
-// The request of a Namespace.Create RPC
+// The request to create a project.
 message CreateRequest {
-  repeated api.v1.project.Update initializers = 1;
-  string project_id = 2;
+  repeated api.v1.project.Update initializers = 1; // The initializers of the project.
+  string project_id = 2; // ID of the project to create.
 }
 
-// The response of a Namespace.Create RPC
+// The response to Create a project.
 message CreateResponse {
-  api.v1.project.Project project = 1;
+  api.v1.project.Project project = 1; // The created project.
 }
 
-// The request of a Namespace.Delete RPC
+// Request to delete a project.
 message DeleteRequest {
-  string project_id = 1;
+  string project_id = 1; // Id of the project to delete
 }
 
-// The response of a Namespace.Delete RPC
+// Empty response for deleting a project.
 message DeleteResponse {}
 
-// The request of a Namespace.Update RPC
+// Update the name field of a project.
 message UpdateRequest {
-  repeated api.v1.project.Update updates = 1;
-  string project_id = 2;
+  repeated api.v1.project.Update updates = 1; // the updates to apply.
+  string project_id = 2; // The project to update.
 }
 
-// The response of a Namespace.Update RPC
+// Empty response for updating a project.
 message UpdateResponse {}
 
-// The request of a Namespace.Get RPC
+// Request for getting a project.
 message GetRequest {
-  string project_id = 1;
+  string project_id = 1; // The project to get.
 }
 
-// The response of a Namespace.Get RPC
+// Response for getting a project.
 message GetResponse {
-  api.v1.project.Project project = 1;
+  api.v1.project.Project project = 1; // The retrieved project.
 }
 
-// The request of a Namespace.List RPC
+// Request for listing projects.
 message ListRequest {
-  model.Pagination pagination = 1;
+  model.Pagination pagination = 1; // Pagination options.
 }
 
+// Response for listing projects.
 message ListResponse {
-  repeated api.v1.project.Project projects = 1;
-  int64 total = 2;
+  repeated api.v1.project.Project projects = 1; // The retrieved projects.
+  int64 total = 2; // Total number of projects.
 }
 
-// The request of a Namespace.PublicKey RPC
+// Request to get the public key of a project.
 message PublicKeyRequest {
-  string project_id = 1;
+  string project_id = 1; // The project to get the key from.
 }
 
-// The response of a Namespace.PublicKey RPC
+// Response for getting a projects public key.
 message PublicKeyResponse {
-  // The id of the project
-  string public_key = 1;
+  string public_key = 1; // the retrieved public key.
 }
 
+// Request to get the license information of the Rig installation.
 message GetLicenseInfoRequest {
-  string project_id = 1;
+  string project_id = 1; // Deprecated: Only the Rig-Project has license information.
 }
 
+// Response for getting the license information of the Rig installation.
 message GetLicenseInfoResponse {
-  api.v1.project.Plan plan = 1;
-  google.protobuf.Timestamp expires_at = 2;
+  api.v1.project.Plan plan = 1; // The plan of the rig installation.
+  google.protobuf.Timestamp expires_at = 2; // The expiration date of the license.
 }
 
+// Request to get custom metrics for a project and environment.
 message GetCustomObjectMetricsRequest {
-  api.v1.capsule.ObjectReference object_reference = 1;
-  string project_id = 2;
-  string environment_id = 3;
+  api.v1.capsule.ObjectReference object_reference = 1; // The object to get metrics for.
+  string project_id = 2; // The project to get metrics for.
+  string environment_id = 3; // The environment to get metrics for.
 }
 
+// Response for getting custom metrics for a project and environment.
 message GetCustomObjectMetricsResponse {
-  repeated api.v1.capsule.Metric metrics = 1;
-  string project_id = 2;
-  string environment_id = 3;
+  repeated api.v1.capsule.Metric metrics = 1; // The metrics for the given object.
+  string project_id = 2; // The project the metrics are for.
+  string environment_id = 3; // The environment the metrics are for.
 }
 
+// Model of a kubernetes object.
 message KubernetesObject {
-  string kind = 1;
-  string name = 2;
+  string kind = 1; // Type / kind of the object.
+  string name = 2; // Name of the object.
 }
 
+// Request to get all objects of a given kind in a project and environment.
 message GetObjectsByKindRequest {
-  string kind = 1;
-  string api_version = 2;
-  string project_id = 3;
-  string environment_id = 4;
+  string kind = 1; // The kind of the objects to get.
+  string api_version = 2; // The api version of the objects to get.
+  string project_id = 3; // The project to get the objects for.
+  string environment_id = 4; // The environment to get the objects for.
 }
 
+// Response for getting all objects of a given kind in a project and environment.
 message GetObjectsByKindResponse {
-  repeated KubernetesObject objects = 1;
+  repeated KubernetesObject objects = 1; // The objects of the given kind.
 }

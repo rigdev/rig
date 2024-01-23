@@ -19,24 +19,31 @@ service Service {
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
 }
 
+// Request o create a service account.
 message CreateRequest {
-  string name = 1;
+  string name = 1; // Name of the service account to create.
 }
 
+
+// Response of creating a service account.
 message CreateResponse {
-  api.v1.service_account.ServiceAccount service_account = 1;
-  string client_id = 2;
-  string client_secret = 3;
+  api.v1.service_account.ServiceAccount service_account = 1; // The created service account.
+  string client_id = 2; // The client id of the service account.
+  string client_secret = 3; // The client secret of the service account.
 }
 
+// Request to list service accounts.
 message ListRequest {}
 
+// Response for listing service accounts.
 message ListResponse {
-  repeated model.ServiceAccountEntry service_accounts = 1;
+  repeated model.ServiceAccountEntry service_accounts = 1; // the retrieved service accounts.
 }
 
+// Request to delete a service account.
 message DeleteRequest {
-  string service_account_id = 1;
+  string service_account_id = 1; // The id of the service account to delete.
 }
 
+// Empty response for deleting a service account.
 message DeleteResponse {}

@@ -2,7 +2,19 @@ syntax = "proto3";
 
 package api.v1.authentication;
 
+import "model/user.proto";
+
 message Token {
-  string access_token = 1;
-  string refresh_token = 2;
+  string access_token = 1; // Access token
+  string refresh_token = 2; // Refresh token
+}
+
+message ClientCredentials {
+  string client_id = 1; // ID of the service account
+  string client_secret = 2; // secret of the service account
+}
+
+message UserPassword {
+  model.UserIdentifier identifier = 1; // Identifier of user. This can be username, email etc.
+  string password = 2; // Password of the user
 }

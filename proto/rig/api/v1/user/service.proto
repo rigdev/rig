@@ -6,11 +6,11 @@ import "model/user.proto";
 import "model/common.proto";
 import "api/v1/user/user.proto";
 
-// The service to manage users in Users
+// The service to manage users in Users.
 service Service {
-  // Create a new user
+  // Create a new user.
   rpc Create(CreateRequest) returns (CreateResponse) {}
-  // Update a users profile and info
+  // Update a users profile and info.
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
   // Get the list of active sessions for the given user.
   rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {}
@@ -18,85 +18,81 @@ service Service {
   rpc Get(GetRequest) returns (GetResponse) {}
   // Lookup a user by a unique identifier - email, username, phone number etc.
   rpc GetByIdentifier(GetByIdentifierRequest) returns (GetByIdentifierResponse) {}
-  // List users
+  // List users.
   rpc List(ListRequest) returns (ListResponse) {}
-  // Delete a specific user
+  // Delete a specific user.
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
 }
 
+// Request to get a user by an identifier.
 message GetByIdentifierRequest {
-  model.UserIdentifier identifier = 1;
+  model.UserIdentifier identifier = 1; // The identifier to lookup.
 }
 
+// Response to get a user by an identifier.
 message GetByIdentifierResponse {
-  api.v1.user.User user = 1;
+  api.v1.user.User user = 1; // The user.
 }
 
-// The request of a Users.Create RPC
+// The request to create a user.
 message CreateRequest {
-  // Initial fields to set.
-  repeated api.v1.user.Update initializers = 1;
-  string initial_group_id = 2;
+  repeated api.v1.user.Update initializers = 1; // Initial fields to set.
+  string initial_group_id = 2; // If set, the user will be added to this group upon creation.
 }
 
-// The response of a Users.Create RPC
+// The response of creating a user.
 message CreateResponse {
-  // The created user.
-  api.v1.user.User user = 1;
+  api.v1.user.User user = 1; // The created user.
 }
 
-// The request of a Users.Update RPC
+// The request of updating a user.
 message UpdateRequest {
-  // The user identifier to fetch the user
-  string user_id = 1;
-  repeated api.v1.user.Update updates = 2;
+  string user_id = 1; // The user identifier of the user to update.
+  repeated api.v1.user.Update updates = 2; // The updates to apply to the user.
 }
 
-// The response of a Users.Update RPC
+// Empty update response.
 message UpdateResponse {}
 
-// The request of an Users.Get RPC
+// Get request for retrieving a user.
 message GetRequest {
-  // The user identifier to fetch the user
+  // The user identifier to fetch the user.
   string user_id = 1;
 }
 
-// The response of an Users.Get RPC
+// The response of getting a user.
 message GetResponse {
-  api.v1.user.User user = 1;
+  api.v1.user.User user = 1; // The retrieved user.
 }
 
-// The request of an Users.ListSessions RPC
+// Request to list a users login sessions.
 message ListSessionsRequest {
-  string user_id = 1;
-  model.Pagination pagination = 2;
+  string user_id = 1; // The user to retrieve sessions for.
+  model.Pagination pagination = 2; // Pagination options.
 }
 
-// The response of a Users.ListSessions RPC
+// The response of listing a users login sessions.
 message ListSessionsResponse {
-  repeated api.v1.user.SessionEntry sessions = 1;
-  uint64 total = 2;
+  repeated api.v1.user.SessionEntry sessions = 1; // The retrieved sessions.
+  uint64 total = 2; // The total number of sessions.
 }
 
-// The request of an Users.Delete RPC
+// Request for deleting a user.
 message DeleteRequest {
-  // The user identifier to fetch the user
-  string user_id = 1;
+  string user_id = 1; // The user identifier to fetch the user.
 }
 
-// The response of an Users.Delete RPC
+// Empty response for deleting a user.
 message DeleteResponse {}
 
-// The request of a Users.List RPC
+// Request for listing users.
 message ListRequest {
-  model.Pagination pagination = 1;
-  string search = 2;
+  model.Pagination pagination = 1; // Pagination options.
+  string search = 2; // Search string.
 }
 
-// The response of a Users.List RPC
+// Response for listing users.
 message ListResponse {
-  // The users returned
-  repeated model.UserEntry users = 1;
-  // Return number of users in database
-  uint64 total = 2;
+  repeated model.UserEntry users = 1; // The users returned.
+  uint64 total = 2; // total number of users.
 }

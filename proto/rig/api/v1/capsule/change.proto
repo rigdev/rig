@@ -2,79 +2,89 @@ syntax = "proto3";
 
 package api.v1.capsule;
 
-import "google/protobuf/timestamp.proto";
-import "model/author.proto";
 import "api/v1/capsule/job.proto";
 
+// Change to a capsule that ultimately results in a new rollout.
 message Change {
+
+  // Config file change.
   message ConfigFile {
-    string path = 1;
-    bytes content = 2;
-    bool is_secret = 3;
+    string path = 1; // Path of the file in the instance.
+    bytes content = 2; // Content of the config file.
+    bool is_secret = 3; // True if the content is secret.
   }
 
+  // Rollback change.
   message Rollback {
-    uint64 rollback_id = 1;
+    uint64 rollback_id = 1; // Rollout to roll back to.
   }
 
+  // Jobs change
   message CronJobs {
-    repeated CronJob jobs = 1;
+    repeated CronJob jobs = 1; // The jobs.
   }
 
+  // Environment variable change.
   message EnvironmentVariable {
-    string name = 1;
-    string value = 2;
+    string name = 1; // Name of the environment variable.
+    string value = 2; // The value it takes.
   }
 
+  // Entrypoint for the capsule instances.
   message CommandArguments {
-    string command = 2;
-    repeated string args = 3;
+    string command = 2; // Command to run.
+    repeated string args = 3; // arguments to the command.
   }
 
+  // Remove cron job change.
   message RemoveCronJob {
-    string job_name = 1;
+    string job_name = 1; // Name of the job to remove
   }
 
   message RemoveInterface {
     string interface_name = 1;
   }
   
+  // Different types of changes.
   oneof field {
-    uint32 replicas = 1;
-    string build_id = 2;
-    Network network = 3;
-    ContainerSettings container_settings = 4;
-    bool auto_add_rig_service_accounts = 5;
-    ConfigFile set_config_file = 6;
-    string remove_config_file = 7;
-    HorizontalScale horizontal_scale = 8;
-    Rollback rollback = 9;
-    EnvironmentVariable set_environment_variable = 11;
-    string remove_environment_variable = 12;
-    EnvironmentSource set_environment_source = 13;
-    EnvironmentSource remove_environment_source = 14;
-    CommandArguments command_arguments = 15;
-    CronJob add_cron_job = 16;
-    RemoveCronJob remove_cron_job = 17;
-    Interface add_interface = 18;
-    RemoveInterface remove_interface = 19;
+    uint32 replicas = 1; // Number of replicas changed.
+    string build_id = 2; // New build change.
+    Network network = 3; // Network interfaces change.
+    ContainerSettings container_settings = 4; // Container settings of the instances.
+    bool auto_add_rig_service_accounts = 5; // Automatically add a rig-service account.
+    ConfigFile set_config_file = 6; // Set a config file - either update or add.
+    string remove_config_file = 7; // Path of a config file to remove.
+    HorizontalScale horizontal_scale = 8; // Horizontal scaling settings.
+    Rollback rollback = 9; // Rollback to a previous rollout.
+    EnvironmentVariable set_environment_variable = 11; // Update or add an environment variable.
+    string remove_environment_variable = 12; // Name of an environment variable to remove.
+    EnvironmentSource set_environment_source = 13; // Set or update an environment source.
+    EnvironmentSource remove_environment_source = 14; // Remove an environment source.
+    CommandArguments command_arguments = 15; // Entrypoint for capsule instances.
+    CronJob add_cron_job = 16; // Add a cron job.
+    RemoveCronJob remove_cron_job = 17; // Remove a cron job.
+    Interface add_interface = 18; // Add a network interface.
+    RemoveInterface remove_interface = 19; // Remove a network interface.
   }
 }
 
+// Settings for the instance container
 message ContainerSettings {
-  map<string, string> environment_variables = 1;
-  string command = 2;
-  repeated string args = 3;
-  Resources resources = 4;
-  repeated EnvironmentSource environment_sources = 5;
+  map<string, string> environment_variables = 1; // Environment variables.
+  string command = 2; // Entrypoint for the container.
+  repeated string args = 3; // Arguments to the container.
+  Resources resources = 4; // Resource requests and limits.
+  repeated EnvironmentSource environment_sources = 5; // Environment sources.
 }
 
+// Container resources requests and limits
 message Resources {
-  ResourceList requests = 1;
-  ResourceList limits = 2;
-  GpuLimits gpu_limits = 3;
+  ResourceList requests = 1; // CPU and memory requests.
+  ResourceList limits = 2; // CPU and memory limits
+  GpuLimits gpu_limits = 3; // GPU Limits
 }
 
+// CPU and Memory resource request or limits
 message ResourceList {
   // Unit: milli-CPUs
   uint32 cpu_millis = 1;
@@ -82,6 +92,7 @@ message ResourceList {
   uint64 memory_bytes = 2;
 }
 
+// GPU resource limits
 message GpuLimits {
   // gpu resource type - fx. nvidia.com/gpu
   string type = 1;
@@ -89,40 +100,50 @@ message GpuLimits {
   uint32 count = 2;
 }
 
+// Source of environment variables
 message EnvironmentSource {
   enum Kind {
-    KIND_UNSPECIFIED = 0;
-    KIND_CONFIG_MAP = 1;
-    KIND_SECRET = 2;
+    KIND_UNSPECIFIED = 0; // Unspecified.
+    KIND_CONFIG_MAP = 1; // Environment variables from a config map.
+    KIND_SECRET = 2; // Environment variables from a secret.
   }
 
-  string name = 1;
-  Kind kind = 2;
+  string name = 1; // Name of the source
+  Kind kind = 2; // Type of the source
 }
 
+
+// A network configuration of network interfaces.
 message Network {
-  repeated Interface interfaces = 1;
+  repeated Interface interfaces = 1; // All the network interfaces.
 }
 
+// A single network interface.
 message Interface {
-  uint32 port = 1;
-  string name = 2;
-  PublicInterface public = 4;
-  InterfaceProbe liveness = 7;
-  InterfaceProbe readiness = 8;
+  uint32 port = 1; // Port of the interface.
+  string name = 2; // Name of the interface.
+  PublicInterface public = 4; // If public interface is enabled. Contains ingress or load balancer settings.
+  InterfaceProbe liveness = 7; // Liveness probe.
+  InterfaceProbe readiness = 8; // Readiness probe.
 }
 
+// Probe for liveness or readiness.
 message InterfaceProbe {
+
+  // HTTP path for the probe.
   message HTTP {
     string path = 1;
   }
 
+  // IF TCP probe.
   message TCP {}
 
+  // GRPC service for the probe.
   message GRPC {
     string service = 1;
   }
 
+  // Type of the proble.
   oneof kind {
     HTTP http = 1;
     TCP tcp = 2;
@@ -130,63 +151,77 @@ message InterfaceProbe {
   }
 }
 
+// Public interface configuration.
 message PublicInterface {
-  bool enabled = 1;
-  RoutingMethod method = 2;
+  bool enabled = 1; // True if the interface is public.
+  RoutingMethod method = 2; // Routing method - Ingress or Load Balancer.
 }
 
+// The routing method for the public interface.
 message RoutingMethod {
+
+  // Loadbalancer routing.
   message LoadBalancer {
-    uint32 port = 1;
-    uint32 node_port = 2;
+    uint32 port = 1; // public port.
+    uint32 node_port = 2; // node port.
   }
 
+  // Ingress routing.
   message Ingress {
-    string host = 1;
-    bool tls = 2;
-    repeated string paths = 3;
+    string host = 1; // Hostname of the ingress.
+    bool tls = 2; // True if TLS is enabled.
+    repeated string paths = 3; // Paths of the ingress.
   }
 
+  // Type of routing for the public interface.
   oneof kind {
     LoadBalancer load_balancer = 1;
     Ingress ingress = 2;
   }
 }
 
+
+// Horizontal scaling settings.
 message HorizontalScale {
-  uint32 max_replicas = 1;
-  uint32 min_replicas = 2;
-  CPUTarget cpu_target = 3;
-  repeated CustomMetric custom_metrics = 4;
+  uint32 max_replicas = 1; // Maximum number of replicas.
+  uint32 min_replicas = 2; // Minimum number of replicas.
+  CPUTarget cpu_target = 3; // CPU target for autoscaling.
+  repeated CustomMetric custom_metrics = 4; // If scaling based on custom metrics.
 }
 
+// Autoscaling based on CPU target.
 message CPUTarget {
-  uint32 average_utilization_percentage = 1;
+  uint32 average_utilization_percentage = 1; // Average CPU utilization target.
 }
 
+// Autoscaling based on custom metrics.
 message CustomMetric {
+  // The type of metric.
   oneof metric {
-    InstanceMetric instance = 1;
-    ObjectMetric object = 2;
+    InstanceMetric instance = 1; // If scaling based on metrics across all intstances / pods.
+    ObjectMetric object = 2; // If scaling based on metrics for a specific kubernetes resource object.
   }
 }
 
+// Metric emitted by instances / pods.
 message InstanceMetric {
-  string metric_name = 1;
-  map<string, string> match_labels = 2;
-  string average_value = 3;
+  string metric_name = 1; // Name of the metric
+  map<string, string> match_labels = 2; // Labels of the instances to match.
+  string average_value = 3; // Average value target.
 }
 
+// Metric emitted by kubernetes object. 
 message ObjectMetric {
-  string metric_name = 1;
-  map<string, string> match_labels = 2;
-  string average_value = 3;
-  string value = 4;
-  ObjectReference object_reference = 5;
+  string metric_name = 1; // Name of the metric.
+  map<string, string> match_labels = 2; // Labels of the object to match.
+  string average_value = 3; // Average value target.
+  string value = 4; // Value target.
+  ObjectReference object_reference = 5; // Reference to the object.
 }
 
+// A reference to a kubernetes object.
 message ObjectReference {
-  string kind = 1;
-  string name = 2;
-  string api_version = 3;
+  string kind = 1; // Type of object.
+  string name = 2; // Name of the object.
+  string api_version = 3; // Api version of the object.
 }

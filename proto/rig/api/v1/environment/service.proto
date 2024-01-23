@@ -10,11 +10,14 @@ service Service {
   rpc List(ListRequest) returns (ListResponse) {}
 }
 
+// Request for listing available environments.
 message ListRequest {
-  model.Pagination pagination = 2;
+  model.Pagination pagination = 2; // Pagination options.
 }
 
+
+// Response for listing available environments.
 message ListResponse {
-  repeated api.v1.environment.Environment environments = 1;
-  string platform_version = 2;
+  repeated api.v1.environment.Environment environments = 1; // List of environments.
+  string platform_version = 2; // The version of the Rig-platform.
 }

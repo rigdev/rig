@@ -34,116 +34,108 @@ service Service {
       returns (VerifyPhoneNumberResponse) {}
 }
 
-// the request of a Public.VerifyEmail RPC
+// Request to verify the email of a user with a verification code sent to the email.
 message VerifyEmailRequest {
-  string code = 1;
-  string email = 2;
+  string code = 1; // The verification code.
+  string email = 2; // The email of the user.
 }
 
-// the response of a Public.VerifyEmail RPC
+// Empty response to the Verify Email Request.
 message VerifyEmailResponse {}
 
-// the request of a Public.VerifyPhoneNumber RPC
+// Request to verify the phone number of a user with a verification code sent to the phone number.
 message VerifyPhoneNumberRequest {
   string code = 1;
   string phone_number = 2;
 }
 
-// the response of a Public.VerifyPhoneNumber RPC
+// Empty response to the Verify Phone Number Request.
 message VerifyPhoneNumberResponse {}
 
-message UserPassword {
-  model.UserIdentifier identifier = 1;
-  string password = 2;
-}
-
-message ClientCredentials {
-  string client_id = 1;
-  string client_secret = 2;
-}
-
-// The request of a Public.Login RPC
+// Login request with either user identifier & email or client credentials.
 message LoginRequest {
   oneof method {
-    UserPassword user_password = 1;
-    ClientCredentials client_credentials = 3;
+    authentication.UserPassword user_password = 1; // User identifier & password.
+    authentication.ClientCredentials client_credentials = 3; // Client credentials from service account.
   }
 }
 
-// The response of a Public.Login RPC
+// Login response with tokens and user information.
 message LoginResponse {
-  authentication.Token token = 1;
-  string user_id = 2;
-  model.UserInfo user_info = 3;
+  authentication.Token token = 1; // The access token and refresh token.
+  string user_id = 2; // ID of the user.
+  model.UserInfo user_info = 3; // User information.
 }
 
-// The request of a Public.Logout RPC
+// Empty logout request. The user ID etc. is taken from the token. 
 message LogoutRequest {}
 
-// The response of a Public.Logout RPC
+// Empty response to the logout request.
 message LogoutResponse {}
 
-// The request of a Public.Get RPC
+// Get request to get the logged in user. The user ID etc. is taken from the token.
 message GetRequest {}
 
-// The response of a Public.Get RPC
+// Response with user information to the get request.
 message GetResponse {
-  model.UserInfo user_info = 1;
-  string user_id = 2;
+  model.UserInfo user_info = 1; // Information about the user.
+  string user_id = 2; // ID of the user
 }
 
-// The request of a Public.Create RPC
+// Register request for users to self-register. This is only possible with the register bool set in users settings.
 message RegisterRequest {
   oneof method {
-    UserPassword user_password = 1;
+    UserPassword user_password = 1; // User identifier & password for the new user.
   }
 }
 
-// The response of a Public.Create RPC
+// Register response with tokens and user information.
 message RegisterResponse {
-  authentication.Token token = 1;
-  string user_id = 2;
-  model.UserInfo user_info = 3;
+  authentication.Token token = 1; // Access and refresh token for the new logged in user.
+  string user_id = 2; // User ID of the new user.
+  model.UserInfo user_info = 3; // Information about the new user.
 }
 
+// Request to send a reset password email to the user. This is only possible if an email provider is configured, and the user has an email.
 message SendPasswordResetRequest {
-  model.UserIdentifier identifier = 1;
+  model.UserIdentifier identifier = 1; // User identifier of the user.
 }
 
+// Empty response to the send password reset request
 message SendPasswordResetResponse {}
 
-// The request of a Public.ResetPassword RPC
+// Request to reset the password of a user with a verification code sent to the email.
 message ResetPasswordRequest {
-  string code = 1;
-  string new_password = 2;
-  model.UserIdentifier identifier = 3;
+  string code = 1; // The 6 digit verification code
+  string new_password = 2; // The new password
+  model.UserIdentifier identifier = 3; // Identifier of the user
 }
 
-// The response of a Public.ResetPassword RPC
+// Empty response to the reset password request
 message ResetPasswordResponse {}
 
-// The request of a Public.Delete RPC
+// Request to delete the logged in user. The user ID etc. is taken from the token.
 message DeleteRequest {}
 
-// The response of a Public.Delete RPC
+// Empty response to the delete request.
 message DeleteResponse {}
 
-// The request of a Public.Delete RPC
+// Request to refresh the access and refresh token of the logged in user.
 message RefreshTokenRequest {
   // The access token of the user
-  string refresh_token = 1;
+  string refresh_token = 1; // Refresh token matching the access token.
 }
 
-// The response of a Public.Delete RPC
+// Response with new access and refresh token.
 message RefreshTokenResponse {
-  authentication.Token token = 1;
+  authentication.Token token = 1; // New refresh and access tokens
 }
 
-// The request of a Public.AuthenticationServiceGetAuthConfigRequest RPC
+// Empty Request to get the auth config containing the available login mechanisms and if self-registering is enabled.
 message GetAuthConfigRequest {
 }
 
-// The response of a Public.AuthenticationServiceGetAuthConfigRequest RPC
+// Response with the auth config containing the available login mechanisms and if self-registering is enabled.
 message GetAuthConfigResponse {
   // The name of the project
   string name = 1;

@@ -5,39 +5,44 @@ package api.v1.role;
 import "google/protobuf/timestamp.proto";
 import "model/metadata.proto";
 
-
+// Role model for Role based access control.
 message Role {  
-    string role_id = 1;
-    repeated Permission permissions = 2;
-    map<string, bytes> metadata = 3;
-    google.protobuf.Timestamp created_at = 4;
-    google.protobuf.Timestamp updated_at = 5;
+  string role_id = 1; // Unique ID of the role.
+  repeated Permission permissions = 2; // The permissions granted to the role.
+  map<string, bytes> metadata = 3; // Metadata associated with the role.
+  google.protobuf.Timestamp created_at = 4; // Timestamp when the role was created.
+  google.protobuf.Timestamp updated_at = 5; // Timestamp when the role was last updated.
 }
 
+// EntityID is a oneof type that can be used to represent a user, service account or group.
 message EntityID {
+  // The type of entity that has a role.
   oneof kind {
-    string user_id = 1;
-    string service_account_id = 2;
-    string group_id = 3;
+    string user_id = 1; // User entity.
+    string service_account_id = 2; // Service account entity.
+    string group_id = 3; // Group entity.
   }
 }
 
+// A permission that is granted to a role.
 message Permission {
-    string action = 1;
-    Scope scope = 2;
+  string action = 1; // The action that is action permission to perform.
+  Scope scope = 2; // The scope in which the action can be performed.
 }
 
+// Scope for permissions.
 message Scope {
-    string resource = 1;
-    string environment = 2;
-    string project = 3;
+  string resource = 1; // The resource on which the action can be performed. This consists of a type, and an optional ID. fx. "user/*", "group/admin"
+  string environment = 2; // The environment in which the action can be performed. This can be a wildcard.
+  string project = 3; // The project in which the action can be performed. This can be a wildcard.
 }
 
+// Update message to update a field of a role.
 message Update {
   oneof update { 
-    Permission add_permission = 1;
-    Permission remove_permission = 2;
-    model.Metadata set_metadata = 3;
-    string delete_metadata_key = 4;
+    Permission add_permission = 1; // Adding a permission to the role.
+    Permission remove_permission = 2; // Removing a permission from the role.
+    model.Metadata set_metadata = 3; // Update or create a metadata field on the role.
+    string delete_metadata_key = 4; // Delete a metadata field on the role.
   }
 }

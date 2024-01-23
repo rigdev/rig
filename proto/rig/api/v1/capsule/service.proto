@@ -4,7 +4,6 @@ package api.v1.capsule;
 
 import "api/v1/capsule/capsule.proto";
 import "api/v1/capsule/log.proto";
-import "api/v1/capsule/build.proto";
 import "api/v1/capsule/instance.proto";
 import "api/v1/capsule/rollout.proto";
 import "api/v1/capsule/instance/status.proto";
@@ -46,19 +45,16 @@ service Service {
   rpc ListRollouts(ListRolloutsRequest) returns (ListRolloutsResponse) {}
   // Abort the rollout.
   rpc AbortRollout(AbortRolloutRequest) returns (AbortRolloutResponse) {}
-
+  // List capsule events.
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
   // Get metrics for a capsule
   rpc CapsuleMetrics(CapsuleMetricsRequest) returns (CapsuleMetricsResponse) {}
-
-  // GetInstanceStatus returns the current status for the given instance
+  // GetInstanceStatus returns the current status for the given instance.
   rpc GetInstanceStatus(GetInstanceStatusRequest)
       returns (GetInstanceStatusResponse) {}
-
   // ListInstanceStatuses lists the status of all instances.
   rpc ListInstanceStatuses(ListInstanceStatusesRequest)
       returns (ListInstanceStatusesResponse) {}
-
   // Execute executes a command in a given in instance,
   // and returns the output along with an exit code.
   rpc Execute(stream ExecuteRequest) returns (stream ExecuteResponse) {}
@@ -71,267 +67,303 @@ service Service {
       returns (GetJobExecutionsResponse) {}
 }
 
+// StreamData for Execute RPC.
 message StreamData {
-  bytes data = 1;
-  bool closed = 2;
+  bytes data = 1; // Stream data.
+  bool closed = 2; // If the stream is closed.
 }
 
+// Execute request. This can either be a request to start a request, a terminal resize msg or a stream data msg.
 message ExecuteRequest {
+
+  // Exec start request
   message Start {
-    string capsule_id = 1;
-    string instance_id = 2;
-    string command = 3;
-    repeated string arguments = 4;
-    Resize tty = 5;
-    bool interactive = 6;
+    string capsule_id = 1; // The capsule to execute in.
+    string instance_id = 2; // The instance to execute in.
+    string command = 3; // The command to execute.
+    repeated string arguments = 4; // The arguments to the command.
+    Resize tty = 5; // The initial terminal size.
+    bool interactive = 6; // If the command is interactive.
   }
 
+  // Terminal resize request.
   message Resize {
-    uint32 height = 1;
-    uint32 width = 2;
+    uint32 height = 1; // The new terminal height.
+    uint32 width = 2; // The new terminal width.
   }
 
   oneof request {
-    Start start = 1;
-    StreamData stdin = 2;
-    Resize resize = 3;
+    Start start = 1; // Start request.
+    StreamData stdin = 2; // Stream stdin request
+    Resize resize = 3; // Resize request
   }
 
-  string project_id = 4;
-  string environment_id = 5;
+  string project_id = 4; // The project ID.
+  string environment_id = 5; // The environment ID.
 }
 
+// Execute response.
 message ExecuteResponse {
   oneof response {
-    StreamData stdout = 1;
-    StreamData stderr = 2;
-    int32 exit_code = 3;
+    StreamData stdout = 1; // Stdout of the execute.
+    StreamData stderr = 2; // Stderr in case of an error. 
+    int32 exit_code = 3; // Exit code of the execute.
   }
 }
 
+// Create capsule request.
 message CreateRequest {
-  // The name of the capsule. This property must be unique and cannot be changed
+  // The name of the capsule. This property must be unique for a project and cannot be changed
   // after creation.
   // Resources created in associating with the capsule will use this name.
   string name = 1;
-  // The initial properties of the capsule.
-  repeated api.v1.capsule.Update initializers = 2;
-  string project_id = 3;
+  repeated api.v1.capsule.Update initializers = 2; // Deprecated field: The initial properties of the capsule.
+  string project_id = 3; // The project to create the capsule in.
 }
 
+// Create capsule response.
 message CreateResponse {
-  string capsule_id = 1;
+  string capsule_id = 1; // ID of the capsule. This is the same as the name.
 }
 
+// Request to get a capsule.
 message GetRequest {
-  string capsule_id = 1;
-  string project_id = 2;
+  string capsule_id = 1; // Capsule to get.
+  string project_id = 2; // Project in which the capsule is.
 }
 
+// Response to get a capsule.
 message GetResponse {
-  api.v1.capsule.Capsule capsule = 1;
+  api.v1.capsule.Capsule capsule = 1; // The capsule.
 }
 
+// Request to delete a capsule.
 message DeleteRequest {
-  // The capsule to delete.
-  string capsule_id = 1;
-  string project_id = 2;
+  string capsule_id = 1; // The capsule to delete.
+  string project_id = 2; // The project in which the capsule is to be deleted.
 }
 
+
+// Empty delete response.
 message DeleteResponse {}
 
+// Request to get instance logs from a capsule.
 message LogsRequest {
-  // The capsule to read logs from.
-  string capsule_id = 1;
-  // The instance in the capsule to read logs from.
-  string instance_id = 2;
-  // If true, the request will stay open and stream new log messages.
-  bool follow = 3;
-  // If set, will not show logs older than since.
-  google.protobuf.Duration since = 4;
-  string project_id = 5;
-  string environment_id = 6;
+  string capsule_id = 1; // The capsule to read logs from.
+  string instance_id = 2; // The instance in the capsule to read logs from.
+  bool follow = 3; // If true, the request will stay open and stream new log messages.
+  google.protobuf.Duration since = 4; // If set, will not show logs older than since.
+  string project_id = 5; // The project in which the capsule is.
+  string environment_id = 6; // Environment to get logs from.
 }
 
 // The response of a capsule.Logs RPC
 message LogsResponse {
-  api.v1.capsule.Log log = 1;
+  api.v1.capsule.Log log = 1; // The actual logs
 }
 
+// Deprecated update - This is now a no-op
 message UpdateRequest {
-  // The capsule to update.
-  string capsule_id = 1;
-  // The updates to apply to the capsule.
-  repeated api.v1.capsule.Update updates = 2;
+  string capsule_id = 1; // The capsule to update.
+  repeated api.v1.capsule.Update updates = 2; // The updates to apply to the capsule.
   string project_id = 3;
 }
 
+// Deprecated: Empty update response.
 message UpdateResponse {}
 
+
+// List capsule request.
 message ListRequest {
-  model.Pagination pagination = 2;
-  string project_id = 3;
+  model.Pagination pagination = 2; // Pagination options.
+  string project_id = 3; // Project in which to list capsules.
 }
 
+// List capsule response.
 message ListResponse {
-  // The capsules.
-  repeated api.v1.capsule.Capsule capsules = 1;
-  uint64 total = 2;
+  repeated api.v1.capsule.Capsule capsules = 1; // The capsules.
+  uint64 total = 2; // Total number of capsules in the project.
 }
 
+// Deploy request. This will deploy a number of changes which results in a new rollout.
 message DeployRequest {
-  string capsule_id = 1;
-  // Changes to include in the new rollout.
-  repeated api.v1.capsule.Change changes = 2;
-  // Force deploy, aborting an existing rollout if ongoing.
-  bool force = 3;
-  string project_id = 4;
-  string environment_id = 5;
-  string message = 6;
-  bool dry_run = 7;
+  string capsule_id = 1; // Capsule to deploy to.
+  repeated api.v1.capsule.Change changes = 2; // Changes to include in the new rollout.
+  bool force = 3; // Force deploy, aborting an existing rollout if ongoing.
+  string project_id = 4; // Project in which the capsule lives.
+  string environment_id = 5; // Environment in which to deploy.
+  string message = 6; // Deploy message.
+  bool dry_run = 7; // if true, the deploy will not be executed, but the request will return the rollout config.
+
   // If not zero, this will constrain the rollout only to be created if the
   // currently running rollout matches this identifier. If this check fails, the
   // request will return an `Aborted` error.
   uint64 current_rollout_id = 8;
 }
 
+// Deploy response.
 message DeployResponse {
-  uint64 rollout_id = 1;
-  map<string, string> resource_yaml = 2;
-  api.v1.capsule.RolloutConfig rollout_config = 3;
+  uint64 rollout_id = 1; // ID of the new rollout.
+  map<string, string> resource_yaml = 2; // The YAML of the resources that will be deployed.
+  api.v1.capsule.RolloutConfig rollout_config = 3; // The rollout config.
 }
 
+
+// List instances request.
 message ListInstancesRequest {
-  string capsule_id = 1;
-  model.Pagination pagination = 2;
-  string project_id = 3;
-  string environment_id = 4;
-  bool include_deleted = 5;
-  bool exclude_existing = 6;
+  string capsule_id = 1; // Capsule to list instances from.
+  model.Pagination pagination = 2; // Pagination options.
+  string project_id = 3; // Project in which the capsule lives.
+  string environment_id = 4; // Environment to list instances from.
+  bool include_deleted = 5; // if true, deleted instances will be included in the response.
+  bool exclude_existing = 6; // if true, existing instances will be excluded from the response.
 }
 
+// List instances response.
 message ListInstancesResponse {
-  repeated api.v1.capsule.Instance instances = 1;
-  uint64 total = 2;
+  repeated api.v1.capsule.Instance instances = 1; // The instances.
+  uint64 total = 2; // Total number of instances in the capsule for the given environment.
 }
 
+// Get status of an instance.
 message GetInstanceStatusRequest {
-  string capsule_id = 1;
-  string instance_id = 2;
-  string project_id = 3;
-  string environment_id = 4;
+  string capsule_id = 1; // The capsule to get the instance status from.
+  string instance_id = 2; // The instance to get.
+  string project_id = 3; // The project in which the capsule lives.
+  string environment_id = 4; // The environment to get the instance from.
 }
 
+// Get instance status response.
 message GetInstanceStatusResponse {
-  api.v1.capsule.instance.Status status = 1;
+  api.v1.capsule.instance.Status status = 1; // The instance status.
 }
 
+// List multiple instance statuses
 message ListInstanceStatusesRequest {
-  string capsule_id = 1;
-  model.Pagination pagination = 2;
-  string project_id = 3;
-  string environment_id = 4;
-  bool include_deleted = 5;
-  bool exclude_existing = 6;
+  string capsule_id = 1; // The capsule to get the instance statuses from.
+  model.Pagination pagination = 2; // Pagination options.
+  string project_id = 3; // The project in which the capsule is.
+  string environment_id = 4; // The environment to get the instance statuses from.
+  bool include_deleted = 5; // if true, deleted instances will be included in the response.
+  bool exclude_existing = 6; // if true, existing instances will be excluded from the response.
 }
 
+// Response for listing multiple instance statuses
 message ListInstanceStatusesResponse {
-  repeated api.v1.capsule.instance.Status instances = 1;
-  uint64 total = 2;
+  repeated api.v1.capsule.instance.Status instances = 1; // The instance statuses.
+  uint64 total = 2; // Total number of instances in the capsule for the given environment.
 }
 
+// RestartInstanceRequest restarts a single instance.
 message RestartInstanceRequest {
-  string capsule_id = 1;
-  string instance_id = 2;
-  string project_id = 3;
-  string environment_id = 4;
+  string capsule_id = 1; // The capsule to restart the instance in.
+  string instance_id = 2; // The instance to restart.
+  string project_id = 3; // The project in which the capsule lives.
+  string environment_id = 4; // The environment to restart the instance in.
 }
 
+// RestartInstanceResponse is an empty response.
 message RestartInstanceResponse {}
 
+// ListRolloutsRequest lists rollouts for a capsule.
 message ListRolloutsRequest {
-  string capsule_id = 1;
-  model.Pagination pagination = 2;
-  string project_id = 3;
-  string environment_id = 4;
+  string capsule_id = 1; // The capsule to list rollouts for.
+  model.Pagination pagination = 2; // Pagination options.
+  string project_id = 3; // The project in which the capsule lives.
+  string environment_id = 4; // The environment to list rollouts for.
 }
 
+// ListRolloutsResponse lists rollouts for a capsule and an environment.
 message ListRolloutsResponse {
-  repeated api.v1.capsule.Rollout rollouts = 1;
-  uint64 total = 2;
+  repeated api.v1.capsule.Rollout rollouts = 1; // The rollouts.
+  uint64 total = 2; // Total number of rollouts in the capsule for the given environment.
 }
 
+// GetRolloutRequest gets a single rollout.
 message GetRolloutRequest {
-  string capsule_id = 1;
-  uint64 rollout_id = 2;
-  string project_id = 3;
+  string capsule_id = 1; // The capsule to get the rollout from.
+  uint64 rollout_id = 2; // The rollout to get.
+  string project_id = 3;  // The project in which the capsule lives.
 }
 
+// GetRolloutResponse returns a single rollout for a capsule and an environment in a project.
 message GetRolloutResponse {
-  api.v1.capsule.Rollout rollout = 1;
+  api.v1.capsule.Rollout rollout = 1; // The rollout.
 }
 
+// AbortRolloutRequest aborts a rollout.
 message AbortRolloutRequest {
-  string capsule_id = 1;
-  uint64 rollout_id = 2;
-  string project_id = 3;
+  string capsule_id = 1; // The capsule to abort the rollout in.
+  uint64 rollout_id = 2; // The rollout to abort.
+  string project_id = 3; // The project in which the capsule lives.
 }
 
+// AbortRolloutResponse is an empty response.
 message AbortRolloutResponse {}
 
+// ListEvents request for listing rollout events for a given rollout in a capsule and environment.
 message ListEventsRequest {
-  string capsule_id = 1;
-  uint64 rollout_id = 2;
-  model.Pagination pagination = 3;
-  string project_id = 4;
-  string environment_id = 5;
+  string capsule_id = 1; // The capsule to list events for.
+  uint64 rollout_id = 2; // The rollout to list events for.
+  model.Pagination pagination = 3; // Pagination options.
+  string project_id = 4; // The project in which the capsule lives.
+  string environment_id = 5; // The environment to list events for.
 }
 
+// Response to List Events
 message ListEventsResponse {
-  repeated api.v1.capsule.Event events = 1;
-  uint64 total = 2;
+  repeated api.v1.capsule.Event events = 1; // The events for a rollout in a capsule and environment for a given project.
+  uint64 total = 2; // Total number of events in the capsule for the given environment.
 }
 
+
+// Request for getting metrics for a capsule and optionally a single instance.
 message CapsuleMetricsRequest {
-  string capsule_id = 1;
-  // If set, only returns metrics for the given instance_id.
-  string instance_id = 2;
-  model.Pagination pagination = 3;
-  string project_id = 4;
-  string environment_id = 5;
+  string capsule_id = 1; // The capsule to get metrics for.
+  string instance_id = 2; // If set, only returns metrics for the given instance_id.
+  model.Pagination pagination = 3; // Pagination options.
+  string project_id = 4; // The project in which the capsule lives.
+  string environment_id = 5; // The environment to get metrics for.
 }
 
+
+// Response to getting capsule metrics.
 message CapsuleMetricsResponse {
-  repeated InstanceMetrics instance_metrics = 1;
+  repeated InstanceMetrics instance_metrics = 1; // Metrics
 }
 
+// Request for getting custom metrics for a capsule in an environment.
 message GetCustomInstanceMetricsRequest {
-  string capsule_id = 1;
-  string project_id = 2;
-  string environment_id = 3;
+  string capsule_id = 1; // The capsule to get metrics for.
+  string project_id = 2; // The project in which the capsule lives.
+  string environment_id = 3; // The environment to get metrics for.
 }
 
+// Response to getting custom metrics for a capsule in an environment.
 message GetCustomInstanceMetricsResponse {
-  repeated Metric metrics = 1;
+  repeated Metric metrics = 1; // Custom Metrics.
 }
 
+// Custom metrics
 message Metric {
-  string name = 1;
-  double latest_value = 2;
-  google.protobuf.Timestamp latest_timestamp = 3;
+  string name = 1; // Name of the metric.
+  double latest_value = 2; // Latest value of the metric.
+  google.protobuf.Timestamp latest_timestamp = 3; // Timestamp of the latest value.
 }
 
+// Request for getting job executions from cron jobs.
 message GetJobExecutionsRequest {
-  string capsule_id = 1;
-  string job_name = 2;
-  repeated JobState states = 4;
-  google.protobuf.Timestamp created_from = 5;
-  google.protobuf.Timestamp created_to = 6;
-  model.Pagination pagination = 7;
-  string project_id = 8;
-  string environment_id = 9;
+  string capsule_id = 1; // The capsule to get job executions for.
+  string job_name = 2; // The name of the job to get executions for.
+  repeated JobState states = 4; // Filtering executions by job state.
+  google.protobuf.Timestamp created_from = 5; // Filtering executions created before this timestamp.
+  google.protobuf.Timestamp created_to = 6; // Filtering executions created after this timestamp.
+  model.Pagination pagination = 7; // Pagination options.
+  string project_id = 8; // The project in which the capsule lives.
+  string environment_id = 9; // The environment to get job executions for.
 }
 
+// Response to getting job executions.
 message GetJobExecutionsResponse {
-  repeated JobExecution job_executions = 1;
+  repeated JobExecution job_executions = 1; // Job executions.
 }

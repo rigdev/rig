@@ -6,113 +6,116 @@ import "api/v1/group/group.proto";
 import "model/common.proto";
 import "model/user.proto";
 
-// The service to manage groups in Users
+// The service to manage groups in Users.
 service Service {
-  // Create a new group
+  // Create a new group.
   rpc Create(CreateRequest) returns (CreateResponse) {}
-  // Delete group
+  // Delete a group.
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
-  // List groups
+  // List groups.
   rpc List(ListRequest) returns (ListResponse) {}
-  // Update group
+  // Update group.
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
-  // Get group
+  // Get group.
   rpc Get(GetRequest) returns (GetResponse) {}
-  // Add a member to a group
+  // Add a member to a group.
   rpc AddMember(AddMemberRequest) returns (AddMemberResponse) {}
-  // Remove member from Group
+  // Remove member from group.
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse) {}
-  // Get Group Members
+  // Get Group Members.
   rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {}
-  // Get Groups
+  // Get Groups.
   rpc ListGroupsForMember(ListGroupsForMemberRequest)
       returns (ListGroupsForMemberResponse) {}
 }
 
-// The request of a Groups.Create RPC
+// The request of a Groups.Create RPC.
 message CreateRequest {
-  repeated api.v1.group.Update initializers = 1;
+  repeated api.v1.group.Update initializers = 1; // The group to create.
 }
 
-// The response of a Groups.Create RPC
+// The response of a Groups.Create RPC.
 message CreateResponse {
-  api.v1.group.Group group = 1;
+  api.v1.group.Group group = 1; // The created group.
 }
 
-// The request of a Groups.List RPC
+// The request of a Groups.List RPC.
 message ListRequest {
-  model.Pagination pagination = 1;
-  string search = 2;
+  model.Pagination pagination = 1; // Pagination options.
+  string search = 2; // Search string.
 }
 
-// The response of a Groups.List RPC
+// The response of a Groups.List RPC.
 message ListResponse {
-  // list of groups
-  repeated api.v1.group.Group groups = 1;
-  // count of total amount of groups
-  uint64 total = 2;
+  repeated api.v1.group.Group groups = 1; // list of groups.
+  uint64 total = 2; // total amount of groups.
 }
 
-// The request of a Group.Delete RPC
+// The request of a Group.Delete RPC.
 message DeleteRequest {
-  // The group to delete
-  string group_id = 1;
+  string group_id = 1; // The group to delete.
 }
 
-// The response of a Group.Delete RPC
+// The response of a Group.Delete RPC.
 message DeleteResponse {}
 
-// The request of a Groups.Update RPC
+// The request of a Groups.Update RPC.
 message UpdateRequest {
-  repeated api.v1.group.Update updates = 1;
-  // The group id
-  string group_id = 2;
+  repeated api.v1.group.Update updates = 1; // The updates to apply.
+  string group_id = 2; // The group id.
 }
 
-// The response of a Groups.Update RPC
+// The response of a Groups.Update RPC.
 message UpdateResponse {}
 
-// The request of a Groups.Get RPC
+// The request of a Groups.Get RPC.
 message GetRequest {
-  // The group id
-  string group_id = 1;
+  string group_id = 1; // The group id.
 }
 
 // The response of a Groups.Get RPC
 message GetResponse {
-  api.v1.group.Group group = 1;
+  api.v1.group.Group group = 1; // The group.
 }
 
+// Request for adding one or more members to a group.
 message AddMemberRequest {
-  string group_id = 1;
-  repeated api.v1.group.MemberID member_ids = 2;
+  string group_id = 1; // The group to add members to.
+  repeated api.v1.group.MemberID member_ids = 2; // The members to add.
 }
 
+// Empty response for adding one or more members to a group.
 message AddMemberResponse {}
 
+// Request for removing a member from a group.
 message RemoveMemberRequest {
-  string group_id = 1;
-  api.v1.group.MemberID member_id = 2;
+  string group_id = 1; // The group to remove the member from.
+  api.v1.group.MemberID member_id = 2; // The member to remove.
 }
 
+// Empty response for removing a member from a group.
 message RemoveMemberResponse {}
 
+// Reqyest for listing members of a group.
 message ListMembersRequest {
-  string group_id = 1;
-  model.Pagination pagination = 2;
+  string group_id = 1; // The group to list members of.
+  model.Pagination pagination = 2; // Pagination options.
 }
 
+// Response for listing members of a group.
 message ListMembersResponse {
-  repeated model.MemberEntry members = 1;
-  uint64 total = 2;
+  repeated model.MemberEntry members = 1; // The members in the group.
+  uint64 total = 2; // The total amount of members in the group.
 }
 
+// Request for listing the groups a member is in.
 message ListGroupsForMemberRequest {
-  api.v1.group.MemberID member_id = 1;
-  model.Pagination pagination = 2;
+  api.v1.group.MemberID member_id = 1; // The member to list groups for.
+  model.Pagination pagination = 2; // Pagination options.
 }
 
+// Response for listing the groups a member is in.
 message ListGroupsForMemberResponse {
-  repeated api.v1.group.Group groups = 1;
-  uint64 total = 2;
+  repeated api.v1.group.Group groups = 1; // The groups the member is in.
+  uint64 total = 2; // The total amount of groups the member is in.
 }
