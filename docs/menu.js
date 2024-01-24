@@ -199,6 +199,15 @@ const sidebars = {
         sidebar_icon: "BiKey",
       },
     },
+    {
+      type: "doc",
+      id: "platform/rbac",
+      label: "RBAC",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiLock",
+      },
+    },
 
     //   items: [
     //     {
