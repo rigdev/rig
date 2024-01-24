@@ -1,0 +1,66 @@
+# Role Based Access Control
+
+For granular access control, Rig offers Role Based Access Control (RBAC), with four predefined roles, 
+where a role has a set of permissions that define what actions a user can perform, and on what resources they can perform those actions.
+
+The roles and their permissions are rougly as follows:
+- Admin: Can perform all actions on all resources
+- Owner: Can do everything a Developer can do, but can also create and delete capsules, delete builds, and manage users and their roles.
+- Developer: Can do everything a Viewer can do, and can also perform deployments and create new builds.
+- Viewer: Can view all resources, but cannot perform any actions.
+
+For a more detailed view of the permissions for each role, see the [Role Permissions](#role-permissions) section.
+
+## Manage Users
+
+To manage users, you must be logged in as an Owner or an Admin, navigate to the 'Settings'-tab, and then click the 'Team'-page.
+
+### Add user
+
+To add a user, click the '+ Add member'-button, and enter the email address, a temporary password, and the role you want to assign to the user.
+
+![Dashboard Add Member](/img/rbac/add-member.png)
+
+### Assign role
+
+To add a different role to an existing user, simply open the dropdown on the user and select the role you want to assign.
+
+![Dashboard Assign Role](/img/rbac/assign-role.png)
+
+
+## Role Permissions
+
+The following table shows the permissions for each role:
+
+| Permission | Admin | Owner | Developer | Viewer |
+| --- | :---: | :---: | :---: | :---: |
+| **Projects** | | | | |
+| Create |:heavy_check_mark:| | | |
+| Delete |:heavy_check_mark:| | | |
+| Update Settings |:heavy_check_mark:| | | |
+| **Members** | | | | |
+| Create User |:heavy_check_mark:|:heavy_check_mark:| | |
+| Delete User |:heavy_check_mark:|:heavy_check_mark:| | |
+| Create Service Accounts |:heavy_check_mark:|:heavy_check_mark:| | |
+| Delete Service Accounts |:heavy_check_mark:|:heavy_check_mark:| | |
+| Update Role |:heavy_check_mark:|:heavy_check_mark:| | |
+| **Capsules & Deployments** | | | | |
+| Create |:heavy_check_mark:|:heavy_check_mark:| | |
+| Delete |:heavy_check_mark:|:heavy_check_mark:| | |
+| Delete Builds |:heavy_check_mark:|:heavy_check_mark:| | |
+| Create Builds |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:| |
+| Deploy Rollouts |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:| |
+| Abort Rollouts |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:| |
+| Restart Instances |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:| |
+| Exec in Instances |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:| |
+| **View Data** |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
+
+:::info
+This table is not exhaustive, and is subject to change. 
+It does however cover the most important permissions.
+
+
+
+
+
+
