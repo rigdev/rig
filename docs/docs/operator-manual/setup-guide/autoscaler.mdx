@@ -1,0 +1,21 @@
+# Autoscaler and Custom Metrics
+Capsules support adding a [horizontal autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) which automatically adds or removes instances to a capsule depending on various metrics.
+The basic autoscaler scales on CPU metrics emitted by the instances and requires [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) installed. See also the [general setup guide](/operator-manual/setup-guide).
+
+We also support autoscaling based on [custom metrics](/platform/custom-metrics). To use custom metrics, you need an observability stack installed in your Kubernetes cluster. Whereas normal CPU-based autoscaling requires the `metrics.k8s.io` API to be installed (provided by the Metrics Server), custom metrics require the `custom.metrics.k8s.io` API to be installed.
+
+There are multiple implementations of the `custom.metrics.k8s.io` API, but the most common setup is with [Prometheus](https://prometheus.io) as a metrics collector and the [Prometheus Adapter](https://github.com/kubernetes-sigs/prometheus-adapter) to expose the collected metrics through the `custom.metrics.k8s.io` API.
+
+Your cloud provider might also have solutions to help spin up a metrics stack. E.g. Google Cloud has a [managed Prometheus](https://cloud.google.com/stackdriver/docs/managed-prometheus) and a custom [adapter](https://cloud.google.com/stackdriver/docs/managed-prometheus/hpa) to translate the Prometheus metrics to `custom.metrics.k8s.io`.
+
+Although Rig can setup autoscaling with custom metrics from any `custom.metrics.k8s.io` implementer, the rest of this guide shows how this can be setup using a Prometheus stack.
+
+[Here](https://github.com/kubernetes-sigs/prometheus-adapter/blob/master/docs/walkthrough.md) you can find a guide to setup a Prometheus stack + adapter using the [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator).
+
+## Prometheus Operator and ServiceMonitors
+The [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator) and its CRDs is a convenient way to spin up a metric stack. If your capsule emits metrics which you would like to scale on, Prometheus first needs to know how to scrape these metrics. Besides the general [scrape_config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config) configuration, the Promethus Operator comes with a convenience [ServiceMonitor](https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#monitoring.coreos.com/v1.ServiceMonitor) CRD which helps with scraping metrics from Kubernetes `Services`.
+
+Assume you have a capsule which emits metrics we would like to scale on. Creating an [interface](/platform/network-interfaces) on a port of capsule which exposes metrics, you can then setup a `ServiceMonitor` to monitor the `Service` created by Rig for that interface.
+Each service created by Rig has a `rig.dev/capsule` label which can be useful when setting up a `ServiceMonitor` with label selectors.
+
+The Rig operator has a [`prometheusServiceMonitor`](/api/config/v1alpha1#prometheusservicemonitor) setting which if set prompts the operator to spawn a `ServiceMonitor` per capsule which will search for a `Service` of that capsule with the given port name. See [this walkthrough of an example](/platform/custom-metrics-example) of how to make such a setup.

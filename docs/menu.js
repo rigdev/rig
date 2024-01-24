@@ -266,6 +266,12 @@ const sidebars = {
           label: "Configuration Secrets",
           className: "docpage-sidebar-item",
         },
+        {
+          type: "doc",
+          id: "operator-manual/setup-guide/autoscaler",
+          label: "Autoscaler and Custom Metrics",
+          className: "docpage-sidebar-item",
+        },
       ],
     },
     {
