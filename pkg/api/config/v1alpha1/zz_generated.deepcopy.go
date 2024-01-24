@@ -342,6 +342,11 @@ func (in *OIDCProvider) DeepCopyInto(out *OIDCProvider) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Scopes != nil {
+		in, out := &in.Scopes, &out.Scopes
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.DisableJITGroups != nil {
 		in, out := &in.DisableJITGroups, &out.DisableJITGroups
 		*out = new(bool)

@@ -6,16 +6,42 @@ apiVersion: config.rig.dev/v1alpha1
 kind: PlatformConfig
 
 {{- with .Values.rig -}}
-{{- if and .auth.certificateFile .auth.certificateKeyFile }}
+{{- if or (and .auth.certificateFile .auth.certificateKeyFile) .auth.sso.oidcProviders }}
 auth:
+  {{- if (and .auth.certificateFile .auth.certificateKeyFile) }}
   certificateFile: {{ .auth.certificateFile | quote }}
   certificateKeyFile: {{ .auth.certificateKeyFile | quote }}
+  {{- end }}
+  {{- if .auth.sso.oidcProviders }}
+  sso:
+    oidcProviders:
+    {{- range $name, $provider := .auth.sso.oidcProviders }}
+      {{ $name | quote }}:
+        issuerURL: {{ $provider.issuerURL | quote }}
+        clientID: {{ $provider.clientID | quote }}
+        {{- with $provider.allowedDomains }}
+        allowedDomains: {{ . | toYaml | nindent 8 }}
+        {{- end }}
+        {{- with $provider.scopes }}
+        scopes: {{ . | toYaml | nindent 8 }}
+        {{- end }}
+        {{- if .groupsClaim }}
+        groupsClaim: {{ .groupsClaim | quote }}
+        {{- end }}
+        {{- if .disableJITGroups }}
+        disableJITGroups: {{ .disableJITGroups }}
+        {{- end }}
+        {{- with .groupMapping }}
+        groupMapping: {{ . | toYaml | nindent 8 }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 
 port: {{ $.Values.port }}
 
 {{- if $.Values.ingress.enabled }}
-publicUrl: {{ printf "https://%s" $.Values.ingress.host | quote }}
+publicURL: {{ printf "https://%s" $.Values.ingress.host | quote }}
 {{- end }}
 
 telemetryEnabled: {{ .telemetryEnabled }}
@@ -148,6 +174,13 @@ auth:
   {{- if not (and .auth.certificateFile .auth.certificateKeyFile) }}
   secret: {{ .auth.secret | quote }}
   {{- end }}
-
+  {{- if .auth.sso.oidcProviders }}
+  sso:
+    oidcProviders:
+    {{- range $name, $provider := .auth.sso.oidcProviders }}
+      {{ $name | quote }}:
+        clientSecret: {{ $provider.clientSecret | quote }}
+    {{- end }}
+    {{- end }}
 {{- end -}}
 {{- end -}}

@@ -67,7 +67,7 @@ message LoginResponse {
   model.UserInfo user_info = 3; // User information.
 }
 
-// Empty logout request. The user ID etc. is taken from the token. 
+// Empty logout request. The user ID etc. is taken from the token.
 message LogoutRequest {}
 
 // Empty response to the logout request.
@@ -147,4 +147,40 @@ message GetAuthConfigResponse {
   repeated model.LoginType login_types = 4;
   // True if new users can sign up.
   bool allows_register = 7;
+  // SSO login options
+  repeated SSOOption sso_options = 8;
 }
+
+// The type of SSO. Currently only OIDC is supported.
+enum SSOType {
+    SSO_TYPE_UNSPECIFIED = 0;
+    SSO_TYPE_OIDC = 1;
+}
+
+// A login option for using SSO. This might be merged into
+// GetAuthConfigResponse.login_types, but is introduced as a separate field, to
+// maintain backwards compatibility.
+message SSOOption {
+    // Type of SSO. Currently only OIDC is supported.
+    SSOType type = 1;
+    // ID of the SSO provider as given in the platform configuration.
+    string provider_id = 2;
+    // Name of SSO provider. This is an optional human readable version of the provider ID.
+    string name = 3;
+    // URL of the underlying issuer. This can be used in the frontend for
+    // showing specific items for certain known issuers.
+    string issuer_url = 4;
+}
+
+// Represents an SSO provided ID of a user
+message SSOID {
+    // What type of SSO this ID is from
+    SSOType type = 1;
+    // The ID of the SSO provider
+    string provider_id = 2;
+    // The ID provided by SSO
+    string sso_id = 3;
+    // The internal user ID
+    string user_id = 4;
+}
+

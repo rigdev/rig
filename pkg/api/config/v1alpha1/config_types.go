@@ -120,7 +120,7 @@ func (c *OperatorConfig) Default() *OperatorConfig {
 		c.Ingress.Annotations = map[string]string{}
 	}
 	if c.Ingress.PathType == "" {
-		c.Ingress.PathType = networkingv1.PathTypeExact
+		c.Ingress.PathType = networkingv1.PathTypePrefix
 	}
 	return c
 }
@@ -140,7 +140,7 @@ type PlatformConfig struct {
 
 	// PublicUrl sets the public url for the platform. This is used for
 	// generating urls for the platform when using oauth2.
-	PublicURL string `json:"publicUrl,omitempty"`
+	PublicURL string `json:"publicURL,omitempty"`
 
 	// TelemetryEnabled specifies wether or not we are allowed to collect usage
 	// data. Defaults to true.
@@ -202,11 +202,16 @@ type SSO struct {
 
 // OIDCProvider specifies an OIDC provider.
 type OIDCProvider struct {
+	// Name is a human-readable name of the provider. If set this will be used
+	// instead of the provider id (the key in
+	// `PlatformConfig.Auth.SSO.OIDCProviders`)
+	Name string `json:"name,omitempty"`
+
 	// IssuerURL is the URL for the OIDC issuer endpoint.
 	IssuerURL string `json:"issuerURL,omitempty"`
 
 	// ClientID is the OAuth client ID.
-	ClientID string `json:"clientId,omitempty"`
+	ClientID string `json:"clientID,omitempty"`
 
 	// ClientSecret is the OAuth client secret.
 	ClientSecret string `json:"clientSecret,omitempty"`
@@ -214,6 +219,10 @@ type OIDCProvider struct {
 	// AllowedDomains is a list of email domains to allow. If left empty any
 	// successful authentication on the provider is allowed.
 	AllowedDomains []string `json:"allowedDomains,omitempty"`
+
+	// Scopes is a list of additional scopes other than `openid`, `email` and
+	// `profile`.
+	Scopes []string `json:"scopes"`
 
 	// GroupsClaim is the path to a claim in the JWT containing a string or
 	// list of strings of group names.
