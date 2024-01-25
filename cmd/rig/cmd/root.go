@@ -53,14 +53,14 @@ func Run() error {
 	}
 	rootCmd.PersistentFlags().VarP(&flags.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Environment,
-		"environment", "E", flags.Flags.Environment, "Override environment in context")
+		"environment", "E", flags.Flags.Environment, "Override environment from the context")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Project,
-		"project", "P", flags.Flags.Project, "Override environment in context")
+		"project", "P", flags.Flags.Project, "Override environment from the context")
 	rootCmd.PersistentFlags().BoolVarP(&flags.Flags.BasicAuth,
 		"basic-auth", "B", flags.Flags.BasicAuth,
-		"Use basic auth with environment in context. Otherwise use access token in context")
+		"Use basic auth with environment in context. Otherwise use access token from the context")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Host,
-		"host", "H", flags.Flags.Host, "Override the rig host in context")
+		"host", "H", flags.Flags.Host, "Override the rig host from the context")
 
 	license := &cobra.Command{
 		Use:               "license",
