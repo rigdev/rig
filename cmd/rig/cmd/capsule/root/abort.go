@@ -6,6 +6,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	cc, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
-			ProjectId: c.Cfg.GetProject(),
+			ProjectId: flags.GetProject(c.Cfg),
 		},
 	})
 	if err != nil {
@@ -24,7 +25,7 @@ func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		Msg: &capsule.AbortRolloutRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			RolloutId: cc.Msg.GetCapsule().GetCurrentRollout(),
-			ProjectId: c.Cfg.GetProject(),
+			ProjectId: flags.GetProject(c.Cfg),
 		},
 	}); err != nil {
 		return err

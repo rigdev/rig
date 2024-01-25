@@ -89,6 +89,22 @@ func Setup(parent *cobra.Command) {
 	}
 	config.AddCommand(useEnvironment)
 
+	currentContext := &cobra.Command{
+		Use:   "current-context",
+		Short: "Display the current context",
+		Args:  cobra.NoArgs,
+		RunE:  cmd.currentContext,
+	}
+	config.AddCommand(currentContext)
+
+	viewConfig := &cobra.Command{
+		Use:   "view",
+		Short: "View Config",
+		Args:  cobra.NoArgs,
+		RunE:  cmd.viewConfig,
+	}
+	config.AddCommand(viewConfig)
+
 	parent.AddCommand(config)
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
@@ -166,7 +167,7 @@ func (c *Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef i
 			Image:          imageRef.Image,
 			Digest:         digest,
 			SkipImageCheck: skipImageCheck,
-			ProjectId:      c.Cfg.GetProject(),
+			ProjectId:      flags.GetProject(c.Cfg),
 		}),
 	)
 	if err != nil {

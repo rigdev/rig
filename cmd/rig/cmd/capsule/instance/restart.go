@@ -25,7 +25,7 @@ func (c *Cmd) restart(ctx context.Context, cmd *cobra.Command, args []string) er
 		Msg: &capsule.RestartInstanceRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
 			InstanceId:    instanceID,
-			ProjectId:     c.Cfg.GetProject(),
+			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}); err != nil {

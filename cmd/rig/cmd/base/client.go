@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -28,12 +29,22 @@ func newRigClient(
 	cfg *cmdconfig.Config,
 	interactive Interactive,
 ) (rig.Client, *auth.Service, error) {
-	r := rig.NewClient(
-		rig.WithHost(s.Server),
+	options := []rig.Option{
 		rig.WithInterceptors(&userAgentInterceptor{}),
 		rig.WithSessionManager(&configSessionManager{cfg: cfg}),
-	)
+	}
 
+	if flags.Flags.BasicAuth {
+		options = append(options, rig.WithBasicAuthOption(rig.ClientCredential{}))
+	}
+
+	if flags.Flags.Host != "" {
+		options = append(options, rig.WithHost(flags.Flags.Host))
+	} else {
+		options = append(options, rig.WithHost(s.Server))
+	}
+
+	r := rig.NewClient(options...)
 	a := auth.NewService(r, cfg)
 
 	if !SkipChecks(cmd) {

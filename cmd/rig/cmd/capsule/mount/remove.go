@@ -56,7 +56,7 @@ func (c *Cmd) remove(ctx context.Context, cmd *cobra.Command, args []string) err
 					Field: cf,
 				},
 			},
-			ProjectId:     c.Cfg.GetProject(),
+			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}

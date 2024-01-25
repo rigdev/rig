@@ -75,7 +75,7 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 				Interactive: interactive,
 			},
 		},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}
 

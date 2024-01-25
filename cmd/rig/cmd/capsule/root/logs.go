@@ -22,7 +22,7 @@ func (c *Cmd) logs(ctx context.Context, _ *cobra.Command, _ []string) error {
 		CapsuleId:     capsule_cmd.CapsuleID,
 		Follow:        follow,
 		Since:         durationpb.New(duration),
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 	if err != nil {

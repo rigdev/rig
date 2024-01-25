@@ -27,7 +27,7 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, _ []string) erro
 				},
 			},
 		}},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 
@@ -58,7 +58,7 @@ func (c *Cmd) getRollback(ctx context.Context) (uint64, error) {
 			Offset:     1,
 			Descending: true,
 		},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 	if err != nil {

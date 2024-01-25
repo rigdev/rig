@@ -39,7 +39,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, _ []string) error 
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_BuildId{BuildId: buildID},
 			}},
-			ProjectId:     c.Cfg.GetProject(),
+			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}
@@ -69,7 +69,7 @@ func (c *Cmd) getBuildID(ctx context.Context, capsuleID string) (string, error) 
 		// TODO Figure out pagination
 		resp, err := c.Rig.Build().List(ctx, connect.NewRequest(&build.ListRequest{
 			CapsuleId: capsuleID,
-			ProjectId: c.Cfg.GetProject(),
+			ProjectId: flags.GetProject(c.Cfg),
 		}))
 		if err != nil {
 			return "", err
@@ -198,7 +198,7 @@ func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (str
 	resp, err := c.Rig.Build().List(ctx, connect.NewRequest(&build.ListRequest{
 		CapsuleId:  capsuleID,
 		Pagination: &model.Pagination{},
-		ProjectId:  c.Cfg.GetProject(),
+		ProjectId:  flags.GetProject(c.Cfg),
 	}))
 	if err != nil {
 		return "", err
@@ -249,7 +249,7 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 			Msg: &capsule.GetRolloutRequest{
 				CapsuleId: capsuleID,
 				RolloutId: rolloutID,
-				ProjectId: c.Cfg.GetProject(),
+				ProjectId: flags.GetProject(c.Cfg),
 			},
 		})
 		if err != nil {
@@ -263,7 +263,7 @@ func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID s
 				Pagination: &model.Pagination{
 					Offset: uint32(eventCount),
 				},
-				ProjectId:     c.Cfg.GetProject(),
+				ProjectId:     flags.GetProject(c.Cfg),
 				EnvironmentId: flags.GetEnvironment(c.Cfg),
 			},
 		})

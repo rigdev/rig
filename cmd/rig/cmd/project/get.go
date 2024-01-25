@@ -13,7 +13,7 @@ import (
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	req := &project.GetRequest{
-		ProjectId: c.Cfg.GetProject(),
+		ProjectId: flags.GetProject(c.Cfg),
 	}
 	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{
 		Msg: req,

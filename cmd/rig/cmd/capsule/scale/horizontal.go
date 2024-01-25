@@ -59,7 +59,7 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 				},
 			},
 		},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 
@@ -149,7 +149,7 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 				},
 			},
 		},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 
@@ -320,7 +320,7 @@ func (c *Cmd) promptInstanceMetric(ctx context.Context) (*capsule.CustomMetric_I
 	metrics, err := c.Rig.Capsule().
 		GetCustomInstanceMetrics(ctx, connect.NewRequest(&capsule.GetCustomInstanceMetricsRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
-			ProjectId:     c.Cfg.GetProject(),
+			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		}))
 	if err != nil {
@@ -359,7 +359,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 
 	resp, err := c.Rig.Project().GetObjectsByKind(ctx, connect.NewRequest(&project.GetObjectsByKindRequest{
 		Kind:          kind,
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 
@@ -401,7 +401,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 				Name:       objName,
 				ApiVersion: api,
 			},
-			ProjectId:     c.Cfg.GetProject(),
+			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		}))
 	if err != nil {

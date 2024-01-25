@@ -44,7 +44,7 @@ func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error 
 				},
 			},
 		},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 
