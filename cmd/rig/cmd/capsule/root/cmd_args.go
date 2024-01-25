@@ -30,8 +30,13 @@ func (c *Cmd) cmdArgs(ctx context.Context, cmd *cobra.Command, args []string) er
 		containerSettings = r.GetConfig().GetContainerSettings()
 	}
 
-	containerSettings.Command = args[0]
-	containerSettings.Args = args[1:]
+	if deleteCmd {
+		containerSettings.Command = ""
+		containerSettings.Args = nil
+	} else {
+		containerSettings.Command = args[0]
+		containerSettings.Args = args[1:]
+	}
 
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
