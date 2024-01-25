@@ -56,7 +56,7 @@ func (c *Cmd) configure(ctx context.Context, cmd *cobra.Command, args []string) 
 					Network: n,
 				},
 			}},
-			ProjectId:     c.Cfg.GetProject(),
+			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}
@@ -78,7 +78,7 @@ func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error 
 			Limit:      1,
 			Descending: true,
 		},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 	if err != nil {
@@ -135,7 +135,7 @@ func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error 
 				Network: network,
 			},
 		}},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
 	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req, forceDeploy); err != nil {

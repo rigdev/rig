@@ -40,7 +40,7 @@ func (c *Cmd) executions(ctx context.Context, _ *cobra.Command, _ []string) erro
 			Limit:      limit,
 			Descending: true,
 		},
-		ProjectId:     c.Cfg.GetProject(),
+		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	}))
 	if err != nil {

@@ -41,7 +41,7 @@ func (c *Cmd) cmdArgs(ctx context.Context, cmd *cobra.Command, args []string) er
 					ContainerSettings: containerSettings,
 				},
 			}},
-			ProjectId:     c.Cfg.GetProject(),
+			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}

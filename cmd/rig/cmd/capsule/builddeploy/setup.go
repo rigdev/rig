@@ -16,6 +16,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -189,7 +190,7 @@ func (c *Cmd) completions(
 	resp, err := c.Rig.Build().List(ctx, connect.NewRequest(
 		&build.ListRequest{
 			CapsuleId: capsule.CapsuleID,
-			ProjectId: c.Cfg.GetProject(),
+			ProjectId: flags.GetProject(c.Cfg),
 		}),
 	)
 	if err != nil {

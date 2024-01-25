@@ -24,7 +24,7 @@ func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, _ []string) erro
 				Limit:      uint32(limit),
 				Descending: true,
 			},
-			ProjectId: c.Cfg.GetProject(),
+			ProjectId: flags.GetProject(c.Cfg),
 		}),
 	)
 	if err != nil {

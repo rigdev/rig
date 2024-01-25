@@ -24,6 +24,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -198,7 +199,7 @@ func (c *Cmd) completions(
 
 	resp, err := c.Rig.Capsule().List(ctx, &connect.Request[capsule_api.ListRequest]{
 		Msg: &capsule_api.ListRequest{
-			ProjectId: c.Cfg.GetProject(),
+			ProjectId: flags.GetProject(c.Cfg),
 		},
 	})
 	if err != nil {
@@ -240,7 +241,7 @@ func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []str
 
 	resp, err := c.Rig.Capsule().List(ctx, connect.NewRequest(&capsule_api.ListRequest{
 		Pagination: &model.Pagination{},
-		ProjectId:  c.Cfg.GetProject(),
+		ProjectId:  flags.GetProject(c.Cfg),
 	}))
 	if err != nil {
 		return err

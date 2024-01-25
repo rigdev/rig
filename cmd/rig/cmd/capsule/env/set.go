@@ -42,7 +42,7 @@ func (c *Cmd) set(ctx context.Context, _ *cobra.Command, args []string) error {
 					},
 				},
 			},
-			ProjectId:     c.Cfg.GetProject(),
+			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 		},
 	}

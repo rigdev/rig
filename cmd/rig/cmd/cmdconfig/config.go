@@ -203,3 +203,13 @@ func NewConfig(cfgPath string) (*Config, error) {
 
 	return cfg, nil
 }
+
+func (cfg *Config) Format() string {
+	// convert config to yaml string
+	bs, err := yaml.Marshal(cfg)
+	if err != nil {
+		return ""
+	}
+
+	return string(bs)
+}
