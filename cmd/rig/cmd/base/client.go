@@ -48,7 +48,7 @@ func newRigClient(
 	a := auth.NewService(r, cfg)
 
 	if !SkipChecks(cmd) {
-		if err := a.CheckAuth(context.TODO(), cmd, bool(interactive)); err != nil {
+		if err := a.CheckAuth(context.TODO(), cmd, bool(interactive), flags.Flags.BasicAuth); err != nil {
 			return nil, nil, err
 		}
 	}
