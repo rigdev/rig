@@ -149,7 +149,7 @@ func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
 		}
 
 		if !use {
-			return errors.FailedPreconditionErrorf("Select an environment or use the --environment flag")
+			return errors.FailedPreconditionErrorf("Select an available environment")
 		}
 
 		environmentID, err = s.promptForEnvironment(ctx)
@@ -241,16 +241,14 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 	}
 
 	if !found {
-		// what to do here? Should we allow to use projects not existing in the
-		// list? Eg. Rig project or projects form another context?
 		use, err := common.PromptConfirm("Your selected project is not available. Would you like to select a new one?", true)
 		if err != nil {
 			return err
 		}
 
-		// if !use {
-		// 	return errors.FailedPreconditionErrorf("Select a project to continue")
-		// }
+		if !use {
+			return errors.FailedPreconditionErrorf("Select an available project to continue")
+		}
 
 		if use {
 			err = s.useProject(ctx)
