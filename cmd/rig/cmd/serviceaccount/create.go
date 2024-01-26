@@ -20,9 +20,18 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		}
 	}
 
+	if role == "" {
+		_, role, err = common.PromptSelect("What is the role of the user?",
+			[]string{"admin", "owner", "developer", "viewer"})
+		if err != nil {
+			return err
+		}
+	}
+
 	resp, err := c.Rig.ServiceAccount().Create(ctx, &connect.Request[service_account.CreateRequest]{
 		Msg: &service_account.CreateRequest{
-			Name: name,
+			Name:           name,
+			InitialGroupId: role,
 		},
 	})
 	if err != nil {

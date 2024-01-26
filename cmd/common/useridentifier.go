@@ -11,7 +11,7 @@ import (
 
 func PromptUserIndentifierUpdate() (*user.Update, error) {
 	var err error
-	identifier, err := PromptInput("Username, email or phone number:", ValidateAllOpt)
+	identifier, err := PromptInput("Username or email:", ValidateAllOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,7 @@ func PromptUserIndentifierUpdate() (*user.Update, error) {
 
 func PromptUserIndentifier() (*model.UserIdentifier, error) {
 	var err error
-	identifierStr, err := PromptInput("Username, email or phone number:", ValidateAllOpt)
+	identifierStr, err := PromptInput("Username or email:", ValidateAllOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +35,8 @@ func PromptUserIndentifier() (*model.UserIdentifier, error) {
 	return identifier, nil
 }
 
-func GetUserIdentifierUpdates(username, email, phoneNumber string) ([]*user.Update, error) {
-	if username == "" && email == "" && phoneNumber == "" {
+func GetUserIdentifierUpdates(username, email string) ([]*user.Update, error) {
+	if username == "" && email == "" {
 		update, err := PromptUserIndentifierUpdate()
 		if err != nil {
 			return nil, err
@@ -50,9 +50,6 @@ func GetUserIdentifierUpdates(username, email, phoneNumber string) ([]*user.Upda
 	}
 	if email != "" {
 		updates = append(updates, makeUpdateUsername(email))
-	}
-	if phoneNumber != "" {
-		updates = append(updates, makeUpdateUsername(phoneNumber))
 	}
 
 	return updates, nil
@@ -81,8 +78,8 @@ func GetUserIdentifier(username, email, phoneNumber string) (*model.UserIdentifi
 	return nil, fmt.Errorf("something went wrong")
 }
 
-func GetUserAndPasswordUpdates(username, email, phoneNumber, password string) ([]*user.Update, error) {
-	updates, err := GetUserIdentifierUpdates(username, email, phoneNumber)
+func GetUserAndPasswordUpdates(username, email, password string) ([]*user.Update, error) {
+	updates, err := GetUserIdentifierUpdates(username, email)
 	if err != nil {
 		return nil, err
 	}

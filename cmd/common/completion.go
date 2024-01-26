@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -74,4 +75,22 @@ func Complete(
 	}
 
 	return complete
+}
+
+func RoleCompletions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	availableRoles := []string{"admin", "owner", "developer", "viewer"}
+
+	var completions []string
+
+	for _, r := range availableRoles {
+		if strings.HasPrefix(r, toComplete) {
+			completions = append(completions, r)
+		}
+	}
+
+	if len(completions) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions, cobra.ShellCompDirectiveDefault
 }
