@@ -5820,6 +5820,7 @@ Request o create a service account.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | Name of the service account to create. |
+| initial_group_id | [string](#string) |  | If set, the service-account will be added to this group upon creation. |
 
 
 
