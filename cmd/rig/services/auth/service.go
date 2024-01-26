@@ -38,11 +38,11 @@ var (
 	OmitCapsule     = "OMIT_CAPSULE"
 )
 
-func (s *Service) CheckAuth(ctx context.Context, cmd *cobra.Command, interactive bool) error {
+func (s *Service) CheckAuth(ctx context.Context, cmd *cobra.Command, interactive, basicAuth bool) error {
 	annotations := common.GetAllAnnotations(cmd)
 
 	var funcs []func(context.Context, bool) error
-	if _, ok := annotations[OmitUser]; !ok {
+	if _, ok := annotations[OmitUser]; !ok && !basicAuth {
 		funcs = append(funcs, s.authUser)
 	}
 	if _, ok := annotations[OmitProject]; !ok {
@@ -186,8 +186,8 @@ func (s *Service) authUser(ctx context.Context, interactive bool) error {
 }
 
 func (s *Service) authProject(ctx context.Context, interactive bool) error {
-	if (s.cfg.GetCurrentContext().ProjectID == "" ||
-		uuid.UUID(s.cfg.GetCurrentContext().ProjectID).IsNil()) && !interactive {
+	projectID := flags.GetProject(s.cfg)
+	if projectID == "" && !interactive {
 		return errors.FailedPreconditionErrorf("Select a project to continue")
 	}
 
@@ -209,30 +209,32 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 			return err
 		}
 
+		projectID = flags.GetProject(s.cfg)
+
 		res, err = s.rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 		if err != nil {
 			return err
 		}
 	}
 
-	pid := s.cfg.GetCurrentContext().ProjectID
-	if pid == "" || uuid.UUID(pid).IsNil() {
+	if projectID == "" || uuid.UUID(projectID).IsNil() {
 		use, err := common.PromptConfirm("You have not selected a project. Would you like to select one now?", true)
 		if err != nil {
 			return err
 		}
 		if !use {
-			return errors.FailedPreconditionErrorf("Select a project to continue")
+			return errors.FailedPreconditionErrorf("Select a project or use the --project flag to continue")
 		}
 
 		if err := s.useProject(ctx); err != nil {
 			return err
 		}
+		projectID = flags.GetProject(s.cfg)
 	}
 
 	found := false
 	for _, p := range res.Msg.GetProjects() {
-		if p.GetProjectId() == s.cfg.GetCurrentContext().ProjectID {
+		if p.GetProjectId() == projectID {
 			found = true
 			break
 		}
