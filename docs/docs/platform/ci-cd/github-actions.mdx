@@ -55,11 +55,12 @@ jobs:
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/DOCKER_IMAGE_NAME:latest
 
       - name: Make build and deploy to the Rig capsule
-        uses: rigdev/actions/build@v2.1
+        uses: rigdev/actions/build@v3
         id: build_deploy_rig
         with:
           url: url-to-rig-cluster
           project: YOUR_PROJECT_NAME
+          environment: YOUR_ENVIRONMENT_NAME
           clientID: YOUR_ID
           clientSecret: ${{ secrets.RIG_PROJECT_CLIENT_SECRET }}
           image: ${{ secrets.DOCKER_HUB_USERNAME }}/DOCKER_IMAGE_NAME:latest
