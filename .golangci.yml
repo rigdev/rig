@@ -1,3 +1,7 @@
+run:
+  skip-dirs:
+    - docs
+    - gen
 linters:
   enable:
     - revive

@@ -1,0 +1,291 @@
+version: '3'
+
+env:
+  TAG: dev
+  PLATFORM_TAG: latest
+  KUBECTX: kind-rig
+
+run: once
+
+includes:
+  tools:
+    taskfile: ./tools/taskfile.yaml
+    dir: ./tools
+
+tasks:
+  build:
+    desc: "🔨 Build all binaries"
+    deps: [build-rig, build-rig-operator]
+
+  build-rig:
+    desc: "🔨 Build rig binary"
+    deps: [proto]
+    env:
+      CGO_ENABLED: "0"
+    sources:
+      - '**/*.go'
+    generates:
+      - 'bin/rig'
+    cmds:
+      - go build -o ./bin/rig ./cmd/rig
+
+  build-rig-operator:
+    desc: "🔨 Build rig-operator binary"
+    deps: [proto]
+    env:
+      CGO_ENABLED: "0"
+    sources:
+      - '**/*.go'
+    generates:
+      - 'bin/rig-operator'
+    cmds:
+      - go build -o ./bin/rig-operator ./cmd/rig-operator
+
+  gen:
+    desc: "🪄 Run code generation"
+    deps: [proto, manifests, generate-k8s, docs-gen, mocks]
+
+  proto:
+    desc: "🪄 Run protobuf generation"
+    deps:
+      - tools:buf
+      - tools:protoc-gen-go
+      - tools:protoc-gen-connect-go
+      - tools:protoc-gen-doc
+    sources:
+      - proto/rig/**/*
+    generates:
+      - gen/go/rig/**/*
+      - docs/docs/api/platform-api.md
+    cmds:
+      - mkdir -p gen/go/rig
+      - printf "module github.com/rigdev/rig-go-api\n\ngo 1.20\n" > ./gen/go/rig/go.mod
+      - find . -path './gen/go/rig/*' -type f -name '*.go' -delete
+      - ./tools/bin/buf generate proto/rig --template proto/buf.gen.yaml
+      - cd gen/go/rig/; go get -u ./...
+
+  mocks:
+    desc: "🪄 Run mock generation"
+    deps: [tools:mockery]
+    vars:
+      GOMODCACHE:
+        sh: go env GOMODCACHE
+    sources:
+      - pkg/service/config/config.go
+      - "{{ .GOMODCACHE }}/sigs.k8s.io/controller-runtime*/pkg/client/*.go"
+      - "{{ .GOMODCACHE }}/k8s.io/client-go*/discovery/*.go"
+    generates:
+      - gen/mocks/**/*.go
+    cmds:
+      - cmd: rm -r gen/mocks
+        ignore_error: true
+      - ./tools/bin/mockery
+
+  manifests:
+    desc: "🪄 Run k8s manifests generation"
+    deps: [tools:controller-gen, proto]
+    sources:
+      - pkg/api/v1alpha1/*.go
+      - pkg/api/v1alpha2/*.go
+      - pkg/controller/*.go
+    generates:
+      - deploy/kustomize/rbac/**/*.yaml
+      - deploy/kustomize/webhook/**/*.yaml
+      - deploy/kustomize/crd/**/*.yaml
+    cmds:
+      - |
+        ./tools/bin/controller-gen rbac:roleName=rig crd webhook \
+          paths="./pkg/api/v1alpha1;./pkg/api/v1alpha2;./pkg/controller" \
+          output:rbac:dir=deploy/kustomize/rbac \
+          output:webhook:dir=deploy/kustomize/webhook \
+          output:crd:dir=deploy/kustomize/crd/bases
+
+  generate-k8s:
+    desc: "🪄 Run runtime.Object implementaion generation"
+    deps: [tools:controller-gen, proto]
+    sources:
+      - pkg/api/**/*.go
+    generates:
+      - pkg/api/**/zz_generated.deepcopy.go
+    cmds:
+      - ./tools/bin/controller-gen object paths="./pkg/api/..."
+
+  docs:
+    desc: "📝 Run documentation site"
+    dir: docs
+    cmds:
+      - npm i
+      - npm run start
+
+  docs-gen:
+    desc: "📚 Generate api references"
+    deps: [tools:crd-ref-docs]
+    sources:
+      - docs/crd-ref-docs/**/*
+      - pkg/api/config/v1alpha1/**/*
+      - pkg/api/v1alpha1/**/*
+      - pkg/api/v1alpha2/**/*
+    generates:
+      - docs/docs/api/config/v1alpha1.md
+      - docs/docs/api/v1alpha1.md
+      - docs/docs/api/v1alpha2.md
+    cmds:
+      - |
+        ./tools/bin/crd-ref-docs --renderer markdown \
+          --config ./docs/crd-ref-docs/config.yaml \
+          --templates-dir ./docs/crd-ref-docs/templates \
+          --source-path ./pkg/api/config/v1alpha1 \
+          --output-path ./docs/docs/api/config/v1alpha1.md
+      - |
+        ./tools/bin/crd-ref-docs --renderer markdown \
+          --config ./docs/crd-ref-docs/config.yaml \
+          --templates-dir ./docs/crd-ref-docs/templates \
+          --source-path ./pkg/api/v1alpha1 \
+          --output-path ./docs/docs/api/v1alpha1.md
+      - |
+        ./tools/bin/crd-ref-docs --renderer markdown \
+          --config ./docs/crd-ref-docs/v1alpha2-config.yaml \
+          --templates-dir ./docs/crd-ref-docs/templates \
+          --source-path ./pkg/api/v1alpha2 \
+          --output-path ./docs/docs/api/v1alpha2.md
+
+  lint:
+    desc: "🚨 Run linting"
+    deps: [tools:golangci-lint, proto]
+    cmds:
+      - ./tools/bin/golangci-lint run
+
+  test:
+    desc: "✅ Run unit tests"
+    deps: [tools:gotestsum, proto]
+    cmds:
+      - |
+        ./tools/bin/gotestsum \
+          --format-hide-empty-pkg \
+          --hide-summary skipped -- \
+          -race \
+          -short \
+          ./...
+
+  test-all:
+    desc: "✅ Run all tests"
+    deps: [tools:gotestsum, tools:setup-envtest, proto, manifests]
+    env:
+      KUBEBUILDER_ASSETS:
+        sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
+    cmds:
+      - |
+        ./tools/bin/gotestsum \
+          --format-hide-empty-pkg \
+          --junitfile test-result.xml -- \
+          -race \
+          -coverprofile cover.out \
+          -coverpkg $(go list ./... | grep rigdev/rig/pkg | tr "\n" ",") \
+          -covermode atomic \
+          ./...
+
+  test-integration:
+    desc: "✅ Run integration tests"
+    deps: [tools:gotestsum, tools:setup-envtest, proto, manifests]
+    env:
+      KUBEBUILDER_ASSETS:
+        sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
+    cmds:
+      - |
+        ./tools/bin/gotestsum \
+          --format-hide-empty-pkg -- \
+          -race \
+          -run "^TestIntegration" \
+          ./...
+
+  docker:
+    desc: "🐳 Build docker image"
+    cmds:
+      - docker build -t ghcr.io/rigdev/rig-operator:${TAG} -f ./build/package/Dockerfile .
+
+  deploy-operator:
+    desc: "🚀 Deploy operator to k8s context defined by $KUBECTX (default: kind-rig)"
+    cmds:
+      - |
+        helm --kube-context ${KUBECTX} \
+          upgrade --install rig-operator ./deploy/charts/rig-operator \
+          --namespace rig-system \
+          --create-namespace \
+          --set image.tag=${TAG} \
+          --set config.devModeEnabled=true
+
+  deploy-platform:
+    desc: "🚀 Deploy platform to k8s context defined by $KUBECTX (default: kind-rig)"
+    cmds:
+      - |
+        helm --kube-context ${KUBECTX} \
+          upgrade --install rig-platform ./deploy/charts/rig-platform \
+          --namespace rig-system \
+          --create-namespace \
+          --set postgres.enabled=true	\
+          --set image.tag=${PLATFORM_TAG} \
+          --set rig.cluster.dev_registry.enabled=true \
+          --set rig.cluster.dev_registry.host=localhost:30000 \
+          --set rig.cluster.dev_registry.cluster_host=registry:5000
+
+  kind-create:
+    desc: "🐋 Create kind cluster with rig dependencies"
+    deps: [tools:kind]
+    env:
+      KIND: /tools/bin/kind
+    cmds:
+      - ./deploy/kind/create.sh
+
+  kind-load:
+    desc: "🐋 Load docker image into kind cluster"
+    deps: [tools:kind]
+    cmds:
+      - ./tools/bin/kind load docker-image ghcr.io/rigdev/rig-operator:${TAG} -n rig
+
+  kind-load:
+    desc: "🐋 Load platform docker image into kind cluster"
+    deps: [tools:kind]
+    cmds:
+      - ./tools/bin/kind load docker-image ghcr.io/rigdev/rig-platform:${PLATFORM_TAG} -n rig
+
+  kind-deploy:
+    desc: "🐋 Deploy rig to kind cluster"
+    deps: [tools:kind, kind-load, deploy-operator]
+    cmds:
+      - |
+        kubectl --context ${KUBECTX} \
+          rollout restart deployment -n rig-system rig-operator
+
+  clean:
+    desc: "🧹 Clean everything"
+    deps: [clean-kind, clean-gen]
+
+  clean-kind:
+    desc: "🧹 Clean kind cluster"
+    deps: [tools:kind]
+    cmds:
+      - cmd: kind delete clusters rig
+        ignore_error: true
+
+  clean-gen:
+    desc: "🧹 Clean generated files"
+    cmds:
+      - cmd: rm -r gen
+        ignore_error: true
+
+  release:
+    desc: "🔖 Release project"
+    deps: [tools:goreleaser, proto]
+    cmds:
+      - |
+        ./tools/bin/goreleaser release \
+          -f ./build/package/goreleaser/goreleaser.yml
+
+  release-build:
+    desc: "📸 Build release snapshot"
+    deps: [tools:goreleaser, proto]
+    cmds:
+      - |
+        ./tools/bin/goreleaser build \
+          -f ./build/package/goreleaser/goreleaser.yml --snapshot --clean
+

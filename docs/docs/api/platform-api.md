@@ -2,6 +2,10 @@
 
 
 
+
+
+
+
 ### api.v1.authentication.Service
 <a name="api-v1-authentication-Service"></a>
 
@@ -27,6 +31,7 @@
 
 
 
+
 ### api.v1.build.Service
 <a name="api-v1-build-Service"></a>
 
@@ -40,6 +45,7 @@
 | /api.v1.build.Service/Create | [CreateRequest](#api-v1-build-CreateRequest) | [CreateResponse](#api-v1-build-CreateResponse) | Create a new build. Builds are immutable and cannot change. Create a new build to make changes from an existing one. |
 | /api.v1.build.Service/List | [ListRequest](#api-v1-build-ListRequest) | [ListResponse](#api-v1-build-ListResponse) | List builds for a capsule. |
 | /api.v1.build.Service/Delete | [DeleteRequest](#api-v1-build-DeleteRequest) | [DeleteResponse](#api-v1-build-DeleteResponse) | Delete a build. |
+
 
 
 
@@ -88,8 +94,6 @@
 
 
 
-
-
 ### api.v1.cluster.Service
 <a name="api-v1-cluster-Service"></a>
 
@@ -114,6 +118,7 @@
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.environment.Service/List | [ListRequest](#api-v1-environment-ListRequest) | [ListResponse](#api-v1-environment-ListResponse) | List available environments. |
+
 
 
 
@@ -166,6 +171,7 @@
 
 
 
+
 ### api.v1.project.settings.Service
 <a name="api-v1-project-settings-Service"></a>
 
@@ -175,7 +181,6 @@
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.project.settings.Service/GetSettings | [GetSettingsRequest](#api-v1-project-settings-GetSettingsRequest) | [GetSettingsResponse](#api-v1-project-settings-GetSettingsResponse) | Gets the users settings for the current project. |
 | /api.v1.project.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-project-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-project-settings-UpdateSettingsResponse) | Sets the users settings for the current project. |
-
 
 
 
@@ -197,6 +202,7 @@
 | /api.v1.role.Service/Get | [GetRequest](#api-v1-role-GetRequest) | [GetResponse](#api-v1-role-GetResponse) | Get role. |
 | /api.v1.role.Service/Assign | [AssignRequest](#api-v1-role-AssignRequest) | [AssignResponse](#api-v1-role-AssignResponse) | Assign a role. |
 | /api.v1.role.Service/Revoke | [RevokeRequest](#api-v1-role-RevokeRequest) | [RevokeResponse](#api-v1-role-RevokeResponse) | Revoke a role. |
+
 
 
 
@@ -241,6 +247,7 @@
 
 
 
+
 ### api.v1.user.settings.Service
 <a name="api-v1-user-settings-Service"></a>
 
@@ -252,6 +259,282 @@
 | /api.v1.user.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-user-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-user-settings-UpdateSettingsResponse) | Sets the users settings for the current project. |
 
 
+
+
+
+
+
+
+<a name="model_auth-proto"></a>
+
+## model/auth.proto
+
+
+
+
+
+<a name="model-LoginType"></a>
+
+### LoginType
+The LoginType enum defines the type of login.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| LOGIN_TYPE_UNSPECIFIED | 0 | Default value. |
+| LOGIN_TYPE_EMAIL_PASSWORD | 1 | Email and password login. |
+| LOGIN_TYPE_PHONE_PASSWORD | 2 | deprecated: text is not supported - Phone number and password login. |
+| LOGIN_TYPE_USERNAME_PASSWORD | 3 | Username and password login. |
+| LOGIN_TYPE_SSO | 4 | SSO Login |
+
+
+
+
+
+
+
+
+<a name="model_author-proto"></a>
+
+## model/author.proto
+
+
+
+<a name="model-Author"></a>
+
+### Author
+Author of a change.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| identifier | [string](#string) |  | Cached identifier of the author, e.g. email or username at the time of change. |
+| printable_name | [string](#string) |  | Cached pretty-printed name of the author at the time of change. |
+| user_id | [string](#string) |  | if a user did the change |
+| service_account_id | [string](#string) |  | if a service account did the change |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="model_user-proto"></a>
+
+## model/user.proto
+
+
+
+<a name="model-MemberEntry"></a>
+
+### MemberEntry
+Entry model of a group member - placed in models to prevent cyclic imports.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [UserEntry](#model-UserEntry) |  | if the member is a user. |
+| service_account | [ServiceAccountEntry](#model-ServiceAccountEntry) |  | if the member is a service account. |
+| joined_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | when the member joined the group. |
+
+
+
+
+
+
+<a name="model-RegisterInfo"></a>
+
+### RegisterInfo
+Registering information of a user.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| creater_id | [string](#string) |  | Who created the user. |
+| method | [RegisterMethod](#model-RegisterMethod) |  | How the user was registered. |
+
+
+
+
+
+
+<a name="model-RegisterMethod"></a>
+
+### RegisterMethod
+Method used to register a user.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| system | [RegisterMethod.System](#model-RegisterMethod-System) |  | system created the user. |
+| signup | [RegisterMethod.Signup](#model-RegisterMethod-Signup) |  | user signed up. |
+
+
+
+
+
+
+<a name="model-RegisterMethod-Signup"></a>
+
+### RegisterMethod.Signup
+if the user was created by signing up.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| login_type | [LoginType](#model-LoginType) |  | The login type used to sign up. |
+
+
+
+
+
+
+<a name="model-RegisterMethod-System"></a>
+
+### RegisterMethod.System
+if the user was created by the system.
+
+
+
+
+
+
+<a name="model-ServiceAccountEntry"></a>
+
+### ServiceAccountEntry
+Entry model of a service account - placed in models to prevent cyclic imports.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| service_account_id | [string](#string) |  | unique id of the service account. |
+| name | [string](#string) |  | name of the service account. |
+| client_id | [string](#string) |  | client id of the service account. |
+| group_ids | [string](#string) | repeated | groups the service account belongs to. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | when the service account was created. |
+| created_by | [Author](#model-Author) |  | who created the service account. |
+
+
+
+
+
+
+<a name="model-UserEntry"></a>
+
+### UserEntry
+Entry model of a user - placed in models to prevent cyclic imports.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  | unique id of the user. |
+| printable_name | [string](#string) |  | pretty printable name of a user. |
+| register_info | [RegisterInfo](#model-RegisterInfo) |  | how the user was registered. |
+| verified | [bool](#bool) |  | whether the user is verified. |
+| group_ids | [string](#string) | repeated | groups the user belongs to. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | when the user was created. |
+
+
+
+
+
+
+<a name="model-UserIdentifier"></a>
+
+### UserIdentifier
+different fields that can identify a user.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| username | [string](#string) |  | username is unique. |
+| email | [string](#string) |  | email is unique. |
+| phone_number | [string](#string) |  | Deprecated: text is not supported - phone number is unique. |
+
+
+
+
+
+
+<a name="model-UserInfo"></a>
+
+### UserInfo
+Userinfo - placed in models to prevent cyclic imports.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| email | [string](#string) |  | email of the user. |
+| username | [string](#string) |  | username of the user. |
+| phone_number | [string](#string) |  | Deprecated: text is not supported - phone number of the user. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | when the user was created. |
+| group_ids | [string](#string) | repeated | groups the user belongs to. |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_authentication_user-proto"></a>
+
+## api/v1/authentication/user.proto
+
+
+
+<a name="api-v1-authentication-ClientCredentials"></a>
+
+### ClientCredentials
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| client_id | [string](#string) |  | ID of the service account |
+| client_secret | [string](#string) |  | secret of the service account |
+
+
+
+
+
+
+<a name="api-v1-authentication-Token"></a>
+
+### Token
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| access_token | [string](#string) |  | Access token |
+| refresh_token | [string](#string) |  | Refresh token |
+
+
+
+
+
+
+<a name="api-v1-authentication-UserPassword"></a>
+
+### UserPassword
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| identifier | [model.UserIdentifier](#model-UserIdentifier) |  | Identifier of user. This can be username, email etc. |
+| password | [string](#string) |  | Password of the user |
 
 
 
@@ -314,6 +597,7 @@ Response with the auth config containing the available login mechanisms and if s
 | validate_password | [bool](#bool) |  | If to validate password |
 | login_types | [model.LoginType](#model-LoginType) | repeated | Array of supported login methods. |
 | allows_register | [bool](#bool) |  | True if new users can sign up. |
+| sso_options | [SSOOption](#api-v1-authentication-SSOOption) | repeated | SSO login options |
 
 
 
@@ -490,6 +774,44 @@ Empty response to the reset password request
 
 
 
+<a name="api-v1-authentication-SSOID"></a>
+
+### SSOID
+Represents an SSO provided ID of a user
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [SSOType](#api-v1-authentication-SSOType) |  | What type of SSO this ID is from |
+| provider_id | [string](#string) |  | The ID of the SSO provider |
+| sso_id | [string](#string) |  | The ID provided by SSO |
+| user_id | [string](#string) |  | The internal user ID |
+
+
+
+
+
+
+<a name="api-v1-authentication-SSOOption"></a>
+
+### SSOOption
+A login option for using SSO. This might be merged into
+GetAuthConfigResponse.login_types, but is introduced as a separate field, to
+maintain backwards compatibility.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [SSOType](#api-v1-authentication-SSOType) |  | Type of SSO. Currently only OIDC is supported. |
+| provider_id | [string](#string) |  | ID of the SSO provider as given in the platform configuration. |
+| name | [string](#string) |  | Name of SSO provider. This is an optional human readable version of the provider ID. |
+| issuer_url | [string](#string) |  | URL of the underlying issuer. This can be used in the frontend for showing specific items for certain known issuers. |
+
+
+
+
+
+
 <a name="api-v1-authentication-SendPasswordResetRequest"></a>
 
 ### SendPasswordResetRequest
@@ -569,59 +891,217 @@ Empty response to the Verify Phone Number Request.
 
 
 
+<a name="api-v1-authentication-SSOType"></a>
+
+### SSOType
+The type of SSO. Currently only OIDC is supported.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| SSO_TYPE_UNSPECIFIED | 0 |  |
+| SSO_TYPE_OIDC | 1 |  |
 
 
 
 
 
-<a name="api_v1_authentication_user-proto"></a>
-
-## api/v1/authentication/user.proto
 
 
 
-<a name="api-v1-authentication-ClientCredentials"></a>
+<a name="api_v1_capsule_build-proto"></a>
 
-### ClientCredentials
+## api/v1/capsule/build.proto
+
+
+
+<a name="api-v1-capsule-Build"></a>
+
+### Build
+Build is an environment wide abstraction of an image along with metadata for a capsule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| build_id | [string](#string) |  | unique identifier for the build |
+| digest | [string](#string) |  | digest of the image |
+| repository | [string](#string) |  | repository of the image |
+| tag | [string](#string) |  | tag of the image |
+| created_by | [model.Author](#model-Author) |  | user who created the build |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | time the build was created |
+| origin | [Origin](#api-v1-capsule-Origin) |  | origin of the build |
+| labels | [Build.LabelsEntry](#api-v1-capsule-Build-LabelsEntry) | repeated | labels of the build |
+
+
+
+
+
+
+<a name="api-v1-capsule-Build-LabelsEntry"></a>
+
+### Build.LabelsEntry
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| client_id | [string](#string) |  | ID of the service account |
-| client_secret | [string](#string) |  | secret of the service account |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 
 
 
 
-<a name="api-v1-authentication-Token"></a>
+<a name="api-v1-capsule-GitReference"></a>
 
-### Token
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| access_token | [string](#string) |  | Access token |
-| refresh_token | [string](#string) |  | Refresh token |
-
-
-
-
-
-
-<a name="api-v1-authentication-UserPassword"></a>
-
-### UserPassword
-
+### GitReference
+GitReference is an origin of a build.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| identifier | [model.UserIdentifier](#model-UserIdentifier) |  | Identifier of user. This can be username, email etc. |
-| password | [string](#string) |  | Password of the user |
+| repository_url | [string](#string) |  | The url of the git repository |
+| commit_sha | [string](#string) |  | The commit sha of the git repository |
+| commit_url | [string](#string) |  | The commit url of the git repository |
+
+
+
+
+
+
+<a name="api-v1-capsule-Origin"></a>
+
+### Origin
+Where the build came from
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| git_reference | [GitReference](#api-v1-capsule-GitReference) |  | The build came from a git repository |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="model_common-proto"></a>
+
+## model/common.proto
+
+
+
+<a name="model-BcryptHashingConfig"></a>
+
+### BcryptHashingConfig
+Bcrypt hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cost | [int32](#int32) |  | The cost of the hashing algorithm. |
+
+
+
+
+
+
+<a name="model-BcryptHashingInstance"></a>
+
+### BcryptHashingInstance
+Bcrypt hashing instance.
+
+
+
+
+
+
+<a name="model-HashingConfig"></a>
+
+### HashingConfig
+Hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| bcrypt | [BcryptHashingConfig](#model-BcryptHashingConfig) |  | if bcrypt is set, use bcrypt. |
+| scrypt | [ScryptHashingConfig](#model-ScryptHashingConfig) |  | if scrypt is set, use scrypt. |
+
+
+
+
+
+
+<a name="model-HashingInstance"></a>
+
+### HashingInstance
+Hashing instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| config | [HashingConfig](#model-HashingConfig) |  | The hashing configuration. |
+| hash | [bytes](#bytes) |  | A hash |
+| bcrypt | [BcryptHashingInstance](#model-BcryptHashingInstance) |  | if bcrypt is set, this bcrypt instance was used. |
+| scrypt | [ScryptHashingInstance](#model-ScryptHashingInstance) |  | if scrypt is set, this scrypt instance was used. |
+
+
+
+
+
+
+<a name="model-Pagination"></a>
+
+### Pagination
+Pagination option.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| offset | [uint32](#uint32) |  | Where to start the pagination. |
+| limit | [uint32](#uint32) |  | How many items to return. |
+| descending | [bool](#bool) |  | Whether to sort in descending order. |
+
+
+
+
+
+
+<a name="model-ScryptHashingConfig"></a>
+
+### ScryptHashingConfig
+Scrypt hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| signer_key | [string](#string) |  | The key used to sign the salt. |
+| salt_separator | [string](#string) |  | The salt separator. |
+| rounds | [int32](#int32) |  | The number of rounds in the algorithm. |
+| mem_cost | [int32](#int32) |  | The memory cost of the algorithm. |
+| p | [int32](#int32) |  | The parallelization factor of the algorithm. |
+| key_len | [int32](#int32) |  | The length of the key. |
+
+
+
+
+
+
+<a name="model-ScryptHashingInstance"></a>
+
+### ScryptHashingInstance
+Scrypt hashing instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| salt | [bytes](#bytes) |  | The salt used to hash the password. |
 
 
 
@@ -891,89 +1371,6 @@ A docker image tag.
 
 
 
-<a name="api_v1_capsule_build-proto"></a>
-
-## api/v1/capsule/build.proto
-
-
-
-<a name="api-v1-capsule-Build"></a>
-
-### Build
-Build is an environment wide abstraction of an image along with metadata for a capsule.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| build_id | [string](#string) |  | unique identifier for the build |
-| digest | [string](#string) |  | digest of the image |
-| repository | [string](#string) |  | repository of the image |
-| tag | [string](#string) |  | tag of the image |
-| created_by | [model.Author](#model-Author) |  | user who created the build |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | time the build was created |
-| origin | [Origin](#api-v1-capsule-Origin) |  | origin of the build |
-| labels | [Build.LabelsEntry](#api-v1-capsule-Build-LabelsEntry) | repeated | labels of the build |
-
-
-
-
-
-
-<a name="api-v1-capsule-Build-LabelsEntry"></a>
-
-### Build.LabelsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-GitReference"></a>
-
-### GitReference
-GitReference is an origin of a build.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| repository_url | [string](#string) |  | The url of the git repository |
-| commit_sha | [string](#string) |  | The commit sha of the git repository |
-| commit_url | [string](#string) |  | The commit url of the git repository |
-
-
-
-
-
-
-<a name="api-v1-capsule-Origin"></a>
-
-### Origin
-Where the build came from
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| git_reference | [GitReference](#api-v1-capsule-GitReference) |  | The build came from a git repository |
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="api_v1_capsule_capsule-proto"></a>
 
 ## api/v1/capsule/capsule.proto
@@ -1007,6 +1404,127 @@ Legacy update message
 
 
 
+
+
+
+
+
+
+
+
+<a name="api_v1_capsule_job-proto"></a>
+
+## api/v1/capsule/job.proto
+
+
+
+<a name="api-v1-capsule-CronJob"></a>
+
+### CronJob
+Specification for a cron job.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| job_name | [string](#string) |  | Name of the job. |
+| schedule | [string](#string) |  | Cron schedule. |
+| max_retries | [int32](#int32) |  | Maximum number of retries. |
+| timeout | [google.protobuf.Duration](#google-protobuf-Duration) |  | Maximum duration of the job. |
+| url | [JobURL](#api-v1-capsule-JobURL) |  | URL job. |
+| command | [JobCommand](#api-v1-capsule-JobCommand) |  | Command job. |
+
+
+
+
+
+
+<a name="api-v1-capsule-JobCommand"></a>
+
+### JobCommand
+Run a job by running a command in an instance of a capsule
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| command | [string](#string) |  | Command to run. |
+| args | [string](#string) | repeated | Arguments to pass to the command. |
+
+
+
+
+
+
+<a name="api-v1-capsule-JobExecution"></a>
+
+### JobExecution
+An execution of a cron job.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| job_name | [string](#string) |  | Name of the job. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the job started running. |
+| finished_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the job finished. |
+| state | [JobState](#api-v1-capsule-JobState) |  | The state of the job. |
+| retries | [int32](#int32) |  | Number of retries. |
+| rollout_id | [uint64](#uint64) |  | ID of the rollout. |
+| capsule_id | [string](#string) |  | ID of the capsule. |
+| project_id | [string](#string) |  | ID of the project. |
+| execution_id | [string](#string) |  | ID of the execution. |
+| environment_id | [string](#string) |  | ID of the environment. |
+
+
+
+
+
+
+<a name="api-v1-capsule-JobURL"></a>
+
+### JobURL
+Run a job by making a HTTP request to a URL.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| port | [uint64](#uint64) |  | Port to make the request to. |
+| path | [string](#string) |  | Path to make the request to. |
+| query_parameters | [JobURL.QueryParametersEntry](#api-v1-capsule-JobURL-QueryParametersEntry) | repeated | Query parameters to add to the request. |
+
+
+
+
+
+
+<a name="api-v1-capsule-JobURL-QueryParametersEntry"></a>
+
+### JobURL.QueryParametersEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+<a name="api-v1-capsule-JobState"></a>
+
+### JobState
+Different states a job execution can be in
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| JOB_STATE_UNSPECIFIED | 0 | Default value. |
+| JOB_STATE_ONGOING | 1 | The job is running. |
+| JOB_STATE_COMPLETED | 2 | The job completed successfully. |
+| JOB_STATE_FAILED | 3 | The job failed. |
+| JOB_STATE_TERMINATED | 4 | The job was terminated. |
 
 
 
@@ -2152,99 +2670,311 @@ An event that is associated with a rollout.
 
 
 
-<a name="api_v1_capsule_job-proto"></a>
+<a name="api_v1_capsule_instance_status-proto"></a>
 
-## api/v1/capsule/job.proto
-
-
-
-<a name="api-v1-capsule-CronJob"></a>
-
-### CronJob
-Specification for a cron job.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| job_name | [string](#string) |  | Name of the job. |
-| schedule | [string](#string) |  | Cron schedule. |
-| max_retries | [int32](#int32) |  | Maximum number of retries. |
-| timeout | [google.protobuf.Duration](#google-protobuf-Duration) |  | Maximum duration of the job. |
-| url | [JobURL](#api-v1-capsule-JobURL) |  | URL job. |
-| command | [JobCommand](#api-v1-capsule-JobCommand) |  | Command job. |
+## api/v1/capsule/instance/status.proto
 
 
 
+<a name="api-v1-capsule-instance-ContainerTermination"></a>
 
-
-
-<a name="api-v1-capsule-JobCommand"></a>
-
-### JobCommand
-Run a job by running a command in an instance of a capsule
+### ContainerTermination
+Information about the last container termination.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| command | [string](#string) |  | Command to run. |
-| args | [string](#string) | repeated | Arguments to pass to the command. |
+| exit_code | [int32](#int32) |  | Exit status from the last termination of the container |
+| signal | [int32](#int32) |  | Signal from the last termination of the container +optional |
+| reason | [string](#string) |  | (brief) reason from the last termination of the container +optional |
+| message | [string](#string) |  | Message regarding the last termination of the container +optional |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which previous execution of the container started +optional |
+| finished_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which the container last terminated +optional |
+| container_id | [string](#string) |  | Container's ID in the format 'type://container_id' +optional |
 
 
 
 
 
 
-<a name="api-v1-capsule-JobExecution"></a>
+<a name="api-v1-capsule-instance-DeletedStage"></a>
 
-### JobExecution
-An execution of a cron job.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| job_name | [string](#string) |  | Name of the job. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the job started running. |
-| finished_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the job finished. |
-| state | [JobState](#api-v1-capsule-JobState) |  | The state of the job. |
-| retries | [int32](#int32) |  | Number of retries. |
-| rollout_id | [uint64](#uint64) |  | ID of the rollout. |
-| capsule_id | [string](#string) |  | ID of the capsule. |
-| project_id | [string](#string) |  | ID of the project. |
-| execution_id | [string](#string) |  | ID of the execution. |
-| environment_id | [string](#string) |  | ID of the environment. |
-
-
-
-
-
-
-<a name="api-v1-capsule-JobURL"></a>
-
-### JobURL
-Run a job by making a HTTP request to a URL.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| port | [uint64](#uint64) |  | Port to make the request to. |
-| path | [string](#string) |  | Path to make the request to. |
-| query_parameters | [JobURL.QueryParametersEntry](#api-v1-capsule-JobURL-QueryParametersEntry) | repeated | Query parameters to add to the request. |
-
-
-
-
-
-
-<a name="api-v1-capsule-JobURL-QueryParametersEntry"></a>
-
-### JobURL.QueryParametersEntry
+### DeletedStage
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| info | [StageInfo](#api-v1-capsule-instance-StageInfo) |  |  |
+| steps | [DeletedStep](#api-v1-capsule-instance-DeletedStep) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-DeletedStep"></a>
+
+### DeletedStep
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-ExecutingStep"></a>
+
+### ExecutingStep
+An executing step of the running stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which the step started. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-GenericStep"></a>
+
+### GenericStep
+A generic step.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-ImagePullingStep"></a>
+
+### ImagePullingStep
+An image pulling step of the preparing stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
+| state | [ImagePullingState](#api-v1-capsule-instance-ImagePullingState) |  | State of the step. |
+| image | [string](#string) |  | Image that is being pulled. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-PlacementStep"></a>
+
+### PlacementStep
+Placement step.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
+| node | [string](#string) |  | Node on which the instance should run. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-PreparingStage"></a>
+
+### PreparingStage
+The preparing stage
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-instance-StageInfo) |  | Meta information about the stage. |
+| steps | [PreparingStep](#api-v1-capsule-instance-PreparingStep) | repeated | Steps of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-PreparingStep"></a>
+
+### PreparingStep
+A step of the preparing stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  | Generic step. |
+| image_pulling | [ImagePullingStep](#api-v1-capsule-instance-ImagePullingStep) |  | Image pulling step. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-ReadyStep"></a>
+
+### ReadyStep
+A ready step of the running stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
+| state | [ReadyState](#api-v1-capsule-instance-ReadyState) |  | State of the step. |
+| failed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which the step failed. |
+| fail_count | [uint32](#uint32) |  | Number of times the step has failed. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-RunningStage"></a>
+
+### RunningStage
+The running stage of the instance
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-instance-StageInfo) |  | Meta information about the stage. |
+| steps | [RunningStep](#api-v1-capsule-instance-RunningStep) | repeated | Steps of the stage. |
+| restarts | [uint32](#uint32) |  | Number of restarts of the instance. |
+| last_container_termination | [ContainerTermination](#api-v1-capsule-instance-ContainerTermination) |  | Information about the last container termination. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-RunningStep"></a>
+
+### RunningStep
+A step of the running stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  | Generic step. |
+| ready | [ReadyStep](#api-v1-capsule-instance-ReadyStep) |  | Ready step. |
+| executing | [ExecutingStep](#api-v1-capsule-instance-ExecutingStep) |  | Executing step. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-SchedulingStage"></a>
+
+### SchedulingStage
+The scheduling stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-instance-StageInfo) |  | Meta information about the stage. |
+| steps | [SchedulingStep](#api-v1-capsule-instance-SchedulingStep) | repeated | Steps of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-SchedulingStep"></a>
+
+### SchedulingStep
+A step of the scheduling stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  | Generic step. |
+| placement | [PlacementStep](#api-v1-capsule-instance-PlacementStep) |  | Placement step - On what node should the instance run. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-StageInfo"></a>
+
+### StageInfo
+Meta information about a stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the stage. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last update time of the stage. |
+| state | [StageState](#api-v1-capsule-instance-StageState) |  | State of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-Stages"></a>
+
+### Stages
+The different stages of the instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| schedule | [SchedulingStage](#api-v1-capsule-instance-SchedulingStage) |  | Scheduling stage. |
+| preparing | [PreparingStage](#api-v1-capsule-instance-PreparingStage) |  | Preparing stage. |
+| running | [RunningStage](#api-v1-capsule-instance-RunningStage) |  | Running stage. |
+| deleted | [DeletedStage](#api-v1-capsule-instance-DeletedStage) |  | Deleted stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-Status"></a>
+
+### Status
+Status is a representation of the current state of an instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| instance_id | [string](#string) |  | Instance ID. |
+| stages | [Stages](#api-v1-capsule-instance-Stages) |  | Stages of the instance. |
+| rollout_id | [uint64](#uint64) |  | Rollout ID. |
+| image | [string](#string) |  | Image of the instance. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Creation time of the instance. |
+
+
+
+
+
+
+<a name="api-v1-capsule-instance-StepInfo"></a>
+
+### StepInfo
+Meta data about a step.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the step. |
+| message | [string](#string) |  | Message of the step. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last update time of the step. |
+| state | [StepState](#api-v1-capsule-instance-StepState) |  | State of the step. |
 
 
 
@@ -2253,18 +2983,75 @@ Run a job by making a HTTP request to a URL.
 
 
 
-<a name="api-v1-capsule-JobState"></a>
+<a name="api-v1-capsule-instance-ImagePullingState"></a>
 
-### JobState
-Different states a job execution can be in
+### ImagePullingState
+Different states of an image pulling step.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| JOB_STATE_UNSPECIFIED | 0 | Default value. |
-| JOB_STATE_ONGOING | 1 | The job is running. |
-| JOB_STATE_COMPLETED | 2 | The job completed successfully. |
-| JOB_STATE_FAILED | 3 | The job failed. |
-| JOB_STATE_TERMINATED | 4 | The job was terminated. |
+| IMAGE_PULLING_STATE_UNSPECIFIED | 0 | Unspecified state. |
+| IMAGE_PULLING_STATE_PULLING | 1 | Image is being pulled. |
+| IMAGE_PULLING_STATE_ERROR | 2 | Image pulling has failed. |
+| IMAGE_PULLING_STATE_BACK_OFF | 3 | Image pulling is in back off. |
+| IMAGE_PULLING_STATE_DONE | 4 | Image pulling is done. |
+
+
+
+<a name="api-v1-capsule-instance-PlacementState"></a>
+
+### PlacementState
+Different states of a placement step
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| SCHEDULING_STATE_UNSPECIFIED | 0 | Unspecified state. |
+| SCHEDULING_STATE_UNSCHEDULEABLE | 1 | If the instance is unschedulable. |
+| SCHEDULING_STATE_DONE | 2 | If the instance is scheduled. |
+
+
+
+<a name="api-v1-capsule-instance-ReadyState"></a>
+
+### ReadyState
+Different states of a ready step.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| READY_STATE_UNSPECIFIED | 0 | Unspecified state. |
+| READY_STATE_CRASH_LOOP_BACKOFF | 1 | If the instance is in crash loop backoff. |
+| READY_STATE_NOT_READY | 2 | If the instance is not ready. |
+| READY_STATE_READY | 3 | If the instance is ready. |
+
+
+
+<a name="api-v1-capsule-instance-StageState"></a>
+
+### StageState
+Different states a stage can be in.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STAGE_STATE_UNSPECIFIED | 0 | Unspecified state. |
+| STAGE_STATE_ONGOING | 1 | Stage is ongoing. |
+| STAGE_STATE_FAILED | 2 | Stage has failed. |
+| STAGE_STATE_DONE | 3 | Stage is done. |
+| STAGE_STATE_RUNNING | 4 | Stage is running. |
+
+
+
+<a name="api-v1-capsule-instance-StepState"></a>
+
+### StepState
+Different states a step can be in.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STEP_STATE_UNSPECIFIED | 0 | Unspecified state. |
+| STEP_STATE_ONGOING | 1 | Step is ongoing. |
+| STEP_STATE_FAILED | 2 | Step has failed. |
+| STEP_STATE_DONE | 3 | Step is done. |
+| STEP_STATE_RUNNING | 4 | Step is running. |
 
 
 
@@ -2360,6 +3147,366 @@ Metrics for an instance
 
 
 
+
+
+
+
+
+
+
+
+<a name="api_v1_capsule_rollout_status-proto"></a>
+
+## api/v1/capsule/rollout/status.proto
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureCapsuleStep"></a>
+
+### ConfigureCapsuleStep
+A step configuring a capsule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The state of the step. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureEnvStep"></a>
+
+### ConfigureEnvStep
+A step configuring an environment.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The result of the environment configuration. |
+| is_secret | [bool](#bool) |  | Whether the environment is a secret. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureFileStep"></a>
+
+### ConfigureFileStep
+A step configuring a file.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The result of the file configuration. |
+| path | [string](#string) |  | The path of the file. |
+| is_secret | [bool](#bool) |  | Whether the file is a secret. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureStage"></a>
+
+### ConfigureStage
+The configure stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
+| steps | [ConfigureStep](#api-v1-capsule-rollout-ConfigureStep) | repeated | The steps of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureStep"></a>
+
+### ConfigureStep
+A step of the configure stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
+| configure_capsule | [ConfigureCapsuleStep](#api-v1-capsule-rollout-ConfigureCapsuleStep) |  | A step configuring a capsule. |
+| configure_file | [ConfigureFileStep](#api-v1-capsule-rollout-ConfigureFileStep) |  | A step configuring a file. |
+| configure_env | [ConfigureEnvStep](#api-v1-capsule-rollout-ConfigureEnvStep) |  | A step configuring an environment. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-CreateResourceStep"></a>
+
+### CreateResourceStep
+A step creating a resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| kind | [string](#string) |  | The kind of the resource. |
+| name | [string](#string) |  | The name of the resource. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-GenericStep"></a>
+
+### GenericStep
+A generic step of a stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-InstancesStep"></a>
+
+### InstancesStep
+Information on the instances of the rollout.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| num_updated | [uint32](#uint32) |  | The number of updated instances. |
+| num_ready | [uint32](#uint32) |  | The number of ready instances. |
+| num_stuck | [uint32](#uint32) |  | The number of stuck instances. |
+| num_wrong_version | [uint32](#uint32) |  | The number of instances with the wrong version. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ResourceCreationStage"></a>
+
+### ResourceCreationStage
+The resource creation stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
+| steps | [ResourceCreationStep](#api-v1-capsule-rollout-ResourceCreationStep) | repeated | The steps of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ResourceCreationStep"></a>
+
+### ResourceCreationStep
+A step of the resource creation stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
+| create_resource | [CreateResourceStep](#api-v1-capsule-rollout-CreateResourceStep) |  | A step creating a resource. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-RunningStage"></a>
+
+### RunningStage
+The running stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
+| steps | [RunningStep](#api-v1-capsule-rollout-RunningStep) | repeated | The steps of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-RunningStep"></a>
+
+### RunningStep
+A step of the running stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
+| instances | [InstancesStep](#api-v1-capsule-rollout-InstancesStep) |  | A step containing information on the instances of the rollout. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-StageInfo"></a>
+
+### StageInfo
+Information about a stage of a rollout.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the stage. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the stage was updated. |
+| state | [StageState](#api-v1-capsule-rollout-StageState) |  | The current state of the stage. |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the stage started. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-Stages"></a>
+
+### Stages
+The three stages of a rollout
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| configure | [ConfigureStage](#api-v1-capsule-rollout-ConfigureStage) |  | The configure stage. |
+| resource_creation | [ResourceCreationStage](#api-v1-capsule-rollout-ResourceCreationStage) |  | The resource creation stage. |
+| running | [RunningStage](#api-v1-capsule-rollout-RunningStage) |  | The running stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-Status"></a>
+
+### Status
+Status is a representation of the current state of a rollout.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rollout_id | [uint64](#uint64) |  | The ID of the rollout. |
+| state | [State](#api-v1-capsule-rollout-State) |  | The current state of the rollout. |
+| stages | [Stages](#api-v1-capsule-rollout-Stages) |  | The stages of the rollout. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the rollout was updated. |
+| result | [Result](#api-v1-capsule-rollout-Result) |  | The result of the rollout. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-StepInfo"></a>
+
+### StepInfo
+Information about a step of a stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the step. |
+| message | [string](#string) |  | Messages in the step. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the step was updated. |
+| state | [StepState](#api-v1-capsule-rollout-StepState) |  | The current state of the step. |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the step started. |
+
+
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureResult"></a>
+
+### ConfigureResult
+The result of a configuration step.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONFIGURE_RESULT_UNSPECIFIED | 0 | The result is unspecified. |
+| CONFIGURE_RESULT_CREATED | 1 | The resource is to be created. |
+| CONFIGURE_RESULT_UPDATED | 2 | The resource is to be updated. |
+| CONFIGURE_RESULT_NO_CHANGE | 3 | The resource has no change. |
+| CONFIGURE_RESULT_DELETED | 4 | The resource is to be deleted. |
+
+
+
+<a name="api-v1-capsule-rollout-Result"></a>
+
+### Result
+Different result of a rollout.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| RESULT_UNSPECIFIED | 0 | The result is unspecified. |
+| RESULT_REPLACED | 1 | The rollout has been replaced. |
+| RESULT_FAILED | 2 | The rollout has failed. |
+| RESULT_ABORTED | 3 | The rollout has been aborted. |
+| RESULT_ROLLBACK | 4 | The rollout has been rolled back. |
+
+
+
+<a name="api-v1-capsule-rollout-StageState"></a>
+
+### StageState
+Different states a stage can be in.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STAGE_STATE_UNSPECIFIED | 0 | The state is unspecified. |
+| STAGE_STATE_DEPLOYING | 1 | The stage is deploying. |
+| STAGE_STATE_RUNNING | 2 | The stage is running. |
+| STAGE_STATE_STOPPED | 3 | The stage is stopped. |
+
+
+
+<a name="api-v1-capsule-rollout-State"></a>
+
+### State
+Different states a rollout can be in.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STATE_UNSPECIFIED | 0 | The state is unspecified. |
+| STATE_PREPARING | 1 | The rollout is preparing. |
+| STATE_CONFIGURE | 2 | The rollout is configuring. |
+| STATE_RESOURCE_CREATION | 3 | The rollout is creating resources. |
+| STATE_RUNNING | 4 | The rollout is running. |
+| STATE_STOPPED | 5 | The rollout is stopped. |
+
+
+
+<a name="api-v1-capsule-rollout-StepState"></a>
+
+### StepState
+Different states a step can be in.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STEP_STATE_UNSPECIFIED | 0 | The state is unspecified. |
+| STEP_STATE_ONGOING | 1 | The step is ongoing. |
+| STEP_STATE_FAILED | 2 | The step failed. |
+| STEP_STATE_DONE | 3 | The step is done. |
 
 
 
@@ -3256,756 +4403,6 @@ Deprecated: sidecar interface configuration
 
 
 
-<a name="api_v1_capsule_instance_status-proto"></a>
-
-## api/v1/capsule/instance/status.proto
-
-
-
-<a name="api-v1-capsule-instance-ContainerTermination"></a>
-
-### ContainerTermination
-Information about the last container termination.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| exit_code | [int32](#int32) |  | Exit status from the last termination of the container |
-| signal | [int32](#int32) |  | Signal from the last termination of the container +optional |
-| reason | [string](#string) |  | (brief) reason from the last termination of the container +optional |
-| message | [string](#string) |  | Message regarding the last termination of the container +optional |
-| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which previous execution of the container started +optional |
-| finished_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which the container last terminated +optional |
-| container_id | [string](#string) |  | Container's ID in the format 'type://container_id' +optional |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-DeletedStage"></a>
-
-### DeletedStage
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-instance-StageInfo) |  |  |
-| steps | [DeletedStep](#api-v1-capsule-instance-DeletedStep) | repeated |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-DeletedStep"></a>
-
-### DeletedStep
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-ExecutingStep"></a>
-
-### ExecutingStep
-An executing step of the running stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
-| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which the step started. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-GenericStep"></a>
-
-### GenericStep
-A generic step.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-ImagePullingStep"></a>
-
-### ImagePullingStep
-An image pulling step of the preparing stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
-| state | [ImagePullingState](#api-v1-capsule-instance-ImagePullingState) |  | State of the step. |
-| image | [string](#string) |  | Image that is being pulled. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-PlacementStep"></a>
-
-### PlacementStep
-Placement step.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
-| node | [string](#string) |  | Node on which the instance should run. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-PreparingStage"></a>
-
-### PreparingStage
-The preparing stage
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-instance-StageInfo) |  | Meta information about the stage. |
-| steps | [PreparingStep](#api-v1-capsule-instance-PreparingStep) | repeated | Steps of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-PreparingStep"></a>
-
-### PreparingStep
-A step of the preparing stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  | Generic step. |
-| image_pulling | [ImagePullingStep](#api-v1-capsule-instance-ImagePullingStep) |  | Image pulling step. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-ReadyStep"></a>
-
-### ReadyStep
-A ready step of the running stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
-| state | [ReadyState](#api-v1-capsule-instance-ReadyState) |  | State of the step. |
-| failed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which the step failed. |
-| fail_count | [uint32](#uint32) |  | Number of times the step has failed. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-RunningStage"></a>
-
-### RunningStage
-The running stage of the instance
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-instance-StageInfo) |  | Meta information about the stage. |
-| steps | [RunningStep](#api-v1-capsule-instance-RunningStep) | repeated | Steps of the stage. |
-| restarts | [uint32](#uint32) |  | Number of restarts of the instance. |
-| last_container_termination | [ContainerTermination](#api-v1-capsule-instance-ContainerTermination) |  | Information about the last container termination. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-RunningStep"></a>
-
-### RunningStep
-A step of the running stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  | Generic step. |
-| ready | [ReadyStep](#api-v1-capsule-instance-ReadyStep) |  | Ready step. |
-| executing | [ExecutingStep](#api-v1-capsule-instance-ExecutingStep) |  | Executing step. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-SchedulingStage"></a>
-
-### SchedulingStage
-The scheduling stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-instance-StageInfo) |  | Meta information about the stage. |
-| steps | [SchedulingStep](#api-v1-capsule-instance-SchedulingStep) | repeated | Steps of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-SchedulingStep"></a>
-
-### SchedulingStep
-A step of the scheduling stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  | Generic step. |
-| placement | [PlacementStep](#api-v1-capsule-instance-PlacementStep) |  | Placement step - On what node should the instance run. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-StageInfo"></a>
-
-### StageInfo
-Meta information about a stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the stage. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last update time of the stage. |
-| state | [StageState](#api-v1-capsule-instance-StageState) |  | State of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-Stages"></a>
-
-### Stages
-The different stages of the instance.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| schedule | [SchedulingStage](#api-v1-capsule-instance-SchedulingStage) |  | Scheduling stage. |
-| preparing | [PreparingStage](#api-v1-capsule-instance-PreparingStage) |  | Preparing stage. |
-| running | [RunningStage](#api-v1-capsule-instance-RunningStage) |  | Running stage. |
-| deleted | [DeletedStage](#api-v1-capsule-instance-DeletedStage) |  | Deleted stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-Status"></a>
-
-### Status
-Status is a representation of the current state of an instance.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| instance_id | [string](#string) |  | Instance ID. |
-| stages | [Stages](#api-v1-capsule-instance-Stages) |  | Stages of the instance. |
-| rollout_id | [uint64](#uint64) |  | Rollout ID. |
-| image | [string](#string) |  | Image of the instance. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Creation time of the instance. |
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-StepInfo"></a>
-
-### StepInfo
-Meta data about a step.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the step. |
-| message | [string](#string) |  | Message of the step. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last update time of the step. |
-| state | [StepState](#api-v1-capsule-instance-StepState) |  | State of the step. |
-
-
-
-
-
-
-
-
-<a name="api-v1-capsule-instance-ImagePullingState"></a>
-
-### ImagePullingState
-Different states of an image pulling step.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| IMAGE_PULLING_STATE_UNSPECIFIED | 0 | Unspecified state. |
-| IMAGE_PULLING_STATE_PULLING | 1 | Image is being pulled. |
-| IMAGE_PULLING_STATE_ERROR | 2 | Image pulling has failed. |
-| IMAGE_PULLING_STATE_BACK_OFF | 3 | Image pulling is in back off. |
-| IMAGE_PULLING_STATE_DONE | 4 | Image pulling is done. |
-
-
-
-<a name="api-v1-capsule-instance-PlacementState"></a>
-
-### PlacementState
-Different states of a placement step
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| SCHEDULING_STATE_UNSPECIFIED | 0 | Unspecified state. |
-| SCHEDULING_STATE_UNSCHEDULEABLE | 1 | If the instance is unschedulable. |
-| SCHEDULING_STATE_DONE | 2 | If the instance is scheduled. |
-
-
-
-<a name="api-v1-capsule-instance-ReadyState"></a>
-
-### ReadyState
-Different states of a ready step.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| READY_STATE_UNSPECIFIED | 0 | Unspecified state. |
-| READY_STATE_CRASH_LOOP_BACKOFF | 1 | If the instance is in crash loop backoff. |
-| READY_STATE_NOT_READY | 2 | If the instance is not ready. |
-| READY_STATE_READY | 3 | If the instance is ready. |
-
-
-
-<a name="api-v1-capsule-instance-StageState"></a>
-
-### StageState
-Different states a stage can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| STAGE_STATE_UNSPECIFIED | 0 | Unspecified state. |
-| STAGE_STATE_ONGOING | 1 | Stage is ongoing. |
-| STAGE_STATE_FAILED | 2 | Stage has failed. |
-| STAGE_STATE_DONE | 3 | Stage is done. |
-| STAGE_STATE_RUNNING | 4 | Stage is running. |
-
-
-
-<a name="api-v1-capsule-instance-StepState"></a>
-
-### StepState
-Different states a step can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| STEP_STATE_UNSPECIFIED | 0 | Unspecified state. |
-| STEP_STATE_ONGOING | 1 | Step is ongoing. |
-| STEP_STATE_FAILED | 2 | Step has failed. |
-| STEP_STATE_DONE | 3 | Step is done. |
-| STEP_STATE_RUNNING | 4 | Step is running. |
-
-
-
-
-
-
-
-
-<a name="api_v1_capsule_rollout_status-proto"></a>
-
-## api/v1/capsule/rollout/status.proto
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureCapsuleStep"></a>
-
-### ConfigureCapsuleStep
-A step configuring a capsule.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The state of the step. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureEnvStep"></a>
-
-### ConfigureEnvStep
-A step configuring an environment.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The result of the environment configuration. |
-| is_secret | [bool](#bool) |  | Whether the environment is a secret. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureFileStep"></a>
-
-### ConfigureFileStep
-A step configuring a file.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The result of the file configuration. |
-| path | [string](#string) |  | The path of the file. |
-| is_secret | [bool](#bool) |  | Whether the file is a secret. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureStage"></a>
-
-### ConfigureStage
-The configure stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
-| steps | [ConfigureStep](#api-v1-capsule-rollout-ConfigureStep) | repeated | The steps of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureStep"></a>
-
-### ConfigureStep
-A step of the configure stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
-| configure_capsule | [ConfigureCapsuleStep](#api-v1-capsule-rollout-ConfigureCapsuleStep) |  | A step configuring a capsule. |
-| configure_file | [ConfigureFileStep](#api-v1-capsule-rollout-ConfigureFileStep) |  | A step configuring a file. |
-| configure_env | [ConfigureEnvStep](#api-v1-capsule-rollout-ConfigureEnvStep) |  | A step configuring an environment. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-CreateResourceStep"></a>
-
-### CreateResourceStep
-A step creating a resource.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| kind | [string](#string) |  | The kind of the resource. |
-| name | [string](#string) |  | The name of the resource. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-GenericStep"></a>
-
-### GenericStep
-A generic step of a stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-InstancesStep"></a>
-
-### InstancesStep
-Information on the instances of the rollout.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| num_updated | [uint32](#uint32) |  | The number of updated instances. |
-| num_ready | [uint32](#uint32) |  | The number of ready instances. |
-| num_stuck | [uint32](#uint32) |  | The number of stuck instances. |
-| num_wrong_version | [uint32](#uint32) |  | The number of instances with the wrong version. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ResourceCreationStage"></a>
-
-### ResourceCreationStage
-The resource creation stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
-| steps | [ResourceCreationStep](#api-v1-capsule-rollout-ResourceCreationStep) | repeated | The steps of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ResourceCreationStep"></a>
-
-### ResourceCreationStep
-A step of the resource creation stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
-| create_resource | [CreateResourceStep](#api-v1-capsule-rollout-CreateResourceStep) |  | A step creating a resource. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-RunningStage"></a>
-
-### RunningStage
-The running stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
-| steps | [RunningStep](#api-v1-capsule-rollout-RunningStep) | repeated | The steps of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-RunningStep"></a>
-
-### RunningStep
-A step of the running stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
-| instances | [InstancesStep](#api-v1-capsule-rollout-InstancesStep) |  | A step containing information on the instances of the rollout. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-StageInfo"></a>
-
-### StageInfo
-Information about a stage of a rollout.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the stage. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the stage was updated. |
-| state | [StageState](#api-v1-capsule-rollout-StageState) |  | The current state of the stage. |
-| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the stage started. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-Stages"></a>
-
-### Stages
-The three stages of a rollout
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| configure | [ConfigureStage](#api-v1-capsule-rollout-ConfigureStage) |  | The configure stage. |
-| resource_creation | [ResourceCreationStage](#api-v1-capsule-rollout-ResourceCreationStage) |  | The resource creation stage. |
-| running | [RunningStage](#api-v1-capsule-rollout-RunningStage) |  | The running stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-Status"></a>
-
-### Status
-Status is a representation of the current state of a rollout.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| rollout_id | [uint64](#uint64) |  | The ID of the rollout. |
-| state | [State](#api-v1-capsule-rollout-State) |  | The current state of the rollout. |
-| stages | [Stages](#api-v1-capsule-rollout-Stages) |  | The stages of the rollout. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the rollout was updated. |
-| result | [Result](#api-v1-capsule-rollout-Result) |  | The result of the rollout. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-StepInfo"></a>
-
-### StepInfo
-Information about a step of a stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the step. |
-| message | [string](#string) |  | Messages in the step. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the step was updated. |
-| state | [StepState](#api-v1-capsule-rollout-StepState) |  | The current state of the step. |
-| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the step started. |
-
-
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureResult"></a>
-
-### ConfigureResult
-The result of a configuration step.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| CONFIGURE_RESULT_UNSPECIFIED | 0 | The result is unspecified. |
-| CONFIGURE_RESULT_CREATED | 1 | The resource is to be created. |
-| CONFIGURE_RESULT_UPDATED | 2 | The resource is to be updated. |
-| CONFIGURE_RESULT_NO_CHANGE | 3 | The resource has no change. |
-| CONFIGURE_RESULT_DELETED | 4 | The resource is to be deleted. |
-
-
-
-<a name="api-v1-capsule-rollout-Result"></a>
-
-### Result
-Different result of a rollout.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| RESULT_UNSPECIFIED | 0 | The result is unspecified. |
-| RESULT_REPLACED | 1 | The rollout has been replaced. |
-| RESULT_FAILED | 2 | The rollout has failed. |
-| RESULT_ABORTED | 3 | The rollout has been aborted. |
-| RESULT_ROLLBACK | 4 | The rollout has been rolled back. |
-
-
-
-<a name="api-v1-capsule-rollout-StageState"></a>
-
-### StageState
-Different states a stage can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| STAGE_STATE_UNSPECIFIED | 0 | The state is unspecified. |
-| STAGE_STATE_DEPLOYING | 1 | The stage is deploying. |
-| STAGE_STATE_RUNNING | 2 | The stage is running. |
-| STAGE_STATE_STOPPED | 3 | The stage is stopped. |
-
-
-
-<a name="api-v1-capsule-rollout-State"></a>
-
-### State
-Different states a rollout can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| STATE_UNSPECIFIED | 0 | The state is unspecified. |
-| STATE_PREPARING | 1 | The rollout is preparing. |
-| STATE_CONFIGURE | 2 | The rollout is configuring. |
-| STATE_RESOURCE_CREATION | 3 | The rollout is creating resources. |
-| STATE_RUNNING | 4 | The rollout is running. |
-| STATE_STOPPED | 5 | The rollout is stopped. |
-
-
-
-<a name="api-v1-capsule-rollout-StepState"></a>
-
-### StepState
-Different states a step can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| STEP_STATE_UNSPECIFIED | 0 | The state is unspecified. |
-| STEP_STATE_ONGOING | 1 | The step is ongoing. |
-| STEP_STATE_FAILED | 2 | The step failed. |
-| STEP_STATE_DONE | 3 | The step is done. |
-
-
-
-
-
-
-
-
 <a name="api_v1_cluster_service-proto"></a>
 
 ## api/v1/cluster/service.proto
@@ -4176,6 +4573,35 @@ Response for listing available environments.
 | ----- | ---- | ----- | ----------- |
 | environments | [Environment](#api-v1-environment-Environment) | repeated | List of environments. |
 | platform_version | [string](#string) |  | The version of the Rig-platform. |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="model_metadata-proto"></a>
+
+## model/metadata.proto
+
+
+
+<a name="model-Metadata"></a>
+
+### Metadata
+Generic metadata model.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  | Key of the metadata. |
+| value | [bytes](#bytes) |  | Value of the metadata. |
 
 
 
@@ -4903,69 +5329,6 @@ Empty response for updating a project.
 
 
 
-<a name="api_v1_project_settings_service-proto"></a>
-
-## api/v1/project/settings/service.proto
-
-
-
-<a name="api-v1-project-settings-GetSettingsRequest"></a>
-
-### GetSettingsRequest
-Empty get settings request
-
-
-
-
-
-
-<a name="api-v1-project-settings-GetSettingsResponse"></a>
-
-### GetSettingsResponse
-Response for getting settings for the project.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| settings | [Settings](#api-v1-project-settings-Settings) |  | The settings. |
-
-
-
-
-
-
-<a name="api-v1-project-settings-UpdateSettingsRequest"></a>
-
-### UpdateSettingsRequest
-Request for  updating settings for a project.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| updates | [Update](#api-v1-project-settings-Update) | repeated | The updates to apply. |
-
-
-
-
-
-
-<a name="api-v1-project-settings-UpdateSettingsResponse"></a>
-
-### UpdateSettingsResponse
-Empty response for updating a project's settings.
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="api_v1_project_settings_settings-proto"></a>
 
 ## api/v1/project/settings/settings.proto
@@ -5047,6 +5410,69 @@ Update message for project settings.
 | ----- | ---- | ----- | ----------- |
 | add_docker_registry | [AddDockerRegistry](#api-v1-project-settings-AddDockerRegistry) |  | Add a docker registry. |
 | delete_docker_registry | [string](#string) |  | Delete a docker registry. |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_project_settings_service-proto"></a>
+
+## api/v1/project/settings/service.proto
+
+
+
+<a name="api-v1-project-settings-GetSettingsRequest"></a>
+
+### GetSettingsRequest
+Empty get settings request
+
+
+
+
+
+
+<a name="api-v1-project-settings-GetSettingsResponse"></a>
+
+### GetSettingsResponse
+Response for getting settings for the project.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| settings | [Settings](#api-v1-project-settings-Settings) |  | The settings. |
+
+
+
+
+
+
+<a name="api-v1-project-settings-UpdateSettingsRequest"></a>
+
+### UpdateSettingsRequest
+Request for  updating settings for a project.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| updates | [Update](#api-v1-project-settings-Update) | repeated | The updates to apply. |
+
+
+
+
+
+
+<a name="api-v1-project-settings-UpdateSettingsResponse"></a>
+
+### UpdateSettingsResponse
+Empty response for updating a project's settings.
 
 
 
@@ -5383,6 +5809,38 @@ Empty update response.
 
 
 
+<a name="api_v1_service_account_service_account-proto"></a>
+
+## api/v1/service_account/service_account.proto
+
+
+
+<a name="api-v1-service_account-ServiceAccount"></a>
+
+### ServiceAccount
+Service account model.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Unique name of the service account. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Creation date. |
+| created_by | [model.Author](#model-Author) |  | Author of the service account. |
+| managed | [bool](#bool) |  | Whether the service account is managed by the system. |
+| group_ids | [string](#string) | repeated | List of group IDs the service account belongs to. |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_service_account_service-proto"></a>
 
 ## api/v1/service_account/service.proto
@@ -5478,30 +5936,189 @@ Response for listing service accounts.
 
 
 
-<a name="api_v1_service_account_service_account-proto"></a>
+<a name="api_v1_user_user-proto"></a>
 
-## api/v1/service_account/service_account.proto
+## api/v1/user/user.proto
 
 
 
-<a name="api-v1-service_account-ServiceAccount"></a>
+<a name="api-v1-user-AuthMethod"></a>
 
-### ServiceAccount
-Service account model.
+### AuthMethod
+how a user is authenticated.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Unique name of the service account. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Creation date. |
-| created_by | [model.Author](#model-Author) |  | Author of the service account. |
-| managed | [bool](#bool) |  | Whether the service account is managed by the system. |
-| group_ids | [string](#string) | repeated | List of group IDs the service account belongs to. |
+| login_type | [model.LoginType](#model-LoginType) |  | Login type of the user. |
 
 
 
 
 
+
+<a name="api-v1-user-Profile"></a>
+
+### Profile
+User profile
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| first_name | [string](#string) |  | First name of the user. |
+| last_name | [string](#string) |  | Last name of the user. |
+
+
+
+
+
+
+<a name="api-v1-user-Session"></a>
+
+### Session
+A user's sessions.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| auth_method | [AuthMethod](#api-v1-user-AuthMethod) |  | how the user is authenticated. |
+| is_invalidated | [bool](#bool) |  | if the session is invalidated |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the session was created. |
+| invalidated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the session was invalidated. |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the session expires. |
+| renewed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the session was renewed. |
+| country | [string](#string) |  | Country of the session. |
+| postal_code | [int32](#int32) |  | Postal code of the session. |
+
+
+
+
+
+
+<a name="api-v1-user-SessionEntry"></a>
+
+### SessionEntry
+Session entry
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| session_id | [string](#string) |  | Session ID of the session. |
+| session | [Session](#api-v1-user-Session) |  | Session of the session. |
+
+
+
+
+
+
+<a name="api-v1-user-Update"></a>
+
+### Update
+Update message to update a user.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| email | [string](#string) |  | Email of the user. |
+| username | [string](#string) |  | Username of the user. |
+| phone_number | [string](#string) |  | Deprecated: text is not supported - Phone number of the user. |
+| password | [string](#string) |  | Password of the user. |
+| profile | [Profile](#api-v1-user-Profile) |  | Profile of the user. |
+| is_email_verified | [bool](#bool) |  | Whether the user's email is verified. |
+| is_phone_verified | [bool](#bool) |  | Deprecated: text is not supported - Whether the user's phone number is verified. |
+| reset_sessions | [Update.ResetSessions](#api-v1-user-Update-ResetSessions) |  | Reset sessions of the user. |
+| set_metadata | [model.Metadata](#model-Metadata) |  | Set metadata of the user. |
+| delete_metadata_key | [string](#string) |  | Delete metadata of the user. |
+| hashed_password | [model.HashingInstance](#model-HashingInstance) |  | Hashed password of the user. |
+
+
+
+
+
+
+<a name="api-v1-user-Update-ResetSessions"></a>
+
+### Update.ResetSessions
+if sessions are reset, all sessions will be invalidated and a new session will be created.
+
+
+
+
+
+
+<a name="api-v1-user-User"></a>
+
+### User
+The user model.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user_id | [string](#string) |  | User ID of the user. |
+| user_info | [model.UserInfo](#model-UserInfo) |  | User info of the user. |
+| profile | [Profile](#api-v1-user-Profile) |  | Profile of the user. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the user was last updated. |
+| register_info | [model.RegisterInfo](#model-RegisterInfo) |  | Register info of the user. |
+| is_phone_verified | [bool](#bool) |  | Deprecated: text is not supported - Whether the user's phone number is verified. |
+| is_email_verified | [bool](#bool) |  | Whether the user's email is verified. |
+| new_sessions_since | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the user last created a new session. |
+| metadata | [User.MetadataEntry](#api-v1-user-User-MetadataEntry) | repeated | Metadata of the user. |
+
+
+
+
+
+
+<a name="api-v1-user-User-MetadataEntry"></a>
+
+### User.MetadataEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="api-v1-user-VerificationCode"></a>
+
+### VerificationCode
+short-lived verification code.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code | [model.HashingInstance](#model-HashingInstance) |  | Hashed verification code. |
+| sent_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the verification code was sent. |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the verification code expires. |
+| attempts | [int32](#int32) |  | Number of attempts to verify the code. |
+| last_attempt | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp of the last attempt to verify the code. |
+| type | [VerificationType](#api-v1-user-VerificationType) |  | Type of verification code. |
+| user_id | [string](#string) |  | User ID of the user who the code was sent to. |
+
+
+
+
+
+
+
+
+<a name="api-v1-user-VerificationType"></a>
+
+### VerificationType
+Type of verification code
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VERIFICATION_TYPE_UNSPECIFIED | 0 | Default value |
+| VERIFICATION_TYPE_EMAIL | 1 | Email verification code. |
+| VERIFICATION_TYPE_TEXT | 2 | Deprecated: text is not supported - text verification code. |
+| VERIFICATION_TYPE_RESET_PASSWORD | 3 | reset password verification code. |
 
 
 
@@ -5729,247 +6346,22 @@ Empty update response.
 
 
 
-<a name="api_v1_user_user-proto"></a>
+<a name="model_credentials-proto"></a>
 
-## api/v1/user/user.proto
-
-
-
-<a name="api-v1-user-AuthMethod"></a>
-
-### AuthMethod
-how a user is authenticated.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| login_type | [model.LoginType](#model-LoginType) |  | Login type of the user. |
+## model/credentials.proto
 
 
 
+<a name="model-ProviderCredentials"></a>
 
-
-
-<a name="api-v1-user-Profile"></a>
-
-### Profile
-User profile
+### ProviderCredentials
+Generic credentials model.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| first_name | [string](#string) |  | First name of the user. |
-| last_name | [string](#string) |  | Last name of the user. |
-
-
-
-
-
-
-<a name="api-v1-user-Session"></a>
-
-### Session
-A user's sessions.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| auth_method | [AuthMethod](#api-v1-user-AuthMethod) |  | how the user is authenticated. |
-| is_invalidated | [bool](#bool) |  | if the session is invalidated |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the session was created. |
-| invalidated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the session was invalidated. |
-| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the session expires. |
-| renewed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the session was renewed. |
-| country | [string](#string) |  | Country of the session. |
-| postal_code | [int32](#int32) |  | Postal code of the session. |
-
-
-
-
-
-
-<a name="api-v1-user-SessionEntry"></a>
-
-### SessionEntry
-Session entry
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| session_id | [string](#string) |  | Session ID of the session. |
-| session | [Session](#api-v1-user-Session) |  | Session of the session. |
-
-
-
-
-
-
-<a name="api-v1-user-Update"></a>
-
-### Update
-Update message to update a user.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| email | [string](#string) |  | Email of the user. |
-| username | [string](#string) |  | Username of the user. |
-| phone_number | [string](#string) |  | Deprecated: text is not supported - Phone number of the user. |
-| password | [string](#string) |  | Password of the user. |
-| profile | [Profile](#api-v1-user-Profile) |  | Profile of the user. |
-| is_email_verified | [bool](#bool) |  | Whether the user's email is verified. |
-| is_phone_verified | [bool](#bool) |  | Deprecated: text is not supported - Whether the user's phone number is verified. |
-| reset_sessions | [Update.ResetSessions](#api-v1-user-Update-ResetSessions) |  | Reset sessions of the user. |
-| set_metadata | [model.Metadata](#model-Metadata) |  | Set metadata of the user. |
-| delete_metadata_key | [string](#string) |  | Delete metadata of the user. |
-| hashed_password | [model.HashingInstance](#model-HashingInstance) |  | Hashed password of the user. |
-
-
-
-
-
-
-<a name="api-v1-user-Update-ResetSessions"></a>
-
-### Update.ResetSessions
-if sessions are reset, all sessions will be invalidated and a new session will be created.
-
-
-
-
-
-
-<a name="api-v1-user-User"></a>
-
-### User
-The user model.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user_id | [string](#string) |  | User ID of the user. |
-| user_info | [model.UserInfo](#model-UserInfo) |  | User info of the user. |
-| profile | [Profile](#api-v1-user-Profile) |  | Profile of the user. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the user was last updated. |
-| register_info | [model.RegisterInfo](#model-RegisterInfo) |  | Register info of the user. |
-| is_phone_verified | [bool](#bool) |  | Deprecated: text is not supported - Whether the user's phone number is verified. |
-| is_email_verified | [bool](#bool) |  | Whether the user's email is verified. |
-| new_sessions_since | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the user last created a new session. |
-| metadata | [User.MetadataEntry](#api-v1-user-User-MetadataEntry) | repeated | Metadata of the user. |
-
-
-
-
-
-
-<a name="api-v1-user-User-MetadataEntry"></a>
-
-### User.MetadataEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [bytes](#bytes) |  |  |
-
-
-
-
-
-
-<a name="api-v1-user-VerificationCode"></a>
-
-### VerificationCode
-short-lived verification code.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| code | [model.HashingInstance](#model-HashingInstance) |  | Hashed verification code. |
-| sent_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the verification code was sent. |
-| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp when the verification code expires. |
-| attempts | [int32](#int32) |  | Number of attempts to verify the code. |
-| last_attempt | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp of the last attempt to verify the code. |
-| type | [VerificationType](#api-v1-user-VerificationType) |  | Type of verification code. |
-| user_id | [string](#string) |  | User ID of the user who the code was sent to. |
-
-
-
-
-
-
-
-
-<a name="api-v1-user-VerificationType"></a>
-
-### VerificationType
-Type of verification code
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| VERIFICATION_TYPE_UNSPECIFIED | 0 | Default value |
-| VERIFICATION_TYPE_EMAIL | 1 | Email verification code. |
-| VERIFICATION_TYPE_TEXT | 2 | Deprecated: text is not supported - text verification code. |
-| VERIFICATION_TYPE_RESET_PASSWORD | 3 | reset password verification code. |
-
-
-
-
-
-
-
-
-<a name="api_v1_user_settings_service-proto"></a>
-
-## api/v1/user/settings/service.proto
-
-
-
-<a name="api-v1-user-settings-GetSettingsRequest"></a>
-
-### GetSettingsRequest
-Request for getting users settings for the Rig project.
-
-
-
-
-
-
-<a name="api-v1-user-settings-GetSettingsResponse"></a>
-
-### GetSettingsResponse
-Response for getting users settings for the Rig project.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| settings | [Settings](#api-v1-user-settings-Settings) |  | The users settings. |
-
-
-
-
-
-
-<a name="api-v1-user-settings-UpdateSettingsRequest"></a>
-
-### UpdateSettingsRequest
-Request for updating users settings for the Rig project.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| settings | [Update](#api-v1-user-settings-Update) | repeated | The updates to apply to the users settings. |
-
-
-
-
-
-
-<a name="api-v1-user-settings-UpdateSettingsResponse"></a>
-
-### UpdateSettingsResponse
-Empty response for updating users settings for the Rig project.
+| public_key | [string](#string) |  | Public key. |
+| private_key | [string](#string) |  | Private key. |
 
 
 
@@ -6322,396 +6714,56 @@ The different template types.
 
 
 
-<a name="model_auth-proto"></a>
+<a name="api_v1_user_settings_service-proto"></a>
 
-## model/auth.proto
-
-
+## api/v1/user/settings/service.proto
 
 
 
-<a name="model-LoginType"></a>
+<a name="api-v1-user-settings-GetSettingsRequest"></a>
 
-### LoginType
-The LoginType enum defines the type of login.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| LOGIN_TYPE_UNSPECIFIED | 0 | Default value. |
-| LOGIN_TYPE_EMAIL_PASSWORD | 1 | Email and password login. |
-| LOGIN_TYPE_PHONE_PASSWORD | 2 | deprecated: text is not supported - Phone number and password login. |
-| LOGIN_TYPE_USERNAME_PASSWORD | 3 | Username and password login. |
+### GetSettingsRequest
+Request for getting users settings for the Rig project.
 
 
 
 
 
 
+<a name="api-v1-user-settings-GetSettingsResponse"></a>
 
-
-<a name="model_author-proto"></a>
-
-## model/author.proto
-
-
-
-<a name="model-Author"></a>
-
-### Author
-Author of a change.
+### GetSettingsResponse
+Response for getting users settings for the Rig project.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| identifier | [string](#string) |  | Cached identifier of the author, e.g. email or username at the time of change. |
-| printable_name | [string](#string) |  | Cached pretty-printed name of the author at the time of change. |
-| user_id | [string](#string) |  | if a user did the change |
-| service_account_id | [string](#string) |  | if a service account did the change |
+| settings | [Settings](#api-v1-user-settings-Settings) |  | The users settings. |
 
 
 
 
 
 
+<a name="api-v1-user-settings-UpdateSettingsRequest"></a>
 
-
-
-
-
-
-
-<a name="model_common-proto"></a>
-
-## model/common.proto
-
-
-
-<a name="model-BcryptHashingConfig"></a>
-
-### BcryptHashingConfig
-Bcrypt hashing configuration.
+### UpdateSettingsRequest
+Request for updating users settings for the Rig project.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| cost | [int32](#int32) |  | The cost of the hashing algorithm. |
+| settings | [Update](#api-v1-user-settings-Update) | repeated | The updates to apply to the users settings. |
 
 
 
 
 
 
-<a name="model-BcryptHashingInstance"></a>
+<a name="api-v1-user-settings-UpdateSettingsResponse"></a>
 
-### BcryptHashingInstance
-Bcrypt hashing instance.
-
-
-
-
-
-
-<a name="model-HashingConfig"></a>
-
-### HashingConfig
-Hashing configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| bcrypt | [BcryptHashingConfig](#model-BcryptHashingConfig) |  | if bcrypt is set, use bcrypt. |
-| scrypt | [ScryptHashingConfig](#model-ScryptHashingConfig) |  | if scrypt is set, use scrypt. |
-
-
-
-
-
-
-<a name="model-HashingInstance"></a>
-
-### HashingInstance
-Hashing instance.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| config | [HashingConfig](#model-HashingConfig) |  | The hashing configuration. |
-| hash | [bytes](#bytes) |  | A hash |
-| bcrypt | [BcryptHashingInstance](#model-BcryptHashingInstance) |  | if bcrypt is set, this bcrypt instance was used. |
-| scrypt | [ScryptHashingInstance](#model-ScryptHashingInstance) |  | if scrypt is set, this scrypt instance was used. |
-
-
-
-
-
-
-<a name="model-Pagination"></a>
-
-### Pagination
-Pagination option.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| offset | [uint32](#uint32) |  | Where to start the pagination. |
-| limit | [uint32](#uint32) |  | How many items to return. |
-| descending | [bool](#bool) |  | Whether to sort in descending order. |
-
-
-
-
-
-
-<a name="model-ScryptHashingConfig"></a>
-
-### ScryptHashingConfig
-Scrypt hashing configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| signer_key | [string](#string) |  | The key used to sign the salt. |
-| salt_separator | [string](#string) |  | The salt separator. |
-| rounds | [int32](#int32) |  | The number of rounds in the algorithm. |
-| mem_cost | [int32](#int32) |  | The memory cost of the algorithm. |
-| p | [int32](#int32) |  | The parallelization factor of the algorithm. |
-| key_len | [int32](#int32) |  | The length of the key. |
-
-
-
-
-
-
-<a name="model-ScryptHashingInstance"></a>
-
-### ScryptHashingInstance
-Scrypt hashing instance.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| salt | [bytes](#bytes) |  | The salt used to hash the password. |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="model_credentials-proto"></a>
-
-## model/credentials.proto
-
-
-
-<a name="model-ProviderCredentials"></a>
-
-### ProviderCredentials
-Generic credentials model.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| public_key | [string](#string) |  | Public key. |
-| private_key | [string](#string) |  | Private key. |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="model_metadata-proto"></a>
-
-## model/metadata.proto
-
-
-
-<a name="model-Metadata"></a>
-
-### Metadata
-Generic metadata model.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  | Key of the metadata. |
-| value | [bytes](#bytes) |  | Value of the metadata. |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="model_user-proto"></a>
-
-## model/user.proto
-
-
-
-<a name="model-MemberEntry"></a>
-
-### MemberEntry
-Entry model of a group member - placed in models to prevent cyclic imports.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user | [UserEntry](#model-UserEntry) |  | if the member is a user. |
-| service_account | [ServiceAccountEntry](#model-ServiceAccountEntry) |  | if the member is a service account. |
-| joined_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | when the member joined the group. |
-
-
-
-
-
-
-<a name="model-RegisterInfo"></a>
-
-### RegisterInfo
-Registering information of a user.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| creater_id | [string](#string) |  | Who created the user. |
-| method | [RegisterMethod](#model-RegisterMethod) |  | How the user was registered. |
-
-
-
-
-
-
-<a name="model-RegisterMethod"></a>
-
-### RegisterMethod
-Method used to register a user.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| system | [RegisterMethod.System](#model-RegisterMethod-System) |  | system created the user. |
-| signup | [RegisterMethod.Signup](#model-RegisterMethod-Signup) |  | user signed up. |
-
-
-
-
-
-
-<a name="model-RegisterMethod-Signup"></a>
-
-### RegisterMethod.Signup
-if the user was created by signing up.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| login_type | [LoginType](#model-LoginType) |  | The login type used to sign up. |
-
-
-
-
-
-
-<a name="model-RegisterMethod-System"></a>
-
-### RegisterMethod.System
-if the user was created by the system.
-
-
-
-
-
-
-<a name="model-ServiceAccountEntry"></a>
-
-### ServiceAccountEntry
-Entry model of a service account - placed in models to prevent cyclic imports.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| service_account_id | [string](#string) |  | unique id of the service account. |
-| name | [string](#string) |  | name of the service account. |
-| client_id | [string](#string) |  | client id of the service account. |
-| group_ids | [string](#string) | repeated | groups the service account belongs to. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | when the service account was created. |
-| created_by | [Author](#model-Author) |  | who created the service account. |
-
-
-
-
-
-
-<a name="model-UserEntry"></a>
-
-### UserEntry
-Entry model of a user - placed in models to prevent cyclic imports.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| user_id | [string](#string) |  | unique id of the user. |
-| printable_name | [string](#string) |  | pretty printable name of a user. |
-| register_info | [RegisterInfo](#model-RegisterInfo) |  | how the user was registered. |
-| verified | [bool](#bool) |  | whether the user is verified. |
-| group_ids | [string](#string) | repeated | groups the user belongs to. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | when the user was created. |
-
-
-
-
-
-
-<a name="model-UserIdentifier"></a>
-
-### UserIdentifier
-different fields that can identify a user.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| username | [string](#string) |  | username is unique. |
-| email | [string](#string) |  | email is unique. |
-| phone_number | [string](#string) |  | Deprecated: text is not supported - phone number is unique. |
-
-
-
-
-
-
-<a name="model-UserInfo"></a>
-
-### UserInfo
-Userinfo - placed in models to prevent cyclic imports.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| email | [string](#string) |  | email of the user. |
-| username | [string](#string) |  | username of the user. |
-| phone_number | [string](#string) |  | Deprecated: text is not supported - phone number of the user. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | when the user was created. |
-| group_ids | [string](#string) | repeated | groups the user belongs to. |
+### UpdateSettingsResponse
+Empty response for updating users settings for the Rig project.
 
 
 
