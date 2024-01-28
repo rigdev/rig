@@ -15,3 +15,9 @@ plugins:
     out: gen/go/rig
     opt:
       - paths=source_relative
+  - name: doc
+    path: tools/bin/protoc-gen-doc
+    out: docs/docs/api
+    strategy: all
+    opt:
+      - docs/api-ref-docs/templates/service.tmpl,platform-api.md:operator/*

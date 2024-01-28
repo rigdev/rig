@@ -4,27 +4,28 @@ ENV CGO_ENABLED=0
 
 WORKDIR /app
 
-RUN apk add --no-cache ca-certificates make git && \
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+    apk add --no-cache ca-certificates go-task git && \
     addgroup -g 1000 nonroot && \
     adduser -u 1000 -G nonroot -D nonroot
 
-COPY go.mod go.sum Makefile ./
+COPY go.mod go.sum taskfile.yaml ./
 COPY tools tools
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    make \
-        gen/go/rig/go.mod \
-        buf \
-        protoc-gen-go \
-        protoc-gen-connect-go && \
+    go-task tools:buf \
+         tools:protoc-gen-go \
+         tools:protoc-gen-connect-go \
+         tools:protoc-gen-doc && \
     go mod download # && go mod verify
 
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    make proto build-rig-operator
+    go-task proto build-rig-operator
 
 FROM alpine:3
+
 RUN apk add --no-cache curl
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

@@ -1,0 +1,187 @@
+version: '3'
+
+tasks:
+  all:
+    desc: "📦 Install all tools"
+    deps:
+      - ci
+      - kind
+
+  ci:
+    desc: "📦 Install CI tools"
+    deps:
+      - buf
+      - protoc-gen-go
+      - protoc-gen-doc
+      - protoc-gen-connect-go
+      - mockery
+      - gotestsum
+      - goreleaser
+      - controller-gen
+      - crd-ref-docs
+      - golangci-lint
+      - setup-envtest
+
+  buf:
+    desc: "📦 Install buf"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "github.com/bufbuild/buf " | cut -d ' ' -f2 | cut -c2-
+    status:
+      - test -s bin/buf
+      - bin/buf --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install github.com/bufbuild/buf/cmd/buf
+
+  protoc-gen-go:
+    desc: "📦 Install protoc-gen-go"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "google.golang.org/protobuf " | cut -d ' ' -f2
+    status:
+      - test -s bin/protoc-gen-go
+      - bin/protoc-gen-go --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install google.golang.org/protobuf/cmd/protoc-gen-go
+
+  protoc-gen-connect-go:
+    desc: "📦 Install protoc-gen-connect-go"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "connectrpc.com/connect " | cut -d ' ' -f2 | cut -c2-
+    status:
+      - test -s bin/protoc-gen-connect-go
+      - bin/protoc-gen-connect-go --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install connectrpc.com/connect/cmd/protoc-gen-connect-go
+
+  mockery:
+    desc: "📦 Install mockery"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "github.com/vektra/mockery/v2 " | cut -d ' ' -f2 | cut -c2-
+    status:
+      - test -s bin/mockery
+      - bin/mockery --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install github.com/vektra/mockery/v2
+
+  gotestsum:
+    desc: "📦 Install gotestsum"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "gotest.tools/gotestsum" | cut -d ' ' -f2
+    status:
+      - test -s bin/gotestsum
+      - bin/gotestsum --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - |
+        go install \
+          -ldflags="-X gotest.tools/gotestsum/cmd.version={{ .GO_MOD_VERSION }}" \
+          gotest.tools/gotestsum
+
+  kind:
+    desc: "📦 Install kind"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "sigs.k8s.io/kind" | cut -d ' ' -f2
+    status:
+      - test -s bin/kind
+      - ./bin/kind version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install sigs.k8s.io/kind
+
+  goreleaser:
+    desc: "📦 Install goreleaser"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "github.com/goreleaser/goreleaser " | cut -d ' ' -f2
+    status:
+      - test -s bin/goreleaser
+      - ./bin/goreleaser --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install github.com/goreleaser/goreleaser
+
+  controller-gen:
+    desc: "📦 Install controller-gen"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "sigs.k8s.io/controller-tools" | cut -d ' ' -f2
+    status:
+      - test -s bin/controller-gen
+      - ./bin/controller-gen --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install sigs.k8s.io/controller-tools/cmd/controller-gen)
+
+  crd-ref-docs:
+    desc: "📦 Install crd-ref-docs"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    status:
+      - test -s bin/crd-ref-docs
+    cmds:
+      - go install github.com/elastic/crd-ref-docs
+
+  protoc-gen-doc:
+    desc: "📦 Install protoc-gen-doc"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "github.com/pseudomuto/protoc-gen-doc" | cut -d ' ' -f2 | cut -c2-
+    status:
+      - test -s bin/protoc-gen-doc
+      - ./bin/protoc-gen-doc -version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc
+
+  golangci-lint:
+    desc: "📦 Install golangci-lint"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "github.com/golangci/golangci-lint" | cut -d ' ' -f2
+    status:
+      - test -s bin/golangci-lint
+      - ./bin/golangci-lint --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint
+
+  setup-envtest:
+    desc: "📦 Install golangci-lint"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    status:
+      - test -s bin/setup-envtest
+    cmds:
+      - go install sigs.k8s.io/controller-runtime/tools/setup-envtest
+
+  kind:
+    desc: "📦 Install kind"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "sigs.k8s.io/kind" | cut -d ' ' -f2
+    status:
+      - test -s bin/kind
+      - ./bin/kind version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install sigs.k8s.io/kind

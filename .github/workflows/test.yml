@@ -19,6 +19,12 @@ jobs:
           go-version-file: go.mod
           cache: false # this is handled in the golangci-lint-action
 
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Cache tools
         uses: actions/cache@v3
         with:
@@ -29,7 +35,7 @@ jobs:
             ${{ runner.os }}-tools-
 
       - name: Generate code
-        run: make ci
+        run: task proto
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
@@ -46,6 +52,12 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Cache tools
         uses: actions/cache@v3
         with:
@@ -56,7 +68,7 @@ jobs:
             ${{ runner.os }}-tools-
 
       - name: Run tests
-        run: make ci test-all
+        run: task test-all
 
       - name: Test Summary
         uses: test-summary/action@v2
@@ -96,6 +108,12 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Cache tools
         uses: actions/cache@v3
         with:
@@ -107,7 +125,7 @@ jobs:
 
       - name: Check for uncommitted changes after generating files
         run: |
-          make ci
+          task gen
           go mod tidy
           cd tools && go mod tidy
           GIT_STATUS="$(git status --porcelain)"
