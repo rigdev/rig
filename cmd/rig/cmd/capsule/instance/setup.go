@@ -26,11 +26,12 @@ var (
 )
 
 var (
-	follow          bool
-	tty             bool
-	interactive     bool
-	excludeExisting bool
-	includeDeleted  bool
+	follow             bool
+	tty                bool
+	interactive        bool
+	excludeExisting    bool
+	includeDeleted     bool
+	previousContainers bool
 )
 
 var since string
@@ -100,6 +101,10 @@ func Setup(parent *cobra.Command) {
 	logs.Flags().BoolVarP(
 		&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced",
 	)
+	logs.Flags().BoolVarP(
+		&previousContainers, "previous-containers", "p", false,
+		"Return logs from previous container terminations of the instance.",
+	)
 	logs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
 	if err := logs.RegisterFlagCompletionFunc("follow", common.BoolCompletions); err != nil {
 		fmt.Println(err)
@@ -136,8 +141,8 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 		return arg, nil
 	}
 
-	res, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
-		Msg: &capsule.ListInstancesRequest{
+	res, err := c.Rig.Capsule().ListInstanceStatuses(ctx, &connect.Request[capsule.ListInstanceStatusesRequest]{
+		Msg: &capsule.ListInstanceStatusesRequest{
 			CapsuleId:     capsuleID,
 			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),

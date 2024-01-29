@@ -190,6 +190,12 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 			if _, err := os.Stderr.Write(v.Stderr); err != nil {
 				return err
 			}
+		case *capsule.LogMessage_ContainerTermination_:
+			if err := printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stderr); err != nil {
+				return err
+			}
+			os.Stdout.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
+			os.Stdout.WriteString(" Container Terminated.\n\n")
 		default:
 			return errors.InvalidArgumentErrorf("invalid log message")
 		}
