@@ -19,11 +19,12 @@ func (c *Cmd) logs(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 
 	stream, err := c.Rig.Capsule().Logs(ctx, connect.NewRequest(&capsule.LogsRequest{
-		CapsuleId:     capsule_cmd.CapsuleID,
-		Follow:        follow,
-		Since:         durationpb.New(duration),
-		ProjectId:     flags.GetProject(c.Cfg),
-		EnvironmentId: flags.GetEnvironment(c.Cfg),
+		CapsuleId:          capsule_cmd.CapsuleID,
+		Follow:             follow,
+		Since:              durationpb.New(duration),
+		ProjectId:          flags.GetProject(c.Cfg),
+		EnvironmentId:      flags.GetEnvironment(c.Cfg),
+		PreviousContainers: previousContainers,
 	}))
 	if err != nil {
 		return err

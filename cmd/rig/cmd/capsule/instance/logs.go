@@ -30,12 +30,13 @@ func (c *Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error
 
 	s, err := c.Rig.Capsule().Logs(ctx, &connect.Request[capsule.LogsRequest]{
 		Msg: &capsule.LogsRequest{
-			CapsuleId:     capsule_cmd.CapsuleID,
-			InstanceId:    instanceID,
-			Follow:        follow,
-			Since:         durationpb.New(duration),
-			ProjectId:     flags.GetProject(c.Cfg),
-			EnvironmentId: flags.GetEnvironment(c.Cfg),
+			CapsuleId:          capsule_cmd.CapsuleID,
+			InstanceId:         instanceID,
+			Follow:             follow,
+			Since:              durationpb.New(duration),
+			ProjectId:          flags.GetProject(c.Cfg),
+			EnvironmentId:      flags.GetEnvironment(c.Cfg),
+			PreviousContainers: previousContainers,
 		},
 	})
 	if err != nil {

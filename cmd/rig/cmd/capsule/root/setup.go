@@ -37,10 +37,11 @@ var (
 )
 
 var (
-	interactive bool
-	forceDeploy bool
-	follow      bool
-	deleteCmd   bool
+	interactive        bool
+	forceDeploy        bool
+	follow             bool
+	deleteCmd          bool
+	previousContainers bool
 )
 
 var since string
@@ -165,6 +166,10 @@ func Setup(parent *cobra.Command) {
 	}
 	capsuleLogs.Flags().BoolVarP(
 		&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced",
+	)
+	capsuleLogs.Flags().BoolVarP(
+		&previousContainers, "previous-containers", "p", false,
+		"Return logs from previous container terminations of the instance.",
 	)
 	capsuleLogs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
 	capsuleCmd.AddCommand(capsuleLogs)
