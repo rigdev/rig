@@ -23,10 +23,10 @@ var (
 )
 
 var (
-	email       string
-	username    string
-	phoneNumber string
-	password    string
+	email    string
+	username string
+	password string
+	role     string
 
 	field string
 	value string
@@ -61,10 +61,14 @@ func Setup(parent *cobra.Command) {
 		RunE:  base.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
-	create.Flags().StringVarP(&email, "email", "E", "", "email of the user")
+	create.Flags().StringVarP(&email, "email", "e", "", "email of the user")
 	create.Flags().StringVarP(&username, "username", "u", "", "username of the user")
-	create.Flags().StringVarP(&phoneNumber, "phone", "P", "", "phone number of the user")
 	create.Flags().StringVarP(&password, "password", "p", "", "password of the user")
+	create.Flags().StringVarP(&role, "role", "r", "", "role of the user (admin, owner, developer, viewer)")
+	if err := create.RegisterFlagCompletionFunc("role", common.RoleCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	user.AddCommand(create)
 
 	update := &cobra.Command{

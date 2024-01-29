@@ -55,7 +55,7 @@ func Run() error {
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Environment,
 		"environment", "E", flags.Flags.Environment, "Override environment from the context")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Project,
-		"project", "P", flags.Flags.Project, "Override environment from the context")
+		"project", "P", flags.Flags.Project, "Override project from the context")
 	rootCmd.PersistentFlags().BoolVarP(&flags.Flags.BasicAuth,
 		"basic-auth", "B", flags.Flags.BasicAuth,
 		"Use basic auth with environment in context. Otherwise use access token from the context")

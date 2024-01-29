@@ -3,12 +3,14 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
@@ -20,7 +22,10 @@ var (
 	limit  int
 )
 
-var name string
+var (
+	name string
+	role string
+)
 
 type Cmd struct {
 	fx.In
@@ -52,6 +57,11 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 	}
 	serviceAccount.PersistentFlags().StringVarP(&name, "name", "n", "", "name of the credential")
+	create.Flags().StringVarP(&role, "role", "r", "", "role of the user (admin, owner, developer, viewer)")
+	if err := create.RegisterFlagCompletionFunc("role", common.RoleCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	serviceAccount.AddCommand(create)
 
 	get := &cobra.Command{
