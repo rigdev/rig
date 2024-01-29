@@ -867,6 +867,10 @@ spec:
                       enum:
                       - created
                       - failed
+                      - alreadyExists
+                      - unchanged
+                      - updated
+                      - changePending
                       type: string
                   required:
                   - ref
