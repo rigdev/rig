@@ -14,8 +14,10 @@ message Log {
 
 // The actual log message
 message LogMessage {
+  message ContainerTermination {}
   oneof message {
     bytes stdout = 1; // If the log is stdout
     bytes stderr = 2; // If the log is stderr
+    ContainerTermination container_termination = 3; // Represents a termination event
   }
 }
