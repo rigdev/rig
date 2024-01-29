@@ -15,8 +15,11 @@ auth:
   {{- if .auth.sso.oidcProviders }}
   sso:
     oidcProviders:
-    {{- range $name, $provider := .auth.sso.oidcProviders }}
-      {{ $name | quote }}:
+    {{- range $id, $provider := .auth.sso.oidcProviders }}
+      {{ $id | quote }}:
+        {{- if $provider.name }}
+        name: {{ $provider.name | quote }}
+        {{- end }}
         issuerURL: {{ $provider.issuerURL | quote }}
         clientID: {{ $provider.clientID | quote }}
         {{- with $provider.allowedDomains }}
