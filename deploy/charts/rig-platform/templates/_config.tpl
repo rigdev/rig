@@ -20,6 +20,9 @@ auth:
         {{- if $provider.name }}
         name: {{ $provider.name | quote }}
         {{- end }}
+        {{- if $provider.icon }}
+        icon: {{ $provider.icon | quote }}
+        {{- end }}
         issuerURL: {{ $provider.issuerURL | quote }}
         clientID: {{ $provider.clientID | quote }}
         {{- with $provider.allowedDomains }}

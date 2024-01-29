@@ -805,7 +805,7 @@ maintain backwards compatibility.
 | type | [SSOType](#api-v1-authentication-SSOType) |  | Type of SSO. Currently only OIDC is supported. |
 | provider_id | [string](#string) |  | ID of the SSO provider as given in the platform configuration. |
 | name | [string](#string) |  | Name of SSO provider. This is an optional human readable version of the provider ID. |
-| issuer_url | [string](#string) |  | URL of the underlying issuer. This can be used in the frontend for showing specific items for certain known issuers. |
+| icon | [string](#string) |  | URL of the underlying issuer. This can be used in the frontend for showing specific items for certain known issuers. |
 
 
 
