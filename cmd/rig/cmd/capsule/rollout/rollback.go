@@ -5,6 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/model"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -67,7 +68,7 @@ func (c *Cmd) getRollback(ctx context.Context) (uint64, error) {
 
 	for _, r := range resp.Msg.GetRollouts() {
 		s := r.GetStatus().GetState()
-		if s == capsule.RolloutState_ROLLOUT_STATE_DONE {
+		if s == rollout.State_STATE_STOPPED {
 			return r.RolloutId, nil
 		}
 	}

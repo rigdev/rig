@@ -3550,8 +3550,7 @@ The rollout model.
 | ----- | ---- | ----- | ----------- |
 | rollout_id | [uint64](#uint64) |  | Unique indentifier for the rollout. |
 | config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
-| status | [RolloutStatus](#api-v1-capsule-RolloutStatus) |  | The rollout status. |
-| rollout_status | [rollout.Status](#api-v1-capsule-rollout-Status) |  | The rollout status. |
+| status | [rollout.Status](#api-v1-capsule-rollout-Status) |  | The rollout status. |
 
 
 
@@ -3585,22 +3584,6 @@ The rollout model.
 
 
 
-<a name="api-v1-capsule-RolloutStatus"></a>
-
-### RolloutStatus
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| state | [RolloutState](#api-v1-capsule-RolloutState) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-
-
-
-
 
 
 <a name="api-v1-capsule-EventType"></a>
@@ -3612,25 +3595,6 @@ The rollout model.
 | ---- | ------ | ----------- |
 | EVENT_TYPE_UNSPECIFIED | 0 |  |
 | EVENT_TYPE_ABORT | 1 |  |
-
-
-
-<a name="api-v1-capsule-RolloutState"></a>
-
-### RolloutState
-Different states a rollout can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| ROLLOUT_STATE_UNSPECIFIED | 0 | Default value. |
-| ROLLOUT_STATE_PENDING | 1 | Pending rollout. |
-| ROLLOUT_STATE_PREPARING | 6 | Preparing rollout. |
-| ROLLOUT_STATE_APPLYING | 2 | Applying rollout. |
-| ROLLOUT_STATE_RESOURCE_CREATION | 8 | Creating resources. |
-| ROLLOUT_STATE_INSTANCE_ROLL_OUT | 7 | Rolling out instances. |
-| ROLLOUT_STATE_DONE | 3 | Rollout is done. |
-| ROLLOUT_STATE_ABORTED | 4 | Rollout is aborted. |
-| ROLLOUT_STATE_FAILED | 5 | Rollout failed. |
 
 
 
