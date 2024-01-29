@@ -3093,6 +3093,17 @@ The actual log message
 | ----- | ---- | ----- | ----------- |
 | stdout | [bytes](#bytes) |  | If the log is stdout |
 | stderr | [bytes](#bytes) |  | If the log is stderr |
+| container_termination | [LogMessage.ContainerTermination](#api-v1-capsule-LogMessage-ContainerTermination) |  | Represents a termination event |
+
+
+
+
+
+
+<a name="api-v1-capsule-LogMessage-ContainerTermination"></a>
+
+### LogMessage.ContainerTermination
+
 
 
 
@@ -4207,6 +4218,7 @@ Request to get instance logs from a capsule.
 | since | [google.protobuf.Duration](#google-protobuf-Duration) |  | If set, will not show logs older than since. |
 | project_id | [string](#string) |  | The project in which the capsule is. |
 | environment_id | [string](#string) |  | Environment to get logs from. |
+| previous_containers | [bool](#bool) |  | If true, include logs from previously terminated containers |
 
 
 

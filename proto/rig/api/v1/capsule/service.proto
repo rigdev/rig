@@ -155,6 +155,7 @@ message LogsRequest {
   google.protobuf.Duration since = 4; // If set, will not show logs older than since.
   string project_id = 5; // The project in which the capsule is.
   string environment_id = 6; // Environment to get logs from.
+  bool previous_containers = 7; // If true, include logs from previously terminated containers
 }
 
 // The response of a capsule.Logs RPC
