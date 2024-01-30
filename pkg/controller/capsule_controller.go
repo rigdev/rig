@@ -307,11 +307,6 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
-	if capsule.Status != nil && capsule.GetGeneration() == capsule.Status.ObservedGeneration {
-		// All done.
-		return ctrl.Result{}, nil
-	}
-
 	capabilities, err := r.CapabilitiesService.Get(ctx)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -329,8 +324,11 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if err := p.Run(ctx); err != nil {
+		log.Error(err, "reconciliation ended with error")
 		return ctrl.Result{}, err
 	}
+
+	log.Info("reconciliation completed successfully")
 
 	return ctrl.Result{}, nil
 }

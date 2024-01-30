@@ -10,8 +10,10 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -64,4 +66,26 @@ func lookupGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
 	}
 
 	return gvk, nil
+}
+
+type ObjectsEqual func(o1, o2 client.Object) bool
+
+var _objectsEquals = map[schema.GroupVersionKind]ObjectsEqual{
+	_monitoringServiceMonitorGVK: func(o1, o2 client.Object) bool {
+		return equality.Semantic.DeepEqual(o1.(*monitorv1.ServiceMonitor).Spec, o2.(*monitorv1.ServiceMonitor).Spec)
+	},
+	_appsDeploymentGVK: func(o1, o2 client.Object) bool {
+		return equality.Semantic.DeepEqual(o1.(*appsv1.Deployment).Spec, o2.(*appsv1.Deployment).Spec)
+	},
+}
+
+func ObjectsEquals(o1, o2 client.Object) bool {
+	objectsEqual, ok := _objectsEquals[o1.GetObjectKind().GroupVersionKind()]
+	if !ok {
+		objectsEqual = func(o1, o2 client.Object) bool {
+			return equality.Semantic.DeepEqual(o1, o2)
+		}
+	}
+
+	return objectsEqual(o1, o2)
 }

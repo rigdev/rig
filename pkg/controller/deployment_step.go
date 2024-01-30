@@ -491,7 +491,7 @@ func (s *DeploymentStep) setUsedSource(
 			ref.State = "found"
 		}
 
-		// r.status.UsedResources = append(r.status.UsedResources, ref)
+		req.MarkUsedResource(ref)
 	}()
 
 	switch kind {
@@ -506,6 +506,7 @@ func (s *DeploymentStep) setUsedSource(
 		}, &cm); err != nil {
 			return fmt.Errorf("could not get referenced environment configmap: %w", err)
 		}
+
 		cfgs.configMaps[cm.Name] = &cm
 	case "Secret":
 		if _, ok := cfgs.secrets[name]; ok {

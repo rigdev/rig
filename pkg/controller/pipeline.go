@@ -8,14 +8,11 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"golang.org/x/exp/maps"
-	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -59,17 +56,6 @@ func Get[T interface {
 		return o
 	}
 	return t
-}
-
-type ObjectsEqual func(o1, o2 client.Object) bool
-
-var _objectsEquals = map[schema.GroupVersionKind]ObjectsEqual{
-	monitorv1.SchemeGroupVersion.WithKind(monitorv1.ServiceMonitorsKind): func(o1, o2 client.Object) bool {
-		return equality.Semantic.DeepEqual(o1.(*monitorv1.ServiceMonitor).Spec, o2.(*monitorv1.ServiceMonitor).Spec)
-	},
-	appsv1.SchemeGroupVersion.WithKind("Deployment"): func(o1, o2 client.Object) bool {
-		return equality.Semantic.DeepEqual(o1.(*appsv1.Deployment).Spec, o2.(*appsv1.Deployment).Spec)
-	},
 }
 
 type Object struct {
@@ -123,6 +109,7 @@ type Request interface {
 	Set(key ObjectKey, obj client.Object)
 	NamedObjectKey(name string, gvk schema.GroupVersionKind) ObjectKey
 	ObjectKey(gvk schema.GroupVersionKind) ObjectKey
+	MarkUsedResource(res v1alpha2.UsedResource)
 }
 
 type Step interface {
@@ -139,6 +126,7 @@ type Pipeline struct {
 	objects        map[ObjectKey]*Object
 	steps          []Step
 	generation     int64
+	usedResources  []v1alpha2.UsedResource
 }
 
 func NewPipeline(
@@ -148,18 +136,20 @@ func NewPipeline(
 	scheme *runtime.Scheme,
 	logger logr.Logger,
 ) *Pipeline {
-	logger = logger.WithValues(
-		"capsule", capsule.Name,
-	)
-	return &Pipeline{
-		client:         cc,
-		config:         config,
-		scheme:         scheme,
-		logger:         logger,
+	p := &Pipeline{
+		client: cc,
+		config: config,
+		scheme: scheme,
+		logger: logger.WithValues(
+			"capsule", capsule.Name,
+		),
 		capsule:        capsule,
 		currentObjects: map[ObjectKey]client.Object{},
-		generation:     capsule.Status.ObservedGeneration,
 	}
+	if capsule.Status != nil {
+		p.generation = capsule.Status.ObservedGeneration
+	}
+	return p
 }
 
 func (p *Pipeline) Config() *configv1alpha1.OperatorConfig {
@@ -227,6 +217,10 @@ func (p *Pipeline) ObjectKey(gvk schema.GroupVersionKind) ObjectKey {
 	return p.NamedObjectKey(p.capsule.Name, gvk)
 }
 
+func (p *Pipeline) MarkUsedResource(res v1alpha2.UsedResource) {
+	p.usedResources = append(p.usedResources, res)
+}
+
 func (p *Pipeline) AddStep(step Step) {
 	p.steps = append(p.steps, step)
 }
@@ -273,6 +267,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	}
 
 	for {
+		p.usedResources = nil
 		p.objects = map[ObjectKey]*Object{}
 		for k, o := range p.currentObjects {
 			p.objects[k] = &Object{
@@ -342,6 +337,7 @@ func (p *Pipeline) commit(ctx context.Context) error {
 		obj := p.objects[key]
 
 		if obj.Current == nil {
+			p.logger.Info("create object", "object", key)
 			changes[key] = &change{state: _resourceStateCreated}
 			continue
 		}
@@ -353,11 +349,13 @@ func (p *Pipeline) commit(ctx context.Context) error {
 		}
 
 		if obj.New == nil {
+			p.logger.Info("delete object", "object", key)
 			changes[key] = &change{state: _resourceStateDeleted}
 			continue
 		}
 
 		materializedObj := obj.New.DeepCopyObject().(client.Object)
+		materializedObj.GetObjectKind().SetGroupVersionKind(obj.Current.GetObjectKind().GroupVersionKind())
 
 		// Dry run to fully materialize the new spec.
 		materializedObj.SetResourceVersion(obj.Current.GetResourceVersion())
@@ -365,21 +363,30 @@ func (p *Pipeline) commit(ctx context.Context) error {
 			return fmt.Errorf("could not render update to %s: %w", key.GroupVersionKind, err)
 		}
 
-		objectsEqual, ok := _objectsEquals[key.GroupVersionKind]
-		if !ok {
-			objectsEqual = func(o1, o2 client.Object) bool {
-				return equality.Semantic.DeepEqual(o1, o2)
-			}
-		}
-
-		materializedObj.SetResourceVersion("")
-		if objectsEqual(materializedObj, obj.Current) {
+		if ObjectsEquals(obj.Current, materializedObj) {
 			p.logger.Info("update object skipped, not changed", "object", key)
 			changes[key] = &change{state: _resourceStateUnchanged}
 			continue
 		}
 
+		p.logger.Info("update object", "object", key)
 		changes[key] = &change{state: _resourceStateUpdated}
+	}
+
+	// Skip update if no changes.
+	if p.generation == p.capsule.Generation {
+		p.logger.Info("already at generation", "generation", p.generation)
+		hasChanges := false
+		for _, change := range changes {
+			switch change.state {
+			case _resourceStateUpdated, _resourceStateCreated, _resourceStateDeleted:
+				hasChanges = true
+			}
+		}
+		if !hasChanges {
+			p.logger.Info("no changes to apply", "generation", p.generation)
+			return nil
+		}
 	}
 
 	if err := p.updateStatus(ctx, changes, nil); err != nil {
@@ -506,6 +513,8 @@ func (p *Pipeline) updateStatus(ctx context.Context, changes map[ObjectKey]*chan
 	if err != nil {
 		status.Errors = []string{err.Error()}
 	}
+
+	status.UsedResources = p.usedResources
 
 	capsule.Status = status
 

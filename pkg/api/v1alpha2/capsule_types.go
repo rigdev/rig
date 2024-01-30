@@ -323,7 +323,7 @@ type DeploymentStatus struct {
 
 type OwnedResource struct {
 	Ref *v1.TypedLocalObjectReference `json:"ref"`
-	// +kubebuilder:validation:Enum=created;failed;alreadyExists;unchanged;updated;changePending
+	// +kubebuilder:validation:Enum=created;failed;alreadyExists;unchanged;updated;changePending;deleted
 	State   string `json:"state,omitempty"`
 	Message string `json:"message,omitempty"`
 }

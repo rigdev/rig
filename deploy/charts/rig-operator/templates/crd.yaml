@@ -871,6 +871,7 @@ spec:
                       - unchanged
                       - updated
                       - changePending
+                      - deleted
                       type: string
                   required:
                   - ref

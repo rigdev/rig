@@ -80,12 +80,11 @@ func (s *NetworkStep) Apply(ctx context.Context, req Request) error {
 		req.Set(req.NamedObjectKey(lb.Name, _coreServiceGVK), lb)
 	}
 
-	if shouldCreateCertificateRessource(req) {
-		req.Set(req.ObjectKey(_cmCertificateGVK), s.createCertificate(req))
-	}
-
 	if ingressIsSupported(req) && capsuleHasIngress(req) {
 		req.Set(req.ObjectKey(_netIngressGVK), s.createIngress(req))
+		if shouldCreateCertificateRessource(req) {
+			req.Set(req.ObjectKey(_cmCertificateGVK), s.createCertificate(req))
+		}
 	}
 
 	return nil
