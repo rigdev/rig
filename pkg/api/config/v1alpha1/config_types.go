@@ -237,7 +237,7 @@ type OIDCProvider struct {
 	GroupMapping map[string]string `json:"groupMapping,omitempty"`
 
 	// Icon is what icon to show for this provider.
-	OIDCProviderIcon OIDCProviderIcon `json:"icon,omitempty"`
+	Icon OIDCProviderIcon `json:"icon,omitempty"`
 }
 
 // OIDCProviderIcon is a string representing what provider icon should be shown
