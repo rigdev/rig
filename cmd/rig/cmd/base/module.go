@@ -5,7 +5,10 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/client"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -37,7 +40,32 @@ var Module = fx.Module(
 
 type Interactive bool
 
-func getContext(cfg *cmdconfig.Config, promptInfo *PromptInformation) (*cmdconfig.Context, error) {
+func skipContext(cmd *cobra.Command) bool {
+	annotations := common.GetAllAnnotations(cmd)
+	if flags.Flags.Host == "" {
+		return false
+	}
+
+	if _, ok := annotations[auth.OmitUser]; !ok && !flags.Flags.BasicAuth {
+		return false
+	}
+
+	if _, ok := annotations[auth.OmitProject]; !ok && flags.Flags.Project == "" {
+		return false
+	}
+
+	if _, ok := annotations[auth.OmitEnvironment]; !ok && flags.Flags.Environment == "" {
+		return false
+	}
+
+	return true
+}
+
+func getContext(cmd *cobra.Command, cfg *cmdconfig.Config, promptInfo *PromptInformation) (*cmdconfig.Context, error) {
+	if skipContext(cmd) {
+		return &cmdconfig.Context{}, nil
+	}
+
 	if cfg.CurrentContextName == "" {
 		if len(cfg.Contexts) > 0 {
 			fmt.Println("No context selected, please select one")
