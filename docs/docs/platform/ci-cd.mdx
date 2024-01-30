@@ -51,7 +51,7 @@ jobs:
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/DOCKER_IMAGE_NAME:latest
 
       - name: Create build on Rig
-        uses: rigdev/actions/build@v2
+        uses: rigdev/actions/build@v3
         id: build_rig
         with:
           url: url-to-rig-cluster
@@ -62,7 +62,7 @@ jobs:
           capsule: YOUR_CAPSULE
 
       - name: Deploy to capsule
-        uses: rigdev/actions/deploy@v2
+        uses: rigdev/actions/deploy@v3
         with:
           url: url-to-rig-cluster
           project: YOUR_PROJECT_NAME
