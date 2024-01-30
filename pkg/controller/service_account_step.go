@@ -13,7 +13,7 @@ func NewServiceAccountStep() *ServiceAccountStep {
 	return &ServiceAccountStep{}
 }
 
-func (s *ServiceAccountStep) Apply(ctx context.Context, req Request) error {
+func (s *ServiceAccountStep) Apply(_ context.Context, req Request) error {
 	sa := s.createServiceAccount(req)
 	req.Set(req.ObjectKey(_coreServiceAccount), sa)
 	return nil

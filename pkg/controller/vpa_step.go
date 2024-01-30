@@ -19,7 +19,7 @@ func NewVPAStep() *VPAStep {
 	return &VPAStep{}
 }
 
-func (s *VPAStep) Apply(ctx context.Context, req Request) error {
+func (s *VPAStep) Apply(_ context.Context, req Request) error {
 	if !req.Config().VerticalPodAutoscaler.Enabled {
 		return nil
 	}

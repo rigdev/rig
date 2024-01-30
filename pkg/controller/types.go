@@ -39,15 +39,15 @@ var (
 		_coreServiceAccount,
 	}
 
-	_gvkByApiGroupKind = map[string]map[string]schema.GroupVersionKind{}
+	_gvkByAPIGroupKind = map[string]map[string]schema.GroupVersionKind{}
 )
 
 func init() {
 	for _, gvk := range _allGVKs {
-		gs, ok := _gvkByApiGroupKind[gvk.Group]
+		gs, ok := _gvkByAPIGroupKind[gvk.Group]
 		if !ok {
 			gs = map[string]schema.GroupVersionKind{}
-			_gvkByApiGroupKind[gvk.Group] = gs
+			_gvkByAPIGroupKind[gvk.Group] = gs
 		}
 
 		gs[gvk.Kind] = gvk
@@ -55,7 +55,7 @@ func init() {
 }
 
 func lookupGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
-	gs, ok := _gvkByApiGroupKind[gk.Group]
+	gs, ok := _gvkByAPIGroupKind[gk.Group]
 	if !ok {
 		return schema.GroupVersionKind{}, fmt.Errorf("unknown apiGroup '%v'", gk.Group)
 	}

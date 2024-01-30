@@ -21,7 +21,7 @@ func NewNetworkStep() *NetworkStep {
 	return &NetworkStep{}
 }
 
-func (s *NetworkStep) Apply(ctx context.Context, req Request) error {
+func (s *NetworkStep) Apply(_ context.Context, req Request) error {
 	// If no interfaces are defined, no changes are needed.
 	if len(req.Capsule().Spec.Interfaces) == 0 {
 		return nil
@@ -260,7 +260,8 @@ func shouldCreateCertificateRessource(req Request) bool {
 }
 
 func ingressIsSupported(req Request) bool {
-	return req.Config().Ingress.IsTLSDisabled() || (req.Config().Certmanager != nil && req.Config().Certmanager.ClusterIssuer != "")
+	return req.Config().Ingress.IsTLSDisabled() ||
+		(req.Config().Certmanager != nil && req.Config().Certmanager.ClusterIssuer != "")
 }
 
 func capsuleHasIngress(req Request) bool {

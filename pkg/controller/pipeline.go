@@ -68,13 +68,6 @@ type ObjectKey struct {
 	schema.GroupVersionKind
 }
 
-func objectKeyFromObject(obj client.Object) ObjectKey {
-	return ObjectKey{
-		ObjectKey:        client.ObjectKeyFromObject(obj),
-		GroupVersionKind: obj.GetObjectKind().GroupVersionKind(),
-	}
-}
-
 func (ok ObjectKey) String() string {
 	return fmt.Sprintf("%s/%s", ok.GroupVersionKind.String(), ok.ObjectKey.String())
 }
@@ -258,6 +251,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 			co.SetNamespace(p.capsule.Namespace)
 			if err := p.client.Get(ctx, client.ObjectKeyFromObject(co), co); kerrors.IsNotFound(err) {
 				// Okay it doesn't exist, ignore the resource.
+				continue
 			} else if err != nil {
 				return err
 			}

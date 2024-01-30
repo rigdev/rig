@@ -19,7 +19,7 @@ func NewCronJobStep() *CronJobStep {
 	return &CronJobStep{}
 }
 
-func (s *CronJobStep) Apply(ctx context.Context, req Request) error {
+func (s *CronJobStep) Apply(_ context.Context, req Request) error {
 	jobs, err := s.createCronJobs(req)
 	if err != nil {
 		return err

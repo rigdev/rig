@@ -849,7 +849,7 @@ func (s *K8sTestSuite) testHPA(ctx context.Context) {
 
 	s.by("Deleting the HPA")
 
-	capsuleOwnerRef = s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+	s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
 		c.Spec.Scale.Horizontal.CPUTarget = nil
 		c.Spec.Scale.Horizontal.CustomMetrics = nil
 		c.Spec.Scale.Horizontal.Instances.Max = ptr.New(uint32(1))
@@ -867,7 +867,7 @@ func (s *K8sTestSuite) testHPA(ctx context.Context) {
 
 func (s *K8sTestSuite) testCronJob(ctx context.Context) {
 	s.by("Creating Cron Jobs")
-	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+	s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
 		c.Spec.CronJobs = []v1alpha2.CronJob{
 			{
 				Name:     "job1",

@@ -13,7 +13,7 @@ func NewServiceMonitorStep() *ServiceMonitorStep {
 	return &ServiceMonitorStep{}
 }
 
-func (s *ServiceMonitorStep) Apply(ctx context.Context, req Request) error {
+func (s *ServiceMonitorStep) Apply(_ context.Context, req Request) error {
 	if req.Config().PrometheusServiceMonitor == nil || req.Config().PrometheusServiceMonitor.PortName == "" {
 		return nil
 	}

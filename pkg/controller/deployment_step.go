@@ -65,7 +65,9 @@ func (s *DeploymentStep) Apply(ctx context.Context, req Request) error {
 	return nil
 }
 
-func (s *DeploymentStep) createDeployment(current *appsv1.Deployment, req Request, cfgs *configs, checksums checksums) (*appsv1.Deployment, error) {
+func (s *DeploymentStep) createDeployment(
+	current *appsv1.Deployment, req Request, cfgs *configs, checksums checksums,
+) (*appsv1.Deployment, error) {
 	var volumes []v1.Volume
 	var volumeMounts []v1.VolumeMount
 	for _, f := range req.Capsule().Spec.Files {
