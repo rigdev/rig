@@ -378,6 +378,18 @@ _Appears in:_
 | `groupsClaim` _string_ | GroupsClaim is the path to a claim in the JWT containing a string or list of strings of group names. |
 | `disableJITGroups` _boolean_ | DisableJITGroups disables creation of groups found through OIDC in rig. |
 | `groupMapping` _object (keys:string, values:string)_ | GroupMapping is a mapping from OIDC provided group names to group names used in rig. If an OIDC provided group name is not provided in this mapping we will use the OIDC provided groupname in rig. |
+| `icon` _[OIDCProviderIcon](#oidcprovidericon)_ | Icon is what icon to show for this provider. |
+
+
+### OIDCProviderIcon
+
+_Underlying type:_ _string_
+
+OIDCProviderIcon is a string representing what provider icon should be shown on the login page.
+
+_Appears in:_
+- [OIDCProvider](#oidcprovider)
+
 
 
 ### OperatorConfig

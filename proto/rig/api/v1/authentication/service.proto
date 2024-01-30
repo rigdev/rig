@@ -169,7 +169,7 @@ message SSOOption {
     string name = 3;
     // URL of the underlying issuer. This can be used in the frontend for
     // showing specific items for certain known issuers.
-    string issuer_url = 4;
+    string icon = 4;
 }
 
 // Represents an SSO provided ID of a user

@@ -235,7 +235,22 @@ type OIDCProvider struct {
 	// used in rig. If an OIDC provided group name is not provided in this
 	// mapping we will use the OIDC provided groupname in rig.
 	GroupMapping map[string]string `json:"groupMapping,omitempty"`
+
+	// Icon is what icon to show for this provider.
+	OIDCProviderIcon OIDCProviderIcon `json:"icon,omitempty"`
 }
+
+// OIDCProviderIcon is a string representing what provider icon should be shown
+// on the login page.
+type OIDCProviderIcon string
+
+const (
+	OIDCProviderIconGoogle   OIDCProviderIcon = "google"
+	OIDCProviderIconAzure    OIDCProviderIcon = "azure"
+	OIDCProviderIconAWS      OIDCProviderIcon = "aws"
+	OIDCProviderIconFacebook OIDCProviderIcon = "facebook"
+	OIDCProviderIconKeycloak OIDCProviderIcon = "keycloak"
+)
 
 // Client holds various client configuration
 type Client struct {
