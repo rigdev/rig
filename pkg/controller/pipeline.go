@@ -137,7 +137,10 @@ func NewPipeline(
 	if capsule.Status != nil {
 		p.observedGeneration = capsule.Status.ObservedGeneration
 	}
-	p.logger.Info("created pipeline", "generation", capsule.Generation, "observed_generation", p.observedGeneration, "resource_version", capsule.ResourceVersion)
+	p.logger.Info("created pipeline",
+		"generation", capsule.Generation,
+		"observed_generation", p.observedGeneration,
+		"resource_version", capsule.ResourceVersion)
 	return p
 }
 
