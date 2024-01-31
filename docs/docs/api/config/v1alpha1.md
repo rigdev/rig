@@ -385,7 +385,7 @@ _Appears in:_
 
 _Underlying type:_ _string_
 
-OIDCProviderIcon is a string representing what provider icon should be shown on the login page.
+OIDCProviderIcon is a string representing what provider icon should be shown on the login page. Valid options: "google", "azure", "aws", "facebook", "keycloak".
 
 _Appears in:_
 - [OIDCProvider](#oidcprovider)

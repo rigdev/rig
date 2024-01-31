@@ -265,6 +265,12 @@ const sidebars = {
         },
         {
           type: "doc",
+          id: "operator-manual/sso",
+          label: "Single Sing-on",
+          className: "docpage-sidebar-item",
+        },
+        {
+          type: "doc",
           id: "operator-manual/ingress",
           label: "Ingress",
           className: "docpage-sidebar-item",

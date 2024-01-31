@@ -1,0 +1,52 @@
+# Single Sign-On
+
+Enabling single sign-on in rig platform enables users to login to rig by
+proving that they can login at a thrid party. Currenlty users will be created
+if the do not already exist when a user logs in using SSO. This means that you
+wont have to manually create users in your organization.
+
+## OpenID Connect
+
+OpenID Connect (OIDC) is a standardised extension of oauth, which is widely
+supported by a lot of differnt identity providers. Rig platform can be
+configured to let users log in using one or more OIDC providers.
+
+If you installed rig-platform using helm, you will be able to configure the
+required parameter through helm values. Each of the below provider examples
+will include an example of the helm values needed to configure that specific
+provider.
+
+### Google
+
+In order to setup Google as an OIDC provider you will first need to create an
+OAuth 2.0 Client ID. This is done on the [API Credentials
+page](https://console.cloud.google.com/apis/credentials) in the Google cloud
+console.
+
+- For "Application type" choose "Web application".
+- Enter a "Name" which will be shown in the OAuth flow.
+- Add "Authorized Redirect URI" set to
+  `https://<your-domain>/api/v1/sso/oidc/callback`
+
+It should look like the below screenshot (with your own domain). Take note of your "Client ID" and "Client secret", we will need to insert these in our platform config.
+
+<img style={{
+    width: '600px',
+    height: 'auto',
+}} src={require('../../static/img/operator-manual/google-oauth-client.png').default} alt="Screenshot of google credential creation" />
+
+Example of how to add the configuration of your google OIDC provider to the
+rig-platform configuration.
+
+```yaml
+rig:
+  auth:
+    sso:
+      oidcProviders:
+        google:
+          name: "Google"
+          icon: "google"
+          clientID: "<Client ID>"
+          clientSecret: "<Client secret>"
+          issuerURL: "https://accounts.google.com"
+```
