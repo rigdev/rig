@@ -294,7 +294,6 @@ func (s *K8sTestSuite) updateCapsule(ctx context.Context, update func(*v1alpha2.
 		update(capsule)
 		err := s.Client.Update(ctx, capsule)
 		if kerrors.IsConflict(err) {
-
 			s.Require().NoError(s.Client.Get(ctx, nsName, capsule))
 			continue
 		}

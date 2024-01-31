@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 
@@ -106,16 +105,16 @@ type Step interface {
 }
 
 type Pipeline struct {
-	client         client.Client
-	config         *configv1alpha1.OperatorConfig
-	scheme         *runtime.Scheme
-	logger         logr.Logger
-	capsule        *v1alpha2.Capsule
-	currentObjects map[ObjectKey]client.Object
-	objects        map[ObjectKey]*Object
-	steps          []Step
-	generation     int64
-	usedResources  []v1alpha2.UsedResource
+	client             client.Client
+	config             *configv1alpha1.OperatorConfig
+	scheme             *runtime.Scheme
+	logger             logr.Logger
+	capsule            *v1alpha2.Capsule
+	currentObjects     map[ObjectKey]client.Object
+	objects            map[ObjectKey]*Object
+	steps              []Step
+	observedGeneration int64
+	usedResources      []v1alpha2.UsedResource
 }
 
 func NewPipeline(
@@ -136,8 +135,9 @@ func NewPipeline(
 		currentObjects: map[ObjectKey]client.Object{},
 	}
 	if capsule.Status != nil {
-		p.generation = capsule.Status.ObservedGeneration
+		p.observedGeneration = capsule.Status.ObservedGeneration
 	}
+	p.logger.Info("created pipeline", "generation", capsule.Generation, "observed_generation", p.observedGeneration, "resource_version", capsule.ResourceVersion)
 	return p
 }
 
@@ -215,6 +215,20 @@ func (p *Pipeline) AddStep(step Step) {
 }
 
 func (p *Pipeline) Run(ctx context.Context) error {
+	if err := p.runSteps(ctx); errors.IsFailedPrecondition(err) {
+		return err
+	} else if err != nil {
+		if err := p.updateStatusError(ctx, err); err != nil {
+			return err
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (p *Pipeline) runSteps(ctx context.Context) error {
 	// Read all status objects.
 	if s := p.capsule.Status; s != nil {
 		for _, r := range s.OwnedResources {
@@ -269,9 +283,6 @@ func (p *Pipeline) Run(ctx context.Context) error {
 
 		for _, s := range p.steps {
 			if err := s.Apply(ctx, p); err != nil {
-				if err := p.updateStatus(ctx, nil, err); err != nil {
-					return err
-				}
 				return err
 			}
 		}
@@ -281,10 +292,6 @@ func (p *Pipeline) Run(ctx context.Context) error {
 			continue
 		} else if err != nil {
 			p.logger.Error(err, "error committing changes")
-			if err := p.updateStatus(ctx, nil, err); err != nil {
-				return err
-			}
-
 			return err
 		}
 
@@ -327,6 +334,33 @@ func (p *Pipeline) commit(ctx context.Context) error {
 		obj := p.objects[key]
 
 		if obj.Current == nil {
+			materializedObj := obj.New.DeepCopyObject().(client.Object)
+			if err := p.client.Create(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
+				return errors.FailedPreconditionErrorf("new object version available for '%v'", key)
+			} else if kerrors.IsAlreadyExists(err) {
+				o, err2 := p.scheme.New(key.GroupVersionKind)
+				if err2 != nil {
+					return err
+				}
+
+				co := o.(client.Object)
+				if err := p.client.Get(ctx, key.ObjectKey, co); err != nil {
+					return fmt.Errorf("could not get existing object: %w", err)
+				}
+
+				if IsOwnedBy(p.capsule, co) {
+					p.logger.Info("object exists but not in status, retrying", "object", key)
+					p.currentObjects[key] = co
+					return errors.AbortedErrorf("object exists but not in capsule status")
+				}
+
+				p.logger.Info("create object skipped, not owned by controller", "object", key)
+				changes[key] = &change{state: _resourceStateAlreadyExists}
+				continue
+			} else if err != nil {
+				return fmt.Errorf("could not render create to %s: %w", key.GroupVersionKind, err)
+			}
+
 			p.logger.Info("create object", "object", key)
 			changes[key] = &change{state: _resourceStateCreated}
 			continue
@@ -349,7 +383,9 @@ func (p *Pipeline) commit(ctx context.Context) error {
 
 		// Dry run to fully materialize the new spec.
 		materializedObj.SetResourceVersion(obj.Current.GetResourceVersion())
-		if err := p.client.Update(ctx, materializedObj, client.DryRunAll); err != nil {
+		if err := p.client.Update(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
+			return errors.FailedPreconditionErrorf("new object version available for '%v'", key)
+		} else if err != nil {
 			return fmt.Errorf("could not render update to %s: %w", key.GroupVersionKind, err)
 		}
 
@@ -364,8 +400,8 @@ func (p *Pipeline) commit(ctx context.Context) error {
 	}
 
 	// Skip update if no changes.
-	if p.generation == p.capsule.Generation {
-		p.logger.Info("already at generation", "generation", p.generation)
+	if p.observedGeneration == p.capsule.Generation {
+		p.logger.Info("already at generation", "generation", p.observedGeneration)
 		hasChanges := false
 		for _, change := range changes {
 			switch change.state {
@@ -374,20 +410,18 @@ func (p *Pipeline) commit(ctx context.Context) error {
 			}
 		}
 		if !hasChanges {
-			p.logger.Info("no changes to apply", "generation", p.generation)
+			p.logger.Info("no changes to apply", "generation", p.observedGeneration)
 			return nil
 		}
 	}
 
-	if err := p.updateStatus(ctx, changes, nil); err != nil {
+	if err := p.updateStatusChanges(ctx, changes, p.observedGeneration); err != nil {
 		return err
 	}
 
 	var errs []error
 	for key, change := range changes {
-		if err := p.applyChange(ctx, key, change.state); errors.IsAborted(err) {
-			return err
-		} else if err != nil {
+		if err := p.applyChange(ctx, key, change.state); err != nil {
 			change.err = err
 			errs = append(errs, err)
 		} else {
@@ -395,12 +429,11 @@ func (p *Pipeline) commit(ctx context.Context) error {
 		}
 	}
 
-	err := errors.Join(errs...)
-	if err == nil {
-		p.generation = p.capsule.Generation
+	if err := errors.Join(errs...); err != nil {
+		return err
 	}
-	// If there is an error, it's set here on the status (or failing trying).
-	if err := p.updateStatus(ctx, changes, err); err != nil {
+
+	if err := p.updateStatusChanges(ctx, changes, p.capsule.Generation); err != nil {
 		return err
 	}
 
@@ -420,24 +453,6 @@ func (p *Pipeline) applyChange(ctx context.Context, key ObjectKey, state resourc
 		p.logger.Info("create object", "object", key)
 		obj := p.objects[key]
 		if err := p.client.Create(ctx, obj.New); err != nil {
-			o, err2 := p.scheme.New(key.GroupVersionKind)
-			if err2 != nil {
-				return err
-			}
-
-			co, ok := o.(client.Object)
-			if !ok {
-				return fmt.Errorf("invalid object conversion: %v", reflect.TypeOf(o))
-			}
-
-			if err2 := p.client.Get(ctx, key.ObjectKey, co); err2 == nil {
-				if IsOwnedBy(p.capsule, co) {
-					p.logger.Info("object exists but not in status, retrying", "object", key)
-					p.currentObjects[key] = co
-					return errors.AbortedErrorf("object exists but not in capsule status")
-				}
-			}
-
 			return fmt.Errorf("could not create %s: %w", key.GroupVersionKind, err)
 		}
 
@@ -464,47 +479,65 @@ const (
 	_resourceStateChangePending resourceState = "changePending"
 )
 
-func (p *Pipeline) updateStatus(ctx context.Context, changes map[ObjectKey]*change, err error) error {
+func (p *Pipeline) updateStatusChanges(ctx context.Context, changes map[ObjectKey]*change, generation int64) error {
 	capsule := p.capsule.DeepCopy()
 
 	status := &v1alpha2.CapsuleStatus{
-		ObservedGeneration: p.generation,
+		ObservedGeneration: generation,
 	}
 
-	if changes != nil {
-		keys := maps.Keys(changes)
-		slices.SortStableFunc(keys, func(k1, k2 ObjectKey) int { return strings.Compare(k1.String(), k2.String()) })
-		for _, key := range keys {
-			key := key
-			change := changes[key]
-			or := v1alpha2.OwnedResource{
-				Ref: &v1.TypedLocalObjectReference{
-					APIGroup: &key.Group,
-					Kind:     key.Kind,
-					Name:     key.Name,
-				},
-				State: string(change.state),
-			}
-			switch change.state {
-			case _resourceStateCreated, _resourceStateUpdated, _resourceStateDeleted:
-				if !change.applied {
-					or.State = string(_resourceStateChangePending)
-				}
-			}
-			if change.err != nil {
-				or.Message = change.err.Error()
-			}
-			status.OwnedResources = append(status.OwnedResources, or)
+	keys := maps.Keys(changes)
+	slices.SortStableFunc(keys, func(k1, k2 ObjectKey) int { return strings.Compare(k1.String(), k2.String()) })
+	for _, key := range keys {
+		key := key
+		change := changes[key]
+		or := v1alpha2.OwnedResource{
+			Ref: &v1.TypedLocalObjectReference{
+				APIGroup: &key.Group,
+				Kind:     key.Kind,
+				Name:     key.Name,
+			},
+			State: string(change.state),
 		}
-	} else {
-		status.OwnedResources = capsule.Status.OwnedResources
-	}
-
-	if err != nil {
-		status.Errors = []string{err.Error()}
+		switch change.state {
+		case _resourceStateCreated, _resourceStateUpdated, _resourceStateDeleted:
+			if !change.applied {
+				or.State = string(_resourceStateChangePending)
+			}
+		}
+		if change.err != nil {
+			or.Message = change.err.Error()
+		}
+		status.OwnedResources = append(status.OwnedResources, or)
 	}
 
 	status.UsedResources = p.usedResources
+
+	capsule.Status = status
+
+	if err := p.client.Status().Update(ctx, capsule); err != nil {
+		return err
+	}
+
+	p.observedGeneration = generation
+	p.capsule.Status = status
+	p.capsule.SetResourceVersion(capsule.GetResourceVersion())
+
+	return nil
+}
+
+func (p *Pipeline) updateStatusError(ctx context.Context, err error) error {
+	capsule := p.capsule.DeepCopy()
+
+	status := &v1alpha2.CapsuleStatus{
+		ObservedGeneration: p.observedGeneration,
+		Errors:             []string{err.Error()},
+	}
+
+	if capsule.Status != nil {
+		status.OwnedResources = capsule.Status.OwnedResources
+		status.UsedResources = capsule.Status.UsedResources
+	}
 
 	capsule.Status = status
 

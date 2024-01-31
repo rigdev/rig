@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 env:
   TAG: dev
@@ -23,9 +23,9 @@ tasks:
     env:
       CGO_ENABLED: "0"
     sources:
-      - '**/*.go'
+      - "**/*.go"
     generates:
-      - 'bin/rig'
+      - "bin/rig"
     cmds:
       - go build -o ./bin/rig ./cmd/rig
 
@@ -35,9 +35,9 @@ tasks:
     env:
       CGO_ENABLED: "0"
     sources:
-      - '**/*.go'
+      - "**/*.go"
     generates:
-      - 'bin/rig-operator'
+      - "bin/rig-operator"
     cmds:
       - go build -o ./bin/rig-operator ./cmd/rig-operator
 
@@ -238,11 +238,11 @@ tasks:
 
   kind-load:
     desc: "🐋 Load docker image into kind cluster"
-    deps: [tools:kind]
+    deps: [tools:kind, docker]
     cmds:
       - ./tools/bin/kind load docker-image ghcr.io/rigdev/rig-operator:${TAG} -n rig
 
-  kind-load:
+  kind-load-platform:
     desc: "🐋 Load platform docker image into kind cluster"
     deps: [tools:kind]
     cmds:
@@ -288,4 +288,3 @@ tasks:
       - |
         ./tools/bin/goreleaser build \
           -f ./build/package/goreleaser/goreleaser.yml --snapshot --clean
-
