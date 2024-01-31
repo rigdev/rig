@@ -26,7 +26,7 @@ func (s *CronJobStep) Apply(_ context.Context, req Request) error {
 	}
 
 	for _, job := range jobs {
-		req.Set(req.NamedObjectKey(job.Name, _appsDeploymentGVK), job)
+		req.Set(req.NamedObjectKey(job.Name, _batchCronJobGVK), job)
 	}
 
 	return nil

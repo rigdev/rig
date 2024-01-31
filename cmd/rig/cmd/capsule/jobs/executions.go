@@ -60,8 +60,8 @@ func (c *Cmd) executions(ctx context.Context, _ *cobra.Command, _ []string) erro
 		row := []any{
 			idx + 1,
 			e.GetJobName(),
-			formatTime(e.GetCreatedAt().AsTime()),
-			formatTime(e.GetFinishedAt().AsTime()),
+			common.FormatTime(e.GetCreatedAt().AsTime()),
+			common.FormatTime(e.GetFinishedAt().AsTime()),
 			stateToStr(e.GetState()),
 			e.GetRetries(),
 		}
@@ -70,13 +70,6 @@ func (c *Cmd) executions(ctx context.Context, _ *cobra.Command, _ []string) erro
 	tbl.Print()
 
 	return nil
-}
-
-func formatTime(t time.Time) string {
-	if t.IsZero() {
-		return ""
-	}
-	return t.Format(time.DateTime)
 }
 
 func timeToPB(t time.Time) *timestamppb.Timestamp {

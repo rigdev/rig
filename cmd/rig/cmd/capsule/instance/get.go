@@ -20,8 +20,9 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Capsule().ListInstanceStatuses(ctx, connect.NewRequest(&capsule.ListInstanceStatusesRequest{
 		CapsuleId: cmd_capsule.CapsuleID,
 		Pagination: &model.Pagination{
-			Offset: uint32(offset),
-			Limit:  uint32(limit),
+			Offset:     uint32(offset),
+			Limit:      uint32(limit),
+			Descending: true,
 		},
 		ProjectId:       flags.GetProject(c.Cfg),
 		EnvironmentId:   flags.GetEnvironment(c.Cfg),
@@ -39,7 +40,7 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
-	tbl := table2.New("ID", "Scheduling", "Preparing", "Running", "Deleted")
+	tbl := table2.New("ID", "Created", "Deleted", "Scheduling", "Preparing", "Running", "Deleted")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	for _, i := range instances {
 		tbl.AddRow(instanceStatusToTableRow(i)...)
@@ -51,8 +52,15 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 func instanceStatusToTableRow(instance *instance.Status) []any {
 	stages := instance.GetStages()
+	d := stages.GetDeleted().GetInfo().GetUpdatedAt()
+	ds := "-"
+	if d != nil {
+		ds = common.FormatTime(d.AsTime())
+	}
 	return []any{
 		instance.GetInstanceId(),
+		common.FormatTime(instance.CreatedAt.AsTime()),
+		ds,
 		formatRow(stages.GetSchedule()),
 		formatRow(stages.GetPreparing()),
 		formatRow(stages.GetRunning()),

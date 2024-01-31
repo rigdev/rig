@@ -423,3 +423,10 @@ func GetAllAnnotations(cmd *cobra.Command) map[string]string {
 	}
 	return res
 }
+
+func FormatTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format(time.DateTime)
+}
