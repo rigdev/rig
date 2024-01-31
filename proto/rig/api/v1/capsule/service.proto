@@ -322,9 +322,9 @@ message ListEventsResponse {
 message CapsuleMetricsRequest {
   string capsule_id = 1; // The capsule to get metrics for.
   string instance_id = 2; // If set, only returns metrics for the given instance_id.
-  model.Pagination pagination = 3; // Pagination options.
   string project_id = 4; // The project in which the capsule lives.
   string environment_id = 5; // The environment to get metrics for.
+  google.protobuf.Timestamp since = 6; // Return metrics generated after 'since'
 }
 
 
