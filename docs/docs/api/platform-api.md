@@ -3657,9 +3657,9 @@ Request for getting metrics for a capsule and optionally a single instance.
 | ----- | ---- | ----- | ----------- |
 | capsule_id | [string](#string) |  | The capsule to get metrics for. |
 | instance_id | [string](#string) |  | If set, only returns metrics for the given instance_id. |
-| pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
 | project_id | [string](#string) |  | The project in which the capsule lives. |
 | environment_id | [string](#string) |  | The environment to get metrics for. |
+| since | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Return metrics generated after 'since' |
 
 
 
