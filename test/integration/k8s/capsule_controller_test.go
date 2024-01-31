@@ -32,16 +32,11 @@ import (
 	"github.com/rigdev/rig/pkg/ptr"
 )
 
-var (
-	nsName = types.NamespacedName{
-		Name:      "test",
-		Namespace: "nginx",
-	}
-)
+var nsName types.NamespacedName
 
 func (s *K8sTestSuite) TestControllerSharedSecrets() {
 	ctx := context.Background()
-	nsName := types.NamespacedName{
+	nsName = types.NamespacedName{
 		Name:      uuid.NewString(),
 		Namespace: "default",
 	}
@@ -145,17 +140,16 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 	secret.ResourceVersion = ""
 	s.Require().NoError(s.Client.Create(ctx, &secret))
 
-	s.Require().NoError(s.Client.Get(ctx, nsName, &capsule))
-	capsule.Spec.Env = &v1alpha2.Env{
-		From: []v1alpha2.EnvReference{
-			{
-				Kind: "Secret",
-				Name: secret.Name,
+	s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Env = &v1alpha2.Env{
+			From: []v1alpha2.EnvReference{
+				{
+					Kind: "Secret",
+					Name: secret.Name,
+				},
 			},
-		},
-	}
-
-	s.Require().NoError(s.Client.Update(ctx, &capsule))
+		}
+	})
 
 	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
@@ -229,9 +223,9 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 
 	s.by("Disabling automatic env")
 
-	s.Require().NoError(s.Client.Get(ctx, nsName, &capsule))
-	capsule.Spec.Env.DisableAutomatic = true
-	s.Require().NoError(s.Client.Update(ctx, &capsule))
+	s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Env.DisableAutomatic = true
+	})
 
 	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
@@ -263,6 +257,10 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 }
 
 func (s *K8sTestSuite) TestController() {
+	nsName = types.NamespacedName{
+		Name:      "test",
+		Namespace: "nginx",
+	}
 	ctx := context.Background()
 	s.testCreateCapsule(ctx)
 	s.testInterface(ctx)
@@ -286,6 +284,28 @@ func (s *K8sTestSuite) getCapsule(ctx context.Context) (v1alpha2.Capsule, metav1
 		Name:               nsName.Name,
 		Controller:         ptr.New(true),
 		BlockOwnerDeletion: ptr.New(true),
+	}
+}
+
+func (s *K8sTestSuite) updateCapsule(ctx context.Context, update func(*v1alpha2.Capsule)) metav1.OwnerReference {
+	capsule := &v1alpha2.Capsule{}
+	s.Require().NoError(s.Client.Get(ctx, nsName, capsule))
+	for {
+		update(capsule)
+		err := s.Client.Update(ctx, capsule)
+		if kerrors.IsConflict(err) {
+			s.Require().NoError(s.Client.Get(ctx, nsName, capsule))
+			continue
+		}
+		s.Assert().NoError(err)
+		return metav1.OwnerReference{
+			Kind:               "Capsule",
+			APIVersion:         v1alpha2.GroupVersion.Identifier(),
+			UID:                capsule.UID,
+			Name:               nsName.Name,
+			Controller:         ptr.New(true),
+			BlockOwnerDeletion: ptr.New(true),
+		}
 	}
 }
 
@@ -367,14 +387,14 @@ func (s *K8sTestSuite) testCreateCapsule(ctx context.Context) {
 
 func (s *K8sTestSuite) testInterface(ctx context.Context) {
 	s.by("Adding an interface")
-	capsule, capsuleOwnerRef := s.getCapsule(ctx)
-	capsule.Spec.Interfaces = []v1alpha2.CapsuleInterface{
-		{
-			Name: "http",
-			Port: 80,
-		},
-	}
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Interfaces = []v1alpha2.CapsuleInterface{
+			{
+				Name: "http",
+				Port: 80,
+			},
+		}
+	})
 
 	s.expectResources(ctx, []client.Object{
 		&appsv1.Deployment{
@@ -424,13 +444,13 @@ func (s *K8sTestSuite) testInterface(ctx context.Context) {
 
 func (s *K8sTestSuite) testIngress(ctx context.Context) {
 	s.by("Enabling ingress")
-	capsule, capsuleOwnerRef := s.getCapsule(ctx)
-	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
-		Ingress: &v1alpha2.CapsuleInterfaceIngress{
-			Host: "test.com",
-		},
-	}
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
+			Ingress: &v1alpha2.CapsuleInterfaceIngress{
+				Host: "test.com",
+			},
+		}
+	})
 
 	pt := netv1.PathTypeExact
 	s.expectResources(ctx, []client.Object{
@@ -489,9 +509,9 @@ func (s *K8sTestSuite) testIngress(ctx context.Context) {
 		},
 	})
 
-	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
-	capsule.Spec.Interfaces[0].Public.Ingress.Paths = []string{"/test1", "/test2"}
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	capsuleOwnerRef = s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Interfaces[0].Public.Ingress.Paths = []string{"/test1", "/test2"}
+	})
 
 	s.expectResources(ctx, []client.Object{
 		&netv1.Ingress{
@@ -547,13 +567,13 @@ func (s *K8sTestSuite) testIngress(ctx context.Context) {
 
 func (s *K8sTestSuite) testLoadbalancer(ctx context.Context) {
 	s.by("Changing ingress to loadbalancer")
-	capsule, capsuleOwnerRef := s.getCapsule(ctx)
-	capsule.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
-		LoadBalancer: &v1alpha2.CapsuleInterfaceLoadBalancer{
-			Port: 1,
-		},
-	}
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
+			LoadBalancer: &v1alpha2.CapsuleInterfaceLoadBalancer{
+				Port: 1,
+			},
+		}
+	})
 
 	s.Assert().Eventually(func() bool {
 		if err := s.Client.Get(ctx, nsName, &netv1.Ingress{}); err != nil {
@@ -639,7 +659,6 @@ func (s *K8sTestSuite) testEnvVar(ctx context.Context) {
 
 func (s *K8sTestSuite) testConfigMap(ctx context.Context) {
 	s.by("Adding a configfile configmap")
-	capsule, capsuleOwnerRef := s.getCapsule(ctx)
 
 	cm := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -653,18 +672,17 @@ func (s *K8sTestSuite) testConfigMap(ctx context.Context) {
 	}
 
 	s.Assert().NoError(s.Client.Create(ctx, cm))
-	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
 
-	capsule.Spec.Files = []v1alpha2.File{{
-		Path: "/etc/test/test.yaml",
-		Ref: &v1alpha2.FileContentReference{
-			Kind: "ConfigMap",
-			Name: cm.GetName(),
-			Key:  "test.yaml",
-		},
-	}}
-
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Files = []v1alpha2.File{{
+			Path: "/etc/test/test.yaml",
+			Ref: &v1alpha2.FileContentReference{
+				Kind: "ConfigMap",
+				Name: cm.GetName(),
+				Key:  "test.yaml",
+			},
+		}}
+	})
 
 	h := sha256.New()
 	s.Assert().NoError(hash.ConfigMapKeys(h, []string{"test.yaml"}, cm))
@@ -737,35 +755,36 @@ func (s *K8sTestSuite) testConfigMap(ctx context.Context) {
 
 	err := s.Client.Get(ctx, nsName, &autoscalingv2.HorizontalPodAutoscaler{})
 	s.Assert().True(kerrors.IsNotFound(err))
-	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
+	s.getCapsule(ctx)
 }
 
 func (s *K8sTestSuite) testHPA(ctx context.Context) {
 	s.by("Adding an HPA")
-	capsule, capsuleOwnerRef := s.getCapsule(ctx)
-	capsule.Spec.Scale.Horizontal.CPUTarget = &v1alpha2.CPUTarget{
-		Utilization: ptr.New(uint32(80)),
-	}
-	capsule.Spec.Scale.Horizontal.CustomMetrics = []v1alpha2.CustomMetric{
-		{
-			InstanceMetric: &v1alpha2.InstanceMetric{
-				MetricName:   "some-metric",
-				AverageValue: "10",
-			},
-		},
-		{
-			ObjectMetric: &v1alpha2.ObjectMetric{
-				MetricName: "object-metric",
-				Value:      "5",
-				DescribedObject: autoscalingv2.CrossVersionObjectReference{
-					Kind: "Service",
-					Name: "my-service",
+	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Scale.Horizontal.CPUTarget = &v1alpha2.CPUTarget{
+			Utilization: ptr.New(uint32(80)),
+		}
+		c.Spec.Scale.Horizontal.CustomMetrics = []v1alpha2.CustomMetric{
+			{
+				InstanceMetric: &v1alpha2.InstanceMetric{
+					MetricName:   "some-metric",
+					AverageValue: "10",
 				},
 			},
-		},
-	}
-	capsule.Spec.Scale.Horizontal.Instances.Max = ptr.New(uint32(3))
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+			{
+				ObjectMetric: &v1alpha2.ObjectMetric{
+					MetricName: "object-metric",
+					Value:      "5",
+					DescribedObject: autoscalingv2.CrossVersionObjectReference{
+						Kind: "Service",
+						Name: "my-service",
+					},
+				},
+			},
+		}
+		c.Spec.Scale.Horizontal.Instances.Max = ptr.New(uint32(3))
+	})
+
 	s.expectResources(ctx, []client.Object{
 		&autoscalingv2.HorizontalPodAutoscaler{
 			ObjectMeta: metav1.ObjectMeta{
@@ -828,11 +847,13 @@ func (s *K8sTestSuite) testHPA(ctx context.Context) {
 	})
 
 	s.by("Deleting the HPA")
-	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
-	capsule.Spec.Scale.Horizontal.CPUTarget = nil
-	capsule.Spec.Scale.Horizontal.CustomMetrics = nil
-	capsule.Spec.Scale.Horizontal.Instances.Max = ptr.New(uint32(1))
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+
+	s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Scale.Horizontal.CPUTarget = nil
+		c.Spec.Scale.Horizontal.CustomMetrics = nil
+		c.Spec.Scale.Horizontal.Instances.Max = ptr.New(uint32(1))
+	})
+
 	s.Assert().Eventually(func() bool {
 		if err := s.Client.Get(ctx, nsName, &autoscalingv2.HorizontalPodAutoscaler{}); err != nil {
 			if kerrors.IsNotFound(err) {
@@ -841,34 +862,34 @@ func (s *K8sTestSuite) testHPA(ctx context.Context) {
 		}
 		return false
 	}, waitFor, tick)
-
 }
 
 func (s *K8sTestSuite) testCronJob(ctx context.Context) {
 	s.by("Creating Cron Jobs")
+	s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.CronJobs = []v1alpha2.CronJob{
+			{
+				Name:     "job1",
+				Schedule: "* * * * *",
+				URL: &v1alpha2.URL{
+					Port: 8000,
+					Path: "/some/path",
+				},
+			},
+			{
+				Name:     "job2",
+				Schedule: "10 * * * *",
+				Command: &v1alpha2.JobCommand{
+					Command: "./cmd",
+					Args:    []string{"arg1", "arg2"},
+				},
+				MaxRetries:     ptr.New(uint(1)),
+				TimeoutSeconds: ptr.New(uint(10)),
+			},
+		}
+	})
+
 	capsule, capsuleOwnerRef := s.getCapsule(ctx)
-	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
-	capsule.Spec.CronJobs = []v1alpha2.CronJob{
-		{
-			Name:     "job1",
-			Schedule: "* * * * *",
-			URL: &v1alpha2.URL{
-				Port: 8000,
-				Path: "/some/path",
-			},
-		},
-		{
-			Name:     "job2",
-			Schedule: "10 * * * *",
-			Command: &v1alpha2.JobCommand{
-				Command: "./cmd",
-				Args:    []string{"arg1", "arg2"},
-			},
-			MaxRetries:     ptr.New(uint(1)),
-			TimeoutSeconds: ptr.New(uint(10)),
-		},
-	}
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
 	deployment := appsv1.Deployment{}
 	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &deployment))
 	podTemplate := deployment.Spec.Template.DeepCopy()
@@ -943,9 +964,9 @@ func (s *K8sTestSuite) testCronJob(ctx context.Context) {
 	s.expectResources(ctx, []client.Object{job1, job2})
 
 	s.by("Deleting one Cron Job")
-	s.Assert().NoError(s.Client.Get(ctx, client.ObjectKeyFromObject(&capsule), &capsule))
-	capsule.Spec.CronJobs = capsule.Spec.CronJobs[:1]
-	s.Assert().NoError(s.Client.Update(ctx, &capsule))
+	s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.CronJobs = capsule.Spec.CronJobs[:1]
+	})
 	s.expectResources(ctx, []client.Object{job1})
 }
 
@@ -1001,8 +1022,7 @@ func (s *K8sTestSuite) expectResources(ctx context.Context, resources []client.O
 		c := 0
 		cp := r.DeepCopyObject().(client.Object)
 		for {
-			err := s.Client.Get(ctx, client.ObjectKeyFromObject(r), cp)
-			if kerrors.IsNotFound(err) {
+			if err := s.Client.Get(ctx, client.ObjectKeyFromObject(r), cp); kerrors.IsNotFound(err) {
 				time.Sleep(100 * time.Millisecond)
 				continue
 			} else if err != nil {

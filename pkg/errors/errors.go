@@ -469,3 +469,7 @@ func FromHTTP(status int, msg string) error {
 func New(s string) error {
 	return errors.New(s)
 }
+
+func Join(errs ...error) error {
+	return errors.Join(errs...)
+}
