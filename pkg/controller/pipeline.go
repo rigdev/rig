@@ -88,10 +88,6 @@ func (ok ObjectKey) MarshalLog() interface{} {
 	}
 }
 
-func Equal(a ObjectKey, b ObjectKey) bool {
-	return a == b
-}
-
 type Request interface {
 	Config() *configv1alpha1.OperatorConfig
 	Scheme() *runtime.Scheme
@@ -146,7 +142,7 @@ func NewPipeline(
 }
 
 func (p *Pipeline) Config() *configv1alpha1.OperatorConfig {
-	return p.config
+	return p.config.DeepCopy()
 }
 
 func (p *Pipeline) Scheme() *runtime.Scheme {
@@ -154,7 +150,7 @@ func (p *Pipeline) Scheme() *runtime.Scheme {
 }
 
 func (p *Pipeline) Capsule() *v1alpha2.Capsule {
-	return p.capsule
+	return p.capsule.DeepCopy()
 }
 
 func (p *Pipeline) Client() client.Client {
