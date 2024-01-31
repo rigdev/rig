@@ -241,7 +241,8 @@ type OIDCProvider struct {
 }
 
 // OIDCProviderIcon is a string representing what provider icon should be shown
-// on the login page.
+// on the login page. Valid options: "google", "azure", "aws", "facebook",
+// "keycloak".
 type OIDCProviderIcon string
 
 const (
