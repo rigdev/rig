@@ -40,6 +40,9 @@ var (
 	}
 
 	_gvkByAPIGroupKind = map[string]map[string]schema.GroupVersionKind{}
+	// If the capsule was created before the pipeline refactor then there isn't a
+	// group associated to the resources in OwnedResources.
+	_gvkByKind = map[string]schema.GroupVersionKind{}
 )
 
 func init() {
@@ -51,10 +54,20 @@ func init() {
 		}
 
 		gs[gvk.Kind] = gvk
+
+		_gvkByKind[gvk.Kind] = gvk
 	}
 }
 
 func lookupGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
+	if gk.Group == "" {
+		gvk, ok := _gvkByKind[gk.Kind]
+		if !ok {
+			return schema.GroupVersionKind{}, fmt.Errorf("unknown kind '%v' with empty apiGroup", gk.Kind)
+		}
+		return gvk, nil
+	}
+
 	gs, ok := _gvkByAPIGroupKind[gk.Group]
 	if !ok {
 		return schema.GroupVersionKind{}, fmt.Errorf("unknown apiGroup '%v'", gk.Group)
