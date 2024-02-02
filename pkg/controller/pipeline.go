@@ -448,6 +448,7 @@ func (p *Pipeline) applyChange(ctx context.Context, key ObjectKey, state resourc
 	case _resourceStateUpdated:
 		p.logger.Info("update object", "object", key)
 		obj := p.objects[key]
+		obj.New.SetResourceVersion(obj.Current.GetResourceVersion())
 		if err := p.client.Update(ctx, obj.New); err != nil {
 			return fmt.Errorf("could not update %s: %w", key.GroupVersionKind, err)
 		}
