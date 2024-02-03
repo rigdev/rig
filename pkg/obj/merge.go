@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"sigs.k8s.io/kustomize/kyaml/yaml"
 	"sigs.k8s.io/kustomize/kyaml/yaml/merge2"
 )
@@ -15,10 +16,9 @@ type Merger interface {
 }
 
 func NewMerger(scheme *runtime.Scheme) Merger {
-
 	codecs := serializer.NewCodecFactory(scheme)
 
-	info, _ := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), runtime.ContentTypeYAML)
+	info, _ := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), runtime.ContentTypeJSON)
 
 	return &merger{
 		serializer: info.Serializer,
@@ -39,6 +39,29 @@ func (m *merger) Merge(src, dst runtime.Object) error {
 	if err := m.serializer.Encode(dst, &dstB); err != nil {
 		return fmt.Errorf("could not encode destination obj: %w", err)
 	}
+
+	out, err := strategicpatch.StrategicMergePatch(dstB.Bytes(), srcB.Bytes(), dst)
+	if err == nil {
+		if _, _, err := m.serializer.Decode(out, nil, dst); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// Alternative solution:
+	// out, err := jsonpatch.MergePatch(dstB.Bytes(), srcB.Bytes())
+	// if err != nil {
+	// 	fmt.Println("did not work")
+	// 	return err
+	// }
+
+	// _, _, err = m.serializer.Decode(out, nil, dst)
+	// if err != nil {
+	// 	return fmt.Errorf("could not decode merged document: %w", err)
+	// }
+
+	// return nil
 
 	srcRN, err := yaml.Parse(srcB.String())
 	if err != nil {

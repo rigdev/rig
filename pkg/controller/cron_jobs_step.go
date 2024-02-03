@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
@@ -19,22 +20,22 @@ func NewCronJobStep() *CronJobStep {
 	return &CronJobStep{}
 }
 
-func (s *CronJobStep) Apply(_ context.Context, req Request) error {
+func (s *CronJobStep) Apply(_ context.Context, req pipeline.Request) error {
 	jobs, err := s.createCronJobs(req)
 	if err != nil {
 		return err
 	}
 
 	for _, job := range jobs {
-		req.Set(req.NamedObjectKey(job.Name, _batchCronJobGVK), job)
+		req.Set(req.NamedObjectKey(job.Name, pipeline.BatchCronJobGVK), job)
 	}
 
 	return nil
 }
 
-func (s *CronJobStep) createCronJobs(req Request) ([]*batchv1.CronJob, error) {
+func (s *CronJobStep) createCronJobs(req pipeline.Request) ([]*batchv1.CronJob, error) {
 	var res []*batchv1.CronJob
-	deployment := Get[*appsv1.Deployment](req, req.ObjectKey(_appsDeploymentGVK))
+	deployment := pipeline.Get[*appsv1.Deployment](req, req.ObjectKey(pipeline.AppsDeploymentGVK))
 	if deployment == nil {
 		return nil, nil
 	}

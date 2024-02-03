@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -19,18 +20,18 @@ func NewVPAStep() *VPAStep {
 	return &VPAStep{}
 }
 
-func (s *VPAStep) Apply(_ context.Context, req Request) error {
+func (s *VPAStep) Apply(_ context.Context, req pipeline.Request) error {
 	if !req.Config().VerticalPodAutoscaler.Enabled {
 		return nil
 	}
 
 	vpa := s.createVPA(req)
-	req.Set(req.ObjectKey(_vpaVerticalPodAutoscalerGVK), vpa)
+	req.Set(req.ObjectKey(pipeline.VPAVerticalPodAutoscalerGVK), vpa)
 
 	return nil
 }
 
-func (s *VPAStep) createVPA(req Request) *vpav1.VerticalPodAutoscaler {
+func (s *VPAStep) createVPA(req pipeline.Request) *vpav1.VerticalPodAutoscaler {
 	vpa := &vpav1.VerticalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
@@ -59,7 +60,7 @@ func (s *VPAStep) createVPA(req Request) *vpav1.VerticalPodAutoscaler {
 }
 
 // This should be used once we create a VPA per namespace
-func (s *VPAStep) createVPARecommender(req Request) *appsv1.Deployment { //nolint:unused
+func (s *VPAStep) createVPARecommender(req pipeline.Request) *appsv1.Deployment { //nolint:unused
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-vpa", req.Capsule().Namespace),

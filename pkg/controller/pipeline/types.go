@@ -1,4 +1,4 @@
-package controller
+package pipeline
 
 import (
 	"fmt"
@@ -17,26 +17,26 @@ import (
 )
 
 var (
-	_appsDeploymentGVK                      = appsv1.SchemeGroupVersion.WithKind("Deployment")
-	_coreServiceGVK                         = corev1.SchemeGroupVersion.WithKind("Service")
-	_cmCertificateGVK                       = cmv1.SchemeGroupVersion.WithKind(cmv1.CertificateKind)
-	_netIngressGVK                          = netv1.SchemeGroupVersion.WithKind("Ingress")
-	_autoscalingvHorizontalPodAutoscalerGVK = autoscalingv2.SchemeGroupVersion.WithKind("HorizontalPodAutoscaler")
-	_batchCronJobGVK                        = batchv1.SchemeGroupVersion.WithKind("CronJob")
-	_monitoringServiceMonitorGVK            = monitorv1.SchemeGroupVersion.WithKind(monitorv1.ServiceMonitorsKind)
-	_vpaVerticalPodAutoscalerGVK            = vpav1.SchemeGroupVersion.WithKind("VerticalPodAutoscaler")
-	_coreServiceAccount                     = corev1.SchemeGroupVersion.WithKind("ServiceAccount")
+	AppsDeploymentGVK                      = appsv1.SchemeGroupVersion.WithKind("Deployment")
+	CoreServiceGVK                         = corev1.SchemeGroupVersion.WithKind("Service")
+	CMCertificateGVK                       = cmv1.SchemeGroupVersion.WithKind(cmv1.CertificateKind)
+	NetIngressGVK                          = netv1.SchemeGroupVersion.WithKind("Ingress")
+	AutoscalingvHorizontalPodAutoscalerGVK = autoscalingv2.SchemeGroupVersion.WithKind("HorizontalPodAutoscaler")
+	BatchCronJobGVK                        = batchv1.SchemeGroupVersion.WithKind("CronJob")
+	MonitoringServiceMonitorGVK            = monitorv1.SchemeGroupVersion.WithKind(monitorv1.ServiceMonitorsKind)
+	VPAVerticalPodAutoscalerGVK            = vpav1.SchemeGroupVersion.WithKind("VerticalPodAutoscaler")
+	CoreServiceAccount                     = corev1.SchemeGroupVersion.WithKind("ServiceAccount")
 
 	_allGVKs = []schema.GroupVersionKind{
-		_appsDeploymentGVK,
-		_coreServiceGVK,
-		_cmCertificateGVK,
-		_netIngressGVK,
-		_autoscalingvHorizontalPodAutoscalerGVK,
-		_batchCronJobGVK,
-		_monitoringServiceMonitorGVK,
-		_vpaVerticalPodAutoscalerGVK,
-		_coreServiceAccount,
+		AppsDeploymentGVK,
+		CoreServiceGVK,
+		CMCertificateGVK,
+		NetIngressGVK,
+		AutoscalingvHorizontalPodAutoscalerGVK,
+		BatchCronJobGVK,
+		MonitoringServiceMonitorGVK,
+		VPAVerticalPodAutoscalerGVK,
+		CoreServiceAccount,
 	}
 
 	_gvkByAPIGroupKind = map[string]map[string]schema.GroupVersionKind{}
@@ -59,7 +59,7 @@ func init() {
 	}
 }
 
-func lookupGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
+func LookupGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
 	if gk.Group == "" {
 		gvk, ok := _gvkByKind[gk.Kind]
 		if !ok {
@@ -84,10 +84,10 @@ func lookupGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
 type ObjectsEqual func(o1, o2 client.Object) bool
 
 var _objectsEquals = map[schema.GroupVersionKind]ObjectsEqual{
-	_monitoringServiceMonitorGVK: func(o1, o2 client.Object) bool {
+	MonitoringServiceMonitorGVK: func(o1, o2 client.Object) bool {
 		return equality.Semantic.DeepEqual(o1.(*monitorv1.ServiceMonitor).Spec, o2.(*monitorv1.ServiceMonitor).Spec)
 	},
-	_appsDeploymentGVK: func(o1, o2 client.Object) bool {
+	AppsDeploymentGVK: func(o1, o2 client.Object) bool {
 		return equality.Semantic.DeepEqual(o1.(*appsv1.Deployment).Spec, o2.(*appsv1.Deployment).Spec)
 	},
 }

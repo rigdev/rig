@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 
+	"github.com/rigdev/rig/pkg/controller/pipeline"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -13,13 +14,13 @@ func NewServiceAccountStep() *ServiceAccountStep {
 	return &ServiceAccountStep{}
 }
 
-func (s *ServiceAccountStep) Apply(_ context.Context, req Request) error {
+func (s *ServiceAccountStep) Apply(_ context.Context, req pipeline.Request) error {
 	sa := s.createServiceAccount(req)
-	req.Set(req.ObjectKey(_coreServiceAccount), sa)
+	req.Set(req.ObjectKey(pipeline.CoreServiceAccount), sa)
 	return nil
 }
 
-func (s *ServiceAccountStep) createServiceAccount(req Request) *corev1.ServiceAccount {
+func (s *ServiceAccountStep) createServiceAccount(req pipeline.Request) *corev1.ServiceAccount {
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
