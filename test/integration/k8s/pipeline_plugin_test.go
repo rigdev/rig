@@ -7,6 +7,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -100,14 +101,13 @@ func (s *PluginTestSuite) TestSidecarPluginNginxContainer() {
 				Selector: &metav1.LabelSelector{},
 				Template: v1.PodTemplateSpec{
 					Spec: v1.PodSpec{
-						Containers: []v1.Container{
-							{
-								Name: nsName.Name,
-							},
+						Containers: []v1.Container{},
+						InitContainers: []v1.Container{
 							// This sidecar container is added by the plugin.
 							{
-								Name:  "nginx",
-								Image: "nginx",
+								Name:          "nginx",
+								Image:         "nginx",
+								RestartPolicy: ptr.New(corev1.ContainerRestartPolicyAlways),
 							},
 						},
 					},
@@ -154,17 +154,15 @@ func (s *PluginTestSuite) TestInitContainerPluginStartupEcho() {
 				Selector: &metav1.LabelSelector{},
 				Template: v1.PodTemplateSpec{
 					Spec: v1.PodSpec{
-						Containers: []v1.Container{
-							{
-								Name: nsName.Name,
-							},
-						},
-						// This init container is added by the plugin.
+						Containers: []v1.Container{},
 						InitContainers: []v1.Container{
+							{Name: "nginx"},
+							// This init container is added by the plugin, after the other sidecar.
 							{
-								Image:   "alpine",
-								Name:    "startup",
-								Command: []string{"sh", "-c", "echo Hello"},
+								Image:         "alpine",
+								Name:          "startup",
+								Command:       []string{"sh", "-c", "echo Hello"},
+								RestartPolicy: nil,
 							},
 						},
 					},
