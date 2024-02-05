@@ -51,6 +51,9 @@ func (s *PluginTestSuite) SetupSuite() {
 			fmt.Sprintf("1.28.0-%s-%s", runtime.GOOS, runtime.GOARCH)),
 	}
 
+	// Enable sidecars.
+	s.TestEnv.ControlPlane.GetAPIServer().Configure().Append("feature-gates", "SidecarContainers=true")
+
 	var err error
 	cfg, err := s.TestEnv.Start()
 	require.NoError(t, err)

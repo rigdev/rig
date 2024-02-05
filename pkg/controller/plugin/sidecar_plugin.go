@@ -7,6 +7,7 @@ import (
 
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -36,7 +37,9 @@ func (s *SidecarPlugin) Run(_ context.Context, req pipeline.Request) error {
 		return nil
 	}
 
-	object.Spec.Template.Spec.Containers = append(object.Spec.Template.Spec.Containers, c)
+	c.RestartPolicy = ptr.New(corev1.ContainerRestartPolicyAlways)
+
+	object.Spec.Template.Spec.InitContainers = append(object.Spec.Template.Spec.InitContainers, c)
 
 	req.Set(key, object)
 	return nil
