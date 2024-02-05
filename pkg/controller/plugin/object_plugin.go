@@ -6,30 +6,29 @@ import (
 	"text/template"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/obj"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type TemplatePlugin struct {
-	Template string `json:"template"`
-	Group    string `json:"group"`
-	Kind     string `json:"kind"`
-	Name     string `json:"name"`
+type ObjectPlugin struct {
+	cfg *v1alpha1.ObjectPlugin
 }
 
-func NewTemplatePlugin(config map[string]string) (Plugin, error) {
-	p := &TemplatePlugin{}
-	return p, mapstructure.Decode(config, p)
+func NewObjectPlugin(cfg *v1alpha1.ObjectPlugin) Plugin {
+	return &ObjectPlugin{
+		cfg: cfg,
+	}
 }
 
-func (s *TemplatePlugin) Run(_ context.Context, req pipeline.Request) error {
-	gvk, err := pipeline.LookupGVK(schema.GroupKind{Group: s.Group, Kind: s.Kind})
+func (s *ObjectPlugin) Run(_ context.Context, req pipeline.Request) error {
+	gvk, err := pipeline.LookupGVK(schema.GroupKind{Group: s.cfg.Group, Kind: s.cfg.Kind})
 	if err != nil {
 		return err
 	}
 
-	name := s.Name
+	name := s.cfg.Name
 	if name == "" {
 		name = req.Capsule().Name
 	}
@@ -41,7 +40,7 @@ func (s *TemplatePlugin) Run(_ context.Context, req pipeline.Request) error {
 		return nil
 	}
 
-	t, err := template.New("plugin").Parse(s.Template)
+	t, err := template.New("plugin").Parse(s.cfg.Object)
 	if err != nil {
 		return err
 	}

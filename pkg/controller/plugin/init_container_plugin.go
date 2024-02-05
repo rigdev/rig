@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,16 +13,17 @@ import (
 )
 
 type InitContainerPlugin struct {
-	Container string `json:"container"`
+	cfg *v1alpha1.InitContainerPlugin
 }
 
-func NewInitContainerPlugin(config map[string]string) (Plugin, error) {
-	p := &InitContainerPlugin{}
-	return p, mapstructure.Decode(config, p)
+func NewInitContainerPlugin(cfg *v1alpha1.InitContainerPlugin) Plugin {
+	return &InitContainerPlugin{
+		cfg: cfg,
+	}
 }
 
 func (s *InitContainerPlugin) Run(_ context.Context, req pipeline.Request) error {
-	r := yaml.NewYAMLToJSONDecoder(bufio.NewReader(bytes.NewReader([]byte(s.Container))))
+	r := yaml.NewYAMLToJSONDecoder(bufio.NewReader(bytes.NewReader([]byte(s.cfg.Container))))
 	var c corev1.Container
 	if err := r.Decode(&c); err != nil {
 		return err

@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"context"
+	"reflect"
 	"slices"
 
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -11,12 +12,6 @@ import (
 
 type Plugin interface {
 	Run(context.Context, pipeline.Request) error
-}
-
-var _pluginFactories = map[string]func(config map[string]string) (Plugin, error){
-	"template":      NewTemplatePlugin,
-	"sidecar":       NewSidecarPlugin,
-	"initContainer": NewInitContainerPlugin,
 }
 
 type Step struct {
@@ -30,20 +25,27 @@ func NewStep(step v1alpha1.Step) *Step {
 }
 
 func (s *Step) Apply(ctx context.Context, req pipeline.Request) error {
-	pf, ok := _pluginFactories[s.step.Plugin]
-	if !ok {
-		return errors.InvalidArgumentErrorf("unknown plugin '%v'", s.step.Plugin)
-	}
-
 	if len(s.step.Namespaces) > 0 {
 		if !slices.Contains(s.step.Namespaces, req.Capsule().Namespace) {
 			return nil
 		}
 	}
 
-	p, err := pf(s.step.Config)
+	raw, err := s.step.Plugin.GetPlugin()
 	if err != nil {
 		return err
+	}
+
+	var p Plugin
+	switch v := raw.(type) {
+	case *v1alpha1.ObjectPlugin:
+		p = NewObjectPlugin(v)
+	case *v1alpha1.SidecarPlugin:
+		p = NewSidecarPlugin(v)
+	case *v1alpha1.InitContainerPlugin:
+		p = NewInitContainerPlugin(v)
+	default:
+		return errors.InvalidArgumentErrorf("unknown plugin '%v'", reflect.TypeOf(v))
 	}
 
 	return p.Run(ctx, req)
