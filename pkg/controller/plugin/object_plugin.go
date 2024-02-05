@@ -70,17 +70,17 @@ func (s *ObjectPlugin) Run(_ context.Context, req pipeline.Request) error {
 		return err
 	}
 
-	new, err := req.Scheme().New(gvk)
+	patch, err := req.Scheme().New(gvk)
 	if err != nil {
 		return err
 	}
 
-	if err := obj.DecodeInto(out.Bytes(), new, req.Scheme()); err != nil {
+	if err := obj.DecodeInto(out.Bytes(), patch, req.Scheme()); err != nil {
 		return err
 	}
 
 	merge := obj.NewMerger(req.Scheme())
-	if err := merge.Merge(new, object); err != nil {
+	if err := merge.Merge(patch, object); err != nil {
 		return err
 	}
 
