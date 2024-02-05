@@ -6,10 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/go-logr/logr/testr"
-	"github.com/nsf/jsondiff"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/scheme"
@@ -19,9 +17,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/json"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -29,19 +24,14 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
-const (
-	waitFor = time.Second * 10
-	tick    = time.Millisecond * 200
-)
-
-type K8sTestSuite struct {
+type PluginTestSuite struct {
 	Suite
 
 	cancel  context.CancelFunc
 	TestEnv *envtest.Environment
 }
 
-func (s *K8sTestSuite) SetupSuite() {
+func (s *PluginTestSuite) SetupSuite() {
 	setupDone := false
 	defer func() {
 		if !setupDone {
@@ -94,6 +84,38 @@ func (s *K8sTestSuite) SetupSuite() {
 			Path:     "metrics",
 			PortName: "metricsport",
 		},
+		Steps: []configv1alpha1.Step{
+			{
+				Plugin: configv1alpha1.Plugin{
+					Object: &configv1alpha1.ObjectPlugin{
+						Group: "apps",
+						Kind:  "Deployment",
+						Object: `
+spec:
+  replicas: 2`,
+					},
+				},
+			},
+			{
+				Plugin: configv1alpha1.Plugin{
+					Sidecar: &configv1alpha1.SidecarPlugin{
+						Container: `
+image: nginx
+name: nginx`,
+					},
+				},
+			},
+			{
+				Plugin: configv1alpha1.Plugin{
+					InitContainer: &configv1alpha1.InitContainerPlugin{
+						Container: `
+image: alpine
+name: startup
+command: ['sh', '-c', 'echo Hello']`,
+					},
+				},
+			},
+		},
 	}
 
 	configService := config.NewServiceFromConfigs(opConfig, nil)
@@ -122,7 +144,7 @@ func (s *K8sTestSuite) SetupSuite() {
 	setupDone = true
 }
 
-func (s *K8sTestSuite) TearDownSuite() {
+func (s *PluginTestSuite) TearDownSuite() {
 	if s.cancel != nil {
 		s.cancel()
 	}
@@ -133,51 +155,10 @@ func (s *K8sTestSuite) TearDownSuite() {
 	}
 }
 
-func TestIntegrationK8s(t *testing.T) {
+func TestIntegrationPlugin(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
 	t.Parallel()
-	suite.Run(t, &K8sTestSuite{})
-}
-
-type Suite struct {
-	suite.Suite
-	Client client.Client
-}
-
-func (s *Suite) expectResources(ctx context.Context, resources []client.Object) {
-	for _, r := range resources {
-		c := 0
-		cp := r.DeepCopyObject().(client.Object)
-		for {
-			if err := s.Client.Get(ctx, client.ObjectKeyFromObject(r), cp); kerrors.IsNotFound(err) {
-				time.Sleep(100 * time.Millisecond)
-				continue
-			} else if err != nil {
-				s.Require().NoError(err)
-			}
-
-			// Clear this property.
-			cp.SetCreationTimestamp(metav1.Time{})
-
-			bs1, err := json.Marshal(r)
-			s.Require().NoError(err)
-
-			bs2, err := json.Marshal(cp)
-			s.Require().NoError(err)
-
-			opt := jsondiff.DefaultConsoleOptions()
-			diff, change := jsondiff.Compare(bs2, bs1, &opt)
-
-			c++
-			if jsondiff.SupersetMatch == diff {
-				break
-			} else if c > 20 {
-				s.Require().Equal(jsondiff.SupersetMatch, diff, change)
-			}
-
-			time.Sleep(250 * time.Millisecond)
-		}
-	}
+	suite.Run(t, &PluginTestSuite{})
 }

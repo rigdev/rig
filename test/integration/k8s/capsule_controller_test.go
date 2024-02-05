@@ -4,12 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"time"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/google/uuid"
-	"github.com/nsf/jsondiff"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
@@ -24,7 +22,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	//+kubebuilder:scaffold:imports
@@ -1015,40 +1012,4 @@ func (s *K8sTestSuite) testDeleteCapsule(ctx context.Context) {
 
 func (s *K8sTestSuite) by(msg string) {
 	s.T().Log("STEP: ", msg)
-}
-
-func (s *K8sTestSuite) expectResources(ctx context.Context, resources []client.Object) {
-	for _, r := range resources {
-		c := 0
-		cp := r.DeepCopyObject().(client.Object)
-		for {
-			if err := s.Client.Get(ctx, client.ObjectKeyFromObject(r), cp); kerrors.IsNotFound(err) {
-				time.Sleep(100 * time.Millisecond)
-				continue
-			} else if err != nil {
-				s.Require().NoError(err)
-			}
-
-			// Clear this property.
-			cp.SetCreationTimestamp(metav1.Time{})
-
-			bs1, err := json.Marshal(r)
-			s.Require().NoError(err)
-
-			bs2, err := json.Marshal(cp)
-			s.Require().NoError(err)
-
-			opt := jsondiff.DefaultConsoleOptions()
-			diff, change := jsondiff.Compare(bs2, bs1, &opt)
-
-			c++
-			if jsondiff.SupersetMatch == diff {
-				break
-			} else if c > 20 {
-				s.Require().Equal(jsondiff.SupersetMatch, diff, change)
-			}
-
-			time.Sleep(250 * time.Millisecond)
-		}
-	}
 }
