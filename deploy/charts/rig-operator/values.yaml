@@ -18,6 +18,32 @@ config:
   prometheusServiceMonitor:
     path: ""
     portName: ""
+  steps:
+    []
+    # - plugin:
+    #     object:
+    #       group: apps
+    #       kind: Deployment
+    #       object: |
+    #         spec:
+    #           template:
+    #             spec:
+    #               containers:
+    #               - name: {{ .capsule.metadata.name }}
+    #                 image: alpine
+    #                 command: ['sh', '-c', 'echo "Hello from {{ .capsule.metadata.name }}!"']
+    # - plugin:
+    #     sidecar:
+    #       container: |
+    #         name: foobar
+    #         image: alpine
+    #         command: ['sh', '-c', 'sleep 1000']
+    # - plugin:
+    #     initContainer:
+    #       container: |
+    #         name: startup
+    #         image: alpine
+    #         command: ['sh', '-c', 'echo "Startup!"']
 
 replicaCount: 1
 

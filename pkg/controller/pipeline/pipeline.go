@@ -1,4 +1,4 @@
-package controller
+package pipeline
 
 import (
 	"context"
@@ -87,23 +87,6 @@ func (ok ObjectKey) MarshalLog() interface{} {
 	}
 }
 
-type Request interface {
-	Config() *configv1alpha1.OperatorConfig
-	Scheme() *runtime.Scheme
-	Client() client.Client
-	Capsule() *v1alpha2.Capsule
-	GetCurrent(key ObjectKey) client.Object
-	GetNew(key ObjectKey) client.Object
-	Set(key ObjectKey, obj client.Object)
-	NamedObjectKey(name string, gvk schema.GroupVersionKind) ObjectKey
-	ObjectKey(gvk schema.GroupVersionKind) ObjectKey
-	MarkUsedResource(res v1alpha2.UsedResource)
-}
-
-type Step interface {
-	Apply(ctx context.Context, req Request) error
-}
-
 type Pipeline struct {
 	client             client.Client
 	config             *configv1alpha1.OperatorConfig
@@ -117,7 +100,7 @@ type Pipeline struct {
 	usedResources      []v1alpha2.UsedResource
 }
 
-func NewPipeline(
+func New(
 	cc client.Client,
 	config *configv1alpha1.OperatorConfig,
 	capsule *v1alpha2.Capsule,
@@ -245,7 +228,7 @@ func (p *Pipeline) runSteps(ctx context.Context) error {
 				gk.Group = *r.Ref.APIGroup
 			}
 
-			gvk, err := lookupGVK(gk)
+			gvk, err := LookupGVK(gk)
 			if err != nil {
 				return err
 			}

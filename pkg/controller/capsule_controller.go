@@ -24,6 +24,8 @@ import (
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -312,7 +314,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	p := NewPipeline(r.Client, r.Config, capsule, r.Scheme, log)
+	p := pipeline.New(r.Client, r.Config, capsule, r.Scheme, log)
 
 	p.AddStep(NewServiceAccountStep())
 	p.AddStep(NewDeploymentStep())
@@ -321,6 +323,10 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	p.AddStep(NewCronJobStep())
 	if capabilities.GetHasPrometheusServiceMonitor() {
 		p.AddStep(NewServiceMonitorStep())
+	}
+
+	for _, step := range r.Config.Steps {
+		p.AddStep(plugin.NewStep(step))
 	}
 
 	if err := p.Run(ctx); err != nil {
