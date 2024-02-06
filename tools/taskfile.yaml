@@ -1,5 +1,8 @@
 version: '3'
 
+env:
+  GOBIN: "{{ .TASKFILE_DIR }}/bin"
+
 tasks:
   all:
     desc: "📦 Install all tools"
@@ -25,8 +28,6 @@ tasks:
 
   buf:
     desc: "📦 Install buf"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "github.com/bufbuild/buf " | cut -d ' ' -f2 | cut -c2-
@@ -38,8 +39,6 @@ tasks:
 
   protoc-gen-go:
     desc: "📦 Install protoc-gen-go"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "google.golang.org/protobuf " | cut -d ' ' -f2
@@ -51,8 +50,6 @@ tasks:
 
   protoc-gen-connect-go:
     desc: "📦 Install protoc-gen-connect-go"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "connectrpc.com/connect " | cut -d ' ' -f2 | cut -c2-
@@ -77,8 +74,6 @@ tasks:
 
   mockery:
     desc: "📦 Install mockery"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "github.com/vektra/mockery/v2 " | cut -d ' ' -f2 | cut -c2-
@@ -90,8 +85,6 @@ tasks:
 
   gotestsum:
     desc: "📦 Install gotestsum"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "gotest.tools/gotestsum" | cut -d ' ' -f2
@@ -106,8 +99,6 @@ tasks:
 
   kind:
     desc: "📦 Install kind"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "sigs.k8s.io/kind" | cut -d ' ' -f2
@@ -119,8 +110,6 @@ tasks:
 
   goreleaser:
     desc: "📦 Install goreleaser"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "github.com/goreleaser/goreleaser " | cut -d ' ' -f2
@@ -132,8 +121,6 @@ tasks:
 
   controller-gen:
     desc: "📦 Install controller-gen"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "sigs.k8s.io/controller-tools" | cut -d ' ' -f2
@@ -145,8 +132,6 @@ tasks:
 
   crd-ref-docs:
     desc: "📦 Install crd-ref-docs"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     status:
       - test -s bin/crd-ref-docs
     cmds:
@@ -154,8 +139,6 @@ tasks:
 
   protoc-gen-doc:
     desc: "📦 Install protoc-gen-doc"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "github.com/pseudomuto/protoc-gen-doc" | cut -d ' ' -f2 | cut -c2-
@@ -167,8 +150,6 @@ tasks:
 
   golangci-lint:
     desc: "📦 Install golangci-lint"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "github.com/golangci/golangci-lint" | cut -d ' ' -f2
@@ -180,8 +161,6 @@ tasks:
 
   setup-envtest:
     desc: "📦 Install golangci-lint"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     status:
       - test -s bin/setup-envtest
     cmds:
@@ -189,8 +168,6 @@ tasks:
 
   kind:
     desc: "📦 Install kind"
-    env:
-      GOBIN: "{{ .TASKFILE_DIR }}/bin"
     vars:
       GO_MOD_VERSION:
         sh: cat go.mod | grep -E "sigs.k8s.io/kind" | cut -d ' ' -f2

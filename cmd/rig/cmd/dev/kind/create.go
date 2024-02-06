@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -29,7 +30,7 @@ var config string
 var registry string
 
 func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
-	if err := checkBinaries(kubectl, kind, helm); err != nil {
+	if err := checkBinaries(kubectl, kindBin, helm); err != nil {
 		return err
 	}
 
@@ -82,7 +83,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 }
 
 func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
-	if err := checkBinaries(kind, kubectl, helm, docker); err != nil {
+	if err := checkBinaries(kindBin, kubectl, helm, docker); err != nil {
 		return err
 	}
 
@@ -249,7 +250,7 @@ func (c *Cmd) loadImage(ctx context.Context, cmd *common.DeferredOutputCommand, 
 		}
 	}
 
-	if err := cmd.RunNew("kind", "load", "docker-image", imageTag, "-n", "rig"); err != nil {
+	if err := cmd.RunNew(kindBin.bin(), "load", "docker-image", imageTag, "-n", "rig"); err != nil {
 		return err
 	}
 
@@ -257,11 +258,11 @@ func (c *Cmd) loadImage(ctx context.Context, cmd *common.DeferredOutputCommand, 
 }
 
 func (c *Cmd) clean(_ context.Context, _ *cobra.Command, _ []string) error {
-	if err := checkBinaries(kind); err != nil {
+	if err := checkBinaries(kindBin); err != nil {
 		return err
 	}
 
-	if err := runCmd("Cleaning Rig kind cluster...", "kind", "delete", "clusters", "rig"); err != nil {
+	if err := runCmd("Cleaning Rig kind cluster...", kindBin.bin(), "delete", "clusters", "rig"); err != nil {
 		return err
 	}
 
@@ -420,12 +421,16 @@ type binary struct {
 	link string
 }
 
+func (b binary) bin() string {
+	return filepath.Join(os.Getenv("TOOLS_BIN"), b.name)
+}
+
 var (
 	kubectl = binary{
 		name: "kubectl",
 		link: "https://kubernetes.io/docs/tasks/tools",
 	}
-	kind = binary{
+	kindBin = binary{
 		name: "kind",
 		link: "https://kind.sigs.k8s.io/docs/user/quick-start/#installation",
 	}
@@ -440,8 +445,12 @@ var (
 )
 
 func checkBinaries(binaries ...binary) error {
+	toolsBin := os.Getenv("TOOLS_BIN")
 	hasAll := true
 	for _, bin := range binaries {
+		if _, err := os.Stat(filepath.Join(toolsBin, bin.name)); err == nil {
+			continue
+		}
 		if _, err := exec.LookPath(bin.name); err != nil {
 			fmt.Printf(
 				"No bin bin.named '%s' could be found. Install %s and make sure it's in the PATH to use this command\n",

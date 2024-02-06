@@ -78,7 +78,24 @@ See https://github.com/prometheus-operator/prometheus-operator for information o
 		`If set, will install the VerticalPodAutoscaler CRD + Recommender in the cluster.
 The operator will be configured to spawn a VerticalPodAutoscaler resource per capsule.`,
 	)
-	kind.AddCommand(create)
+
+	//kind.AddCommand(create)
+
+	newcreate := &cobra.Command{
+		Use:   "create",
+		Short: "Create a rig cluster in Kind for local development",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.scenarioCreate),
+	}
+	kind.AddCommand(newcreate)
+
+	newclean := &cobra.Command{
+		Use:   "clean",
+		Short: "Deletes a rig kind-cluster",
+		Args:  cobra.NoArgs,
+		RunE:  base.CtxWrap(cmd.scenarioClean),
+	}
+	kind.AddCommand(newclean)
 
 	deploy := &cobra.Command{
 		Use:   "deploy",
@@ -115,13 +132,13 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 		`If set, the operator will be configured to spawn a VerticalPodAutoscaler resource per capsule.`,
 	)
 
-	clean := &cobra.Command{
-		Use:   "clean",
-		Short: "Deletes the rig kind-cluster",
-		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.clean),
-	}
-	kind.AddCommand(clean)
+	//clean := &cobra.Command{
+	//	Use:   "clean",
+	//	Short: "Deletes the rig kind-cluster",
+	//	Args:  cobra.NoArgs,
+	//	RunE:  base.CtxWrap(cmd.clean),
+	//}
+	//kind.AddCommand(clean)
 
 	runInit := &cobra.Command{
 		Use:   "run-init",
