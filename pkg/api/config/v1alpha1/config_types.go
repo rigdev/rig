@@ -292,6 +292,11 @@ type OIDCProvider struct {
 
 	// Icon is what icon to show for this provider.
 	Icon OIDCProviderIcon `json:"icon,omitempty"`
+
+	// DisableUserMerging disallows merging their OIDC account with an existing user in rig.
+	// This effectively means, that if a user is created using OIDC, then it can only login
+	// using that OIDC provider.
+	DisableUserMerging *bool `json:"disableUserMerging,omitempty"`
 }
 
 // OIDCProviderIcon is a string representing what provider icon should be shown

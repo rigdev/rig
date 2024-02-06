@@ -393,6 +393,7 @@ _Appears in:_
 | `disableJITGroups` _boolean_ | DisableJITGroups disables creation of groups found through OIDC in rig. |
 | `groupMapping` _object (keys:string, values:string)_ | GroupMapping is a mapping from OIDC provided group names to group names used in rig. If an OIDC provided group name is not provided in this mapping we will use the OIDC provided groupname in rig. |
 | `icon` _[OIDCProviderIcon](#oidcprovidericon)_ | Icon is what icon to show for this provider. |
+| `disableUserMerging` _boolean_ | DisableUserMerging disallows merging their OIDC account with an existing user in rig. This effectively means, that if a user is created using OIDC, then it can only login using that OIDC provider. |
 
 
 ### OIDCProviderIcon
