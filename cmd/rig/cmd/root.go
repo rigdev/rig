@@ -8,6 +8,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	project_api "github.com/rigdev/rig-go-api/api/v1/project"
+	"github.com/rigdev/rig-go-api/api/v1/project/settings"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
@@ -106,7 +107,7 @@ func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, _ []string
 	var plan project_api.Plan
 	var expiresAt *timestamppb.Timestamp
 
-	resp, err := c.Rig.Project().GetLicenseInfo(ctx, &connect.Request[project_api.GetLicenseInfoRequest]{})
+	resp, err := c.Rig.ProjectSettings().GetLicenseInfo(ctx, &connect.Request[settings.GetLicenseInfoRequest]{})
 	if err != nil {
 		cmd.Println("Unable to get license info", err)
 		plan = project_api.Plan_PLAN_FREE

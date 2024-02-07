@@ -162,7 +162,6 @@
 | /api.v1.project.Service/List | [ListRequest](#api-v1-project-ListRequest) | [ListResponse](#api-v1-project-ListResponse) | Get project list. |
 | /api.v1.project.Service/Update | [UpdateRequest](#api-v1-project-UpdateRequest) | [UpdateResponse](#api-v1-project-UpdateResponse) | Update updates the profile of the project. |
 | /api.v1.project.Service/PublicKey | [PublicKeyRequest](#api-v1-project-PublicKeyRequest) | [PublicKeyResponse](#api-v1-project-PublicKeyResponse) | Get public key. |
-| /api.v1.project.Service/GetLicenseInfo | [GetLicenseInfoRequest](#api-v1-project-GetLicenseInfoRequest) | [GetLicenseInfoResponse](#api-v1-project-GetLicenseInfoResponse) | Get License Information. |
 | /api.v1.project.Service/GetObjectsByKind | [GetObjectsByKindRequest](#api-v1-project-GetObjectsByKindRequest) | [GetObjectsByKindResponse](#api-v1-project-GetObjectsByKindResponse) | Returns all objects of a given kind. |
 | /api.v1.project.Service/GetCustomObjectMetrics | [GetCustomObjectMetricsRequest](#api-v1-project-GetCustomObjectMetricsRequest) | [GetCustomObjectMetricsResponse](#api-v1-project-GetCustomObjectMetricsResponse) | Returns all metrics of a given custom object. |
 
@@ -181,6 +180,7 @@
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.project.settings.Service/GetSettings | [GetSettingsRequest](#api-v1-project-settings-GetSettingsRequest) | [GetSettingsResponse](#api-v1-project-settings-GetSettingsResponse) | Gets the users settings for the current project. |
 | /api.v1.project.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-project-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-project-settings-UpdateSettingsResponse) | Sets the users settings for the current project. |
+| /api.v1.project.settings.Service/GetLicenseInfo | [GetLicenseInfoRequest](#api-v1-project-settings-GetLicenseInfoRequest) | [GetLicenseInfoResponse](#api-v1-project-settings-GetLicenseInfoResponse) | Get License Information. |
 
 
 
@@ -5101,37 +5101,6 @@ Response for getting custom metrics for a project and environment.
 
 
 
-<a name="api-v1-project-GetLicenseInfoRequest"></a>
-
-### GetLicenseInfoRequest
-Request to get the license information of the Rig installation.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  | Deprecated: Only the Rig-Project has license information. |
-
-
-
-
-
-
-<a name="api-v1-project-GetLicenseInfoResponse"></a>
-
-### GetLicenseInfoResponse
-Response for getting the license information of the Rig installation.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| plan | [Plan](#api-v1-project-Plan) |  | The plan of the rig installation. |
-| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The expiration date of the license. |
-
-
-
-
-
-
 <a name="api-v1-project-GetObjectsByKindRequest"></a>
 
 ### GetObjectsByKindRequest
@@ -5402,6 +5371,37 @@ Update message for project settings.
 <a name="api_v1_project_settings_service-proto"></a>
 
 ## api/v1/project/settings/service.proto
+
+
+
+<a name="api-v1-project-settings-GetLicenseInfoRequest"></a>
+
+### GetLicenseInfoRequest
+Request to get the license information of the Rig installation.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  | Deprecated: Only the Rig-Project has license information. |
+
+
+
+
+
+
+<a name="api-v1-project-settings-GetLicenseInfoResponse"></a>
+
+### GetLicenseInfoResponse
+Response for getting the license information of the Rig installation.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan | [api.v1.project.Plan](#api-v1-project-Plan) |  | The plan of the rig installation. |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The expiration date of the license. |
+
+
+
 
 
 
