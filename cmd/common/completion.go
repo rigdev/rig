@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -37,7 +36,6 @@ var ArgsCompletionFilter = func(
 	args = append(args, toComplete)
 	err := cmd.Args(cmd, args)
 	if err != nil {
-		fmt.Println(err.Error())
 		return []string{}, cobra.ShellCompDirectiveError
 	}
 

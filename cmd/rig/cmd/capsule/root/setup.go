@@ -225,14 +225,9 @@ func (c *Cmd) completions(
 }
 
 func formatCapsule(c *capsule_api.Capsule) string {
-	var age string
-	if c.GetCurrentRollout() == 0 {
-		age = "-"
-	} else {
-		age = time.Since(c.GetUpdatedAt().AsTime()).Truncate(time.Second).String()
-	}
+	age := time.Since(c.GetUpdatedAt().AsTime()).Truncate(time.Second).String()
 
-	return fmt.Sprintf("%v\t (Rollout: %v, Updated At: %v)", c.GetCapsuleId(), c.GetCurrentRollout(), age)
+	return fmt.Sprintf("%v\t (Updated At: %v)", c.GetCapsuleId(), age)
 }
 
 func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []string) error {

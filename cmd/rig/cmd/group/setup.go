@@ -248,9 +248,9 @@ func (c *Cmd) memberCompletions(
 }
 
 func formatUser(u *model.UserEntry) string {
-	return fmt.Sprintf("%s\t (%s)", u.GetUserId(), u.GetPrintableName())
+	return fmt.Sprintf("%s\t (User: %s)", u.GetUserId(), u.GetPrintableName())
 }
 
 func formatServiceAccount(u *model.ServiceAccountEntry) string {
-	return fmt.Sprintf("%s\t (%s)", u.GetServiceAccountId(), u.GetName())
+	return fmt.Sprintf("%s\t (SA: %s)", u.GetServiceAccountId(), u.GetName())
 }
