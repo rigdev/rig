@@ -6,7 +6,6 @@ import "api/v1/project/project.proto";
 import "api/v1/capsule/change.proto";
 import "api/v1/capsule/service.proto";
 import "model/common.proto";
-import "google/protobuf/timestamp.proto";
 
 // The service to manage your projects.
 service Service {
@@ -22,8 +21,6 @@ service Service {
   rpc Update(UpdateRequest) returns (UpdateResponse) {}
   // Get public key.
   rpc PublicKey(PublicKeyRequest) returns (PublicKeyResponse) {}
-  // Get License Information.
-  rpc GetLicenseInfo(GetLicenseInfoRequest) returns (GetLicenseInfoResponse) {}
   // Returns all objects of a given kind.
   rpc GetObjectsByKind(GetObjectsByKindRequest)
       returns (GetObjectsByKindResponse) {}
@@ -89,17 +86,6 @@ message PublicKeyRequest {
 // Response for getting a projects public key.
 message PublicKeyResponse {
   string public_key = 1; // the retrieved public key.
-}
-
-// Request to get the license information of the Rig installation.
-message GetLicenseInfoRequest {
-  string project_id = 1; // Deprecated: Only the Rig-Project has license information.
-}
-
-// Response for getting the license information of the Rig installation.
-message GetLicenseInfoResponse {
-  api.v1.project.Plan plan = 1; // The plan of the rig installation.
-  google.protobuf.Timestamp expires_at = 2; // The expiration date of the license.
 }
 
 // Request to get custom metrics for a project and environment.
