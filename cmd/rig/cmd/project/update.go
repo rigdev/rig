@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -29,8 +30,18 @@ func (p projectField) String() string {
 	}
 }
 
-func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: &project.GetRequest{}})
+func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) error {
+	var projectID string
+	if len(args) > 0 {
+		projectID = args[0]
+	} else {
+		projectID = flags.GetProject(c.Cfg)
+	}
+	fmt.Println("projectID: ", projectID)
+
+	resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{Msg: &project.GetRequest{
+		ProjectId: projectID,
+	}})
 	if err != nil {
 		return err
 	}
@@ -43,7 +54,8 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 
 		_, err = c.Rig.Project().Update(ctx, &connect.Request[project.UpdateRequest]{
 			Msg: &project.UpdateRequest{
-				Updates: []*project.Update{u},
+				ProjectId: projectID,
+				Updates:   []*project.Update{u},
 			},
 		})
 		if err != nil {
@@ -70,7 +82,6 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		}
 		u, err := promptProjectUpdate(projectField(i+1), resp.Msg.GetProject())
 		if err != nil {
-			fmt.Println(err.Error())
 			continue
 		}
 		if u != nil {
@@ -78,8 +89,14 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		}
 	}
 
+	if len(updates) == 0 {
+		cmd.Println("No updates to make")
+		return nil
+	}
+
 	_, err = c.Rig.Project().Update(ctx, connect.NewRequest(&project.UpdateRequest{
-		Updates: updates,
+		ProjectId: projectID,
+		Updates:   updates,
 	}))
 	if err != nil {
 		return err
@@ -90,11 +107,17 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 }
 
 func promptProjectUpdate(f projectField, p *project.Project) (*project.Update, error) {
+	fmt.Println("f: ", f)
 	switch f {
 	case projectName:
+		name, err := common.PromptInput("Name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(p.GetName()))
+		if err != nil {
+			return nil, err
+		}
+
 		return &project.Update{
 			Field: &project.Update_Name{
-				Name: p.GetName(),
+				Name: name,
 			},
 		}, nil
 	default:
