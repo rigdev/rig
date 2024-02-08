@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -26,6 +27,11 @@ type Cmd struct {
 }
 
 var minify bool
+
+var (
+	field string
+	value string
+)
 
 var cmd Cmd
 
@@ -111,6 +117,9 @@ func Setup(parent *cobra.Command) {
 		Short: "Display the current context",
 		Args:  cobra.NoArgs,
 		RunE:  cmd.currentContext,
+		Annotations: map[string]string{
+			auth.OmitUser: "",
+		},
 	}
 	config.AddCommand(currentContext)
 
@@ -119,11 +128,47 @@ func Setup(parent *cobra.Command) {
 		Short: "View Config",
 		Args:  cobra.NoArgs,
 		RunE:  cmd.viewConfig,
+		Annotations: map[string]string{
+			auth.OmitUser: "",
+		},
 	}
 	viewConfig.Flags().BoolVarP(&minify, "minify", "m", false,
 		"Remove all information not used by current-context from the output")
-
 	config.AddCommand(viewConfig)
+
+	editConfig := &cobra.Command{
+		Use:   "edit [context]",
+		Short: "Edit a context",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  cmd.editConfig,
+		ValidArgsFunction: common.Complete(
+			cmd.completions,
+			common.MaxArgsCompletionFilter(1),
+		),
+		Annotations: map[string]string{
+			auth.OmitUser: "",
+		},
+	}
+	editConfig.Flags().StringVarP(&field, "field", "f", "", "Field to edit")
+
+	if err := editConfig.RegisterFlagCompletionFunc("field",
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			options := []string{"name", "server"}
+			labels := []string{}
+			for _, option := range options {
+				if strings.HasPrefix(option, toComplete) {
+					labels = append(labels, option)
+				}
+			}
+			return labels, cobra.ShellCompDirectiveNoFileComp
+		}); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	editConfig.Flags().StringVarP(&value, "value", "v", "", "Value to set")
+	editConfig.MarkFlagsRequiredTogether("field", "value")
+	config.AddCommand(editConfig)
 
 	parent.AddCommand(config)
 }
