@@ -65,6 +65,18 @@ type Config struct {
 	filePath string
 }
 
+func (cfg *Config) Minify() *Config {
+	return &Config{
+		Contexts: []*Context{cfg.GetCurrentContext()},
+		Services: []*Service{cfg.GetCurrentService()},
+		Users: []*User{{
+			Name: cfg.CurrentContextName,
+			Auth: cfg.GetCurrentAuth(),
+		}},
+		CurrentContextName: cfg.CurrentContextName,
+	}
+}
+
 func (cfg *Config) GetEnvironment() string {
 	if c := cfg.GetCurrentContext(); c != nil {
 		return c.EnvironmentID
@@ -202,14 +214,4 @@ func NewConfig(cfgPath string) (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func (cfg *Config) Format() string {
-	// convert config to yaml string
-	bs, err := yaml.Marshal(cfg)
-	if err != nil {
-		return ""
-	}
-
-	return string(bs)
 }

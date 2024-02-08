@@ -13,7 +13,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+	if len(args) > 0 || current {
+		var projectID string
+		if current {
+			projectID = flags.GetProject(c.Cfg)
+		} else {
+			projectID = args[0]
+		}
+
+		req := &project.GetRequest{
+			ProjectId: projectID,
+		}
+		resp, err := c.Rig.Project().Get(ctx, &connect.Request[project.GetRequest]{
+			Msg: req,
+		})
+		if err != nil {
+			return err
+		}
+
+		if flags.Flags.OutputType != common.OutputTypePretty {
+			return common.FormatPrint(resp.Msg.GetProject(), flags.Flags.OutputType)
+		}
+
+		t := table.NewWriter()
+		t.AppendHeader(table.Row{"Attribute", "Value"})
+		t.AppendRows([]table.Row{
+			{"ID", resp.Msg.GetProject().GetProjectId()},
+			{"Name", resp.Msg.GetProject().GetName()},
+			{"Created At", resp.Msg.GetProject().GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")},
+		})
+
+		cmd.Println(t.Render())
+		return nil
+	}
+
 	req := &project.ListRequest{
 		Pagination: &model.Pagination{
 			Offset: uint32(offset),

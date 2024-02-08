@@ -19,6 +19,16 @@ func (cfg *Config) UseContext(name string) error {
 }
 
 func (cfg *Config) SelectContext() error {
+	contextName, err := PromptForContext(cfg)
+	if err != nil {
+		return err
+	}
+
+	cfg.CurrentContextName = contextName
+	return cfg.Save()
+}
+
+func PromptForContext(cfg *Config) (string, error) {
 	var labels []string
 	for _, c := range cfg.Contexts {
 		if c.Name == cfg.CurrentContextName {
@@ -30,11 +40,10 @@ func (cfg *Config) SelectContext() error {
 
 	n, _, err := common.PromptSelect("Rig context:", labels)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	cfg.CurrentContextName = cfg.Contexts[n].Name
-	return cfg.Save()
+	return cfg.Contexts[n].Name, nil
 }
 
 func (cfg *Config) CreateDefaultContext() error {

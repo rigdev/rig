@@ -25,6 +25,8 @@ type Cmd struct {
 	PromptInfo *base.PromptInformation
 }
 
+var minify bool
+
 var cmd Cmd
 
 func initCmd(c Cmd) {
@@ -53,6 +55,21 @@ func Setup(parent *cobra.Command) {
 			auth.OmitUser: ""},
 	}
 	config.AddCommand(init)
+
+	deleteContext := &cobra.Command{
+		Use:   "delete [context]",
+		Short: "Delete a context",
+		Args:  cobra.ExactArgs(1),
+		RunE:  cmd.delete,
+		ValidArgsFunction: common.Complete(
+			cmd.completions,
+			common.MaxArgsCompletionFilter(1),
+		),
+		Annotations: map[string]string{
+			auth.OmitUser: "",
+		},
+	}
+	config.AddCommand(deleteContext)
 
 	useContext := &cobra.Command{
 		Use:   "use-context [context]",
@@ -103,6 +120,9 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  cmd.viewConfig,
 	}
+	viewConfig.Flags().BoolVarP(&minify, "minify", "m", false,
+		"Remove all information not used by current-context from the output")
+
 	config.AddCommand(viewConfig)
 
 	parent.AddCommand(config)

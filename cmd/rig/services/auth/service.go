@@ -263,7 +263,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 func (s *Service) CreateProject(ctx context.Context, name string, useNewProject *bool) error {
 	var err error
 	if name == "" {
-		name, err = common.PromptInput("Project name:", common.ValidateNonEmptyOpt)
+		name, err = common.PromptInput("Project ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
@@ -288,7 +288,7 @@ func (s *Service) CreateProject(ctx context.Context, name string, useNewProject 
 	}
 
 	p := res.Msg.GetProject()
-	fmt.Printf("Successfully created project %s with id %s \n", name, p.GetProjectId())
+	fmt.Printf("Successfully created project %s with ID %s \n", name, p.GetProjectId())
 
 	if useNewProject == nil {
 		ok, err := common.PromptConfirm("Would you like to use this project now?", true)
