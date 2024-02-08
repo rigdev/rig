@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -19,7 +20,6 @@ type Auth struct {
 type Context struct {
 	Name          string `yaml:"name"`
 	ServiceName   string `yaml:"service"`
-	UserName      string `yaml:"user"`
 	ProjectID     string `yaml:"project_id"`
 	EnvironmentID string `yaml:"environment_id"`
 
@@ -108,11 +108,20 @@ func (cfg *Config) GetCurrentAuth() *Auth {
 	}
 
 	for _, u := range cfg.Users {
-		if u.Name == c.UserName {
+		if u.Name == c.Name {
 			return u.Auth
 		}
 	}
 	return nil
+}
+
+func (cfg *Config) GetUser(name string) (*User, error) {
+	for _, u := range cfg.Users {
+		if u.Name == name {
+			return u, nil
+		}
+	}
+	return nil, errors.NotFoundErrorf("user %s not found", name)
 }
 
 func (cfg *Config) GetCurrentService() *Service {
@@ -127,6 +136,15 @@ func (cfg *Config) GetCurrentService() *Service {
 		}
 	}
 	return nil
+}
+
+func (cfg *Config) GetService(name string) (*Service, error) {
+	for _, cl := range cfg.Services {
+		if cl.Name == name {
+			return cl, nil
+		}
+	}
+	return nil, errors.NotFoundErrorf("service %s not found", name)
 }
 
 func (cfg *Config) DeleteContext(name string) bool {

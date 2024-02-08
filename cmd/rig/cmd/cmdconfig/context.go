@@ -79,7 +79,6 @@ func (cfg *Config) CreateContext(name, url string) error {
 	cfg.Contexts = append(cfg.Contexts, &Context{
 		Name:          name,
 		ServiceName:   name,
-		UserName:      name,
 		ProjectID:     "",
 		EnvironmentID: "",
 	})
