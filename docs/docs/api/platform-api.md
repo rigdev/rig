@@ -5380,11 +5380,6 @@ Update message for project settings.
 Request to get the license information of the Rig installation.
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  | Deprecated: Only the Rig-Project has license information. |
-
-
 
 
 

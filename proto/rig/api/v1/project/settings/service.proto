@@ -19,7 +19,6 @@ service Service {
 
 // Request to get the license information of the Rig installation.
 message GetLicenseInfoRequest {
-  string project_id = 1; // Deprecated: Only the Rig-Project has license information.
 }
 
 // Response for getting the license information of the Rig installation.
