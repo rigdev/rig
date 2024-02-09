@@ -297,6 +297,7 @@ message AbortRolloutRequest {
   string capsule_id = 1; // The capsule to abort the rollout in.
   uint64 rollout_id = 2; // The rollout to abort.
   string project_id = 3; // The project in which the capsule lives.
+  string environment_id = 4; // The environment the rollout is in.
 }
 
 // AbortRolloutResponse is an empty response.
