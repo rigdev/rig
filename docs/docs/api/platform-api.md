@@ -3631,6 +3631,7 @@ AbortRolloutRequest aborts a rollout.
 | capsule_id | [string](#string) |  | The capsule to abort the rollout in. |
 | rollout_id | [uint64](#uint64) |  | The rollout to abort. |
 | project_id | [string](#string) |  | The project in which the capsule lives. |
+| environment_id | [string](#string) |  | The environment the rollout is in. |
 
 
 

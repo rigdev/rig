@@ -37,10 +37,8 @@ jobs:
       - name: Generate code
         run: task proto
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          args: --timeout 3m
+      - name: lint
+        run: task lint
 
   test:
     runs-on: ubuntu-latest
