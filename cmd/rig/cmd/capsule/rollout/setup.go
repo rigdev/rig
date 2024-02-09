@@ -18,9 +18,8 @@ import (
 )
 
 var (
-	offset    int
-	limit     int
-	rolloutID int
+	offset int
+	limit  int
 )
 
 var forceDeploy bool
@@ -75,7 +74,7 @@ func Setup(parent *cobra.Command) {
 	rollback := &cobra.Command{
 		Use:   "rollback [rollout-id]",
 		Short: "Rollback the capsule to a previous rollout",
-		Args:  cobra.NoArgs,
+		Args:  cobra.MaximumNArgs(1),
 		RunE:  base.CtxWrap(cmd.rollback),
 		ValidArgsFunction: common.Complete(
 			base.CtxWrapCompletion(cmd.completions),
@@ -85,11 +84,6 @@ func Setup(parent *cobra.Command) {
 	rollback.Flags().BoolVarP(
 		&forceDeploy,
 		"force-deploy", "f", false, "Abort the current rollout if one is in progress and perform the rollback",
-	)
-	rollback.Flags().IntVarP(
-		&rolloutID,
-		"rollout-id",
-		"r", -1, "The rollout to rollback to. If not given, will roll back to the latest successful rollout.",
 	)
 	rollout.AddCommand(rollback)
 

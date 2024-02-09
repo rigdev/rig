@@ -2,6 +2,7 @@ package env
 
 import (
 	"context"
+	"fmt"
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -11,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) set(ctx context.Context, _ *cobra.Command, args []string) error {
+func (c *Cmd) set(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if len(args) != 2 {
 		return errors.InvalidArgumentErrorf("expected key and value arguments")
 	}
@@ -59,6 +60,8 @@ func (c *Cmd) set(ctx context.Context, _ *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	cmd.Println(fmt.Sprintf("Environment variable %s=%s set", args[0], args[1]))
 
 	return nil
 }

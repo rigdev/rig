@@ -75,6 +75,8 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 		return err
 	}
 
+	cmd.Println("Horizontal scale updated")
+
 	return nil
 }
 
@@ -164,6 +166,8 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 	if err != nil {
 		return err
 	}
+
+	cmd.Println("Autoscaler updated")
 
 	return nil
 }

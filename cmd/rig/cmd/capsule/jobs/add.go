@@ -269,5 +269,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 		return err
 	}
 
+	cmd.Println("Job deleted")
+
 	return nil
 }

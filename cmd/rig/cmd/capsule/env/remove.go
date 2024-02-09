@@ -2,6 +2,7 @@ package env
 
 import (
 	"context"
+	"fmt"
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -66,6 +67,8 @@ func (c *Cmd) remove(ctx context.Context, cmd *cobra.Command, args []string) err
 	if err != nil {
 		return err
 	}
+
+	cmd.Println(fmt.Sprintf("Environment variable %s removed", key))
 
 	return nil
 }
