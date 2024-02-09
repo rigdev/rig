@@ -73,5 +73,7 @@ func (c *Cmd) remove(ctx context.Context, cmd *cobra.Command, args []string) err
 		return err
 	}
 
+	cmd.Println(fmt.Sprintf("Config file %s removed", path))
+
 	return nil
 }

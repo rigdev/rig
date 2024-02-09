@@ -2,6 +2,7 @@ package rollout
 
 import (
 	"context"
+	"strconv"
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -13,8 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	rolloutID, err := c.getRollback(ctx)
+func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) error {
+	rolloutID, err := c.getRollback(ctx, args[0])
 	if err != nil {
 		return err
 	}
@@ -48,9 +49,14 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, _ []string) erro
 	return nil
 }
 
-func (c *Cmd) getRollback(ctx context.Context) (uint64, error) {
-	if rolloutID >= 0 {
-		return uint64(rolloutID), nil
+func (c *Cmd) getRollback(ctx context.Context, rolloutID string) (uint64, error) {
+	if rolloutID != "" {
+		// parse rolloutID to uint64
+		rolloutID, err := strconv.ParseUint(rolloutID, 10, 64)
+		if err != nil {
+			return 0, errors.InvalidArgumentErrorf("invalid rollout ID: %v", rolloutID)
+		}
+		return rolloutID, nil
 	}
 
 	resp, err := c.Rig.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{

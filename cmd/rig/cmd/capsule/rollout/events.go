@@ -27,6 +27,7 @@ func (c *Cmd) capsuleEvents(ctx context.Context, cmd *cobra.Command, args []stri
 		resp, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 			Msg: &capsule.GetRequest{
 				CapsuleId: capsule_cmd.CapsuleID,
+				ProjectId: flags.GetProject(c.Cfg),
 			},
 		})
 		if err != nil {

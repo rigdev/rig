@@ -17,7 +17,7 @@ var _kinds = map[string]capsule.EnvironmentSource_Kind{
 	"secret":    capsule.EnvironmentSource_KIND_SECRET,
 }
 
-func (c *Cmd) source(ctx context.Context, _ *cobra.Command, args []string) error {
+func (c *Cmd) source(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if len(args) != 2 {
 		return errors.InvalidArgumentErrorf("expected kind and name arguments")
 	}
@@ -81,6 +81,12 @@ func (c *Cmd) source(ctx context.Context, _ *cobra.Command, args []string) error
 	}
 	if err != nil {
 		return err
+	}
+
+	if remove {
+		cmd.Println("Environment source removed")
+	} else {
+		cmd.Println("Environment source added")
 	}
 
 	return nil

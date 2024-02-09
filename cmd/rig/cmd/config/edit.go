@@ -103,6 +103,7 @@ func applyContextChange(cfg *cmdconfig.Config, ctx *cmdconfig.Context, field, va
 		}
 		user.Name = value
 		ctx.Name = value
+		ctx.ServiceName = value
 	case "server":
 		// check if the server host is already configured
 		for _, s := range cfg.Services {

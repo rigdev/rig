@@ -63,7 +63,7 @@ func (c *Cmd) cmdArgs(ctx context.Context, cmd *cobra.Command, args []string) er
 		return err
 	}
 
-	cmd.Println("Capsule configuration updated")
+	cmd.Println("Capsule Command updated")
 
 	return nil
 }
