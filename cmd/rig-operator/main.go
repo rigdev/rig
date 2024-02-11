@@ -14,12 +14,15 @@ import (
 
 	"connectrpc.com/grpcreflect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
+	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
+	"github.com/rigdev/rig/pkg/handler/api/pipeline"
 	"github.com/rigdev/rig/pkg/manager"
 	"github.com/rigdev/rig/pkg/scheme"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
+	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -106,16 +109,20 @@ func run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	pipelineSvc := svcpipeline.NewService(cfg, cc, capabilitiesSvc, log)
+	pipelineH := pipeline.NewHandler(pipelineSvc)
+
 	mux := http.NewServeMux()
-	mux.Handle(capabilitiesconnect.NewServiceHandler(
-		capabilitiesH,
-	))
-	mux.Handle(grpcreflect.NewHandlerV1(
-		grpcreflect.NewStaticReflector(capabilitiesconnect.ServiceName),
-	))
-	mux.Handle(grpcreflect.NewHandlerV1Alpha(
-		grpcreflect.NewStaticReflector(capabilitiesconnect.ServiceName),
-	))
+	mux.Handle(capabilitiesconnect.NewServiceHandler(capabilitiesH))
+	mux.Handle(pipelineconnect.NewServiceHandler(pipelineH))
+	mux.Handle(grpcreflect.NewHandlerV1(grpcreflect.NewStaticReflector(
+		capabilitiesconnect.ServiceName,
+		pipelineconnect.ServiceName,
+	)))
+	mux.Handle(grpcreflect.NewHandlerV1Alpha(grpcreflect.NewStaticReflector(
+		capabilitiesconnect.ServiceName,
+		pipelineconnect.ServiceName,
+	)))
 
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)

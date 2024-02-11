@@ -309,20 +309,14 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
-	capabilities, err := r.CapabilitiesService.Get(ctx)
+	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	p := pipeline.New(r.Client, r.Config, r.Scheme, log)
-
-	p.AddStep(NewServiceAccountStep())
-	p.AddStep(NewDeploymentStep())
-	p.AddStep(NewVPAStep())
-	p.AddStep(NewNetworkStep())
-	p.AddStep(NewCronJobStep())
-	if capabilities.GetHasPrometheusServiceMonitor() {
-		p.AddStep(NewServiceMonitorStep())
+	for _, step := range steps {
+		p.AddStep(step)
 	}
 
 	for _, step := range r.Config.Steps {
@@ -335,7 +329,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		defer ps.Stop(ctx)
 	}
 
-	if err := p.RunCapsule(ctx, capsule); err != nil {
+	if _, err := p.RunCapsule(ctx, capsule, false); err != nil {
 		log.Error(err, "reconciliation ended with error")
 		return ctrl.Result{}, err
 	}
@@ -343,4 +337,27 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log.Info("reconciliation completed successfully")
 
 	return ctrl.Result{}, nil
+}
+
+func GetDefaultPipelineSteps(ctx context.Context, capSvc capabilities.Service) ([]pipeline.Step, error) {
+	capabilities, err := capSvc.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var steps []pipeline.Step
+
+	steps = append(steps,
+		NewServiceAccountStep(),
+		NewDeploymentStep(),
+		NewVPAStep(),
+		NewNetworkStep(),
+		NewCronJobStep(),
+	)
+
+	if capabilities.GetHasPrometheusServiceMonitor() {
+		steps = append(steps, NewServiceMonitorStep())
+	}
+
+	return steps, nil
 }

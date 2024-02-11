@@ -232,23 +232,26 @@ func (r *capsuleRequest) loadExisting(ctx context.Context) error {
 	return nil
 }
 
-func (r *capsuleRequest) prepare() {
+func (r *capsuleRequest) prepare() *Result {
+	result := &Result{}
 	r.usedResources = nil
 	r.objects = map[objectKey]*Object{}
 	for k, o := range r.currentObjects {
 		r.objects[k] = &Object{
 			Current: o.DeepCopyObject().(client.Object),
 		}
+		result.InputObjects = append(result.InputObjects, o.DeepCopyObject().(client.Object))
 	}
+	return result
 }
 
 type change struct {
-	state   resourceState
+	state   ResourceState
 	applied bool
 	err     error
 }
 
-func (r *capsuleRequest) commit(ctx context.Context) error {
+func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey]*change, error) {
 	allKeys := maps.Keys(r.objects)
 
 	// Prepare all the new objects with default labels / owner refs.
@@ -266,7 +269,7 @@ func (r *capsuleRequest) commit(ctx context.Context) error {
 		obj.New.SetLabels(labels)
 
 		if err := controllerutil.SetControllerReference(r.capsule, obj.New, r.pipeline.scheme); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -279,29 +282,29 @@ func (r *capsuleRequest) commit(ctx context.Context) error {
 		if obj.Current == nil {
 			materializedObj := obj.New.DeepCopyObject().(client.Object)
 			if err := r.pipeline.client.Create(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
-				return errors.FailedPreconditionErrorf("new object version available for '%v'", key)
+				return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
 			} else if kerrors.IsAlreadyExists(err) {
 				o, err2 := r.pipeline.scheme.New(key.GroupVersionKind)
 				if err2 != nil {
-					return err
+					return nil, err
 				}
 
 				co := o.(client.Object)
 				if err := r.pipeline.client.Get(ctx, key.ObjectKey, co); err != nil {
-					return fmt.Errorf("could not get existing object: %w", err)
+					return nil, fmt.Errorf("could not get existing object: %w", err)
 				}
 
 				if IsOwnedBy(r.capsule, co) {
 					r.logger.Info("object exists but not in status, retrying", "object", key)
 					r.currentObjects[key] = co
-					return errors.AbortedErrorf("object exists but not in capsule status")
+					return nil, errors.AbortedErrorf("object exists but not in capsule status")
 				}
 
 				r.logger.Info("create object skipped, not owned by controller", "object", key)
 				changes[key] = &change{state: _resourceStateAlreadyExists}
 				continue
 			} else if err != nil {
-				return fmt.Errorf("could not render create to %s: %w", key.GroupVersionKind, err)
+				return nil, fmt.Errorf("could not render create to %s: %w", key.GroupVersionKind, err)
 			}
 
 			r.logger.Info("create object", "object", key)
@@ -327,9 +330,9 @@ func (r *capsuleRequest) commit(ctx context.Context) error {
 		// Dry run to fully materialize the new spec.
 		materializedObj.SetResourceVersion(obj.Current.GetResourceVersion())
 		if err := r.pipeline.client.Update(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
-			return errors.FailedPreconditionErrorf("new object version available for '%v'", key)
+			return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
 		} else if err != nil {
-			return fmt.Errorf("could not render update to %s: %w", key.GroupVersionKind, err)
+			return nil, fmt.Errorf("could not render update to %s: %w", key.GroupVersionKind, err)
 		}
 
 		if ObjectsEquals(obj.Current, materializedObj) {
@@ -354,12 +357,16 @@ func (r *capsuleRequest) commit(ctx context.Context) error {
 		}
 		if !hasChanges {
 			r.logger.Info("no changes to apply", "generation", r.observedGeneration)
-			return nil
+			return changes, nil
 		}
 	}
 
+	if dryRun {
+		return changes, nil
+	}
+
 	if err := r.updateStatusChanges(ctx, changes, r.observedGeneration); err != nil {
-		return err
+		return nil, err
 	}
 
 	var errs []error
@@ -373,17 +380,17 @@ func (r *capsuleRequest) commit(ctx context.Context) error {
 	}
 
 	if err := errors.Join(errs...); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := r.updateStatusChanges(ctx, changes, r.capsule.Generation); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return changes, nil
 }
 
-func (r *capsuleRequest) applyChange(ctx context.Context, key objectKey, state resourceState) error {
+func (r *capsuleRequest) applyChange(ctx context.Context, key objectKey, state ResourceState) error {
 	switch state {
 	case _resourceStateUpdated:
 		r.logger.Info("update object", "object", key)
@@ -411,16 +418,16 @@ func (r *capsuleRequest) applyChange(ctx context.Context, key objectKey, state r
 	return nil
 }
 
-type resourceState string
+type ResourceState string
 
 const (
-	_resourceStateDeleted       resourceState = "deleted"
-	_resourceStateUpdated       resourceState = "updated"
-	_resourceStateUnchanged     resourceState = "unchanged"
-	_resourceStateCreated       resourceState = "created"
-	_resourceStateFailed        resourceState = "failed"
-	_resourceStateAlreadyExists resourceState = "alreadyExists"
-	_resourceStateChangePending resourceState = "changePending"
+	_resourceStateDeleted       ResourceState = "deleted"
+	_resourceStateUpdated       ResourceState = "updated"
+	_resourceStateUnchanged     ResourceState = "unchanged"
+	_resourceStateCreated       ResourceState = "created"
+	_resourceStateFailed        ResourceState = "failed"
+	_resourceStateAlreadyExists ResourceState = "alreadyExists"
+	_resourceStateChangePending ResourceState = "changePending"
 )
 
 func (r *capsuleRequest) updateStatusChanges(

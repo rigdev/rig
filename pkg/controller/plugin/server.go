@@ -196,5 +196,5 @@ func StartPlugin(name string, rigPlugin Server) {
 }
 
 func LoadYAMLConfig(data []byte, out interface{}) error {
-	return obj.DecodeYAML(data, out)
+	return obj.Decode(data, out)
 }
