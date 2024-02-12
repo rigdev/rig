@@ -428,7 +428,7 @@ _Appears in:_
 
 
 
-OperatorConfig is the Schema for the configs API
+OperatorConfig is the Schema for the operator config API
 
 
 
@@ -451,7 +451,7 @@ OperatorConfig is the Schema for the configs API
 
 
 
-OperatorConfig is the Schema for the configs API
+PlatformConfig is the Schema for the platform config API
 
 
 
