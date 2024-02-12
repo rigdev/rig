@@ -24,6 +24,7 @@
 | /api.v1.authentication.Service/GetAuthConfig | [GetAuthConfigRequest](#api-v1-authentication-GetAuthConfigRequest) | [GetAuthConfigResponse](#api-v1-authentication-GetAuthConfigResponse) | Get auth config for how available login methods |
 | /api.v1.authentication.Service/VerifyEmail | [VerifyEmailRequest](#api-v1-authentication-VerifyEmailRequest) | [VerifyEmailResponse](#api-v1-authentication-VerifyEmailResponse) | Verify email |
 | /api.v1.authentication.Service/VerifyPhoneNumber | [VerifyPhoneNumberRequest](#api-v1-authentication-VerifyPhoneNumberRequest) | [VerifyPhoneNumberResponse](#api-v1-authentication-VerifyPhoneNumberResponse) | Verify phone number |
+| /api.v1.authentication.Service/SendVerificationEmail | [SendVerificationEmailRequest](#api-v1-authentication-SendVerificationEmailRequest) | [SendVerificationEmailResponse](#api-v1-authentication-SendVerificationEmailResponse) |  |
 
 
 
@@ -831,6 +832,33 @@ Request to send a reset password email to the user. This is only possible if an 
 
 ### SendPasswordResetResponse
 Empty response to the send password reset request
+
+
+
+
+
+
+<a name="api-v1-authentication-SendVerificationEmailRequest"></a>
+
+### SendVerificationEmailRequest
+Request to send an email containing the code for the email verification flow.
+This is an upsert, and will invalidate the current verification-code if it exists.
+Only possible if an email-provider is configured, and the user has en email.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| identifier | [model.UserIdentifier](#model-UserIdentifier) |  | User identifier of the user. |
+
+
+
+
+
+
+<a name="api-v1-authentication-SendVerificationEmailResponse"></a>
+
+### SendVerificationEmailResponse
+Empty response for sending a verification email
 
 
 

@@ -32,7 +32,18 @@ service Service {
   // Verify phone number
   rpc VerifyPhoneNumber(VerifyPhoneNumberRequest)
       returns (VerifyPhoneNumberResponse) {}
+  rpc SendVerificationEmail(SendVerificationEmailRequest) returns (SendVerificationEmailResponse) {}
 }
+
+// Request to send an email containing the code for the email verification flow.
+// This is an upsert, and will invalidate the current verification-code if it exists.
+// Only possible if an email-provider is configured, and the user has en email.
+message SendVerificationEmailRequest {
+  model.UserIdentifier identifier = 1; // User identifier of the user.
+}
+
+// Empty response for sending a verification email
+message SendVerificationEmailResponse {}
 
 // Request to verify the email of a user with a verification code sent to the email.
 message VerifyEmailRequest {
