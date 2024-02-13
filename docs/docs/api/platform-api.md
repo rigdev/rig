@@ -834,6 +834,11 @@ Request to send a reset password email to the user. This is only possible if an 
 Empty response to the send password reset request
 
 
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| token | [string](#string) |  | The token used as accesstoken to reset the password. |
+
+
 
 
 
@@ -859,6 +864,11 @@ Only possible if an email-provider is configured, and the user has en email.
 
 ### SendVerificationEmailResponse
 Empty response for sending a verification email
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| token | [string](#string) |  | The token used as accesstoken to verify the email. |
 
 
 
