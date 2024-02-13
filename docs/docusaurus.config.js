@@ -50,13 +50,6 @@ const config = {
     }
   ],
 
-  scripts: [
-    "https://js-eu1.hs-scripts.com/139684927.js",
-    {
-      src: '/js/segment.js'
-    },
-  ],
-
   stylesheets: [
     "https://doc.gendocu.com/widget/documentation.css"
   ],
