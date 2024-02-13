@@ -10,7 +10,7 @@ const config = {
   tagline: 'Explore and learn how to use Rig',
   favicon: 'img/favicon.ico',
   // Set the production url of your site here
-  url: 'https://rig.dev',
+  url: 'https://docs.rig.dev',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
