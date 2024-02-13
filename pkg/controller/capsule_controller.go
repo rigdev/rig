@@ -326,7 +326,13 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	for _, step := range r.Config.Steps {
-		p.AddStep(plugin.NewStep(step))
+		ps, err := plugin.NewStep(step, log)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		p.AddStep(ps)
+		defer ps.Stop(ctx)
 	}
 
 	if err := p.Run(ctx); err != nil {

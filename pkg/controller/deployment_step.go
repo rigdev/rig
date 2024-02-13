@@ -10,6 +10,7 @@ import (
 
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/hash"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
@@ -31,7 +32,7 @@ func NewDeploymentStep() *DeploymentStep {
 	return &DeploymentStep{}
 }
 
-func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.Request) error {
+func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.CapsuleRequest) error {
 	cfgs, err := s.getConfigs(ctx, req)
 	if err != nil {
 		return err
@@ -42,15 +43,21 @@ func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.Request) error 
 		return err
 	}
 
-	key := req.ObjectKey(pipeline.AppsDeploymentGVK)
-	current := pipeline.GetCurrent[*appsv1.Deployment](req, key)
+	current := &appsv1.Deployment{}
+	if err := req.GetCurrent(current); errors.IsNotFound(err) {
+		current = nil
+	} else if err != nil {
+		return err
+	}
 
 	deployment, err := s.createDeployment(current, req, cfgs, checksums)
 	if err != nil {
 		return err
 	}
 
-	req.Set(key, deployment)
+	if err := req.Set(deployment); err != nil {
+		return err
+	}
 
 	if ok, err := s.shouldCreateHPA(req); err != nil {
 		return err
@@ -60,14 +67,16 @@ func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.Request) error 
 			return err
 		}
 
-		req.Set(req.ObjectKey(pipeline.AutoscalingvHorizontalPodAutoscalerGVK), hpa)
+		if err := req.Set(hpa); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func (s *DeploymentStep) createDeployment(
-	current *appsv1.Deployment, req pipeline.Request, cfgs *configs, checksums checksums,
+	current *appsv1.Deployment, req pipeline.CapsuleRequest, cfgs *configs, checksums checksums,
 ) (*appsv1.Deployment, error) {
 	var volumes []v1.Volume
 	var volumeMounts []v1.VolumeMount
@@ -240,7 +249,7 @@ func (s *DeploymentStep) createDeployment(
 	return d, nil
 }
 
-func (s *DeploymentStep) getConfigChecksums(req pipeline.Request, cfgs configs) (checksums, error) {
+func (s *DeploymentStep) getConfigChecksums(req pipeline.CapsuleRequest, cfgs configs) (checksums, error) {
 	sharedEnv, err := configSharedEnvChecksum(cfgs)
 	if err != nil {
 		return checksums{}, err
@@ -322,7 +331,7 @@ func configAutoEnvChecksum(
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func configEnvChecksum(req pipeline.Request, cfgs configs) (string, error) {
+func configEnvChecksum(req pipeline.CapsuleRequest, cfgs configs) (string, error) {
 	if req.Capsule().Spec.Env == nil || len(req.Capsule().Spec.Env.From) == 0 {
 		return "", nil
 	}
@@ -344,7 +353,7 @@ func configEnvChecksum(req pipeline.Request, cfgs configs) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func configFilesChecksum(req pipeline.Request, cfgs configs) (string, error) {
+func configFilesChecksum(req pipeline.CapsuleRequest, cfgs configs) (string, error) {
 	if len(req.Capsule().Spec.Files) == 0 {
 		return "", nil
 	}
@@ -399,7 +408,7 @@ func configFilesChecksum(req pipeline.Request, cfgs configs) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.Request) (*configs, error) {
+func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleRequest) (*configs, error) {
 	cfgs := &configs{
 		configMaps: map[string]*v1.ConfigMap{},
 		secrets:    map[string]*v1.Secret{},
@@ -470,7 +479,7 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.Request) (
 
 func (s *DeploymentStep) setUsedSource(
 	ctx context.Context,
-	req pipeline.Request,
+	req pipeline.CapsuleRequest,
 	cfgs *configs,
 	kind string,
 	name string,
@@ -528,7 +537,7 @@ func (s *DeploymentStep) setUsedSource(
 	return nil
 }
 
-func (s *DeploymentStep) shouldCreateHPA(req pipeline.Request) (bool, error) {
+func (s *DeploymentStep) shouldCreateHPA(req pipeline.CapsuleRequest) (bool, error) {
 	_, res, err := s.createHPA(req)
 	if err != nil {
 		return false, err
@@ -536,7 +545,7 @@ func (s *DeploymentStep) shouldCreateHPA(req pipeline.Request) (bool, error) {
 	return res, nil
 }
 
-func (s *DeploymentStep) createHPA(req pipeline.Request) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
+func (s *DeploymentStep) createHPA(req pipeline.CapsuleRequest) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,

@@ -14,13 +14,12 @@ func NewServiceAccountStep() *ServiceAccountStep {
 	return &ServiceAccountStep{}
 }
 
-func (s *ServiceAccountStep) Apply(_ context.Context, req pipeline.Request) error {
+func (s *ServiceAccountStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
 	sa := s.createServiceAccount(req)
-	req.Set(req.ObjectKey(pipeline.CoreServiceAccount), sa)
-	return nil
+	return req.Set(sa)
 }
 
-func (s *ServiceAccountStep) createServiceAccount(req pipeline.Request) *corev1.ServiceAccount {
+func (s *ServiceAccountStep) createServiceAccount(req pipeline.CapsuleRequest) *corev1.ServiceAccount {
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,

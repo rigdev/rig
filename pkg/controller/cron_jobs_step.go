@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
@@ -20,24 +21,29 @@ func NewCronJobStep() *CronJobStep {
 	return &CronJobStep{}
 }
 
-func (s *CronJobStep) Apply(_ context.Context, req pipeline.Request) error {
+func (s *CronJobStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
 	jobs, err := s.createCronJobs(req)
 	if err != nil {
 		return err
 	}
 
 	for _, job := range jobs {
-		req.Set(req.NamedObjectKey(job.Name, pipeline.BatchCronJobGVK), job)
+		if err := req.Set(job); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (s *CronJobStep) createCronJobs(req pipeline.Request) ([]*batchv1.CronJob, error) {
+func (s *CronJobStep) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.CronJob, error) {
 	var res []*batchv1.CronJob
-	deployment := pipeline.Get[*appsv1.Deployment](req, req.ObjectKey(pipeline.AppsDeploymentGVK))
-	if deployment == nil {
+	deployment := &appsv1.Deployment{}
+	if err := req.GetNew(deployment); errors.IsNotFound(err) {
+		// TODO(anders): We should support this for command jobs.
 		return nil, nil
+	} else if err != nil {
+		return nil, err
 	}
 
 	for _, job := range req.Capsule().Spec.CronJobs {

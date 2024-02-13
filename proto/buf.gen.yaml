@@ -15,6 +15,11 @@ plugins:
     out: gen/go/rig
     opt:
       - paths=source_relative
+  - name: go-grpc
+    path: tools/bin/protoc-gen-go-grpc
+    out: gen/go/rig
+    opt:
+      - paths=source_relative
   - name: doc
     path: tools/bin/protoc-gen-doc
     out: docs/docs/api

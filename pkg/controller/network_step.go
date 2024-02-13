@@ -7,6 +7,7 @@ import (
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,16 +23,18 @@ func NewNetworkStep() *NetworkStep {
 	return &NetworkStep{}
 }
 
-func (s *NetworkStep) Apply(_ context.Context, req pipeline.Request) error {
+func (s *NetworkStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
 	// If no interfaces are defined, no changes are needed.
 	if len(req.Capsule().Spec.Interfaces) == 0 {
 		return nil
 	}
 
-	deployment := pipeline.Get[*appsv1.Deployment](req, req.ObjectKey(pipeline.AppsDeploymentGVK))
-	if deployment == nil {
+	deployment := &appsv1.Deployment{}
+	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		// We assume service and ingress are not needed if the deployment doesn't exist.
 		return nil
+	} else if err != nil {
+		return err
 	}
 
 	for i, container := range deployment.Spec.Template.Spec.Containers {
@@ -72,26 +75,36 @@ func (s *NetworkStep) Apply(_ context.Context, req pipeline.Request) error {
 		deployment.Spec.Template.Spec.Containers[i] = container
 	}
 
-	req.Set(req.ObjectKey(pipeline.AppsDeploymentGVK), deployment)
+	if err := req.Set(deployment); err != nil {
+		return err
+	}
 
-	req.Set(req.ObjectKey(pipeline.CoreServiceGVK), s.createService(req))
+	if err := req.Set(s.createService(req)); err != nil {
+		return err
+	}
 
 	if capsuleHasLoadBalancer(req) {
 		lb := s.createLoadBalancer(req)
-		req.Set(req.NamedObjectKey(lb.Name, pipeline.CoreServiceGVK), lb)
+		if err := req.Set(lb); err != nil {
+			return err
+		}
 	}
 
 	if ingressIsSupported(req) && capsuleHasIngress(req) {
-		req.Set(req.ObjectKey(pipeline.NetIngressGVK), s.createIngress(req))
-		if shouldCreateCertificateRessource(req) {
-			req.Set(req.ObjectKey(pipeline.CMCertificateGVK), s.createCertificate(req))
+		if err := req.Set(s.createIngress(req)); err != nil {
+			return err
+		}
+		if shouldCreateCertificateResource(req) {
+			if err := req.Set(s.createCertificate(req)); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func (s *NetworkStep) createService(req pipeline.Request) *corev1.Service {
+func (s *NetworkStep) createService(req pipeline.CapsuleRequest) *corev1.Service {
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
@@ -119,7 +132,7 @@ func (s *NetworkStep) createService(req pipeline.Request) *corev1.Service {
 	return svc
 }
 
-func (s *NetworkStep) createCertificate(req pipeline.Request) *cmv1.Certificate {
+func (s *NetworkStep) createCertificate(req pipeline.CapsuleRequest) *cmv1.Certificate {
 	crt := &cmv1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
@@ -146,7 +159,7 @@ func (s *NetworkStep) createCertificate(req pipeline.Request) *cmv1.Certificate 
 	return crt
 }
 
-func (s *NetworkStep) createIngress(req pipeline.Request) *netv1.Ingress {
+func (s *NetworkStep) createIngress(req pipeline.CapsuleRequest) *netv1.Ingress {
 	ing := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        req.Capsule().Name,
@@ -159,7 +172,7 @@ func (s *NetworkStep) createIngress(req pipeline.Request) *netv1.Ingress {
 		ing.Spec.IngressClassName = ptr.New(req.Config().Ingress.ClassName)
 	}
 
-	if ingressIsSupported(req) && !req.Config().Ingress.IsTLSDisabled() && !shouldCreateCertificateRessource(req) {
+	if ingressIsSupported(req) && !req.Config().Ingress.IsTLSDisabled() && !shouldCreateCertificateResource(req) {
 		ing.Annotations["cert-manager.io/cluster-issuer"] = req.Config().Certmanager.ClusterIssuer
 	}
 
@@ -227,7 +240,7 @@ func (s *NetworkStep) createIngress(req pipeline.Request) *netv1.Ingress {
 	return ing
 }
 
-func (s *NetworkStep) createLoadBalancer(req pipeline.Request) *v1.Service {
+func (s *NetworkStep) createLoadBalancer(req pipeline.CapsuleRequest) *v1.Service {
 	svc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-lb", req.Capsule().Name),
@@ -254,18 +267,18 @@ func (s *NetworkStep) createLoadBalancer(req pipeline.Request) *v1.Service {
 	return svc
 }
 
-func shouldCreateCertificateRessource(req pipeline.Request) bool {
+func shouldCreateCertificateResource(req pipeline.CapsuleRequest) bool {
 	return req.Config().Certmanager != nil &&
 		req.Config().Certmanager.CreateCertificateResources &&
 		!req.Config().Ingress.IsTLSDisabled()
 }
 
-func ingressIsSupported(req pipeline.Request) bool {
+func ingressIsSupported(req pipeline.CapsuleRequest) bool {
 	return req.Config().Ingress.IsTLSDisabled() ||
 		(req.Config().Certmanager != nil && req.Config().Certmanager.ClusterIssuer != "")
 }
 
-func capsuleHasIngress(req pipeline.Request) bool {
+func capsuleHasIngress(req pipeline.CapsuleRequest) bool {
 	for _, inf := range req.Capsule().Spec.Interfaces {
 		if inf.Public != nil && inf.Public.Ingress != nil {
 			return true
@@ -274,7 +287,7 @@ func capsuleHasIngress(req pipeline.Request) bool {
 	return false
 }
 
-func capsuleHasLoadBalancer(req pipeline.Request) bool {
+func capsuleHasLoadBalancer(req pipeline.CapsuleRequest) bool {
 	for _, inf := range req.Capsule().Spec.Interfaces {
 		if inf.Public != nil && inf.Public.LoadBalancer != nil {
 			return true
