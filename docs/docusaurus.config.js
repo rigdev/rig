@@ -35,7 +35,7 @@ const config = {
     [
       '@docusaurus/plugin-google-tag-manager',
       {
-        containerId: 'G-2LXVH0546L',
+        containerId: 'GTM-P2VBJ6K',
       }
     ],
     (context, opts) => {
