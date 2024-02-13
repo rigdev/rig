@@ -43,7 +43,9 @@ message SendVerificationEmailRequest {
 }
 
 // Empty response for sending a verification email
-message SendVerificationEmailResponse {}
+message SendVerificationEmailResponse {
+  string token = 1; // The token used as accesstoken to verify the email.
+}
 
 // Request to verify the email of a user with a verification code sent to the email.
 message VerifyEmailRequest {
@@ -113,7 +115,9 @@ message SendPasswordResetRequest {
 }
 
 // Empty response to the send password reset request
-message SendPasswordResetResponse {}
+message SendPasswordResetResponse {
+  string token = 1; // The token used as accesstoken to reset the password.
+}
 
 // Request to reset the password of a user with a verification code sent to the email.
 message ResetPasswordRequest {
