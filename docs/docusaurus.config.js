@@ -44,6 +44,16 @@ const config = {
         containerId: 'GTM-P2VBJ6K',
       }
     ],
+    (context, opts) => {
+      return {
+        name: 'tidio',
+        injectHtmlTags({content}) {
+          return {
+            postBodyTags: [`<script src="//code.tidio.co/nzmuyu07fgt8wm0jkj4dv0rj9ti2djfw.js" async></script>`],
+          };
+        }
+      };
+    }
   ],
 
   scripts: [
