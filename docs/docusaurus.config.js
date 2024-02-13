@@ -33,12 +33,6 @@ const config = {
 
   plugins: [
     [
-      "docusaurus-plugin-segment",
-      {
-        apiKey: "6hg2Pns6KKDV7j7xCmc9hlg8mroLjYYD" //process.env.SEGMENT_API_KEY || "temp",
-      },
-    ],
-    [
       '@docusaurus/plugin-google-tag-manager',
       {
         containerId: 'GTM-P2VBJ6K',
@@ -54,13 +48,6 @@ const config = {
         }
       };
     }
-  ],
-
-  scripts: [
-    "https://js-eu1.hs-scripts.com/139684927.js",
-    {
-      src: '/js/segment.js'
-    },
   ],
 
   stylesheets: [
