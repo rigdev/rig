@@ -68,4 +68,12 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - cert-manager.io/v1
+  resources:
+  - certificates
+  verbs:
+  - get
+  - list
+  - watch
 {{- end -}}
