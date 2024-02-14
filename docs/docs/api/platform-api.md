@@ -759,6 +759,7 @@ Request to reset the password of a user with a verification code sent to the ema
 | code | [string](#string) |  | The 6 digit verification code |
 | new_password | [string](#string) |  | The new password |
 | identifier | [model.UserIdentifier](#model-UserIdentifier) |  | Identifier of the user |
+| token | [string](#string) |  | JWT token to reset the password. |
 
 
 
@@ -836,7 +837,7 @@ Empty response to the send password reset request
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| token | [string](#string) |  | The token used as accesstoken to reset the password. |
+| token | [string](#string) |  | JWT token to reset the password. |
 
 
 
@@ -868,7 +869,7 @@ Empty response for sending a verification email
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| token | [string](#string) |  | The token used as accesstoken to verify the email. |
+| token | [string](#string) |  | JWT token to verify the email. |
 
 
 
@@ -885,6 +886,7 @@ Request to verify the email of a user with a verification code sent to the email
 | ----- | ---- | ----- | ----------- |
 | code | [string](#string) |  | The verification code. |
 | email | [string](#string) |  | The email of the user. |
+| token | [string](#string) |  | JWT token to verify the email. |
 
 
 

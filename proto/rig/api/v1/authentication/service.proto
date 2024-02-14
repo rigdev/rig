@@ -44,13 +44,14 @@ message SendVerificationEmailRequest {
 
 // Empty response for sending a verification email
 message SendVerificationEmailResponse {
-  string token = 1; // The token used as accesstoken to verify the email.
+  string token = 1; // JWT token to verify the email.
 }
 
 // Request to verify the email of a user with a verification code sent to the email.
 message VerifyEmailRequest {
   string code = 1; // The verification code.
   string email = 2; // The email of the user.
+  string token = 3; // JWT token to verify the email.
 }
 
 // Empty response to the Verify Email Request.
@@ -116,7 +117,7 @@ message SendPasswordResetRequest {
 
 // Empty response to the send password reset request
 message SendPasswordResetResponse {
-  string token = 1; // The token used as accesstoken to reset the password.
+  string token = 1; // JWT token to reset the password.
 }
 
 // Request to reset the password of a user with a verification code sent to the email.
@@ -124,6 +125,7 @@ message ResetPasswordRequest {
   string code = 1; // The 6 digit verification code
   string new_password = 2; // The new password
   model.UserIdentifier identifier = 3; // Identifier of the user
+  string token = 4; // JWT token to reset the password.
 }
 
 // Empty response to the reset password request
