@@ -94,17 +94,6 @@ app.kubernetes.io/component: postgres
 {{- end }}
 
 {{/*
-Create the name of the service account to use
-*/}}
-{{- define "rig-platform.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "rig-platform.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-{{/*
 Create the name of the config secret
 */}}
 {{- define "rig-platform.secretName" -}}

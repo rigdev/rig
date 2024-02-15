@@ -6,7 +6,7 @@ metadata:
   labels: {{ include "rig-platform.labels" . | nindent 4 }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "rig-platform.serviceAccountName" . }}
+  name: rig-platform
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
