@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1.role;
 
 import "api/v1/role/role.proto";
+import "api/v1/role/action.proto";
 import "model/common.proto";
 
 // Service to manage roles that controls the RBAC.
@@ -21,6 +22,27 @@ service Service {
   rpc Assign(AssignRequest) returns (AssignResponse) {}
   // Revoke a role.
   rpc Revoke(RevokeRequest) returns (RevokeResponse) {}
+  // Evaluate if an entity has permissions for a set of actions.
+  rpc Evaluate(EvaluateRequest) returns (EvaluateResponse) {}
+}
+
+// Request Evaluate entity rights on the given actions.
+message EvaluateRequest {
+  api.v1.role.EntityID entity_id = 1; // The entity to evaluate permissions for.
+  repeated api.v1.role.Action actions = 2; // The actions to evaluate.
+  api.v1.role.Scope scope = 3; // The scope to evaluate the permissions in.
+}
+
+
+// Reponse to evaluate entity rights, with an output for each action in the request.
+message EvaluateResponse {
+  message ActionOutput {
+    api.v1.role.Action action = 1; // The action that was evaluated.
+    bool allowed = 2; // Whether the entity has permission for the action.
+    repeated string resources = 3; // The resources that the entity has permission for.
+  }
+
+  repeated ActionOutput outputs = 1; // The evaluated permissions.
 }
 
 // Request to create a role.

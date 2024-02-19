@@ -189,6 +189,7 @@
 
 
 
+
 ### api.v1.role.Service
 <a name="api-v1-role-Service"></a>
 
@@ -203,6 +204,7 @@
 | /api.v1.role.Service/Get | [GetRequest](#api-v1-role-GetRequest) | [GetResponse](#api-v1-role-GetResponse) | Get role. |
 | /api.v1.role.Service/Assign | [AssignRequest](#api-v1-role-AssignRequest) | [AssignResponse](#api-v1-role-AssignResponse) | Assign a role. |
 | /api.v1.role.Service/Revoke | [RevokeRequest](#api-v1-role-RevokeRequest) | [RevokeResponse](#api-v1-role-RevokeResponse) | Revoke a role. |
+| /api.v1.role.Service/Evaluate | [EvaluateRequest](#api-v1-role-EvaluateRequest) | [EvaluateResponse](#api-v1-role-EvaluateResponse) | Evaluate if an entity has permissions for a set of actions. |
 
 
 
@@ -5498,6 +5500,67 @@ Empty response for updating a project's settings.
 
 
 
+<a name="api_v1_role_action-proto"></a>
+
+## api/v1/role/action.proto
+
+
+
+
+
+<a name="api-v1-role-Action"></a>
+
+### Action
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| UNDEFINED | 0 |  |
+| USER_VIEW | 1 |  |
+| USER_EDIT | 2 |  |
+| SETTINGS_VIEW | 3 |  |
+| SETTINGS_EDIT | 4 |  |
+| GROUP_VIEW | 5 |  |
+| GROUP_EDIT | 6 |  |
+| ROLE_VIEW | 7 |  |
+| ROLE_EDIT | 8 |  |
+| ROLE_ASSIGN | 9 |  |
+| ROLE_REVOKE | 10 |  |
+| SERVICE_ACCOUNT_VIEW | 11 |  |
+| SERVICE_ACCOUNT_EDIT | 12 |  |
+| PROJECT_VIEW | 13 |  |
+| PROJECT_EDIT | 14 |  |
+| CLUSTER_CONFIG_VIEW | 15 |  |
+| CAPSULE_VIEW | 16 |  |
+| CAPSULE_EDIT | 17 |  |
+| CAPSULE_CREATE | 18 |  |
+| CAPSULE_DELETE | 19 |  |
+| CAPSULE_EXECUTE | 20 |  |
+| CAPSULE_RESTART | 21 |  |
+| CAPSULE_ABORT | 22 |  |
+| CAPSULE_DEPLOY | 23 |  |
+| CASPULE_DEPLOY_REPLICA | 24 |  |
+| CAPSULE_DEPLOY_AUTOSCALE | 25 |  |
+| CAPSULE_DEPLOY_CONTAINER | 26 |  |
+| CAPSULE_DEPLOY_CONFIG_FILE | 27 |  |
+| CAPSULE_DEPLOY_NETWORK | 28 |  |
+| CAPSULE_DEPLOY_BUILD | 29 |  |
+| CAPSULE_DEPLOY_CRON | 30 |  |
+| CAPSULE_DEPLOY_ENVIRONMENT_VARIABLES | 31 |  |
+| CAPSULE_DEPLOY_ENVIRONMENT_SOURCES | 32 |  |
+| CAPSULE_DEPLOY_ROLLBACK | 33 |  |
+| CAPSULE_DEPLOY_SERVICE_ACCOUNT | 34 |  |
+| BUILD_VIEW | 35 |  |
+| BUILD_CREATE | 36 |  |
+| BUILD_DELETE | 37 |  |
+
+
+
+
+
+
+
+
 <a name="api_v1_role_role-proto"></a>
 
 ## api/v1/role/role.proto
@@ -5529,7 +5592,7 @@ A permission that is granted to a role.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| action | [string](#string) |  | The action that is action permission to perform. |
+| action | [Action](#api-v1-role-Action) |  | The action that is action permission to perform. |
 | scope | [Scope](#api-v1-role-Scope) |  | The scope in which the action can be performed. |
 
 
@@ -5696,6 +5759,55 @@ Request to delete a role.
 
 ### DeleteResponse
 Empty Response to delete a role.
+
+
+
+
+
+
+<a name="api-v1-role-EvaluateRequest"></a>
+
+### EvaluateRequest
+Request Evaluate entity rights on the given actions.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity_id | [EntityID](#api-v1-role-EntityID) |  | The entity to evaluate permissions for. |
+| actions | [Action](#api-v1-role-Action) | repeated | The actions to evaluate. |
+| scope | [Scope](#api-v1-role-Scope) |  | The scope to evaluate the permissions in. |
+
+
+
+
+
+
+<a name="api-v1-role-EvaluateResponse"></a>
+
+### EvaluateResponse
+Reponse to evaluate entity rights, with an output for each action in the request.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| outputs | [EvaluateResponse.ActionOutput](#api-v1-role-EvaluateResponse-ActionOutput) | repeated | The evaluated permissions. |
+
+
+
+
+
+
+<a name="api-v1-role-EvaluateResponse-ActionOutput"></a>
+
+### EvaluateResponse.ActionOutput
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| action | [Action](#api-v1-role-Action) |  | The action that was evaluated. |
+| allowed | [bool](#bool) |  | Whether the entity has permission for the action. |
+| resources | [string](#string) | repeated | The resources that the entity has permission for. |
 
 
 
