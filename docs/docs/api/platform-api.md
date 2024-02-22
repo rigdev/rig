@@ -3228,6 +3228,23 @@ A step configuring a capsule.
 
 
 
+<a name="api-v1-capsule-rollout-ConfigureCommitStep"></a>
+
+### ConfigureCommitStep
+A step committing the changes to git
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information |
+| commit_hash | [string](#string) |  | The hash of the commit containing the changes |
+| commit_url | [string](#string) |  | The url to the commit (if known. May be empty) |
+
+
+
+
+
+
 <a name="api-v1-capsule-rollout-ConfigureEnvStep"></a>
 
 ### ConfigureEnvStep
@@ -3291,6 +3308,7 @@ A step of the configure stage.
 | configure_capsule | [ConfigureCapsuleStep](#api-v1-capsule-rollout-ConfigureCapsuleStep) |  | A step configuring a capsule. |
 | configure_file | [ConfigureFileStep](#api-v1-capsule-rollout-ConfigureFileStep) |  | A step configuring a file. |
 | configure_env | [ConfigureEnvStep](#api-v1-capsule-rollout-ConfigureEnvStep) |  | A step configuring an environment. |
+| commit | [ConfigureCommitStep](#api-v1-capsule-rollout-ConfigureCommitStep) |  | A step for commiting the changes to git. |
 
 
 
