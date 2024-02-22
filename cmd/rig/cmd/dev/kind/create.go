@@ -186,7 +186,7 @@ type deployParams struct {
 
 func (c *Cmd) deployInner(ctx context.Context, p deployParams) error {
 	var err error
-	cmd := common.NewDefferredOutputCommand(fmt.Sprintf("Deploying %s...", p.chartName))
+	cmd := common.NewDeferredOutputCommand(fmt.Sprintf("Deploying %s...", p.chartName))
 	defer func() {
 		cmd.End(err == nil)
 	}()
@@ -303,7 +303,7 @@ func setupKindRigCluster() error {
 
 func setupK8s() error {
 	var err error
-	cmd := common.NewDefferredOutputCommand("Setup kind cluster...")
+	cmd := common.NewDeferredOutputCommand("Setup kind cluster...")
 	defer func() {
 		cmd.End(err == nil)
 	}()
@@ -338,7 +338,7 @@ func setupK8s() error {
 
 func helmInstall() error {
 	if prometheus {
-		cmd := common.NewDefferredOutputCommand("Installing prometheus...")
+		cmd := common.NewDeferredOutputCommand("Installing prometheus...")
 		cmd.Command(
 			"helm", "--kube-context", "kind-rig",
 			"upgrade", "--install", "kube-prometheus-stack", "kube-prometheus-stack",
@@ -472,7 +472,7 @@ func checkBinaries(binaries ...binary) error {
 
 func runCmd(displayMessage string, arg string, args ...string) error {
 	var err error
-	cmd := common.NewDefferredOutputCommand(displayMessage)
+	cmd := common.NewDeferredOutputCommand(displayMessage)
 	defer func() {
 		cmd.End(err == nil)
 	}()
