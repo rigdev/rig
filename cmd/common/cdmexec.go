@@ -93,7 +93,7 @@ type DeferredOutputCommand struct {
 	hasStarted     bool
 }
 
-func NewDefferredOutputCommand(displayMessage string) *DeferredOutputCommand {
+func NewDeferredOutputCommand(displayMessage string) *DeferredOutputCommand {
 	d := &DeferredOutputCommand{
 		cmdBuffer:      newCmdBuffer(),
 		displayMessage: displayMessage,
