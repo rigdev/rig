@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
@@ -74,6 +75,13 @@ func New(
 			return nil, err
 		}
 		//+kubebuilder:scaffold:builder
+
+		if err := mgr.AddHealthzCheck("webhooks", mgr.GetWebhookServer().StartedChecker()); err != nil {
+			return nil, fmt.Errorf("could not add webhooks healthz check: %w", err)
+		}
+		if err := mgr.AddReadyzCheck("webhooks", mgr.GetWebhookServer().StartedChecker()); err != nil {
+			return nil, fmt.Errorf("could not add webhooks readyz check: %w", err)
+		}
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
