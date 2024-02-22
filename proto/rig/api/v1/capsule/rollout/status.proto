@@ -90,6 +90,7 @@ message ConfigureStep {
     ConfigureCapsuleStep configure_capsule = 2; // A step configuring a capsule.
     ConfigureFileStep configure_file = 3; // A step configuring a file.
     ConfigureEnvStep configure_env = 4; // A step configuring an environment.
+    ConfigureCommitStep commit = 5; // A step for commiting the changes to git.
   }
 }
 
@@ -112,6 +113,13 @@ message ConfigureEnvStep {
   StepInfo info = 1; // Step information.
   ConfigureResult state = 2; // The result of the environment configuration.
   bool is_secret = 3; // Whether the environment is a secret.
+}
+
+// A step committing the changes to git
+message ConfigureCommitStep {
+  StepInfo info = 1; // Step information
+  string commit_hash = 2; // The hash of the commit containing the changes
+  string commit_url = 3; // The url to the commit (if known. May be empty)
 }
 
 // The result of a configuration step.
