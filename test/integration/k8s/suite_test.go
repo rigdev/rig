@@ -147,11 +147,11 @@ type Suite struct {
 }
 
 func (s *Suite) expectResources(ctx context.Context, resources []client.Object) {
-	for _, r := range resources {
-		c := 0
-		cp := r.DeepCopyObject().(client.Object)
+	for _, expectedResource := range resources {
+		count := 0
+		currentResource := expectedResource.DeepCopyObject().(client.Object)
 		for {
-			if err := s.Client.Get(ctx, client.ObjectKeyFromObject(r), cp); kerrors.IsNotFound(err) {
+			if err := s.Client.Get(ctx, client.ObjectKeyFromObject(expectedResource), currentResource); kerrors.IsNotFound(err) {
 				time.Sleep(100 * time.Millisecond)
 				continue
 			} else if err != nil {
@@ -159,21 +159,21 @@ func (s *Suite) expectResources(ctx context.Context, resources []client.Object) 
 			}
 
 			// Clear this property.
-			cp.SetCreationTimestamp(metav1.Time{})
+			currentResource.SetCreationTimestamp(metav1.Time{})
 
-			bs1, err := json.Marshal(r)
+			expectedBytes, err := json.Marshal(expectedResource)
 			s.Require().NoError(err)
 
-			bs2, err := json.Marshal(cp)
+			currentBytes, err := json.Marshal(currentResource)
 			s.Require().NoError(err)
 
 			opt := jsondiff.DefaultConsoleOptions()
-			diff, change := jsondiff.Compare(bs2, bs1, &opt)
+			diff, change := jsondiff.Compare(currentBytes, expectedBytes, &opt)
 
-			c++
+			count++
 			if jsondiff.SupersetMatch == diff {
 				break
-			} else if c > 20 {
+			} else if count > 20 {
 				s.Require().Equal(jsondiff.SupersetMatch, diff, change)
 			}
 

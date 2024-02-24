@@ -52,6 +52,7 @@ type Pipeline struct {
 	client client.Client
 	config *configv1alpha1.OperatorConfig
 	scheme *runtime.Scheme
+	// TODO Use zap instead
 	logger logr.Logger
 	steps  []Step
 }
@@ -77,7 +78,7 @@ func (p *Pipeline) AddStep(step Step) {
 }
 
 func (p *Pipeline) RunCapsule(ctx context.Context, capsule *v1alpha2.Capsule, dryRun bool) (*Result, error) {
-	req := newCapsuleRequest(p, capsule)
+	req := NewCapsuleRequest(p, capsule)
 
 	result, err := p.runSteps(ctx, req, dryRun)
 	if errors.IsFailedPrecondition(err) {

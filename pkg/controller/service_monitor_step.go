@@ -25,6 +25,10 @@ func (s *ServiceMonitorStep) Apply(_ context.Context, req pipeline.CapsuleReques
 
 func (s *ServiceMonitorStep) createPrometheusServiceMonitor(req pipeline.CapsuleRequest) *monitorv1.ServiceMonitor {
 	return &monitorv1.ServiceMonitor{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ServiceMonitor",
+			APIVersion: "monitoring.coreos.com/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            req.Capsule().Name,
 			Namespace:       req.Capsule().Namespace,
