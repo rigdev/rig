@@ -66,6 +66,7 @@ func New(
 		client: cc,
 		config: config,
 		scheme: scheme,
+		logger: logger,
 	}
 
 	return p
