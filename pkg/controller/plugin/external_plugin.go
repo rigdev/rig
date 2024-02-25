@@ -85,8 +85,6 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 		Cmd:              exec.CommandContext(ctx, path.Join(pluginDir, p.name)),
 		Logger:           pLogger,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-		SyncStdout:       os.Stdout,
-		SyncStderr:       os.Stderr,
 		Stderr:           os.Stderr,
 	})
 
