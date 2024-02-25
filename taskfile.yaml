@@ -199,6 +199,7 @@ tasks:
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
+      RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
     cmds:
       - |
         ./tools/bin/gotestsum \
