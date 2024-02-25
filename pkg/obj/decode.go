@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 
+	"github.com/rigdev/rig/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -21,7 +22,11 @@ func DecodeInto(bs []byte, into runtime.Object, scheme *runtime.Scheme) error {
 	return nil
 }
 
-func DecodeYAML(bs []byte, out interface{}) error {
+func Decode(bs []byte, out interface{}) error {
 	r := yaml.NewYAMLToJSONDecoder(bufio.NewReader(bytes.NewReader(bs)))
-	return r.Decode(out)
+	if err := r.Decode(out); err != nil {
+		return errors.InvalidArgumentErrorf("bad yaml input: %v", err)
+	}
+
+	return nil
 }

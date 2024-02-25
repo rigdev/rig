@@ -76,46 +76,66 @@ func (p *Pipeline) AddStep(step Step) {
 	p.steps = append(p.steps, step)
 }
 
-func (p *Pipeline) RunCapsule(ctx context.Context, capsule *v1alpha2.Capsule) error {
+func (p *Pipeline) RunCapsule(ctx context.Context, capsule *v1alpha2.Capsule, dryRun bool) (*Result, error) {
 	req := newCapsuleRequest(p, capsule)
 
-	if err := p.runSteps(ctx, req); errors.IsFailedPrecondition(err) {
-		return err
+	result, err := p.runSteps(ctx, req, dryRun)
+	if errors.IsFailedPrecondition(err) {
+		return nil, err
 	} else if err != nil {
 		if err := req.updateStatusError(ctx, err); err != nil {
-			return err
+			return nil, err
 		}
 
-		return err
+		return nil, err
 	}
 
-	return nil
+	return result, nil
 }
 
-func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest) error {
+type OutputObject struct {
+	ObjectKey objectKey
+	Object    client.Object
+	State     ResourceState
+}
+type Result struct {
+	InputObjects  []client.Object
+	OutputObjects []OutputObject
+	Objects       []*Object
+}
+
+func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest, dryRun bool) (*Result, error) {
 	if err := req.loadExisting(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	for {
-		req.prepare()
+		result := req.prepare()
 
 		p.logger.Info("run steps", "current_objects", maps.Keys(req.currentObjects))
 
 		for _, s := range p.steps {
 			if err := s.Apply(ctx, req); err != nil {
-				return err
+				return nil, err
 			}
 		}
 
-		if err := req.commit(ctx); errors.IsAborted(err) {
+		changes, err := req.commit(ctx, dryRun)
+		if errors.IsAborted(err) {
 			p.logger.Error(err, "retry running steps")
 			continue
 		} else if err != nil {
 			p.logger.Error(err, "error committing changes")
-			return err
+			return nil, err
 		}
 
-		return nil
+		for key, c := range changes {
+			result.OutputObjects = append(result.OutputObjects, OutputObject{
+				ObjectKey: key,
+				Object:    req.objects[key].New,
+				State:     c.state,
+			})
+		}
+		return result, nil
 	}
 }
