@@ -17,7 +17,10 @@ import (
 )
 
 type Service interface {
-	DryRun(ctx context.Context, cfg *v1alpha1.OperatorConfig, namespace, capsuleName string, spec *v1alpha2.Capsule) (*pipeline.Result, error)
+	DryRun(ctx context.Context,
+		cfg *v1alpha1.OperatorConfig,
+		namespace, capsuleName string,
+		spec *v1alpha2.Capsule) (*pipeline.Result, error)
 }
 
 func NewService(
@@ -42,7 +45,12 @@ type service struct {
 }
 
 // Get implements Service.
-func (s *service) DryRun(ctx context.Context, cfg *v1alpha1.OperatorConfig, namespace, capsuleName string, spec *v1alpha2.Capsule) (*pipeline.Result, error) {
+func (s *service) DryRun(
+	ctx context.Context,
+	cfg *v1alpha1.OperatorConfig,
+	namespace, capsuleName string,
+	spec *v1alpha2.Capsule,
+) (*pipeline.Result, error) {
 	if cfg == nil {
 		cfg = s.cfg.Operator()
 	}

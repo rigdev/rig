@@ -79,7 +79,8 @@ func (p *Pipeline) AddStep(step Step) {
 func (p *Pipeline) RunCapsule(ctx context.Context, capsule *v1alpha2.Capsule, dryRun bool) (*Result, error) {
 	req := newCapsuleRequest(p, capsule)
 
-	if result, err := p.runSteps(ctx, req, dryRun); errors.IsFailedPrecondition(err) {
+	result, err := p.runSteps(ctx, req, dryRun)
+	if errors.IsFailedPrecondition(err) {
 		return nil, err
 	} else if err != nil {
 		if err := req.updateStatusError(ctx, err); err != nil {
@@ -87,9 +88,9 @@ func (p *Pipeline) RunCapsule(ctx context.Context, capsule *v1alpha2.Capsule, dr
 		}
 
 		return nil, err
-	} else {
-		return result, nil
 	}
+
+	return result, nil
 }
 
 type OutputObject struct {
@@ -119,21 +120,22 @@ func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest, dryRun boo
 			}
 		}
 
-		if changes, err := req.commit(ctx, dryRun); errors.IsAborted(err) {
+		changes, err := req.commit(ctx, dryRun)
+		if errors.IsAborted(err) {
 			p.logger.Error(err, "retry running steps")
 			continue
 		} else if err != nil {
 			p.logger.Error(err, "error committing changes")
 			return nil, err
-		} else {
-			for key, c := range changes {
-				result.OutputObjects = append(result.OutputObjects, OutputObject{
-					ObjectKey: key,
-					Object:    req.objects[key].New,
-					State:     c.state,
-				})
-			}
-			return result, nil
 		}
+
+		for key, c := range changes {
+			result.OutputObjects = append(result.OutputObjects, OutputObject{
+				ObjectKey: key,
+				Object:    req.objects[key].New,
+				State:     c.state,
+			})
+		}
+		return result, nil
 	}
 }
