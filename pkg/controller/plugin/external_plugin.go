@@ -216,22 +216,23 @@ func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest) err
 		return err
 	}
 
-	var s *grpc.Server
+	c := make(chan *grpc.Server)
 	serverFunc := func(opts []grpc.ServerOption) *grpc.Server {
-		s = grpc.NewServer(opts...)
+		s := grpc.NewServer(opts...)
 		apiplugin.RegisterRequestServiceServer(s, reqServer)
+		c <- s
 		return s
 	}
 
 	brokerID := m.broker.NextId()
 	go m.broker.AcceptAndServe(brokerID, serverFunc)
+	s := <-c
+	defer s.Stop()
 
 	_, err = m.client.RunCapsule(ctx, &apiplugin.RunCapsuleRequest{
 		RunServer:     brokerID,
 		CapsuleObject: capsuleBytes,
 	})
-
-	s.Stop()
 
 	return err
 }
