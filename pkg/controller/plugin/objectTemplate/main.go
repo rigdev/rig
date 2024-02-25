@@ -34,7 +34,7 @@ func (p *objectTemplatePlugin) LoadConfig(data []byte) error {
 	return plugin.LoadYAMLConfig(data, &p.config)
 }
 
-func (p *objectTemplatePlugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	gvk, err := pipeline.LookupGVK(schema.GroupKind{Group: p.config.Group, Kind: p.config.Kind})
 	if err != nil {
 		return err

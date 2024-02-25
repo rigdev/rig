@@ -210,10 +210,6 @@ func (p *Pipeline) namedObjectKey(name string, gvk schema.GroupVersionKind) obje
 	}
 }
 
-func (p *Pipeline) objectKey(gvk schema.GroupVersionKind) objectKey {
-	return p.namedObjectKey(p.capsule.Name, gvk)
-}
-
 func (p *Pipeline) MarkUsedResource(res v1alpha2.UsedResource) {
 	p.usedResources = append(p.usedResources, res)
 }

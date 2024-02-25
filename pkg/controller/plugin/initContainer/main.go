@@ -23,7 +23,7 @@ func (p *initContainerPlugin) LoadConfig(data []byte) error {
 	return plugin.LoadYAMLConfig(data, &p.config)
 }
 
-func (p *initContainerPlugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *initContainerPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		return nil
@@ -31,7 +31,8 @@ func (p *initContainerPlugin) Run(ctx context.Context, req pipeline.CapsuleReque
 		return err
 	}
 
-	deployment.Spec.Template.Spec.InitContainers = append(deployment.Spec.Template.Spec.InitContainers, *p.config.Container.DeepCopy())
+	c := *p.config.Container.DeepCopy()
+	deployment.Spec.Template.Spec.InitContainers = append(deployment.Spec.Template.Spec.InitContainers, c)
 
 	return req.Set(deployment)
 }

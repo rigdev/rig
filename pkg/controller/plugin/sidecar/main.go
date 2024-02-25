@@ -24,7 +24,7 @@ func (p *sidecarPlugin) LoadConfig(data []byte) error {
 	return plugin.LoadYAMLConfig(data, &p.config)
 }
 
-func (p *sidecarPlugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *sidecarPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		return nil

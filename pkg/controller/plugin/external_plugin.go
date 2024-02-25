@@ -105,9 +105,9 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 	return p.pluginClient.Initialize(ctx, pluginConfig)
 }
 
-func (s *ExternalPlugin) Stop(context.Context) {
-	if s.client != nil {
-		s.client.Kill()
+func (p *ExternalPlugin) Stop(context.Context) {
+	if p.client != nil {
+		p.client.Kill()
 	}
 }
 
@@ -120,7 +120,7 @@ func (p *ExternalPlugin) Run(ctx context.Context, req pipeline.CapsuleRequest) e
 type rigOperatorPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	logger hclog.Logger
-	Impl   PluginServer
+	Impl   Server
 }
 
 func (p *rigOperatorPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
@@ -133,7 +133,11 @@ func (p *rigOperatorPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server
 	return nil
 }
 
-func (p *rigOperatorPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+func (p *rigOperatorPlugin) GRPCClient(
+	_ context.Context,
+	broker *plugin.GRPCBroker,
+	c *grpc.ClientConn,
+) (interface{}, error) {
 	return &pluginClient{
 		client: apiplugin.NewPluginServiceClient(c),
 		broker: broker,
@@ -143,13 +147,16 @@ func (p *rigOperatorPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCB
 type GRPCServer struct {
 	apiplugin.UnimplementedPluginServiceServer
 	logger         hclog.Logger
-	Impl           PluginServer
+	Impl           Server
 	broker         *plugin.GRPCBroker
 	operatorConfig v1alpha1.OperatorConfig
 	scheme         *runtime.Scheme
 }
 
-func (m *GRPCServer) Initialize(ctx context.Context, req *apiplugin.InitializeRequest) (*apiplugin.InitializeResponse, error) {
+func (m *GRPCServer) Initialize(
+	_ context.Context,
+	req *apiplugin.InitializeRequest,
+) (*apiplugin.InitializeResponse, error) {
 	if err := m.Impl.LoadConfig([]byte(req.GetPluginConfig())); err != nil {
 		return nil, err
 	}
@@ -160,7 +167,10 @@ func (m *GRPCServer) Initialize(ctx context.Context, req *apiplugin.InitializeRe
 	return &apiplugin.InitializeResponse{}, nil
 }
 
-func (m *GRPCServer) RunCapsule(ctx context.Context, req *apiplugin.RunCapsuleRequest) (*apiplugin.RunCapsuleResponse, error) {
+func (m *GRPCServer) RunCapsule(
+	ctx context.Context,
+	req *apiplugin.RunCapsuleRequest,
+) (*apiplugin.RunCapsuleResponse, error) {
 	conn, err := m.broker.Dial(req.GetRunServer())
 	if err != nil {
 		return nil, err
@@ -240,7 +250,10 @@ func toGVK(gvk *apiplugin.GVK) schema.GroupVersionKind {
 	}
 }
 
-func (s requestServer) GetObject(ctx context.Context, req *apiplugin.GetObjectRequest) (*apiplugin.GetObjectResponse, error) {
+func (s requestServer) GetObject(
+	_ context.Context,
+	req *apiplugin.GetObjectRequest,
+) (*apiplugin.GetObjectResponse, error) {
 	gvk := toGVK(req.GetGvk())
 	ro, err := s.req.Scheme().New(gvk)
 	if err != nil {
@@ -269,7 +282,10 @@ func (s requestServer) GetObject(ctx context.Context, req *apiplugin.GetObjectRe
 	}, nil
 }
 
-func (s requestServer) SetObject(ctx context.Context, req *apiplugin.SetObjectRequest) (*apiplugin.SetObjectResponse, error) {
+func (s requestServer) SetObject(
+	_ context.Context,
+	req *apiplugin.SetObjectRequest,
+) (*apiplugin.SetObjectResponse, error) {
 	gvk := toGVK(req.GetGvk())
 	ro, err := s.req.Scheme().New(gvk)
 	if err != nil {
@@ -317,7 +333,6 @@ func (c *capsuleRequestClient) Scheme() *runtime.Scheme {
 
 func (c *capsuleRequestClient) Client() client.Client {
 	panic("unimplemented `Client` command")
-	return nil
 }
 
 func (c *capsuleRequestClient) Capsule() *v1alpha2.Capsule {
@@ -339,8 +354,9 @@ func (c *capsuleRequestClient) get(o client.Object, current bool) error {
 	}
 
 	res, err := c.client.GetObject(c.ctx, &apiplugin.GetObjectRequest{
-		Gvk:  fromGVK(gvk),
-		Name: o.GetName(),
+		Gvk:     fromGVK(gvk),
+		Name:    o.GetName(),
+		Current: current,
 	})
 	if err != nil {
 		return err
@@ -378,20 +394,20 @@ func (c *capsuleRequestClient) Set(co client.Object) error {
 	return nil
 }
 
-func (c *capsuleRequestClient) Delete(obj client.Object) error {
+func (c *capsuleRequestClient) Delete(_ client.Object) error {
 	return errors.UnimplementedErrorf("unimplemented `Delete` command")
 }
 
-func (c *capsuleRequestClient) MarkUsedResource(res v1alpha2.UsedResource) {
+func (c *capsuleRequestClient) MarkUsedResource(_ v1alpha2.UsedResource) {
 	panic("unimplemented `MarkUsedResource` command")
 }
 
-type PluginServer interface {
+type Server interface {
 	Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error
 	LoadConfig(data []byte) error
 }
 
-func StartPlugin(name string, rigPlugin PluginServer) {
+func StartPlugin(name string, rigPlugin Server) {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Level:      hclog.Info,
 		Output:     os.Stderr,
