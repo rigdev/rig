@@ -343,20 +343,6 @@ _Appears in:_
 | `disableTLS` _boolean_ | DisableTLS for ingress resources generated. This is useful if a 3rd-party component is handling the HTTPS TLS termination and certificates. |
 
 
-### InitContainerPlugin
-
-
-
-
-
-_Appears in:_
-- [Plugin](#plugin)
-
-| Field | Description |
-| --- | --- |
-| `container` _string_ | The yaml of the container to add. The yaml can be templated. |
-
-
 ### Logging
 
 
@@ -407,23 +393,6 @@ _Appears in:_
 
 
 
-### ObjectPlugin
-
-
-
-
-
-_Appears in:_
-- [Plugin](#plugin)
-
-| Field | Description |
-| --- | --- |
-| `object` _string_ | The yaml to apply to the object. The yaml can be templated. |
-| `group` _string_ | Group to match, for which objects to apply the patch to. |
-| `kind` _string_ | Kind to match, for which objects to apply the patch to. |
-| `name` _string_ | Name of the object to match. Default to Capsule-name. |
-
-
 ### OperatorConfig
 
 
@@ -470,22 +439,6 @@ PlatformConfig is the Schema for the platform config API
 | `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
 | `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
 | `environments` _object (keys:string, values:[Environment](#environment))_ | Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups). |
-
-
-### Plugin
-
-
-
-
-
-_Appears in:_
-- [Step](#step)
-
-| Field | Description |
-| --- | --- |
-| `object` _[ObjectPlugin](#objectplugin)_ | Object plugin. Can patch any object generated as part of processing the Capsule. |
-| `sidecar` _[SidecarPlugin](#sidecarplugin)_ | Sidecar plugin. Adds a sidecar-container to the pods of the Capsule. |
-| `initContainer` _[InitContainerPlugin](#initcontainerplugin)_ | Init-container plugin. Adds a init-container to the pods of the Capsule. |
 
 
 ### PrometheusServiceMonitor
@@ -561,20 +514,6 @@ _Appears in:_
 | `type` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ | Type of the service to generate. By default, services are of type ClusterIP. Valid values are ClusterIP, NodePort. |
 
 
-### SidecarPlugin
-
-
-
-
-
-_Appears in:_
-- [Plugin](#plugin)
-
-| Field | Description |
-| --- | --- |
-| `container` _string_ | The yaml of the container to add. The yaml can be templated. |
-
-
 ### Step
 
 
@@ -586,8 +525,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `plugin` _[Plugin](#plugin)_ | Plugin to use in the current step. |
+| `plugin` _string_ | Plugin to use in the current step. |
 | `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. |
+| `config` _string_ |  |
 
 
 ### VerticalPodAutoscaler

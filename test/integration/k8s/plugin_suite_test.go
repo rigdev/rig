@@ -89,34 +89,31 @@ func (s *PluginTestSuite) SetupSuite() {
 		},
 		Steps: []configv1alpha1.Step{
 			{
-				Plugin: configv1alpha1.Plugin{
-					Object: &configv1alpha1.ObjectPlugin{
-						Group: "apps",
-						Kind:  "Deployment",
-						Object: `
-spec:
-  replicas: 2`,
-					},
-				},
+				Plugin: "objectTemplate",
+				Config: `
+group: "apps"
+kind: "Deployment"
+object: |
+  spec:
+    replicas: 2
+`,
 			},
 			{
-				Plugin: configv1alpha1.Plugin{
-					Sidecar: &configv1alpha1.SidecarPlugin{
-						Container: `
-image: nginx
-name: nginx`,
-					},
-				},
+				Plugin: "sidecar",
+				Config: `
+container:
+  image: nginx
+  name: nginx
+`,
 			},
 			{
-				Plugin: configv1alpha1.Plugin{
-					InitContainer: &configv1alpha1.InitContainerPlugin{
-						Container: `
-image: alpine
-name: startup
-command: ['sh', '-c', 'echo Hello']`,
-					},
-				},
+				Plugin: "initContainer",
+				Config: `
+container:
+  image: alpine
+  name: startup
+  command: ['sh', '-c', 'echo Hello']
+`,
 			},
 		},
 	}

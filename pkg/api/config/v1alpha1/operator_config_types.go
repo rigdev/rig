@@ -1,8 +1,6 @@
 package v1alpha1
 
 import (
-	"fmt"
-
 	"github.com/rigdev/rig/pkg/ptr"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -59,52 +57,10 @@ type OperatorConfig struct {
 
 type Step struct {
 	// Plugin to use in the current step.
-	Plugin Plugin `json:"plugin,omitempty"`
+	Plugin string `json:"plugin,omitempty"`
 	// If set, only capsules in one of the namespaces given will have this step run.
 	Namespaces []string `json:"namespaces,omitempty"`
-}
-
-type Plugin struct {
-	// Object plugin. Can patch any object generated as part of processing the Capsule.
-	Object *ObjectPlugin `json:"object,omitempty"`
-	// Sidecar plugin. Adds a sidecar-container to the pods of the Capsule.
-	Sidecar *SidecarPlugin `json:"sidecar,omitempty"`
-	// Init-container plugin. Adds a init-container to the pods of the Capsule.
-	InitContainer *InitContainerPlugin `json:"initContainer,omitempty"`
-}
-
-func (p Plugin) GetPlugin() (interface{}, error) {
-	if p.Object != nil {
-		return p.Object, nil
-	}
-	if p.Sidecar != nil {
-		return p.Sidecar, nil
-	}
-	if p.InitContainer != nil {
-		return p.InitContainer, nil
-	}
-	return nil, fmt.Errorf("missing plugin")
-}
-
-type ObjectPlugin struct {
-	// The yaml to apply to the object. The yaml can be templated.
-	Object string `json:"object,omitempty"`
-	// Group to match, for which objects to apply the patch to.
-	Group string `json:"group,omitempty"`
-	// Kind to match, for which objects to apply the patch to.
-	Kind string `json:"kind,omitempty"`
-	// Name of the object to match. Default to Capsule-name.
-	Name string `json:"name,omitempty"`
-}
-
-type SidecarPlugin struct {
-	// The yaml of the container to add. The yaml can be templated.
-	Container string `json:"container,omitempty"`
-}
-
-type InitContainerPlugin struct {
-	// The yaml of the container to add. The yaml can be templated.
-	Container string `json:"container,omitempty"`
+	Config     string   `json:"config,omitempty"`
 }
 
 type VerticalPodAutoscaler struct {

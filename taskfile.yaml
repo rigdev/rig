@@ -15,7 +15,7 @@ includes:
 tasks:
   build:
     desc: "🔨 Build all binaries"
-    deps: [build-rig, build-rig-operator]
+    deps: [build-rig, build-rig-operator, build-plugins]
 
   build-rig:
     desc: "🔨 Build rig binary"
@@ -31,7 +31,7 @@ tasks:
 
   build-rig-operator:
     desc: "🔨 Build rig-operator binary"
-    deps: [proto]
+    deps: [proto, build-plugins]
     env:
       CGO_ENABLED: "0"
     sources:
@@ -40,6 +40,31 @@ tasks:
       - "bin/rig-operator"
     cmds:
       - go build -o ./bin/rig-operator ./cmd/rig-operator
+
+  build-plugins:
+    desc: "🔨 Build rig-operator plugins"
+    sources:
+      - "pkg/controller/plugin/**/*.go"
+    vars:
+      PLUGINS:
+        sh: find ./pkg/controller/plugin/ -mindepth 1 -type d | xargs -I{} basename {}
+    cmds:
+      - for: { var: PLUGINS }
+        task: build-plugin
+        vars:
+          PLUGIN: "{{ .ITEM }}"
+
+  build-plugin:
+    run: when_changed
+    deps: [proto]
+    env:
+      CGO_ENABLED: "0"
+    sources:
+      - "./pkg/controller/plugin/{{ .PLUGIN }}/**/*.go"
+    generates:
+      - "bin/plugin/{{ .PLUGIN }}"
+    cmds:
+      - go build -o ./bin/plugin/{{ .PLUGIN }} ./pkg/controller/plugin/{{ .PLUGIN }}
 
   gen:
     desc: "🪄 Run code generation"
@@ -52,6 +77,7 @@ tasks:
       - tools:protoc-gen-go
       - tools:protoc-gen-connect-go
       - tools:protoc-gen-doc
+      - tools:protoc-gen-go-grpc
     sources:
       - proto/rig/**/*
     generates:
@@ -66,7 +92,7 @@ tasks:
 
   mocks:
     desc: "🪄 Run mock generation"
-    deps: [tools:mockery]
+    deps: [tools:mockery, proto]
     vars:
       GOMODCACHE:
         sh: go env GOMODCACHE
@@ -169,10 +195,12 @@ tasks:
 
   test-all:
     desc: "✅ Run all tests"
-    deps: [tools:gotestsum, tools:setup-envtest, proto, manifests]
+    deps:
+      [tools:gotestsum, tools:setup-envtest, proto, manifests, build-plugins]
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
+      RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
     cmds:
       - |
         ./tools/bin/gotestsum \
@@ -186,10 +214,12 @@ tasks:
 
   test-integration:
     desc: "✅ Run integration tests"
-    deps: [tools:gotestsum, tools:setup-envtest, proto, manifests]
+    deps:
+      [tools:gotestsum, tools:setup-envtest, proto, manifests, build-plugins]
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
+      RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
     cmds:
       - |
         ./tools/bin/gotestsum \

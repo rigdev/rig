@@ -14,6 +14,7 @@ tasks:
       - protoc-gen-go
       - protoc-gen-doc
       - protoc-gen-connect-go
+      - protoc-gen-go-grpc
       - mockery
       - gotestsum
       - goreleaser
@@ -60,6 +61,19 @@ tasks:
       - bin/protoc-gen-connect-go --version | grep "{{ .GO_MOD_VERSION }}"
     cmds:
       - go install connectrpc.com/connect/cmd/protoc-gen-connect-go
+
+  protoc-gen-go-grpc:
+    desc: "📦 Install protoc-gen-go-grpc"
+    env:
+      GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "google.golang.org/grpc " | cut -d ' ' -f2
+    status:
+      - test -s bin/protoc-gen-go
+      - bin/protoc-gen-go --version | grep "{{ .GO_MOD_VERSION }}"
+    cmds:
+      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
   mockery:
     desc: "📦 Install mockery"
@@ -127,7 +141,7 @@ tasks:
       - test -s bin/controller-gen
       - ./bin/controller-gen --version | grep "{{ .GO_MOD_VERSION }}"
     cmds:
-      - go install sigs.k8s.io/controller-tools/cmd/controller-gen)
+      - go install sigs.k8s.io/controller-tools/cmd/controller-gen
 
   crd-ref-docs:
     desc: "📦 Install crd-ref-docs"

@@ -24,54 +24,21 @@ const (
 	LabelOwnedByCapsule = "rig.dev/owned-by-capsule"
 )
 
-func GetNew[T client.Object](req Request, key ObjectKey) T {
-	var t T
-	o := req.GetNew(key)
-	if c, ok := o.(T); ok {
-		t = c
-	}
-	return t
-}
-
-func GetCurrent[T client.Object](req Request, key ObjectKey) T {
-	var t T
-	o := req.GetCurrent(key)
-	if c, ok := o.(T); ok {
-		t = c
-	}
-	return t
-}
-
-func Get[T interface {
-	client.Object
-	comparable
-}](req Request, key ObjectKey,
-) T {
-	var t T
-	if o := GetNew[T](req, key); o != t {
-		return o
-	}
-	if o := GetCurrent[T](req, key); o != t {
-		return o
-	}
-	return t
-}
-
 type Object struct {
 	Current client.Object
 	New     client.Object
 }
 
-type ObjectKey struct {
+type objectKey struct {
 	client.ObjectKey
 	schema.GroupVersionKind
 }
 
-func (ok ObjectKey) String() string {
+func (ok objectKey) String() string {
 	return fmt.Sprintf("%s/%s", ok.GroupVersionKind.String(), ok.ObjectKey.String())
 }
 
-func (ok ObjectKey) MarshalLog() interface{} {
+func (ok objectKey) MarshalLog() interface{} {
 	return struct {
 		Group     string `json:"group,omitempty"`
 		Version   string `json:"version,omitempty"`
@@ -93,8 +60,8 @@ type Pipeline struct {
 	scheme             *runtime.Scheme
 	logger             logr.Logger
 	capsule            *v1alpha2.Capsule
-	currentObjects     map[ObjectKey]client.Object
-	objects            map[ObjectKey]*Object
+	currentObjects     map[objectKey]client.Object
+	objects            map[objectKey]*Object
 	steps              []Step
 	observedGeneration int64
 	usedResources      []v1alpha2.UsedResource
@@ -115,7 +82,7 @@ func New(
 			"capsule", capsule.Name,
 		),
 		capsule:        capsule,
-		currentObjects: map[ObjectKey]client.Object{},
+		currentObjects: map[objectKey]client.Object{},
 	}
 	if capsule.Status != nil {
 		p.observedGeneration = capsule.Status.ObservedGeneration
@@ -143,53 +110,104 @@ func (p *Pipeline) Client() client.Client {
 	return p.client
 }
 
-func (p *Pipeline) GetCurrent(key ObjectKey) client.Object {
+func (p *Pipeline) GetCurrent(obj client.Object) error {
+	key, err := p.getKey(obj)
+	if err != nil {
+		return err
+	}
+
 	o, ok := p.objects[key]
 	if !ok {
-		return nil
+		return errors.NotFoundErrorf("object '%v' of type '%v' not found", key.Name, key.GroupVersionKind)
 	}
 
 	if o.Current == nil {
-		return nil
+		return errors.NotFoundErrorf("object '%v' of type '%v' has no existing version", key.Name, key.GroupVersionKind)
 	}
 
-	return o.Current.DeepCopyObject().(client.Object)
+	return p.scheme.Converter().Convert(o.Current, obj, nil)
 }
 
-func (p *Pipeline) GetNew(key ObjectKey) client.Object {
+func (p *Pipeline) GetNew(obj client.Object) error {
+	key, err := p.getKey(obj)
+	if err != nil {
+		return err
+	}
+
 	o, ok := p.objects[key]
 	if !ok {
-		return nil
+		return errors.NotFoundErrorf("object '%v' of type '%v' not found", key.Name, key.GroupVersionKind)
 	}
 
 	if o.New == nil {
-		return nil
+		return errors.NotFoundErrorf("object '%v' of type '%v' has no new version", key.Name, key.GroupVersionKind)
 	}
 
-	return o.New.DeepCopyObject().(client.Object)
+	return p.scheme.Converter().Convert(o.New, obj, nil)
 }
 
-func (p *Pipeline) Set(key ObjectKey, obj client.Object) {
+func (p *Pipeline) getGVK(obj client.Object) (schema.GroupVersionKind, error) {
+	gvks, _, err := p.scheme.ObjectKinds(obj)
+	if err != nil {
+		p.logger.Error(err, "invalid object type")
+		return schema.GroupVersionKind{}, err
+	}
+
+	return gvks[0], nil
+}
+
+func (p *Pipeline) getKey(obj client.Object) (objectKey, error) {
+	if obj.GetName() == "" {
+		obj.SetName(p.capsule.Name)
+	}
+	obj.SetNamespace(p.capsule.Namespace)
+
+	gvk, err := p.getGVK(obj)
+	if err != nil {
+		return objectKey{}, err
+	}
+
+	obj.SetNamespace(p.capsule.Namespace)
+	return p.namedObjectKey(obj.GetName(), gvk), nil
+}
+
+func (p *Pipeline) Set(obj client.Object) error {
+	key, err := p.getKey(obj)
+	if err != nil {
+		return err
+	}
+
 	o, ok := p.objects[key]
 	if !ok {
 		o = &Object{}
 	}
 	o.New = obj
 	p.objects[key] = o
+	return nil
 }
 
-func (p *Pipeline) NamedObjectKey(name string, gvk schema.GroupVersionKind) ObjectKey {
-	return ObjectKey{
+func (p *Pipeline) Delete(obj client.Object) error {
+	key, err := p.getKey(obj)
+	if err != nil {
+		return err
+	}
+
+	o, ok := p.objects[key]
+	if ok {
+		o.New = nil
+	}
+
+	return nil
+}
+
+func (p *Pipeline) namedObjectKey(name string, gvk schema.GroupVersionKind) objectKey {
+	return objectKey{
 		ObjectKey: types.NamespacedName{
 			Name:      name,
 			Namespace: p.capsule.Namespace,
 		},
 		GroupVersionKind: gvk,
 	}
-}
-
-func (p *Pipeline) ObjectKey(gvk schema.GroupVersionKind) ObjectKey {
-	return p.NamedObjectKey(p.capsule.Name, gvk)
 }
 
 func (p *Pipeline) MarkUsedResource(res v1alpha2.UsedResource) {
@@ -252,13 +270,13 @@ func (p *Pipeline) runSteps(ctx context.Context) error {
 				return err
 			}
 
-			p.currentObjects[p.NamedObjectKey(r.Ref.Name, gvk)] = co
+			p.currentObjects[p.namedObjectKey(r.Ref.Name, gvk)] = co
 		}
 	}
 
 	for {
 		p.usedResources = nil
-		p.objects = map[ObjectKey]*Object{}
+		p.objects = map[objectKey]*Object{}
 		for k, o := range p.currentObjects {
 			p.objects[k] = &Object{
 				Current: o.DeepCopyObject().(client.Object),
@@ -313,7 +331,7 @@ func (p *Pipeline) commit(ctx context.Context) error {
 		}
 	}
 
-	changes := map[ObjectKey]*change{}
+	changes := map[objectKey]*change{}
 
 	// Dry run to detect no-op vs create vs update.
 	for _, key := range allKeys {
@@ -426,7 +444,7 @@ func (p *Pipeline) commit(ctx context.Context) error {
 	return nil
 }
 
-func (p *Pipeline) applyChange(ctx context.Context, key ObjectKey, state resourceState) error {
+func (p *Pipeline) applyChange(ctx context.Context, key objectKey, state resourceState) error {
 	switch state {
 	case _resourceStateUpdated:
 		p.logger.Info("update object", "object", key)
@@ -466,7 +484,7 @@ const (
 	_resourceStateChangePending resourceState = "changePending"
 )
 
-func (p *Pipeline) updateStatusChanges(ctx context.Context, changes map[ObjectKey]*change, generation int64) error {
+func (p *Pipeline) updateStatusChanges(ctx context.Context, changes map[objectKey]*change, generation int64) error {
 	capsule := p.capsule.DeepCopy()
 
 	status := &v1alpha2.CapsuleStatus{
@@ -474,7 +492,7 @@ func (p *Pipeline) updateStatusChanges(ctx context.Context, changes map[ObjectKe
 	}
 
 	keys := maps.Keys(changes)
-	slices.SortStableFunc(keys, func(k1, k2 ObjectKey) int { return strings.Compare(k1.String(), k2.String()) })
+	slices.SortStableFunc(keys, func(k1, k2 objectKey) int { return strings.Compare(k1.String(), k2.String()) })
 	for _, key := range keys {
 		key := key
 		change := changes[key]

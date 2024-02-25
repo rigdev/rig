@@ -14,18 +14,16 @@ func NewServiceMonitorStep() *ServiceMonitorStep {
 	return &ServiceMonitorStep{}
 }
 
-func (s *ServiceMonitorStep) Apply(_ context.Context, req pipeline.Request) error {
+func (s *ServiceMonitorStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
 	if req.Config().PrometheusServiceMonitor == nil || req.Config().PrometheusServiceMonitor.PortName == "" {
 		return nil
 	}
 
 	serviceMonitor := s.createPrometheusServiceMonitor(req)
-	req.Set(req.ObjectKey(pipeline.MonitoringServiceMonitorGVK), serviceMonitor)
-
-	return nil
+	return req.Set(serviceMonitor)
 }
 
-func (s *ServiceMonitorStep) createPrometheusServiceMonitor(req pipeline.Request) *monitorv1.ServiceMonitor {
+func (s *ServiceMonitorStep) createPrometheusServiceMonitor(req pipeline.CapsuleRequest) *monitorv1.ServiceMonitor {
 	return &monitorv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            req.Capsule().Name,

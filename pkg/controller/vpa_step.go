@@ -20,18 +20,16 @@ func NewVPAStep() *VPAStep {
 	return &VPAStep{}
 }
 
-func (s *VPAStep) Apply(_ context.Context, req pipeline.Request) error {
+func (s *VPAStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
 	if !req.Config().VerticalPodAutoscaler.Enabled {
 		return nil
 	}
 
 	vpa := s.createVPA(req)
-	req.Set(req.ObjectKey(pipeline.VPAVerticalPodAutoscalerGVK), vpa)
-
-	return nil
+	return req.Set(vpa)
 }
 
-func (s *VPAStep) createVPA(req pipeline.Request) *vpav1.VerticalPodAutoscaler {
+func (s *VPAStep) createVPA(req pipeline.CapsuleRequest) *vpav1.VerticalPodAutoscaler {
 	vpa := &vpav1.VerticalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
@@ -60,7 +58,7 @@ func (s *VPAStep) createVPA(req pipeline.Request) *vpav1.VerticalPodAutoscaler {
 }
 
 // This should be used once we create a VPA per namespace
-func (s *VPAStep) createVPARecommender(req pipeline.Request) *appsv1.Deployment { //nolint:unused
+func (s *VPAStep) createVPARecommender(req pipeline.CapsuleRequest) *appsv1.Deployment { //nolint:unused
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-vpa", req.Capsule().Namespace),

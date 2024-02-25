@@ -24,7 +24,7 @@ require (
 )
 
 require (
-	connectrpc.com/connect v1.14.0
+	connectrpc.com/connect v1.15.0
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/cert-manager/cert-manager v1.13.1
 	github.com/distribution/reference v0.5.0
@@ -34,16 +34,19 @@ require (
 	github.com/google/gnostic-models v0.6.8
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
+	github.com/hashicorp/go-hclog v1.6.2
+	github.com/hashicorp/go-plugin v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/moby/term v0.5.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20240209082824-e70b791c2a76
+	github.com/rigdev/rig-go-api v0.0.0-20240225103947-23a41a1078be
 	github.com/rigdev/rig-go-sdk v0.0.0-20240125120802-fb9e44c555aa
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rodaine/table v1.1.0
+	google.golang.org/grpc v1.57.0
 	k8s.io/apiextensions-apiserver v0.28.4
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.0.0
 	sigs.k8s.io/controller-runtime v0.16.3
@@ -67,20 +70,24 @@ require (
 	github.com/go-logr/zapr v1.2.4 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 // indirect
+	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
+	github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
+	github.com/oklog/run v1.0.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230911183012-2d3300fd4832 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 	k8s.io/component-base v0.28.4 // indirect
 	sigs.k8s.io/gateway-api v0.8.0 // indirect
@@ -115,7 +122,7 @@ require (
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
@@ -146,8 +153,8 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/dig v1.17.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.19.0
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/net v0.21.0
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1

@@ -8,6 +8,7 @@ import (
 	_ "github.com/goreleaser/goreleaser"
 	_ "github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc"
 	_ "github.com/vektra/mockery/v2"
+	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
 	_ "gotest.tools/gotestsum"
 	_ "sigs.k8s.io/controller-runtime/tools/setup-envtest"
