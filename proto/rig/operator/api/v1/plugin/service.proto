@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package api.v1.plugin;
+
+service PluginService {
+  rpc Initialize(InitializeRequest) returns (InitializeResponse) {}
+  rpc RunCapsule(RunCapsuleRequest) returns (RunCapsuleResponse) {}
+}
+
+service RequestService {
+  rpc GetObject(GetObjectRequest) returns (GetObjectResponse) {}
+  rpc SetObject(SetObjectRequest) returns (SetObjectResponse) {}
+}
+
+message InitializeRequest {
+  string plugin_config = 1;
+  bytes operator_config = 2;
+}
+message InitializeResponse {}
+
+message RunCapsuleRequest {
+  uint32 run_server = 1;
+  bytes capsule_object = 2;
+}
+message RunCapsuleResponse {}
+
+message GetObjectRequest {
+  GVK gvk = 1;
+  string name = 2;
+  bool current = 3;
+}
+message GetObjectResponse {
+  bytes object = 3;
+}
+
+message SetObjectRequest {
+  GVK gvk = 1;
+  bytes object = 3;
+}
+message SetObjectResponse {}
+
+message GVK {
+  string group = 1;
+  string version = 2;
+  string kind = 3;
+}
