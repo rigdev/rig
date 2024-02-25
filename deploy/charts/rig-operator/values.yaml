@@ -19,7 +19,7 @@ config:
     path: ""
     portName: ""
   steps:
-    {}
+    []
     # - plugin: objectTemplate
     #   config: |
     #     group: apps

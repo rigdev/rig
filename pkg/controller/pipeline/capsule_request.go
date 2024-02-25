@@ -301,26 +301,26 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 				}
 
 				r.logger.Info("create object skipped, not owned by controller", "object", key)
-				changes[key] = &change{state: _resourceStateAlreadyExists}
+				changes[key] = &change{state: ResourceStateAlreadyExists}
 				continue
 			} else if err != nil {
 				return nil, fmt.Errorf("could not render create to %s: %w", key.GroupVersionKind, err)
 			}
 
 			r.logger.Info("create object", "object", key)
-			changes[key] = &change{state: _resourceStateCreated}
+			changes[key] = &change{state: ResourceStateCreated}
 			continue
 		}
 
 		if !IsOwnedBy(r.capsule, obj.Current) {
 			r.logger.Info("update object skipped, not owned by controller", "object", key)
-			changes[key] = &change{state: _resourceStateAlreadyExists}
+			changes[key] = &change{state: ResourceStateAlreadyExists}
 			continue
 		}
 
 		if obj.New == nil {
 			r.logger.Info("delete object", "object", key)
-			changes[key] = &change{state: _resourceStateDeleted}
+			changes[key] = &change{state: ResourceStateDeleted}
 			continue
 		}
 
@@ -337,12 +337,12 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 
 		if ObjectsEquals(obj.Current, materializedObj) {
 			r.logger.Info("update object skipped, not changed", "object", key)
-			changes[key] = &change{state: _resourceStateUnchanged}
+			changes[key] = &change{state: ResourceStateUnchanged}
 			continue
 		}
 
 		r.logger.Info("update object", "object", key)
-		changes[key] = &change{state: _resourceStateUpdated}
+		changes[key] = &change{state: ResourceStateUpdated}
 	}
 
 	// Skip update if no changes.
@@ -351,7 +351,7 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 		hasChanges := false
 		for _, change := range changes {
 			switch change.state {
-			case _resourceStateUpdated, _resourceStateCreated, _resourceStateDeleted:
+			case ResourceStateUpdated, ResourceStateCreated, ResourceStateDeleted:
 				hasChanges = true
 			}
 		}
@@ -392,7 +392,7 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 
 func (r *capsuleRequest) applyChange(ctx context.Context, key objectKey, state ResourceState) error {
 	switch state {
-	case _resourceStateUpdated:
+	case ResourceStateUpdated:
 		r.logger.Info("update object", "object", key)
 		obj := r.objects[key]
 		obj.New.SetResourceVersion(obj.Current.GetResourceVersion())
@@ -400,14 +400,14 @@ func (r *capsuleRequest) applyChange(ctx context.Context, key objectKey, state R
 			return fmt.Errorf("could not update %s: %w", key.GroupVersionKind, err)
 		}
 
-	case _resourceStateCreated:
+	case ResourceStateCreated:
 		r.logger.Info("create object", "object", key)
 		obj := r.objects[key]
 		if err := r.pipeline.client.Create(ctx, obj.New); err != nil {
 			return fmt.Errorf("could not create %s: %w", key.GroupVersionKind, err)
 		}
 
-	case _resourceStateDeleted:
+	case ResourceStateDeleted:
 		r.logger.Info("delete object", "object", key)
 		obj := r.objects[key]
 		if err := r.pipeline.client.Delete(ctx, obj.Current); err != nil {
@@ -421,13 +421,13 @@ func (r *capsuleRequest) applyChange(ctx context.Context, key objectKey, state R
 type ResourceState string
 
 const (
-	_resourceStateDeleted       ResourceState = "deleted"
-	_resourceStateUpdated       ResourceState = "updated"
-	_resourceStateUnchanged     ResourceState = "unchanged"
-	_resourceStateCreated       ResourceState = "created"
-	_resourceStateFailed        ResourceState = "failed"
-	_resourceStateAlreadyExists ResourceState = "alreadyExists"
-	_resourceStateChangePending ResourceState = "changePending"
+	ResourceStateDeleted       ResourceState = "deleted"
+	ResourceStateUpdated       ResourceState = "updated"
+	ResourceStateUnchanged     ResourceState = "unchanged"
+	ResourceStateCreated       ResourceState = "created"
+	ResourceStateFailed        ResourceState = "failed"
+	ResourceStateAlreadyExists ResourceState = "alreadyExists"
+	ResourceStateChangePending ResourceState = "changePending"
 )
 
 func (r *capsuleRequest) updateStatusChanges(
@@ -455,9 +455,9 @@ func (r *capsuleRequest) updateStatusChanges(
 			State: string(change.state),
 		}
 		switch change.state {
-		case _resourceStateCreated, _resourceStateUpdated, _resourceStateDeleted:
+		case ResourceStateCreated, ResourceStateUpdated, ResourceStateDeleted:
 			if !change.applied {
-				or.State = string(_resourceStateChangePending)
+				or.State = string(ResourceStateChangePending)
 			}
 		}
 		if change.err != nil {

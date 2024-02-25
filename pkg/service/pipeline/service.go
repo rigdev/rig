@@ -61,14 +61,20 @@ func (s *service) DryRun(ctx context.Context, cfg *v1alpha1.OperatorConfig, name
 		return nil, err
 	}
 
-	p := pipeline.New(s.client, cfg, spec, scheme.New(), s.logger)
+	p := pipeline.New(s.client, cfg, scheme.New(), s.logger)
 	for _, step := range steps {
 		p.AddStep(step)
 	}
 
 	for _, step := range cfg.Steps {
-		p.AddStep(plugin.NewStep(step))
+		ps, err := plugin.NewStep(step, s.logger)
+		if err != nil {
+			return nil, err
+		}
+
+		p.AddStep(ps)
+		defer ps.Stop(ctx)
 	}
 
-	return p.Run(ctx, true)
+	return p.RunCapsule(ctx, spec, true)
 }
