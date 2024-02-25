@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package api.v1.pipeline;
+
+// The service for interacting with the operator pipeline
+service Service {
+  rpc DryRun(DryRunRequest) returns (DryRunResponse) {}
+}
+
+message DryRunRequest {
+  string namespace = 1;
+  string capsule = 2;
+  // A YAML encoded OperatorConfig, to be used when processing the pipeline.
+  string operator_config = 3;
+  // An optional YAML encoded capsule spec, to be used instead of the current
+  // one.
+  string capsule_spec = 4;
+}
+
+message DryRunResponse {
+  repeated Object input_objects = 1;
+  repeated ObjectChange output_objects = 2;
+}
+
+enum ObjectState {
+  OBJECT_STATE_UNSPECIFIED = 0;
+  OBJECT_STATE_CREATE = 1;
+  OBJECT_STATE_UPDATE = 2;
+  OBJECT_STATE_DELETE = 3;
+  OBJECT_STATE_UNCHANGED = 4;
+  OBJECT_STATE_ALREADY_EXISTS = 5;
+}
+
+message ObjectChange {
+  Object object = 1;
+  ObjectState state = 2;
+}
+
+message Object {
+  GVK gvk = 1;
+  string name = 2;
+  string content = 3;
+}
+
+message GVK {
+  string group = 1;
+  string version = 2;
+  string kind = 3;
+}
