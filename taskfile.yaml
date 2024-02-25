@@ -92,7 +92,7 @@ tasks:
 
   mocks:
     desc: "🪄 Run mock generation"
-    deps: [tools:mockery]
+    deps: [tools:mockery, proto]
     vars:
       GOMODCACHE:
         sh: go env GOMODCACHE

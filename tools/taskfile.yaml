@@ -141,7 +141,7 @@ tasks:
       - test -s bin/controller-gen
       - ./bin/controller-gen --version | grep "{{ .GO_MOD_VERSION }}"
     cmds:
-      - go install sigs.k8s.io/controller-tools/cmd/controller-gen)
+      - go install sigs.k8s.io/controller-tools/cmd/controller-gen
 
   crd-ref-docs:
     desc: "📦 Install crd-ref-docs"
