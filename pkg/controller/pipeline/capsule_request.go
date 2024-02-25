@@ -423,7 +423,11 @@ const (
 	_resourceStateChangePending resourceState = "changePending"
 )
 
-func (r *capsuleRequest) updateStatusChanges(ctx context.Context, changes map[objectKey]*change, generation int64) error {
+func (r *capsuleRequest) updateStatusChanges(
+	ctx context.Context,
+	changes map[objectKey]*change,
+	generation int64,
+) error {
 	capsule := r.capsule.DeepCopy()
 
 	status := &v1alpha2.CapsuleStatus{
