@@ -24,7 +24,7 @@ require (
 )
 
 require (
-	connectrpc.com/connect v1.14.0
+	connectrpc.com/connect v1.15.0
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/cert-manager/cert-manager v1.13.1
 	github.com/distribution/reference v0.5.0
@@ -39,7 +39,7 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20240209082824-e70b791c2a76
+	github.com/rigdev/rig-go-api v0.0.0-20240225103947-23a41a1078be
 	github.com/rigdev/rig-go-sdk v0.0.0-20240125120802-fb9e44c555aa
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
@@ -122,7 +122,7 @@ require (
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
@@ -153,8 +153,8 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/dig v1.17.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.19.0
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/net v0.21.0
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
