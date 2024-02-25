@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/docker/docker v24.0.2+incompatible
 	github.com/docker/go-connections v0.4.0
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.6.0
 	github.com/nyaruka/phonenumbers v1.1.7
 	github.com/opencontainers/image-spec v1.1.0-rc3
 	github.com/spf13/cobra v1.8.0
@@ -15,8 +15,8 @@ require (
 	go.uber.org/fx v1.19.3
 	go.uber.org/zap v1.25.0
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e
-	golang.org/x/oauth2 v0.15.0 // indirect
-	golang.org/x/sync v0.5.0 // indirect
+	golang.org/x/oauth2 v0.16.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
 	google.golang.org/protobuf v1.32.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
@@ -41,12 +41,12 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20240225103947-23a41a1078be
+	github.com/rigdev/rig-go-api v0.0.0-20240225171918-15e22616674b
 	github.com/rigdev/rig-go-sdk v0.0.0-20240125120802-fb9e44c555aa
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rodaine/table v1.1.0
-	google.golang.org/grpc v1.57.0
+	google.golang.org/grpc v1.62.0
 	k8s.io/apiextensions-apiserver v0.28.4
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.0.0
 	sigs.k8s.io/controller-runtime v0.16.3
@@ -87,7 +87,7 @@ require (
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230911183012-2d3300fd4832 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240221002015-b0ce06bbee7c // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 	k8s.io/component-base v0.28.4 // indirect
 	sigs.k8s.io/gateway-api v0.8.0 // indirect
