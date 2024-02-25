@@ -314,7 +314,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	p := pipeline.New(r.Client, r.Config, capsule, r.Scheme, log)
+	p := pipeline.New(r.Client, r.Config, r.Scheme, log)
 
 	p.AddStep(NewServiceAccountStep())
 	p.AddStep(NewDeploymentStep())
@@ -335,7 +335,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		defer ps.Stop(ctx)
 	}
 
-	if err := p.Run(ctx); err != nil {
+	if err := p.RunCapsule(ctx, capsule); err != nil {
 		log.Error(err, "reconciliation ended with error")
 		return ctrl.Result{}, err
 	}
