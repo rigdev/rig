@@ -34,6 +34,8 @@ require (
 	github.com/google/gnostic-models v0.6.8
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
+	github.com/hashicorp/go-hclog v1.6.2
+	github.com/hashicorp/go-plugin v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/moby/term v0.5.0
@@ -44,6 +46,7 @@ require (
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rodaine/table v1.1.0
+	google.golang.org/grpc v1.57.0
 	k8s.io/apiextensions-apiserver v0.28.4
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.0.0
 	sigs.k8s.io/controller-runtime v0.16.3
@@ -67,8 +70,6 @@ require (
 	github.com/go-logr/zapr v1.2.4 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 // indirect
-	github.com/hashicorp/go-hclog v1.6.2 // indirect
-	github.com/hashicorp/go-plugin v1.6.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -87,7 +88,6 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230911183012-2d3300fd4832 // indirect
-	google.golang.org/grpc v1.57.0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 	k8s.io/component-base v0.28.4 // indirect
 	sigs.k8s.io/gateway-api v0.8.0 // indirect
