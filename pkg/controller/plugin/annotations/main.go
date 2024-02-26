@@ -12,6 +12,7 @@ import (
 
 type Config struct {
 	Annotations map[string]string
+	Labels      map[string]string
 	// Group to match, for which objects to apply the patch to.
 	Group string `json:"group,omitempty"`
 	// Kind to match, for which objects to apply the patch to.
@@ -38,11 +39,6 @@ func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, 
 		return err
 	}
 
-	annotations := object.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-
 	values, err := plugin.TemplateDataUsingJSONTags(map[string]interface{}{
 		"capsule": req.Capsule(),
 		"current": object,
@@ -51,25 +47,45 @@ func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, 
 		return err
 	}
 
-	for k, v := range p.config.Annotations {
+	annotations := object.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	if err := handleMap(annotations, p.config.Annotations, values); err != nil {
+		return err
+	}
+	object.SetAnnotations(annotations)
+
+	labels := object.GetLabels()
+	if labels == nil {
+		labels = map[string]string{}
+	}
+	if err := handleMap(labels, p.config.Labels, values); err != nil {
+		return err
+	}
+	object.SetLabels(labels)
+
+	return req.Set(object)
+}
+
+func handleMap(values map[string]string, updates map[string]string, templateValues map[string]any) error {
+	for k, v := range updates {
 		if v == "" {
-			delete(annotations, k)
+			delete(values, k)
 			continue
 		}
 
-		t, err := template.New("annotation").Parse(v)
+		t, err := template.New("value").Parse(v)
 		if err != nil {
 			return err
 		}
 		var buffer bytes.Buffer
-		if err := t.Execute(&buffer, values); err != nil {
+		if err := t.Execute(&buffer, templateValues); err != nil {
 			return err
 		}
-		annotations[k] = buffer.String()
+		values[k] = buffer.String()
 	}
-	object.SetAnnotations(annotations)
-
-	return req.Set(object)
+	return nil
 }
 
 func main() {
