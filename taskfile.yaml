@@ -15,7 +15,7 @@ includes:
 tasks:
   build:
     desc: "🔨 Build all binaries"
-    deps: [build-rig, build-rig-operator, build-plugins]
+    deps: [build-rig, build-rig-ops, build-rig-operator, build-plugins]
 
   build-rig:
     desc: "🔨 Build rig binary"
@@ -28,6 +28,18 @@ tasks:
       - "bin/rig"
     cmds:
       - go build -o ./bin/rig ./cmd/rig
+
+  build-rig-ops:
+    desc: "🔨 Build rig-ops binary"
+    deps: [proto]
+    env:
+      CGO_ENABLED: "0"
+    sources:
+      - "**/*.go"
+    generates:
+      - "bin/rig-ops"
+    cmds:
+      - go build -o ./bin/rig-ops ./cmd/rig-ops
 
   build-rig-operator:
     desc: "🔨 Build rig-operator binary"

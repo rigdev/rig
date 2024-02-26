@@ -10,9 +10,11 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/roclient"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -29,8 +31,8 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 		f := fx.New(
 			fx.Supply(cmd),
 			fx.Supply(args),
-			fx.Provide(NewKubernetesClient),
-			fx.Provide(NewRigClient),
+			fx.Provide(NewKubernetesClient, NewKubernetesReader),
+			fx.Provide(NewRigClient, NewOperatorClient),
 			fx.Provide(func() context.Context { return context.Background() }),
 
 			fx.Invoke(f),
@@ -49,11 +51,11 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func NewKubernetesClient() (client.Client, error) {
+func NewKubernetesClient() (client.Client, *rest.Config, error) {
 	// use the current context in kubeconfig
 	config, err := clientcmd.BuildConfigFromFlags("", Flags.KubeConfig)
 	if err != nil {
-		return nil, err
+		return nil, config, err
 	}
 
 	if Flags.KubeContext != "" {
@@ -63,13 +65,22 @@ func NewKubernetesClient() (client.Client, error) {
 				CurrentContext: Flags.KubeContext,
 			}).ClientConfig()
 		if err != nil {
-			return nil, err
+			return nil, config, err
 		}
 	}
 
-	return client.New(config, client.Options{
+	cc, err := client.New(config, client.Options{
 		Scheme: scheme.New(),
 	})
+	return cc, config, err
+}
+
+func NewKubernetesReader(cc client.Client) (client.Reader, error) {
+	if Flags.KubeFile == "" {
+		return cc, nil
+	}
+
+	return roclient.NewReaderFromFile(Flags.KubeFile, cc.Scheme())
 }
 
 func NewRigClient(ctx context.Context) (rig.Client, error) {
@@ -183,6 +194,7 @@ func (s *sessionManager) GetRefreshToken() string {
 
 	return s.cfg.GetCurrentAuth().AccessToken
 }
+
 func (s *sessionManager) SetAccessToken(accessToken string, refreshToken string) {
 	var auth *cmdconfig.Auth
 	if Flags.RigContext != "" {

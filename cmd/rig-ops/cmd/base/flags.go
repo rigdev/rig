@@ -8,6 +8,7 @@ type FlagsStruct struct {
 	Namespace   string
 	Project     string
 	Environment string
+	KubeFile    string
 }
 
 var Flags = FlagsStruct{

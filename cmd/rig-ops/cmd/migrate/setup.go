@@ -35,8 +35,8 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(migrate)
 }
 
-func migrate(ctx context.Context, cmd *cobra.Command, args []string, cc client.Client, rc rig.Client) error {
-	deployment, err := getDeployment(ctx, cc)
+func migrate(ctx context.Context, cmd *cobra.Command, args []string, cc client.Client, cr client.Reader, rc rig.Client, _ *base.OperatorClient) error {
+	deployment, err := getDeployment(ctx, cr)
 	if err != nil || deployment == nil {
 		return err
 	}
@@ -116,20 +116,22 @@ func migrate(ctx context.Context, cmd *cobra.Command, args []string, cc client.C
 }
 
 func migrateDeployment(ctx context.Context, deployment *appsv1.Deployment, rc rig.Client) (*v1alpha2.CapsuleSpec, string, []*capsule.Change, error) {
-	var capsuleID = deployment.Name
-	res, err := rc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
-		Msg: &capsule.GetRequest{
-			CapsuleId: capsuleID,
-			ProjectId: base.Flags.Project,
-		},
-	})
-	if errors.IsNotFound(err) {
-	} else if err != nil {
-		return nil, "", nil, err
-	}
+	capsuleID := deployment.Name
+	{
+		res, err := rc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
+			Msg: &capsule.GetRequest{
+				CapsuleId: capsuleID,
+				ProjectId: base.Flags.Project,
+			},
+		})
+		if errors.IsNotFound(err) {
+		} else if err != nil {
+			return nil, "", nil, err
+		}
 
-	if res.Msg.GetCapsule() != nil {
-		capsuleID = fmt.Sprintf("%s-migrated", deployment.Name)
+		if res != nil && res.Msg.GetCapsule() != nil {
+			capsuleID = fmt.Sprintf("%s-migrated", deployment.Name)
+		}
 	}
 
 	if _, err := rc.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
@@ -213,19 +215,20 @@ func migrateDeployment(ctx context.Context, deployment *appsv1.Deployment, rc ri
 	return capsuleSpec, capsuleID, capsuleChanges, nil
 }
 
-func getDeployment(ctx context.Context, cc client.Client) (*appsv1.Deployment, error) {
+func getDeployment(ctx context.Context, cc client.Reader) (*appsv1.Deployment, error) {
 	deployments := &appsv1.DeploymentList{}
 	err := cc.List(ctx, deployments, client.InNamespace(base.Flags.Namespace))
 	if err != nil {
 		return nil, err
 	}
 
-	headers := []string{"NAME", "READY", "UP-TO-DATE", "AVAILABLE", "AGE"}
+	headers := []string{"NAME", "NAMESPACE", "READY", "UP-TO-DATE", "AVAILABLE", "AGE"}
 	deploymentNames := make([][]string, 0, len(deployments.Items))
 	for _, deployment := range deployments.Items {
 		// if deployment.GetObjectMeta().GetLabels()["rig.dev/owned-by-capsule"] == "" {
 		deploymentNames = append(deploymentNames, []string{
 			deployment.GetName(),
+			deployment.GetNamespace(),
 			fmt.Sprintf("    %d/%d    ", deployment.Status.ReadyReplicas, *deployment.Spec.Replicas),
 			fmt.Sprintf("     %d     ", deployment.Status.UpdatedReplicas),
 			fmt.Sprintf("     %d     ", deployment.Status.AvailableReplicas),
