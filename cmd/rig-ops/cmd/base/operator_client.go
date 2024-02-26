@@ -52,8 +52,7 @@ func NewOperatorClient(ctx context.Context, cc client.Client, cfg *rest.Config) 
 
 	rdy := make(chan struct{}, 1)
 	errs := make(chan error, 1)
-	stop := make(chan struct{}, 1)
-	pw, err := portforward.New(dialer, []string{"0:9000"}, stop, rdy, io.Discard, io.Discard)
+	pw, err := portforward.New(dialer, []string{"0:9000"}, nil, rdy, io.Discard, io.Discard)
 	if err != nil {
 		return nil, err
 	}
