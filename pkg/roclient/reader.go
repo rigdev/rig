@@ -44,7 +44,7 @@ type object struct {
 	raw gojson.RawMessage
 }
 
-func (r *reader) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+func (r *reader) Get(_ context.Context, key client.ObjectKey, obj client.Object, _ ...client.GetOption) error {
 	gvk, err := apiutil.GVKForObject(obj, r.scheme)
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func (r *reader) Get(ctx context.Context, key client.ObjectKey, obj client.Objec
 	return kerrors.NewNotFound(schema.GroupResource{Group: obj.GetObjectKind().GroupVersionKind().Group}, obj.GetName())
 }
 
-func (r *reader) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+func (r *reader) List(_ context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	gvk, err := apiutil.GVKForObject(list, r.scheme)
 	if err != nil {
 		return err
@@ -156,7 +156,9 @@ func (r *reader) getObjectsFromContent(bs []byte) ([]object, error) {
 
 				co, ok := ro.(client.Object)
 				if !ok {
-					return nil, errors.UnimplementedErrorf("unknown object resource type in file '%v'", ro.GetObjectKind().GroupVersionKind())
+					return nil,
+						errors.UnimplementedErrorf("unknown object resource type in file '%v'",
+							ro.GetObjectKind().GroupVersionKind())
 				}
 
 				res = append(res, object{
@@ -169,7 +171,8 @@ func (r *reader) getObjectsFromContent(bs []byte) ([]object, error) {
 
 		co, ok := ro.(client.Object)
 		if !ok {
-			return nil, errors.UnimplementedErrorf("unknown object resource type in file '%v'", ro.GetObjectKind().GroupVersionKind())
+			return nil, errors.UnimplementedErrorf("unknown object resource type in file '%v'",
+				ro.GetObjectKind().GroupVersionKind())
 		}
 
 		raw, err := yaml.YAMLToJSON(buf.Bytes())

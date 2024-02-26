@@ -130,7 +130,8 @@ spec:
 			tt.capsule.Name = name
 			p := pipeline.New(nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
 			req := pipeline.NewCapsuleRequest(p, tt.capsule)
-			req.Set(tt.current)
+			err := req.Set(tt.current)
+			assert.Nil(t, err)
 			plugin := objectTemplatePlugin{
 				config: Config{
 					Object: tt.patchYAML,
@@ -139,7 +140,7 @@ spec:
 					Name:   name,
 				},
 			}
-			err := plugin.Run(context.Background(), req, hclog.Default())
+			err = plugin.Run(context.Background(), req, hclog.Default())
 			assert.Nil(t, err)
 			deploy := &appsv1.Deployment{}
 			err = req.GetNew(deploy)

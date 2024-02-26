@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"fmt"
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
@@ -213,5 +214,7 @@ func (s *sessionManager) SetAccessToken(accessToken string, refreshToken string)
 
 	auth.AccessToken = accessToken
 	auth.RefreshToken = refreshToken
-	s.cfg.Save()
+	if err := s.cfg.Save(); err != nil {
+		fmt.Println("Failed to save the new access token")
+	}
 }
