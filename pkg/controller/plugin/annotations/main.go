@@ -47,6 +47,9 @@ func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, 
 		"capsule": req.Capsule(),
 		"current": object,
 	})
+	if err != nil {
+		return err
+	}
 
 	for k, v := range p.config.Annotations {
 		if v == "" {

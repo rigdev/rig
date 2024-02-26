@@ -49,6 +49,9 @@ func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleReques
 		"capsule": req.Capsule(),
 		"current": currentObject,
 	})
+	if err != nil {
+		return err
+	}
 
 	t, err := template.New("plugin").Parse(p.config.Object)
 	if err != nil {

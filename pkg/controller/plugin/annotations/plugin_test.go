@@ -65,12 +65,12 @@ func Test_Plugin(t *testing.T) {
 			tt.capsule.Name = name
 			p := pipeline.New(nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
 			req := pipeline.NewCapsuleRequest(p, tt.capsule)
-			req.Set(&appsv1.Deployment{
+			assert.NoError(t, req.Set(&appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        name,
 					Annotations: tt.annotationsBefore,
 				},
-			})
+			}))
 			plugin := annotationsPlugin{
 				config: Config{
 					Annotations: tt.annotations,
