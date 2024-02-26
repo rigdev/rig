@@ -17,11 +17,15 @@ import (
 func Test_Plugin(t *testing.T) {
 	name, namespace := "name", "namespace"
 	tests := []struct {
-		name              string
-		capsule           *v1alpha2.Capsule
-		annotations       map[string]string
-		annotationsBefore map[string]string
-		expected          map[string]string
+		name                string
+		capsule             *v1alpha2.Capsule
+		annotations         map[string]string
+		annotationsBefore   map[string]string
+		expectedAnnotations map[string]string
+
+		labels         map[string]string
+		labelsBefore   map[string]string
+		expectedLabels map[string]string
 	}{
 		{
 			name: "add delete remove annotation",
@@ -38,11 +42,34 @@ func Test_Plugin(t *testing.T) {
 				"annotation2": "value2",
 				"annotation3": "value3",
 			},
-			expected: map[string]string{
+			expectedAnnotations: map[string]string{
 				"annotation2": "new-value",
 				"annotation3": "value3",
 				"annotation4": "value4",
 			},
+			expectedLabels: map[string]string{},
+		},
+		{
+			name: "add delete remove label",
+			capsule: &v1alpha2.Capsule{
+				Spec: v1alpha2.CapsuleSpec{},
+			},
+			labels: map[string]string{
+				"label1": "",
+				"label2": "new-value",
+				"label4": "value4",
+			},
+			labelsBefore: map[string]string{
+				"label1": "value1",
+				"label2": "value2",
+				"label3": "value3",
+			},
+			expectedLabels: map[string]string{
+				"label2": "new-value",
+				"label3": "value3",
+				"label4": "value4",
+			},
+			expectedAnnotations: map[string]string{},
 		},
 		{
 			name: "capsule templating",
@@ -53,9 +80,10 @@ func Test_Plugin(t *testing.T) {
 				"annotation": "image-{{ .capsule.spec.image }}",
 			},
 			annotationsBefore: map[string]string{},
-			expected: map[string]string{
+			expectedAnnotations: map[string]string{
 				"annotation": "image-nginx",
 			},
+			expectedLabels: map[string]string{},
 		},
 	}
 
@@ -69,11 +97,13 @@ func Test_Plugin(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        name,
 					Annotations: tt.annotationsBefore,
+					Labels:      tt.labelsBefore,
 				},
 			}))
 			plugin := annotationsPlugin{
 				config: Config{
 					Annotations: tt.annotations,
+					Labels:      tt.labels,
 					Group:       "apps",
 					Kind:        "Deployment",
 					Name:        name,
@@ -84,7 +114,8 @@ func Test_Plugin(t *testing.T) {
 			deploy := &appsv1.Deployment{}
 			err = req.GetNew(deploy)
 			assert.Nil(t, err)
-			assert.Equal(t, tt.expected, deploy.GetAnnotations())
+			assert.Equal(t, tt.expectedAnnotations, deploy.GetAnnotations())
+			assert.Equal(t, tt.expectedLabels, deploy.GetLabels())
 		})
 	}
 }
