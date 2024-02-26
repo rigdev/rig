@@ -22,7 +22,10 @@ func NewSerializer(scheme *runtime.Scheme) runtime.Serializer {
 // This function is dangerous to use with objects derived from yaml/json when fields don't have omitEmpty
 // Consider a field with no omitEmpty JSON tag. If this field is not set in 'source', if will be present as an empty
 // value in the JSON of 'source' and then overwrite whatever the field had in 'dest'.
-func Merge[T runtime.Object](patch runtime.Object, object runtime.Object, result T, serializer runtime.Serializer) (T, error) {
+func Merge[T runtime.Object](patch runtime.Object,
+	object runtime.Object,
+	result T,
+	serializer runtime.Serializer) (T, error) {
 	var empty T
 
 	var srcB bytes.Buffer
