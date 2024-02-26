@@ -42,7 +42,12 @@ type capsuleRequest struct {
 	logger             logr.Logger
 }
 
-func NewCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) *capsuleRequest {
+func NewCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) CapsuleRequest {
+	r := newCapsuleRequest(p, capsule)
+	return CapsuleRequest(r)
+}
+
+func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) *capsuleRequest {
 	r := &capsuleRequest{
 		pipeline:       p,
 		capsule:        capsule,

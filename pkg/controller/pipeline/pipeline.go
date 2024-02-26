@@ -78,7 +78,7 @@ func (p *Pipeline) AddStep(step Step) {
 }
 
 func (p *Pipeline) RunCapsule(ctx context.Context, capsule *v1alpha2.Capsule, dryRun bool) (*Result, error) {
-	req := NewCapsuleRequest(p, capsule)
+	req := newCapsuleRequest(p, capsule)
 
 	result, err := p.runSteps(ctx, req, dryRun)
 	if errors.IsFailedPrecondition(err) {
