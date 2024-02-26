@@ -133,7 +133,7 @@ container:
 		CapabilitiesService: capabilities.NewService(configService, cc, clientSet.Discovery()),
 	}
 
-	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
+	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
