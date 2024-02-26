@@ -131,7 +131,7 @@ func (p *rigOperatorPlugin) GRPCClient(
 	_ context.Context,
 	broker *plugin.GRPCBroker,
 	c *grpc.ClientConn,
-) (interface{}, error) {
+) (any, error) {
 	return &pluginClient{
 		client: apiplugin.NewPluginServiceClient(c),
 		broker: broker,

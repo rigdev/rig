@@ -44,6 +44,14 @@ config:
     #       name: startup
     #       image: alpine
     #       command: ['sh', '-c', 'echo "Startup!"']
+    # - plugin: annotations
+    #   config: |
+    #     group: apps
+    #     kind: Deployment
+    #     annotations:
+    #       some-annotation: some-value
+    #       templated-annotation: value-{{ .capsule.spec.image }}
+    #       deleted-annotation: ""
 
 replicaCount: 1
 

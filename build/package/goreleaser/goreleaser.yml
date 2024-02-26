@@ -77,6 +77,21 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
       - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
+  - id: plugin/annotations
+    binary: plugin/annotations
+    main: ./pkg/controller/plugin/annotations
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
+      - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
+      - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
 
 archives:
   - id: rig

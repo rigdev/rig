@@ -6,14 +6,11 @@ import (
 	"text/template"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/mitchellh/mapstructure"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -37,50 +34,26 @@ func (p *objectTemplatePlugin) LoadConfig(data []byte) error {
 }
 
 func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
-	gvk, err := pipeline.LookupGVK(schema.GroupKind{Group: p.config.Group, Kind: p.config.Kind})
-	if err != nil {
-		return err
+	name := p.config.Name
+	if name == "" {
+		name = req.Capsule().Name
 	}
-
-	co, err := req.Scheme().New(gvk)
-	if err != nil {
-		return err
-	}
-
-	currentObject := co.(client.Object)
-	currentObject.SetName(p.config.Name)
-
-	if err := req.GetNew(currentObject); errors.IsNotFound(err) {
+	currentObject, err := plugin.GetNew(p.config.Group, p.config.Kind, name, req)
+	if errors.IsNotFound(err) {
 		return nil
 	} else if err != nil {
 		return err
 	}
 
+	values, err := plugin.TemplateDataUsingJSONTags(map[string]interface{}{
+		"capsule": req.Capsule(),
+		"current": currentObject,
+	})
+
 	t, err := template.New("plugin").Parse(p.config.Object)
 	if err != nil {
 		return err
 	}
-
-	input := map[string]interface{}{
-		"capsule": req.Capsule(),
-		"current": currentObject,
-	}
-
-	values := map[string]interface{}{}
-	for name, in := range input {
-		result := map[string]interface{}{}
-		d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{TagName: "json", Result: &result})
-		if err != nil {
-			return err
-		}
-
-		if err := d.Decode(in); err != nil {
-			return err
-		}
-
-		values[name] = result
-	}
-
 	var patchBuffer bytes.Buffer
 	if err := t.Execute(&patchBuffer, values); err != nil {
 		return err
