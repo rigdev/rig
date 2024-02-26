@@ -12,7 +12,9 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 type Config struct {
@@ -45,10 +47,10 @@ func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleReques
 		return err
 	}
 
-	cc := co.(client.Object)
-	cc.SetName(p.config.Name)
+	currentObject := co.(client.Object)
+	currentObject.SetName(p.config.Name)
 
-	if err := req.GetNew(cc); errors.IsNotFound(err) {
+	if err := req.GetNew(currentObject); errors.IsNotFound(err) {
 		return nil
 	} else if err != nil {
 		return err
@@ -61,7 +63,7 @@ func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleReques
 
 	input := map[string]interface{}{
 		"capsule": req.Capsule(),
-		"current": cc,
+		"current": currentObject,
 	}
 
 	values := map[string]interface{}{}
@@ -79,26 +81,31 @@ func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleReques
 		values[name] = result
 	}
 
-	var out bytes.Buffer
-	if err := t.Execute(&out, values); err != nil {
+	var patchBuffer bytes.Buffer
+	if err := t.Execute(&patchBuffer, values); err != nil {
 		return err
 	}
-
-	patch, err := req.Scheme().New(gvk)
+	patchBytes, err := yaml.YAMLToJSON(patchBuffer.Bytes())
 	if err != nil {
 		return err
 	}
 
-	if err := obj.DecodeInto(out.Bytes(), patch, req.Scheme()); err != nil {
+	var currentBytes bytes.Buffer
+	serializer := obj.NewSerializer(req.Scheme())
+	if err := serializer.Encode(currentObject, &currentBytes); err != nil {
 		return err
 	}
 
-	merge := obj.NewMerger(req.Scheme())
-	if err := merge.Merge(patch, cc); err != nil {
+	modifiedBytes, err := strategicpatch.StrategicMergePatch(currentBytes.Bytes(), patchBytes, currentObject)
+	if err != nil {
 		return err
 	}
 
-	return req.Set(cc)
+	if err := obj.DecodeInto(modifiedBytes, currentObject, req.Scheme()); err != nil {
+		return err
+	}
+
+	return req.Set(currentObject)
 }
 
 func main() {

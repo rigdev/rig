@@ -134,6 +134,10 @@ func (s *NetworkStep) createService(req pipeline.CapsuleRequest) *corev1.Service
 
 func (s *NetworkStep) createCertificate(req pipeline.CapsuleRequest) *cmv1.Certificate {
 	crt := &cmv1.Certificate{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Certificate",
+			APIVersion: "cert-manager.io/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
 			Namespace: req.Capsule().Namespace,
@@ -161,6 +165,10 @@ func (s *NetworkStep) createCertificate(req pipeline.CapsuleRequest) *cmv1.Certi
 
 func (s *NetworkStep) createIngress(req pipeline.CapsuleRequest) *netv1.Ingress {
 	ing := &netv1.Ingress{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Ingress",
+			APIVersion: "networking.k8s.io/v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        req.Capsule().Name,
 			Namespace:   req.Capsule().Namespace,
@@ -242,6 +250,9 @@ func (s *NetworkStep) createIngress(req pipeline.CapsuleRequest) *netv1.Ingress 
 
 func (s *NetworkStep) createLoadBalancer(req pipeline.CapsuleRequest) *v1.Service {
 	svc := &v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Service",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-lb", req.Capsule().Name),
 			Namespace: req.Capsule().Namespace,

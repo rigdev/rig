@@ -21,6 +21,10 @@ func (s *ServiceAccountStep) Apply(_ context.Context, req pipeline.CapsuleReques
 
 func (s *ServiceAccountStep) createServiceAccount(req pipeline.CapsuleRequest) *corev1.ServiceAccount {
 	sa := &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ServiceAccount",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
 			Namespace: req.Capsule().Namespace,

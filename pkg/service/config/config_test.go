@@ -123,7 +123,7 @@ ingress:
 	}
 
 	sch := scheme.New()
-	merger := obj.NewMerger(sch)
+	ser := obj.NewSerializer(sch)
 	decoder := serializer.NewCodecFactory(sch).UniversalDeserializer()
 
 	for i := range tests {
@@ -151,7 +151,7 @@ ingress:
 			s, err := newServiceBuilder().
 				withDecoder(decoder).
 				withFiles(fileNames...).
-				withMerger(merger).
+				withSerializer(ser).
 				build()
 			if test.err != nil {
 				require.ErrorAs(t, err, &test.err)

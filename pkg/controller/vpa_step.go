@@ -31,6 +31,9 @@ func (s *VPAStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
 
 func (s *VPAStep) createVPA(req pipeline.CapsuleRequest) *vpav1.VerticalPodAutoscaler {
 	vpa := &vpav1.VerticalPodAutoscaler{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "VerticalPodAutoscaler",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
 			Namespace: req.Capsule().Namespace,

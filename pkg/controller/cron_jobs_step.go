@@ -82,6 +82,10 @@ func (s *CronJobStep) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.Cr
 		maps.Copy(annotations, req.Capsule().Annotations)
 
 		j := &batchv1.CronJob{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "batch/v1",
+				APIVersion: "CronJob",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-%s", req.Capsule().Name, job.Name),
 				Namespace: req.Capsule().Namespace,

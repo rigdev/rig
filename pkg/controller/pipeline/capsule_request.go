@@ -42,14 +42,14 @@ type capsuleRequest struct {
 	logger             logr.Logger
 }
 
-func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) *capsuleRequest {
+func NewCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) *capsuleRequest {
 	r := &capsuleRequest{
-		pipeline: p,
-		logger: p.logger.WithValues(
-			"capsule", capsule.Name,
-		),
+		pipeline:       p,
 		capsule:        capsule,
 		currentObjects: map[objectKey]client.Object{},
+		objects:        map[objectKey]*Object{},
+		usedResources:  []v1alpha2.UsedResource{},
+		logger:         p.logger.WithValues("capsule", capsule.Name),
 	}
 
 	if capsule.Status != nil {
