@@ -32,7 +32,6 @@ import (
 var nsName types.NamespacedName
 
 func (s *K8sTestSuite) TestControllerSharedSecrets() {
-	return
 	ctx := context.Background()
 	nsName = types.NamespacedName{
 		Name:      uuid.NewString(),
@@ -255,7 +254,6 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 }
 
 func (s *K8sTestSuite) TestController() {
-	return
 	nsName = types.NamespacedName{
 		Name:      "test",
 		Namespace: "nginx",
