@@ -63,7 +63,7 @@ func New(
 		CapabilitiesService: capabilitiesService,
 	}
 
-	if err := cr.SetupWithManager(mgr); err != nil {
+	if err := cr.SetupWithManager(mgr, logger); err != nil {
 		return nil, err
 	}
 

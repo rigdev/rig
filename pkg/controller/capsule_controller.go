@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/go-logr/logr"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -52,6 +53,7 @@ type CapsuleReconciler struct {
 	Config              *configv1alpha1.OperatorConfig
 	ClientSet           clientset.Interface
 	CapabilitiesService capabilities.Service
+	Pipeline            *pipeline.Pipeline
 }
 
 const (
@@ -71,7 +73,7 @@ const (
 )
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logger) error {
 	// TODO Where to get the context from?
 	ctx := context.Background()
 
@@ -156,6 +158,25 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	capabilities, err := r.CapabilitiesService.Get(ctx)
 	if err != nil {
 		return err
+	}
+
+	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService)
+	if err != nil {
+		return err
+	}
+
+	r.Pipeline = pipeline.New(r.Client, r.Config, r.Scheme, logger)
+	for _, step := range steps {
+		r.Pipeline.AddStep(step)
+	}
+
+	for _, step := range r.Config.Steps {
+		ps, err := plugin.NewStep(step, logger)
+		if err != nil {
+			return err
+		}
+
+		r.Pipeline.AddStep(ps)
 	}
 
 	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
@@ -309,27 +330,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
-	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	p := pipeline.New(r.Client, r.Config, r.Scheme, log)
-	for _, step := range steps {
-		p.AddStep(step)
-	}
-
-	for _, step := range r.Config.Steps {
-		ps, err := plugin.NewStep(step, log)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-
-		p.AddStep(ps)
-		defer ps.Stop(ctx)
-	}
-
-	if _, err := p.RunCapsule(ctx, capsule, false); err != nil {
+	if _, err := r.Pipeline.RunCapsule(ctx, capsule, false); err != nil {
 		log.Error(err, "reconciliation ended with error")
 		return ctrl.Result{}, err
 	}
