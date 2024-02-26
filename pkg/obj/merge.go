@@ -22,38 +22,22 @@ func NewSerializer(scheme *runtime.Scheme) runtime.Serializer {
 // This function is dangerous to use with objects derived from yaml/json when fields don't have omitEmpty
 // Consider a field with no omitEmpty JSON tag. If this field is not set in 'source', if will be present as an empty
 // value in the JSON of 'source' and then overwrite whatever the field had in 'dest'.
-func Merge[T runtime.Object](source runtime.Object, dest T, serializer runtime.Serializer) (T, error) {
+func Merge[T runtime.Object](patch runtime.Object, object runtime.Object, result T, serializer runtime.Serializer) (T, error) {
 	var empty T
 
 	var srcB bytes.Buffer
-	if err := serializer.Encode(source, &srcB); err != nil {
+	if err := serializer.Encode(patch, &srcB); err != nil {
 		return empty, fmt.Errorf("could not encode source obj: %w", err)
 	}
 
 	var dstB bytes.Buffer
-	if err := serializer.Encode(dest, &dstB); err != nil {
+	if err := serializer.Encode(object, &dstB); err != nil {
 		return empty, fmt.Errorf("could not encode destination obj: %w", err)
 	}
 
-	out, err := strategicpatch.StrategicMergePatch(dstB.Bytes(), srcB.Bytes(), dest)
+	out, err := strategicpatch.StrategicMergePatch(dstB.Bytes(), srcB.Bytes(), object)
 	if err == nil {
-		// Previously, we discarded the output and used 'dst' as 'into'. This introduced a bug in the following scenario:
-		// Consider
-		// type obj Struct {
-		// 	list []struct{
-		// 		name string
-		// 		value string
-		// 	}
-		// }
-		// where we merge 'obj's by merging their 'list' fields on 'name'. Having two obj's of
-		// source := obj{list: [{name: "n1", value: "v1"}, {name: "n2", value: "v2"}]
-		// dest := obj{list: [{name: "n1", value: "vv"}, {name: "n3", value: ""}]
-		// We expect
-		// result == obj{list: [{name: "n1", value: "vv"}, {name: "n3", value: ""}, {name: "n2", value: "v2"}]
-		// but got (note 'value' of the second element)
-		// result == obj{list: [{name: "n1", value: "vv"}, {name: "n3", value: "v2"}, {name: "n2", value: "v2"}]
-		gvk := dest.GetObjectKind().GroupVersionKind()
-		res, _, err := serializer.Decode(out, &gvk, nil)
+		res, _, err := serializer.Decode(out, nil, result)
 		if err != nil {
 			return empty, err
 		}

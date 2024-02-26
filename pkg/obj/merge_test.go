@@ -65,6 +65,7 @@ func TestMerger(t *testing.T) {
 				},
 			},
 		},
+		&v1alpha1.PlatformConfig{},
 	)
 
 	podMeta := metav1.TypeMeta{
@@ -120,6 +121,7 @@ func TestMerger(t *testing.T) {
 				},
 			},
 		},
+		&corev1.Pod{},
 	)
 	testMerge(t, "test container add",
 		&corev1.Pod{
@@ -173,6 +175,7 @@ func TestMerger(t *testing.T) {
 				},
 			},
 		},
+		&corev1.Pod{},
 	)
 	testMerge(t, "test container merge",
 		&corev1.Pod{
@@ -277,6 +280,7 @@ func TestMerger(t *testing.T) {
 				},
 			},
 		},
+		&corev1.Pod{},
 	)
 
 	deploymentMeta := metav1.TypeMeta{
@@ -326,16 +330,17 @@ func TestMerger(t *testing.T) {
 				},
 			},
 		},
+		&appsv1.Deployment{},
 	)
 }
 
-func testMerge[T runtime.Object](t *testing.T, name string, src, dst, expected T) {
+func testMerge[T runtime.Object](t *testing.T, name string, src, dst, expected, empty T) {
 	codecs := serializer.NewCodecFactory(scheme.New())
 
 	info, _ := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), runtime.ContentTypeJSON)
 	t.Run(name, func(t *testing.T) {
 		t.Parallel()
-		res, err := Merge(src, dst, info.Serializer)
+		res, err := Merge(src, dst, empty, info.Serializer)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, res)
 	})

@@ -93,7 +93,7 @@ func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleReques
 	var currentBytes bytes.Buffer
 	serializer := obj.NewSerializer(req.Scheme())
 	if err := serializer.Encode(currentObject, &currentBytes); err != nil {
-		return fmt.Errorf("could not encode current obj: %w", err)
+		return err
 	}
 
 	modifiedBytes, err := strategicpatch.StrategicMergePatch(currentBytes.Bytes(), patchBytes, currentObject)

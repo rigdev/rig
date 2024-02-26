@@ -98,7 +98,7 @@ func (b *serviceBuilder) build() (*service, error) {
 		return nil, err
 	}
 	var err error
-	b.oCFG, err = obj.Merge(&oCFGFromEnv, b.oCFG, b.serializer)
+	b.oCFG, err = obj.Merge(&oCFGFromEnv, b.oCFG, b.oCFG, b.serializer)
 	if err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
 	}
@@ -108,7 +108,7 @@ func (b *serviceBuilder) build() (*service, error) {
 		return nil, err
 	}
 
-	b.pCFG, err = obj.Merge(&pCFGFromEnv, b.pCFG, b.serializer)
+	b.pCFG, err = obj.Merge(&pCFGFromEnv, b.pCFG, b.pCFG, b.serializer)
 	if err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
 	}
@@ -145,7 +145,7 @@ func (b *serviceBuilder) decode(data []byte) error {
 		default:
 			return fmt.Errorf("unsupport api version: %s", gvk.Version)
 		}
-		b.oCFG, err = obj.Merge(decodedCFG, b.oCFG, b.serializer)
+		b.oCFG, err = obj.Merge(decodedCFG, b.oCFG, b.oCFG, b.serializer)
 		if err != nil {
 			return fmt.Errorf("could not merge operator config: %w", err)
 		}
@@ -164,7 +164,7 @@ func (b *serviceBuilder) decode(data []byte) error {
 		default:
 			return fmt.Errorf("unsupported api version: %s", gvk.Version)
 		}
-		b.pCFG, err = obj.Merge(decodedCFG, b.pCFG, b.serializer)
+		b.pCFG, err = obj.Merge(decodedCFG, b.pCFG, b.pCFG, b.serializer)
 		if err != nil {
 			return fmt.Errorf("could not merge platform config: %w", err)
 		}
