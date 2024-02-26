@@ -21,12 +21,7 @@ type Step struct {
 }
 
 func NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error) {
-	var p Plugin
-	var err error
-	switch step.Plugin {
-	default:
-		p, err = NewExternalPlugin(step.Plugin, logger, step.Config)
-	}
+	p, err := NewExternalPlugin(step.Plugin, logger, step.Config)
 	if err != nil {
 		return nil, err
 	}
