@@ -78,7 +78,11 @@ func (p *Pipeline) AddStep(step Step) {
 	p.steps = append(p.steps, step)
 }
 
-func (p *Pipeline) RunCapsule(ctx context.Context, capsule *v1alpha2.Capsule, opts ...CapsuleRequestOption) (*Result, error) {
+func (p *Pipeline) RunCapsule(
+	ctx context.Context,
+	capsule *v1alpha2.Capsule,
+	opts ...CapsuleRequestOption,
+) (*Result, error) {
 	req := newCapsuleRequest(p, capsule, opts...)
 
 	result, err := p.runSteps(ctx, req)

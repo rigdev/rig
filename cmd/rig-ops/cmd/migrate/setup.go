@@ -257,7 +257,9 @@ func migrate(ctx context.Context,
 				Report:     r,
 				OmitHeader: true,
 			}
-			b.WriteReport(os.Stdout)
+			if err := b.WriteReport(os.Stdout); err != nil {
+				return err
+			}
 		}
 	}
 

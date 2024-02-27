@@ -31,11 +31,13 @@ require (
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/color v1.16.0
 	github.com/ghodss/yaml v1.0.0
+	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/gnostic-models v0.6.8
 	github.com/google/go-containerregistry v0.16.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-hclog v1.6.2
 	github.com/hashicorp/go-plugin v1.6.0
+	github.com/homeport/dyff v1.7.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/moby/term v0.5.0
@@ -74,10 +76,8 @@ require (
 	github.com/gonvenience/term v1.0.2 // indirect
 	github.com/gonvenience/text v1.0.7 // indirect
 	github.com/gonvenience/wrap v1.2.0 // indirect
-	github.com/gonvenience/ytbx v1.4.4 // indirect
 	github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
-	github.com/homeport/dyff v1.7.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-ciede2000 v0.0.0-20170301095244-782e8c62fec3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
