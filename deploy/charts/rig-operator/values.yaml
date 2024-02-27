@@ -52,6 +52,18 @@ config:
     #       some-annotation: some-value
     #       templated-annotation: value-{{ .capsule.spec.image }}
     #       deleted-annotation: ""
+    # - plugin: datadog
+    #   config: |
+    #     libraryTag:
+    #       java: latest
+    #       javascript: latest
+    #       python: latest
+    #       net: latest
+    #       ruby: latest
+    #     unifiedServiceTags:
+    #       env: some-env
+    #       service: some-service
+    #       version: some-version
 
 replicaCount: 1
 
