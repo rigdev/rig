@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"text/template"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
@@ -45,23 +44,19 @@ func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleReques
 		return err
 	}
 
-	values, err := plugin.TemplateDataUsingJSONTags(map[string]interface{}{
-		"capsule": req.Capsule(),
-		"current": currentObject,
-	})
-	if err != nil {
+	templateContext := plugin.NewTemplateContext()
+	if err := templateContext.AddData("capsule", req.Capsule()); err != nil {
+		return err
+	}
+	if err := templateContext.AddData("current", currentObject); err != nil {
 		return err
 	}
 
-	t, err := template.New("plugin").Parse(p.config.Object)
+	s, err := templateContext.Parse(p.config.Object)
 	if err != nil {
 		return err
 	}
-	var patchBuffer bytes.Buffer
-	if err := t.Execute(&patchBuffer, values); err != nil {
-		return err
-	}
-	patchBytes, err := yaml.YAMLToJSON(patchBuffer.Bytes())
+	patchBytes, err := yaml.YAMLToJSON([]byte(s))
 	if err != nil {
 		return err
 	}

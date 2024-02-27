@@ -1,6 +1,9 @@
 package plugin
 
 import (
+	"bytes"
+	"html/template"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,20 +31,38 @@ func GetNew(group, kind, name string, req pipeline.CapsuleRequest) (client.Objec
 	return currentObject, nil
 }
 
-func TemplateDataUsingJSONTags(input map[string]any) (map[string]any, error) {
-	values := map[string]interface{}{}
-	for name, in := range input {
-		result := map[string]interface{}{}
-		d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{TagName: "json", Result: &result})
-		if err != nil {
-			return nil, err
-		}
+type TemplateContext struct {
+	values map[string]any
+}
 
-		if err := d.Decode(in); err != nil {
-			return nil, err
-		}
-
-		values[name] = result
+func NewTemplateContext() *TemplateContext {
+	return &TemplateContext{
+		values: map[string]any{},
 	}
-	return values, nil
+}
+
+func (t *TemplateContext) Parse(s string) (string, error) {
+	tt, err := template.New("value").Parse(s)
+	if err != nil {
+		return "", err
+	}
+	var buffer bytes.Buffer
+	if err := tt.Execute(&buffer, t.values); err != nil {
+		return "", err
+	}
+	return buffer.String(), nil
+}
+
+func (t *TemplateContext) AddData(name string, data any) error {
+	result := map[string]interface{}{}
+	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{TagName: "json", Result: &result})
+	if err != nil {
+		return err
+	}
+
+	if err := d.Decode(data); err != nil {
+		return err
+	}
+	t.values[name] = result
+	return nil
 }

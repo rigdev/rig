@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"text/template"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
@@ -11,8 +9,8 @@ import (
 )
 
 type Config struct {
-	Annotations map[string]string
-	Labels      map[string]string
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 	// Group to match, for which objects to apply the patch to.
 	Group string `json:"group,omitempty"`
 	// Kind to match, for which objects to apply the patch to.
@@ -39,11 +37,11 @@ func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, 
 		return err
 	}
 
-	values, err := plugin.TemplateDataUsingJSONTags(map[string]interface{}{
-		"capsule": req.Capsule(),
-		"current": object,
-	})
-	if err != nil {
+	templateContext := plugin.NewTemplateContext()
+	if err := templateContext.AddData("capsule", req.Capsule()); err != nil {
+		return err
+	}
+	if err := templateContext.AddData("current", object); err != nil {
 		return err
 	}
 
@@ -51,7 +49,7 @@ func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, 
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
-	if err := handleMap(annotations, p.config.Annotations, values); err != nil {
+	if err := handleMap(annotations, p.config.Annotations, templateContext); err != nil {
 		return err
 	}
 	object.SetAnnotations(annotations)
@@ -60,7 +58,7 @@ func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, 
 	if labels == nil {
 		labels = map[string]string{}
 	}
-	if err := handleMap(labels, p.config.Labels, values); err != nil {
+	if err := handleMap(labels, p.config.Labels, templateContext); err != nil {
 		return err
 	}
 	object.SetLabels(labels)
@@ -68,22 +66,18 @@ func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, 
 	return req.Set(object)
 }
 
-func handleMap(values map[string]string, updates map[string]string, templateValues map[string]any) error {
+func handleMap(values map[string]string, updates map[string]string, templateContext *plugin.TemplateContext) error {
 	for k, v := range updates {
 		if v == "" {
 			delete(values, k)
 			continue
 		}
 
-		t, err := template.New("value").Parse(v)
+		s, err := templateContext.Parse(v)
 		if err != nil {
 			return err
 		}
-		var buffer bytes.Buffer
-		if err := t.Execute(&buffer, templateValues); err != nil {
-			return err
-		}
-		values[k] = buffer.String()
+		values[k] = s
 	}
 	return nil
 }

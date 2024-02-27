@@ -92,6 +92,21 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
       - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
+  - id: plugin/datadog
+    binary: plugin/datadog
+    main: ./pkg/controller/plugin/datadog
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
+      - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
+      - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
 
 archives:
   - id: rig
@@ -113,6 +128,8 @@ archives:
       - plugin/sidecar
       - plugin/initContainer
       - plugin/objectTemplate
+      - plugin/annotations
+      - plugin/datadog
     name_template: >-
       rig-operator_
       {{- .Os }}_
