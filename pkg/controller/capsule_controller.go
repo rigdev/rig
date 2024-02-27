@@ -330,7 +330,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
-	if _, err := r.Pipeline.RunCapsule(ctx, capsule, false); err != nil {
+	if _, err := r.Pipeline.RunCapsule(ctx, capsule); err != nil {
 		log.Error(err, "reconciliation ended with error")
 		return ctrl.Result{}, err
 	}
