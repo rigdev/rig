@@ -19,8 +19,9 @@ const (
 )
 
 type Object struct {
-	Current client.Object
-	New     client.Object
+	Current      client.Object
+	New          client.Object
+	Materialized client.Object
 }
 
 type objectKey struct {
@@ -77,15 +78,21 @@ func (p *Pipeline) AddStep(step Step) {
 	p.steps = append(p.steps, step)
 }
 
-func (p *Pipeline) RunCapsule(ctx context.Context, capsule *v1alpha2.Capsule, dryRun bool) (*Result, error) {
-	req := newCapsuleRequest(p, capsule)
+func (p *Pipeline) RunCapsule(
+	ctx context.Context,
+	capsule *v1alpha2.Capsule,
+	opts ...CapsuleRequestOption,
+) (*Result, error) {
+	req := newCapsuleRequest(p, capsule, opts...)
 
-	result, err := p.runSteps(ctx, req, dryRun)
+	result, err := p.runSteps(ctx, req)
 	if errors.IsFailedPrecondition(err) {
 		return nil, err
 	} else if err != nil {
-		if err := req.updateStatusError(ctx, err); err != nil {
-			return nil, err
+		if !req.dryRun {
+			if err := req.updateStatusError(ctx, err); err != nil {
+				return nil, err
+			}
 		}
 
 		return nil, err
@@ -105,7 +112,7 @@ type Result struct {
 	Objects       []*Object
 }
 
-func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest, dryRun bool) (*Result, error) {
+func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest) (*Result, error) {
 	if err := req.loadExisting(ctx); err != nil {
 		return nil, err
 	}
@@ -121,7 +128,7 @@ func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest, dryRun boo
 			}
 		}
 
-		changes, err := req.commit(ctx, dryRun)
+		changes, err := req.commit(ctx)
 		if errors.IsAborted(err) {
 			p.logger.Error(err, "retry running steps")
 			continue
@@ -131,9 +138,13 @@ func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest, dryRun boo
 		}
 
 		for key, c := range changes {
+			obj := req.objects[key].Materialized
+			if obj == nil {
+				obj = req.objects[key].New
+			}
 			result.OutputObjects = append(result.OutputObjects, OutputObject{
 				ObjectKey: key,
-				Object:    req.objects[key].New,
+				Object:    obj,
 				State:     c.state,
 			})
 		}

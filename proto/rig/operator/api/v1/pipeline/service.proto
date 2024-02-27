@@ -15,6 +15,9 @@ message DryRunRequest {
   // An optional YAML encoded capsule spec, to be used instead of the current
   // one.
   string capsule_spec = 4;
+  // If force is enabled, existing resources will be handled as if they were
+  // supposed to be replaced.
+  bool force = 5;
 }
 
 message DryRunResponse {

@@ -40,14 +40,33 @@ type capsuleRequest struct {
 	observedGeneration int64
 	usedResources      []v1alpha2.UsedResource
 	logger             logr.Logger
+	dryRun             bool
+	force              bool
 }
 
-func NewCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) CapsuleRequest {
-	r := newCapsuleRequest(p, capsule)
-	return CapsuleRequest(r)
+type CapsuleRequestOption interface {
+	apply(*capsuleRequest)
 }
 
-func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) *capsuleRequest {
+type withDryRun struct{}
+
+func (withDryRun) apply(r *capsuleRequest) { r.dryRun = true }
+func WithDryRun() CapsuleRequestOption {
+	return withDryRun{}
+}
+
+type withForce struct{}
+
+func (withForce) apply(r *capsuleRequest) { r.force = true }
+func WithForce() CapsuleRequestOption {
+	return withForce{}
+}
+
+func NewCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule, opts ...CapsuleRequestOption) CapsuleRequest {
+	return newCapsuleRequest(p, capsule, opts...)
+}
+
+func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule, opts ...CapsuleRequestOption) *capsuleRequest {
 	r := &capsuleRequest{
 		pipeline:       p,
 		capsule:        capsule,
@@ -57,6 +76,10 @@ func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) *capsuleRequest {
 		logger:         p.logger.WithValues("capsule", capsule.Name),
 	}
 
+	for _, opt := range opts {
+		opt.apply(r)
+	}
+
 	if capsule.Status != nil {
 		r.observedGeneration = capsule.Status.ObservedGeneration
 	}
@@ -64,7 +87,10 @@ func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule) *capsuleRequest {
 	r.logger.Info("created capsule request",
 		"generation", capsule.Generation,
 		"observed_generation", r.observedGeneration,
-		"resource_version", capsule.ResourceVersion)
+		"resource_version", capsule.ResourceVersion,
+		"dry_run", r.dryRun,
+		"force", r.force,
+	)
 
 	return r
 }
@@ -256,7 +282,7 @@ type change struct {
 	err     error
 }
 
-func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey]*change, error) {
+func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, error) {
 	allKeys := maps.Keys(r.objects)
 
 	// Prepare all the new objects with default labels / owner refs.
@@ -288,18 +314,20 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 			materializedObj := obj.New.DeepCopyObject().(client.Object)
 			if err := r.pipeline.client.Create(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
 				return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
-			} else if kerrors.IsAlreadyExists(err) {
-				o, err2 := r.pipeline.scheme.New(key.GroupVersionKind)
-				if err2 != nil {
+			} else if kerrors.IsAlreadyExists(err) || kerrors.IsInvalid(err) {
+				o, newErr := r.pipeline.scheme.New(key.GroupVersionKind)
+				if newErr != nil {
 					return nil, err
 				}
 
 				co := o.(client.Object)
-				if err := r.pipeline.client.Get(ctx, key.ObjectKey, co); err != nil {
-					return nil, fmt.Errorf("could not get existing object: %w", err)
+				if getErr := r.pipeline.client.Get(ctx, key.ObjectKey, co); kerrors.IsNotFound(getErr) {
+					return nil, err
+				} else if getErr != nil {
+					return nil, fmt.Errorf("could not get existing object: %w", getErr)
 				}
 
-				if IsOwnedBy(r.capsule, co) {
+				if r.force || IsOwnedBy(r.capsule, co) {
 					r.logger.Info("object exists but not in status, retrying", "object", key)
 					r.currentObjects[key] = co
 					return nil, errors.AbortedErrorf("object exists but not in capsule status")
@@ -312,12 +340,15 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 				return nil, fmt.Errorf("could not render create to %s: %w", key.GroupVersionKind, err)
 			}
 
+			materializedObj.SetManagedFields(nil)
+			obj.Materialized = materializedObj
+
 			r.logger.Info("create object", "object", key)
 			changes[key] = &change{state: ResourceStateCreated}
 			continue
 		}
 
-		if !IsOwnedBy(r.capsule, obj.Current) {
+		if !(r.force || IsOwnedBy(r.capsule, obj.Current)) {
 			r.logger.Info("update object skipped, not owned by controller", "object", key)
 			changes[key] = &change{state: ResourceStateAlreadyExists}
 			continue
@@ -334,6 +365,9 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 
 		// Dry run to fully materialize the new spec.
 		materializedObj.SetResourceVersion(obj.Current.GetResourceVersion())
+		if r.force {
+			materializedObj.SetOwnerReferences(obj.Current.GetOwnerReferences())
+		}
 		if err := r.pipeline.client.Update(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
 			return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
 		} else if err != nil {
@@ -345,6 +379,9 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 			changes[key] = &change{state: ResourceStateUnchanged}
 			continue
 		}
+
+		materializedObj.SetManagedFields(nil)
+		obj.Materialized = materializedObj
 
 		r.logger.Info("update object", "object", key)
 		changes[key] = &change{state: ResourceStateUpdated}
@@ -366,7 +403,7 @@ func (r *capsuleRequest) commit(ctx context.Context, dryRun bool) (map[objectKey
 		}
 	}
 
-	if dryRun {
+	if r.dryRun {
 		return changes, nil
 	}
 

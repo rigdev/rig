@@ -20,7 +20,8 @@ type Service interface {
 	DryRun(ctx context.Context,
 		cfg *v1alpha1.OperatorConfig,
 		namespace, capsuleName string,
-		spec *v1alpha2.Capsule) (*pipeline.Result, error)
+		spec *v1alpha2.Capsule,
+		opts ...pipeline.CapsuleRequestOption) (*pipeline.Result, error)
 }
 
 func NewService(
@@ -50,6 +51,7 @@ func (s *service) DryRun(
 	cfg *v1alpha1.OperatorConfig,
 	namespace, capsuleName string,
 	spec *v1alpha2.Capsule,
+	opts ...pipeline.CapsuleRequestOption,
 ) (*pipeline.Result, error) {
 	if cfg == nil {
 		cfg = s.cfg.Operator()
@@ -84,5 +86,5 @@ func (s *service) DryRun(
 		defer ps.Stop(ctx)
 	}
 
-	return p.RunCapsule(ctx, spec, true)
+	return p.RunCapsule(ctx, spec, append(opts, pipeline.WithDryRun())...)
 }

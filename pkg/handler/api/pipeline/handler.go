@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 
 	connect "connectrpc.com/connect"
 
@@ -47,8 +48,14 @@ func (h *handler) DryRun(
 		}
 	}
 
-	result, err := h.pipeline.DryRun(ctx, cfg, req.Msg.GetNamespace(), req.Msg.GetCapsule(), spec)
+	var opts []pipeline.CapsuleRequestOption
+	if req.Msg.GetForce() {
+		opts = append(opts, pipeline.WithForce())
+	}
+
+	result, err := h.pipeline.DryRun(ctx, cfg, req.Msg.GetNamespace(), req.Msg.GetCapsule(), spec, opts...)
 	if err != nil {
+		fmt.Println("failed to dry run it", err)
 		return nil, err
 	}
 
