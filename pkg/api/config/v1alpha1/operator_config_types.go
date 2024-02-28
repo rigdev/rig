@@ -60,7 +60,10 @@ type Step struct {
 	Plugin string `json:"plugin,omitempty"`
 	// If set, only capsules in one of the namespaces given will have this step run.
 	Namespaces []string `json:"namespaces,omitempty"`
-	Config     string   `json:"config,omitempty"`
+	// If set, only execute the plugin on the capsules specified
+	Capsules []string `json:"capsules,omitempty"`
+	// Config is a string expected to be YAML defining the configuration for the plugin
+	Config string `json:"config,omitempty"`
 }
 
 type VerticalPodAutoscaler struct {

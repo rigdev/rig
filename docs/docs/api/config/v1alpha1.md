@@ -527,7 +527,8 @@ _Appears in:_
 | --- | --- |
 | `plugin` _string_ | Plugin to use in the current step. |
 | `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. |
-| `config` _string_ |  |
+| `capsules` _string array_ | If set, only execute the plugin on the capsules specified |
+| `config` _string_ | Config is a string expected to be YAML defining the configuration for the plugin |
 
 
 ### VerticalPodAutoscaler
