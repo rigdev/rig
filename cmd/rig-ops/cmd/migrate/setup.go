@@ -509,7 +509,7 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 			})
 		}
 	}
-	capsuleSpec.Env = &v1alpha2.Env{
+	capsuleSpec.Env = v1alpha2.Env{
 		From: envReferences,
 	}
 

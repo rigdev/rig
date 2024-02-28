@@ -39,7 +39,7 @@ type CapsuleSpec struct {
 
 	// Env specifies configuration for how the container should obtain
 	// environment variables.
-	Env *Env `json:"env,omitempty"`
+	Env Env `json:"env,omitempty"`
 
 	CronJobs []CronJob `json:"cronJobs,omitempty"`
 }

@@ -138,7 +138,7 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 	s.Require().NoError(s.Client.Create(ctx, &secret))
 
 	s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
-		c.Spec.Env = &v1alpha2.Env{
+		c.Spec.Env = v1alpha2.Env{
 			From: []v1alpha2.EnvReference{
 				{
 					Kind: "Secret",

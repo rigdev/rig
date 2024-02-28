@@ -188,10 +188,6 @@ func (p *InterfaceProbe) validate(pPath *field.Path) field.ErrorList {
 }
 
 func (r *Capsule) validateEnv() (admission.Warnings, field.ErrorList) {
-	if r.Spec.Env == nil {
-		return nil, nil
-	}
-
 	var errs field.ErrorList
 
 	fromPath := field.NewPath("spec").Child("env").Child("from")
