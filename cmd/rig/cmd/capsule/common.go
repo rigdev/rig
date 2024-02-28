@@ -100,9 +100,7 @@ func TruncatedFixed(str string, max int) string {
 
 func PromptAbortAndDeploy(
 	ctx context.Context,
-	capsuleID string,
 	rig rig.Client,
-	cfg *cmdconfig.Config,
 	req *connect.Request[capsule.DeployRequest],
 ) (*connect.Response[capsule.DeployResponse], error) {
 	deploy, err := common.PromptConfirm("Rollout already in progress, would you like to cancel it and redeploy?", false)
@@ -114,54 +112,30 @@ func PromptAbortAndDeploy(
 		return nil, errors.FailedPreconditionErrorf("rollout already in progress")
 	}
 
-	return AbortAndDeploy(ctx, rig, cfg, capsuleID, req)
+	return AbortAndDeploy(ctx, rig, req)
 }
 
 func AbortAndDeploy(
 	ctx context.Context,
 	rig rig.Client,
-	cfg *cmdconfig.Config,
-	capsuleID string,
 	req *connect.Request[capsule.DeployRequest],
 ) (*connect.Response[capsule.DeployResponse], error) {
-	cc, err := rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
-		Msg: &capsule.GetRequest{
-			CapsuleId: capsuleID,
-			ProjectId: cfg.GetProject(),
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := rig.Capsule().AbortRollout(ctx, &connect.Request[capsule.AbortRolloutRequest]{
-		Msg: &capsule.AbortRolloutRequest{
-			CapsuleId:     capsuleID,
-			RolloutId:     cc.Msg.GetCapsule().GetCurrentRollout(),
-			ProjectId:     flags.GetProject(cfg),
-			EnvironmentId: flags.GetEnvironment(cfg),
-		},
-	}); err != nil {
-		return nil, err
-	}
-
+	req.Msg.Force = true
 	return rig.Capsule().Deploy(ctx, req)
 }
 
 func Deploy(
 	ctx context.Context,
 	rig rig.Client,
-	cfg *cmdconfig.Config,
-	capsuleID string,
 	req *connect.Request[capsule.DeployRequest],
 	forceDeploy bool,
 ) error {
 	_, err := rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 		if forceDeploy {
-			_, err = AbortAndDeploy(ctx, rig, cfg, capsuleID, req)
+			_, err = AbortAndDeploy(ctx, rig, req)
 		} else {
-			_, err = PromptAbortAndDeploy(ctx, capsuleID, rig, cfg, req)
+			_, err = PromptAbortAndDeploy(ctx, rig, req)
 		}
 	}
 	if err != nil {

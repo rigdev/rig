@@ -24,17 +24,26 @@ func (c *Cmd) capsuleEvents(ctx context.Context, cmd *cobra.Command, args []stri
 			return errors.InvalidArgumentErrorf("invalid rollout id - %v", err)
 		}
 	} else {
-		resp, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
-			Msg: &capsule.GetRequest{
-				CapsuleId: capsule_cmd.CapsuleID,
-				ProjectId: flags.GetProject(c.Cfg),
+		resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
+			Msg: &capsule.ListRolloutsRequest{
+				CapsuleId:     capsule_cmd.CapsuleID,
+				ProjectId:     flags.GetProject(c.Cfg),
+				EnvironmentId: flags.GetEnvironment(c.Cfg),
+				Pagination: &model.Pagination{
+					Limit:      1,
+					Descending: true,
+				},
 			},
 		})
 		if err != nil {
 			return err
 		}
 
-		rollout = resp.Msg.GetCapsule().GetCurrentRollout()
+		if len(resp.Msg.GetRollouts()) == 0 {
+			return errors.NotFoundErrorf("no rollouts found")
+		}
+
+		rollout = resp.Msg.GetRollouts()[0].GetRolloutId()
 	}
 
 	resp, err := c.Rig.Capsule().ListEvents(ctx, &connect.Request[capsule.ListEventsRequest]{
