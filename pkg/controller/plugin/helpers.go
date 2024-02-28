@@ -33,6 +33,8 @@ func GetNew(group, kind, name string, req pipeline.CapsuleRequest) (client.Objec
 
 type ParseStep[T any] func(config T, req pipeline.CapsuleRequest) (string, any, error)
 
+// Using this, we parse the config at every execution of the plugin.
+// If we get performance issues due to that we can try and optimize that.
 func ParseTemplatedConfig[T any](data []byte, req pipeline.CapsuleRequest, steps ...ParseStep[T]) (T, error) {
 	var config, empty T
 
