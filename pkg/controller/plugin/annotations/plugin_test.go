@@ -19,11 +19,10 @@ func Test_Plugin(t *testing.T) {
 	tests := []struct {
 		name                string
 		capsule             *v1alpha2.Capsule
-		annotations         map[string]string
+		config              string
 		annotationsBefore   map[string]string
 		expectedAnnotations map[string]string
 
-		labels         map[string]string
 		labelsBefore   map[string]string
 		expectedLabels map[string]string
 	}{
@@ -32,11 +31,11 @@ func Test_Plugin(t *testing.T) {
 			capsule: &v1alpha2.Capsule{
 				Spec: v1alpha2.CapsuleSpec{},
 			},
-			annotations: map[string]string{
-				"annotation1": "",
-				"annotation2": "new-value",
-				"annotation4": "value4",
-			},
+			config: `
+annotations:
+  annotation1: ""
+  annotation2: "new-value"
+  annotation4: "value4"`,
 			annotationsBefore: map[string]string{
 				"annotation1": "value1",
 				"annotation2": "value2",
@@ -54,11 +53,11 @@ func Test_Plugin(t *testing.T) {
 			capsule: &v1alpha2.Capsule{
 				Spec: v1alpha2.CapsuleSpec{},
 			},
-			labels: map[string]string{
-				"label1": "",
-				"label2": "new-value",
-				"label4": "value4",
-			},
+			config: `
+labels:
+  label1: ""
+  label2: "new-value"
+  label4: "value4"`,
 			labelsBefore: map[string]string{
 				"label1": "value1",
 				"label2": "value2",
@@ -76,9 +75,9 @@ func Test_Plugin(t *testing.T) {
 			capsule: &v1alpha2.Capsule{
 				Spec: v1alpha2.CapsuleSpec{Image: "nginx"},
 			},
-			annotations: map[string]string{
-				"annotation": "image-{{ .capsule.spec.image }}",
-			},
+			config: `
+annotations:
+  annotation: image-{{ .capsule.spec.image }}`,
 			annotationsBefore: map[string]string{},
 			expectedAnnotations: map[string]string{
 				"annotation": "image-nginx",
@@ -100,20 +99,14 @@ func Test_Plugin(t *testing.T) {
 					Labels:      tt.labelsBefore,
 				},
 			}))
-			plugin := annotationsPlugin{
-				config: Config{
-					Annotations: tt.annotations,
-					Labels:      tt.labels,
-					Group:       "apps",
-					Kind:        "Deployment",
-					Name:        name,
-				},
-			}
-			err := plugin.Run(context.Background(), req, hclog.Default())
-			assert.Nil(t, err)
+			c := tt.config + `
+group: apps
+kind: Deployment
+name: name`
+			pp := &pluginParent{configBytes: []byte(c)}
+			assert.NoError(t, pp.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}
-			err = req.GetNew(deploy)
-			assert.Nil(t, err)
+			assert.NoError(t, req.GetNew(deploy))
 			assert.Equal(t, tt.expectedAnnotations, deploy.GetAnnotations())
 			assert.Equal(t, tt.expectedLabels, deploy.GetLabels())
 		})

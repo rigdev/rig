@@ -18,11 +18,11 @@ import (
 func TestObjectPlugin(t *testing.T) {
 	name, namespace := "name", "namespace"
 	tests := []struct {
-		name      string
-		capsule   *v1alpha2.Capsule
-		current   *appsv1.Deployment
-		patchYAML string
-		expected  *appsv1.Deployment
+		name     string
+		capsule  *v1alpha2.Capsule
+		current  *appsv1.Deployment
+		config   string
+		expected *appsv1.Deployment
 	}{
 		{
 			name:    "empty patch",
@@ -32,7 +32,7 @@ func TestObjectPlugin(t *testing.T) {
 					Replicas: ptr.New[int32](1),
 				},
 			},
-			patchYAML: "{}",
+			config: "object: '{}'",
 			expected: &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
 					Replicas: ptr.New[int32](1),
@@ -52,9 +52,10 @@ func TestObjectPlugin(t *testing.T) {
 					},
 				},
 			},
-			patchYAML: `
-spec:
-  replicas: 2`,
+			config: `
+object: |
+  spec:
+    replicas: 2`,
 			expected: &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
 					Selector: &metav1.LabelSelector{
@@ -79,11 +80,12 @@ spec:
 					},
 				},
 			},
-			patchYAML: `
-spec:
-  selector:
-    matchLabels:
-      label2: value2`,
+			config: `
+object: |
+  spec:
+    selector:
+      matchLabels:
+        label2: value2`,
 			expected: &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
 					Selector: &metav1.LabelSelector{
@@ -106,11 +108,12 @@ spec:
 			current: &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{},
 			},
-			patchYAML: `
-spec:
-  selector:
-    matchLabels:
-      label: {{ .capsule.spec.image }}`,
+			config: `
+object: |
+  spec:
+    selector:
+      matchLabels:
+        label: {{ .capsule.spec.image }}`,
 			expected: &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
 					Selector: &metav1.LabelSelector{
@@ -130,23 +133,20 @@ spec:
 			tt.capsule.Name = name
 			p := pipeline.New(nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
 			req := pipeline.NewCapsuleRequest(p, tt.capsule)
-			err := req.Set(tt.current)
-			assert.Nil(t, err)
-			plugin := objectTemplatePlugin{
-				config: Config{
-					Object: tt.patchYAML,
-					Group:  "apps",
-					Kind:   "Deployment",
-					Name:   name,
-				},
+			assert.NoError(t, req.Set(tt.current))
+
+			c := tt.config + `
+group: apps
+kind: Deployment
+name: name`
+			plugin := pluginParent{
+				configBytes: []byte(c),
 			}
-			err = plugin.Run(context.Background(), req, hclog.Default())
-			assert.Nil(t, err)
+			assert.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}
-			err = req.GetNew(deploy)
+			assert.NoError(t, req.GetNew(deploy))
 			tt.expected.Name = name
 			tt.expected.Namespace = namespace
-			assert.Nil(t, err)
 			assert.Equal(t, tt.expected, deploy)
 		})
 	}
