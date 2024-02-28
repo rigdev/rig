@@ -45,12 +45,11 @@ type CurrentResources struct {
 	CronJobs   []*batchv1.CronJob
 }
 
-func (cr *CurrentResources) ToYaml(cc client.Client) (map[string]string, error) {
-	// copy the deployment
+func (cr *CurrentResources) ToYAML(cc client.Client) (map[string]string, error) {
 	deploymentCopy := cr.Deployment.DeepCopy()
 	deploymentCopy.ManagedFields = nil
 
-	deploymentYaml, err := obj.Encode(deploymentCopy, cc.Scheme())
+	deploymentYAML, err := obj.Encode(deploymentCopy, cc.Scheme())
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +60,7 @@ func (cr *CurrentResources) ToYaml(cc client.Client) (map[string]string, error) 
 		configMapCopy.ManagedFields = nil
 		configMapList.Items = append(configMapList.Items, *configMapCopy)
 	}
-	configMapsYaml, err := obj.Encode(configMapList, cc.Scheme())
+	configMapsYAML, err := obj.Encode(configMapList, cc.Scheme())
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +71,7 @@ func (cr *CurrentResources) ToYaml(cc client.Client) (map[string]string, error) 
 		secretCopy.ManagedFields = nil
 		secretList.Items = append(secretList.Items, *secretCopy)
 	}
-	secretsYaml, err := obj.Encode(secretList, cc.Scheme())
+	secretsYAML, err := obj.Encode(secretList, cc.Scheme())
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +82,7 @@ func (cr *CurrentResources) ToYaml(cc client.Client) (map[string]string, error) 
 		serviceCopy.ManagedFields = nil
 		serviceList.Items = append(serviceList.Items, *serviceCopy)
 	}
-	servicesYaml, err := obj.Encode(serviceList, cc.Scheme())
+	servicesYAML, err := obj.Encode(serviceList, cc.Scheme())
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +93,7 @@ func (cr *CurrentResources) ToYaml(cc client.Client) (map[string]string, error) 
 		ingressCopy.ManagedFields = nil
 		ingressList.Items = append(ingressList.Items, *ingressCopy)
 	}
-	ingressesYaml, err := obj.Encode(ingressList, cc.Scheme())
+	ingressesYAML, err := obj.Encode(ingressList, cc.Scheme())
 	if err != nil {
 		return nil, err
 	}
@@ -105,21 +104,19 @@ func (cr *CurrentResources) ToYaml(cc client.Client) (map[string]string, error) 
 		cronJobCopy.ManagedFields = nil
 		cronJobList.Items = append(cronJobList.Items, *cronJobCopy)
 	}
-	cronJobsYaml, err := obj.Encode(cronJobList, cc.Scheme())
+	cronJobsYAML, err := obj.Encode(cronJobList, cc.Scheme())
 	if err != nil {
 		return nil, err
 	}
 
-	yamlString := map[string]string{
-		"deployment": string(deploymentYaml),
-		"configMaps": string(configMapsYaml),
-		"secrets":    string(secretsYaml),
-		"services":   string(servicesYaml),
-		"ingresses":  string(ingressesYaml),
-		"cronJobs":   string(cronJobsYaml),
-	}
-
-	return yamlString, nil
+	return map[string]string{
+		"deployment": string(deploymentYAML),
+		"configMaps": string(configMapsYAML),
+		"secrets":    string(secretsYAML),
+		"services":   string(servicesYAML),
+		"ingresses":  string(ingressesYAML),
+		"cronJobs":   string(cronJobsYAML),
+	}, nil
 }
 
 func Setup(parent *cobra.Command) {
@@ -196,14 +193,12 @@ func migrate(ctx context.Context,
 	fmt.Print("Migrating Cronjobs...")
 	cronJobChanges, err := migrateCronJobs(ctx, cc, currentResources, &capsuleSpec.Spec)
 	if err != nil {
-		fmt.Println(err)
+		color.Red(" ✗")
+		return err
 	}
-
 	changes = append(changes, cronJobChanges...)
-	fmt.Print("Migrating Cronjobs...")
-	color.Green(" ✓")
 
-	capsuleSpecYaml, err := obj.Encode(capsuleSpec, cc.Scheme())
+	capsuleSpecYAML, err := obj.Encode(capsuleSpec, cc.Scheme())
 	if err != nil {
 		return err
 	}
@@ -211,7 +206,7 @@ func migrate(ctx context.Context,
 	resp, err := oc.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
 		Namespace:   deployment.Namespace,
 		Capsule:     capsuleID,
-		CapsuleSpec: string(capsuleSpecYaml),
+		CapsuleSpec: string(capsuleSpecYAML),
 		Force:       true,
 	}))
 	if err != nil {
@@ -219,47 +214,49 @@ func migrate(ctx context.Context,
 	}
 
 	for _, r := range resp.Msg.OutputObjects {
-		if r.GetObject().GetGvk().GetKind() == "Deployment" {
-			deployment.ManagedFields = nil
-			orig, err := json.Marshal(deployment)
-			if err != nil {
-				return err
-			}
+		if r.GetObject().GetGvk().GetKind() != "Deployment" {
+			continue
+		}
 
-			proposal, err := yaml.YAMLToJSON([]byte(r.GetObject().GetContent()))
-			if err != nil {
-				return err
-			}
+		deployment.ManagedFields = nil
+		orig, err := json.Marshal(deployment)
+		if err != nil {
+			return err
+		}
 
-			fromNodes, err := ytbx.LoadDocuments(orig)
-			if err != nil {
-				return err
-			}
-			from := ytbx.InputFile{
-				Location:  "current",
-				Documents: fromNodes,
-			}
-			toNodes, err := ytbx.LoadDocuments(proposal)
-			if err != nil {
-				return err
-			}
-			to := ytbx.InputFile{
-				Location:  "migration",
-				Documents: toNodes,
-			}
+		proposal, err := yaml.YAMLToJSON([]byte(r.GetObject().GetContent()))
+		if err != nil {
+			return err
+		}
 
-			r, err := dyff.CompareInputFiles(from, to)
-			if err != nil {
-				return err
-			}
+		fromNodes, err := ytbx.LoadDocuments(orig)
+		if err != nil {
+			return err
+		}
+		from := ytbx.InputFile{
+			Location:  "current",
+			Documents: fromNodes,
+		}
+		toNodes, err := ytbx.LoadDocuments(proposal)
+		if err != nil {
+			return err
+		}
+		to := ytbx.InputFile{
+			Location:  "migration",
+			Documents: toNodes,
+		}
 
-			b := dyff.HumanReport{
-				Report:     r,
-				OmitHeader: true,
-			}
-			if err := b.WriteReport(os.Stdout); err != nil {
-				return err
-			}
+		r, err := dyff.CompareInputFiles(from, to)
+		if err != nil {
+			return err
+		}
+
+		b := dyff.HumanReport{
+			Report:     r,
+			OmitHeader: true,
+		}
+		if err := b.WriteReport(os.Stdout); err != nil {
+			return err
 		}
 	}
 
@@ -279,14 +276,14 @@ func migrate(ctx context.Context,
 	}
 
 	resources := deployResp.Msg.GetResourceYaml()
-	currentYaml, err := currentResources.ToYaml(cc)
+	currentYAML, err := currentResources.ToYAML(cc)
 	if err != nil {
-		return nil
+		return err
 	}
 
-	fmt.Println("CURRENT RESORUCES:\n", currentYaml)
+	fmt.Println("CURRENT RESORUCES:\n", currentYAML)
 	fmt.Println("KUBERNETES RESOURCES:\n", resources)
-	fmt.Println("CAPSULE SPEC:\n", string(capsuleSpecYaml))
+	fmt.Println("CAPSULE SPEC:\n", string(capsuleSpecYAML))
 
 	return nil
 }
@@ -296,20 +293,18 @@ func migrateDeployment(ctx context.Context,
 	rc rig.Client,
 ) (*v1alpha2.Capsule, string, []*capsule.Change, error) {
 	capsuleID := currentResources.Deployment.Name
-	{
-		res, err := rc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
-			Msg: &capsule.GetRequest{
-				CapsuleId: capsuleID,
-				ProjectId: base.Flags.Project,
-			},
-		})
-		if err != nil && !errors.IsNotFound(err) {
-			return nil, "", nil, err
-		}
+	res, err := rc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
+		Msg: &capsule.GetRequest{
+			CapsuleId: capsuleID,
+			ProjectId: base.Flags.Project,
+		},
+	})
+	if err != nil && !errors.IsNotFound(err) {
+		return nil, "", nil, err
+	}
 
-		if res != nil && res.Msg.GetCapsule() != nil {
-			capsuleID = fmt.Sprintf("%s-migrated", currentResources.Deployment.Name)
-		}
+	if res != nil && res.Msg.GetCapsule() != nil {
+		capsuleID = fmt.Sprintf("%s-migrated", currentResources.Deployment.Name)
 	}
 
 	if _, err := rc.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
@@ -321,10 +316,12 @@ func migrateDeployment(ctx context.Context,
 		return nil, "", nil, err
 	}
 
+	// TODO How do we handle multiple containers?
+	container := currentResources.Deployment.Spec.Template.Spec.Containers[0]
 	resp, err := rc.Build().Create(ctx, connect.NewRequest(&build.CreateRequest{
 		CapsuleId:      capsuleID,
-		Image:          currentResources.Deployment.Spec.Template.Spec.Containers[0].Image,
-		SkipImageCheck: false,
+		Image:          container.Image,
+		SkipImageCheck: false, // TODO Make configurable?
 		ProjectId:      base.Flags.Project,
 	}))
 	if err != nil {
@@ -337,47 +334,51 @@ func migrateDeployment(ctx context.Context,
 			Namespace: currentResources.Deployment.Namespace,
 		},
 		Spec: v1alpha2.CapsuleSpec{
-			Image: currentResources.Deployment.Spec.Template.Spec.Containers[0].Image,
+			Image: container.Image,
 			Scale: v1alpha2.CapsuleScale{
 				Vertical: &v1alpha2.VerticalScale{
-					CPU: &v1alpha2.ResourceLimits{
-						Request: currentResources.Deployment.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu(),
-						Limit:   currentResources.Deployment.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu(),
-					},
-					Memory: &v1alpha2.ResourceLimits{
-						Request: currentResources.Deployment.Spec.Template.Spec.Containers[0].Resources.Requests.Memory(),
-						Limit:   currentResources.Deployment.Spec.Template.Spec.Containers[0].Resources.Limits.Memory(),
-					},
+					CPU:    &v1alpha2.ResourceLimits{},
+					Memory: &v1alpha2.ResourceLimits{},
 				},
 				Horizontal: v1alpha2.HorizontalScale{
 					Instances: v1alpha2.Instances{
+						// TODO Handle autoscaler
 						Min: uint32(*currentResources.Deployment.Spec.Replicas),
 					},
 				},
 			},
 		},
 	}
+	cpu, memory := capsuleSpec.Spec.Scale.Vertical.CPU, capsuleSpec.Spec.Scale.Vertical.Memory
+	if q, ok := container.Resources.Requests[corev1.ResourceCPU]; ok {
+		cpu.Request = &q
+	}
+	if q, ok := container.Resources.Requests[corev1.ResourceMemory]; ok {
+		memory.Request = &q
+	}
+	if q, ok := container.Resources.Limits[corev1.ResourceCPU]; ok {
+		cpu.Limit = &q
+	}
+	if q, ok := container.Resources.Limits[corev1.ResourceMemory]; ok {
+		memory.Limit = &q
+	}
 
 	containerSettings := &capsule.ContainerSettings{
 		Resources: &capsule.Resources{
 			Requests: &capsule.ResourceList{
-				CpuMillis: uint32(currentResources.Deployment.Spec.Template.
-					Spec.Containers[0].Resources.Requests.Cpu().MilliValue()),
-				MemoryBytes: uint64(currentResources.Deployment.
-					Spec.Template.Spec.Containers[0].Resources.Requests.Memory().Value()),
+				CpuMillis:   uint32(container.Resources.Requests.Cpu().MilliValue()),
+				MemoryBytes: uint64(container.Resources.Requests.Memory().Value()),
 			},
 			Limits: &capsule.ResourceList{
-				CpuMillis: uint32(currentResources.Deployment.Spec.
-					Template.Spec.Containers[0].Resources.Limits.Cpu().MilliValue()),
-				MemoryBytes: uint64(currentResources.Deployment.Spec.
-					Template.Spec.Containers[0].Resources.Limits.Memory().Value()),
+				CpuMillis:   uint32(container.Resources.Limits.Cpu().MilliValue()),
+				MemoryBytes: uint64(container.Resources.Limits.Memory().Value()),
 			},
 		},
 	}
 
-	if len(currentResources.Deployment.Spec.Template.Spec.Containers[0].Command) > 0 {
-		capsuleSpec.Spec.Command = currentResources.Deployment.Spec.Template.Spec.Containers[0].Command[0]
-		capsuleSpec.Spec.Args = currentResources.Deployment.Spec.Template.Spec.Containers[0].Args
+	if len(container.Command) > 0 {
+		capsuleSpec.Spec.Command = container.Command[0]
+		capsuleSpec.Spec.Args = container.Args
 		containerSettings.Command = capsuleSpec.Spec.Command
 		containerSettings.Args = capsuleSpec.Spec.Args
 	}
@@ -450,10 +451,11 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 	currentResources *CurrentResources,
 	capsuleSpec *v1alpha2.CapsuleSpec,
 ) ([]*capsule.Change, error) {
-	changes := []*capsule.Change{}
+	var changes []*capsule.Change
+	container := currentResources.Deployment.Spec.Template.Spec.Containers[0]
 	// Migrate Environment Sources
-	envReferences := []v1alpha2.EnvReference{}
-	for _, source := range currentResources.Deployment.Spec.Template.Spec.Containers[0].EnvFrom {
+	var envReferences []v1alpha2.EnvReference
+	for _, source := range container.EnvFrom {
 		var envReference *v1alpha2.EnvReference
 		var environmentSource *capsule.EnvironmentSource
 		if source.ConfigMapRef != nil {
@@ -514,7 +516,7 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 	}
 
 	// Migrate ConfigMap and Secret files
-	files := []v1alpha2.File{}
+	var files []v1alpha2.File
 	for _, volume := range currentResources.Deployment.Spec.Template.Spec.Volumes {
 		var file v1alpha2.File
 		var configFile *capsule.Change_ConfigFile
@@ -539,7 +541,7 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 				},
 			}
 
-			for _, volumeMount := range currentResources.Deployment.Spec.Template.Spec.Containers[0].VolumeMounts {
+			for _, volumeMount := range container.VolumeMounts {
 				if volumeMount.Name == volume.Name {
 					file.Path = volumeMount.MountPath
 					break
@@ -577,7 +579,7 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 				},
 			}
 
-			for _, volumeMount := range currentResources.Deployment.Spec.Template.Spec.Containers[0].VolumeMounts {
+			for _, volumeMount := range container.VolumeMounts {
 				if volumeMount.Name == volume.Name {
 					file.Path = volumeMount.MountPath
 					break
@@ -615,8 +617,9 @@ func migrateServicesAndIngresses(ctx context.Context,
 	currentResources *CurrentResources,
 	capsuleSpec *v1alpha2.CapsuleSpec,
 ) ([]*capsule.Change, error) {
-	livenessProbe := currentResources.Deployment.Spec.Template.Spec.Containers[0].LivenessProbe
-	readinessProbe := currentResources.Deployment.Spec.Template.Spec.Containers[0].ReadinessProbe
+	container := currentResources.Deployment.Spec.Template.Spec.Containers[0]
+	livenessProbe := container.LivenessProbe
+	readinessProbe := container.ReadinessProbe
 
 	services := &corev1.ServiceList{}
 	err := cc.List(ctx, services, client.InNamespace(currentResources.Deployment.GetNamespace()))
@@ -630,12 +633,10 @@ func migrateServicesAndIngresses(ctx context.Context,
 		return nil, err
 	}
 
-	interfaces := make([]v1alpha2.CapsuleInterface, 0,
-		len(currentResources.Deployment.Spec.Template.Spec.Containers[0].Ports))
-	capsuleInterfaces := make([]*capsule.Interface, 0,
-		len(currentResources.Deployment.Spec.Template.Spec.Containers[0].Ports))
+	interfaces := make([]v1alpha2.CapsuleInterface, 0, len(container.Ports))
+	capsuleInterfaces := make([]*capsule.Interface, 0, len(container.Ports))
 
-	for _, port := range currentResources.Deployment.Spec.Template.Spec.Containers[0].Ports {
+	for _, port := range container.Ports {
 		for _, service := range services.Items {
 			for _, servicePort := range service.Spec.Ports {
 				if servicePort.Name == port.Name {
@@ -807,7 +808,7 @@ func migrateCronJobs(ctx context.Context,
 	}
 
 	migratedCronJobs := make([]v1alpha2.CronJob, 0, len(cronJobs))
-	changes := []*capsule.Change{}
+	var changes []*capsule.Change
 	// fmt.Printf("There are %d cron jobs in the same namespace with the same image\n", len(jobTitles))
 	for {
 		i, err := common.PromptTableSelect("\nSelect a job to migrate or CTRL+C to continue",
