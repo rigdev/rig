@@ -39,6 +39,11 @@ func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest) error {
 			return nil
 		}
 	}
+	if len(s.step.Capsules) > 0 {
+		if !slices.Contains(s.step.Capsules, req.Capsule().Name) {
+			return nil
+		}
+	}
 
 	s.logger.Info("running plugin", "plugin", s.step.Plugin)
 
