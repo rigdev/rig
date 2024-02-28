@@ -1420,15 +1420,14 @@ A docker image tag.
 <a name="api-v1-capsule-Capsule"></a>
 
 ### Capsule
-Environment wide capsule abstraction
+Environment wide capsule abstraction.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | ID of the capsule |
-| current_rollout | [uint64](#uint64) |  | Current rollout of the capsule |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last time the capsule was updated |
-| updated_by | [model.Author](#model-Author) |  | Author of the last update |
+| capsule_id | [string](#string) |  | ID of the capsule. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last time the capsule was updated. |
+| updated_by | [model.Author](#model-Author) |  | Author of the last update. |
 
 
 
