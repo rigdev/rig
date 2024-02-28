@@ -3,6 +3,8 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/go-logr/logr"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -27,6 +29,11 @@ type Object struct {
 type objectKey struct {
 	client.ObjectKey
 	schema.GroupVersionKind
+}
+
+func sortedKeys(keys []objectKey) []objectKey {
+	slices.SortStableFunc(keys, func(k1, k2 objectKey) int { return strings.Compare(k1.String(), k2.String()) })
+	return keys
 }
 
 func (ok objectKey) String() string {

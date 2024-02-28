@@ -28,6 +28,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -36,9 +37,7 @@ import (
 
 var promptAborted = "prompt aborted"
 
-var (
-	platformDryRun bool
-)
+var platformDryRun bool
 
 func Setup(parent *cobra.Command) {
 	migrate := &cobra.Command{
@@ -193,7 +192,6 @@ func migrate(ctx context.Context,
 			},
 		})
 		if err != nil {
-			fmt.Println("Error deploying capsule", err)
 			return err
 		}
 
@@ -326,11 +324,13 @@ func migrateDeployment(ctx context.Context,
 			Name:      currentResources.Deployment.Spec.Template.Spec.ServiceAccountName,
 			Namespace: currentResources.Deployment.Namespace,
 		}, serviceAccount)
-		if err != nil {
+		if kerrors.IsNotFound(err) {
+			// TODO: warning we can't find it?
+		} else if err != nil {
 			return nil, "", nil, err
+		} else {
+			currentResources.ServiceAccount = serviceAccount
 		}
-
-		currentResources.ServiceAccount = serviceAccount
 	}
 
 	if rc != nil {
