@@ -47,9 +47,9 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	res, err := c.Rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 		if forceDeploy {
-			res, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req)
+			res, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
 		} else {
-			res, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, c.Cfg, req)
+			res, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, req)
 		}
 	}
 	if err != nil {
@@ -323,7 +323,6 @@ func (c *Cmd) pushLocalImageToDevRegistry(ctx context.Context, image string) (st
 	}
 
 	return newImageName, digest, nil
-
 }
 
 func makeDevRegistryImageName(image string, devRegistryHost string) (string, error) {

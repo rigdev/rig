@@ -61,7 +61,7 @@ func (c *Cmd) configure(ctx context.Context, cmd *cobra.Command, args []string) 
 		},
 	}
 
-	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req, forceDeploy); err != nil {
+	if err := capsule_cmd.Deploy(ctx, c.Rig, req, forceDeploy); err != nil {
 		return err
 	}
 
@@ -138,7 +138,7 @@ func (c *Cmd) configureInteractive(ctx context.Context, capsuleID string) error 
 		ProjectId:     flags.GetProject(c.Cfg),
 		EnvironmentId: flags.GetEnvironment(c.Cfg),
 	})
-	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req, forceDeploy); err != nil {
+	if err := capsule_cmd.Deploy(ctx, c.Rig, req, forceDeploy); err != nil {
 		return err
 	}
 

@@ -36,9 +36,9 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) e
 	resp, err := c.Rig.Capsule().Deploy(ctx, req)
 	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
 		if forceDeploy {
-			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, c.Cfg, capsule_cmd.CapsuleID, req)
+			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
 		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, capsule_cmd.CapsuleID, c.Rig, c.Cfg, req)
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, req)
 		}
 	}
 	if err != nil {
