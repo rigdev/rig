@@ -124,27 +124,7 @@ func AbortAndDeploy(
 	capsuleID string,
 	req *connect.Request[capsule.DeployRequest],
 ) (*connect.Response[capsule.DeployResponse], error) {
-	cc, err := rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
-		Msg: &capsule.GetRequest{
-			CapsuleId: capsuleID,
-			ProjectId: cfg.GetProject(),
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := rig.Capsule().AbortRollout(ctx, &connect.Request[capsule.AbortRolloutRequest]{
-		Msg: &capsule.AbortRolloutRequest{
-			CapsuleId:     capsuleID,
-			RolloutId:     cc.Msg.GetCapsule().GetCurrentRollout(),
-			ProjectId:     flags.GetProject(cfg),
-			EnvironmentId: flags.GetEnvironment(cfg),
-		},
-	}); err != nil {
-		return nil, err
-	}
-
+	req.Msg.Force = true
 	return rig.Capsule().Deploy(ctx, req)
 }
 
