@@ -233,11 +233,7 @@ func (in *CapsuleSpec) DeepCopyInto(out *CapsuleSpec) {
 			(*out)[key] = val
 		}
 	}
-	if in.Env != nil {
-		in, out := &in.Env, &out.Env
-		*out = new(Env)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Env.DeepCopyInto(&out.Env)
 	if in.CronJobs != nil {
 		in, out := &in.CronJobs, &out.CronJobs
 		*out = make([]CronJob, len(*in))

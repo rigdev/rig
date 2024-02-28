@@ -75,57 +75,93 @@ func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.CapsuleRequest)
 	return nil
 }
 
-func (s *DeploymentStep) createDeployment(
-	current *appsv1.Deployment, req pipeline.CapsuleRequest, cfgs *configs, checksums checksums,
-) (*appsv1.Deployment, error) {
-	var volumes []v1.Volume
-	var volumeMounts []v1.VolumeMount
-	for _, f := range req.Capsule().Spec.Files {
-		var name string
-		switch f.Ref.Kind {
-		case "ConfigMap":
-			name = "configmap-" + strings.ReplaceAll(f.Ref.Name, ".", "-")
-			volumes = append(volumes, v1.Volume{
-				Name: name,
-				VolumeSource: v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: f.Ref.Name,
-						},
-						Items: []v1.KeyToPath{
-							{
-								Key:  f.Ref.Key,
-								Path: path.Base(f.Path),
-							},
+func FileToVolume(f v1alpha2.File) (v1.Volume, v1.VolumeMount) {
+	var volume v1.Volume
+	var mount v1.VolumeMount
+	var name string
+	switch f.Ref.Kind {
+	case "ConfigMap":
+		name = "configmap-" + strings.ReplaceAll(f.Ref.Name, ".", "-")
+		volume = v1.Volume{
+			Name: name,
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: f.Ref.Name,
+					},
+					Items: []v1.KeyToPath{
+						{
+							Key:  f.Ref.Key,
+							Path: path.Base(f.Path),
 						},
 					},
+				},
+			},
+		}
+	case "Secret":
+		name = "secret-" + strings.ReplaceAll(f.Ref.Name, ".", "-")
+		volume = v1.Volume{
+			Name: name,
+			VolumeSource: v1.VolumeSource{
+				Secret: &v1.SecretVolumeSource{
+					SecretName: f.Ref.Name,
+					Items: []v1.KeyToPath{
+						{
+							Key:  f.Ref.Key,
+							Path: path.Base(f.Path),
+						},
+					},
+				},
+			},
+		}
+	}
+	if name != "" {
+		mount = v1.VolumeMount{
+			Name:      name,
+			MountPath: f.Path,
+			SubPath:   path.Base(f.Path),
+		}
+	}
+
+	return volume, mount
+}
+
+func FilesToVolumes(files []v1alpha2.File) ([]v1.Volume, []v1.VolumeMount) {
+	var volumes []v1.Volume
+	var mounts []v1.VolumeMount
+	for _, f := range files {
+		volume, mount := FileToVolume(f)
+		volumes = append(volumes, volume)
+		mounts = append(mounts, mount)
+	}
+	return volumes, mounts
+}
+
+func EnvSources(refs []v1alpha2.EnvReference) []v1.EnvFromSource {
+	var res []v1.EnvFromSource
+	for _, e := range refs {
+		switch e.Kind {
+		case "ConfigMap":
+			res = append(res, v1.EnvFromSource{
+				ConfigMapRef: &v1.ConfigMapEnvSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: e.Name},
 				},
 			})
 		case "Secret":
-			name = "secret-" + strings.ReplaceAll(f.Ref.Name, ".", "-")
-			volumes = append(volumes, v1.Volume{
-				Name: name,
-				VolumeSource: v1.VolumeSource{
-					Secret: &v1.SecretVolumeSource{
-						SecretName: f.Ref.Name,
-						Items: []v1.KeyToPath{
-							{
-								Key:  f.Ref.Key,
-								Path: path.Base(f.Path),
-							},
-						},
-					},
+			res = append(res, v1.EnvFromSource{
+				SecretRef: &v1.SecretEnvSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: e.Name},
 				},
 			})
 		}
-		if name != "" {
-			volumeMounts = append(volumeMounts, v1.VolumeMount{
-				Name:      name,
-				MountPath: f.Path,
-				SubPath:   path.Base(f.Path),
-			})
-		}
 	}
+	return res
+}
+
+func (s *DeploymentStep) createDeployment(
+	current *appsv1.Deployment, req pipeline.CapsuleRequest, cfgs *configs, checksums checksums,
+) (*appsv1.Deployment, error) {
+	volumes, volumeMounts := FilesToVolumes(req.Capsule().Spec.Files)
 
 	podAnnotations := map[string]string{}
 	maps.Copy(podAnnotations, req.Capsule().Annotations)
@@ -142,8 +178,9 @@ func (s *DeploymentStep) createDeployment(
 		podAnnotations[AnnotationChecksumSharedEnv] = checksums.sharedEnv
 	}
 
-	var envFrom []v1.EnvFromSource
-	if req.Capsule().Spec.Env == nil || !req.Capsule().Spec.Env.DisableAutomatic {
+	env := req.Capsule().Spec.Env
+	envFrom := EnvSources(env.From)
+	if !env.DisableAutomatic {
 		if _, ok := cfgs.configMaps[req.Capsule().GetName()]; ok {
 			envFrom = append(envFrom, v1.EnvFromSource{
 				ConfigMapRef: &v1.ConfigMapEnvSource{
@@ -157,25 +194,6 @@ func (s *DeploymentStep) createDeployment(
 					LocalObjectReference: v1.LocalObjectReference{Name: req.Capsule().GetName()},
 				},
 			})
-		}
-	}
-
-	if req.Capsule().Spec.Env != nil {
-		for _, e := range req.Capsule().Spec.Env.From {
-			switch e.Kind {
-			case "ConfigMap":
-				envFrom = append(envFrom, v1.EnvFromSource{
-					ConfigMapRef: &v1.ConfigMapEnvSource{
-						LocalObjectReference: v1.LocalObjectReference{Name: e.Name},
-					},
-				})
-			case "Secret":
-				envFrom = append(envFrom, v1.EnvFromSource{
-					SecretRef: &v1.SecretEnvSource{
-						LocalObjectReference: v1.LocalObjectReference{Name: e.Name},
-					},
-				})
-			}
 		}
 	}
 
@@ -336,7 +354,7 @@ func configAutoEnvChecksum(
 }
 
 func configEnvChecksum(req pipeline.CapsuleRequest, cfgs configs) (string, error) {
-	if req.Capsule().Spec.Env == nil || len(req.Capsule().Spec.Env.From) == 0 {
+	if len(req.Capsule().Spec.Env.From) == 0 {
 		return "", nil
 	}
 
@@ -413,7 +431,7 @@ func configFilesChecksum(req pipeline.CapsuleRequest, cfgs configs) (string, err
 }
 
 func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleRequest) (*configs, error) {
-	cfgs := &configs{
+	configs := &configs{
 		configMaps: map[string]*v1.ConfigMap{},
 		secrets:    map[string]*v1.Secret{},
 	}
@@ -428,10 +446,10 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 	}); err != nil {
 		return nil, fmt.Errorf("could not list shared env configmaps: %w", err)
 	}
-	cfgs.sharedEnvConfigMaps = make([]string, len(configMapList.Items))
+	configs.sharedEnvConfigMaps = make([]string, len(configMapList.Items))
 	for i, cm := range configMapList.Items {
-		cfgs.sharedEnvConfigMaps[i] = cm.GetName()
-		cfgs.configMaps[cm.Name] = &cm
+		configs.sharedEnvConfigMaps[i] = cm.GetName()
+		configs.configMaps[cm.Name] = &cm
 	}
 	var secretList v1.SecretList
 	if err := req.Client().List(ctx, &secretList, &client.ListOptions{
@@ -442,43 +460,40 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 	}); err != nil {
 		return nil, fmt.Errorf("could not list shared env secrets: %w", err)
 	}
-	cfgs.sharedEnvSecrets = make([]string, len(secretList.Items))
+	configs.sharedEnvSecrets = make([]string, len(secretList.Items))
 	for i, s := range secretList.Items {
-		cfgs.sharedEnvSecrets[i] = s.GetName()
-		cfgs.secrets[s.Name] = &s
+		configs.sharedEnvSecrets[i] = s.GetName()
+		configs.secrets[s.Name] = &s
 	}
 
 	env := req.Capsule().Spec.Env
-	if env == nil {
-		env = &v1alpha2.Env{}
-	}
 
 	// Get automatic env
 	if !env.DisableAutomatic {
-		if err := s.setUsedSource(ctx, req, cfgs, "ConfigMap", req.Capsule().Name, false); err != nil {
+		if err := s.setUsedSource(ctx, req, configs, "ConfigMap", req.Capsule().Name, false); err != nil {
 			return nil, err
 		}
 
-		if err := s.setUsedSource(ctx, req, cfgs, "Secret", req.Capsule().Name, false); err != nil {
+		if err := s.setUsedSource(ctx, req, configs, "Secret", req.Capsule().Name, false); err != nil {
 			return nil, err
 		}
 	}
 
 	// Get envs
 	for _, e := range env.From {
-		if err := s.setUsedSource(ctx, req, cfgs, e.Kind, e.Name, true); err != nil {
+		if err := s.setUsedSource(ctx, req, configs, e.Kind, e.Name, true); err != nil {
 			return nil, err
 		}
 	}
 
 	// Get files
 	for _, f := range req.Capsule().Spec.Files {
-		if err := s.setUsedSource(ctx, req, cfgs, f.Ref.Kind, f.Ref.Name, true); err != nil {
+		if err := s.setUsedSource(ctx, req, configs, f.Ref.Kind, f.Ref.Name, true); err != nil {
 			return nil, err
 		}
 	}
 
-	return cfgs, nil
+	return configs, nil
 }
 
 func (s *DeploymentStep) setUsedSource(

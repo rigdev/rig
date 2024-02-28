@@ -273,7 +273,7 @@ func TestValidateEnv(t *testing.T) {
 
 			c := &Capsule{
 				Spec: CapsuleSpec{
-					Env: &Env{
+					Env: Env{
 						From: test.from,
 					},
 				},
