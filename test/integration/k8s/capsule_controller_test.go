@@ -199,14 +199,14 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 								{
 									SecretRef: &v1.SecretEnvSource{
 										LocalObjectReference: v1.LocalObjectReference{
-											Name: nsName.Name,
+											Name: secret.Name,
 										},
 									},
 								},
 								{
 									SecretRef: &v1.SecretEnvSource{
 										LocalObjectReference: v1.LocalObjectReference{
-											Name: secret.Name,
+											Name: nsName.Name,
 										},
 									},
 								},
