@@ -120,9 +120,6 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		func(o client.Object) []string {
 			capsule := o.(*v1alpha2.Capsule)
 			var cms []string
-			if capsule.Spec.Env == nil {
-				return nil
-			}
 			for _, from := range capsule.Spec.Env.From {
 				if from.Kind == "ConfigMap" {
 					cms = append(cms, from.Name)
@@ -141,9 +138,6 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		func(o client.Object) []string {
 			capsule := o.(*v1alpha2.Capsule)
 			var ss []string
-			if capsule.Spec.Env == nil {
-				return nil
-			}
 			for _, from := range capsule.Spec.Env.From {
 				if from.Kind == "Secret" {
 					ss = append(ss, from.Name)
@@ -279,7 +273,7 @@ func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {
 			return nil
 		}
 		if err == nil {
-			if capsule.Spec.Env == nil || !capsule.Spec.Env.DisableAutomatic {
+			if !capsule.Spec.Env.DisableAutomatic {
 				requests = append(requests, ctrl.Request{
 					NamespacedName: client.ObjectKeyFromObject(o),
 				})
