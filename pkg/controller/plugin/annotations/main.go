@@ -19,15 +19,31 @@ type Config struct {
 	Name string `json:"name,omitempty"`
 }
 
-type annotationsPlugin struct {
+type pluginParent struct {
+	configBytes []byte
+}
+
+func (p *pluginParent) LoadConfig(data []byte) error {
+	p.configBytes = data
+	return nil
+}
+
+func (p *pluginParent) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
+	if err != nil {
+		return err
+	}
+	pp := &pluginImpl{
+		config: config,
+	}
+	return pp.run(ctx, req, logger)
+}
+
+type pluginImpl struct {
 	config Config
 }
 
-func (p *annotationsPlugin) LoadConfig(data []byte) error {
-	return plugin.LoadYAMLConfig(data, &p.config)
-}
-
-func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	name := p.config.Name
 	if name == "" {
 		name = req.Capsule().Name
@@ -37,51 +53,29 @@ func (p *annotationsPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, 
 		return err
 	}
 
-	templateContext := plugin.NewTemplateContext()
-	if err := templateContext.AddData("capsule", req.Capsule()); err != nil {
-		return err
-	}
-	if err := templateContext.AddData("current", object); err != nil {
-		return err
-	}
-
-	annotations := object.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-	if err := handleMap(annotations, p.config.Annotations, templateContext); err != nil {
-		return err
-	}
+	annotations := handleMap(object.GetAnnotations(), p.config.Annotations)
 	object.SetAnnotations(annotations)
 
-	labels := object.GetLabels()
-	if labels == nil {
-		labels = map[string]string{}
-	}
-	if err := handleMap(labels, p.config.Labels, templateContext); err != nil {
-		return err
-	}
+	labels := handleMap(object.GetLabels(), p.config.Labels)
 	object.SetLabels(labels)
 
 	return req.Set(object)
 }
 
-func handleMap(values map[string]string, updates map[string]string, templateContext *plugin.TemplateContext) error {
+func handleMap(values map[string]string, updates map[string]string) map[string]string {
+	if values == nil {
+		values = map[string]string{}
+	}
 	for k, v := range updates {
 		if v == "" {
 			delete(values, k)
 			continue
 		}
-
-		s, err := templateContext.Parse(v)
-		if err != nil {
-			return err
-		}
-		values[k] = s
+		values[k] = v
 	}
-	return nil
+	return values
 }
 
 func main() {
-	plugin.StartPlugin("annotations", &annotationsPlugin{})
+	plugin.StartPlugin("annotations", &pluginParent{})
 }

@@ -20,14 +20,12 @@ func Test_Plugin(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		config   Config
+		config   string
 		expected *appsv1.Deployment
 	}{
 		{
-			name: "set nothing",
-			config: Config{
-				DontAddEnabledAnnotation: true,
-			},
+			name:   "set nothing",
+			config: "dontAddEnabledAnnotation: true",
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:    map[string]string{},
@@ -46,27 +44,24 @@ func Test_Plugin(t *testing.T) {
 		},
 		{
 			name: "set it all",
-			config: Config{
-				LibraryTag: LibraryTag{
-					Java:       "java",
-					JavaScript: "js",
-					Python:     "python",
-					NET:        "net",
-					Ruby:       "ruby",
-				},
-				UnifiedServiceTags: UnifiedServiceTags{
-					Env:     "env",
-					Service: "service",
-					Version: "version",
-				},
-			},
+			config: `
+libraryTag:
+  java: java
+  javascript: js
+  python: python
+  net: net
+  ruby: ruby
+unifiedServiceTags:
+  env: env
+  service: {{ .capsule.metadata.name }}
+  version: version`,
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
 					Namespace: namespace,
 					Labels: map[string]string{
 						"tags.datadoghq.com/env":     "env",
-						"tags.datadoghq.com/service": "service",
+						"tags.datadoghq.com/service": name,
 						"tags.datadoghq.com/version": "version",
 					},
 				},
@@ -76,7 +71,7 @@ func Test_Plugin(t *testing.T) {
 							Labels: map[string]string{
 								"admission.datadoghq.com/enabled": "true",
 								"tags.datadoghq.com/env":          "env",
-								"tags.datadoghq.com/service":      "service",
+								"tags.datadoghq.com/service":      name,
 								"tags.datadoghq.com/version":      "version",
 							},
 							Annotations: map[string]string{
@@ -107,14 +102,12 @@ func Test_Plugin(t *testing.T) {
 					Name: name,
 				},
 			}))
-			plugin := datadogPlugin{
-				config: tt.config,
+			plugin := pluginParent{
+				configBytes: []byte(tt.config),
 			}
-			err := plugin.Run(context.Background(), req, hclog.Default())
-			assert.Nil(t, err)
+			assert.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}
-			err = req.GetNew(deploy)
-			assert.Nil(t, err)
+			assert.NoError(t, req.GetNew(deploy))
 			assert.Equal(t, tt.expected, deploy)
 		})
 	}

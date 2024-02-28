@@ -24,15 +24,44 @@ type Config struct {
 	Name string `json:"name,omitempty"`
 }
 
-type objectTemplatePlugin struct {
+type pluginParent struct {
+	configBytes []byte
+}
+
+func (p *pluginParent) LoadConfig(data []byte) error {
+	p.configBytes = data
+	return nil
+}
+
+func (p *pluginParent) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req,
+		plugin.CapsuleStep[Config],
+		func(c Config, req pipeline.CapsuleRequest) (string, any, error) {
+			name := c.Name
+			if name == "" {
+				name = req.Capsule().Name
+			}
+			currentObject, err := plugin.GetNew(c.Group, c.Kind, name, req)
+			if err != nil {
+				return "", nil, err
+			}
+			return "current", currentObject, nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+	pp := &pluginImpl{
+		config: config,
+	}
+	return pp.run(ctx, req, logger)
+}
+
+type pluginImpl struct {
 	config Config
 }
 
-func (p *objectTemplatePlugin) LoadConfig(data []byte) error {
-	return plugin.LoadYAMLConfig(data, &p.config)
-}
-
-func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	name := p.config.Name
 	if name == "" {
 		name = req.Capsule().Name
@@ -44,19 +73,7 @@ func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleReques
 		return err
 	}
 
-	templateContext := plugin.NewTemplateContext()
-	if err := templateContext.AddData("capsule", req.Capsule()); err != nil {
-		return err
-	}
-	if err := templateContext.AddData("current", currentObject); err != nil {
-		return err
-	}
-
-	s, err := templateContext.Parse(p.config.Object)
-	if err != nil {
-		return err
-	}
-	patchBytes, err := yaml.YAMLToJSON([]byte(s))
+	patchBytes, err := yaml.YAMLToJSON([]byte(p.config.Object))
 	if err != nil {
 		return err
 	}
@@ -80,5 +97,5 @@ func (p *objectTemplatePlugin) Run(_ context.Context, req pipeline.CapsuleReques
 }
 
 func main() {
-	plugin.StartPlugin("objectTemplate", &objectTemplatePlugin{})
+	plugin.StartPlugin("objectTemplate", &pluginParent{})
 }

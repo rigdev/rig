@@ -31,38 +31,45 @@ func GetNew(group, kind, name string, req pipeline.CapsuleRequest) (client.Objec
 	return currentObject, nil
 }
 
-type TemplateContext struct {
-	values map[string]any
+type ParseStep[T any] func(config T, req pipeline.CapsuleRequest) (string, any, error)
+
+func ParseTemplatedConfig[T any](data []byte, req pipeline.CapsuleRequest, steps ...ParseStep[T]) (T, error) {
+	var config, empty T
+
+	values := map[string]any{}
+	for _, step := range steps {
+		name, obj, err := step(config, req)
+		if err != nil {
+			return empty, err
+		}
+
+		result := map[string]interface{}{}
+		d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{TagName: "json", Result: &result})
+		if err != nil {
+			return empty, err
+		}
+
+		if err := d.Decode(obj); err != nil {
+			return empty, err
+		}
+		values[name] = result
+		t, err := template.New("config").Parse(string(data))
+		if err != nil {
+			return empty, err
+		}
+		var b bytes.Buffer
+		if err := t.Execute(&b, values); err != nil {
+			return empty, err
+		}
+		data = b.Bytes()
+		if err := LoadYAMLConfig(data, &config); err != nil {
+			return empty, err
+		}
+	}
+
+	return config, nil
 }
 
-func NewTemplateContext() *TemplateContext {
-	return &TemplateContext{
-		values: map[string]any{},
-	}
-}
-
-func (t *TemplateContext) Parse(s string) (string, error) {
-	tt, err := template.New("value").Parse(s)
-	if err != nil {
-		return "", err
-	}
-	var buffer bytes.Buffer
-	if err := tt.Execute(&buffer, t.values); err != nil {
-		return "", err
-	}
-	return buffer.String(), nil
-}
-
-func (t *TemplateContext) AddData(name string, data any) error {
-	result := map[string]interface{}{}
-	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{TagName: "json", Result: &result})
-	if err != nil {
-		return err
-	}
-
-	if err := d.Decode(data); err != nil {
-		return err
-	}
-	t.values[name] = result
-	return nil
+func CapsuleStep[T any](_ T, req pipeline.CapsuleRequest) (string, any, error) {
+	return "capsule", req.Capsule(), nil
 }

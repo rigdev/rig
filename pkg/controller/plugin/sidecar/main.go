@@ -16,15 +16,31 @@ type Config struct {
 	Container *corev1.Container `json:"container"`
 }
 
-type sidecarPlugin struct {
+type pluginParent struct {
+	configBytes []byte
+}
+
+func (p *pluginParent) LoadConfig(data []byte) error {
+	p.configBytes = data
+	return nil
+}
+
+func (p *pluginParent) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
+	if err != nil {
+		return err
+	}
+	pp := &pluginImpl{
+		config: config,
+	}
+	return pp.run(ctx, req, logger)
+}
+
+type pluginImpl struct {
 	config Config
 }
 
-func (p *sidecarPlugin) LoadConfig(data []byte) error {
-	return plugin.LoadYAMLConfig(data, &p.config)
-}
-
-func (p *sidecarPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		return nil
@@ -40,5 +56,5 @@ func (p *sidecarPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hc
 }
 
 func main() {
-	plugin.StartPlugin("sidecar", &sidecarPlugin{})
+	plugin.StartPlugin("sidecar", &pluginParent{})
 }
