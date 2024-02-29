@@ -45,7 +45,7 @@ type service struct {
 	logger logr.Logger
 }
 
-// Get implements Service.
+// DryRun implements Service.
 func (s *service) DryRun(
 	ctx context.Context,
 	cfg *v1alpha1.OperatorConfig,

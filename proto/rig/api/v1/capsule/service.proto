@@ -368,4 +368,5 @@ message GetJobExecutionsRequest {
 // Response to getting job executions.
 message GetJobExecutionsResponse {
   repeated JobExecution job_executions = 1; // Job executions.
+  uint64 total = 2; // Total number of executions ignorring pagination.
 }
