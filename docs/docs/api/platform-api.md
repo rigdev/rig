@@ -4020,6 +4020,7 @@ Response to getting job executions.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | job_executions | [JobExecution](#api-v1-capsule-JobExecution) | repeated | Job executions. |
+| total | [uint64](#uint64) |  | Total number of executions ignorring pagination. |
 
 
 
