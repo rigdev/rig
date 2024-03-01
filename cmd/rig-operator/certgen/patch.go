@@ -12,7 +12,6 @@ const (
 	flagMutating        = "mutating"
 	flagSecretName      = "secret-name"
 	flagSecretNamespace = "secret-namespace"
-	flagAPIServiceName  = "api-service-name"
 )
 
 func patchCMD() (*cobra.Command, error) {
