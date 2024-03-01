@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
+	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/api/v1/project"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
@@ -90,12 +92,22 @@ func NewRigClient(ctx context.Context) (rig.Client, error) {
 		return nil, err
 	}
 
-	rc := rig.NewClient(rig.WithSessionManager(&sessionManager{cfg: cfg}))
+	sessionManager := &sessionManager{cfg: cfg}
+
+	rc := rig.NewClient(rig.WithSessionManager(sessionManager))
 
 	// check if we need to authenticate
 	projectListResp, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if errors.IsUnauthenticated(err) {
-		return nil, errors.UnauthenticatedErrorf("You are not authenticated. Please login to continue")
+		tokens, err := rigLogin(ctx, rc)
+		if err != nil {
+			return nil, err
+		}
+		sessionManager.SetAccessToken(tokens.AccessToken, tokens.RefreshToken)
+		projectListResp, err = rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
+		if err != nil {
+			return nil, err
+		}
 	} else if err != nil {
 		return nil, err
 	}
@@ -164,6 +176,38 @@ func NewRigClient(ctx context.Context) (rig.Client, error) {
 	}
 
 	return rc, nil
+}
+
+func rigLogin(ctx context.Context, rc rig.Client) (*authentication.Token, error) {
+	email, err := common.PromptInput("You are not logged in on the Rig platform. Please do so to migrate using the platform.\nEmail:", common.ValidateEmailOpt)
+	if err != nil {
+		return nil, err
+	}
+
+	password, err := common.PromptPassword("Password: ")
+	if err != nil {
+		return nil, err
+	}
+
+	loginResp, err := rc.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
+		Msg: &authentication.LoginRequest{
+			Method: &authentication.LoginRequest_UserPassword{
+				UserPassword: &authentication.UserPassword{
+					Identifier: &model.UserIdentifier{
+						Identifier: &model.UserIdentifier_Email{
+							Email: email,
+						},
+					},
+					Password: password,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return loginResp.Msg.GetToken(), nil
 }
 
 type sessionManager struct {
