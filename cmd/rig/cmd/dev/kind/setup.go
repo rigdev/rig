@@ -14,6 +14,7 @@ var (
 	operatorChartPath string
 	prometheus        bool
 	vpa               bool
+	installationID    string
 )
 
 type Cmd struct {
@@ -42,6 +43,13 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  base.CtxWrap(cmd.create),
 	}
+	create.Flags().StringVarP(
+		&installationID,
+		"installation-id",
+		"i", "",
+		"Installation ID from the Rig Hub. "+
+			"If set, the rig-platform will activate the hub installation, and inject the license",
+	)
 	create.Flags().StringVarP(
 		&platformDockerTag,
 		"platform-docker-tag", "p", "", "The rig-platform docker image tag. Defaults to latest.",
