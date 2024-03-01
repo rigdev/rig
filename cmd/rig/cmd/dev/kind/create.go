@@ -485,7 +485,7 @@ func (c *Cmd) runInit(_ *cobra.Command, _ []string) error {
 		"kubectl", "exec", "--tty", "--stdin",
 		"--namespace", "rig-system",
 		"deploy/rig-platform", "--",
-		"rig-admin", "init",
+		"rig-admin", "init", installationID,
 	)
 	execCmd.Stdin = os.Stdin
 	execCmd.Stdout = os.Stdout
