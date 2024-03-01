@@ -192,6 +192,7 @@ func migrate(ctx context.Context,
 			},
 		})
 		if err != nil {
+			fmt.Println("Error deploying capsule", err)
 			return err
 		}
 

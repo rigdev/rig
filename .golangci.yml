@@ -11,3 +11,6 @@ issues:
     - linters:
         - lll
       source: '^//\+kubebuilder'
+    - linters:
+        - revive
+      text: "empty-block: this block is empty, you can remove it"
