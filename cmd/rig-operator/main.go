@@ -15,6 +15,8 @@ import (
 	"connectrpc.com/grpcreflect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
+	"github.com/rigdev/rig/cmd/rig-operator/certgen"
+	"github.com/rigdev/rig/cmd/rig-operator/log"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
 	"github.com/rigdev/rig/pkg/handler/api/pipeline"
@@ -29,7 +31,6 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const (
@@ -49,6 +50,12 @@ func main() {
 	flags.StringP(flagConfigFile, "c", "/etc/rig-operator/config.yaml", "path to rig-operator config file")
 
 	c.AddCommand(build.VersionCommand())
+	certGenCmd, err := certgen.CMD()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	c.AddCommand(certGenCmd)
 
 	ctx := context.Background()
 	if err := c.ExecuteContext(ctx); err != nil {
@@ -70,8 +77,7 @@ func run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	log := zap.New(zap.UseDevMode(cfg.Operator().DevModeEnabled))
-
+	log := log.New(cfg.Operator().DevModeEnabled)
 	ctrl.SetLogger(log)
 
 	ctx, cancel := context.WithCancel(cmd.Context())
