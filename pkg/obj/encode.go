@@ -23,7 +23,7 @@ func Encode(obj runtime.Object, scheme *runtime.Scheme) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func Dump(obj client.Object, scheme *runtime.Scheme) {
+func Dump(obj client.Object, scheme *runtime.Scheme) { //nolint:revive
 	codecs := serializer.NewCodecFactory(scheme)
 
 	info, _ := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), runtime.ContentTypeYAML)

@@ -367,7 +367,8 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 
 		// Dry run to fully materialize the new spec.
 		materializedObj.SetResourceVersion(cObj.Current.GetResourceVersion())
-		if r.force {
+		if r.force && r.dryRun {
+			// TODO: If just force, we probably need to delete and re-create. Let's explore workarounds.
 			materializedObj.SetOwnerReferences(cObj.Current.GetOwnerReferences())
 		}
 		r.logger.Info("generating materialized version", "object", key)
