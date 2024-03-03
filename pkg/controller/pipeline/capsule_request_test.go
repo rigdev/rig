@@ -16,7 +16,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func preparePipelineTest(t *testing.T, opts ...CapsuleRequestOption) (context.Context, *mockclient.MockClient, *capsuleRequest) {
+func preparePipelineTest(t *testing.T, opts ...CapsuleRequestOption) (
+	context.Context, *mockclient.MockClient, *capsuleRequest,
+) {
 	scheme := scheme.New()
 	cc := mockclient.NewMockClient(t)
 	ctx := context.Background()
