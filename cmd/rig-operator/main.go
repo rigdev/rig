@@ -108,7 +108,7 @@ func run(cmd *cobra.Command, _ []string) error {
 	}
 
 	capabilitiesSvc := svccapabilities.NewService(cfg, cc, clientSet.DiscoveryClient)
-	capabilitiesH := capabilities.NewHandler(capabilitiesSvc)
+	capabilitiesH := capabilities.NewHandler(capabilitiesSvc, cfg)
 
 	mgr, err := manager.New(cfg, scheme, capabilitiesSvc)
 	if err != nil {

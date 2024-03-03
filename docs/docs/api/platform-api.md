@@ -119,6 +119,7 @@
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.environment.Service/List | [ListRequest](#api-v1-environment-ListRequest) | [ListResponse](#api-v1-environment-ListResponse) | List available environments. |
+| /api.v1.environment.Service/GetNamespaces | [GetNamespacesRequest](#api-v1-environment-GetNamespacesRequest) | [GetNamespacesResponse](#api-v1-environment-GetNamespacesResponse) |  |
 
 
 
@@ -4583,6 +4584,36 @@ Environment model.
 
 
 
+<a name="api-v1-environment-GetNamespacesRequest"></a>
+
+### GetNamespacesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_envs | [ProjectEnvironment](#api-v1-environment-ProjectEnvironment) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-environment-GetNamespacesResponse"></a>
+
+### GetNamespacesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespaces | [ProjectEnvironmentNamespace](#api-v1-environment-ProjectEnvironmentNamespace) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-environment-ListRequest"></a>
 
 ### ListRequest
@@ -4608,6 +4639,39 @@ Response for listing available environments.
 | ----- | ---- | ----- | ----------- |
 | environments | [Environment](#api-v1-environment-Environment) | repeated | List of environments. |
 | platform_version | [string](#string) |  | The version of the Rig-platform. |
+
+
+
+
+
+
+<a name="api-v1-environment-ProjectEnvironment"></a>
+
+### ProjectEnvironment
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-environment-ProjectEnvironmentNamespace"></a>
+
+### ProjectEnvironmentNamespace
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| namespace | [string](#string) |  |  |
 
 
 

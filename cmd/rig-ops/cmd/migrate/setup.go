@@ -55,6 +55,8 @@ func Setup(parent *cobra.Command) {
 			- A valid rig-cli config and context must be set either according to defaults or through flags
 			- Valid access- and refresh tokens must be provided in the context. Otherwise a login is required.`,
 	)
+	migrate.PersistentFlags().StringVarP(&base.Flags.Namespace, "namespace", "n", "", "The k8s namespace to migrate from")
+	migrate.PersistentFlags().StringVarP(&base.Flags.Project, "project", "p", "", "The project to migrate to")
 
 	parent.AddCommand(migrate)
 }

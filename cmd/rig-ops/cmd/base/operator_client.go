@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -17,7 +18,8 @@ import (
 )
 
 type OperatorClient struct {
-	Pipeline pipelineconnect.ServiceClient
+	Pipeline     pipelineconnect.ServiceClient
+	Capabilities capabilitiesconnect.ServiceClient
 }
 
 func NewOperatorClient(ctx context.Context, cc client.Client, cfg *rest.Config) (*OperatorClient, error) {
@@ -77,6 +79,7 @@ func NewOperatorClient(ctx context.Context, cc client.Client, cfg *rest.Config) 
 	baseURL := fmt.Sprintf("http://localhost:%d/", ps[0].Local)
 
 	return &OperatorClient{
-		Pipeline: pipelineconnect.NewServiceClient(http.DefaultClient, baseURL),
+		Pipeline:     pipelineconnect.NewServiceClient(http.DefaultClient, baseURL),
+		Capabilities: capabilitiesconnect.NewServiceClient(http.DefaultClient, baseURL),
 	}, nil
 }
