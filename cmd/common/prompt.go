@@ -102,7 +102,6 @@ func ValidateLengthOpt(minLength, maxLength int) GetInputOption {
 	return func(inp *textinput.TextInput) {
 		inp.Validate = ValidateLength(minLength, maxLength)
 	}
-
 }
 
 func ValidateAndOpt(validators ...func(string) error) GetInputOption {

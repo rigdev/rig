@@ -30,6 +30,7 @@ require (
 	github.com/distribution/reference v0.5.0
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/color v1.16.0
+	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/gnostic-models v0.6.8
@@ -45,6 +46,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
 	github.com/rigdev/rig-go-api v0.0.0-20240225171918-15e22616674b
 	github.com/rigdev/rig-go-sdk v0.0.0-20240125120802-fb9e44c555aa
+	github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rodaine/table v1.1.0
@@ -68,6 +70,7 @@ require (
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/evanphx/json-patch v5.7.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.7.0 // indirect
+	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-logr/zapr v1.2.4 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
@@ -96,7 +99,7 @@ require (
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect

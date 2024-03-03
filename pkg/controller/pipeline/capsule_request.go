@@ -286,19 +286,22 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 
 	// Prepare all the new objects with default labels / owner refs.
 	for _, key := range allKeys {
-		obj := r.objects[key]
-		if obj.New == nil {
+		cObj := r.objects[key]
+		if cObj.New == nil {
 			continue
 		}
 
-		labels := obj.New.GetLabels()
+		cObj.New.GetObjectKind().SetGroupVersionKind(key.GroupVersionKind)
+		normalizeObject(key, cObj.New)
+
+		labels := cObj.New.GetLabels()
 		if labels == nil {
 			labels = map[string]string{}
 		}
 		labels[LabelOwnedByCapsule] = r.capsule.Name
-		obj.New.SetLabels(labels)
+		cObj.New.SetLabels(labels)
 
-		if err := controllerutil.SetControllerReference(r.capsule, obj.New, r.pipeline.scheme); err != nil {
+		if err := controllerutil.SetControllerReference(r.capsule, cObj.New, r.pipeline.scheme); err != nil {
 			return nil, err
 		}
 	}
@@ -327,11 +330,9 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 					return nil, fmt.Errorf("could not get existing object: %w", getErr)
 				}
 
-				co.SetManagedFields(nil)
-
 				if r.force || IsOwnedBy(r.capsule, co) {
 					r.logger.Info("object exists but not in status, retrying", "object", key)
-					r.currentObjects[key] = co
+					r.currentObjects[key] = normalizeObject(key, co)
 					return nil, errors.AbortedErrorf("object exists but not in capsule status")
 				}
 
@@ -342,8 +343,7 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 				return nil, fmt.Errorf("could not render create to %s: %w", key.GroupVersionKind, err)
 			}
 
-			materializedObj.SetManagedFields(nil)
-			cObj.Materialized = materializedObj
+			cObj.Materialized = normalizeObject(key, materializedObj)
 
 			r.logger.Info("create object", "object", key)
 			changes[key] = &change{state: ResourceStateCreated}
@@ -384,8 +384,7 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 			continue
 		}
 
-		materializedObj.SetManagedFields(nil)
-		cObj.Materialized = materializedObj
+		cObj.Materialized = normalizeObject(key, materializedObj)
 
 		r.logger.Info("update object", "object", key)
 		changes[key] = &change{state: ResourceStateUpdated}
@@ -549,4 +548,10 @@ func (r *capsuleRequest) updateStatusError(ctx context.Context, err error) error
 	r.capsule.SetResourceVersion(capsule.GetResourceVersion())
 
 	return nil
+}
+
+func normalizeObject(key objectKey, obj client.Object) client.Object {
+	obj.SetManagedFields(nil)
+	obj.GetObjectKind().SetGroupVersionKind(key.GroupVersionKind)
+	return obj
 }

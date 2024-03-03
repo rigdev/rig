@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +21,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/spf13/cobra"
+	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/durationpb"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -128,7 +128,7 @@ func migrate(ctx context.Context,
 	color.Green(" ✓")
 
 	fmt.Print("Migrating ConfigMaps and Secrets...")
-	configChanges, err := migrateEnvironmentAndConfigFiles(ctx, cc, currentResources, &capsuleSpec.Spec)
+	configChanges, err := migrateEnvironmentAndConfigFiles(ctx, cr, currentResources, &capsuleSpec.Spec)
 	if err != nil {
 		color.Red(" ✗")
 		return err
@@ -138,7 +138,7 @@ func migrate(ctx context.Context,
 	color.Green(" ✓")
 
 	fmt.Print("Migrating Services and Ingress...")
-	serviceChanges, err := migrateServicesAndIngresses(ctx, cc, currentResources, &capsuleSpec.Spec)
+	serviceChanges, err := migrateServicesAndIngresses(ctx, cr, currentResources, &capsuleSpec.Spec)
 	if err != nil {
 		color.Red(" ✗")
 		return err
@@ -173,8 +173,8 @@ func migrate(ctx context.Context,
 		return err
 	}
 
-	reports := map[string]map[string]*dyff.HumanReport{}
-	err = processOperatorOutput(reports, currentResources, resp.Msg.OutputObjects)
+	reports := map[string]map[string]*dyff.Report{}
+	err = processOperatorOutput(reports, currentResources, resp.Msg.OutputObjects, cc.Scheme())
 	if err != nil {
 		return err
 	}
@@ -197,13 +197,13 @@ func migrate(ctx context.Context,
 		}
 
 		platformResources = deployResp.Msg.GetResourceYaml()
-		err = processPlatformOutput(reports, currentResources, platformResources)
+		err = processPlatformOutput(reports, currentResources, platformResources, cc.Scheme())
 		if err != nil {
 			return err
 		}
 	}
 
-	err = processRemainingResources(reports, currentResources)
+	err = processRemainingResources(reports, currentResources, cc.Scheme())
 	if err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func migrate(ctx context.Context,
 	return nil
 }
 
-func promptDiffingChanges(reports map[string]map[string]*dyff.HumanReport) error {
+func promptDiffingChanges(reports map[string]map[string]*dyff.Report) error {
 	choices := []string{}
 	for kind := range reports {
 		choices = append(choices, kind)
@@ -230,10 +230,9 @@ func promptDiffingChanges(reports map[string]map[string]*dyff.HumanReport) error
 
 		report := reports[kind]
 		if len(report) == 1 {
-			for _, r := range report {
-				if err := r.WriteReport(os.Stdout); err != nil {
-					return err
-				}
+			name := maps.Keys(report)[0]
+			if err := showDiffReport(report[name], kind, name); err != nil {
+				return err
 			}
 		} else {
 			names := []string{}
@@ -249,7 +248,7 @@ func promptDiffingChanges(reports map[string]map[string]*dyff.HumanReport) error
 					return err
 				}
 
-				if err := report[name].WriteReport(os.Stdout); err != nil {
+				if err := showDiffReport(report[name], kind, name); err != nil {
 					return err
 				}
 			}
@@ -552,7 +551,7 @@ func migrateHPA(ctx context.Context,
 }
 
 func migrateEnvironmentAndConfigFiles(ctx context.Context,
-	cc client.Client,
+	cc client.Reader,
 	currentResources *CurrentResources,
 	capsuleSpec *v1alpha2.CapsuleSpec,
 ) ([]*capsule.Change, error) {
@@ -716,7 +715,7 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 }
 
 func migrateServicesAndIngresses(ctx context.Context,
-	cc client.Client,
+	cc client.Reader,
 	currentResources *CurrentResources,
 	capsuleSpec *v1alpha2.CapsuleSpec,
 ) ([]*capsule.Change, error) {
@@ -741,16 +740,17 @@ func migrateServicesAndIngresses(ctx context.Context,
 
 	for _, port := range container.Ports {
 		for _, service := range services.Items {
-			for _, servicePort := range service.Spec.Ports {
-				found := false
-				if servicePort.Name == port.Name {
-					service := service
-					currentResources.Services[service.GetName()] = &service
-					found = true
-				}
-				if found {
+			match := len(service.Spec.Selector) > 0
+			for key, value := range service.Spec.Selector {
+				if currentResources.Deployment.Spec.Template.Labels[key] != value {
+					match = false
 					break
 				}
+			}
+
+			if match {
+				service := service
+				currentResources.Services[service.GetName()] = &service
 			}
 		}
 
