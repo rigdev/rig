@@ -3,8 +3,6 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"slices"
-	"strings"
 
 	"github.com/go-logr/logr"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -267,7 +265,8 @@ func (r *capsuleRequest) prepare() *Result {
 	result := &Result{}
 	r.usedResources = nil
 	r.objects = map[objectKey]*Object{}
-	for k, o := range r.currentObjects {
+	for _, k := range sortedKeys(maps.Keys(r.currentObjects)) {
+		o := r.currentObjects[k]
 		r.objects[k] = &Object{
 			Current: o.DeepCopyObject().(client.Object),
 		}
@@ -283,7 +282,7 @@ type change struct {
 }
 
 func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, error) {
-	allKeys := maps.Keys(r.objects)
+	allKeys := sortedKeys(maps.Keys(r.objects))
 
 	// Prepare all the new objects with default labels / owner refs.
 	for _, key := range allKeys {
@@ -308,10 +307,10 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 
 	// Dry run to detect no-op vs create vs update.
 	for _, key := range allKeys {
-		obj := r.objects[key]
+		cObj := r.objects[key]
 
-		if obj.Current == nil {
-			materializedObj := obj.New.DeepCopyObject().(client.Object)
+		if cObj.Current == nil {
+			materializedObj := cObj.New.DeepCopyObject().(client.Object)
 			if err := r.pipeline.client.Create(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
 				return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
 			} else if kerrors.IsAlreadyExists(err) || kerrors.IsInvalid(err) {
@@ -322,10 +321,13 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 
 				co := o.(client.Object)
 				if getErr := r.pipeline.client.Get(ctx, key.ObjectKey, co); kerrors.IsNotFound(getErr) {
+					r.logger.Info("configuration is invalid", "object", key, "error", err)
 					return nil, err
 				} else if getErr != nil {
 					return nil, fmt.Errorf("could not get existing object: %w", getErr)
 				}
+
+				co.SetManagedFields(nil)
 
 				if r.force || IsOwnedBy(r.capsule, co) {
 					r.logger.Info("object exists but not in status, retrying", "object", key)
@@ -341,47 +343,49 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 			}
 
 			materializedObj.SetManagedFields(nil)
-			obj.Materialized = materializedObj
+			cObj.Materialized = materializedObj
 
 			r.logger.Info("create object", "object", key)
 			changes[key] = &change{state: ResourceStateCreated}
 			continue
 		}
 
-		if !(r.force || IsOwnedBy(r.capsule, obj.Current)) {
+		if !(r.force || IsOwnedBy(r.capsule, cObj.Current)) {
 			r.logger.Info("update object skipped, not owned by controller", "object", key)
 			changes[key] = &change{state: ResourceStateAlreadyExists}
 			continue
 		}
 
-		if obj.New == nil {
+		if cObj.New == nil {
 			r.logger.Info("delete object", "object", key)
 			changes[key] = &change{state: ResourceStateDeleted}
 			continue
 		}
 
-		materializedObj := obj.New.DeepCopyObject().(client.Object)
-		materializedObj.GetObjectKind().SetGroupVersionKind(obj.Current.GetObjectKind().GroupVersionKind())
+		materializedObj := cObj.New.DeepCopyObject().(client.Object)
+		materializedObj.GetObjectKind().SetGroupVersionKind(cObj.Current.GetObjectKind().GroupVersionKind())
 
 		// Dry run to fully materialize the new spec.
-		materializedObj.SetResourceVersion(obj.Current.GetResourceVersion())
-		if r.force {
-			materializedObj.SetOwnerReferences(obj.Current.GetOwnerReferences())
+		materializedObj.SetResourceVersion(cObj.Current.GetResourceVersion())
+		if r.force && r.dryRun {
+			// TODO: If just force, we probably need to delete and re-create. Let's explore workarounds.
+			materializedObj.SetOwnerReferences(cObj.Current.GetOwnerReferences())
 		}
+		r.logger.Info("generating materialized version", "object", key)
 		if err := r.pipeline.client.Update(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
 			return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
 		} else if err != nil {
 			return nil, fmt.Errorf("could not render update to %s: %w", key.GroupVersionKind, err)
 		}
 
-		if ObjectsEquals(obj.Current, materializedObj) {
+		if ObjectsEquals(cObj.Current, materializedObj) {
 			r.logger.Info("update object skipped, not changed", "object", key)
 			changes[key] = &change{state: ResourceStateUnchanged}
 			continue
 		}
 
 		materializedObj.SetManagedFields(nil)
-		obj.Materialized = materializedObj
+		cObj.Materialized = materializedObj
 
 		r.logger.Info("update object", "object", key)
 		changes[key] = &change{state: ResourceStateUpdated}
@@ -412,7 +416,8 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 	}
 
 	var errs []error
-	for key, change := range changes {
+	for _, key := range sortedKeys(maps.Keys(changes)) {
+		change := changes[key]
 		if err := r.applyChange(ctx, key, change.state); err != nil {
 			change.err = err
 			errs = append(errs, err)
@@ -483,9 +488,7 @@ func (r *capsuleRequest) updateStatusChanges(
 		ObservedGeneration: generation,
 	}
 
-	keys := maps.Keys(changes)
-	slices.SortStableFunc(keys, func(k1, k2 objectKey) int { return strings.Compare(k1.String(), k2.String()) })
-	for _, key := range keys {
+	for _, key := range sortedKeys(maps.Keys(changes)) {
 		key := key
 		change := changes[key]
 		or := v1alpha2.OwnedResource{

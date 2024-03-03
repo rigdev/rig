@@ -66,6 +66,10 @@ func (s *service) DryRun(
 		}
 	}
 
+	if len(spec.GetUID()) == 0 {
+		spec.SetUID(types.UID("dry-run-spec"))
+	}
+
 	steps, err := controller.GetDefaultPipelineSteps(ctx, s.capSvc)
 	if err != nil {
 		return nil, err

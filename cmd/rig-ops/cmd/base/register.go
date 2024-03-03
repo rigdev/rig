@@ -179,7 +179,10 @@ func NewRigClient(ctx context.Context) (rig.Client, error) {
 }
 
 func rigLogin(ctx context.Context, rc rig.Client) (*authentication.Token, error) {
-	email, err := common.PromptInput("You are not logged in on the Rig platform. Please do so to migrate using the platform.\nEmail:", common.ValidateEmailOpt)
+	email, err := common.PromptInput(
+		"You are not logged in on the Rig platform. Please do so to migrate using the platform.\nEmail:",
+		common.ValidateEmailOpt,
+	)
 	if err != nil {
 		return nil, err
 	}
