@@ -1,7 +1,6 @@
 package migrate
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -26,29 +25,17 @@ type CurrentResources struct {
 	CronJobs       map[string]*batchv1.CronJob
 }
 
-func (c *CurrentResources) getCurrentObject(kind, name string) ([]byte, error) {
-	var orig []byte
-	var err error
+func (c *CurrentResources) getCurrentObject(kind, name string) client.Object {
 	switch kind {
 	case "Deployment":
-		if c.Deployment != nil {
-			c.Deployment.SetManagedFields(nil)
-			c.Deployment.Status = appsv1.DeploymentStatus{}
-			orig, err = json.Marshal(c.Deployment)
-			if err != nil {
-				return nil, err
-			}
+		if d := c.Deployment; d != nil {
 			c.Deployment = nil
+			return d
 		}
 	case "HorizontalPodAutoscaler":
-		if c.HPA != nil {
-			c.HPA.SetManagedFields(nil)
-			c.HPA.Status = autoscalingv2.HorizontalPodAutoscalerStatus{}
-			orig, err = json.Marshal(c.HPA)
-			if err != nil {
-				return nil, err
-			}
+		if hpa := c.HPA; hpa != nil {
 			c.HPA = nil
+			return hpa
 		}
 	case "ConfigMap":
 		parts := strings.Split(name, "--")
@@ -61,13 +48,8 @@ func (c *CurrentResources) getCurrentObject(kind, name string) ([]byte, error) {
 		}
 
 		if cm, ok := c.ConfigMaps[name]; ok {
-			cm.SetManagedFields(nil)
-			orig, err = json.Marshal(cm)
-			if err != nil {
-				return nil, err
-			}
-
 			delete(c.ConfigMaps, name)
+			return cm
 		}
 	case "Secret":
 		parts := strings.Split(name, "--")
@@ -80,68 +62,37 @@ func (c *CurrentResources) getCurrentObject(kind, name string) ([]byte, error) {
 		}
 
 		if s, ok := c.Secrets[name]; ok {
-			s.SetManagedFields(nil)
-			orig, err = json.Marshal(s)
-			if err != nil {
-				return nil, err
-			}
-
 			delete(c.Secrets, name)
+			return s
 		}
 	case "Service":
 		if s, ok := c.Services[name]; ok {
-			s.SetManagedFields(nil)
-			orig, err = json.Marshal(s)
-			if err != nil {
-				return nil, err
-			}
-
 			delete(c.Services, name)
+			return s
 		}
 	case "Ingress":
 		if i, ok := c.Ingresses[name]; ok {
-			i.SetManagedFields(nil)
-			orig, err = json.Marshal(i)
-			if err != nil {
-				return nil, err
-			}
-
 			delete(c.Ingresses, name)
+			return i
 		}
 	case "CronJob":
 		if cj, ok := c.CronJobs[name]; ok {
-			cj.SetManagedFields(nil)
-			orig, err = json.Marshal(cj)
-			if err != nil {
-				return nil, err
-			}
-
 			delete(c.CronJobs, name)
+			return cj
 		}
 	case "ServiceAccount":
 		if sa := c.ServiceAccount; sa != nil {
-			sa.SetManagedFields(nil)
-			orig, err = json.Marshal(sa)
-			if err != nil {
-				return nil, err
-			}
-
 			c.ServiceAccount = nil
+			return sa
 		}
 	case "Capsule":
-		if c.Capsule != nil {
-			c.Capsule.Status = nil
-			c.Capsule.SetManagedFields(nil)
-			orig, err = json.Marshal(c.Capsule)
-			if err != nil {
-				return nil, err
-			}
-
+		if ca := c.Capsule; ca != nil {
 			c.Capsule = nil
+			return ca
 		}
 	}
 
-	return orig, nil
+	return nil
 }
 
 func (c *CurrentResources) ToYAML(cc client.Client) (map[string]string, error) {

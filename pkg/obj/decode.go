@@ -7,7 +7,9 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func DecodeInto(bs []byte, into runtime.Object, scheme *runtime.Scheme) error {
@@ -29,4 +31,23 @@ func Decode(bs []byte, out interface{}) error {
 	}
 
 	return nil
+}
+
+func DecodeAny(bs []byte, scheme *runtime.Scheme) (client.Object, error) {
+	s := json.NewSerializerWithOptions(
+		json.DefaultMetaFactory,
+		scheme,
+		scheme,
+		json.SerializerOptions{
+			Yaml:   true,
+			Pretty: true,
+		},
+	)
+
+	ro, _, err := s.Decode(bs, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return ro.(client.Object), nil
 }

@@ -1,20 +1,30 @@
 package migrate
 
 import (
-	"encoding/json"
+	"bytes"
+	"fmt"
+	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/gonvenience/ytbx"
 	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
+	"github.com/rigdev/rig/pkg/obj"
+	"github.com/rivo/tview"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
 // marshall the platform resources into kubernetes resources, and then compare them to the existing k8s resources
-func processPlatformOutput(reports map[string]map[string]*dyff.HumanReport,
+func processPlatformOutput(reports map[string]map[string]*dyff.Report,
 	currentResources *CurrentResources,
-	platformResources map[string]string) error {
+	platformResources map[string]string,
+	scheme *runtime.Scheme,
+) error {
 	for _, resource := range platformResources {
 		// unmarshal the resource into a k8s object
 		object := &unstructured.Unstructured{}
@@ -23,23 +33,20 @@ func processPlatformOutput(reports map[string]map[string]*dyff.HumanReport,
 			return err
 		}
 
-		orig, err := currentResources.getCurrentObject(object.GetKind(), object.GetName())
+		orig := currentResources.getCurrentObject(object.GetKind(), object.GetName())
+
+		proposal, err := obj.DecodeAny([]byte(resource), scheme)
 		if err != nil {
 			return err
 		}
 
-		proposal, err := yaml.YAMLToJSON([]byte(resource))
-		if err != nil {
-			return err
-		}
-
-		b, err := getDiffingReport(orig, proposal)
+		b, err := getDiffingReport(orig, proposal, scheme)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports[object.GetKind()]; !ok {
-			reports[object.GetKind()] = map[string]*dyff.HumanReport{}
+			reports[object.GetKind()] = map[string]*dyff.Report{}
 		}
 
 		reports[object.GetKind()][object.GetName()] = b
@@ -47,27 +54,26 @@ func processPlatformOutput(reports map[string]map[string]*dyff.HumanReport,
 	return nil
 }
 
-func processOperatorOutput(reports map[string]map[string]*dyff.HumanReport,
+func processOperatorOutput(reports map[string]map[string]*dyff.Report,
 	currentResources *CurrentResources,
-	operatorOutput []*pipeline.ObjectChange) error {
+	operatorOutput []*pipeline.ObjectChange,
+	scheme *runtime.Scheme,
+) error {
 	for _, out := range operatorOutput {
-		orig, err := currentResources.getCurrentObject(out.GetObject().GetGvk().GetKind(), out.GetObject().GetName())
+		orig := currentResources.getCurrentObject(out.GetObject().GetGvk().GetKind(), out.GetObject().GetName())
+
+		proposal, err := obj.DecodeAny([]byte(out.GetObject().GetContent()), scheme)
 		if err != nil {
 			return err
 		}
 
-		proposal, err := yaml.YAMLToJSON([]byte(out.GetObject().GetContent()))
-		if err != nil {
-			return err
-		}
-
-		b, err := getDiffingReport(orig, proposal)
+		b, err := getDiffingReport(orig, proposal, scheme)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports[out.GetObject().GetGvk().GetKind()]; !ok {
-			reports[out.GetObject().GetGvk().GetKind()] = map[string]*dyff.HumanReport{}
+			reports[out.GetObject().GetGvk().GetKind()] = map[string]*dyff.Report{}
 		}
 
 		reports[out.GetObject().GetGvk().GetKind()][out.GetObject().GetName()] = b
@@ -76,23 +82,25 @@ func processOperatorOutput(reports map[string]map[string]*dyff.HumanReport,
 	return nil
 }
 
-func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
-	currentResources *CurrentResources) error {
+func processRemainingResources(reports map[string]map[string]*dyff.Report,
+	currentResources *CurrentResources,
+	scheme *runtime.Scheme,
+) error {
 	if currentResources.Deployment != nil {
 		currentResources.Deployment.SetManagedFields(nil)
 		currentResources.Deployment.Status = appsv1.DeploymentStatus{}
-		orig, err := json.Marshal(currentResources.Deployment)
+		orig, err := obj.Encode(currentResources.Deployment, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["Deployment"]; !ok {
-			reports["Deployment"] = map[string]*dyff.HumanReport{}
+			reports["Deployment"] = map[string]*dyff.Report{}
 		}
 
 		reports["Deployment"][currentResources.Deployment.GetName()] = report
@@ -100,18 +108,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 
 	if currentResources.HPA != nil {
 		currentResources.HPA.SetManagedFields(nil)
-		orig, err := json.Marshal(currentResources.HPA)
+		orig, err := obj.Encode(currentResources.HPA, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["HorizontalPodAutoscaler"]; !ok {
-			reports["HorizontalPodAutoscaler"] = map[string]*dyff.HumanReport{}
+			reports["HorizontalPodAutoscaler"] = map[string]*dyff.Report{}
 		}
 
 		reports["HorizontalPodAutoscaler"][currentResources.HPA.GetName()] = report
@@ -119,18 +127,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 
 	if currentResources.ServiceAccount != nil {
 		currentResources.ServiceAccount.SetManagedFields(nil)
-		orig, err := json.Marshal(currentResources.ServiceAccount)
+		orig, err := obj.Encode(currentResources.ServiceAccount, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["ServiceAccount"]; !ok {
-			reports["ServiceAccount"] = map[string]*dyff.HumanReport{}
+			reports["ServiceAccount"] = map[string]*dyff.Report{}
 		}
 
 		reports["ServiceAccount"][currentResources.ServiceAccount.GetName()] = report
@@ -139,18 +147,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 	if currentResources.Capsule != nil {
 		currentResources.Capsule.SetManagedFields(nil)
 		currentResources.Capsule.Status = nil
-		orig, err := json.Marshal(currentResources.Capsule)
+		orig, err := obj.Encode(currentResources.Capsule, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["Capsule"]; !ok {
-			reports["Capsule"] = map[string]*dyff.HumanReport{}
+			reports["Capsule"] = map[string]*dyff.Report{}
 		}
 
 		reports["Capsule"][currentResources.Capsule.GetName()] = report
@@ -158,18 +166,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 
 	for _, cm := range currentResources.ConfigMaps {
 		cm.SetManagedFields(nil)
-		orig, err := json.Marshal(cm)
+		orig, err := obj.Encode(cm, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["ConfigMap"]; !ok {
-			reports["ConfigMap"] = map[string]*dyff.HumanReport{}
+			reports["ConfigMap"] = map[string]*dyff.Report{}
 		}
 
 		reports["ConfigMap"][cm.GetName()] = report
@@ -177,18 +185,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 
 	for _, s := range currentResources.Secrets {
 		s.SetManagedFields(nil)
-		orig, err := json.Marshal(s)
+		orig, err := obj.Encode(s, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["Secret"]; !ok {
-			reports["Secret"] = map[string]*dyff.HumanReport{}
+			reports["Secret"] = map[string]*dyff.Report{}
 		}
 
 		reports["Secret"][s.GetName()] = report
@@ -196,18 +204,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 
 	for _, s := range currentResources.Services {
 		s.SetManagedFields(nil)
-		orig, err := json.Marshal(s)
+		orig, err := obj.Encode(s, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["Service"]; !ok {
-			reports["Service"] = map[string]*dyff.HumanReport{}
+			reports["Service"] = map[string]*dyff.Report{}
 		}
 
 		reports["Service"][s.GetName()] = report
@@ -215,18 +223,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 
 	for _, i := range currentResources.Ingresses {
 		i.SetManagedFields(nil)
-		orig, err := json.Marshal(i)
+		orig, err := obj.Encode(i, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["Ingress"]; !ok {
-			reports["Ingress"] = map[string]*dyff.HumanReport{}
+			reports["Ingress"] = map[string]*dyff.Report{}
 		}
 
 		reports["Ingress"][i.GetName()] = report
@@ -234,18 +242,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 
 	for _, cj := range currentResources.CronJobs {
 		cj.SetManagedFields(nil)
-		orig, err := json.Marshal(cj)
+		orig, err := obj.Encode(cj, scheme)
 		if err != nil {
 			return err
 		}
 
-		report, err := getDiffingReport(orig, []byte{})
+		report, err := getDiffingReportRaw(orig, nil)
 		if err != nil {
 			return err
 		}
 
 		if _, ok := reports["CronJob"]; !ok {
-			reports["CronJob"] = map[string]*dyff.HumanReport{}
+			reports["CronJob"] = map[string]*dyff.Report{}
 		}
 
 		reports["CronJob"][cj.GetName()] = report
@@ -254,8 +262,38 @@ func processRemainingResources(reports map[string]map[string]*dyff.HumanReport,
 	return nil
 }
 
-func getDiffingReport(orig, proposal []byte) (*dyff.HumanReport, error) {
-	fromNodes, err := ytbx.LoadDocuments(orig)
+func getDiffingReport(orig, proposal client.Object, scheme *runtime.Scheme) (*dyff.Report, error) {
+	if err := normalize(orig, scheme); err != nil {
+		return nil, err
+	}
+	if err := normalize(proposal, scheme); err != nil {
+		return nil, err
+	}
+	trimAnnotations(orig)
+	trimAnnotations(proposal)
+
+	origBytes, err := obj.Encode(orig, scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	proposalBytes, err := obj.Encode(proposal, scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	return getDiffingReportRaw(origBytes, proposalBytes)
+}
+
+func getDiffingReportRaw(orig, proposal []byte) (*dyff.Report, error) {
+	if len(orig) == 0 {
+		orig = []byte("{}")
+	}
+	if len(proposal) == 0 {
+		proposal = []byte("{}")
+	}
+
+	fromNodes, err := ytbx.LoadYAMLDocuments(orig)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +301,7 @@ func getDiffingReport(orig, proposal []byte) (*dyff.HumanReport, error) {
 		Location:  "current",
 		Documents: fromNodes,
 	}
-	toNodes, err := ytbx.LoadDocuments(proposal)
+	toNodes, err := ytbx.LoadYAMLDocuments(proposal)
 	if err != nil {
 		return nil, err
 	}
@@ -277,8 +315,79 @@ func getDiffingReport(orig, proposal []byte) (*dyff.HumanReport, error) {
 		return nil, err
 	}
 
-	return &dyff.HumanReport{
-		Report:     r,
+	for i, d := range r.Diffs {
+		if d.Path == nil {
+			continue
+		}
+		if strings.HasPrefix(d.Path.ToDotStyle(), "status") {
+			r.Diffs = append(r.Diffs[:i], r.Diffs[i+1:]...)
+		}
+	}
+
+	return &r, nil
+}
+
+func trimAnnotations(co client.Object) {
+	if co == nil {
+		return
+	}
+
+	annotations := co.GetAnnotations()
+	if annotations == nil {
+		return
+	}
+
+	delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
+	delete(annotations, "deployment.kubernetes.io/revision")
+
+	co.SetAnnotations(annotations)
+}
+
+func normalize(co client.Object, scheme *runtime.Scheme) error {
+	if co == nil {
+		return nil
+	}
+
+	gvks, _, err := scheme.ObjectKinds(co)
+	if err != nil {
+		return err
+	}
+
+	co.GetObjectKind().SetGroupVersionKind(gvks[0])
+	co.SetManagedFields(nil)
+	co.SetCreationTimestamp(v1.Time{})
+	co.SetGeneration(0)
+	co.SetResourceVersion("")
+	co.SetOwnerReferences(nil)
+	co.SetUID("")
+	return nil
+}
+
+func showDiffReport(r *dyff.Report, kind, name string) error {
+	var out bytes.Buffer
+	hr := &dyff.HumanReport{
+		Report:     *r,
 		OmitHeader: true,
-	}, nil
+	}
+	if err := hr.WriteReport(tview.ANSIWriter(&out)); err != nil {
+		return err
+	}
+
+	text := tview.NewTextView()
+	text.SetTitle(fmt.Sprintf("%s/%s (ESC to exit)", kind, name))
+	text.SetBorder(true)
+	text.SetDynamicColors(true)
+	text.SetWrap(true)
+	text.SetText(out.String())
+	text.SetBackgroundColor(tcell.ColorNone)
+
+	app := tview.NewApplication().SetRoot(text, true)
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyESC {
+			app.Stop()
+		}
+		return event
+	})
+
+	return app.Run()
 }
