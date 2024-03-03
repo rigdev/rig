@@ -231,7 +231,9 @@ func promptDiffingChanges(reports map[string]map[string]*dyff.HumanReport) error
 		report := reports[kind]
 		if len(report) == 1 {
 			for _, r := range report {
-				r.WriteReport(os.Stdout)
+				if err := r.WriteReport(os.Stdout); err != nil {
+					return err
+				}
 			}
 		} else {
 			names := []string{}
@@ -247,7 +249,9 @@ func promptDiffingChanges(reports map[string]map[string]*dyff.HumanReport) error
 					return err
 				}
 
-				report[name].WriteReport(os.Stdout)
+				if err := report[name].WriteReport(os.Stdout); err != nil {
+					return err
+				}
 			}
 		}
 	}
