@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -12,7 +11,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
-	"github.com/gonvenience/ytbx"
 	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -26,29 +24,17 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
 )
 
 var promptAborted = "prompt aborted"
-
-type CurrentResources struct {
-	Deployment     *appsv1.Deployment
-	ServiceAccount *corev1.ServiceAccount
-	Capsule        *v1alpha2.Capsule
-	ConfigMaps     map[string]*corev1.ConfigMap
-	Secrets        map[string]*corev1.Secret
-	Services       map[string]*corev1.Service
-	Ingresses      map[string]*netv1.Ingress
-	CronJobs       map[string]*batchv1.CronJob
-}
 
 var (
 	platformDryRun bool
@@ -132,6 +118,16 @@ func migrate(ctx context.Context,
 		}
 	}()
 
+	fmt.Print("Migrating Horizontal Pod Autoscaler...")
+	hpaChanges, err := migrateHPA(ctx, cc, currentResources, &capsuleSpec.Spec)
+	if err != nil {
+		color.Red(" ✗")
+		return err
+	}
+
+	changes = append(changes, hpaChanges...)
+	color.Green(" ✓")
+
 	fmt.Print("Migrating ConfigMaps and Secrets...")
 	configChanges, err := migrateEnvironmentAndConfigFiles(ctx, cc, currentResources, &capsuleSpec.Spec)
 	if err != nil {
@@ -178,7 +174,7 @@ func migrate(ctx context.Context,
 		return err
 	}
 
-	reports := map[string][]*dyff.HumanReport{}
+	reports := map[string]map[string]*dyff.HumanReport{}
 	err = processOperatorOutput(reports, currentResources, resp.Msg.OutputObjects)
 	if err != nil {
 		return err
@@ -208,6 +204,11 @@ func migrate(ctx context.Context,
 		}
 	}
 
+	err = processRemainingResources(reports, currentResources)
+	if err != nil {
+		return err
+	}
+
 	err = promptDiffingChanges(reports)
 	if err != nil && err.Error() != promptAborted {
 		return err
@@ -216,201 +217,41 @@ func migrate(ctx context.Context,
 	return nil
 }
 
-// marshall the platform resources into kubernetes resources, and then compare them to the existing k8s resources
-func processPlatformOutput(reports map[string][]*dyff.HumanReport,
-	currentResources *CurrentResources,
-	platformResources map[string]string) error {
-	for _, resource := range platformResources {
-		// unmarshal the resource into a k8s object
-		object := &unstructured.Unstructured{}
-		err := yaml.Unmarshal([]byte(resource), object)
-		if err != nil {
-			return err
-		}
-
-		orig, err := currentResources.getCurrentObject(object.GetKind(), object.GetName())
-		if err != nil {
-			return err
-		}
-
-		proposal, err := yaml.YAMLToJSON([]byte(resource))
-		if err != nil {
-			return err
-		}
-
-		b, err := getDiffingReport(orig, proposal)
-		if err != nil {
-			return err
-		}
-
-		reports[object.GetKind()] = append(reports[object.GetKind()], b)
-	}
-	return nil
-}
-
-func promptDiffingChanges(reports map[string][]*dyff.HumanReport) error {
+func promptDiffingChanges(reports map[string]map[string]*dyff.HumanReport) error {
 	choices := []string{}
 	for kind := range reports {
 		choices = append(choices, kind)
 	}
 
 	for {
-		_, kind, err := common.PromptSelect("Select the resource to view the diff. CTRL + C to continue", choices)
+		_, kind, err := common.PromptSelect("Select the resource kind to view the diff for. CTRL + C to continue", choices)
 		if err != nil {
 			return err
 		}
 
 		report := reports[kind]
-		for _, r := range report {
-			err = r.WriteReport(os.Stdout)
-			if err != nil {
-				return err
+		if len(report) == 1 {
+			for _, r := range report {
+				r.WriteReport(os.Stdout)
 			}
-		}
-	}
-}
-
-func processOperatorOutput(reports map[string][]*dyff.HumanReport,
-	currentResources *CurrentResources,
-	operatorOutput []*pipeline.ObjectChange) error {
-	for _, out := range operatorOutput {
-		orig, err := currentResources.getCurrentObject(out.GetObject().GetGvk().GetKind(), out.GetObject().GetName())
-		if err != nil {
-			return err
-		}
-
-		proposal, err := yaml.YAMLToJSON([]byte(out.GetObject().GetContent()))
-		if err != nil {
-			return err
-		}
-
-		b, err := getDiffingReport(orig, proposal)
-		if err != nil {
-			return err
-		}
-
-		reports[out.GetObject().GetGvk().GetKind()] = append(reports[out.GetObject().GetGvk().GetKind()], b)
-	}
-
-	return nil
-}
-
-func getDiffingReport(orig, proposal []byte) (*dyff.HumanReport, error) {
-	fromNodes, err := ytbx.LoadDocuments(orig)
-	if err != nil {
-		return nil, err
-	}
-	from := ytbx.InputFile{
-		Location:  "current",
-		Documents: fromNodes,
-	}
-	toNodes, err := ytbx.LoadDocuments(proposal)
-	if err != nil {
-		return nil, err
-	}
-	to := ytbx.InputFile{
-		Location:  "migration",
-		Documents: toNodes,
-	}
-
-	r, err := dyff.CompareInputFiles(from, to)
-	if err != nil {
-		return nil, err
-	}
-
-	return &dyff.HumanReport{
-		Report:     r,
-		OmitHeader: true,
-	}, nil
-}
-
-func (c *CurrentResources) getCurrentObject(kind, name string) ([]byte, error) {
-	var orig []byte
-	var err error
-	switch kind {
-	case "Deployment":
-		c.Deployment.SetManagedFields(nil)
-		orig, err = json.Marshal(c.Deployment)
-		if err != nil {
-			return nil, err
-		}
-	case "ConfigMap":
-		parts := strings.Split(name, "--")
-		if len(parts) < 2 {
-			name = "env-source"
 		} else {
-			name = strings.Replace("/"+parts[1], "-", "/", -1)
-			i := strings.LastIndex(name, "/")
-			name = name[:i] + "." + name[i+1:]
-		}
+			names := []string{}
+			for name := range report {
+				names = append(names, name)
+			}
 
-		if cm, ok := c.ConfigMaps[name]; ok {
-			cm.SetManagedFields(nil)
-			orig, err = json.Marshal(cm)
-			if err != nil {
-				return nil, err
-			}
-		}
-	case "Secret":
-		parts := strings.Split(name, "--")
-		if len(parts) < 2 {
-			name = "env-source"
-		} else {
-			name = strings.Replace("/"+parts[1], "-", "/", -1)
-			i := strings.LastIndex(name, "/")
-			name = name[:i] + "." + name[i+1:]
-		}
+			for {
+				_, name, err := common.PromptSelect("Select the resource to view the diff for. CTRL + C to continue", names)
+				if err != nil && err.Error() == promptAborted {
+					break
+				} else if err != nil {
+					return err
+				}
 
-		if s, ok := c.Secrets[name]; ok {
-			s.SetManagedFields(nil)
-			orig, err = json.Marshal(s)
-			if err != nil {
-				return nil, err
-			}
-		}
-	case "Service":
-		if s, ok := c.Services[name]; ok {
-			s.SetManagedFields(nil)
-			orig, err = json.Marshal(s)
-			if err != nil {
-				return nil, err
-			}
-		}
-	case "Ingress":
-		if i, ok := c.Ingresses[name]; ok {
-			i.SetManagedFields(nil)
-			orig, err = json.Marshal(i)
-			if err != nil {
-				return nil, err
-			}
-		}
-	case "CronJob":
-		if cj, ok := c.CronJobs[name]; ok {
-			cj.SetManagedFields(nil)
-			orig, err = json.Marshal(cj)
-			if err != nil {
-				return nil, err
-			}
-		}
-	case "ServiceAccount":
-		if sa := c.ServiceAccount; sa != nil {
-			sa.SetManagedFields(nil)
-			orig, err = json.Marshal(sa)
-			if err != nil {
-				return nil, err
-			}
-		}
-	case "Capsule":
-		if c.Capsule != nil {
-			c.Capsule.SetManagedFields(nil)
-			orig, err = json.Marshal(c.Capsule)
-			if err != nil {
-				return nil, err
+				report[name].WriteReport(os.Stdout)
 			}
 		}
 	}
-
-	return orig, nil
 }
 
 func migrateDeployment(ctx context.Context,
@@ -443,6 +284,7 @@ func migrateDeployment(ctx context.Context,
 			},
 		},
 	}
+
 	cpu, memory := capsuleSpec.Spec.Scale.Vertical.CPU, capsuleSpec.Spec.Scale.Vertical.Memory
 	if q, ok := container.Resources.Requests[corev1.ResourceCPU]; ok {
 		cpu.Request = &q
@@ -577,9 +419,6 @@ func getDeployment(ctx context.Context, cc client.Reader) (*appsv1.Deployment, e
 			deployment.GetCreationTimestamp().Format("2006-01-02 15:04:05"),
 		})
 	}
-
-	fmt.Printf("There are %d deployments of which %d are not owned by a capsule\n",
-		len(deployments.Items), len(deploymentNames))
 	i, err := common.PromptTableSelect("Select the deployment to migrate",
 		deploymentNames, headers, common.SelectEnableFilterOpt)
 	if err != nil {
@@ -596,6 +435,115 @@ func getDeployment(ctx context.Context, cc client.Reader) (*appsv1.Deployment, e
 	}
 
 	return deployment, nil
+}
+
+func migrateHPA(ctx context.Context,
+	cc client.Client,
+	currentResources *CurrentResources,
+	capsuleSpec *v1alpha2.CapsuleSpec,
+) ([]*capsule.Change, error) {
+	// Get HPA in namespace
+	hpaList := &autoscalingv2.HorizontalPodAutoscalerList{}
+	err := cc.List(ctx, hpaList, client.InNamespace(base.Flags.Namespace))
+	if err != nil {
+		return nil, err
+	}
+
+	var changes []*capsule.Change
+	for _, hpa := range hpaList.Items {
+		found := false
+		if hpa.Spec.ScaleTargetRef.Name == currentResources.Deployment.Name {
+			hpa := hpa
+			currentResources.HPA = &hpa
+
+			horizontalScale := &capsule.HorizontalScale{
+				MaxReplicas: uint32(hpa.Spec.MaxReplicas),
+				MinReplicas: uint32(*hpa.Spec.MinReplicas),
+			}
+			capsuleSpec.Scale.Horizontal.Instances.Max = ptr.To(uint32(hpa.Spec.MaxReplicas))
+			capsuleSpec.Scale.Horizontal.Instances.Min = uint32(*hpa.Spec.MinReplicas)
+			if metrics := hpa.Spec.Metrics; len(metrics) > 0 {
+				for _, metric := range metrics {
+					if metric.Resource != nil {
+						if metric.Resource.Name == corev1.ResourceCPU && metric.Resource.Target.AverageUtilization != nil {
+							capsuleSpec.Scale.Horizontal.CPUTarget = &v1alpha2.CPUTarget{
+								Utilization: ptr.To(uint32(*metric.Resource.Target.AverageUtilization)),
+							}
+							horizontalScale.CpuTarget = &capsule.CPUTarget{
+								AverageUtilizationPercentage: uint32(*metric.Resource.Target.AverageUtilization),
+							}
+						}
+					}
+					if metric.Object != nil {
+						customMetric := &capsule.CustomMetric{
+							Metric: &capsule.CustomMetric_Object{
+								Object: &capsule.ObjectMetric{
+									MetricName: metric.Object.Metric.Name,
+									ObjectReference: &capsule.ObjectReference{
+										Kind:       metric.Object.DescribedObject.Kind,
+										Name:       metric.Object.DescribedObject.Name,
+										ApiVersion: metric.Object.DescribedObject.APIVersion,
+									},
+								},
+							},
+						}
+
+						objectMetric := v1alpha2.CustomMetric{
+							ObjectMetric: &v1alpha2.ObjectMetric{
+								MetricName:      metric.Object.Metric.Name,
+								DescribedObject: metric.Object.DescribedObject,
+							},
+						}
+						if metric.Object.Target.AverageValue != nil {
+							objectMetric.ObjectMetric.AverageValue = metric.Object.Target.AverageValue.String()
+							customMetric.GetObject().AverageValue = metric.Object.Target.AverageValue.String()
+						} else if metric.Object.Target.Value != nil {
+							objectMetric.ObjectMetric.Value = metric.Object.Target.Value.String()
+							customMetric.GetObject().Value = metric.Object.Target.Value.String()
+						}
+
+						capsuleSpec.Scale.Horizontal.CustomMetrics = append(capsuleSpec.Scale.Horizontal.CustomMetrics, objectMetric)
+						horizontalScale.CustomMetrics = append(horizontalScale.CustomMetrics, customMetric)
+					}
+
+					if metric.Pods != nil {
+						podMetric := v1alpha2.CustomMetric{
+							InstanceMetric: &v1alpha2.InstanceMetric{
+								MetricName: metric.Pods.Metric.Name,
+							},
+						}
+
+						customMetric := &capsule.CustomMetric{
+							Metric: &capsule.CustomMetric_Instance{
+								Instance: &capsule.InstanceMetric{
+									MetricName: metric.Pods.Metric.Name,
+								},
+							},
+						}
+
+						if metric.Pods.Target.AverageValue != nil {
+							podMetric.InstanceMetric.AverageValue = metric.Pods.Target.AverageValue.String()
+							customMetric.GetInstance().AverageValue = metric.Pods.Target.AverageValue.String()
+						}
+
+						capsuleSpec.Scale.Horizontal.CustomMetrics = append(capsuleSpec.Scale.Horizontal.CustomMetrics, podMetric)
+						horizontalScale.CustomMetrics = append(horizontalScale.CustomMetrics, customMetric)
+					}
+				}
+			}
+			changes = append(changes, &capsule.Change{
+				Field: &capsule.Change_HorizontalScale{
+					HorizontalScale: horizontalScale,
+				},
+			})
+			found = true
+		}
+		if found {
+			break
+		}
+	}
+
+	return changes, nil
 }
 
 func migrateEnvironmentAndConfigFiles(ctx context.Context,
@@ -1075,78 +1023,4 @@ func migrateCronJob(deployment *appsv1.Deployment,
 	}
 
 	return migrated, capsuleCronjob, nil
-}
-
-func (c *CurrentResources) ToYAML(cc client.Client) (map[string]string, error) {
-	deploymentCopy := c.Deployment.DeepCopy()
-	deploymentCopy.ManagedFields = nil
-
-	deploymentYAML, err := obj.Encode(deploymentCopy, cc.Scheme())
-	if err != nil {
-		return nil, err
-	}
-
-	configMapList := &corev1.ConfigMapList{}
-	for _, configMap := range c.ConfigMaps {
-		configMapCopy := configMap.DeepCopy()
-		configMapCopy.ManagedFields = nil
-		configMapList.Items = append(configMapList.Items, *configMapCopy)
-	}
-	configMapsYAML, err := obj.Encode(configMapList, cc.Scheme())
-	if err != nil {
-		return nil, err
-	}
-
-	secretList := &corev1.SecretList{}
-	for _, secret := range c.Secrets {
-		secretCopy := secret.DeepCopy()
-		secretCopy.ManagedFields = nil
-		secretList.Items = append(secretList.Items, *secretCopy)
-	}
-	secretsYAML, err := obj.Encode(secretList, cc.Scheme())
-	if err != nil {
-		return nil, err
-	}
-
-	serviceList := &corev1.ServiceList{}
-	for _, service := range c.Services {
-		serviceCopy := service.DeepCopy()
-		serviceCopy.ManagedFields = nil
-		serviceList.Items = append(serviceList.Items, *serviceCopy)
-	}
-	servicesYAML, err := obj.Encode(serviceList, cc.Scheme())
-	if err != nil {
-		return nil, err
-	}
-
-	ingressList := &netv1.IngressList{}
-	for _, ingress := range c.Ingresses {
-		ingressCopy := ingress.DeepCopy()
-		ingressCopy.ManagedFields = nil
-		ingressList.Items = append(ingressList.Items, *ingressCopy)
-	}
-	ingressesYAML, err := obj.Encode(ingressList, cc.Scheme())
-	if err != nil {
-		return nil, err
-	}
-
-	cronJobList := &batchv1.CronJobList{}
-	for _, cronJob := range c.CronJobs {
-		cronJobCopy := cronJob.DeepCopy()
-		cronJobCopy.ManagedFields = nil
-		cronJobList.Items = append(cronJobList.Items, *cronJobCopy)
-	}
-	cronJobsYAML, err := obj.Encode(cronJobList, cc.Scheme())
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]string{
-		"deployment": string(deploymentYAML),
-		"configMaps": string(configMapsYAML),
-		"secrets":    string(secretsYAML),
-		"services":   string(servicesYAML),
-		"ingresses":  string(ingressesYAML),
-		"cronJobs":   string(cronJobsYAML),
-	}, nil
 }
