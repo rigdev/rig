@@ -88,6 +88,7 @@ func (c *CurrentResources) getCurrentObject(kind, name string) client.Object {
 	case "Capsule":
 		if ca := c.Capsule; ca != nil {
 			c.Capsule = nil
+			ca.Status = nil
 			return ca
 		}
 	}
