@@ -213,9 +213,15 @@ func (s *DeploymentStep) createDeployment(
 	}
 
 	c := v1.Container{
-		Name:         req.Capsule().Name,
-		Image:        req.Capsule().Spec.Image,
-		EnvFrom:      envFrom,
+		Name:    req.Capsule().Name,
+		Image:   req.Capsule().Spec.Image,
+		EnvFrom: envFrom,
+		Env: []v1.EnvVar{
+			{
+				Name:  "RIG_CAPSULE_NAME",
+				Value: req.Capsule().Name,
+			},
+		},
 		VolumeMounts: volumeMounts,
 		Resources:    makeResourceRequirements(req.Capsule()),
 		Args:         req.Capsule().Spec.Args,
