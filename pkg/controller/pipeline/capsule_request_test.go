@@ -23,7 +23,7 @@ func preparePipelineTest(t *testing.T, opts ...CapsuleRequestOption) (
 	cc := mockclient.NewMockClient(t)
 	ctx := context.Background()
 
-	p := New(cc, &v1alpha1.OperatorConfig{}, scheme, logr.Discard())
+	p := New(cc, cc, &v1alpha1.OperatorConfig{}, scheme, logr.Discard())
 	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, opts...)
 
 	return ctx, cc, c

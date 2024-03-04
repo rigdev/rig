@@ -90,7 +90,7 @@ annotations:
 		t.Run(tt.name, func(t *testing.T) {
 			tt.capsule.Namespace = namespace
 			tt.capsule.Name = name
-			p := pipeline.New(nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
+			p := pipeline.New(nil, nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
 			req := pipeline.NewCapsuleRequest(p, tt.capsule)
 			assert.NoError(t, req.Set(&appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
