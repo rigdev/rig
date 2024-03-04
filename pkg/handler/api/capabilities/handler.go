@@ -29,3 +29,9 @@ func (h *handler) Get(
 	}
 	return connect.NewResponse(res), nil
 }
+
+func (h *handler) GetConfig(ctx context.Context,
+	_ *connect.Request[capabilities.GetConfigRequest],
+) (*connect.Response[capabilities.GetConfigResponse], error) {
+	return nil, nil
+}
