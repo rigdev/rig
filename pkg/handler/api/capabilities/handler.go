@@ -37,7 +37,10 @@ func (h *handler) Get(
 	return connect.NewResponse(res), nil
 }
 
-func (h *handler) GetConfig(ctx context.Context, _ *connect.Request[capabilities.GetConfigRequest]) (*connect.Response[capabilities.GetConfigResponse], error) {
+func (h *handler) GetConfig(
+	_ context.Context,
+	_ *connect.Request[capabilities.GetConfigRequest],
+) (*connect.Response[capabilities.GetConfigResponse], error) {
 	cfg := h.cfg.Operator()
 	buffer := &bytes.Buffer{}
 	encoder := yaml.NewEncoder(buffer)

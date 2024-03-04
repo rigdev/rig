@@ -53,8 +53,8 @@ func makeGlobs(strings []string) ([]glob.Glob, error) {
 }
 
 func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest) error {
-	cap := req.Capsule()
-	if !s.matcher.Match(cap.Name, cap.Namespace) {
+	c := req.Capsule()
+	if !s.matcher.Match(c.Name, c.Namespace) {
 		return nil
 	}
 	s.logger.Info("running plugin", "plugin", s.step.Plugin)
