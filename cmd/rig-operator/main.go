@@ -15,6 +15,7 @@ import (
 	"connectrpc.com/grpcreflect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
+	"github.com/rigdev/rig/cmd/rig-operator/apichecker"
 	"github.com/rigdev/rig/cmd/rig-operator/certgen"
 	"github.com/rigdev/rig/cmd/rig-operator/log"
 	"github.com/rigdev/rig/pkg/build"
@@ -56,6 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 	c.AddCommand(certGenCmd)
+	c.AddCommand(apichecker.CMD())
 
 	ctx := context.Background()
 	if err := c.ExecuteContext(ctx); err != nil {
