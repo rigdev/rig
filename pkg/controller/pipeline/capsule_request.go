@@ -19,7 +19,7 @@ import (
 
 type CapsuleRequest interface {
 	Scheme() *runtime.Scheme
-	Client() client.Client
+	Reader() client.Reader
 	Capsule() *v1alpha2.Capsule
 	GetCurrent(obj client.Object) error
 	GetNew(obj client.Object) error
@@ -99,8 +99,8 @@ func (r *capsuleRequest) Capsule() *v1alpha2.Capsule {
 	return r.capsule.DeepCopy()
 }
 
-func (r *capsuleRequest) Client() client.Client {
-	return r.pipeline.client
+func (r *capsuleRequest) Reader() client.Reader {
+	return r.pipeline.reader
 }
 
 func (r *capsuleRequest) GetCurrent(obj client.Object) error {
@@ -242,7 +242,7 @@ func (r *capsuleRequest) loadExisting(ctx context.Context) error {
 
 		co.SetName(o.Ref.Name)
 		co.SetNamespace(r.capsule.Namespace)
-		if err := r.pipeline.client.Get(ctx, client.ObjectKeyFromObject(co), co); kerrors.IsNotFound(err) {
+		if err := r.pipeline.reader.Get(ctx, client.ObjectKeyFromObject(co), co); kerrors.IsNotFound(err) {
 			// Okay it doesn't exist, ignore the resource.
 			continue
 		} else if err != nil {

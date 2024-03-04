@@ -58,6 +58,7 @@ func (ok objectKey) MarshalLog() interface{} {
 
 type Pipeline struct {
 	client client.Client
+	reader client.Reader
 	config *configv1alpha1.OperatorConfig
 	scheme *runtime.Scheme
 	// TODO Use zap instead
@@ -67,12 +68,14 @@ type Pipeline struct {
 
 func New(
 	cc client.Client,
+	cr client.Reader,
 	config *configv1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
 	logger logr.Logger,
 ) *Pipeline {
 	p := &Pipeline{
 		client: cc,
+		reader: cr,
 		config: config,
 		scheme: scheme,
 		logger: logger,
@@ -92,7 +95,7 @@ func (p *Pipeline) RunCapsule(
 ) (*Result, error) {
 	req := newCapsuleRequest(p, capsule, opts...)
 
-	result, err := p.runSteps(ctx, req)
+	result, err := p.RunSteps(ctx, req, true)
 	if errors.IsFailedPrecondition(err) {
 		return nil, err
 	} else if err != nil {
@@ -119,7 +122,12 @@ type Result struct {
 	Objects       []*Object
 }
 
-func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest) (*Result, error) {
+func (p *Pipeline) RunSteps(ctx context.Context, capReq CapsuleRequest, commit bool) (*Result, error) {
+	req, ok := capReq.(*capsuleRequest)
+	if !ok {
+		return nil, fmt.Errorf("invalid CapsuleRequest")
+	}
+
 	if err := req.loadExisting(ctx); err != nil {
 		return nil, err
 	}
@@ -133,6 +141,10 @@ func (p *Pipeline) runSteps(ctx context.Context, req *capsuleRequest) (*Result, 
 			if err := s.Apply(ctx, req); err != nil {
 				return nil, err
 			}
+		}
+
+		if !commit {
+			return result, nil
 		}
 
 		changes, err := req.commit(ctx)

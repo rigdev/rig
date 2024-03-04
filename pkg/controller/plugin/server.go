@@ -85,8 +85,8 @@ func (c *capsuleRequestClient) Scheme() *runtime.Scheme {
 	return c.scheme
 }
 
-func (c *capsuleRequestClient) Client() client.Client {
-	panic("unimplemented `Client` command")
+func (c *capsuleRequestClient) Reader() client.Reader {
+	panic("unimplemented `Reader` command")
 }
 
 func (c *capsuleRequestClient) Capsule() *v1alpha2.Capsule {
