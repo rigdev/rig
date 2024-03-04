@@ -23,6 +23,17 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "rig-operator.serviceAccountName" . }}
       securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.config.customPlugins }}
+      initContainers:
+        {{- range $i, $p := .Values.config.customPlugins }}
+        - name: plugin{{$i}}
+          image: {{$p.image}}
+          volumeMounts:
+            - name: plugins
+              mountPath: /plugins
+              subPath: plugin{{$i}}
+        {{- end }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
@@ -69,6 +80,10 @@ spec:
             - name: webhook-cert
               mountPath: /tmp/k8s-webhook-server/serving-certs
             {{- end }}
+            - name: plugins
+              mountPath: /app/bin/plugins-thirdparty
+            - name: plugins-info
+              mountPath: /etc/plugins-info
       volumes:
         - name: config
           secret:
@@ -79,6 +94,14 @@ spec:
             defaultMode: 420
             secretName: {{ include "rig-operator.fullname" . }}-webhook-tls
         {{- end }}
+        - name: plugins
+          emptyDir: {}
+        - name: plugins-info
+          configMap:
+            name: {{ include "rig-operator.fullname" . }}-3rdparty-plugins
+            items:
+              - key: contents
+                path: contents.yaml
       terminationGracePeriodSeconds: 10
       {{- with .Values.nodeSelector }}
       nodeSelector: {{ toYaml . | nindent 8 }}
@@ -89,3 +112,15 @@ spec:
       {{- with .Values.tolerations }}
       tolerations: {{ toYaml . | nindent 8 }}
       {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "rig-operator.fullname" . }}-3rdparty-plugins
+data:
+  contents: |
+  {{- range $i, $p := .Values.config.customPlugins }}
+    - dirpath: plugin{{$i}}
+      image: {{$p.image}}
+      {{if $p.name  }}name: {{$p.name}}{{ end }}
+  {{- end }}

@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -22,15 +21,19 @@ import (
 
 type ExternalPlugin struct {
 	name         string
+	originalName string
 	logger       logr.Logger
 	client       *plugin.Client
 	pluginClient *pluginClient
+	path         string
 }
 
-func NewExternalPlugin(name string, logger logr.Logger, pluginConfig string) (Plugin, error) {
+func NewExternalPlugin(name, originalName, pluginConfig, path string, logger logr.Logger) (Plugin, error) {
 	p := &ExternalPlugin{
-		name:   name,
-		logger: logger,
+		name:         name,
+		originalName: originalName,
+		logger:       logger,
+		path:         path,
 	}
 
 	return p, p.start(context.Background(), pluginConfig)
@@ -59,26 +62,16 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 		logger: p.logger.WithName("plugin"),
 	})
 
-	execPath, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	pluginDir := path.Join(path.Dir(execPath), "plugin")
-	if dir := os.Getenv("RIG_PLUGIN_DIR"); dir != "" {
-		pluginDir = dir
-	}
-
 	p.client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: plugin.HandshakeConfig{
 			ProtocolVersion:  1,
 			MagicCookieKey:   "RIG_OPERATOR_PLUGIN",
-			MagicCookieValue: p.name,
+			MagicCookieValue: p.originalName,
 		},
 		Plugins: map[string]plugin.Plugin{
 			"rigOperatorPlugin": &rigOperatorPlugin{},
 		},
-		Cmd:              exec.CommandContext(ctx, path.Join(pluginDir, p.name)),
+		Cmd:              exec.CommandContext(ctx, p.path),
 		Logger:           pLogger,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		Stderr:           os.Stderr,

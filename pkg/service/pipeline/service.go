@@ -35,20 +35,23 @@ func NewService(
 	client client.Client,
 	capSvc capabilities.Service,
 	logger logr.Logger,
+	pluginManager *plugin.Manager,
 ) Service {
 	return &service{
-		cfg:    cfg,
-		client: client,
-		capSvc: capSvc,
-		logger: logger,
+		cfg:           cfg,
+		client:        client,
+		capSvc:        capSvc,
+		logger:        logger,
+		pluginManager: pluginManager,
 	}
 }
 
 type service struct {
-	cfg    config.Service
-	client client.Client
-	capSvc capabilities.Service
-	logger logr.Logger
+	cfg           config.Service
+	client        client.Client
+	capSvc        capabilities.Service
+	logger        logr.Logger
+	pluginManager *plugin.Manager
 }
 
 // DryRun implements Service.
@@ -87,7 +90,7 @@ func (s *service) DryRun(
 	}
 
 	for _, step := range cfg.Steps {
-		ps, err := plugin.NewStep(step, s.logger)
+		ps, err := s.pluginManager.NewStep(step, s.logger)
 		if err != nil {
 			return nil, err
 		}

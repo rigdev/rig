@@ -19,6 +19,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig-operator/certgen"
 	"github.com/rigdev/rig/cmd/rig-operator/log"
 	"github.com/rigdev/rig/pkg/build"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
 	"github.com/rigdev/rig/pkg/handler/api/pipeline"
 	"github.com/rigdev/rig/pkg/manager"
@@ -26,6 +27,7 @@ import (
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
 	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -111,13 +113,17 @@ func run(cmd *cobra.Command, _ []string) error {
 
 	capabilitiesSvc := svccapabilities.NewService(cfg, cc, clientSet.DiscoveryClient)
 	capabilitiesH := capabilities.NewHandler(capabilitiesSvc, cfg)
-
-	mgr, err := manager.New(cfg, scheme, capabilitiesSvc)
+	pluginManager, err := plugin.NewManager(afero.NewOsFs())
 	if err != nil {
 		return err
 	}
 
-	pipelineSvc := svcpipeline.NewService(cfg, cc, capabilitiesSvc, log)
+	mgr, err := manager.New(cfg, scheme, capabilitiesSvc, pluginManager)
+	if err != nil {
+		return err
+	}
+
+	pipelineSvc := svcpipeline.NewService(cfg, cc, capabilitiesSvc, log, pluginManager)
 	pipelineH := pipeline.NewHandler(pipelineSvc)
 
 	mux := http.NewServeMux()

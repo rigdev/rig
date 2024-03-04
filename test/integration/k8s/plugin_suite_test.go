@@ -3,6 +3,7 @@ package k8s_test
 import (
 	"context"
 	"fmt"
+	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -10,9 +11,11 @@ import (
 	"github.com/go-logr/logr/testr"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	netv1 "k8s.io/api/networking/v1"
@@ -135,6 +138,7 @@ container:
 		Config:              opConfig,
 		ClientSet:           clientSet,
 		CapabilitiesService: capabilities.NewService(configService, cc, clientSet.Discovery()),
+		PluginManager:       makePluginManager(t),
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))
@@ -146,6 +150,29 @@ container:
 
 	s.cancel = cancel
 	setupDone = true
+}
+
+func makePluginManager(t *testing.T) *plugin.Manager {
+	fs := afero.NewMemMapFs()
+	dir, err := plugin.BuiltinPluginDir()
+	require.NoError(t, err)
+	require.NoError(t, fs.MkdirAll(dir, 0666))
+	// The filesystem need not have the actual plugin binaries, just that a file exists
+	// with the binary name.
+	// The manager checks for file existence. It does not perform execution.
+	builtinPluginNames := []string{"sidecar", "objectTemplate", "initContainer"}
+	for _, n := range builtinPluginNames {
+		_, err := fs.Create(path.Join(dir, n))
+		require.NoError(t, err)
+	}
+
+	require.NoError(t, fs.MkdirAll("/etc/plugins-info", 0666))
+	_, err = fs.Create("/etc/plugins-info/contents.yaml")
+	require.NoError(t, err)
+
+	pluginManager, err := plugin.NewManager(fs)
+	require.NoError(t, err)
+	return pluginManager
 }
 
 func (s *PluginTestSuite) TearDownSuite() {

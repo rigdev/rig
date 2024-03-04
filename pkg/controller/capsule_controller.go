@@ -55,6 +55,7 @@ type CapsuleReconciler struct {
 	ClientSet           clientset.Interface
 	CapabilitiesService capabilities.Service
 	Pipeline            *pipeline.Pipeline
+	PluginManager       *plugin.Manager
 }
 
 const (
@@ -166,7 +167,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 	}
 
 	for _, step := range r.Config.Steps {
-		ps, err := plugin.NewStep(step, logger)
+		ps, err := r.PluginManager.NewStep(step, logger)
 		if err != nil {
 			return err
 		}
