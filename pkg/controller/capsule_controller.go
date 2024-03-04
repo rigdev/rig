@@ -160,7 +160,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		return err
 	}
 
-	r.Pipeline = pipeline.New(r.Client, r.Config, r.Scheme, logger)
+	r.Pipeline = pipeline.New(r.Client, r.Client, r.Config, r.Scheme, logger)
 	for _, step := range steps {
 		r.Pipeline.AddStep(step)
 	}

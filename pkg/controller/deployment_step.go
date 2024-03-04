@@ -235,6 +235,7 @@ func (s *DeploymentStep) createDeployment(
 			replicas = ptr.New(*current.Spec.Replicas)
 		}
 	}
+
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -246,17 +247,13 @@ func (s *DeploymentStep) createDeployment(
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					LabelCapsule: req.Capsule().Name,
-				},
+				MatchLabels: s.getPodsSelector(current, req),
 			},
 			Replicas: replicas,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: podAnnotations,
-					Labels: map[string]string{
-						LabelCapsule: req.Capsule().Name,
-					},
+					Labels:      s.getPodLabels(current, req),
 				},
 				Spec: v1.PodSpec{
 					Containers:         []v1.Container{c},
@@ -269,6 +266,27 @@ func (s *DeploymentStep) createDeployment(
 	}
 
 	return d, nil
+}
+
+func (s *DeploymentStep) getPodLabels(current *appsv1.Deployment, req pipeline.CapsuleRequest) map[string]string {
+	labels := map[string]string{}
+	maps.Copy(labels, s.getPodsSelector(current, req))
+	labels[LabelCapsule] = req.Capsule().Name
+	return labels
+}
+
+func (s *DeploymentStep) getPodsSelector(current *appsv1.Deployment, req pipeline.CapsuleRequest) map[string]string {
+	if current != nil {
+		if s := current.Spec.Selector; s != nil {
+			if len(s.MatchLabels) > 0 && len(s.MatchExpressions) == 0 {
+				return s.MatchLabels
+			}
+		}
+	}
+
+	return map[string]string{
+		LabelCapsule: req.Capsule().Name,
+	}
 }
 
 func (s *DeploymentStep) getConfigChecksums(req pipeline.CapsuleRequest, cfgs configs) (checksums, error) {
@@ -438,7 +456,7 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 
 	// Get shared env
 	var configMapList v1.ConfigMapList
-	if err := req.Client().List(ctx, &configMapList, &client.ListOptions{
+	if err := req.Reader().List(ctx, &configMapList, &client.ListOptions{
 		Namespace: req.Capsule().Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			LabelSharedConfig: "true",
@@ -452,7 +470,7 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 		configs.configMaps[cm.Name] = &cm
 	}
 	var secretList v1.SecretList
-	if err := req.Client().List(ctx, &secretList, &client.ListOptions{
+	if err := req.Reader().List(ctx, &secretList, &client.ListOptions{
 		Namespace: req.Capsule().Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			LabelSharedConfig: "true",
@@ -531,7 +549,7 @@ func (s *DeploymentStep) setUsedSource(
 			return nil
 		}
 		var cm v1.ConfigMap
-		if err := req.Client().Get(ctx, types.NamespacedName{
+		if err := req.Reader().Get(ctx, types.NamespacedName{
 			Name:      name,
 			Namespace: req.Capsule().Namespace,
 		}, &cm); err != nil {
@@ -544,7 +562,7 @@ func (s *DeploymentStep) setUsedSource(
 			return nil
 		}
 		var s v1.Secret
-		if err := req.Client().Get(ctx, types.NamespacedName{
+		if err := req.Reader().Get(ctx, types.NamespacedName{
 			Name:      name,
 			Namespace: req.Capsule().Namespace,
 		}, &s); err != nil {

@@ -22,14 +22,24 @@ import (
 
 type Reader interface {
 	client.Reader
+
+	AddObject(co client.Object) error
 }
 
-func NewReaderFromFile(fpath string, scheme *runtime.Scheme) (Reader, error) {
+func NewReader(scheme *runtime.Scheme) Reader {
+	return newReader(scheme)
+}
+
+func newReader(scheme *runtime.Scheme) *reader {
 	r := &reader{
 		scheme:  scheme,
 		decoder: serializer.NewCodecFactory(scheme).UniversalDeserializer(),
 	}
+	return r
+}
 
+func NewReaderFromFile(fpath string, scheme *runtime.Scheme) (Reader, error) {
+	r := newReader(scheme)
 	return r, r.readFile(fpath)
 }
 
@@ -44,6 +54,19 @@ type object struct {
 	raw gojson.RawMessage
 }
 
+func (r *reader) AddObject(obj client.Object) error {
+	bs, err := gojson.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	r.objects = append(r.objects, object{
+		Object: obj,
+		raw:    bs,
+	})
+	return nil
+}
+
 func (r *reader) Get(_ context.Context, key client.ObjectKey, obj client.Object, _ ...client.GetOption) error {
 	gvk, err := apiutil.GVKForObject(obj, r.scheme)
 	if err != nil {
@@ -53,7 +76,7 @@ func (r *reader) Get(_ context.Context, key client.ObjectKey, obj client.Object,
 	for _, o := range r.objects {
 		oGVK := o.GetObjectKind().GroupVersionKind()
 		if o.GetName() == key.Name && o.GetNamespace() == key.Namespace && gvk.GroupKind() == oGVK.GroupKind() {
-			return r.scheme.Convert(o, obj, nil)
+			return r.scheme.Convert(o.Object, obj, nil)
 		}
 	}
 
