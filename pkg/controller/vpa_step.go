@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,14 +15,18 @@ import (
 	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 )
 
-type VPAStep struct{}
+type VPAStep struct {
+	cfg *v1alpha1.OperatorConfig
+}
 
-func NewVPAStep() *VPAStep {
-	return &VPAStep{}
+func NewVPAStep(cfg *v1alpha1.OperatorConfig) *VPAStep {
+	return &VPAStep{
+		cfg: cfg,
+	}
 }
 
 func (s *VPAStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
-	if !req.Config().VerticalPodAutoscaler.Enabled {
+	if !s.cfg.VerticalPodAutoscaler.Enabled {
 		return nil
 	}
 

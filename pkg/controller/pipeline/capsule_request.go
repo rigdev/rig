@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"golang.org/x/exp/maps"
@@ -19,7 +18,6 @@ import (
 )
 
 type CapsuleRequest interface {
-	Config() *configv1alpha1.OperatorConfig
 	Scheme() *runtime.Scheme
 	Client() client.Client
 	Capsule() *v1alpha2.Capsule
@@ -91,10 +89,6 @@ func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule, opts ...CapsuleRe
 	)
 
 	return r
-}
-
-func (r *capsuleRequest) Config() *configv1alpha1.OperatorConfig {
-	return r.pipeline.config.DeepCopy()
 }
 
 func (r *capsuleRequest) Scheme() *runtime.Scheme {
