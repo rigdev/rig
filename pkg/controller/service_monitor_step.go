@@ -4,18 +4,23 @@ import (
 	"context"
 
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ServiceMonitorStep struct{}
+type ServiceMonitorStep struct {
+	cfg *v1alpha1.OperatorConfig
+}
 
-func NewServiceMonitorStep() *ServiceMonitorStep {
-	return &ServiceMonitorStep{}
+func NewServiceMonitorStep(cfg *v1alpha1.OperatorConfig) *ServiceMonitorStep {
+	return &ServiceMonitorStep{
+		cfg: cfg,
+	}
 }
 
 func (s *ServiceMonitorStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
-	if req.Config().PrometheusServiceMonitor == nil || req.Config().PrometheusServiceMonitor.PortName == "" {
+	if s.cfg.PrometheusServiceMonitor == nil || s.cfg.PrometheusServiceMonitor.PortName == "" {
 		return nil
 	}
 
@@ -44,8 +49,8 @@ func (s *ServiceMonitorStep) createPrometheusServiceMonitor(req pipeline.Capsule
 				},
 			},
 			Endpoints: []monitorv1.Endpoint{{
-				Port: req.Config().PrometheusServiceMonitor.PortName,
-				Path: req.Config().PrometheusServiceMonitor.Path,
+				Port: s.cfg.PrometheusServiceMonitor.PortName,
+				Path: s.cfg.PrometheusServiceMonitor.Path,
 			}},
 		},
 	}

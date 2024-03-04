@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
-	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/errors"
@@ -19,11 +18,10 @@ import (
 
 type GRPCServer struct {
 	apiplugin.UnimplementedPluginServiceServer
-	logger         hclog.Logger
-	Impl           Server
-	broker         *plugin.GRPCBroker
-	operatorConfig v1alpha1.OperatorConfig
-	scheme         *runtime.Scheme
+	logger hclog.Logger
+	Impl   Server
+	broker *plugin.GRPCBroker
+	scheme *runtime.Scheme
 }
 
 func (m *GRPCServer) Initialize(
@@ -34,9 +32,6 @@ func (m *GRPCServer) Initialize(
 		return nil, err
 	}
 
-	// if err := obj.DecodeInto(req.OperatorConfig, &m.operatorConfig, m.scheme); err != nil {
-	// 	return nil, err
-	// }
 	return &apiplugin.InitializeResponse{}, nil
 }
 
@@ -56,12 +51,11 @@ func (m *GRPCServer) RunCapsule(
 	}
 
 	if err := m.Impl.Run(ctx, &capsuleRequestClient{
-		client:         apiplugin.NewRequestServiceClient(conn),
-		scheme:         m.scheme,
-		operatorConfig: &m.operatorConfig,
-		capsule:        capsule,
-		logger:         m.logger,
-		ctx:            ctx,
+		client:  apiplugin.NewRequestServiceClient(conn),
+		scheme:  m.scheme,
+		capsule: capsule,
+		logger:  m.logger,
+		ctx:     ctx,
 	}, m.logger); err != nil {
 		return nil, err
 	}
@@ -70,12 +64,11 @@ func (m *GRPCServer) RunCapsule(
 }
 
 type capsuleRequestClient struct {
-	client         apiplugin.RequestServiceClient
-	logger         hclog.Logger
-	operatorConfig *v1alpha1.OperatorConfig
-	capsule        *v1alpha2.Capsule
-	scheme         *runtime.Scheme
-	ctx            context.Context
+	client  apiplugin.RequestServiceClient
+	logger  hclog.Logger
+	capsule *v1alpha2.Capsule
+	scheme  *runtime.Scheme
+	ctx     context.Context
 }
 
 func (c *capsuleRequestClient) getGVK(obj client.Object) (schema.GroupVersionKind, error) {
@@ -86,10 +79,6 @@ func (c *capsuleRequestClient) getGVK(obj client.Object) (schema.GroupVersionKin
 	}
 
 	return gvks[0], nil
-}
-
-func (c *capsuleRequestClient) Config() *v1alpha1.OperatorConfig {
-	return c.operatorConfig
 }
 
 func (c *capsuleRequestClient) Scheme() *runtime.Scheme {

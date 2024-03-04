@@ -23,6 +23,7 @@ import (
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/go-logr/logr"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
@@ -154,7 +155,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		return err
 	}
 
-	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService)
+	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService, r.Config)
 	if err != nil {
 		return err
 	}
@@ -334,7 +335,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func GetDefaultPipelineSteps(ctx context.Context, capSvc capabilities.Service) ([]pipeline.Step, error) {
+func GetDefaultPipelineSteps(ctx context.Context, capSvc capabilities.Service, cfg *v1alpha1.OperatorConfig) ([]pipeline.Step, error) {
 	capabilities, err := capSvc.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -345,13 +346,13 @@ func GetDefaultPipelineSteps(ctx context.Context, capSvc capabilities.Service) (
 	steps = append(steps,
 		NewServiceAccountStep(),
 		NewDeploymentStep(),
-		NewVPAStep(),
-		NewNetworkStep(),
+		NewVPAStep(cfg),
+		NewNetworkStep(cfg),
 		NewCronJobStep(),
 	)
 
 	if capabilities.GetHasPrometheusServiceMonitor() {
-		steps = append(steps, NewServiceMonitorStep())
+		steps = append(steps, NewServiceMonitorStep(cfg))
 	}
 
 	return steps, nil

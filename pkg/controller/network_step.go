@@ -6,6 +6,7 @@ import (
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
@@ -17,10 +18,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-type NetworkStep struct{}
+type NetworkStep struct {
+	cfg *v1alpha1.OperatorConfig
+}
 
-func NewNetworkStep() *NetworkStep {
-	return &NetworkStep{}
+func NewNetworkStep(cfg *v1alpha1.OperatorConfig) *NetworkStep {
+	return &NetworkStep{
+		cfg: cfg,
+	}
 }
 
 func (s *NetworkStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
@@ -90,11 +95,11 @@ func (s *NetworkStep) Apply(_ context.Context, req pipeline.CapsuleRequest) erro
 		}
 	}
 
-	if ingressIsSupported(req) && capsuleHasIngress(req) {
+	if s.ingressIsSupported() && capsuleHasIngress(req) {
 		if err := req.Set(s.createIngress(req)); err != nil {
 			return err
 		}
-		if shouldCreateCertificateResource(req) {
+		if s.shouldCreateCertificateResource() {
 			if err := req.Set(s.createCertificate(req)); err != nil {
 				return err
 			}
@@ -117,7 +122,7 @@ func (s *NetworkStep) createService(req pipeline.CapsuleRequest) *corev1.Service
 			Selector: map[string]string{
 				LabelCapsule: req.Capsule().Name,
 			},
-			Type: req.Config().Service.Type,
+			Type: s.cfg.Service.Type,
 		},
 	}
 
@@ -147,10 +152,10 @@ func (s *NetworkStep) createCertificate(req pipeline.CapsuleRequest) *cmv1.Certi
 		},
 	}
 
-	if req.Config().Certmanager != nil {
+	if s.cfg.Certmanager != nil {
 		crt.Spec.IssuerRef = cmmetav1.ObjectReference{
 			Kind: cmv1.ClusterIssuerKind,
-			Name: req.Config().Certmanager.ClusterIssuer,
+			Name: s.cfg.Certmanager.ClusterIssuer,
 		}
 	}
 
@@ -172,16 +177,16 @@ func (s *NetworkStep) createIngress(req pipeline.CapsuleRequest) *netv1.Ingress 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        req.Capsule().Name,
 			Namespace:   req.Capsule().Namespace,
-			Annotations: req.Config().Ingress.Annotations,
+			Annotations: s.cfg.Ingress.Annotations,
 		},
 	}
 
-	if req.Config().Ingress.ClassName != "" {
-		ing.Spec.IngressClassName = ptr.New(req.Config().Ingress.ClassName)
+	if s.cfg.Ingress.ClassName != "" {
+		ing.Spec.IngressClassName = ptr.New(s.cfg.Ingress.ClassName)
 	}
 
-	if ingressIsSupported(req) && !req.Config().Ingress.IsTLSDisabled() && !shouldCreateCertificateResource(req) {
-		ing.Annotations["cert-manager.io/cluster-issuer"] = req.Config().Certmanager.ClusterIssuer
+	if s.ingressIsSupported() && !s.cfg.Ingress.IsTLSDisabled() && !s.shouldCreateCertificateResource() {
+		ing.Annotations["cert-manager.io/cluster-issuer"] = s.cfg.Certmanager.ClusterIssuer
 	}
 
 	for _, inf := range req.Capsule().Spec.Interfaces {
@@ -198,12 +203,12 @@ func (s *NetworkStep) createIngress(req pipeline.CapsuleRequest) *netv1.Ingress 
 
 		if len(inf.Public.Ingress.Paths) == 0 {
 			path := ""
-			if req.Config().Ingress.PathType == netv1.PathTypeExact || req.Config().Ingress.PathType == netv1.PathTypePrefix {
+			if s.cfg.Ingress.PathType == netv1.PathTypeExact || s.cfg.Ingress.PathType == netv1.PathTypePrefix {
 				path = "/"
 			}
 			ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = []netv1.HTTPIngressPath{
 				{
-					PathType: ptr.New(req.Config().Ingress.PathType),
+					PathType: ptr.New(s.cfg.Ingress.PathType),
 					Path:     path,
 					Backend: netv1.IngressBackend{
 						Service: &netv1.IngressServiceBackend{
@@ -220,7 +225,7 @@ func (s *NetworkStep) createIngress(req pipeline.CapsuleRequest) *netv1.Ingress 
 				ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths = append(
 					ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths,
 					netv1.HTTPIngressPath{
-						PathType: ptr.New(req.Config().Ingress.PathType),
+						PathType: ptr.New(s.cfg.Ingress.PathType),
 						Path:     path,
 						Backend: netv1.IngressBackend{
 							Service: &netv1.IngressServiceBackend{
@@ -235,7 +240,7 @@ func (s *NetworkStep) createIngress(req pipeline.CapsuleRequest) *netv1.Ingress 
 			}
 		}
 
-		if !req.Config().Ingress.IsTLSDisabled() && inf.Public.Ingress.Host != "" {
+		if !s.cfg.Ingress.IsTLSDisabled() && inf.Public.Ingress.Host != "" {
 			if len(ing.Spec.TLS) == 0 {
 				ing.Spec.TLS = []netv1.IngressTLS{{
 					SecretName: fmt.Sprintf("%s-tls", req.Capsule().Name),
@@ -278,15 +283,15 @@ func (s *NetworkStep) createLoadBalancer(req pipeline.CapsuleRequest) *v1.Servic
 	return svc
 }
 
-func shouldCreateCertificateResource(req pipeline.CapsuleRequest) bool {
-	return req.Config().Certmanager != nil &&
-		req.Config().Certmanager.CreateCertificateResources &&
-		!req.Config().Ingress.IsTLSDisabled()
+func (s *NetworkStep) shouldCreateCertificateResource() bool {
+	return s.cfg.Certmanager != nil &&
+		s.cfg.Certmanager.CreateCertificateResources &&
+		!s.cfg.Ingress.IsTLSDisabled()
 }
 
-func ingressIsSupported(req pipeline.CapsuleRequest) bool {
-	return req.Config().Ingress.IsTLSDisabled() ||
-		(req.Config().Certmanager != nil && req.Config().Certmanager.ClusterIssuer != "")
+func (s *NetworkStep) ingressIsSupported() bool {
+	return s.cfg.Ingress.IsTLSDisabled() ||
+		(s.cfg.Certmanager != nil && s.cfg.Certmanager.ClusterIssuer != "")
 }
 
 func capsuleHasIngress(req pipeline.CapsuleRequest) bool {
