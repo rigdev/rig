@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1.role;
 
 import "google/protobuf/timestamp.proto";
+import "api/v1/role/action.proto";
 import "model/metadata.proto";
 
 // Role model for Role based access control.
@@ -26,7 +27,7 @@ message EntityID {
 
 // A permission that is granted to a role.
 message Permission {
-  string action = 1; // The action that is action permission to perform.
+  api.v1.role.Action action = 1; // The action that is action permission to perform.
   Scope scope = 2; // The scope in which the action can be performed.
 }
 
