@@ -5,14 +5,11 @@ import (
 	"fmt"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/gonvenience/ytbx"
 	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
-	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -95,14 +92,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	scheme *runtime.Scheme,
 ) error {
 	if currentResources.Deployment != nil {
-		currentResources.Deployment.SetManagedFields(nil)
-		currentResources.Deployment.Status = appsv1.DeploymentStatus{}
-		orig, err := obj.Encode(currentResources.Deployment, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(currentResources.Deployment, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -115,13 +105,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	}
 
 	if currentResources.HPA != nil {
-		currentResources.HPA.SetManagedFields(nil)
-		orig, err := obj.Encode(currentResources.HPA, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(currentResources.HPA, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -134,13 +118,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	}
 
 	if currentResources.ServiceAccount != nil {
-		currentResources.ServiceAccount.SetManagedFields(nil)
-		orig, err := obj.Encode(currentResources.ServiceAccount, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(currentResources.ServiceAccount, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -153,14 +131,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	}
 
 	if currentResources.Capsule != nil {
-		currentResources.Capsule.SetManagedFields(nil)
-		currentResources.Capsule.Status = nil
-		orig, err := obj.Encode(currentResources.Capsule, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(currentResources.Capsule, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -173,13 +144,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	}
 
 	for _, cm := range currentResources.ConfigMaps {
-		cm.SetManagedFields(nil)
-		orig, err := obj.Encode(cm, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(cm, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -192,13 +157,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	}
 
 	for _, s := range currentResources.Secrets {
-		s.SetManagedFields(nil)
-		orig, err := obj.Encode(s, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(s, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -211,13 +170,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	}
 
 	for _, s := range currentResources.Services {
-		s.SetManagedFields(nil)
-		orig, err := obj.Encode(s, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(s, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -230,13 +183,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	}
 
 	for _, i := range currentResources.Ingresses {
-		i.SetManagedFields(nil)
-		orig, err := obj.Encode(i, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(i, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -249,13 +196,7 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 	}
 
 	for _, cj := range currentResources.CronJobs {
-		cj.SetManagedFields(nil)
-		orig, err := obj.Encode(cj, scheme)
-		if err != nil {
-			return err
-		}
-
-		report, err := getDiffingReportRaw(orig, nil)
+		report, err := getDiffingReport(cj, nil, scheme)
 		if err != nil {
 			return err
 		}
@@ -271,106 +212,18 @@ func processRemainingResources(reports map[string]map[string]*dyff.Report,
 }
 
 func getDiffingReport(orig, proposal client.Object, scheme *runtime.Scheme) (*dyff.Report, error) {
-	if err := normalize(orig, scheme); err != nil {
-		return nil, err
-	}
-	if err := normalize(proposal, scheme); err != nil {
-		return nil, err
-	}
-	trimAnnotations(orig)
-	trimAnnotations(proposal)
-
-	origBytes, err := obj.Encode(orig, scheme)
+	c := obj.NewComparison(orig, proposal, scheme)
+	c.AddFilter(obj.RemoveAnnotationsFilter(
+		"kubectl.kubernetes.io/last-applied-configuration",
+		"deployment.kubernetes.io/revision",
+	))
+	c.AddRemoveDiffs("status", "spec.template.spec.containers.*.env")
+	d, err := c.ComputeDiff()
 	if err != nil {
 		return nil, err
 	}
 
-	proposalBytes, err := obj.Encode(proposal, scheme)
-	if err != nil {
-		return nil, err
-	}
-
-	return getDiffingReportRaw(origBytes, proposalBytes)
-}
-
-func getDiffingReportRaw(orig, proposal []byte) (*dyff.Report, error) {
-	if len(orig) == 0 {
-		orig = []byte("{}")
-	}
-	if len(proposal) == 0 {
-		proposal = []byte("{}")
-	}
-
-	fromNodes, err := ytbx.LoadYAMLDocuments(orig)
-	if err != nil {
-		return nil, err
-	}
-	from := ytbx.InputFile{
-		Location:  "current",
-		Documents: fromNodes,
-	}
-	toNodes, err := ytbx.LoadYAMLDocuments(proposal)
-	if err != nil {
-		return nil, err
-	}
-	to := ytbx.InputFile{
-		Location:  "migration",
-		Documents: toNodes,
-	}
-
-	r, err := dyff.CompareInputFiles(from, to)
-	if err != nil {
-		return nil, err
-	}
-
-	// for i, d := range r.Diffs {
-	// 	fmt.Println(d.Path.ToDotStyle())
-	// 	if d.Path == nil {
-	// 		continue
-	// 	}
-	// 	if strings.HasPrefix(d.Path.ToDotStyle(), "status") {
-	// 		// fmt.Println(d.Path.ToDotStyle())
-	// 		r.Diffs = append(r.Diffs[:i], r.Diffs[i+1:]...)
-	// 	}
-	// }
-
-	return &r, nil
-}
-
-func trimAnnotations(co client.Object) {
-	if co == nil {
-		return
-	}
-
-	annotations := co.GetAnnotations()
-	if annotations == nil {
-		return
-	}
-
-	delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
-	delete(annotations, "deployment.kubernetes.io/revision")
-
-	co.SetAnnotations(annotations)
-}
-
-func normalize(co client.Object, scheme *runtime.Scheme) error {
-	if co == nil {
-		return nil
-	}
-
-	gvks, _, err := scheme.ObjectKinds(co)
-	if err != nil {
-		return err
-	}
-
-	co.GetObjectKind().SetGroupVersionKind(gvks[0])
-	co.SetManagedFields(nil)
-	co.SetCreationTimestamp(v1.Time{})
-	co.SetGeneration(0)
-	co.SetResourceVersion("")
-	co.SetOwnerReferences(nil)
-	co.SetUID("")
-	return nil
+	return d.Report, nil
 }
 
 func showDiffReport(r *dyff.Report, kind, name string) error {
