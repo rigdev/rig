@@ -67,3 +67,21 @@ Create the name of the config secret to use
 {{- define "rig-operator.secretName" -}}
 {{- default (include "rig-operator.fullname" .) .Values.secretName }}
 {{- end }}
+
+{{/*
+Create the fullname of apicheck resources
+*/}}
+{{- define "rig-operator.apicheck.fullname" -}}
+{{- include "rig-operator.fullname" . | printf "%s-apicheck" -}}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "rig-operator.apicheck.serviceAccountName" -}}
+{{- if .Values.apicheck.serviceAccount.create }}
+{{- default (include "rig-operator.apicheck.fullname" .) .Values.apicheck.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.apicheck.serviceAccount.name }}
+{{- end }}
+{{- end }}

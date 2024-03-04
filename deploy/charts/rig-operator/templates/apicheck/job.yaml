@@ -1,0 +1,31 @@
+{{- if .Values.config.webhooksEnabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "rig-operator.apicheck.fullname" . }}
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "1"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.apicheck.backoffLimit }}
+  template:
+    spec:
+      serviceAccountName: {{ include "rig-operator.apicheck.serviceAccountName" . }}
+      securityContext: {{ .Values.apicheck.podSecurityContext | toYaml | nindent 8 }}
+      restartPolicy: OnFailure
+      containers:
+        - name: apicheck
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          securityContext: {{ .Values.apicheck.securityContext | toYaml | nindent 12 }}
+          command:
+            - "rig-operator"
+            - "apicheck"
+            - "--interval"
+            - {{ .Values.apicheck.interval | quote }}
+            - "--timeout"
+            - {{ .Values.apicheck.timeout | quote }}
+            - "--namespace"
+            - {{ .Release.Namespace | quote }}
+{{- end -}}
