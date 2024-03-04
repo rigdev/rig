@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	flagInterval = "interval"
-	flagTimeout  = "timeout"
+	flagInterval  = "interval"
+	flagTimeout   = "timeout"
+	flagNamespace = "namespace"
 )
 
 func CMD() *cobra.Command {
@@ -32,6 +33,10 @@ func CMD() *cobra.Command {
 				return err
 			}
 			timeout, err := cmd.Flags().GetDuration(flagTimeout)
+			if err != nil {
+				return err
+			}
+			namespace, err := cmd.Flags().GetString(flagNamespace)
 			if err != nil {
 				return err
 			}
@@ -51,7 +56,7 @@ func CMD() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("could not create k8s client for apicheck")
 			}
-			c = client.NewNamespacedClient(client.NewDryRunClient(c), "default")
+			c = client.NewNamespacedClient(client.NewDryRunClient(c), namespace)
 
 			log := log.New(false)
 
@@ -82,6 +87,7 @@ func CMD() *cobra.Command {
 	flags := cmd.Flags()
 	flags.Duration(flagInterval, time.Second*5, "interval for running check")
 	flags.Duration(flagTimeout, time.Minute*2, "timeout for when we should stop checking")
+	flags.String(flagNamespace, "rig-system", "namespace where Capsule resource creation will dryrun")
 
 	return cmd
 }

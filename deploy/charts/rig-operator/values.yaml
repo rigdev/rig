@@ -138,3 +138,20 @@ serviceMonitor:
   enabled: false
   # labels set on the `ServiceMonitor`
   labels: {}
+
+apicheck:
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 15000
+    runAsGroup: 15000
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+  backoffLimit: 4
+  serviceAccount:
+    create: true
+    name: ""
+  timeout: 2m
+  interval: 5s
