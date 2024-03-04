@@ -11,7 +11,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
 	"github.com/homeport/dyff/pkg/dyff"
-	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig-go-sdk"
@@ -37,7 +36,7 @@ import (
 
 var promptAborted = "prompt aborted"
 
-var platformDryRun bool
+var skipPlatform bool
 
 func Setup(parent *cobra.Command) {
 	migrate := &cobra.Command{
@@ -46,14 +45,15 @@ func Setup(parent *cobra.Command) {
 		RunE:  base.Register(migrate),
 	}
 
-	migrate.Flags().BoolVar(&platformDryRun,
-		"platform-dryrun",
+	migrate.Flags().BoolVar(&skipPlatform,
+		"skip-platform",
 		false,
-		`Additionally perform a platform dryrun to compare to k8s resources from rig-platform.
-		If true:
+		`Do not perform a platform dryrun to compare to k8s resources from rig-platform. Instead just compare the 
+resources created from a capsulespec
+		If false:
 			- The rig platform must be running
 			- A valid rig-cli config and context must be set either according to defaults or through flags
-			- Valid access- and refresh tokens must be provided in the context. Otherwise a login is required.`,
+			- Valid access- and refresh tokens must be provided in the context. Otherwise a login is prompted.`,
 	)
 	migrate.PersistentFlags().StringVarP(&base.Flags.Namespace, "namespace", "n", "", "The k8s namespace to migrate from")
 	migrate.PersistentFlags().StringVarP(&base.Flags.Project, "project", "p", "", "The project to migrate to")
@@ -70,20 +70,14 @@ func migrate(ctx context.Context,
 ) error {
 	var rc rig.Client
 	var err error
-	if platformDryRun {
+	if !skipPlatform {
 		rc, err = base.NewRigClient(ctx)
 		if err != nil {
 			return err
 		}
 	}
 
-	deployment, err := getDeployment(ctx, cr)
-	if err != nil || deployment == nil {
-		return err
-	}
-
 	currentResources := &CurrentResources{
-		Deployment: deployment,
 		ConfigMaps: map[string]*corev1.ConfigMap{},
 		Secrets:    map[string]*corev1.Secret{},
 		Services:   map[string]*corev1.Service{},
@@ -91,10 +85,15 @@ func migrate(ctx context.Context,
 		CronJobs:   map[string]*batchv1.CronJob{},
 	}
 
+	err = getDeployment(ctx, cr, currentResources)
+	if err != nil || currentResources.Deployment == nil {
+		return err
+	}
+
 	changes := []*capsule.Change{}
 
 	fmt.Print("Migrating Deployment...")
-	capsuleSpec, capsuleID, deploymentChanges, err := migrateDeployment(ctx, currentResources, cc, rc)
+	capsuleSpec, capsuleID, deploymentChanges, err := migrateDeployment(ctx, currentResources, cc)
 	if err != nil {
 		color.Red(" ✗")
 		return err
@@ -102,22 +101,6 @@ func migrate(ctx context.Context,
 
 	changes = append(changes, deploymentChanges...)
 	color.Green(" ✓")
-
-	defer func() {
-		if rc == nil {
-			return
-		}
-
-		_, err := rc.Capsule().Delete(ctx, &connect.Request[capsule.DeleteRequest]{
-			Msg: &capsule.DeleteRequest{
-				CapsuleId: capsuleID,
-				ProjectId: base.Flags.Project,
-			},
-		})
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
 
 	fmt.Print("Migrating Horizontal Pod Autoscaler...")
 	hpaChanges, err := migrateHPA(ctx, cc, currentResources, &capsuleSpec.Spec)
@@ -129,8 +112,18 @@ func migrate(ctx context.Context,
 	changes = append(changes, hpaChanges...)
 	color.Green(" ✓")
 
+	fmt.Print("Migrating Environment...")
+	environmentChanges, err := migrateEnvironment(ctx, cc, currentResources)
+	if err != nil {
+		color.Red(" ✗")
+		return err
+	}
+
+	changes = append(changes, environmentChanges...)
+	color.Green(" ✓")
+
 	fmt.Print("Migrating ConfigMaps and Secrets...")
-	configChanges, err := migrateEnvironmentAndConfigFiles(ctx, cr, currentResources, &capsuleSpec.Spec)
+	configChanges, err := migrateConfigFilesAndSecrets(ctx, cr, currentResources, &capsuleSpec.Spec)
 	if err != nil {
 		color.Red(" ✗")
 		return err
@@ -160,33 +153,14 @@ func migrate(ctx context.Context,
 	changes = append(changes, cronJobChanges...)
 	color.Green(" ✓")
 
-	capsuleSpecYAML, err := obj.Encode(capsuleSpec, cc.Scheme())
-	if err != nil {
-		return err
-	}
-
-	resp, err := oc.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
-		Namespace:   deployment.Namespace,
-		Capsule:     capsuleID,
-		CapsuleSpec: string(capsuleSpecYAML),
-		Force:       true,
-	}))
-	if err != nil {
-		return err
-	}
-
 	reports := map[string]map[string]*dyff.Report{}
-	err = processOperatorOutput(reports, currentResources, resp.Msg.OutputObjects, cc.Scheme())
-	if err != nil {
-		return err
-	}
 
 	var platformResources map[string]string
-	if platformDryRun {
+	if !skipPlatform {
 		deployResp, err := rc.Capsule().Deploy(ctx, &connect.Request[capsule.DeployRequest]{
 			Msg: &capsule.DeployRequest{
 				CapsuleId:     capsuleID,
-				ProjectId:     base.Flags.Project,
+				ProjectId:     currentResources.Deployment.Namespace,
 				EnvironmentId: base.Flags.Environment,
 				Message:       "Migrated from kubernetes deployment",
 				DryRun:        true,
@@ -199,10 +173,30 @@ func migrate(ctx context.Context,
 		}
 
 		platformResources = deployResp.Msg.GetResourceYaml()
-		err = processPlatformOutput(reports, currentResources, platformResources, cc.Scheme())
+		capsuleSpec, err = processPlatformOutput(reports, currentResources, platformResources, cc.Scheme())
 		if err != nil {
 			return err
 		}
+	}
+
+	capsuleSpecYAML, err := obj.Encode(capsuleSpec, cc.Scheme())
+	if err != nil {
+		return err
+	}
+
+	resp, err := oc.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
+		Namespace:   currentResources.Deployment.Namespace,
+		Capsule:     capsuleID,
+		CapsuleSpec: string(capsuleSpecYAML),
+		Force:       true,
+	}))
+	if err != nil {
+		return err
+	}
+
+	err = processOperatorOutput(reports, currentResources, resp.Msg.OutputObjects, cc.Scheme())
+	if err != nil {
+		return err
 	}
 
 	err = processRemainingResources(reports, currentResources, cc.Scheme())
@@ -261,7 +255,6 @@ func promptDiffingChanges(reports map[string]map[string]*dyff.Report) error {
 func migrateDeployment(ctx context.Context,
 	currentResources *CurrentResources,
 	cc client.Client,
-	rc rig.Client,
 ) (*v1alpha2.Capsule, string, []*capsule.Change, error) {
 	capsuleID := currentResources.Deployment.Name
 	container := currentResources.Deployment.Spec.Template.Spec.Containers[0]
@@ -281,7 +274,6 @@ func migrateDeployment(ctx context.Context,
 				},
 				Horizontal: v1alpha2.HorizontalScale{
 					Instances: v1alpha2.Instances{
-						// TODO Handle autoscaler
 						Min: uint32(*currentResources.Deployment.Spec.Replicas),
 					},
 				},
@@ -318,10 +310,12 @@ func migrateDeployment(ctx context.Context,
 
 	if len(container.Command) > 0 {
 		capsuleSpec.Spec.Command = container.Command[0]
-		capsuleSpec.Spec.Args = container.Args
+		capsuleSpec.Spec.Args = container.Command[1:]
 		containerSettings.Command = capsuleSpec.Spec.Command
-		containerSettings.Args = capsuleSpec.Spec.Args
 	}
+
+	capsuleSpec.Spec.Args = append(capsuleSpec.Spec.Args, container.Args...)
+	containerSettings.Args = capsuleSpec.Spec.Args
 
 	// Check if the deployment has a service account, and if so add it to the current resources
 	if currentResources.Deployment.Spec.Template.Spec.ServiceAccountName != "" {
@@ -331,7 +325,7 @@ func migrateDeployment(ctx context.Context,
 			Namespace: currentResources.Deployment.Namespace,
 		}, serviceAccount)
 		if kerrors.IsNotFound(err) {
-			// TODO: warning we can't find it?
+			// WARNING: we can't find it?
 		} else if err != nil {
 			return nil, "", nil, err
 		} else {
@@ -339,78 +333,32 @@ func migrateDeployment(ctx context.Context,
 		}
 	}
 
-	if rc != nil {
-		res, err := rc.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
-			Msg: &capsule.GetRequest{
-				CapsuleId: capsuleID,
-				ProjectId: base.Flags.Project,
+	changes = append(changes, []*capsule.Change{
+		{
+			Field: &capsule.Change_BuildId{
+				BuildId: currentResources.Deployment.Spec.Template.Spec.Containers[0].Image,
 			},
-		})
-		if err != nil && !errors.IsNotFound(err) {
-			return nil, "", nil, err
-		}
-
-		if res != nil && res.Msg.GetCapsule() != nil {
-			capsuleID = fmt.Sprintf("%s-migrated", currentResources.Deployment.Name)
-
-			capsule := &v1alpha2.Capsule{}
-			err := cc.Get(ctx, types.NamespacedName{
-				Name:      currentResources.Deployment.GetName(),
-				Namespace: currentResources.Deployment.GetNamespace(),
-			}, capsule)
-			if err != nil {
-				return nil, "", nil, err
-			}
-
-			currentResources.Capsule = capsule
-		}
-
-		if _, err := rc.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
-			Msg: &capsule.CreateRequest{
-				Name:      capsuleID,
-				ProjectId: base.Flags.Project,
+		},
+		{
+			Field: &capsule.Change_Replicas{
+				Replicas: uint32(*currentResources.Deployment.Spec.Replicas),
 			},
-		}); err != nil {
-			return nil, "", nil, err
-		}
-
-		resp, err := rc.Build().Create(ctx, connect.NewRequest(&build.CreateRequest{
-			CapsuleId:      capsuleID,
-			Image:          currentResources.Deployment.Spec.Template.Spec.Containers[0].Image,
-			SkipImageCheck: false,
-			ProjectId:      base.Flags.Project,
-		}))
-		if err != nil {
-			return nil, "", nil, err
-		}
-
-		changes = append(changes, []*capsule.Change{
-			{
-				Field: &capsule.Change_BuildId{
-					BuildId: resp.Msg.GetBuildId(),
-				},
+		},
+		{
+			Field: &capsule.Change_ContainerSettings{
+				ContainerSettings: containerSettings,
 			},
-			{
-				Field: &capsule.Change_Replicas{
-					Replicas: uint32(*currentResources.Deployment.Spec.Replicas),
-				},
-			},
-			{
-				Field: &capsule.Change_ContainerSettings{
-					ContainerSettings: containerSettings,
-				},
-			},
-		}...)
-	}
+		},
+	}...)
 
 	return capsuleSpec, capsuleID, changes, nil
 }
 
-func getDeployment(ctx context.Context, cc client.Reader) (*appsv1.Deployment, error) {
+func getDeployment(ctx context.Context, cc client.Reader, currentResources *CurrentResources) error {
 	deployments := &appsv1.DeploymentList{}
 	err := cc.List(ctx, deployments, client.InNamespace(base.Flags.Namespace))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	headers := []string{"NAME", "NAMESPACE", "READY", "UP-TO-DATE", "AVAILABLE", "AGE"}
@@ -428,7 +376,7 @@ func getDeployment(ctx context.Context, cc client.Reader) (*appsv1.Deployment, e
 	i, err := common.PromptTableSelect("Select the deployment to migrate",
 		deploymentNames, headers, common.SelectEnableFilterOpt)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	deployment := &deployments.Items[i]
@@ -436,11 +384,24 @@ func getDeployment(ctx context.Context, cc client.Reader) (*appsv1.Deployment, e
 	if deployment.GetObjectMeta().GetLabels()["rig.dev/owned-by-capsule"] != "" {
 		if keepGoing, err := common.PromptConfirm("This deployment is already owned by a capsule."+
 			" Do you want to continue anyways?", false); !keepGoing || err != nil {
-			return nil, err
+			return err
 		}
+
+		capsule := &v1alpha2.Capsule{}
+		err := cc.Get(ctx, types.NamespacedName{
+			Name:      deployment.GetObjectMeta().GetLabels()["rig.dev/owned-by-capsule"],
+			Namespace: deployment.GetNamespace(),
+		}, capsule)
+		if err != nil {
+			return err
+		}
+
+		currentResources.Capsule = capsule
 	}
 
-	return deployment, nil
+	currentResources.Deployment = deployment
+
+	return nil
 }
 
 func migrateHPA(ctx context.Context,
@@ -552,7 +513,42 @@ func migrateHPA(ctx context.Context,
 	return changes, nil
 }
 
-func migrateEnvironmentAndConfigFiles(ctx context.Context,
+func migrateEnvironment(ctx context.Context,
+	cc client.Client,
+	currentResources *CurrentResources,
+) ([]*capsule.Change, error) {
+	changes := []*capsule.Change{}
+	configMap := &corev1.ConfigMap{}
+	err := cc.Get(ctx, types.NamespacedName{
+		Namespace: currentResources.Deployment.Namespace,
+		Name:      currentResources.Deployment.Name,
+	}, configMap)
+	if env := currentResources.Deployment.Spec.Template.Spec.Containers[0].Env; len(env) > 0 {
+		if err == nil {
+			return nil, errors.New("ConfigMap already exists with the same name as the deployment" +
+				"Cannot migrate environment variables")
+		} else if !strings.HasSuffix(err.Error(), "not found") {
+			return nil, err
+		}
+		for _, envVar := range env {
+			setEnv := &capsule.Change_SetEnvironmentVariable{
+				SetEnvironmentVariable: &capsule.Change_EnvironmentVariable{
+					Name: envVar.Name,
+				},
+			}
+			if envVar.Value != "" {
+				setEnv.SetEnvironmentVariable.Value = envVar.Value
+			} else if envVar.ValueFrom != nil {
+				// WARNING: We cannot migrate environment variables that are not just values
+				fmt.Println("Cannot migrate environment variables that are not just values")
+			}
+		}
+	}
+
+	return changes, nil
+}
+
+func migrateConfigFilesAndSecrets(ctx context.Context,
 	cc client.Reader,
 	currentResources *CurrentResources,
 	capsuleSpec *v1alpha2.CapsuleSpec,
@@ -624,6 +620,16 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 	for _, volume := range currentResources.Deployment.Spec.Template.Spec.Volumes {
 		var file v1alpha2.File
 		var configFile *capsule.Change_ConfigFile
+
+		var path string
+		for _, volumeMount := range container.VolumeMounts {
+			if volumeMount.Name == volume.Name {
+				path = volumeMount.MountPath
+				break
+			}
+		}
+
+		// EMPTYDIR ??
 		// If Volume is a ConfigMap
 		if volume.ConfigMap != nil {
 			configMap := &corev1.ConfigMap{}
@@ -635,33 +641,33 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 				return nil, err
 			}
 
+			configFile = &capsule.Change_ConfigFile{
+				Path:     path,
+				IsSecret: false,
+			}
+
+			if len(volume.ConfigMap.Items) == 1 {
+				if len(configMap.BinaryData) > 0 {
+					configFile.Content = configMap.BinaryData[volume.ConfigMap.Items[0].Key]
+				} else if len(configMap.Data) > 0 {
+					configFile.Content = []byte(configMap.Data[volume.ConfigMap.Items[0].Key])
+				}
+			} else {
+				// WARNING: IF NO ITEMS OR MORE THAN 1?
+				continue
+			}
+
 			file = v1alpha2.File{
 				Ref: &v1alpha2.FileContentReference{
 					Kind: "ConfigMap",
 					Name: volume.ConfigMap.Name,
 					Key:  "content",
 				},
-			}
-
-			for _, volumeMount := range container.VolumeMounts {
-				if volumeMount.Name == volume.Name {
-					file.Path = volumeMount.MountPath
-					break
-				}
-			}
-
-			configFile = &capsule.Change_ConfigFile{
-				Path:     file.Path,
-				IsSecret: false,
+				Path: path,
 			}
 
 			currentResources.ConfigMaps[file.Path] = configMap
 
-			if len(configMap.BinaryData) > 0 {
-				configFile.Content = configMap.BinaryData[volume.ConfigMap.Items[0].Key]
-			} else if len(configMap.Data) > 0 {
-				configFile.Content = []byte(configMap.Data[volume.ConfigMap.Items[0].Key])
-			}
 			// If Volume is a Secret
 		} else if volume.Secret != nil {
 			secret := &corev1.Secret{}
@@ -679,27 +685,22 @@ func migrateEnvironmentAndConfigFiles(ctx context.Context,
 					Name: volume.Secret.SecretName,
 					Key:  "content",
 				},
-			}
-
-			for _, volumeMount := range container.VolumeMounts {
-				if volumeMount.Name == volume.Name {
-					file.Path = volumeMount.MountPath
-					break
-				}
+				Path: path,
 			}
 
 			configFile = &capsule.Change_ConfigFile{
-				Path:     file.Path,
+				Path:     path,
 				IsSecret: true,
 			}
 
-			currentResources.Secrets[file.Path] = secret
-
-			if len(secret.Data) > 0 {
-				configFile.Content = secret.Data[volume.Secret.Items[0].Key]
-			} else if len(secret.StringData) > 0 {
-				configFile.Content = []byte(secret.StringData[volume.Secret.Items[0].Key])
+			if len(volume.Secret.Items) > 0 {
+				if len(secret.Data) > 0 {
+					configFile.Content = secret.Data[volume.Secret.Items[0].Key]
+				} else if len(secret.StringData) > 0 {
+					configFile.Content = []byte(secret.StringData[volume.Secret.Items[0].Key])
+				}
 			}
+			currentResources.Secrets[file.Path] = secret
 		}
 
 		if file.Path != "" && file.Ref != nil {

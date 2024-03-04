@@ -3,12 +3,12 @@ package migrate
 import (
 	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/gonvenience/ytbx"
 	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
 	appsv1 "k8s.io/api/apps/v1"
@@ -24,34 +24,42 @@ func processPlatformOutput(reports map[string]map[string]*dyff.Report,
 	currentResources *CurrentResources,
 	platformResources map[string]string,
 	scheme *runtime.Scheme,
-) error {
+) (*v1alpha2.Capsule, error) {
+	var capsule *v1alpha2.Capsule
 	for _, resource := range platformResources {
 		// unmarshal the resource into a k8s object
 		object := &unstructured.Unstructured{}
 		err := yaml.Unmarshal([]byte(resource), object)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		orig := currentResources.getCurrentObject(object.GetKind(), object.GetName())
 
 		proposal, err := obj.DecodeAny([]byte(resource), scheme)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		b, err := getDiffingReport(orig, proposal, scheme)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
 		if _, ok := reports[object.GetKind()]; !ok {
+			if object.GetKind() == "Capsule" {
+				capsule = &v1alpha2.Capsule{}
+				err = obj.Decode([]byte(resource), capsule)
+				if err != nil {
+					return nil, err
+				}
+			}
 			reports[object.GetKind()] = map[string]*dyff.Report{}
 		}
 
 		reports[object.GetKind()][object.GetName()] = b
 	}
-	return nil
+
+	return capsule, nil
 }
 
 func processOperatorOutput(reports map[string]map[string]*dyff.Report,
@@ -315,14 +323,16 @@ func getDiffingReportRaw(orig, proposal []byte) (*dyff.Report, error) {
 		return nil, err
 	}
 
-	for i, d := range r.Diffs {
-		if d.Path == nil {
-			continue
-		}
-		if strings.HasPrefix(d.Path.ToDotStyle(), "status") {
-			r.Diffs = append(r.Diffs[:i], r.Diffs[i+1:]...)
-		}
-	}
+	// for i, d := range r.Diffs {
+	// 	fmt.Println(d.Path.ToDotStyle())
+	// 	if d.Path == nil {
+	// 		continue
+	// 	}
+	// 	if strings.HasPrefix(d.Path.ToDotStyle(), "status") {
+	// 		// fmt.Println(d.Path.ToDotStyle())
+	// 		r.Diffs = append(r.Diffs[:i], r.Diffs[i+1:]...)
+	// 	}
+	// }
 
 	return &r, nil
 }
