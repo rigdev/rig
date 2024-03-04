@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/fatih/color"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rodaine/table"
@@ -19,7 +18,6 @@ func list(ctx context.Context,
 	_ *cobra.Command,
 	_ []string,
 	operatorClient *base.OperatorClient,
-	rc rig.Client,
 	scheme *runtime.Scheme,
 ) error {
 	cfg, err := getOperatorConfig(ctx, operatorClient, scheme)
@@ -58,11 +56,11 @@ func list(ctx context.Context,
 	for idx, p := range plugins {
 		n := max(1, len(p.Capsules), len(p.Namespaces))
 		for i := 0; i < n; i++ {
-			col1, col2, default_ := "", "", ""
+			col1, col2, def := "", "", ""
 			if i == 0 {
-				col1, col2, default_ = strconv.Itoa(idx), p.Plugin, "Matches all"
+				col1, col2, def = strconv.Itoa(idx), p.Plugin, "Matches all"
 			}
-			tbl.AddRow(col1, col2, getString(p.Namespaces, i, default_), getString(p.Capsules, i, default_))
+			tbl.AddRow(col1, col2, getString(p.Namespaces, i, def), getString(p.Capsules, i, def))
 		}
 	}
 	tbl.Print()
@@ -77,18 +75,17 @@ type pluginStep struct {
 	Config     map[string]any `json:"config,omitempty"`
 }
 
-func getString(strings []string, idx int, default_ string) string {
+func getString(strings []string, idx int, def string) string {
 	if idx < len(strings) {
 		return strings[idx]
 	}
-	return default_
+	return def
 }
 
 func get(ctx context.Context,
 	_ *cobra.Command,
 	args []string,
 	operatorClient *base.OperatorClient,
-	rc rig.Client,
 	scheme *runtime.Scheme,
 ) error {
 	cfg, err := getOperatorConfig(ctx, operatorClient, scheme)

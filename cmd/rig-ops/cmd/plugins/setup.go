@@ -43,11 +43,13 @@ func Setup(parent *cobra.Command) {
 		Short: "Lists the plugins currently configured in the operator",
 		RunE:  base.Register(list),
 	}
+	//nolint:lll
 	list.Flags().BoolVar(&showConfig, "show-config", false, "If set, will also display the YAML configuration for each plugin.")
 	pluginsCmd.AddCommand(list)
 
 	get := &cobra.Command{
-		Use:   "get 2",
+		Use: "get 2",
+		//nolint:lll
 		Short: "Gets the configuration for a single plugin given by index. If no index is given, it will prompt you to choose a plugin.",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  base.Register(get),
