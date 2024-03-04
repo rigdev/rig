@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	v1 "k8s.io/api/core/v1"
+	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -15,7 +16,8 @@ import (
 )
 
 type k8s struct {
-	client kubernetes.Interface
+	client           kubernetes.Interface
+	extensionsClient apiext.Interface
 }
 
 func newK8s() (*k8s, error) {
@@ -31,7 +33,16 @@ func newK8s() (*k8s, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not create kubernetes client: %w", err)
 	}
-	return &k8s{client: cs}, nil
+
+	extcs, err := apiext.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("could not create kubernetes apiextensions client: %w", err)
+	}
+
+	return &k8s{
+		client:           cs,
+		extensionsClient: extcs,
+	}, nil
 }
 
 func (k *k8s) getSecret(ctx context.Context, namespace, name string) (*v1.Secret, error) {
@@ -106,5 +117,30 @@ func (k *k8s) patchMutating(ctx context.Context, name string, ca []byte) error {
 		Update(ctx, mwc, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("could not update MutatingWebhookConfiguration %s: %w", name, err)
 	}
+	return nil
+}
+
+func (k *k8s) patchCRD(ctx context.Context, name string, ca []byte) error {
+	crd, err := k.extensionsClient.
+		ApiextensionsV1().
+		CustomResourceDefinitions().
+		Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("could not get CustomResourceDefinition %s: %w", name, err)
+	}
+
+	if crd.Spec.Conversion != nil &&
+		crd.Spec.Conversion.Webhook != nil &&
+		crd.Spec.Conversion.Webhook.ClientConfig != nil {
+		crd.Spec.Conversion.Webhook.ClientConfig.CABundle = ca
+	}
+
+	if _, err := k.extensionsClient.
+		ApiextensionsV1().
+		CustomResourceDefinitions().
+		Update(ctx, crd, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("could not update CRD %s: %w", name, err)
+	}
+
 	return nil
 }

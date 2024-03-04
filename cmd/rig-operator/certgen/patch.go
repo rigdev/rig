@@ -10,23 +10,33 @@ import (
 const (
 	flagValidating      = "validating"
 	flagMutating        = "mutating"
+	flagCRDs            = "crds"
 	flagSecretName      = "secret-name"
 	flagSecretNamespace = "secret-namespace"
 	flagAPIServiceName  = "api-service-name"
+	flagWebhookCFGName  = "webhook-cfg-name"
 )
 
 func patchCMD() (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "patch-webhook-config [name]",
-		Args:  cobra.ExactArgs(1),
+		Use:   "patch-webhook-config",
+		Args:  cobra.ExactArgs(0),
 		Short: "Patch a validating/mutating webhook configuration",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
+			webhookCFGName, err := flags.GetString(flagWebhookCFGName)
+			if err != nil {
+				return err
+			}
 			patchValidating, err := flags.GetBool(flagValidating)
 			if err != nil {
 				return err
 			}
 			patchMutating, err := flags.GetBool(flagMutating)
+			if err != nil {
+				return err
+			}
+			patchCRDs, err := flags.GetBool(flagCRDs)
 			if err != nil {
 				return err
 			}
@@ -44,13 +54,13 @@ func patchCMD() (*cobra.Command, error) {
 				return err
 			}
 
-			name := args[0]
 			log := log.New(false).WithValues(
 				"validating", patchValidating,
 				"mutating", patchMutating,
+				"crds", patchCRDs,
 				"secretName", secretName,
 				"secretNamespace", secretNamespace,
-				"name", name,
+				"name", webhookCFGName,
 			)
 
 			log.Info("getting certificate secret...")
@@ -65,20 +75,27 @@ func patchCMD() (*cobra.Command, error) {
 			}
 
 			log.Info("found certificate secret")
-			if patchValidating {
+			if patchValidating && webhookCFGName != "" {
 				log.Info("patching validating")
-				if err := k8s.patchValidating(cmd.Context(), name, ca); err != nil {
+				if err := k8s.patchValidating(cmd.Context(), webhookCFGName, ca); err != nil {
 					return err
 				}
 				log.Info("patched validating")
 			}
-			if patchMutating {
+			if patchMutating && webhookCFGName != "" {
 				log.Info("patching mutating")
-				if err := k8s.patchMutating(cmd.Context(), name, ca); err != nil {
+				if err := k8s.patchMutating(cmd.Context(), webhookCFGName, ca); err != nil {
 					return err
 
 				}
 				log.Info("patched mutating")
+			}
+			if patchCRDs {
+				log.Info("patching Capsule CRD")
+				if err := k8s.patchCRD(cmd.Context(), "capsules.rig.dev", ca); err != nil {
+					return err
+				}
+				log.Info("patched Capsule CRD")
 			}
 
 			return nil
@@ -88,6 +105,8 @@ func patchCMD() (*cobra.Command, error) {
 	flags := cmd.PersistentFlags()
 	flags.Bool(flagValidating, true, "wether to patch ValidatingWebhookConfiguration with given name")
 	flags.Bool(flagMutating, true, "wether to patch MutatingWebhookConfiguration with given name")
+	flags.Bool(flagCRDs, true, "wether to patch CRDs")
+	flags.String(flagWebhookCFGName, "", "Name of *WebhookConfiguration resources")
 	flags.String(flagSecretName, "", "Name of certificate secret containing the ca")
 	flags.String(flagSecretNamespace, "default", "Namespace of certificate secret containing the ca")
 
