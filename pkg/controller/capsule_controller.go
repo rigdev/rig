@@ -335,7 +335,11 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func GetDefaultPipelineSteps(ctx context.Context, capSvc capabilities.Service, cfg *v1alpha1.OperatorConfig) ([]pipeline.Step, error) {
+func GetDefaultPipelineSteps(
+	ctx context.Context,
+	capSvc capabilities.Service,
+	cfg *v1alpha1.OperatorConfig,
+) ([]pipeline.Step, error) {
 	capabilities, err := capSvc.Get(ctx)
 	if err != nil {
 		return nil, err
