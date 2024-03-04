@@ -65,7 +65,7 @@ func dryRun(ctx context.Context,
 	for i, step := range cfg.Steps {
 		if !slices.Contains(removes, i) {
 			cfg.Steps[idx] = step
-			idx += 1
+			idx++
 		}
 	}
 	cfg.Steps = cfg.Steps[:idx]
