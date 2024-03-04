@@ -11,6 +11,8 @@ var (
 	projects       []string
 	environments   []string
 	plugins        []string
+
+	showConfig bool
 )
 
 func Setup(parent *cobra.Command) {
@@ -35,6 +37,24 @@ func Setup(parent *cobra.Command) {
 	//nolint:lll
 	check.Flags().StringSliceVar(&plugins, "plugins", nil, "If given, will only use those plugins names.")
 	pluginsCmd.AddCommand(check)
+
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the plugins currently configured in the operator",
+		RunE:  base.Register(list),
+	}
+	//nolint:lll
+	list.Flags().BoolVar(&showConfig, "show-config", false, "If set, will also display the YAML configuration for each plugin.")
+	pluginsCmd.AddCommand(list)
+
+	get := &cobra.Command{
+		Use: "get 2",
+		//nolint:lll
+		Short: "Gets the configuration for a single plugin given by index. If no index is given, it will prompt you to choose a plugin.",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  base.Register(get),
+	}
+	pluginsCmd.AddCommand(get)
 
 	parent.AddCommand(pluginsCmd)
 }
