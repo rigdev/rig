@@ -37,6 +37,7 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 			fx.Provide(NewKubernetesClient, NewKubernetesReader),
 			fx.Provide(NewRigClient, NewOperatorClient),
 			fx.Provide(func() context.Context { return context.Background() }),
+			fx.Provide(scheme.New),
 
 			fx.Invoke(f),
 
@@ -93,8 +94,7 @@ func NewRigClient(ctx context.Context) (rig.Client, error) {
 	}
 
 	sessionManager := &sessionManager{cfg: cfg}
-
-	rc := rig.NewClient(rig.WithSessionManager(sessionManager))
+	rc := rig.NewClient(rig.WithSessionManager(sessionManager), rig.WithHost(cfg.GetCurrentService().Server))
 
 	// check if we need to authenticate
 	projectListResp, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})

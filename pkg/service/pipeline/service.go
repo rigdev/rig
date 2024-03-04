@@ -24,6 +24,12 @@ type Service interface {
 		opts ...pipeline.CapsuleRequestOption) (*pipeline.Result, error)
 }
 
+type PluginUsed struct {
+	Namespace string
+	Capsule   string
+	Plugin    string
+}
+
 func NewService(
 	cfg config.Service,
 	client client.Client,

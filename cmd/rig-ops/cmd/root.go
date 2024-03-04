@@ -5,6 +5,7 @@ import (
 
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/migrate"
+	"github.com/rigdev/rig/cmd/rig-ops/cmd/plugins"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
 )
@@ -18,15 +19,15 @@ func Run() error {
 		"kube-config", filepath.Join(homedir.HomeDir(), ".kube", "config"), "Path to your kubeconfig file")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.KubeContext,
 		"kube-context", "", "The context to use from your kubeconfig file. Default is the current context")
-	rootCmd.PersistentFlags().StringVarP(&base.Flags.Namespace, "namespace", "n", "", "The k8s namespace to migrate from")
 	rootCmd.PersistentFlags().StringVarP(&base.Flags.KubeFile,
 		"kube-file", "f", "", "A file of resources to use instead of k8s, for reading resources")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.RigContext,
 		"rig-context", "", "The context to use from your rigconfig file. Default is the current context")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.RigConfig, "rig-config", "", "Path to your rigconfig file")
-	rootCmd.PersistentFlags().StringVarP(&base.Flags.Project, "project", "p", "", "The project to migrate to")
+	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 
 	migrate.Setup(rootCmd)
+	plugins.Setup(rootCmd)
 
 	return rootCmd.Execute()
 }

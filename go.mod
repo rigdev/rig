@@ -32,6 +32,7 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/ghodss/yaml v1.0.0
+	github.com/gobwas/glob v0.2.3
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/gnostic-models v0.6.8
 	github.com/google/go-containerregistry v0.16.1
@@ -44,7 +45,7 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20240225171918-15e22616674b
+	github.com/rigdev/rig-go-api v0.0.0-20240229114505-dad5daa083c4
 	github.com/rigdev/rig-go-sdk v0.0.0-20240125120802-fb9e44c555aa
 	github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e
 	github.com/robfig/cron v1.2.0
@@ -105,7 +106,7 @@ require (
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240221002015-b0ce06bbee7c // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240228224816-df926f6c8641 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 	k8s.io/component-base v0.28.4 // indirect
 	sigs.k8s.io/gateway-api v0.8.0 // indirect

@@ -1,5 +1,7 @@
 package base
 
+import "github.com/rigdev/rig/cmd/common"
+
 type FlagsStruct struct {
 	KubeContext string
 	KubeConfig  string
@@ -9,6 +11,7 @@ type FlagsStruct struct {
 	Project     string
 	Environment string
 	KubeFile    string
+	OutputType  common.OutputType
 }
 
 var Flags = FlagsStruct{
@@ -19,4 +22,5 @@ var Flags = FlagsStruct{
 	RigContext:  "",
 	Project:     "",
 	Environment: "",
+	OutputType:  common.OutputTypePretty,
 }

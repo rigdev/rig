@@ -4,7 +4,6 @@ import (
 	"context"
 
 	connect "connectrpc.com/connect"
-
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -13,36 +12,47 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/scheme"
 	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func NewHandler(pipeline svcpipeline.Service) pipelineconnect.ServiceHandler {
-	return &handler{pipeline: pipeline}
+	return &handler{
+		pipeline: pipeline,
+		scheme:   scheme.New(),
+	}
 }
 
 type handler struct {
 	pipeline svcpipeline.Service
+	scheme   *runtime.Scheme
+}
+
+func (h *handler) decodeOperatorConfig(config string) (*v1alpha1.OperatorConfig, error) {
+	if config == "" {
+		return nil, nil
+	}
+	cfg := &v1alpha1.OperatorConfig{}
+	if err := obj.DecodeInto([]byte(config), cfg, h.scheme); err != nil {
+		return nil, err
+	}
+	cfg.Default()
+	return cfg, nil
 }
 
 func (h *handler) DryRun(
 	ctx context.Context,
 	req *connect.Request[apipipeline.DryRunRequest],
 ) (*connect.Response[apipipeline.DryRunResponse], error) {
-	scheme := scheme.New()
 
-	var cfg *v1alpha1.OperatorConfig
-	if req.Msg.GetOperatorConfig() != "" {
-		cfg = &v1alpha1.OperatorConfig{}
-		if err := obj.DecodeInto([]byte(req.Msg.GetOperatorConfig()), cfg, scheme); err != nil {
-			return nil, err
-		}
-
-		cfg.Default()
+	cfg, err := h.decodeOperatorConfig(req.Msg.GetOperatorConfig())
+	if err != nil {
+		return nil, err
 	}
 
 	var spec *v1alpha2.Capsule
 	if req.Msg.GetCapsuleSpec() != "" {
 		spec = &v1alpha2.Capsule{}
-		if err := obj.DecodeInto([]byte(req.Msg.GetCapsuleSpec()), spec, scheme); err != nil {
+		if err := obj.DecodeInto([]byte(req.Msg.GetCapsuleSpec()), spec, h.scheme); err != nil {
 			return nil, err
 		}
 	}
@@ -59,7 +69,7 @@ func (h *handler) DryRun(
 
 	res := &apipipeline.DryRunResponse{}
 	for _, o := range result.InputObjects {
-		bs, err := obj.Encode(o, scheme)
+		bs, err := obj.Encode(o, h.scheme)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +95,7 @@ func (h *handler) DryRun(
 			Name: oo.ObjectKey.Name,
 		}
 		if oo.Object != nil {
-			bs, err := obj.Encode(oo.Object, scheme)
+			bs, err := obj.Encode(oo.Object, h.scheme)
 			if err != nil {
 				return nil, err
 			}
