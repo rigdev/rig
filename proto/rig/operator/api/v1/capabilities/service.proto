@@ -5,6 +5,7 @@ package api.v1.capabilities;
 // The service for getting operator capabilities
 service Service {
     rpc Get(GetRequest) returns (GetResponse) {}
+    rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
 }
 
 message GetRequest {}
@@ -14,4 +15,10 @@ message GetResponse {
     bool has_prometheus_service_monitor = 2;
     bool has_custom_metrics = 3;
     bool has_vertical_pod_autoscaler = 4;
+}
+
+message GetConfigRequest {}
+
+message GetConfigResponse {
+    string yaml = 1;
 }

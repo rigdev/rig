@@ -8,6 +8,7 @@ import "model/common.proto";
 service Service {
   // List available environments.
   rpc List(ListRequest) returns (ListResponse) {}
+  rpc GetNamespaces(GetNamespacesRequest) returns (GetNamespacesResponse) {}
 }
 
 // Request for listing available environments.
@@ -21,3 +22,23 @@ message ListResponse {
   repeated api.v1.environment.Environment environments = 1; // List of environments.
   string platform_version = 2; // The version of the Rig-platform.
 }
+
+message ProjectEnvironment {
+  string project_id = 1;
+  string environment_id = 2;
+}
+
+message ProjectEnvironmentNamespace {
+  string project_id = 1;
+  string environment_id = 2;
+  string namespace = 3;
+}
+
+message GetNamespacesRequest {
+    repeated ProjectEnvironment project_envs = 1;
+}
+
+message GetNamespacesResponse {
+  repeated ProjectEnvironmentNamespace namespaces = 2;
+}
+
