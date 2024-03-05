@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/rigdev/rig/cmd/common"
@@ -26,19 +27,23 @@ func list(ctx context.Context,
 	}
 
 	var plugins []pluginStep
-	for _, p := range cfg.Steps {
-		plugin := pluginStep{
-			Plugin:     p.Plugin,
-			Namespaces: p.Namespaces,
-			Capsules:   p.Capsules,
+	for _, s := range cfg.Steps {
+		step := pluginStep{
+			Namespaces: s.Namespaces,
+			Capsules:   s.Capsules,
 		}
-		if showConfig {
-			plugin.Config = map[string]any{}
-			if err := yaml.Unmarshal([]byte(p.Config), &plugin.Config); err != nil {
-				return fmt.Errorf("plugin '%s' had malformed config: %q", p.Plugin, err)
+		for _, p := range s.Plugins {
+			plugin := pluginInfo{
+				Name: p.Name,
+			}
+			if showConfig {
+				plugin.Config = map[string]any{}
+				if err := yaml.Unmarshal([]byte(p.Config), &plugin.Config); err != nil {
+					return fmt.Errorf("plugin '%s' had malformed config: %q", p.Name, err)
+				}
 			}
 		}
-		plugins = append(plugins, plugin)
+		plugins = append(plugins, step)
 	}
 
 	if base.Flags.OutputType != common.OutputTypePretty {
@@ -69,10 +74,15 @@ func list(ctx context.Context,
 }
 
 type pluginStep struct {
-	Plugin     string         `json:"plugin"`
-	Namespaces []string       `json:"namespaces"`
-	Capsules   []string       `json:"capsules"`
-	Config     map[string]any `json:"config,omitempty"`
+	Plugin     string       `json:"plugin"`
+	Namespaces []string     `json:"namespaces"`
+	Capsules   []string     `json:"capsules"`
+	Plugins    []pluginInfo `json:"plugins"`
+}
+
+type pluginInfo struct {
+	Name   string         `json:"name"`
+	Config map[string]any `json:"config,omitempty"`
 }
 
 func getString(strings []string, idx int, def string) string {
@@ -101,7 +111,11 @@ func get(ctx context.Context,
 		}
 		var choices [][]string
 		for idx, s := range cfg.Steps {
-			choices = append(choices, []string{strconv.Itoa(idx), s.Plugin})
+			var plugins []string
+			for _, p := range s.Plugins {
+				plugins = append(plugins, p.Name)
+			}
+			choices = append(choices, []string{strconv.Itoa(idx), strings.Join(plugins, ", ")})
 		}
 		idx, err = common.PromptTableSelect("Choose a plugin", choices, []string{"Index", "Type"})
 		if err != nil {
@@ -118,15 +132,19 @@ func get(ctx context.Context,
 		return fmt.Errorf("there are %v plugins configured. Max index allowed is %v", len(cfg.Steps), len(cfg.Steps)-1)
 	}
 
-	p := cfg.Steps[idx]
-	plugin := pluginStep{
-		Plugin:     p.Plugin,
-		Namespaces: p.Namespaces,
-		Capsules:   p.Capsules,
-		Config:     map[string]any{},
+	s := cfg.Steps[idx]
+	step := pluginStep{
+		Namespaces: s.Namespaces,
+		Capsules:   s.Capsules,
 	}
-	if err := yaml.Unmarshal([]byte(p.Config), &plugin.Config); err != nil {
-		return fmt.Errorf("plugin had malformed config: %q", err)
+	for _, p := range s.Plugins {
+		plugin := pluginInfo{
+			Name: p.Name,
+		}
+		if err := yaml.Unmarshal([]byte(p.Config), &plugin.Config); err != nil {
+			return fmt.Errorf("plugin had malformed config: %q", err)
+		}
+		step.Plugins = append(step.Plugins, plugin)
 	}
 
 	outputType := common.OutputTypeYAML
@@ -134,5 +152,5 @@ func get(ctx context.Context,
 		outputType = base.Flags.OutputType
 	}
 
-	return common.FormatPrint(plugin, outputType)
+	return common.FormatPrint(step, outputType)
 }

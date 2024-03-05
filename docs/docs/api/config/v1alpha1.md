@@ -13,20 +13,6 @@ Package v1alpha1 contains API Schema definitions for the config v1alpha1 API gro
 
 
 
-### AnnotationSelector
-
-
-
-
-
-_Appears in:_
-- [Step](#step)
-
-| Field | Description |
-| --- | --- |
-| `match` _object (keys:string, values:string)_ | Direct match on annotations, where all keys and values in the map must be present in the capsule annotations for the selector to match. |
-
-
 ### Auth
 
 
@@ -455,6 +441,21 @@ PlatformConfig is the Schema for the platform config API
 | `environments` _object (keys:string, values:[Environment](#environment))_ | Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups). |
 
 
+### Plugin
+
+
+
+
+
+_Appears in:_
+- [Step](#step)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name of the plugin to run. |
+| `config` _string_ | Config is a string expected to be YAML defining the configuration for the plugin |
+
+
 ### PrometheusServiceMonitor
 
 
@@ -539,11 +540,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `plugin` _string_ | Plugin to use in the current step. |
 | `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. |
-| `capsules` _string array_ | If set, only execute the plugin on the capsules specified |
-| `config` _string_ | Config is a string expected to be YAML defining the configuration for the plugin |
-| `selector` _[AnnotationSelector](#annotationselector)_ | Selector for matching plugin step execution based on Capsule annotations. |
+| `capsules` _string array_ | If set, only execute the plugin on the capsules specified. |
+| `selector` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#labelselector-v1-meta)_ | If set, only execute the plugin on the matching capsules. |
+| `plugins` _[Plugin](#plugin) array_ | Plugins to run as part of this step. |
 
 
 ### VerticalPodAutoscaler

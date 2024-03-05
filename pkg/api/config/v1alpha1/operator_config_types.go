@@ -56,22 +56,21 @@ type OperatorConfig struct {
 }
 
 type Step struct {
-	// Plugin to use in the current step.
-	Plugin string `json:"plugin,omitempty"`
 	// If set, only capsules in one of the namespaces given will have this step run.
 	Namespaces []string `json:"namespaces,omitempty"`
-	// If set, only execute the plugin on the capsules specified
+	// If set, only execute the plugin on the capsules specified.
 	Capsules []string `json:"capsules,omitempty"`
-	// Config is a string expected to be YAML defining the configuration for the plugin
-	Config string `json:"config,omitempty"`
-	// Selector for matching plugin step execution based on Capsule annotations.
-	Selector AnnotationSelector `json:"selector,omitempty"`
+	// If set, only execute the plugin on the matching capsules.
+	Selector metav1.LabelSelector `json:"selector,omitempty"`
+	// Plugins to run as part of this step.
+	Plugins []Plugin `json:"plugins,omitempty"`
 }
 
-type AnnotationSelector struct {
-	// Direct match on annotations, where all keys and values in the map must
-	// be present in the capsule annotations for the selector to match.
-	Match map[string]string `json:"match,omitempty"`
+type Plugin struct {
+	// Name of the plugin to run.
+	Name string `json:"name,omitempty"`
+	// Config is a string expected to be YAML defining the configuration for the plugin
+	Config string `json:"config,omitempty"`
 }
 
 type VerticalPodAutoscaler struct {
