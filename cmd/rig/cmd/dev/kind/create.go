@@ -383,16 +383,6 @@ prometheus:
 			return err
 		}
 	}
-	if err := runCmd("Installing cert-manager...",
-		"helm", "--kube-context", "kind-rig",
-		"upgrade", "--install", "cert-manager", "cert-manager",
-		"--repo", "https://charts.jetstack.io",
-		"--namespace", "cert-manager",
-		"--create-namespace", "--version", "v1.13.0",
-		"--set", "installCRDs=true",
-	); err != nil {
-		return err
-	}
 
 	if err := runCmd("Installing metrics-server...",
 		"helm", "--kube-context", "kind-rig",
