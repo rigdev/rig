@@ -123,5 +123,5 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 }
 
 func main() {
-	plugin.StartPlugin("envMapping", &envMapping{})
+	plugin.StartPlugin("env_mapping", &envMapping{})
 }

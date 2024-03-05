@@ -18,10 +18,10 @@ config:
   prometheusServiceMonitor:
     path: ""
     portName: ""
-  steps: []
-    # - namespaces: ["ns1", "ns2", "ns3"]
-    #   plugins:
-    #   - name: objectTemplate
+  steps:
+    []
+    # - plugins:
+    #   - name: object_template
     #     config: |
     #       group: apps
     #       kind: Deployment
@@ -39,7 +39,7 @@ config:
     #         name: foobar
     #         image: alpine
     #         command: ['sh', '-c', 'sleep 1000']
-    #   - name: initContainer
+    #   - name: init_container
     #     config: |
     #       container:
     #         name: startup
@@ -66,7 +66,8 @@ config:
     #         service: some-service
     #         version: some-version
     #   - name: my-name
-  customPlugins: []
+  customPlugins:
+    []
     # - image: some-image
     # - image: some-other-image
     #   name: my-name

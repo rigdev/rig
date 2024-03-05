@@ -94,7 +94,7 @@ func (s *PluginTestSuite) SetupSuite() {
 			{
 				Plugins: []configv1alpha1.Plugin{
 					{
-						Name: "objectTemplate",
+						Name: "object_template",
 						Config: `
 group: "apps"
 kind: "Deployment"
@@ -112,7 +112,7 @@ container:
 `,
 					},
 					{
-						Name: "initContainer",
+						Name: "init_container",
 						Config: `
 container:
   image: alpine
