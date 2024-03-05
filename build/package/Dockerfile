@@ -5,7 +5,7 @@ ENV CGO_ENABLED=0
 WORKDIR /app
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-    apk add --no-cache ca-certificates go-task git && \
+    apk add --no-cache ca-certificates go-task git clang-extra-tools && \
     addgroup -g 1000 nonroot && \
     adduser -u 1000 -G nonroot -D nonroot
 
