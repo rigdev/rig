@@ -4,10 +4,14 @@ package model;
 
 // The LoginType enum defines the type of login.
 enum LoginType {
-  LOGIN_TYPE_UNSPECIFIED = 0; // Default value.
-  LOGIN_TYPE_EMAIL_PASSWORD = 1; // Email and password login.
-  LOGIN_TYPE_PHONE_PASSWORD = 2; // deprecated: text is not supported - Phone number and password login.
-  LOGIN_TYPE_USERNAME_PASSWORD = 3; // Username and password login.
-  LOGIN_TYPE_SSO = 4; // SSO Login
+  // Default value.
+  LOGIN_TYPE_UNSPECIFIED = 0;
+  // Email and password login.
+  LOGIN_TYPE_EMAIL_PASSWORD = 1;
+  // deprecated: text is not supported - Phone number and password login.
+  LOGIN_TYPE_PHONE_PASSWORD = 2;
+  // Username and password login.
+  LOGIN_TYPE_USERNAME_PASSWORD = 3;
+  // SSO Login
+  LOGIN_TYPE_SSO = 4;
 }
-

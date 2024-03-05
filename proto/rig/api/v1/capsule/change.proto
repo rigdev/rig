@@ -6,82 +6,117 @@ import "api/v1/capsule/job.proto";
 
 // Change to a capsule that ultimately results in a new rollout.
 message Change {
-
   // Config file change.
   message ConfigFile {
-    string path = 1; // Path of the file in the instance.
-    bytes content = 2; // Content of the config file.
-    bool is_secret = 3; // True if the content is secret.
+    // Path of the file in the instance.
+    string path = 1;
+    // Content of the config file.
+    bytes content = 2;
+    // True if the content is secret.
+    bool is_secret = 3;
   }
 
   // Rollback change.
   message Rollback {
-    uint64 rollback_id = 1; // Rollout to roll back to.
+    // Rollout to roll back to.
+    uint64 rollback_id = 1;
   }
 
   // Jobs change
   message CronJobs {
-    repeated CronJob jobs = 1; // The jobs.
+    // The jobs.
+    repeated CronJob jobs = 1;
   }
 
   // Environment variable change.
   message EnvironmentVariable {
-    string name = 1; // Name of the environment variable.
-    string value = 2; // The value it takes.
+    // Name of the environment variable.
+    string name = 1;
+    // The value it takes.
+    string value = 2;
   }
 
   // Entrypoint for the capsule instances.
   message CommandArguments {
-    string command = 2; // Command to run.
-    repeated string args = 3; // arguments to the command.
+    // Command to run.
+    string command = 2;
+    // arguments to the command.
+    repeated string args = 3;
   }
 
   // Remove cron job change.
   message RemoveCronJob {
-    string job_name = 1; // Name of the job to remove
+    // Name of the job to remove
+    string job_name = 1;
   }
 
   message RemoveInterface {
     string interface_name = 1;
   }
-  
+
   // Different types of changes.
   oneof field {
-    uint32 replicas = 1; // Number of replicas changed.
-    string build_id = 2; // New build change.
-    Network network = 3; // Network interfaces change.
-    ContainerSettings container_settings = 4; // Container settings of the instances.
-    bool auto_add_rig_service_accounts = 5; // Automatically add a rig-service account.
-    ConfigFile set_config_file = 6; // Set a config file - either update or add.
-    string remove_config_file = 7; // Path of a config file to remove.
-    HorizontalScale horizontal_scale = 8; // Horizontal scaling settings.
-    Rollback rollback = 9; // Rollback to a previous rollout.
-    EnvironmentVariable set_environment_variable = 11; // Update or add an environment variable.
-    string remove_environment_variable = 12; // Name of an environment variable to remove.
-    EnvironmentSource set_environment_source = 13; // Set or update an environment source.
-    EnvironmentSource remove_environment_source = 14; // Remove an environment source.
-    CommandArguments command_arguments = 15; // Entrypoint for capsule instances.
-    CronJob add_cron_job = 16; // Add a cron job.
-    RemoveCronJob remove_cron_job = 17; // Remove a cron job.
-    Interface add_interface = 18; // Add a network interface.
-    RemoveInterface remove_interface = 19; // Remove a network interface.
+    // Number of replicas changed.
+    uint32 replicas = 1;
+    // New build change.
+    string build_id = 2;
+    // Network interfaces change.
+    Network network = 3;
+    // Container settings of the instances.
+    ContainerSettings container_settings = 4;
+    // Automatically add a rig-service account.
+    bool auto_add_rig_service_accounts = 5;
+    // Set a config file - either update or add.
+    ConfigFile set_config_file = 6;
+    // Path of a config file to remove.
+    string remove_config_file = 7;
+    // Horizontal scaling settings.
+    HorizontalScale horizontal_scale = 8;
+    // Rollback to a previous rollout.
+    Rollback rollback = 9;
+    // Update or add an environment variable.
+    EnvironmentVariable set_environment_variable = 11;
+    // Name of an environment variable to remove.
+    string remove_environment_variable = 12;
+    // Set or update an environment source.
+    EnvironmentSource set_environment_source = 13;
+    // Remove an environment source.
+    EnvironmentSource remove_environment_source = 14;
+    // Entrypoint for capsule instances.
+    CommandArguments command_arguments = 15;
+    // Add a cron job.
+    CronJob add_cron_job = 16;
+    // Remove a cron job.
+    RemoveCronJob remove_cron_job = 17;
+    // Add a network interface.
+    Interface add_interface = 18;
+    // Remove a network interface.
+    RemoveInterface remove_interface = 19;
   }
 }
 
 // Settings for the instance container
 message ContainerSettings {
-  map<string, string> environment_variables = 1; // Environment variables.
-  string command = 2; // Entrypoint for the container.
-  repeated string args = 3; // Arguments to the container.
-  Resources resources = 4; // Resource requests and limits.
-  repeated EnvironmentSource environment_sources = 5; // Environment sources.
+  // Environment variables.
+  map<string, string> environment_variables = 1;
+  // Entrypoint for the container.
+  string command = 2;
+  // Arguments to the container.
+  repeated string args = 3;
+  // Resource requests and limits.
+  Resources resources = 4;
+  // Environment sources.
+  repeated EnvironmentSource environment_sources = 5;
 }
 
 // Container resources requests and limits
 message Resources {
-  ResourceList requests = 1; // CPU and memory requests.
-  ResourceList limits = 2; // CPU and memory limits
-  GpuLimits gpu_limits = 3; // GPU Limits
+  // CPU and memory requests.
+  ResourceList requests = 1;
+  // CPU and memory limits
+  ResourceList limits = 2;
+  // GPU Limits
+  GpuLimits gpu_limits = 3;
 }
 
 // CPU and Memory resource request or limits
@@ -103,33 +138,42 @@ message GpuLimits {
 // Source of environment variables
 message EnvironmentSource {
   enum Kind {
-    KIND_UNSPECIFIED = 0; // Unspecified.
-    KIND_CONFIG_MAP = 1; // Environment variables from a config map.
-    KIND_SECRET = 2; // Environment variables from a secret.
+    // Unspecified.
+    KIND_UNSPECIFIED = 0;
+    // Environment variables from a config map.
+    KIND_CONFIG_MAP = 1;
+    // Environment variables from a secret.
+    KIND_SECRET = 2;
   }
 
-  string name = 1; // Name of the source
-  Kind kind = 2; // Type of the source
+  // Name of the source
+  string name = 1;
+  // Type of the source
+  Kind kind = 2;
 }
-
 
 // A network configuration of network interfaces.
 message Network {
-  repeated Interface interfaces = 1; // All the network interfaces.
+  // All the network interfaces.
+  repeated Interface interfaces = 1;
 }
 
 // A single network interface.
 message Interface {
-  uint32 port = 1; // Port of the interface.
-  string name = 2; // Name of the interface.
-  PublicInterface public = 4; // If public interface is enabled. Contains ingress or load balancer settings.
-  InterfaceProbe liveness = 7; // Liveness probe.
-  InterfaceProbe readiness = 8; // Readiness probe.
+  // Port of the interface.
+  uint32 port = 1;
+  // Name of the interface.
+  string name = 2;
+  // If public interface is enabled. Contains ingress or load balancer settings.
+  PublicInterface public = 4;
+  // Liveness probe.
+  InterfaceProbe liveness = 7;
+  // Readiness probe.
+  InterfaceProbe readiness = 8;
 }
 
 // Probe for liveness or readiness.
 message InterfaceProbe {
-
   // HTTP path for the probe.
   message HTTP {
     string path = 1;
@@ -153,24 +197,30 @@ message InterfaceProbe {
 
 // Public interface configuration.
 message PublicInterface {
-  bool enabled = 1; // True if the interface is public.
-  RoutingMethod method = 2; // Routing method - Ingress or Load Balancer.
+  // True if the interface is public.
+  bool enabled = 1;
+  // Routing method - Ingress or Load Balancer.
+  RoutingMethod method = 2;
 }
 
 // The routing method for the public interface.
 message RoutingMethod {
-
   // Loadbalancer routing.
   message LoadBalancer {
-    uint32 port = 1; // public port.
-    uint32 node_port = 2; // node port.
+    // public port.
+    uint32 port = 1;
+    // node port.
+    uint32 node_port = 2;
   }
 
   // Ingress routing.
   message Ingress {
-    string host = 1; // Hostname of the ingress.
-    bool tls = 2; // True if TLS is enabled.
-    repeated string paths = 3; // Paths of the ingress.
+    // Hostname of the ingress.
+    string host = 1;
+    // True if TLS is enabled.
+    bool tls = 2;
+    // Paths of the ingress.
+    repeated string paths = 3;
   }
 
   // Type of routing for the public interface.
@@ -180,48 +230,65 @@ message RoutingMethod {
   }
 }
 
-
 // Horizontal scaling settings.
 message HorizontalScale {
-  uint32 max_replicas = 1; // Maximum number of replicas.
-  uint32 min_replicas = 2; // Minimum number of replicas.
-  CPUTarget cpu_target = 3; // CPU target for autoscaling.
-  repeated CustomMetric custom_metrics = 4; // If scaling based on custom metrics.
+  // Maximum number of replicas.
+  uint32 max_replicas = 1;
+  // Minimum number of replicas.
+  uint32 min_replicas = 2;
+  // CPU target for autoscaling.
+  CPUTarget cpu_target = 3;
+  // If scaling based on custom metrics.
+  repeated CustomMetric custom_metrics = 4;
 }
 
 // Autoscaling based on CPU target.
 message CPUTarget {
-  uint32 average_utilization_percentage = 1; // Average CPU utilization target.
+  // Average CPU utilization target.
+  uint32 average_utilization_percentage = 1;
 }
 
 // Autoscaling based on custom metrics.
 message CustomMetric {
   // The type of metric.
   oneof metric {
-    InstanceMetric instance = 1; // If scaling based on metrics across all intstances / pods.
-    ObjectMetric object = 2; // If scaling based on metrics for a specific kubernetes resource object.
+    // If scaling based on metrics across all intstances / pods.
+    InstanceMetric instance = 1;
+    // If scaling based on metrics for a specific kubernetes resource object.
+    ObjectMetric object = 2;
   }
 }
 
 // Metric emitted by instances / pods.
 message InstanceMetric {
-  string metric_name = 1; // Name of the metric
-  map<string, string> match_labels = 2; // Labels of the instances to match.
-  string average_value = 3; // Average value target.
+  // Name of the metric
+  string metric_name = 1;
+  // Labels of the instances to match.
+  map<string, string> match_labels = 2;
+  // Average value target.
+  string average_value = 3;
 }
 
-// Metric emitted by kubernetes object. 
+// Metric emitted by kubernetes object.
 message ObjectMetric {
-  string metric_name = 1; // Name of the metric.
-  map<string, string> match_labels = 2; // Labels of the object to match.
-  string average_value = 3; // Average value target.
-  string value = 4; // Value target.
-  ObjectReference object_reference = 5; // Reference to the object.
+  // Name of the metric.
+  string metric_name = 1;
+  // Labels of the object to match.
+  map<string, string> match_labels = 2;
+  // Average value target.
+  string average_value = 3;
+  // Value target.
+  string value = 4;
+  // Reference to the object.
+  ObjectReference object_reference = 5;
 }
 
 // A reference to a kubernetes object.
 message ObjectReference {
-  string kind = 1; // Type of object.
-  string name = 2; // Name of the object.
-  string api_version = 3; // Api version of the object.
+  // Type of object.
+  string kind = 1;
+  // Name of the object.
+  string name = 2;
+  // Api version of the object.
+  string api_version = 3;
 }

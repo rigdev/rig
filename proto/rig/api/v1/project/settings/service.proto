@@ -6,25 +6,25 @@ import "api/v1/project/settings/settings.proto";
 import "google/protobuf/timestamp.proto";
 import "api/v1/project/project.proto";
 
-
 // Service for setting and retrieving project-wide settings.
 service Service {
   // Gets the users settings for the current project.
   rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse) {}
   // Sets the users settings for the current project.
   rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {}
-    // Get License Information.
+  // Get License Information.
   rpc GetLicenseInfo(GetLicenseInfoRequest) returns (GetLicenseInfoResponse) {}
 }
 
 // Request to get the license information of the Rig installation.
-message GetLicenseInfoRequest {
-}
+message GetLicenseInfoRequest {}
 
 // Response for getting the license information of the Rig installation.
 message GetLicenseInfoResponse {
-  api.v1.project.Plan plan = 1; // The plan of the rig installation.
-  google.protobuf.Timestamp expires_at = 2; // The expiration date of the license.
+  // The plan of the rig installation.
+  api.v1.project.Plan plan = 1;
+  // The expiration date of the license.
+  google.protobuf.Timestamp expires_at = 2;
 }
 
 // Empty get settings request
@@ -32,12 +32,14 @@ message GetSettingsRequest {}
 
 // Response for getting settings for the project.
 message GetSettingsResponse {
-  api.v1.project.settings.Settings settings = 1; // The settings.
+  // The settings.
+  api.v1.project.settings.Settings settings = 1;
 }
 
 // Request for  updating settings for a project.
 message UpdateSettingsRequest {
-  repeated api.v1.project.settings.Update updates = 1; // The updates to apply.
+  // The updates to apply.
+  repeated api.v1.project.settings.Update updates = 1;
 }
 
 // Empty response for updating a project's settings.

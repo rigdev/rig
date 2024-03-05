@@ -17,17 +17,28 @@ message Update {
 
   // A oneof field for the different settings fields.
   oneof field {
-    bool allow_register = 1; // If true, users can self register.
-    bool is_verified_email_required = 2; // If true, users must be verified via email to login.
-    bool is_verified_phone_required = 3; // If true, users must be verified via phone to login.
-    google.protobuf.Duration access_token_ttl = 4; // Access token Time to Live.
-    google.protobuf.Duration refresh_token_ttl = 5; // Refresh token Time to Live.
-    google.protobuf.Duration verification_code_ttl = 6; // Verification code Time to Live.
-    model.HashingConfig password_hashing = 7; // The hashing config used to hash passwords.
-    LoginMechanisms login_mechanisms = 8; // The allowed login mechanisms.
-    EmailProvider email_provider = 9; // The email provider. 
-    TextProvider text_provider = 10; // The text provider.
-    Template template = 11; // The templates used for sending emails and texts.
+    // If true, users can self register.
+    bool allow_register = 1;
+    // If true, users must be verified via email to login.
+    bool is_verified_email_required = 2;
+    // If true, users must be verified via phone to login.
+    bool is_verified_phone_required = 3;
+    // Access token Time to Live.
+    google.protobuf.Duration access_token_ttl = 4;
+    // Refresh token Time to Live.
+    google.protobuf.Duration refresh_token_ttl = 5;
+    // Verification code Time to Live.
+    google.protobuf.Duration verification_code_ttl = 6;
+    // The hashing config used to hash passwords.
+    model.HashingConfig password_hashing = 7;
+    // The allowed login mechanisms.
+    LoginMechanisms login_mechanisms = 8;
+    // The email provider.
+    EmailProvider email_provider = 9;
+    // The text provider.
+    TextProvider text_provider = 10;
+    // The templates used for sending emails and texts.
+    Template template = 11;
   }
 }
 
@@ -38,13 +49,16 @@ message RegisterMethod {
 
   // The user was self-registered with a login-type.
   message Signup {
-    model.LoginType login_type = 1; // The login type used to register.
+    // The login type used to register.
+    model.LoginType login_type = 1;
   }
 
   // The method used to register a user.
   oneof method {
-    System system = 1; // The user was created by the system.
-    Signup signup = 2; // The user was self-registered with a login-type.
+    // The user was created by the system.
+    System system = 1;
+    // The user was self-registered with a login-type.
+    Signup signup = 2;
   }
 }
 
@@ -55,31 +69,52 @@ message AuthMethod {
   }
 }
 
-// The users settings configuration. Settings of everything that has to do with users.
+// The users settings configuration. Settings of everything that has to do with
+// users.
 message Settings {
-  bool allow_register = 1; // If true, users can self register.
-  bool is_verified_email_required = 2; // If true, users must be verified via email to login.
-  bool is_verified_phone_required = 3; // Deprecated: Text is not supported - If true, users must be verified via phone to login.
-  google.protobuf.Duration access_token_ttl = 4; // Access token Time to Live.
-  google.protobuf.Duration refresh_token_ttl = 5; // Refresh token Time to Live.
-  google.protobuf.Duration verification_code_ttl = 6; // Verification code Time to Live.
-  model.HashingConfig password_hashing = 7; // The hashing config used to hash passwords.
-  repeated model.LoginType login_mechanisms = 8; // The allowed login mechanisms.
-  bool send_welcome_mail = 10; // If true, send a welcome email to new users.
-  EmailProviderEntry email_provider = 11; // The email provider.
-  TextProviderEntry text_provider = 12; // Deprecated: Text is not supported - The text provider.
-  Templates templates = 13; // The templates used for sending emails and texts.
+  // If true, users can self register.
+  bool allow_register = 1;
+  // If true, users must be verified via email to login.
+  bool is_verified_email_required = 2;
+  // Deprecated: Text is not supported - If true, users must be verified via
+  // phone to login.
+  bool is_verified_phone_required = 3;
+  // Access token Time to Live.
+  google.protobuf.Duration access_token_ttl = 4;
+  // Refresh token Time to Live.
+  google.protobuf.Duration refresh_token_ttl = 5;
+  // Verification code Time to Live.
+  google.protobuf.Duration verification_code_ttl = 6;
+  // The hashing config used to hash passwords.
+  model.HashingConfig password_hashing = 7;
+  // The allowed login mechanisms.
+  repeated model.LoginType login_mechanisms = 8;
+  // If true, send a welcome email to new users.
+  bool send_welcome_mail = 10;
+  // The email provider.
+  EmailProviderEntry email_provider = 11;
+  // Deprecated: Text is not supported - The text provider.
+  TextProviderEntry text_provider = 12;
+  // The templates used for sending emails and texts.
+  Templates templates = 13;
 }
 
 // The different template types.
 enum TemplateType {
-  TEMPLATE_TYPE_UNSPECIFIED = 0; // Unspecified template type.
-  TEMPLATE_TYPE_WELCOME_EMAIL = 1; // The welcome email template.
-  TEMPLATE_TYPE_EMAIL_VERIFICATION = 2; // The email verification template.
-  TEMPLATE_TYPE_EMAIL_RESET_PASSWORD = 3; // The reset password email template.
-  TEMPLATE_TYPE_WELCOME_TEXT = 4;  // Deprecated: Text is not supported - The welcome text template.
-  TEMPLATE_TYPE_TEXT_VERIFICATION = 5; // Deprecated: Text is not supported - The text verification template.
-  TEMPLATE_TYPE_TEXT_RESET_PASSWORD = 6; // Deprecated: Text is not supported - The reset password text template.
+  // Unspecified template type.
+  TEMPLATE_TYPE_UNSPECIFIED = 0;
+  // The welcome email template.
+  TEMPLATE_TYPE_WELCOME_EMAIL = 1;
+  // The email verification template.
+  TEMPLATE_TYPE_EMAIL_VERIFICATION = 2;
+  // The reset password email template.
+  TEMPLATE_TYPE_EMAIL_RESET_PASSWORD = 3;
+  TEMPLATE_TYPE_WELCOME_TEXT =
+      4;  // Deprecated: Text is not supported - The welcome text template.
+          // Deprecated: Text is not supported - The text verification template.
+  TEMPLATE_TYPE_TEXT_VERIFICATION = 5;
+  // Deprecated: Text is not supported - The reset password text template.
+  TEMPLATE_TYPE_TEXT_RESET_PASSWORD = 6;
 }
 
 // Default email provider instance.
@@ -102,8 +137,10 @@ message SmtpInstance {
 // Type of email instance in a provider.
 message EmailInstance {
   oneof instance {
-    DefaultInstance default = 1; // default from platform config.
-    MailjetInstance mailjet = 2; // Mailjet instance.
+    // default from platform config.
+    DefaultInstance default = 1;
+    // Mailjet instance.
+    MailjetInstance mailjet = 2;
     SmtpInstance smtp = 3;  // SMTP instance.
   }
 }
@@ -111,55 +148,79 @@ message EmailInstance {
 // Deprecated: Text is not supported - Type of text instance in a provider.
 message TextInstance {
   oneof instance {
-    DefaultInstance default = 1; // default from platform config.
-    TwilioInstance twilio = 2; // Twilio instance.
+    // default from platform config.
+    DefaultInstance default = 1;
+    // Twilio instance.
+    TwilioInstance twilio = 2;
   }
 }
 
 // The email provider.
 message EmailProvider {
-  string from = 1; // The email-address that the provider sends emails from.
-  model.ProviderCredentials credentials = 2; // The credentials for the provider.
-  EmailInstance instance = 3; // The instance of the provider.
+  // The email-address that the provider sends emails from.
+  string from = 1;
+  // The credentials for the provider.
+  model.ProviderCredentials credentials = 2;
+  // The instance of the provider.
+  EmailInstance instance = 3;
 }
-
 
 // an entry model for the email provider.
 message EmailProviderEntry {
-  string from = 1; // The email-address that the provider sends emails from.
-  string client_id = 2; // The client id for the provider.
-  string secret_id = 3; // The secret id for the provider.
-  EmailInstance instance = 4; // The instance of the provider.
+  // The email-address that the provider sends emails from.
+  string from = 1;
+  // The client id for the provider.
+  string client_id = 2;
+  // The secret id for the provider.
+  string secret_id = 3;
+  // The instance of the provider.
+  EmailInstance instance = 4;
 }
 
 // Deprecated: Text is not supported - The text provider.
 message TextProvider {
-  string from = 1; // The phone number that the provider sends texts from.
-  model.ProviderCredentials credentials = 2; // The credentials for the provider.
+  // The phone number that the provider sends texts from.
+  string from = 1;
+  // The credentials for the provider.
+  model.ProviderCredentials credentials = 2;
   TextInstance instance = 3;  // The instance of the provider.
 }
 
 // Deprecated: Text is not supported - An entry model for the text provider.
 message TextProviderEntry {
-  string from = 1; // The phone number that the provider sends texts from.
-  string client_id = 2; // The client id for the provider.
-  string secret_id = 3; // The secret id for the provider.
-  TextInstance instance = 4; // The instance of the provider.
+  // The phone number that the provider sends texts from.
+  string from = 1;
+  // The client id for the provider.
+  string client_id = 2;
+  // The secret id for the provider.
+  string secret_id = 3;
+  // The instance of the provider.
+  TextInstance instance = 4;
 }
 
 // A generic template model for sending emails and texts.
 message Template {
-  string body = 1; // The body of the template.
-  string subject = 2; // The subject of the template.
-  TemplateType type = 3; // The type of the template.
-  repeated string format = 4; // The format of the template.
+  // The body of the template.
+  string body = 1;
+  // The subject of the template.
+  string subject = 2;
+  // The type of the template.
+  TemplateType type = 3;
+  // The format of the template.
+  repeated string format = 4;
 }
 
 message Templates {
-  Template welcome_email = 1; // The welcome email template.
-  Template welcome_text = 2; // Deprecated: Text is not supported - The welcome text template.
-  Template reset_password_email = 3; // The reset password email template.
-  Template reset_password_text = 4; // Deprecated: Text is not supported - The reset password text template.
-  Template verify_email = 5; // The email verification template.
-  Template verify_phone_number = 6; // Deprecated: Text is not supported - The text verification template.
+  // The welcome email template.
+  Template welcome_email = 1;
+  // Deprecated: Text is not supported - The welcome text template.
+  Template welcome_text = 2;
+  // The reset password email template.
+  Template reset_password_email = 3;
+  // Deprecated: Text is not supported - The reset password text template.
+  Template reset_password_text = 4;
+  // The email verification template.
+  Template verify_email = 5;
+  // Deprecated: Text is not supported - The text verification template.
+  Template verify_phone_number = 6;
 }

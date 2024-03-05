@@ -6,16 +6,24 @@ import "google/protobuf/timestamp.proto";
 
 // Metrics for a container.
 message ContainerMetrics {
-    google.protobuf.Timestamp timestamp = 1; // Timestamp of the metrics.
-    uint64 memory_bytes = 2; // Memory usage in bytes.
-    uint64 cpu_ms = 3; // CPU usage in milliseconds.
-    uint64 storage_bytes = 4; // Storage usage in bytes.
+  // Timestamp of the metrics.
+  google.protobuf.Timestamp timestamp = 1;
+  // Memory usage in bytes.
+  uint64 memory_bytes = 2;
+  // CPU usage in milliseconds.
+  uint64 cpu_ms = 3;
+  // Storage usage in bytes.
+  uint64 storage_bytes = 4;
 }
 
 // Metrics for an instance
 message InstanceMetrics {
-    string capsule_id = 1; // Capsule of the instance.
-    string instance_id = 2; // Instance ID.
-    ContainerMetrics main_container = 3; // Main container metrics.
-    ContainerMetrics proxy_container = 4; // Proxy container metrics.
+  // Capsule of the instance.
+  string capsule_id = 1;
+  // Instance ID.
+  string instance_id = 2;
+  // Main container metrics.
+  ContainerMetrics main_container = 3;
+  // Proxy container metrics.
+  ContainerMetrics proxy_container = 4;
 }

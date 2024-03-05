@@ -7,11 +7,16 @@ import "model/author.proto";
 
 // An event is a message from a rollout
 message Event {
-  model.Author created_by = 1; // Potential author associated with the event.
-  google.protobuf.Timestamp created_at = 2; // When the event was created.
-  uint64 rollout_id = 3; // The rollout that created the event.
-  string message = 4; // A message associated with the event.
-  EventData event_data = 5; // The data associated with the event.
+  // Potential author associated with the event.
+  model.Author created_by = 1;
+  // When the event was created.
+  google.protobuf.Timestamp created_at = 2;
+  // The rollout that created the event.
+  uint64 rollout_id = 3;
+  // A message associated with the event.
+  string message = 4;
+  // The data associated with the event.
+  EventData event_data = 5;
 }
 
 // An event that is associated with a rollout.
@@ -23,12 +28,14 @@ message AbortEvent {}
 // An event that is associated with an error.
 message ErrorEvent {}
 
-
 // The data associated with an event.
 message EventData {
   oneof kind {
-    RolloutEvent rollout = 1; // If event is a rollout.
-    ErrorEvent error = 2; // if event is an error event.
-    AbortEvent abort = 3; // If event is an abort event.
+    // If event is a rollout.
+    RolloutEvent rollout = 1;
+    // if event is an error event.
+    ErrorEvent error = 2;
+    // If event is an abort event.
+    AbortEvent abort = 3;
   }
 }

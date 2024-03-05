@@ -26,80 +26,108 @@ service Service {
 
 // Request to get information about an image.
 message GetImageInfoRequest {
-  string image = 1; // The image to get information about.
+  // The image to get information about.
+  string image = 1;
 }
 
 // Reponse to GetImageInfo request, containing information about an image.
 message GetImageInfoResponse {
-  ImageId image_id = 1; // Image ID.
-  string image_string = 2; // Image from the request.
-  google.protobuf.Timestamp created_at = 3; // When the image was created.
-  api.v1.capsule.Origin origin = 4; // Origin of the image.
+  // Image ID.
+  ImageId image_id = 1;
+  // Image from the request.
+  string image_string = 2;
+  // When the image was created.
+  google.protobuf.Timestamp created_at = 3;
+  // Origin of the image.
+  api.v1.capsule.Origin origin = 4;
 }
 
 // A collection of image properties that uniquely identifies an image.
 message ImageId {
-  string registry = 1; // Docker Registry.
-  string repository = 2; // Docker Repository.
-  string tag = 3; // Tag of the image.
-  string digest = 4; // Digest of the image.
+  // Docker Registry.
+  string registry = 1;
+  // Docker Repository.
+  string repository = 2;
+  // Tag of the image.
+  string tag = 3;
+  // Digest of the image.
+  string digest = 4;
 }
 
 // Get repository information request.
 message GetRepositoryInfoRequest {
-  string registry = 1; // Docker Registry
-  string repository = 2; // Docker Repository
+  // Docker Registry
+  string registry = 1;
+  // Docker Repository
+  string repository = 2;
 }
 
 // Get repository information response.
 message GetRepositoryInfoResponse {
-  repeated Tag tags = 1; // Image Tags in the repository.
+  // Image Tags in the repository.
+  repeated Tag tags = 1;
 }
 
 // A docker image tag.
 message Tag {
-  string tag = 1; // Tag of the image.
-  google.protobuf.Timestamp image_created_at = 2; // When the image was created.
+  // Tag of the image.
+  string tag = 1;
+  // When the image was created.
+  google.protobuf.Timestamp image_created_at = 2;
 }
-
 
 // Request to create a new build in a capsule.
 message CreateRequest {
-  string capsule_id = 1; // Capsule to create the build in.
-  string image = 2; // Image to create the build from.
-  string digest = 3; // Digest of the image.
-  api.v1.capsule.Origin origin = 4; // Origin of the image
-  map<string, string> labels = 5; // Meta data to attach to the build.
-  bool skip_image_check = 6; // if true skip check if image exists.
-  string project_id = 7; // Project ID.
+  // Capsule to create the build in.
+  string capsule_id = 1;
+  // Image to create the build from.
+  string image = 2;
+  // Digest of the image.
+  string digest = 3;
+  // Origin of the image
+  api.v1.capsule.Origin origin = 4;
+  // Meta data to attach to the build.
+  map<string, string> labels = 5;
+  // if true skip check if image exists.
+  bool skip_image_check = 6;
+  // Project ID.
+  string project_id = 7;
 }
 
 // Response to create a new build in a capsule.
 message CreateResponse {
-  string build_id = 1; // ID of the build.
-  bool created_new_build = 2; // True if a new build was created.
+  // ID of the build.
+  string build_id = 1;
+  // True if a new build was created.
+  bool created_new_build = 2;
 }
-
 
 // Request to list builds.
 message ListRequest {
-  string capsule_id = 1; // Capsule to list builds in.
-  model.Pagination pagination = 2; // Pagination options.
-  string project_id = 3; // Project ID.
+  // Capsule to list builds in.
+  string capsule_id = 1;
+  // Pagination options.
+  model.Pagination pagination = 2;
+  // Project ID.
+  string project_id = 3;
 }
-
 
 // Reponse to list builds.
 message ListResponse {
-  repeated api.v1.capsule.Build builds = 1; // Builds in the capsule.
-  uint64 total = 2; // Total number of builds in the capsule.
+  // Builds in the capsule.
+  repeated api.v1.capsule.Build builds = 1;
+  // Total number of builds in the capsule.
+  uint64 total = 2;
 }
 
 // Request to delete a build.
 message DeleteRequest {
-  string capsule_id = 1; // Capsule to delete the build from.
-  string build_id = 2; // Build to delete.
-  string project_id = 3; // Project ID.
+  // Capsule to delete the build from.
+  string capsule_id = 1;
+  // Build to delete.
+  string build_id = 2;
+  // Project ID.
+  string project_id = 3;
 }
 
 // Empty response to delete a build.
@@ -107,12 +135,16 @@ message DeleteResponse {}
 
 // Request to get a build.
 message GetRequest {
-  string capsule_id = 1; // Capsule to get the build from.
-  string build_id = 2; // Build to get.
-  string project_id = 3; // Project ID.
+  // Capsule to get the build from.
+  string capsule_id = 1;
+  // Build to get.
+  string build_id = 2;
+  // Project ID.
+  string project_id = 3;
 }
 
 // Response to get a build.
 message GetResponse {
-  api.v1.capsule.Build build = 1; // The build to retrieve
+  // The build to retrieve
+  api.v1.capsule.Build build = 1;
 }

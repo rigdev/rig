@@ -409,7 +409,8 @@ if the user was created by the system.
 <a name="model-ServiceAccountEntry"></a>
 
 ### ServiceAccountEntry
-Entry model of a service account - placed in models to prevent cyclic imports.
+Entry model of a service account - placed in models to prevent cyclic
+imports.
 
 
 | Field | Type | Label | Description |
@@ -559,7 +560,8 @@ Userinfo - placed in models to prevent cyclic imports.
 <a name="api-v1-authentication-DeleteRequest"></a>
 
 ### DeleteRequest
-Request to delete the logged in user. The user ID etc. is taken from the token.
+Request to delete the logged in user. The user ID etc. is taken from the
+token.
 
 
 
@@ -579,7 +581,8 @@ Empty response to the delete request.
 <a name="api-v1-authentication-GetAuthConfigRequest"></a>
 
 ### GetAuthConfigRequest
-Empty Request to get the auth config containing the available login mechanisms and if self-registering is enabled.
+Empty Request to get the auth config containing the available login
+mechanisms and if self-registering is enabled.
 
 
 
@@ -589,7 +592,8 @@ Empty Request to get the auth config containing the available login mechanisms a
 <a name="api-v1-authentication-GetAuthConfigResponse"></a>
 
 ### GetAuthConfigResponse
-Response with the auth config containing the available login mechanisms and if self-registering is enabled.
+Response with the auth config containing the available login mechanisms and
+if self-registering is enabled.
 
 
 | Field | Type | Label | Description |
@@ -609,7 +613,8 @@ Response with the auth config containing the available login mechanisms and if s
 <a name="api-v1-authentication-GetRequest"></a>
 
 ### GetRequest
-Get request to get the logged in user. The user ID etc. is taken from the token.
+Get request to get the logged in user. The user ID etc. is taken from the
+token.
 
 
 
@@ -693,9 +698,7 @@ Request to refresh the access and refresh token of the logged in user.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| refresh_token | [string](#string) |  | The access token of the user
-
-Refresh token matching the access token. |
+| refresh_token | [string](#string) |  | The access token of the user Refresh token matching the access token. |
 
 
 
@@ -720,7 +723,8 @@ Response with new access and refresh token.
 <a name="api-v1-authentication-RegisterRequest"></a>
 
 ### RegisterRequest
-Register request for users to self-register. This is only possible with the register bool set in users settings.
+Register request for users to self-register. This is only possible with the
+register bool set in users settings.
 
 
 | Field | Type | Label | Description |
@@ -752,7 +756,8 @@ Register response with tokens and user information.
 <a name="api-v1-authentication-ResetPasswordRequest"></a>
 
 ### ResetPasswordRequest
-Request to reset the password of a user with a verification code sent to the email.
+Request to reset the password of a user with a verification code sent to the
+email.
 
 
 | Field | Type | Label | Description |
@@ -818,7 +823,8 @@ maintain backwards compatibility.
 <a name="api-v1-authentication-SendPasswordResetRequest"></a>
 
 ### SendPasswordResetRequest
-Request to send a reset password email to the user. This is only possible if an email provider is configured, and the user has an email.
+Request to send a reset password email to the user. This is only possible if
+an email provider is configured, and the user has an email.
 
 
 | Field | Type | Label | Description |
@@ -849,8 +855,9 @@ Empty response to the send password reset request
 
 ### SendVerificationEmailRequest
 Request to send an email containing the code for the email verification flow.
-This is an upsert, and will invalidate the current verification-code if it exists.
-Only possible if an email-provider is configured, and the user has en email.
+This is an upsert, and will invalidate the current verification-code if it
+exists. Only possible if an email-provider is configured, and the user has en
+email.
 
 
 | Field | Type | Label | Description |
@@ -880,7 +887,8 @@ Empty response for sending a verification email
 <a name="api-v1-authentication-VerifyEmailRequest"></a>
 
 ### VerifyEmailRequest
-Request to verify the email of a user with a verification code sent to the email.
+Request to verify the email of a user with a verification code sent to the
+email.
 
 
 | Field | Type | Label | Description |
@@ -907,7 +915,8 @@ Empty response to the Verify Email Request.
 <a name="api-v1-authentication-VerifyPhoneNumberRequest"></a>
 
 ### VerifyPhoneNumberRequest
-Request to verify the phone number of a user with a verification code sent to the phone number.
+Request to verify the phone number of a user with a verification code sent to
+the phone number.
 
 
 | Field | Type | Label | Description |
@@ -958,7 +967,8 @@ The type of SSO. Currently only OIDC is supported.
 <a name="api-v1-capsule-Build"></a>
 
 ### Build
-Build is an environment wide abstraction of an image along with metadata for a capsule.
+Build is an environment wide abstraction of an image along with metadata for
+a capsule.
 
 
 | Field | Type | Label | Description |
@@ -3801,7 +3811,8 @@ Empty delete response.
 <a name="api-v1-capsule-DeployRequest"></a>
 
 ### DeployRequest
-Deploy request. This will deploy a number of changes which results in a new rollout.
+Deploy request. This will deploy a number of changes which results in a new
+rollout.
 
 
 | Field | Type | Label | Description |
@@ -3856,7 +3867,8 @@ Deploy response.
 <a name="api-v1-capsule-ExecuteRequest"></a>
 
 ### ExecuteRequest
-Execute request. This can either be a request to start a request, a terminal resize msg or a stream data msg.
+Execute request. This can either be a request to start a request, a terminal
+resize msg or a stream data msg.
 
 
 | Field | Type | Label | Description |
@@ -4079,7 +4091,8 @@ GetRolloutRequest gets a single rollout.
 <a name="api-v1-capsule-GetRolloutResponse"></a>
 
 ### GetRolloutResponse
-GetRolloutResponse returns a single rollout for a capsule and an environment in a project.
+GetRolloutResponse returns a single rollout for a capsule and an environment
+in a project.
 
 
 | Field | Type | Label | Description |
@@ -4094,7 +4107,8 @@ GetRolloutResponse returns a single rollout for a capsule and an environment in 
 <a name="api-v1-capsule-ListEventsRequest"></a>
 
 ### ListEventsRequest
-ListEvents request for listing rollout events for a given rollout in a capsule and environment.
+ListEvents request for listing rollout events for a given rollout in a
+capsule and environment.
 
 
 | Field | Type | Label | Description |
@@ -4723,7 +4737,8 @@ Generic metadata model.
 <a name="api-v1-group-Group"></a>
 
 ### Group
-Group is a named collection of users and service accounts with optional metadata.
+Group is a named collection of users and service accounts with optional
+metadata.
 
 
 | Field | Type | Label | Description |
@@ -5245,7 +5260,8 @@ Request to get all objects of a given kind in a project and environment.
 <a name="api-v1-project-GetObjectsByKindResponse"></a>
 
 ### GetObjectsByKindResponse
-Response for getting all objects of a given kind in a project and environment.
+Response for getting all objects of a given kind in a project and
+environment.
 
 
 | Field | Type | Label | Description |
@@ -5589,7 +5605,8 @@ Empty response for updating a project's settings.
 <a name="api-v1-role-EntityID"></a>
 
 ### EntityID
-EntityID is a oneof type that can be used to represent a user, service account or group.
+EntityID is a oneof type that can be used to represent a user, service
+account or group.
 
 
 | Field | Type | Label | Description |
@@ -6134,7 +6151,8 @@ Update message to update a user.
 <a name="api-v1-user-Update-ResetSessions"></a>
 
 ### Update.ResetSessions
-if sessions are reset, all sessions will be invalidated and a new session will be created.
+if sessions are reset, all sessions will be invalidated and a new session
+will be created.
 
 
 
@@ -6607,7 +6625,8 @@ The user was created by the system.
 <a name="api-v1-user-settings-Settings"></a>
 
 ### Settings
-The users settings configuration. Settings of everything that has to do with users.
+The users settings configuration. Settings of everything that has to do with
+users.
 
 
 | Field | Type | Label | Description |

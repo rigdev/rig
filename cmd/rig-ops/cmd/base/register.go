@@ -116,7 +116,7 @@ func NewRigClient(ctx context.Context) (rig.Client, error) {
 	found := false
 	if Flags.Project != "" {
 		for _, p := range projectListResp.Msg.Projects {
-			if p.Name == Flags.Project {
+			if p.GetProjectId() == Flags.Project {
 				found = true
 				break
 			}
@@ -131,7 +131,7 @@ func NewRigClient(ctx context.Context) (rig.Client, error) {
 
 		projectChoices := make([]string, 0, len(projectListResp.Msg.Projects))
 		for _, p := range projectListResp.Msg.Projects {
-			projectChoices = append(projectChoices, p.Name)
+			projectChoices = append(projectChoices, p.GetProjectId())
 		}
 
 		_, Flags.Project, err = common.PromptSelect(promptStr, projectChoices)

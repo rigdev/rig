@@ -4,6 +4,8 @@ package model;
 
 // Generic metadata model.
 message Metadata {
-  string key = 1; // Key of the metadata.
-  bytes value = 2; // Value of the metadata.
+  // Key of the metadata.
+  string key = 1;
+  // Value of the metadata.
+  bytes value = 2;
 }

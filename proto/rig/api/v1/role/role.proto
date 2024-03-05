@@ -6,43 +6,63 @@ import "google/protobuf/timestamp.proto";
 import "model/metadata.proto";
 
 // Role model for Role based access control.
-message Role {  
-  string role_id = 1; // Unique ID of the role.
-  repeated Permission permissions = 2; // The permissions granted to the role.
-  map<string, bytes> metadata = 3; // Metadata associated with the role.
-  google.protobuf.Timestamp created_at = 4; // Timestamp when the role was created.
-  google.protobuf.Timestamp updated_at = 5; // Timestamp when the role was last updated.
+message Role {
+  // Unique ID of the role.
+  string role_id = 1;
+  // The permissions granted to the role.
+  repeated Permission permissions = 2;
+  // Metadata associated with the role.
+  map<string, bytes> metadata = 3;
+  // Timestamp when the role was created.
+  google.protobuf.Timestamp created_at = 4;
+  // Timestamp when the role was last updated.
+  google.protobuf.Timestamp updated_at = 5;
 }
 
-// EntityID is a oneof type that can be used to represent a user, service account or group.
+// EntityID is a oneof type that can be used to represent a user, service
+// account or group.
 message EntityID {
   // The type of entity that has a role.
   oneof kind {
-    string user_id = 1; // User entity.
-    string service_account_id = 2; // Service account entity.
-    string group_id = 3; // Group entity.
+    // User entity.
+    string user_id = 1;
+    // Service account entity.
+    string service_account_id = 2;
+    // Group entity.
+    string group_id = 3;
   }
 }
 
 // A permission that is granted to a role.
 message Permission {
-  string action = 1; // The action that is action permission to perform.
-  Scope scope = 2; // The scope in which the action can be performed.
+  // The action that is action permission to perform.
+  string action = 1;
+  // The scope in which the action can be performed.
+  Scope scope = 2;
 }
 
 // Scope for permissions.
 message Scope {
-  string resource = 1; // The resource on which the action can be performed. This consists of a type, and an optional ID. fx. "user/*", "group/admin"
-  string environment = 2; // The environment in which the action can be performed. This can be a wildcard.
-  string project = 3; // The project in which the action can be performed. This can be a wildcard.
+  // The resource on which the action can be performed. This consists of a type,
+  // and an optional ID. fx. "user/*", "group/admin"
+  string resource = 1;
+  // The environment in which the action can be performed. This can be a
+  // wildcard.
+  string environment = 2;
+  // The project in which the action can be performed. This can be a wildcard.
+  string project = 3;
 }
 
 // Update message to update a field of a role.
 message Update {
-  oneof update { 
-    Permission add_permission = 1; // Adding a permission to the role.
-    Permission remove_permission = 2; // Removing a permission from the role.
-    model.Metadata set_metadata = 3; // Update or create a metadata field on the role.
-    string delete_metadata_key = 4; // Delete a metadata field on the role.
+  oneof update {
+    // Adding a permission to the role.
+    Permission add_permission = 1;
+    // Removing a permission from the role.
+    Permission remove_permission = 2;
+    // Update or create a metadata field on the role.
+    model.Metadata set_metadata = 3;
+    // Delete a metadata field on the role.
+    string delete_metadata_key = 4;
   }
 }

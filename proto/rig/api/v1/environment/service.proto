@@ -13,14 +13,16 @@ service Service {
 
 // Request for listing available environments.
 message ListRequest {
-  model.Pagination pagination = 2; // Pagination options.
+  // Pagination options.
+  model.Pagination pagination = 2;
 }
-
 
 // Response for listing available environments.
 message ListResponse {
-  repeated api.v1.environment.Environment environments = 1; // List of environments.
-  string platform_version = 2; // The version of the Rig-platform.
+  // List of environments.
+  repeated api.v1.environment.Environment environments = 1;
+  // The version of the Rig-platform.
+  string platform_version = 2;
 }
 
 message ProjectEnvironment {
@@ -35,10 +37,9 @@ message ProjectEnvironmentNamespace {
 }
 
 message GetNamespacesRequest {
-    repeated ProjectEnvironment project_envs = 1;
+  repeated ProjectEnvironment project_envs = 1;
 }
 
 message GetNamespacesResponse {
   repeated ProjectEnvironmentNamespace namespaces = 2;
 }
-

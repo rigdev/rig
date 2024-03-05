@@ -25,18 +25,22 @@ service Service {
 
 // Request to create a role.
 message CreateRequest {
-  string role_id = 1; // The id / name of the role to create.
-  repeated api.v1.role.Permission permissions = 2; // The permissions to assign to the role.
+  // The id / name of the role to create.
+  string role_id = 1;
+  // The permissions to assign to the role.
+  repeated api.v1.role.Permission permissions = 2;
 }
 
 // Response to create a role.
 message CreateResponse {
-  api.v1.role.Role role = 1; // The created role.
+  // The created role.
+  api.v1.role.Role role = 1;
 }
 
 // Request to delete a role.
 message DeleteRequest {
-  string role_id = 1; // The id / name of the role to delete.
+  // The id / name of the role to delete.
+  string role_id = 1;
 }
 
 // Empty Response to delete a role.
@@ -44,18 +48,22 @@ message DeleteResponse {}
 
 // Request to list roles.
 message ListRequest {
-  model.Pagination pagination = 1; // Pagination options.
+  // Pagination options.
+  model.Pagination pagination = 1;
 }
 
 // Response to list roles.
 message ListResponse {
-  repeated api.v1.role.Role roles = 1; // The retrieved roles.
+  // The retrieved roles.
+  repeated api.v1.role.Role roles = 1;
 }
 
 // Request to update a role.
 message UpdateRequest {
-  string role_id = 1; // the role to update.
-  repeated api.v1.role.Update updates = 2; // The updates to apply to the role.
+  // the role to update.
+  string role_id = 1;
+  // The updates to apply to the role.
+  repeated api.v1.role.Update updates = 2;
 }
 
 // Empty update response.
@@ -63,18 +71,22 @@ message UpdateResponse {}
 
 // Request to retrieve a role.
 message GetRequest {
-  string role_id = 1; // The role to retrieve.
+  // The role to retrieve.
+  string role_id = 1;
 }
 
 // Response to getting a role.
 message GetResponse {
-  api.v1.role.Role role = 1; // The retrieved role.
+  // The retrieved role.
+  api.v1.role.Role role = 1;
 }
 
 // Assign a role to an entity.
 message AssignRequest {
-  string role_id = 1; // The role to assign.
-  api.v1.role.EntityID entity_id = 2; // The entity to assign the role to.
+  // The role to assign.
+  string role_id = 1;
+  // The entity to assign the role to.
+  api.v1.role.EntityID entity_id = 2;
 }
 
 // Empty response of assigning a role to an entity.
@@ -82,12 +94,11 @@ message AssignResponse {}
 
 // Revoke a role from an entity.
 message RevokeRequest {
-  string role_id = 1; // The role to revoke.
-  api.v1.role.EntityID entity_id = 2; // The entity to revoke the role from.
+  // The role to revoke.
+  string role_id = 1;
+  // The entity to revoke the role from.
+  api.v1.role.EntityID entity_id = 2;
 }
 
 // Empty response for revoking a role.
 message RevokeResponse {}
-
-
-

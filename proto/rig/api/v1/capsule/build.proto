@@ -5,28 +5,41 @@ package api.v1.capsule;
 import "google/protobuf/timestamp.proto";
 import "model/author.proto";
 
-// Build is an environment wide abstraction of an image along with metadata for a capsule.
+// Build is an environment wide abstraction of an image along with metadata for
+// a capsule.
 message Build {
-  string build_id = 2; // unique identifier for the build
-  string digest = 7; // digest of the image
-  string repository = 8; // repository of the image
-  string tag = 9; // tag of the image
-  model.Author created_by = 3; // user who created the build
-  google.protobuf.Timestamp created_at = 4; // time the build was created
-  Origin origin = 5; // origin of the build
-  map<string, string> labels = 6; // labels of the build
+  // unique identifier for the build
+  string build_id = 2;
+  // digest of the image
+  string digest = 7;
+  // repository of the image
+  string repository = 8;
+  // tag of the image
+  string tag = 9;
+  // user who created the build
+  model.Author created_by = 3;
+  // time the build was created
+  google.protobuf.Timestamp created_at = 4;
+  // origin of the build
+  Origin origin = 5;
+  // labels of the build
+  map<string, string> labels = 6;
 }
 
 // GitReference is an origin of a build.
 message GitReference {
-  string repository_url = 1; // The url of the git repository
-  string commit_sha = 2; // The commit sha of the git repository
-  string commit_url = 3; // The commit url of the git repository
+  // The url of the git repository
+  string repository_url = 1;
+  // The commit sha of the git repository
+  string commit_sha = 2;
+  // The commit url of the git repository
+  string commit_url = 3;
 }
 
 // Where the build came from
 message Origin {
   oneof kind {
-    GitReference git_reference = 1; // The build came from a git repository
+    // The build came from a git repository
+    GitReference git_reference = 1;
   }
 }

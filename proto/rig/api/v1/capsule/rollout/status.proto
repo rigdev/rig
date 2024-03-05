@@ -6,171 +6,248 @@ import "google/protobuf/timestamp.proto";
 
 // Status is a representation of the current state of a rollout.
 message Status {
-  uint64 rollout_id = 1; // The ID of the rollout.
-  State state = 2; // The current state of the rollout.
-  Stages stages = 3; // The stages of the rollout.
-  google.protobuf.Timestamp updated_at = 4; // The last time the rollout was updated.
-  Result result = 5; // The result of the rollout.
+  // The ID of the rollout.
+  uint64 rollout_id = 1;
+  // The current state of the rollout.
+  State state = 2;
+  // The stages of the rollout.
+  Stages stages = 3;
+  // The last time the rollout was updated.
+  google.protobuf.Timestamp updated_at = 4;
+  // The result of the rollout.
+  Result result = 5;
 }
 
 // Information about a stage of a rollout.
 message StageInfo {
-  string name = 1; // Name of the stage.
-  google.protobuf.Timestamp updated_at = 2; // The last time the stage was updated.
-  StageState state = 3; // The current state of the stage.
-  google.protobuf.Timestamp started_at = 4; // The time the stage started.
+  // Name of the stage.
+  string name = 1;
+  // The last time the stage was updated.
+  google.protobuf.Timestamp updated_at = 2;
+  // The current state of the stage.
+  StageState state = 3;
+  // The time the stage started.
+  google.protobuf.Timestamp started_at = 4;
 }
 
 // Different states a stage can be in.
 enum StageState {
-  STAGE_STATE_UNSPECIFIED = 0; // The state is unspecified.
-  STAGE_STATE_DEPLOYING = 1; // The stage is deploying.
-  STAGE_STATE_RUNNING = 2; // The stage is running.
-  STAGE_STATE_STOPPED = 3; // The stage is stopped.
+  // The state is unspecified.
+  STAGE_STATE_UNSPECIFIED = 0;
+  // The stage is deploying.
+  STAGE_STATE_DEPLOYING = 1;
+  // The stage is running.
+  STAGE_STATE_RUNNING = 2;
+  // The stage is stopped.
+  STAGE_STATE_STOPPED = 3;
 }
 
 // A generic step of a stage.
 message GenericStep {
-  StepInfo info = 1; // Step information.
+  // Step information.
+  StepInfo info = 1;
 }
 
 // Information about a step of a stage.
 message StepInfo {
-  string name = 1; // Name of the step.
-  string message = 2; // Messages in the step.
-  google.protobuf.Timestamp updated_at = 3; // The last time the step was updated.
-  StepState state = 4; // The current state of the step.
-  google.protobuf.Timestamp started_at = 5; // The time the step started.
+  // Name of the step.
+  string name = 1;
+  // Messages in the step.
+  string message = 2;
+  // The last time the step was updated.
+  google.protobuf.Timestamp updated_at = 3;
+  // The current state of the step.
+  StepState state = 4;
+  // The time the step started.
+  google.protobuf.Timestamp started_at = 5;
 }
 
 // Different states a step can be in.
 enum StepState {
-  STEP_STATE_UNSPECIFIED = 0; // The state is unspecified.
-  STEP_STATE_ONGOING = 1; // The step is ongoing.
-  STEP_STATE_FAILED = 2; // The step failed.
-  STEP_STATE_DONE = 3; // The step is done.
+  // The state is unspecified.
+  STEP_STATE_UNSPECIFIED = 0;
+  // The step is ongoing.
+  STEP_STATE_ONGOING = 1;
+  // The step failed.
+  STEP_STATE_FAILED = 2;
+  // The step is done.
+  STEP_STATE_DONE = 3;
 }
 
 // Different states a rollout can be in.
 enum State {
-  STATE_UNSPECIFIED = 0; // The state is unspecified.
-  STATE_PREPARING = 1; // The rollout is preparing.
-  STATE_CONFIGURE = 2; // The rollout is configuring.
-  STATE_RESOURCE_CREATION = 3; // The rollout is creating resources.
-  STATE_RUNNING = 4; // The rollout is running.
-  STATE_STOPPED = 5; // The rollout is stopped.
+  // The state is unspecified.
+  STATE_UNSPECIFIED = 0;
+  // The rollout is preparing.
+  STATE_PREPARING = 1;
+  // The rollout is configuring.
+  STATE_CONFIGURE = 2;
+  // The rollout is creating resources.
+  STATE_RESOURCE_CREATION = 3;
+  // The rollout is running.
+  STATE_RUNNING = 4;
+  // The rollout is stopped.
+  STATE_STOPPED = 5;
 }
 
 // Different result of a rollout.
 enum Result {
-  RESULT_UNSPECIFIED = 0; // The result is unspecified.
-  RESULT_REPLACED = 1; // The rollout has been replaced.
-  RESULT_FAILED = 2; // The rollout has failed.
-  RESULT_ABORTED = 3; // The rollout has been aborted.
-  RESULT_ROLLBACK = 4; // The rollout has been rolled back.
+  // The result is unspecified.
+  RESULT_UNSPECIFIED = 0;
+  // The rollout has been replaced.
+  RESULT_REPLACED = 1;
+  // The rollout has failed.
+  RESULT_FAILED = 2;
+  // The rollout has been aborted.
+  RESULT_ABORTED = 3;
+  // The rollout has been rolled back.
+  RESULT_ROLLBACK = 4;
 }
 
 // The three stages of a rollout
 message Stages {
-  ConfigureStage configure = 1; // The configure stage.
-  ResourceCreationStage resource_creation = 2; // The resource creation stage.
-  RunningStage running = 3; // The running stage.
+  // The configure stage.
+  ConfigureStage configure = 1;
+  // The resource creation stage.
+  ResourceCreationStage resource_creation = 2;
+  // The running stage.
+  RunningStage running = 3;
 }
 
 // The configure stage.
 message ConfigureStage {
-  StageInfo info = 1; // Stage information.
-  repeated ConfigureStep steps = 2; // The steps of the stage.
+  // Stage information.
+  StageInfo info = 1;
+  // The steps of the stage.
+  repeated ConfigureStep steps = 2;
 }
 
 // A step of the configure stage.
 message ConfigureStep {
   oneof step {
-    GenericStep generic = 1; // A generic step.
-    ConfigureCapsuleStep configure_capsule = 2; // A step configuring a capsule.
-    ConfigureFileStep configure_file = 3; // A step configuring a file.
-    ConfigureEnvStep configure_env = 4; // A step configuring an environment.
-    ConfigureCommitStep commit = 5; // A step for commiting the changes to git.
+    // A generic step.
+    GenericStep generic = 1;
+    // A step configuring a capsule.
+    ConfigureCapsuleStep configure_capsule = 2;
+    // A step configuring a file.
+    ConfigureFileStep configure_file = 3;
+    // A step configuring an environment.
+    ConfigureEnvStep configure_env = 4;
+    // A step for commiting the changes to git.
+    ConfigureCommitStep commit = 5;
   }
 }
 
 // A step configuring a capsule.
 message ConfigureCapsuleStep {
-  StepInfo info = 1; // Step information.
-  ConfigureResult state = 2; // The state of the step.
+  // Step information.
+  StepInfo info = 1;
+  // The state of the step.
+  ConfigureResult state = 2;
 }
 
 // A step configuring a file.
 message ConfigureFileStep {
-  StepInfo info = 1; // Step information.
-  ConfigureResult state = 2; // The result of the file configuration.
-  string path = 3; // The path of the file.
-  bool is_secret = 4; // Whether the file is a secret.
+  // Step information.
+  StepInfo info = 1;
+  // The result of the file configuration.
+  ConfigureResult state = 2;
+  // The path of the file.
+  string path = 3;
+  // Whether the file is a secret.
+  bool is_secret = 4;
 }
 
 // A step configuring an environment.
 message ConfigureEnvStep {
-  StepInfo info = 1; // Step information.
-  ConfigureResult state = 2; // The result of the environment configuration.
-  bool is_secret = 3; // Whether the environment is a secret.
+  // Step information.
+  StepInfo info = 1;
+  // The result of the environment configuration.
+  ConfigureResult state = 2;
+  // Whether the environment is a secret.
+  bool is_secret = 3;
 }
 
 // A step committing the changes to git
 message ConfigureCommitStep {
-  StepInfo info = 1; // Step information
-  string commit_hash = 2; // The hash of the commit containing the changes
-  string commit_url = 3; // The url to the commit (if known. May be empty)
+  // Step information
+  StepInfo info = 1;
+  // The hash of the commit containing the changes
+  string commit_hash = 2;
+  // The url to the commit (if known. May be empty)
+  string commit_url = 3;
 }
 
 // The result of a configuration step.
 enum ConfigureResult {
-  CONFIGURE_RESULT_UNSPECIFIED = 0; // The result is unspecified.
-  CONFIGURE_RESULT_CREATED = 1; // The resource is to be created.
-  CONFIGURE_RESULT_UPDATED = 2; // The resource is to be updated.
-  CONFIGURE_RESULT_NO_CHANGE = 3; // The resource has no change.
-  CONFIGURE_RESULT_DELETED = 4; // The resource is to be deleted.
+  // The result is unspecified.
+  CONFIGURE_RESULT_UNSPECIFIED = 0;
+  // The resource is to be created.
+  CONFIGURE_RESULT_CREATED = 1;
+  // The resource is to be updated.
+  CONFIGURE_RESULT_UPDATED = 2;
+  // The resource has no change.
+  CONFIGURE_RESULT_NO_CHANGE = 3;
+  // The resource is to be deleted.
+  CONFIGURE_RESULT_DELETED = 4;
 }
 
 // The resource creation stage.
 message ResourceCreationStage {
-  StageInfo info = 1; // Stage information.
-  repeated ResourceCreationStep steps = 2; // The steps of the stage.
+  // Stage information.
+  StageInfo info = 1;
+  // The steps of the stage.
+  repeated ResourceCreationStep steps = 2;
 }
 
 // A step of the resource creation stage.
 message ResourceCreationStep {
   oneof step {
-    GenericStep generic = 1; // A generic step.
-    CreateResourceStep create_resource = 2; // A step creating a resource.
+    // A generic step.
+    GenericStep generic = 1;
+    // A step creating a resource.
+    CreateResourceStep create_resource = 2;
   }
 }
 
 // A step creating a resource.
 message CreateResourceStep {
-  StepInfo info = 1; // Step information.
-  string kind = 2; // The kind of the resource.
-  string name = 3; // The name of the resource.
+  // Step information.
+  StepInfo info = 1;
+  // The kind of the resource.
+  string kind = 2;
+  // The name of the resource.
+  string name = 3;
 }
 
 // The running stage.
 message RunningStage {
-  StageInfo info = 1; // Stage information.
-  repeated RunningStep steps = 2; // The steps of the stage.
+  // Stage information.
+  StageInfo info = 1;
+  // The steps of the stage.
+  repeated RunningStep steps = 2;
 }
 
 // A step of the running stage.
 message RunningStep {
   oneof step {
-    GenericStep generic = 1; // A generic step.
-    InstancesStep instances = 2; // A step containing information on the instances of the rollout.
+    // A generic step.
+    GenericStep generic = 1;
+    // A step containing information on the instances of the rollout.
+    InstancesStep instances = 2;
   }
 }
 
 // Information on the instances of the rollout.
 message InstancesStep {
-  StepInfo info = 1; // Step information.
-  uint32 num_updated = 2; // The number of updated instances.
-  uint32 num_ready = 3; // The number of ready instances.
-  uint32 num_stuck = 4; // The number of stuck instances.
-  uint32 num_wrong_version = 5; // The number of instances with the wrong version.
+  // Step information.
+  StepInfo info = 1;
+  // The number of updated instances.
+  uint32 num_updated = 2;
+  // The number of ready instances.
+  uint32 num_ready = 3;
+  // The number of stuck instances.
+  uint32 num_stuck = 4;
+  // The number of instances with the wrong version.
+  uint32 num_wrong_version = 5;
 }

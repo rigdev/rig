@@ -4,36 +4,47 @@ package api.v1.project.settings;
 
 // Project wide settings.
 message Settings {
-  repeated DockerRegistry docker_registries = 4; // Docker registries for images.
+  // Docker registries for images.
+  repeated DockerRegistry docker_registries = 4;
 }
 
 // Docker registry.
 message DockerRegistry {
-  string secret_id = 1; // The secret id of the docker registry.
-  string host = 2; // Host of the docker registry/
+  // The secret id of the docker registry.
+  string secret_id = 1;
+  // Host of the docker registry/
+  string host = 2;
 }
 
 // Message for adding a docker registry
 message AddDockerRegistry {
-  string host = 1; // The host of the docker registry.
+  // The host of the docker registry.
+  string host = 1;
   oneof field {
-    string auth = 2; // authentication string to the docker registry.
-    DockerRegistryCredentials credentials = 3; // Credentials for the docker registry.
+    // authentication string to the docker registry.
+    string auth = 2;
+    // Credentials for the docker registry.
+    DockerRegistryCredentials credentials = 3;
   }
 }
 
 // Credentials for a docker registry.
 message DockerRegistryCredentials {
-  string username = 1; // Username for the docker registry.
-  string password = 2; // Password for the docker registry.
-  string email = 3; // Email for the docker registry.
+  // Username for the docker registry.
+  string username = 1;
+  // Password for the docker registry.
+  string password = 2;
+  // Email for the docker registry.
+  string email = 3;
 }
 
 // Update message for project settings.
 message Update {
   // A number of updates to apply to the project settings.
   oneof field {
-    AddDockerRegistry add_docker_registry = 4; // Add a docker registry.
-    string delete_docker_registry = 5; // Delete a docker registry.
+    // Add a docker registry.
+    AddDockerRegistry add_docker_registry = 4;
+    // Delete a docker registry.
+    string delete_docker_registry = 5;
   }
 }

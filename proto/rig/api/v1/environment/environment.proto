@@ -4,7 +4,10 @@ package api.v1.environment;
 
 // Environment model.
 message Environment {
-  string environment_id = 1; // ID of the environment.
-  bool default = 2; // If true, this is the default environment.
-  string operator_version = 3; // The version of the Rig-operator CRD for this environment.
+  // ID of the environment.
+  string environment_id = 1;
+  // If true, this is the default environment.
+  bool default = 2;
+  // The version of the Rig-operator CRD for this environment.
+  string operator_version = 3;
 }

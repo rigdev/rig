@@ -32,32 +32,41 @@ service Service {
   // Verify phone number
   rpc VerifyPhoneNumber(VerifyPhoneNumberRequest)
       returns (VerifyPhoneNumberResponse) {}
-  rpc SendVerificationEmail(SendVerificationEmailRequest) returns (SendVerificationEmailResponse) {}
+  rpc SendVerificationEmail(SendVerificationEmailRequest)
+      returns (SendVerificationEmailResponse) {}
 }
 
 // Request to send an email containing the code for the email verification flow.
-// This is an upsert, and will invalidate the current verification-code if it exists.
-// Only possible if an email-provider is configured, and the user has en email.
+// This is an upsert, and will invalidate the current verification-code if it
+// exists. Only possible if an email-provider is configured, and the user has en
+// email.
 message SendVerificationEmailRequest {
-  model.UserIdentifier identifier = 1; // User identifier of the user.
+  // User identifier of the user.
+  model.UserIdentifier identifier = 1;
 }
 
 // Empty response for sending a verification email
 message SendVerificationEmailResponse {
-  string token = 1; // JWT token to verify the email.
+  // JWT token to verify the email.
+  string token = 1;
 }
 
-// Request to verify the email of a user with a verification code sent to the email.
+// Request to verify the email of a user with a verification code sent to the
+// email.
 message VerifyEmailRequest {
-  string code = 1; // The verification code.
-  string email = 2; // The email of the user.
-  string token = 3; // JWT token to verify the email.
+  // The verification code.
+  string code = 1;
+  // The email of the user.
+  string email = 2;
+  // JWT token to verify the email.
+  string token = 3;
 }
 
 // Empty response to the Verify Email Request.
 message VerifyEmailResponse {}
 
-// Request to verify the phone number of a user with a verification code sent to the phone number.
+// Request to verify the phone number of a user with a verification code sent to
+// the phone number.
 message VerifyPhoneNumberRequest {
   string code = 1;
   string phone_number = 2;
@@ -69,16 +78,21 @@ message VerifyPhoneNumberResponse {}
 // Login request with either user identifier & email or client credentials.
 message LoginRequest {
   oneof method {
-    authentication.UserPassword user_password = 1; // User identifier & password.
-    authentication.ClientCredentials client_credentials = 3; // Client credentials from service account.
+    // User identifier & password.
+    authentication.UserPassword user_password = 1;
+    // Client credentials from service account.
+    authentication.ClientCredentials client_credentials = 3;
   }
 }
 
 // Login response with tokens and user information.
 message LoginResponse {
-  authentication.Token token = 1; // The access token and refresh token.
-  string user_id = 2; // ID of the user.
-  model.UserInfo user_info = 3; // User information.
+  // The access token and refresh token.
+  authentication.Token token = 1;
+  // ID of the user.
+  string user_id = 2;
+  // User information.
+  model.UserInfo user_info = 3;
 }
 
 // Empty logout request. The user ID etc. is taken from the token.
@@ -87,51 +101,68 @@ message LogoutRequest {}
 // Empty response to the logout request.
 message LogoutResponse {}
 
-// Get request to get the logged in user. The user ID etc. is taken from the token.
+// Get request to get the logged in user. The user ID etc. is taken from the
+// token.
 message GetRequest {}
 
 // Response with user information to the get request.
 message GetResponse {
-  model.UserInfo user_info = 1; // Information about the user.
-  string user_id = 2; // ID of the user
+  // Information about the user.
+  model.UserInfo user_info = 1;
+  // ID of the user
+  string user_id = 2;
 }
 
-// Register request for users to self-register. This is only possible with the register bool set in users settings.
+// Register request for users to self-register. This is only possible with the
+// register bool set in users settings.
 message RegisterRequest {
   oneof method {
-    UserPassword user_password = 1; // User identifier & password for the new user.
+    // User identifier & password for the new user.
+    UserPassword user_password = 1;
   }
 }
 
 // Register response with tokens and user information.
 message RegisterResponse {
-  authentication.Token token = 1; // Access and refresh token for the new logged in user.
-  string user_id = 2; // User ID of the new user.
-  model.UserInfo user_info = 3; // Information about the new user.
+  // Access and refresh token for the new logged in user.
+  authentication.Token token = 1;
+  // User ID of the new user.
+  string user_id = 2;
+  // Information about the new user.
+  model.UserInfo user_info = 3;
 }
 
-// Request to send a reset password email to the user. This is only possible if an email provider is configured, and the user has an email.
+// Request to send a reset password email to the user. This is only possible if
+// an email provider is configured, and the user has an email.
 message SendPasswordResetRequest {
-  model.UserIdentifier identifier = 1; // User identifier of the user.
+  // User identifier of the user.
+  model.UserIdentifier identifier = 1;
 }
 
 // Empty response to the send password reset request
 message SendPasswordResetResponse {
-  string token = 1; // JWT token to reset the password.
+  // JWT token to reset the password.
+  string token = 1;
 }
 
-// Request to reset the password of a user with a verification code sent to the email.
+// Request to reset the password of a user with a verification code sent to the
+// email.
 message ResetPasswordRequest {
-  string code = 1; // The 6 digit verification code
-  string new_password = 2; // The new password
-  model.UserIdentifier identifier = 3; // Identifier of the user
-  string token = 4; // JWT token to reset the password.
+  // The 6 digit verification code
+  string code = 1;
+  // The new password
+  string new_password = 2;
+  // Identifier of the user
+  model.UserIdentifier identifier = 3;
+  // JWT token to reset the password.
+  string token = 4;
 }
 
 // Empty response to the reset password request
 message ResetPasswordResponse {}
 
-// Request to delete the logged in user. The user ID etc. is taken from the token.
+// Request to delete the logged in user. The user ID etc. is taken from the
+// token.
 message DeleteRequest {}
 
 // Empty response to the delete request.
@@ -140,19 +171,22 @@ message DeleteResponse {}
 // Request to refresh the access and refresh token of the logged in user.
 message RefreshTokenRequest {
   // The access token of the user
-  string refresh_token = 1; // Refresh token matching the access token.
+  // Refresh token matching the access token.
+  string refresh_token = 1;
 }
 
 // Response with new access and refresh token.
 message RefreshTokenResponse {
-  authentication.Token token = 1; // New refresh and access tokens
+  // New refresh and access tokens
+  authentication.Token token = 1;
 }
 
-// Empty Request to get the auth config containing the available login mechanisms and if self-registering is enabled.
-message GetAuthConfigRequest {
-}
+// Empty Request to get the auth config containing the available login
+// mechanisms and if self-registering is enabled.
+message GetAuthConfigRequest {}
 
-// Response with the auth config containing the available login mechanisms and if self-registering is enabled.
+// Response with the auth config containing the available login mechanisms and
+// if self-registering is enabled.
 message GetAuthConfigResponse {
   // The name of the project
   string name = 1;
@@ -170,34 +204,34 @@ message GetAuthConfigResponse {
 
 // The type of SSO. Currently only OIDC is supported.
 enum SSOType {
-    SSO_TYPE_UNSPECIFIED = 0;
-    SSO_TYPE_OIDC = 1;
+  SSO_TYPE_UNSPECIFIED = 0;
+  SSO_TYPE_OIDC = 1;
 }
 
 // A login option for using SSO. This might be merged into
 // GetAuthConfigResponse.login_types, but is introduced as a separate field, to
 // maintain backwards compatibility.
 message SSOOption {
-    // Type of SSO. Currently only OIDC is supported.
-    SSOType type = 1;
-    // ID of the SSO provider as given in the platform configuration.
-    string provider_id = 2;
-    // Name of SSO provider. This is an optional human readable version of the provider ID.
-    string name = 3;
-    // URL of the underlying issuer. This can be used in the frontend for
-    // showing specific items for certain known issuers.
-    string icon = 4;
+  // Type of SSO. Currently only OIDC is supported.
+  SSOType type = 1;
+  // ID of the SSO provider as given in the platform configuration.
+  string provider_id = 2;
+  // Name of SSO provider. This is an optional human readable version of the
+  // provider ID.
+  string name = 3;
+  // URL of the underlying issuer. This can be used in the frontend for
+  // showing specific items for certain known issuers.
+  string icon = 4;
 }
 
 // Represents an SSO provided ID of a user
 message SSOID {
-    // What type of SSO this ID is from
-    SSOType type = 1;
-    // The ID of the SSO provider
-    string provider_id = 2;
-    // The ID provided by SSO
-    string sso_id = 3;
-    // The internal user ID
-    string user_id = 4;
+  // What type of SSO this ID is from
+  SSOType type = 1;
+  // The ID of the SSO provider
+  string provider_id = 2;
+  // The ID provided by SSO
+  string sso_id = 3;
+  // The internal user ID
+  string user_id = 4;
 }
-

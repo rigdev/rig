@@ -21,16 +21,20 @@ service Service {
 
 // Request o create a service account.
 message CreateRequest {
-  string name = 1; // Name of the service account to create.
-  string initial_group_id = 2; // If set, the service-account will be added to this group upon creation.
+  // Name of the service account to create.
+  string name = 1;
+  // If set, the service-account will be added to this group upon creation.
+  string initial_group_id = 2;
 }
-
 
 // Response of creating a service account.
 message CreateResponse {
-  api.v1.service_account.ServiceAccount service_account = 1; // The created service account.
-  string client_id = 2; // The client id of the service account.
-  string client_secret = 3; // The client secret of the service account.
+  // The created service account.
+  api.v1.service_account.ServiceAccount service_account = 1;
+  // The client id of the service account.
+  string client_id = 2;
+  // The client secret of the service account.
+  string client_secret = 3;
 }
 
 // Request to list service accounts.
@@ -38,12 +42,14 @@ message ListRequest {}
 
 // Response for listing service accounts.
 message ListResponse {
-  repeated model.ServiceAccountEntry service_accounts = 1; // the retrieved service accounts.
+  // the retrieved service accounts.
+  repeated model.ServiceAccountEntry service_accounts = 1;
 }
 
 // Request to delete a service account.
 message DeleteRequest {
-  string service_account_id = 1; // The id of the service account to delete.
+  // The id of the service account to delete.
+  string service_account_id = 1;
 }
 
 // Empty response for deleting a service account.

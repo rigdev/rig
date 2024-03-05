@@ -12,18 +12,23 @@ service Service {
 
 // request for getting cluster config for an environment.
 message GetConfigRequest {
-  string environment_id = 1; // The environment to get cluster config for.
+  // The environment to get cluster config for.
+  string environment_id = 1;
 }
 
 // response for getting cluster config for an environment.
 message GetConfigResponse {
-  ClusterType cluster_type = 1; // Type of the cluster.
+  // Type of the cluster.
+  ClusterType cluster_type = 1;
   // dev registry of the cluster. This is either a Docker daemon or a registry.
   oneof dev_registry {
-    DockerDaemon docker = 2; // Docker.
-    Registry registry = 3; // Registry.
+    // Docker.
+    DockerDaemon docker = 2;
+    // Registry.
+    Registry registry = 3;
   }
-  bool ingress = 4; // if true, the cluster has an ingress controller.
+  // if true, the cluster has an ingress controller.
+  bool ingress = 4;
 }
 
 // Empty Request for getting the configs of all clusters.
