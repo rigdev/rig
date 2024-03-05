@@ -88,8 +88,8 @@ message Change {
     CronJob add_cron_job = 16;
     // Remove a cron job.
     RemoveCronJob remove_cron_job = 17;
-    // Add a network interface.
-    Interface add_interface = 18;
+    // Add or update a network interface.
+    Interface set_interface = 18;
     // Remove a network interface.
     string remove_interface = 19;
     // Set capsule annotations.
