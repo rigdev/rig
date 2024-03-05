@@ -453,7 +453,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `name` _string_ | Name of the plugin to run. |
-| `config` _string_ | Config is a string expected to be YAML defining the configuration for the plugin |
+| `config` _string_ | Config is a string defining the plugin-specific configuration of the plugin. |
 
 
 ### PrometheusServiceMonitor
