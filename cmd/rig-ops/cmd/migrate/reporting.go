@@ -226,7 +226,50 @@ func getDiffingReport(orig, proposal client.Object, scheme *runtime.Scheme) (*dy
 	return d.Report, nil
 }
 
-func showDiffReport(r *dyff.Report, kind, name string) error {
+func getWarningsView(warnings []*Warning) *tview.TextView {
+	if len(warnings) == 0 {
+		return nil
+	}
+	var out bytes.Buffer
+	for _, w := range warnings {
+		out.WriteString(w.String())
+		out.WriteString("\n")
+	}
+
+	text := tview.NewTextView()
+	text.SetTitle("Warnings (ESC to exit)")
+	text.SetBorder(true)
+	text.SetDynamicColors(true)
+	text.SetWrap(true)
+	text.SetTextColor(tcell.ColorYellow)
+	text.SetText(out.String())
+	text.SetBackgroundColor(tcell.ColorNone)
+
+	return text
+}
+
+func showOverview(currentOverview *tview.TreeView,
+	output map[string]map[string]*dyff.Report,
+	warnings map[string][]*Warning) error {
+	grid := tview.NewGrid().
+		SetRows(0).
+		SetColumns(0, 0).
+		SetBorders(true).
+		AddItem(currentOverview, 0, 0, 10, 1, 0, 0, false).
+		AddItem(tview.NewTreeView(), 0, 1, 10, 1, 0, 0, false)
+
+	app := tview.NewApplication().SetRoot(grid, true)
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyESC {
+			app.Stop()
+		}
+		return event
+	})
+
+	return app.Run()
+}
+
+func showDiffReport(r *dyff.Report, kind, name string, warnings []*Warning) error {
 	var out bytes.Buffer
 	hr := &dyff.HumanReport{
 		Report:     *r,
@@ -244,7 +287,22 @@ func showDiffReport(r *dyff.Report, kind, name string) error {
 	text.SetText(out.String())
 	text.SetBackgroundColor(tcell.ColorNone)
 
-	app := tview.NewApplication().SetRoot(text, true)
+	warningsText := getWarningsView(warnings)
+
+	grid := tview.NewGrid().
+		SetColumns(0).
+		SetBorders(false)
+
+	if warningsText != nil {
+		grid.SetRows(10, 0).
+			AddItem(warningsText, 0, 0, 1, 1, 0, 0, false).
+			AddItem(text, 1, 0, 1, 1, 0, 0, true)
+	} else {
+		grid.SetRows(0).
+			AddItem(text, 0, 0, 1, 1, 0, 0, true)
+	}
+
+	app := tview.NewApplication().SetRoot(grid, true).EnableMouse(true)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyESC {
 			app.Stop()
