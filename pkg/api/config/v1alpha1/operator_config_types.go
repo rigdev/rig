@@ -64,6 +64,14 @@ type Step struct {
 	Capsules []string `json:"capsules,omitempty"`
 	// Config is a string expected to be YAML defining the configuration for the plugin
 	Config string `json:"config,omitempty"`
+	// Selector for matching plugin step execution based on Capsule annotations.
+	Selector AnnotationSelector `json:"selector,omitempty"`
+}
+
+type AnnotationSelector struct {
+	// Direct match on annotations, where all keys and values in the map must
+	// be present in the capsule annotations for the selector to match.
+	Match map[string]string `json:"match,omitempty"`
 }
 
 type VerticalPodAutoscaler struct {

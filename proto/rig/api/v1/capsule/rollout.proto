@@ -38,6 +38,7 @@ message RolloutConfig {
   repeated CronJob cron_jobs = 11;
   string environment_id = 12;
   string message = 13;
+  map<string, string> annotations = 14;
 }
 
 message ConfigFile {

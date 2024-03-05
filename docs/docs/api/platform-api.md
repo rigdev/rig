@@ -1621,15 +1621,49 @@ Change to a capsule that ultimately results in a new rollout.
 | remove_config_file | [string](#string) |  | Path of a config file to remove. |
 | horizontal_scale | [HorizontalScale](#api-v1-capsule-HorizontalScale) |  | Horizontal scaling settings. |
 | rollback | [Change.Rollback](#api-v1-capsule-Change-Rollback) |  | Rollback to a previous rollout. |
-| set_environment_variable | [Change.EnvironmentVariable](#api-v1-capsule-Change-EnvironmentVariable) |  | Update or add an environment variable. |
+| set_environment_variable | [Change.KeyValue](#api-v1-capsule-Change-KeyValue) |  | Update or add an environment variable. |
 | remove_environment_variable | [string](#string) |  | Name of an environment variable to remove. |
 | set_environment_source | [EnvironmentSource](#api-v1-capsule-EnvironmentSource) |  | Set or update an environment source. |
 | remove_environment_source | [EnvironmentSource](#api-v1-capsule-EnvironmentSource) |  | Remove an environment source. |
 | command_arguments | [Change.CommandArguments](#api-v1-capsule-Change-CommandArguments) |  | Entrypoint for capsule instances. |
 | add_cron_job | [CronJob](#api-v1-capsule-CronJob) |  | Add a cron job. |
 | remove_cron_job | [Change.RemoveCronJob](#api-v1-capsule-Change-RemoveCronJob) |  | Remove a cron job. |
-| add_interface | [Interface](#api-v1-capsule-Interface) |  | Add a network interface. |
-| remove_interface | [Change.RemoveInterface](#api-v1-capsule-Change-RemoveInterface) |  | Remove a network interface. |
+| set_interface | [Interface](#api-v1-capsule-Interface) |  | Add or update a network interface. |
+| remove_interface | [string](#string) |  | Remove a network interface. |
+| set_annotations | [Change.Annotations](#api-v1-capsule-Change-Annotations) |  | Set capsule annotations. |
+| set_annotation | [Change.KeyValue](#api-v1-capsule-Change-KeyValue) |  | Update or add a single capsule annotation. |
+| remove_annotation | [string](#string) |  | Name of a single capsule annotation to remove. |
+
+
+
+
+
+
+<a name="api-v1-capsule-Change-Annotations"></a>
+
+### Change.Annotations
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| annotations | [Change.Annotations.AnnotationsEntry](#api-v1-capsule-Change-Annotations-AnnotationsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-Change-Annotations-AnnotationsEntry"></a>
+
+### Change.Annotations.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 
@@ -1684,16 +1718,16 @@ Jobs change
 
 
 
-<a name="api-v1-capsule-Change-EnvironmentVariable"></a>
+<a name="api-v1-capsule-Change-KeyValue"></a>
 
-### Change.EnvironmentVariable
-Environment variable change.
+### Change.KeyValue
+Key-value change.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the environment variable. |
-| value | [string](#string) |  | The value it takes. |
+| name | [string](#string) |  | Name of the property. |
+| value | [string](#string) |  | The value of the property. |
 
 
 
@@ -1709,21 +1743,6 @@ Remove cron job change.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | job_name | [string](#string) |  | Name of the job to remove |
-
-
-
-
-
-
-<a name="api-v1-capsule-Change-RemoveInterface"></a>
-
-### Change.RemoveInterface
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| interface_name | [string](#string) |  |  |
 
 
 
@@ -3657,6 +3676,23 @@ The rollout model.
 | cron_jobs | [CronJob](#api-v1-capsule-CronJob) | repeated |  |
 | environment_id | [string](#string) |  |  |
 | message | [string](#string) |  |  |
+| annotations | [RolloutConfig.AnnotationsEntry](#api-v1-capsule-RolloutConfig-AnnotationsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-RolloutConfig-AnnotationsEntry"></a>
+
+### RolloutConfig.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

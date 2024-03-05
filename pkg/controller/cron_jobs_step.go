@@ -8,7 +8,6 @@ import (
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
-	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -78,8 +77,7 @@ func (s *CronJobStep) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.Cr
 			return nil, fmt.Errorf("neither Command nor URL was set on job %s", job.Name)
 		}
 
-		annotations := map[string]string{}
-		maps.Copy(annotations, req.Capsule().Annotations)
+		annotations := createPodAnnotations(req)
 
 		j := &batchv1.CronJob{
 			TypeMeta: metav1.TypeMeta{

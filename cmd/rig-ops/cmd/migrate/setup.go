@@ -48,7 +48,7 @@ func Setup(parent *cobra.Command) {
 	migrate.Flags().BoolVar(&skipPlatform,
 		"skip-platform",
 		false,
-		`Do not perform a platform dryrun to compare to k8s resources from rig-platform. Instead just compare the 
+		`Do not perform a platform dryrun to compare to k8s resources from rig-platform. Instead just compare the
 resources created from a capsulespec
 		If false:
 			- The rig platform must be running
@@ -532,7 +532,7 @@ func migrateEnvironment(ctx context.Context,
 		}
 		for _, envVar := range env {
 			setEnv := &capsule.Change_SetEnvironmentVariable{
-				SetEnvironmentVariable: &capsule.Change_EnvironmentVariable{
+				SetEnvironmentVariable: &capsule.Change_KeyValue{
 					Name: envVar.Name,
 				},
 			}
