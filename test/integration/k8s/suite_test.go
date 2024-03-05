@@ -108,7 +108,7 @@ func (s *K8sTestSuite) SetupSuite() {
 		Scheme:              scheme,
 		Config:              opConfig,
 		ClientSet:           clientSet,
-		CapabilitiesService: capabilities.NewService(configService, cc, clientSet.Discovery()),
+		CapabilitiesService: capabilities.NewService(configService, cc, clientSet.Discovery(), nil),
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))

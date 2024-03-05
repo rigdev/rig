@@ -55,3 +55,10 @@ func (h *handler) GetConfig(
 		Yaml: string(bytes),
 	}), nil
 }
+
+func (h *handler) GetPlugins(
+	_ context.Context,
+	_ *connect.Request[capabilities.GetPluginsRequest],
+) (*connect.Response[capabilities.GetPluginsResponse], error) {
+	return connect.NewResponse(h.capabilities.GetPlugins()), nil
+}
