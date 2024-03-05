@@ -9,67 +9,9 @@ RIG_OPERATOR_CHART_VERSION
 Installing the Rig Operator is a easy as any other Kubernetes operator. We've made a
 Helm chart available the makes it easy to get all the resources up and running.
 
-## Dependencies
-
-The rig-operator uses the kubernetes APIs and a few additional APIs to provide
-some very easy-to-use APIs for spinning up workloads.
-
-- [cert-manager](https://cert-manager.io/).
-- [metrics-server](https://github.com/kubernetes-sigs/metrics-server).
-
-### cert-manager
-
-The rig-operator helm chart uses cert-manager to create a certificate for the
-CRD webhooks. These are self-signed and doesn't require any special
-configuration of cert-manager.
-
-To see if cert-manager is already installed, run the following command:
-
-```bash
-kubectl api-resources | grep cert-manager.io/v1
-```
-
-This should show an output similar to the below if the APIs are available.
-
-```
-[...]
-certificates                      cert,certs   cert-manager.io/v1                     true         Certificate
-clusterissuers                                 cert-manager.io/v1                     false        ClusterIssuer
-[...]
-```
-
-If you want to enable ingress support, then you will need to further configure
-cert-manager and rig-operator to be able to generate certificates for
-workloads. See [the section about ingress](/operator-manual/ingress) for more
-information about this.
-
-### metrics-server
-
-The rig-operator creates
-[`HorizontalPodAutoscaler`](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-resources, configured to use the metrics APIs provided by metrics-server.
-
-In some environments (eg. GKE) this is installed in the kubernetes cluster when
-you create it. To check wether the metrics APIs are available run
-
-```bash
-kubectl api-resources | grep metrics
-```
-
-This should show an output similar to the below if the APIs are available.
-
-```
-nodes          metrics.k8s.io/v1beta1       false        NodeMetrics
-pods           metrics.k8s.io/v1beta1       true         PodMetrics
-```
-
-If you dont see this output you can install the metrics-server using the
-[official
-instructions](https://github.com/kubernetes-sigs/metrics-server#installation).
-
 ## Installation
 
-When the dependencies are installed, you can now install the operator:
+To install the operator run:
 
 <pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
   --repo https://charts.rig.dev \\
@@ -77,7 +19,6 @@ When the dependencies are installed, you can now install the operator:
   --namespace rig-system \\
   --create-namespace
 `}</code></pre>
-
 
 ## Configuration
 
