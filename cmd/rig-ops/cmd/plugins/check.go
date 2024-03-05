@@ -35,16 +35,13 @@ func check(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	matchers := map[string]plugin.Matcher{}
+	var matchers []plugin.Matcher
 	for _, step := range cfg.Steps {
-		if len(plugins) > 0 && !slices.Contains(plugins, step.Plugin) {
-			continue
-		}
 		matcher, err := plugin.NewMatcher(step.Namespaces, step.Capsules, step.Selector)
 		if err != nil {
-			return fmt.Errorf("failed to make matcher for plugin ''%s': %q", step.Plugin, err)
+			return fmt.Errorf("failed to make matcher for step '%v': %q", step, err)
 		}
-		matchers[step.Plugin] = matcher
+		matchers = append(matchers, matcher)
 	}
 
 	pes, err := getProjectEnvs(ctx, rc)
@@ -159,7 +156,7 @@ type result struct {
 func getResults(
 	ctx context.Context,
 	rc rig.Client,
-	matchers map[string]plugin.Matcher,
+	matchers []plugin.Matcher,
 	namespaces []*environment.ProjectEnvironmentNamespace,
 ) ([]result, error) {
 	projectMap := map[string][]*environment.ProjectEnvironmentNamespace{}
@@ -187,14 +184,13 @@ func getResults(
 
 		for _, capsuleID := range cs {
 			for _, ns := range namespaces {
-				for plugin, matcher := range matchers {
+				for _, matcher := range matchers {
 					if matcher.Match(ns.GetNamespace(), capsuleID, nil) {
 						results = append(results, result{
 							ProjectID:     pID,
 							EnvironmentID: ns.GetEnvironmentId(),
 							Namespace:     ns.GetNamespace(),
 							CapsuleID:     capsuleID,
-							Plugin:        plugin,
 						})
 					}
 				}

@@ -3,14 +3,14 @@ package plugin
 import (
 	"testing"
 
-	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type inp struct {
-	ns          string
-	capsule     string
-	annotations map[string]string
+	ns      string
+	capsule string
+	labels  map[string]string
 }
 
 func newInp(ns, capsule string) inp {
@@ -24,7 +24,7 @@ func Test_Matcher(t *testing.T) {
 		capsules   []string
 		inputs     []inp
 		expected   []bool
-		selector   v1alpha1.AnnotationSelector
+		selector   metav1.LabelSelector
 	}{
 		{
 			name:     "match all",
@@ -52,22 +52,22 @@ func Test_Matcher(t *testing.T) {
 			expected: []bool{true, true, false},
 		},
 		{
-			name: "match annotations",
+			name: "match labels",
 			inputs: []inp{
 				{
-					annotations: map[string]string{
+					labels: map[string]string{
 						"foo": "bar",
 					},
 				},
 				{
-					annotations: map[string]string{
+					labels: map[string]string{
 						"foo": "baz",
 					},
 				},
 			},
 			expected: []bool{true, false},
-			selector: v1alpha1.AnnotationSelector{
-				Match: map[string]string{
+			selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
 					"foo": "bar",
 				},
 			},
@@ -79,7 +79,7 @@ func Test_Matcher(t *testing.T) {
 			matcher, err := NewMatcher(tt.namespaces, tt.capsules, tt.selector)
 			assert.NoError(t, err)
 			for idx, inp := range tt.inputs {
-				res := matcher.Match(inp.ns, inp.capsule, inp.annotations)
+				res := matcher.Match(inp.ns, inp.capsule, inp.labels)
 				assert.Equal(t, tt.expected[idx], res, "failed index %v", idx)
 			}
 		})
