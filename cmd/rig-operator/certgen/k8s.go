@@ -63,10 +63,11 @@ func (k *k8s) createSecret(ctx context.Context, namespace, name string, certs *c
 			Namespace: namespace,
 			Name:      name,
 		},
+		Type: v1.SecretTypeTLS,
 		Data: map[string][]byte{
-			"ca":   certs.ca,
-			"cert": certs.cert,
-			"key":  certs.key,
+			"ca.crt":  certs.ca,
+			"tls.crt": certs.cert,
+			"tls.key": certs.key,
 		},
 	}
 

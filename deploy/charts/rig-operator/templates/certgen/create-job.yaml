@@ -1,0 +1,28 @@
+{{- if and .Values.config.webhooksEnabled (not .Values.certManager.enabled) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "rig-operator.certgen.fullname" . }}
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.certgen.backoffLimit }}
+  template:
+    spec:
+      serviceAccountName: {{ include "rig-operator.certgen.serviceAccountName" . }}
+      securityContext: {{ .Values.certgen.podSecurityContext | toYaml | nindent 8 }}
+      restartPolicy: OnFailure
+      containers:
+        - name: certgen
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          securityContext: {{ .Values.certgen.securityContext | toYaml | nindent 12 }}
+          command:
+            - "rig-operator"
+            - "certgen"
+            - "create"
+            - "{{ include "rig-operator.fullname" . }}-webhook-tls"
+            - "--hosts={{ include "rig-operator.fullname" . }},{{ include "rig-operator.fullname" . }}.{{ .Release.Namespace }}.svc"
+            - "--namespace={{ .Release.Namespace }}"
+{{- end -}}

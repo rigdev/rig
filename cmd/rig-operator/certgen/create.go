@@ -118,11 +118,12 @@ func generateCerts(hosts []string) (*certs, error) {
 	}
 
 	notBefore := time.Now().Add(time.Minute * -5)
+	notAfter := notBefore.Add(time.Hour * 24 * 365 * 100)
 
 	rootTemplate := x509.Certificate{
 		SerialNumber:          sn,
 		NotBefore:             notBefore,
-		NotAfter:              notBefore.Add(time.Hour * 24 * 365 * 100),
+		NotAfter:              notAfter,
 		KeyUsage:              x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
@@ -157,6 +158,8 @@ func generateCerts(hosts []string) (*certs, error) {
 
 	template := x509.Certificate{
 		SerialNumber: sn,
+		NotBefore:    notBefore,
+		NotAfter:     notAfter,
 		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Subject: pkix.Name{

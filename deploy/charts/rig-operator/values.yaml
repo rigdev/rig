@@ -160,3 +160,23 @@ apicheck:
     name: ""
   timeout: 2m
   interval: 5s
+
+certgen:
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 15000
+    runAsGroup: 15000
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+  backoffLimit: 4
+  serviceAccount:
+    create: true
+    name: ""
+  timeout: 2m
+  interval: 5s
+
+certManager:
+  enabled: false
