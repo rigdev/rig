@@ -27,23 +27,20 @@ configuration to make it fit into your kubernetes cluster.
 For a quick installation in an existing Kubernetes cluster, you can follow the
 steps here. For a more in-depth guide, see the next section.
 
-1. Install dependencies:
-    1. Install Certificate Manager if missing: https://cert-manager.io/
-    2. Install Metrics Server if missing: https://github.com/kubernetes-sigs/metrics-server
-2. Install the Rig Operator:
+1. Install the Rig Operator:
   <pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
     --repo https://charts.rig.dev \\
     --version ${RIG_OPERATOR_CHART_VERSION} \\
     --namespace rig-system \\
     --create-namespace`}</code></pre>
-3. Install the Rig Platform:
+2. Install the Rig Platform:
   <pre><code className="language-bash">{`helm upgrade --install rig-platform rig-platform \\
     --repo https://charts.rig.dev \\
     --version ${RIG_PLATFORM_CHART_VERSION} \\
     --namespace rig-system \\
     --create-namespace \\
     --set postgres.enabled=true`}</code></pre>
-4. Bootstrap your first user and project by running:
+3. Bootstrap your first user and project by running:
   ```bash
   kubectl exec -it -n rig-system deploy/rig-platform -- rig-admin init
     ```
@@ -51,6 +48,11 @@ steps here. For a more in-depth guide, see the next section.
 :::info Note
 As part of the quick installation, a small PostgresSQL instance is installed in your
 cluster, for the Platform to use. This is *not* recommended for production environments.
+:::
+
+:::info Note
+Dashboard metrics require the Metric-Server in the kubernetes cluster.
+See here for instructions on how to install it, if missing: https://github.com/kubernetes-sigs/metrics-server
 :::
 
 ## Extended installation guides
