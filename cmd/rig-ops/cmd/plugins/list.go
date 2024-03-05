@@ -169,7 +169,6 @@ func list(ctx context.Context,
 	_ *cobra.Command,
 	_ []string,
 	operatorClient *base.OperatorClient,
-	scheme *runtime.Scheme,
 ) error {
 	resp, err := operatorClient.Capabilities.GetPlugins(ctx, connect.NewRequest(&capabilities.GetPluginsRequest{}))
 	if err != nil {
