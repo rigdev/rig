@@ -13,6 +13,20 @@ Package v1alpha1 contains API Schema definitions for the config v1alpha1 API gro
 
 
 
+### AnnotationSelector
+
+
+
+
+
+_Appears in:_
+- [Step](#step)
+
+| Field | Description |
+| --- | --- |
+| `match` _object (keys:string, values:string)_ | Direct match on annotations, where all keys and values in the map must be present in the capsule annotations for the selector to match. |
+
+
 ### Auth
 
 
@@ -529,6 +543,7 @@ _Appears in:_
 | `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. |
 | `capsules` _string array_ | If set, only execute the plugin on the capsules specified |
 | `config` _string_ | Config is a string expected to be YAML defining the configuration for the plugin |
+| `selector` _[AnnotationSelector](#annotationselector)_ | Selector for matching plugin step execution based on Capsule annotations. |
 
 
 ### VerticalPodAutoscaler

@@ -27,7 +27,7 @@ func NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error) {
 		return nil, err
 	}
 
-	matcher, err := NewMatcher(step.Namespaces, step.Capsules)
+	matcher, err := NewMatcher(step.Namespaces, step.Capsules, step.Selector)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func makeGlobs(strings []string) ([]glob.Glob, error) {
 
 func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest) error {
 	c := req.Capsule()
-	if !s.matcher.Match(c.Name, c.Namespace) {
+	if !s.matcher.Match(c.Name, c.Namespace, c.Annotations) {
 		return nil
 	}
 	s.logger.Info("running plugin", "plugin", s.step.Plugin)
@@ -68,9 +68,10 @@ func (s *Step) Stop(ctx context.Context) {
 type Matcher struct {
 	namespaces []glob.Glob
 	capsules   []glob.Glob
+	selector   v1alpha1.AnnotationSelector
 }
 
-func NewMatcher(namespaces, capsules []string) (Matcher, error) {
+func NewMatcher(namespaces, capsules []string, selector v1alpha1.AnnotationSelector) (Matcher, error) {
 	nsGlobs, err := makeGlobs(namespaces)
 	if err != nil {
 		return Matcher{}, err
@@ -82,10 +83,16 @@ func NewMatcher(namespaces, capsules []string) (Matcher, error) {
 	return Matcher{
 		namespaces: nsGlobs,
 		capsules:   cGlobs,
+		selector:   selector,
 	}, nil
 }
 
-func (m Matcher) Match(namespace, capsule string) bool {
+func (m Matcher) Match(namespace, capsule string, annotations map[string]string) bool {
+	for key, value := range m.selector.Match {
+		if annotations[key] != value {
+			return false
+		}
+	}
 	return match(m.namespaces, namespace) && match(m.capsules, capsule)
 }
 
