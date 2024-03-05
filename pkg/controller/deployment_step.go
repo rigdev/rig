@@ -26,6 +26,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	RigDevRolloutLabel = "rig.dev/rollout"
+)
+
+var _defaultPodLabels = []string{RigDevRolloutLabel}
+
 type DeploymentStep struct{}
 
 func NewDeploymentStep() *DeploymentStep {
@@ -163,8 +169,7 @@ func (s *DeploymentStep) createDeployment(
 ) (*appsv1.Deployment, error) {
 	volumes, volumeMounts := FilesToVolumes(req.Capsule().Spec.Files)
 
-	podAnnotations := map[string]string{}
-	maps.Copy(podAnnotations, req.Capsule().Annotations)
+	podAnnotations := createPodAnnotations(req)
 	if checksums.files != "" {
 		podAnnotations[AnnotationChecksumFiles] = checksums.files
 	}
@@ -272,6 +277,16 @@ func (s *DeploymentStep) createDeployment(
 	}
 
 	return d, nil
+}
+
+func createPodAnnotations(req pipeline.CapsuleRequest) map[string]string {
+	podAnnotations := map[string]string{}
+	for _, l := range _defaultPodLabels {
+		if v, ok := req.Capsule().Annotations[l]; ok {
+			podAnnotations[l] = v
+		}
+	}
+	return podAnnotations
 }
 
 func (s *DeploymentStep) getPodLabels(current *appsv1.Deployment, req pipeline.CapsuleRequest) map[string]string {

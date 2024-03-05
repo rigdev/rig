@@ -28,11 +28,11 @@ message Change {
     repeated CronJob jobs = 1;
   }
 
-  // Environment variable change.
-  message EnvironmentVariable {
-    // Name of the environment variable.
+  // Key-value change.
+  message KeyValue {
+    // Name of the property.
     string name = 1;
-    // The value it takes.
+    // The value of the property.
     string value = 2;
   }
 
@@ -50,8 +50,8 @@ message Change {
     string job_name = 1;
   }
 
-  message RemoveInterface {
-    string interface_name = 1;
+  message Annotations {
+    map<string, string> annotations = 1;
   }
 
   // Different types of changes.
@@ -75,7 +75,7 @@ message Change {
     // Rollback to a previous rollout.
     Rollback rollback = 9;
     // Update or add an environment variable.
-    EnvironmentVariable set_environment_variable = 11;
+    KeyValue set_environment_variable = 11;
     // Name of an environment variable to remove.
     string remove_environment_variable = 12;
     // Set or update an environment source.
@@ -91,7 +91,13 @@ message Change {
     // Add a network interface.
     Interface add_interface = 18;
     // Remove a network interface.
-    RemoveInterface remove_interface = 19;
+    string remove_interface = 19;
+    // Set capsule annotations.
+    Annotations set_annotations = 20;
+    // Update or add a single capsule annotation.
+    KeyValue set_annotation = 21;
+    // Name of a single capsule annotation to remove.
+    string remove_annotation = 22;
   }
 }
 

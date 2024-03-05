@@ -101,7 +101,11 @@ tasks:
       - find . -path './gen/go/rig/*' -type f -name '*.go' -delete
       - ./tools/bin/buf generate proto/rig --template proto/buf.gen.yaml
       - cd gen/go/rig/; go get -u ./...
+<<<<<<< HEAD
       - find proto/rig/ -iname *.proto | xargs clang-format -i
+=======
+      # - find proto/rig/ -iname *.proto | xargs clang-format -i
+>>>>>>> b3cb76d (✨ Add API for setting capsule annotations)
 
   mocks:
     desc: "🪄 Run mock generation"
