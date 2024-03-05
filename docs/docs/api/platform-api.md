@@ -1629,7 +1629,7 @@ Change to a capsule that ultimately results in a new rollout.
 | add_cron_job | [CronJob](#api-v1-capsule-CronJob) |  | Add a cron job. |
 | remove_cron_job | [Change.RemoveCronJob](#api-v1-capsule-Change-RemoveCronJob) |  | Remove a cron job. |
 | add_interface | [Interface](#api-v1-capsule-Interface) |  | Add a network interface. |
-| remove_interface | [Change.RemoveInterface](#api-v1-capsule-Change-RemoveInterface) |  | Remove a network interface. |
+| remove_interface | [string](#string) |  | Remove a network interface. |
 | set_annotations | [Change.Annotations](#api-v1-capsule-Change-Annotations) |  | Set capsule annotations. |
 | set_annotation | [Change.KeyValue](#api-v1-capsule-Change-KeyValue) |  | Update or add a single capsule annotation. |
 | remove_annotation | [string](#string) |  | Name of a single capsule annotation to remove. |
@@ -1743,21 +1743,6 @@ Remove cron job change.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | job_name | [string](#string) |  | Name of the job to remove |
-
-
-
-
-
-
-<a name="api-v1-capsule-Change-RemoveInterface"></a>
-
-### Change.RemoveInterface
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| interface_name | [string](#string) |  |  |
 
 
 

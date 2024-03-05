@@ -40,7 +40,7 @@ func check(ctx context.Context,
 		if len(plugins) > 0 && !slices.Contains(plugins, step.Plugin) {
 			continue
 		}
-		matcher, err := plugin.NewMatcher(step.Namespaces, step.Capsules)
+		matcher, err := plugin.NewMatcher(step.Namespaces, step.Capsules, step.Selector)
 		if err != nil {
 			return fmt.Errorf("failed to make matcher for plugin ''%s': %q", step.Plugin, err)
 		}
@@ -188,7 +188,7 @@ func getResults(
 		for _, capsuleID := range cs {
 			for _, ns := range namespaces {
 				for plugin, matcher := range matchers {
-					if matcher.Match(ns.GetNamespace(), capsuleID) {
+					if matcher.Match(ns.GetNamespace(), capsuleID, nil) {
 						results = append(results, result{
 							ProjectID:     pID,
 							EnvironmentID: ns.GetEnvironmentId(),
