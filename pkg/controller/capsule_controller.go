@@ -186,13 +186,16 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		b = b.Owns(&vpav1.VerticalPodAutoscaler{})
 	}
 
+	if r.Config.Certmanager != nil && r.Config.Certmanager.ClusterIssuer != "" {
+		b = b.Owns(&cmv1.Certificate{})
+	}
+
 	return b.
 		For(&v1alpha2.Capsule{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&v1.Service{}).
 		Owns(&netv1.Ingress{}).
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}).
-		Owns(&cmv1.Certificate{}).
 		Owns(&batchv1.CronJob{}).
 		Watches(
 			&v1.ConfigMap{},

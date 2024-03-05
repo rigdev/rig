@@ -19,9 +19,9 @@ const (
 
 func patchCMD() (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "patch-webhook-config",
+		Use:   "patch",
 		Args:  cobra.ExactArgs(0),
-		Short: "Patch a validating/mutating webhook configuration",
+		Short: "Patch validating/mutating webhook configurations and CRDs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags := cmd.Flags()
 			webhookCFGName, err := flags.GetString(flagWebhookCFGName)
@@ -69,7 +69,7 @@ func patchCMD() (*cobra.Command, error) {
 				return fmt.Errorf("could not get secret: %w", err)
 			}
 
-			ca := s.Data["ca"]
+			ca := s.Data["ca.crt"]
 			if ca == nil {
 				return fmt.Errorf("secret %s/%s does not contain ca", secretNamespace, secretName)
 			}

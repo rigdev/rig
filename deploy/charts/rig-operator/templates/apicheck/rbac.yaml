@@ -5,8 +5,7 @@ metadata:
   name: {{ include "rig-operator.apicheck.fullname" . }}
   labels: {{ include "rig-operator.labels" . | nindent 4 }}
   annotations:
-    helm.sh/hook: post-install
-    helm.sh/hook-weight: "-5"
+    helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 rules:
   - apiGroups: ["rig.dev"]
@@ -19,8 +18,7 @@ metadata:
   name: {{ include "rig-operator.apicheck.fullname" . }}
   labels: {{ include "rig-operator.labels" . | nindent 4 }}
   annotations:
-    helm.sh/hook: post-install
-    helm.sh/hook-weight: "-5"
+    helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -28,6 +26,6 @@ roleRef:
   name: {{ include "rig-operator.apicheck.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "rig-operator.apicheck.fullname" . }}
+    name: {{ include "rig-operator.apicheck.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 {{- end -}}

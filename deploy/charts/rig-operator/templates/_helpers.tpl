@@ -85,3 +85,21 @@ Create the name of the service account to use
 {{- default "default" .Values.apicheck.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create the fullname of certgen create
+*/}}
+{{- define "rig-operator.certgen.fullname" -}}
+{{- include "rig-operator.fullname" . | printf "%s-certgen" -}}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "rig-operator.certgen.serviceAccountName" -}}
+{{- if .Values.certgen.serviceAccount.create }}
+{{- default (include "rig-operator.certgen.fullname" .) .Values.certgen.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.certgen.serviceAccount.name }}
+{{- end }}
+{{- end }}

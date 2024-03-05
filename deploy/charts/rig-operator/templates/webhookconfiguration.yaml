@@ -4,8 +4,10 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: {{ include "rig-operator.fullname" . }}
   labels: {{ include "rig-operator.labels" . | nindent 4 }}
+  {{- if .Values.certManager.enabled }}
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rig-operator.fullname" . }}-webhook
+  {{- end }}
 webhooks:
 - admissionReviewVersions:
   - v1
@@ -34,8 +36,10 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: {{ include "rig-operator.fullname" . }}
   labels: {{ include "rig-operator.labels" . | nindent 4 }}
+  {{- if .Values.certManager.enabled }}
   annotations:
     cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "rig-operator.fullname" . }}-webhook
+  {{- end }}
 webhooks:
 - admissionReviewVersions:
   - v1

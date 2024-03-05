@@ -1,4 +1,4 @@
-{{- if .Values.config.webhooksEnabled }}
+{{- if and .Values.config.webhooksEnabled .Values.certManager.enabled -}}
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
@@ -20,4 +20,4 @@ spec:
     kind: Issuer
     name: {{ include "rig-operator.fullname" . }}-webhook
   secretName: {{ include "rig-operator.fullname" . }}-webhook-tls
-{{- end }}
+{{- end -}}
