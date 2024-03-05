@@ -156,17 +156,17 @@ func makePluginManager(t *testing.T) *plugin.Manager {
 	fs := afero.NewMemMapFs()
 	dir, err := plugin.BuiltinPluginDir()
 	require.NoError(t, err)
-	require.NoError(t, fs.MkdirAll(dir, 0666))
+	require.NoError(t, fs.MkdirAll(dir, 0o666))
 	// The filesystem need not have the actual plugin binaries, just that a file exists
 	// with the binary name.
 	// The manager checks for file existence. It does not perform execution.
-	builtinPluginNames := []string{"sidecar", "objectTemplate", "initContainer"}
+	builtinPluginNames := []string{"sidecar", "object_template", "init_container"}
 	for _, n := range builtinPluginNames {
 		_, err := fs.Create(path.Join(dir, n))
 		require.NoError(t, err)
 	}
 
-	require.NoError(t, fs.MkdirAll("/etc/plugins-info", 0666))
+	require.NoError(t, fs.MkdirAll("/etc/plugins-info", 0o666))
 	_, err = fs.Create("/etc/plugins-info/contents.yaml")
 	require.NoError(t, err)
 
