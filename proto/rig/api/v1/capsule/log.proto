@@ -5,19 +5,24 @@ package api.v1.capsule;
 import "google/protobuf/timestamp.proto";
 
 // Log of an instance
-message Log { 
-  google.protobuf.Timestamp timestamp = 1; // Timestamp of the log
-  LogMessage message = 2; // Message of the log
-  string instance_id = 3; // Instance ID of the log
+message Log {
+  // Timestamp of the log
+  google.protobuf.Timestamp timestamp = 1;
+  // Message of the log
+  LogMessage message = 2;
+  // Instance ID of the log
+  string instance_id = 3;
 }
-
 
 // The actual log message
 message LogMessage {
   message ContainerTermination {}
   oneof message {
-    bytes stdout = 1; // If the log is stdout
-    bytes stderr = 2; // If the log is stderr
-    ContainerTermination container_termination = 3; // Represents a termination event
+    // If the log is stdout
+    bytes stdout = 1;
+    // If the log is stderr
+    bytes stderr = 2;
+    // Represents a termination event
+    ContainerTermination container_termination = 3;
   }
 }

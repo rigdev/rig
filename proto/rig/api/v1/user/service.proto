@@ -17,7 +17,8 @@ service Service {
   // Get a user by user-id.
   rpc Get(GetRequest) returns (GetResponse) {}
   // Lookup a user by a unique identifier - email, username, phone number etc.
-  rpc GetByIdentifier(GetByIdentifierRequest) returns (GetByIdentifierResponse) {}
+  rpc GetByIdentifier(GetByIdentifierRequest)
+      returns (GetByIdentifierResponse) {}
   // List users.
   rpc List(ListRequest) returns (ListResponse) {}
   // Delete a specific user.
@@ -26,29 +27,36 @@ service Service {
 
 // Request to get a user by an identifier.
 message GetByIdentifierRequest {
-  model.UserIdentifier identifier = 1; // The identifier to lookup.
+  // The identifier to lookup.
+  model.UserIdentifier identifier = 1;
 }
 
 // Response to get a user by an identifier.
 message GetByIdentifierResponse {
-  api.v1.user.User user = 1; // The user.
+  // The user.
+  api.v1.user.User user = 1;
 }
 
 // The request to create a user.
 message CreateRequest {
-  repeated api.v1.user.Update initializers = 1; // Initial fields to set.
-  string initial_group_id = 2; // If set, the user will be added to this group upon creation.
+  // Initial fields to set.
+  repeated api.v1.user.Update initializers = 1;
+  // If set, the user will be added to this group upon creation.
+  string initial_group_id = 2;
 }
 
 // The response of creating a user.
 message CreateResponse {
-  api.v1.user.User user = 1; // The created user.
+  // The created user.
+  api.v1.user.User user = 1;
 }
 
 // The request of updating a user.
 message UpdateRequest {
-  string user_id = 1; // The user identifier of the user to update.
-  repeated api.v1.user.Update updates = 2; // The updates to apply to the user.
+  // The user identifier of the user to update.
+  string user_id = 1;
+  // The updates to apply to the user.
+  repeated api.v1.user.Update updates = 2;
 }
 
 // Empty update response.
@@ -62,24 +70,30 @@ message GetRequest {
 
 // The response of getting a user.
 message GetResponse {
-  api.v1.user.User user = 1; // The retrieved user.
+  // The retrieved user.
+  api.v1.user.User user = 1;
 }
 
 // Request to list a users login sessions.
 message ListSessionsRequest {
-  string user_id = 1; // The user to retrieve sessions for.
-  model.Pagination pagination = 2; // Pagination options.
+  // The user to retrieve sessions for.
+  string user_id = 1;
+  // Pagination options.
+  model.Pagination pagination = 2;
 }
 
 // The response of listing a users login sessions.
 message ListSessionsResponse {
-  repeated api.v1.user.SessionEntry sessions = 1; // The retrieved sessions.
-  uint64 total = 2; // The total number of sessions.
+  // The retrieved sessions.
+  repeated api.v1.user.SessionEntry sessions = 1;
+  // The total number of sessions.
+  uint64 total = 2;
 }
 
 // Request for deleting a user.
 message DeleteRequest {
-  string user_id = 1; // The user identifier to fetch the user.
+  // The user identifier to fetch the user.
+  string user_id = 1;
 }
 
 // Empty response for deleting a user.
@@ -87,12 +101,16 @@ message DeleteResponse {}
 
 // Request for listing users.
 message ListRequest {
-  model.Pagination pagination = 1; // Pagination options.
-  string search = 2; // Search string.
+  // Pagination options.
+  model.Pagination pagination = 1;
+  // Search string.
+  string search = 2;
 }
 
 // Response for listing users.
 message ListResponse {
-  repeated model.UserEntry users = 1; // The users returned.
-  uint64 total = 2; // total number of users.
+  // The users returned.
+  repeated model.UserEntry users = 1;
+  // total number of users.
+  uint64 total = 2;
 }

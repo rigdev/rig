@@ -4,7 +4,8 @@ package api.v1.user.settings;
 
 import "api/v1/user/settings/settings.proto";
 
-// The Settings service provides methods for getting and updating the users settings.
+// The Settings service provides methods for getting and updating the users
+// settings.
 service Service {
   // Gets the users settings for the current project.
   rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse) {}
@@ -17,12 +18,14 @@ message GetSettingsRequest {}
 
 // Response for getting users settings for the Rig project.
 message GetSettingsResponse {
-  api.v1.user.settings.Settings settings = 1; // The users settings.
+  // The users settings.
+  api.v1.user.settings.Settings settings = 1;
 }
 
 // Request for updating users settings for the Rig project.
 message UpdateSettingsRequest {
-  repeated api.v1.user.settings.Update settings = 1; // The updates to apply to the users settings.
+  // The updates to apply to the users settings.
+  repeated api.v1.user.settings.Update settings = 1;
 }
 
 // Empty response for updating users settings for the Rig project.

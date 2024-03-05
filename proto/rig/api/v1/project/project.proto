@@ -6,24 +6,34 @@ import "google/protobuf/timestamp.proto";
 
 // The top most model that capsules etc belong to.
 message Project {
-  string project_id = 1; // The unique id of the project.
-  string name = 2; // Deprecated: Name of the project.
-  google.protobuf.Timestamp created_at = 3; // When the project was created.
-  google.protobuf.Timestamp updated_at = 4; // When the project was last updated.
-  string installation_id = 5; // The installation id of the project.
+  // The unique id of the project.
+  string project_id = 1;
+  // Deprecated: Name of the project.
+  string name = 2;
+  // When the project was created.
+  google.protobuf.Timestamp created_at = 3;
+  // When the project was last updated.
+  google.protobuf.Timestamp updated_at = 4;
+  // The installation id of the project.
+  string installation_id = 5;
 }
 
 // Update msg for a project.
 message Update {
   oneof field {
-    string name = 1; // Update the name of the project.
+    // Update the name of the project.
+    string name = 1;
   }
 }
 
 // The plan for a rig installation
 enum Plan {
-  PLAN_UNSPECIFIED = 0; // Unspecified / unactivated plan.
-  PLAN_FREE = 1; // Free tier.
-  PLAN_TEAM = 2; // Team / Pro tier.
-  PLAN_ENTERPRISE = 3; // Enterprise tier.
+  // Unspecified / unactivated plan.
+  PLAN_UNSPECIFIED = 0;
+  // Free tier.
+  PLAN_FREE = 1;
+  // Team / Pro tier.
+  PLAN_TEAM = 2;
+  // Enterprise tier.
+  PLAN_ENTERPRISE = 3;
 }

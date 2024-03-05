@@ -5,16 +5,22 @@ package api.v1.authentication;
 import "model/user.proto";
 
 message Token {
-  string access_token = 1; // Access token
-  string refresh_token = 2; // Refresh token
+  // Access token
+  string access_token = 1;
+  // Refresh token
+  string refresh_token = 2;
 }
 
 message ClientCredentials {
-  string client_id = 1; // ID of the service account
-  string client_secret = 2; // secret of the service account
+  // ID of the service account
+  string client_id = 1;
+  // secret of the service account
+  string client_secret = 2;
 }
 
 message UserPassword {
-  model.UserIdentifier identifier = 1; // Identifier of user. This can be username, email etc.
-  string password = 2; // Password of the user
+  // Identifier of user. This can be username, email etc.
+  model.UserIdentifier identifier = 1;
+  // Password of the user
+  string password = 2;
 }

@@ -9,87 +9,132 @@ import "model/metadata.proto";
 import "model/user.proto";
 import "model/auth.proto";
 
-
 // Type of verification code
 enum VerificationType {
-  VERIFICATION_TYPE_UNSPECIFIED = 0; // Default value
-  VERIFICATION_TYPE_EMAIL = 1; // Email verification code.
-  VERIFICATION_TYPE_TEXT = 2; // Deprecated: text is not supported - text verification code.
-  VERIFICATION_TYPE_RESET_PASSWORD = 3; // reset password verification code.
+  // Default value
+  VERIFICATION_TYPE_UNSPECIFIED = 0;
+  // Email verification code.
+  VERIFICATION_TYPE_EMAIL = 1;
+  // Deprecated: text is not supported - text verification code.
+  VERIFICATION_TYPE_TEXT = 2;
+  // reset password verification code.
+  VERIFICATION_TYPE_RESET_PASSWORD = 3;
 }
 
 // short-lived verification code.
 message VerificationCode {
-  model.HashingInstance code = 1; // Hashed verification code.
-  google.protobuf.Timestamp sent_at = 2; // Timestamp when the verification code was sent.
-  google.protobuf.Timestamp expires_at = 3; // Timestamp when the verification code expires.
-  int32 attempts = 4; // Number of attempts to verify the code.
-  google.protobuf.Timestamp last_attempt = 5; // Timestamp of the last attempt to verify the code.
-  VerificationType type = 6; // Type of verification code.
-  string user_id = 7; // User ID of the user who the code was sent to.
+  // Hashed verification code.
+  model.HashingInstance code = 1;
+  // Timestamp when the verification code was sent.
+  google.protobuf.Timestamp sent_at = 2;
+  // Timestamp when the verification code expires.
+  google.protobuf.Timestamp expires_at = 3;
+  // Number of attempts to verify the code.
+  int32 attempts = 4;
+  // Timestamp of the last attempt to verify the code.
+  google.protobuf.Timestamp last_attempt = 5;
+  // Type of verification code.
+  VerificationType type = 6;
+  // User ID of the user who the code was sent to.
+  string user_id = 7;
 }
 
 // User profile
 message Profile {
-  string first_name = 1; // First name of the user.
-  string last_name = 2; // Last name of the user.
+  // First name of the user.
+  string first_name = 1;
+  // Last name of the user.
+  string last_name = 2;
 }
 
 // The user model.
 message User {
-  string user_id = 1; // User ID of the user.
-  model.UserInfo user_info = 2; // User info of the user.
-  Profile profile = 3; // Profile of the user.
-  google.protobuf.Timestamp updated_at = 4; // Timestamp when the user was last updated.
-  model.RegisterInfo register_info = 5; // Register info of the user.
-  bool is_phone_verified = 6; // Deprecated: text is not supported - Whether the user's phone number is verified.
-  bool is_email_verified = 7; // Whether the user's email is verified.
-  google.protobuf.Timestamp new_sessions_since = 8; // Timestamp when the user last created a new session.
-  map<string, bytes> metadata = 9; // Metadata of the user.
+  // User ID of the user.
+  string user_id = 1;
+  // User info of the user.
+  model.UserInfo user_info = 2;
+  // Profile of the user.
+  Profile profile = 3;
+  // Timestamp when the user was last updated.
+  google.protobuf.Timestamp updated_at = 4;
+  // Register info of the user.
+  model.RegisterInfo register_info = 5;
+  // Deprecated: text is not supported - Whether the user's phone number is
+  // verified.
+  bool is_phone_verified = 6;
+  // Whether the user's email is verified.
+  bool is_email_verified = 7;
+  // Timestamp when the user last created a new session.
+  google.protobuf.Timestamp new_sessions_since = 8;
+  // Metadata of the user.
+  map<string, bytes> metadata = 9;
 }
 
 // Update message to update a user.
 message Update {
-  // if sessions are reset, all sessions will be invalidated and a new session will be created.
+  // if sessions are reset, all sessions will be invalidated and a new session
+  // will be created.
   message ResetSessions {}
 
   // field of the user to update./
   oneof field {
-    string email = 1; // Email of the user.
-    string username = 2; // Username of the user.
-    string phone_number = 3; // Deprecated: text is not supported - Phone number of the user.
-    string password = 4; // Password of the user.
-    Profile profile = 5; // Profile of the user.
-    bool is_email_verified = 6; // Whether the user's email is verified.
-    bool is_phone_verified = 7; // Deprecated: text is not supported - Whether the user's phone number is verified.
-    ResetSessions reset_sessions = 8; // Reset sessions of the user.
-    model.Metadata set_metadata = 9; // Set metadata of the user.
-    string delete_metadata_key = 10; // Delete metadata of the user.
-    model.HashingInstance hashed_password = 12; // Hashed password of the user.
+    // Email of the user.
+    string email = 1;
+    // Username of the user.
+    string username = 2;
+    // Deprecated: text is not supported - Phone number of the user.
+    string phone_number = 3;
+    // Password of the user.
+    string password = 4;
+    // Profile of the user.
+    Profile profile = 5;
+    // Whether the user's email is verified.
+    bool is_email_verified = 6;
+    // Deprecated: text is not supported - Whether the user's phone number is
+    // verified.
+    bool is_phone_verified = 7;
+    // Reset sessions of the user.
+    ResetSessions reset_sessions = 8;
+    // Set metadata of the user.
+    model.Metadata set_metadata = 9;
+    // Delete metadata of the user.
+    string delete_metadata_key = 10;
+    // Hashed password of the user.
+    model.HashingInstance hashed_password = 12;
   }
 }
 
 // how a user is authenticated.
 message AuthMethod {
   oneof method {
-    model.LoginType login_type = 1; // Login type of the user.
+    // Login type of the user.
+    model.LoginType login_type = 1;
   }
 }
 
 // Session entry
 message SessionEntry {
-  string session_id = 1; // Session ID of the session.
+  // Session ID of the session.
+  string session_id = 1;
   Session session = 2;  // Session of the session.
 }
 
 // A user's sessions.
 message Session {
-  AuthMethod auth_method = 1; // how the user is authenticated.
-  bool is_invalidated = 2; // if the session is invalidated
-  google.protobuf.Timestamp created_at = 3; // Timestamp when the session was created.
-  google.protobuf.Timestamp invalidated_at = 4; // Timestamp when the session was invalidated.
-  google.protobuf.Timestamp expires_at = 5; // Timestamp when the session expires.
-  google.protobuf.Timestamp renewed_at = 6; // Timestamp when the session was renewed.
-  string country = 7; // Country of the session.
-  int32 postal_code = 8; // Postal code of the session.
+  // how the user is authenticated.
+  AuthMethod auth_method = 1;
+  // if the session is invalidated
+  bool is_invalidated = 2;
+  // Timestamp when the session was created.
+  google.protobuf.Timestamp created_at = 3;
+  // Timestamp when the session was invalidated.
+  google.protobuf.Timestamp invalidated_at = 4;
+  // Timestamp when the session expires.
+  google.protobuf.Timestamp expires_at = 5;
+  // Timestamp when the session was renewed.
+  google.protobuf.Timestamp renewed_at = 6;
+  // Country of the session.
+  string country = 7;
+  // Postal code of the session.
+  int32 postal_code = 8;
 }

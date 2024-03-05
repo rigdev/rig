@@ -4,7 +4,8 @@ package model;
 
 // Bcrypt hashing configuration.
 message BcryptHashingConfig {
-  int32 cost = 1; // The cost of the hashing algorithm.
+  // The cost of the hashing algorithm.
+  int32 cost = 1;
 }
 
 // Bcrypt hashing instance.
@@ -12,40 +13,56 @@ message BcryptHashingInstance {}
 
 // Scrypt hashing configuration.
 message ScryptHashingConfig {
-  string signer_key = 1; // The key used to sign the salt.
-  string salt_separator = 2; // The salt separator.
-  int32 rounds = 3; // The number of rounds in the algorithm.
-  int32 mem_cost = 4; // The memory cost of the algorithm.
-  int32 p = 5; // The parallelization factor of the algorithm.
-  int32 key_len = 6; // The length of the key.
+  // The key used to sign the salt.
+  string signer_key = 1;
+  // The salt separator.
+  string salt_separator = 2;
+  // The number of rounds in the algorithm.
+  int32 rounds = 3;
+  // The memory cost of the algorithm.
+  int32 mem_cost = 4;
+  // The parallelization factor of the algorithm.
+  int32 p = 5;
+  // The length of the key.
+  int32 key_len = 6;
 }
 
 // Scrypt hashing instance.
 message ScryptHashingInstance {
-  bytes salt = 1; // The salt used to hash the password.
+  // The salt used to hash the password.
+  bytes salt = 1;
 }
 
 // Hashing configuration.
 message HashingConfig {
-  oneof method { 
-    BcryptHashingConfig bcrypt = 1; // if bcrypt is set, use bcrypt.
-    ScryptHashingConfig scrypt = 2; // if scrypt is set, use scrypt.
+  oneof method {
+    // if bcrypt is set, use bcrypt.
+    BcryptHashingConfig bcrypt = 1;
+    // if scrypt is set, use scrypt.
+    ScryptHashingConfig scrypt = 2;
   }
 }
 
 // Hashing instance.
 message HashingInstance {
-  HashingConfig config = 1; // The hashing configuration.
-  bytes hash = 2; // A hash
+  // The hashing configuration.
+  HashingConfig config = 1;
+  // A hash
+  bytes hash = 2;
   oneof instance {
-    BcryptHashingInstance bcrypt = 3; // if bcrypt is set, this bcrypt instance was used.
-    ScryptHashingInstance scrypt = 4; // if scrypt is set, this scrypt instance was used.
+    // if bcrypt is set, this bcrypt instance was used.
+    BcryptHashingInstance bcrypt = 3;
+    // if scrypt is set, this scrypt instance was used.
+    ScryptHashingInstance scrypt = 4;
   }
 }
 
 // Pagination option.
 message Pagination {
-  uint32 offset = 1; // Where to start the pagination.
-  uint32 limit = 2; // How many items to return.
-  bool descending = 3; // Whether to sort in descending order.
+  // Where to start the pagination.
+  uint32 offset = 1;
+  // How many items to return.
+  uint32 limit = 2;
+  // Whether to sort in descending order.
+  bool descending = 3;
 }

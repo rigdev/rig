@@ -13,7 +13,9 @@ message Author {
   // User ID of the author. This should be used to get current information
   // about the author.
   oneof account {
-    string user_id = 3; // if a user did the change
-    string service_account_id = 4; // if a service account did the change
+    // if a user did the change
+    string user_id = 3;
+    // if a service account did the change
+    string service_account_id = 4;
   }
 }

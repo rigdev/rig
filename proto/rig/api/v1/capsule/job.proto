@@ -5,53 +5,77 @@ package api.v1.capsule;
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
-
 // An execution of a cron job.
 message JobExecution {
-  string job_name = 1; // Name of the job.
-  google.protobuf.Timestamp created_at = 2; // When the job started running.
-  google.protobuf.Timestamp finished_at = 3; // When the job finished.
-  JobState state = 4; // The state of the job.
-  int32 retries = 5; // Number of retries.
-  uint64 rollout_id = 6; // ID of the rollout.
-  string capsule_id = 7; // ID of the capsule.
-  string project_id = 8; // ID of the project.
-  string execution_id = 9; // ID of the execution.
-  string environment_id = 10; // ID of the environment.
+  // Name of the job.
+  string job_name = 1;
+  // When the job started running.
+  google.protobuf.Timestamp created_at = 2;
+  // When the job finished.
+  google.protobuf.Timestamp finished_at = 3;
+  // The state of the job.
+  JobState state = 4;
+  // Number of retries.
+  int32 retries = 5;
+  // ID of the rollout.
+  uint64 rollout_id = 6;
+  // ID of the capsule.
+  string capsule_id = 7;
+  // ID of the project.
+  string project_id = 8;
+  // ID of the execution.
+  string execution_id = 9;
+  // ID of the environment.
+  string environment_id = 10;
 }
-
 
 // Different states a job execution can be in
 enum JobState {
-  JOB_STATE_UNSPECIFIED = 0; // Default value.
-  JOB_STATE_ONGOING = 1; // The job is running.
-  JOB_STATE_COMPLETED = 2; // The job completed successfully.
-  JOB_STATE_FAILED = 3; // The job failed.
-  JOB_STATE_TERMINATED = 4; // The job was terminated.
+  // Default value.
+  JOB_STATE_UNSPECIFIED = 0;
+  // The job is running.
+  JOB_STATE_ONGOING = 1;
+  // The job completed successfully.
+  JOB_STATE_COMPLETED = 2;
+  // The job failed.
+  JOB_STATE_FAILED = 3;
+  // The job was terminated.
+  JOB_STATE_TERMINATED = 4;
 }
 
 // Specification for a cron job.
 message CronJob {
-  string job_name = 1; // Name of the job.
-  string schedule = 2; // Cron schedule.
-  int32 max_retries = 3; // Maximum number of retries.
-  google.protobuf.Duration timeout = 4; // Maximum duration of the job.
+  // Name of the job.
+  string job_name = 1;
+  // Cron schedule.
+  string schedule = 2;
+  // Maximum number of retries.
+  int32 max_retries = 3;
+  // Maximum duration of the job.
+  google.protobuf.Duration timeout = 4;
   // The type of the job
   oneof job_type {
-    JobURL url = 5; // URL job.
-    JobCommand command = 6; // Command job.
+    // URL job.
+    JobURL url = 5;
+    // Command job.
+    JobCommand command = 6;
   }
 }
 
 // Run a job by making a HTTP request to a URL.
 message JobURL {
-  uint64 port = 1; // Port to make the request to.
-  string path = 2; // Path to make the request to.
-  map<string, string> query_parameters = 3; // Query parameters to add to the request.
+  // Port to make the request to.
+  uint64 port = 1;
+  // Path to make the request to.
+  string path = 2;
+  // Query parameters to add to the request.
+  map<string, string> query_parameters = 3;
 }
 
 // Run a job by running a command in an instance of a capsule
 message JobCommand {
-  string command = 1; // Command to run.
-  repeated string args = 2; // Arguments to pass to the command.
+  // Command to run.
+  string command = 1;
+  // Arguments to pass to the command.
+  repeated string args = 2;
 }
