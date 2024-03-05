@@ -43,14 +43,14 @@ func Setup(parent *cobra.Command) {
 	check.Flags().StringSliceVar(&plugins, "plugins", nil, "If given, will only use those plugins names.")
 	pluginsCmd.AddCommand(check)
 
-	list := &cobra.Command{
-		Use:   "list",
-		Short: "Lists the plugins currently configured in the operator",
-		RunE:  base.Register(list),
+	listSteps := &cobra.Command{
+		Use:   "list-steps",
+		Short: "Lists the plugin steps currently configured in the operator",
+		RunE:  base.Register(listSteps),
 	}
 	//nolint:lll
-	list.Flags().BoolVar(&showConfig, "show-config", false, "If set, will also display the YAML configuration for each plugin.")
-	pluginsCmd.AddCommand(list)
+	listSteps.Flags().BoolVar(&showConfig, "show-config", false, "If set, will also display the YAML configuration for each plugin.")
+	pluginsCmd.AddCommand(listSteps)
 
 	get := &cobra.Command{
 		Use: "get 2",
@@ -93,6 +93,13 @@ The dry run will be executed with the resulting list of plugins.`,
 	//nolint:lll
 	dryRun.Flags().StringVar(&output, "output-path", "", "If given, will write the output to a file at the given path.")
 	pluginsCmd.AddCommand(dryRun)
+
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the set of plugins available in the operator",
+		RunE:  base.Register(list),
+	}
+	pluginsCmd.AddCommand(list)
 
 	parent.AddCommand(pluginsCmd)
 }

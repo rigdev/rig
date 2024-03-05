@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"connectrpc.com/connect"
 	"github.com/fatih/color"
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rodaine/table"
@@ -15,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func list(ctx context.Context,
+func listSteps(ctx context.Context,
 	_ *cobra.Command,
 	_ []string,
 	operatorClient *base.OperatorClient,
@@ -161,4 +163,57 @@ func get(ctx context.Context,
 	}
 
 	return common.FormatPrint(step, outputType)
+}
+
+func list(ctx context.Context,
+	_ *cobra.Command,
+	_ []string,
+	operatorClient *base.OperatorClient,
+	scheme *runtime.Scheme,
+) error {
+	resp, err := operatorClient.Capabilities.GetPlugins(ctx, connect.NewRequest(&capabilities.GetPluginsRequest{}))
+	if err != nil {
+		return err
+	}
+
+	result := struct {
+		Builtin    []string     `json:"builtin,omitempty"`
+		Thirdparty []thirdparty `json:"thirdparty,omitempty"`
+	}{}
+
+	for _, p := range resp.Msg.GetPlugins() {
+		if b := p.GetBuiltin(); b != nil {
+			result.Builtin = append(result.Builtin, b.GetName())
+		} else if t := p.GetThirdParty(); t != nil {
+			result.Thirdparty = append(result.Thirdparty, thirdparty{
+				Name:         t.GetName(),
+				OriginalName: t.GetOriginalName(),
+				Image:        t.GetImage(),
+			})
+		}
+	}
+
+	if base.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(result, base.Flags.OutputType)
+	}
+
+	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+	tbl := table.New("Type", "Name", "Original Name", "Image")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+	for _, p := range result.Builtin {
+		tbl.AddRow("Builtin", p, "", "")
+	}
+	for _, p := range result.Thirdparty {
+		tbl.AddRow("Thirdparty", p.Name, p.OriginalName, p.Image)
+	}
+	tbl.Print()
+
+	return nil
+}
+
+type thirdparty struct {
+	Name         string `json:"name,omitempty"`
+	OriginalName string `json:"original_name,omitempty"`
+	Image        string `json:"image,omitempty"`
 }

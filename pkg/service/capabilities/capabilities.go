@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/service/config"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,17 +14,20 @@ import (
 
 type Service interface {
 	Get(ctx context.Context) (*capabilities.GetResponse, error)
+	GetPlugins() *capabilities.GetPluginsResponse
 }
 
 func NewService(
 	cfg config.Service,
 	client client.Client,
 	discoveryClient discovery.DiscoveryInterface,
+	pluginManager *plugin.Manager,
 ) Service {
 	return &service{
 		cfg:             cfg,
 		client:          client,
 		discoveryClient: discoveryClient,
+		pluginManager:   pluginManager,
 	}
 }
 
@@ -31,6 +35,7 @@ type service struct {
 	cfg             config.Service
 	client          client.Client
 	discoveryClient discovery.DiscoveryInterface
+	pluginManager   *plugin.Manager
 }
 
 // Get implements Service.
@@ -98,4 +103,34 @@ func (s *service) hasCustomMetricsAPI() (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (s *service) GetPlugins() *capabilities.GetPluginsResponse {
+	var plugins []*capabilities.GetPluginsResponse_Plugin
+
+	for _, p := range s.pluginManager.GetPlugins() {
+		if p.IsBuiltin {
+			plugins = append(plugins, &capabilities.GetPluginsResponse_Plugin{
+				Plugin: &capabilities.GetPluginsResponse_Plugin_Builtin{
+					Builtin: &capabilities.GetPluginsResponse_Builtin{
+						Name: p.Name,
+					},
+				},
+			})
+		} else {
+			plugins = append(plugins, &capabilities.GetPluginsResponse_Plugin{
+				Plugin: &capabilities.GetPluginsResponse_Plugin_ThirdParty{
+					ThirdParty: &capabilities.GetPluginsResponse_Thirdparty{
+						Name:         p.Name,
+						Image:        p.Image,
+						OriginalName: p.OriginalName,
+					},
+				},
+			})
+		}
+	}
+
+	return &capabilities.GetPluginsResponse{
+		Plugins: plugins,
+	}
 }

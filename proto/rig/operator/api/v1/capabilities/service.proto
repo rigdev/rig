@@ -6,6 +6,7 @@ package api.v1.capabilities;
 service Service {
   rpc Get(GetRequest) returns (GetResponse) {}
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
+  rpc GetPlugins(GetPluginsRequest) returns (GetPluginsResponse) {}
 }
 
 message GetRequest {}
@@ -21,4 +22,27 @@ message GetConfigRequest {}
 
 message GetConfigResponse {
   string yaml = 1;
+}
+
+message GetPluginsRequest {}
+
+message GetPluginsResponse {
+  message Builtin {
+    string name = 1;
+  }
+
+  message Thirdparty {
+    string name = 1;
+    string image = 2;
+    string original_name = 3;
+  }
+
+  message Plugin {
+    oneof plugin {
+      Builtin builtin = 1;
+      Thirdparty third_party = 2;
+    }
+  }
+
+  repeated Plugin plugins = 1;
 }

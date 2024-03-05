@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 	"path"
+	"slices"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -48,7 +50,6 @@ func NewManager(fs afero.Fs) (*Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("PLUGINDIR", pluginDir)
 
 	manager := &Manager{
 		builtinPath: pluginDir,
@@ -131,7 +132,11 @@ func (m *Manager) GetPlugin(name string) (Info, bool) {
 }
 
 func (m *Manager) GetPlugins() []Info {
-	return maps.Values(m.plugins)
+	plugins := maps.Values(m.plugins)
+	slices.SortFunc(plugins, func(p1, p2 Info) int {
+		return strings.Compare(p1.Name, p2.Name)
+	})
+	return plugins
 }
 
 func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error) {
