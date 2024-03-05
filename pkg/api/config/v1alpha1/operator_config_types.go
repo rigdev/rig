@@ -69,7 +69,7 @@ type Step struct {
 type Plugin struct {
 	// Name of the plugin to run.
 	Name string `json:"name,omitempty"`
-	// Config is a string expected to be YAML defining the configuration for the plugin
+	// Config is a string defining the plugin-specific configuration of the plugin.
 	Config string `json:"config,omitempty"`
 }
 

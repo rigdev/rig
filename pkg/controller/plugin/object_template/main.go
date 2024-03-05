@@ -97,5 +97,5 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 }
 
 func main() {
-	plugin.StartPlugin("objectTemplate", &pluginParent{})
+	plugin.StartPlugin("object_template", &pluginParent{})
 }
