@@ -72,7 +72,7 @@ func check(ctx context.Context,
 		}
 	}
 
-	results, err := getResults(ctx, matchers, objects)
+	results, err := getResults(matchers, objects)
 	if err != nil {
 		return err
 	}
@@ -126,11 +126,7 @@ type result struct {
 	StepIndex int    `json:"step_index"`
 }
 
-func getResults(
-	ctx context.Context,
-	matchers []plugin.Matcher,
-	objects []capsuleNamespace,
-) ([]result, error) {
+func getResults(matchers []plugin.Matcher, objects []capsuleNamespace) ([]result, error) {
 	var results []result
 	for _, obj := range objects {
 		for idx, matcher := range matchers {
