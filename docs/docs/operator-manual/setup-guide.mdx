@@ -44,6 +44,10 @@ steps here. For a more in-depth guide, see the next section.
   ```bash
   kubectl exec -it -n rig-system deploy/rig-platform -- rig-admin init
     ```
+4. Access the dashboard at [http://localhost:4747](http://localhost:4747) after starting port-forwarding:
+  ```bash
+  kubectl port-forward -n rig-system service/rig-platform 4747
+  ```
 
 :::info Note
 As part of the quick installation, a small PostgresSQL instance is installed in your
@@ -51,8 +55,8 @@ cluster, for the Platform to use. This is *not* recommended for production envir
 :::
 
 :::info Note
-Dashboard metrics require the Metric-Server in the kubernetes cluster.
-See here for instructions on how to install it, if missing: https://github.com/kubernetes-sigs/metrics-server
+Dashboard metrics require a metrics-server in the kubernetes cluster.
+While available in most kubernetes cluster, See here for instructions on how to install it, if missing: https://github.com/kubernetes-sigs/metrics-server
 :::
 
 ## Extended installation guides
