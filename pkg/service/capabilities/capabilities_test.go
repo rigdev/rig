@@ -68,7 +68,7 @@ func TestGet(t *testing.T) {
 				Groups: tt.apiGroups,
 			}, nil)
 
-			c := svccapabilities.NewService(mockCfg, mockClient, mockDiscovery)
+			c := svccapabilities.NewService(mockCfg, mockClient, mockDiscovery, nil)
 			res, err := c.Get(context.Background())
 
 			utils.ErrorEqual(t, tt.err, err)
