@@ -49,7 +49,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/init_container
     binary: plugin/init_container
-    main: ./pkg/controlle_t/plugin/init_container
+    main: ./pkg/controller/plugin/init_container
     env:
       - CGO_ENABLED=0
     goos:
