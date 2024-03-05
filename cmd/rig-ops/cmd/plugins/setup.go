@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"errors"
+
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/spf13/cobra"
 )
@@ -8,8 +10,7 @@ import (
 var (
 	operatorConfig string
 	capsules       []string
-	projects       []string
-	environments   []string
+	namespaces     []string
 	plugins        []string
 
 	showConfig bool
@@ -38,11 +39,7 @@ func Setup(parent *cobra.Command) {
 	check.Flags().StringVar(&operatorConfig, "operator-config", "", "If given, will read the config file at the path and use that as an operator config. If empty, will use the operator config of the running operator.")
 	//nolint:lll
 	check.Flags().StringSliceVar(&capsules, "capsules", nil, "If given, will use those capsule names instead of reading them from the platform")
-	//nolint:lll
-	check.Flags().StringSliceVar(&projects, "projects", nil, "If given, will use those project names instead of reading them from the platform")
-	//nolint:lll
-	check.Flags().StringSliceVar(&environments, "environments", nil, "If given, will use those environment names instead of reading them from the platform. The environments given must be known to the platform.")
-	//nolint:lll
+	check.Flags().StringSliceVar(&namespaces, "namespaces", nil, "If given, will only use those namespaces")
 	check.Flags().StringSliceVar(&plugins, "plugins", nil, "If given, will only use those plugins names.")
 	pluginsCmd.AddCommand(check)
 
@@ -65,15 +62,20 @@ func Setup(parent *cobra.Command) {
 	pluginsCmd.AddCommand(get)
 
 	dryRun := &cobra.Command{
-		Use: "dry-run my-capsule",
+		Use: "dry-run namespace my-capsule",
 		//nolint:lll
-		Short: "runs a dry-run of the operator on the given capsule (or provided capsule spec)",
-		Long: `Runs a dry-run of the operator on the givne capsule (or provided capsule spec).
+		Short: "runs a dry-run of the operator on the given namespace and capsule (or provided capsule spec)",
+		Long: `Runs a dry-run of the operator on the given namespace and capsule (or provided capsule spec).
 Besides giving a complete list of plugin configurations, is possible to edit the plugin configuration
 for the dry-run using the replace, remove and append flags.
 If any of these are given, first all the replace, then all remove then all append commands will be executed.
 The dry run will be executed with the resulting list of plugins.`,
-		Args: cobra.MaximumNArgs(1),
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) != 0 && len(args) != 2 {
+				return errors.New("takes exactly 0 or 2 arguments")
+			}
+			return nil
+		},
 		RunE: base.Register(dryRun),
 	}
 	//nolint:lll

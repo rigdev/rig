@@ -112,7 +112,7 @@ func run(cmd *cobra.Command, _ []string) error {
 	}
 
 	capabilitiesSvc := svccapabilities.NewService(cfg, cc, clientSet.DiscoveryClient)
-	capabilitiesH := capabilities.NewHandler(capabilitiesSvc, cfg)
+	capabilitiesH := capabilities.NewHandler(capabilitiesSvc, cfg, scheme)
 	pluginManager, err := plugin.NewManager(afero.NewOsFs())
 	if err != nil {
 		return err

@@ -9,26 +9,24 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
-	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/api/v1/environment"
-	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func check(ctx context.Context,
 	_ *cobra.Command,
 	_ []string,
 	operatorClient *base.OperatorClient,
-	rc rig.Client,
+	cc client.Client,
 	scheme *runtime.Scheme,
 ) error {
 	cfg, err := getOperatorConfig(ctx, operatorClient, scheme)
@@ -44,18 +42,37 @@ func check(ctx context.Context,
 		matchers = append(matchers, matcher)
 	}
 
-	pes, err := getProjectEnvs(ctx, rc)
-	if err != nil {
-		return err
-	}
-	namespaces, err := rc.Environment().GetNamespaces(ctx, connect.NewRequest(&environment.GetNamespacesRequest{
-		ProjectEnvs: pes,
-	}))
-	if err != nil {
-		return err
+	var objects []capsuleNamespace
+
+	if len(capsules) != 0 || len(namespaces) != 0 {
+		capsuleList := v1alpha2.CapsuleList{}
+		if err := cc.List(ctx, &capsuleList); err != nil {
+			return err
+		}
+		for _, c := range capsuleList.Items {
+			if len(capsules) != 0 && !slices.Contains(capsules, c.Name) {
+				continue
+			}
+			if len(namespaces) != 0 && !slices.Contains(namespaces, c.Namespace) {
+				continue
+			}
+			objects = append(objects, capsuleNamespace{
+				namespace: c.Namespace,
+				capsule:   c.Name,
+			})
+		}
+	} else {
+		for _, c := range capsules {
+			for _, ns := range namespaces {
+				objects = append(objects, capsuleNamespace{
+					namespace: ns,
+					capsule:   c,
+				})
+			}
+		}
 	}
 
-	results, err := getResults(ctx, rc, matchers, namespaces.Msg.GetNamespaces())
+	results, err := getResults(matchers, objects)
 	if err != nil {
 		return err
 	}
@@ -65,15 +82,20 @@ func check(ctx context.Context,
 	}
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
-	columnFmt := color.New(color.FgYellow).SprintfFunc()
-	tbl := table.New("Project", "Environment", "Namespace", "Capsule", "Plugin")
-	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+	tbl := table.
+		New("Namespace", "Capsule", "Step Index").
+		WithHeaderFormatter(headerFmt)
 	for _, r := range results {
-		tbl.AddRow(r.ProjectID, r.EnvironmentID, r.Namespace, r.CapsuleID, r.Plugin)
+		tbl.AddRow(r.Namespace, r.CapsuleID, r.StepIndex)
 	}
 	tbl.Print()
 
 	return nil
+}
+
+type capsuleNamespace struct {
+	namespace string
+	capsule   string
 }
 
 func getOperatorConfig(
@@ -95,122 +117,37 @@ func getOperatorConfig(
 		}
 		cfgYAML = string(bytes)
 	}
-
-	// TODO Encapsulate config decoding
-	decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
-	config := &v1alpha1.OperatorConfig{}
-	decodedConfig, _, err := decoder.Decode([]byte(cfgYAML), nil, config)
-	if err != nil {
-		return nil, err
-	}
-	var ok bool
-	config, ok = decodedConfig.(*v1alpha1.OperatorConfig)
-	if !ok {
-		return nil, fmt.Errorf("decoded operator config had unexpected type %T", decodedConfig)
-	}
-
-	return config, nil
-}
-
-func getProjectEnvs(ctx context.Context, rc rig.Client) ([]*environment.ProjectEnvironment, error) {
-	if len(projects) == 0 {
-		resp, err := rc.Project().List(ctx, connect.NewRequest(&project.ListRequest{}))
-		if err != nil {
-			return nil, err
-		}
-		for _, p := range resp.Msg.GetProjects() {
-			projects = append(projects, p.GetProjectId())
-		}
-	}
-
-	if len(environments) == 0 {
-		resp, err := rc.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{}))
-		if err != nil {
-			return nil, err
-		}
-		for _, e := range resp.Msg.GetEnvironments() {
-			environments = append(environments, e.GetEnvironmentId())
-		}
-	}
-	var pes []*environment.ProjectEnvironment
-	for _, p := range projects {
-		for _, e := range environments {
-			pes = append(pes, &environment.ProjectEnvironment{
-				ProjectId:     p,
-				EnvironmentId: e,
-			})
-		}
-	}
-
-	return pes, nil
+	return obj.DecodeIntoT([]byte(cfgYAML), &v1alpha1.OperatorConfig{}, scheme)
 }
 
 type result struct {
-	ProjectID     string `json:"project_id"`
-	EnvironmentID string `json:"environment_id"`
-	Namespace     string `json:"namespace"`
-	CapsuleID     string `json:"capsule_id"`
-	Plugin        string `json:"plugin"`
+	Namespace string `json:"namespace"`
+	CapsuleID string `json:"capsule_id"`
+	StepIndex int    `json:"step_index"`
 }
 
-func getResults(
-	ctx context.Context,
-	rc rig.Client,
-	matchers []plugin.Matcher,
-	namespaces []*environment.ProjectEnvironmentNamespace,
-) ([]result, error) {
-	projectMap := map[string][]*environment.ProjectEnvironmentNamespace{}
-	for _, ns := range namespaces {
-		projectMap[ns.GetProjectId()] = append(projectMap[ns.GetProjectId()], ns)
-	}
-
+func getResults(matchers []plugin.Matcher, objects []capsuleNamespace) ([]result, error) {
 	var results []result
-	for pID, namespaces := range projectMap {
-		var cs []string
-		if len(capsules) > 0 {
-			cs = capsules
-		} else {
-			resp, err := rc.Capsule().List(ctx, connect.NewRequest(&capsule.ListRequest{
-				ProjectId: pID,
-			}))
-			if err != nil {
-				return nil, err
-			}
-			for _, c := range resp.Msg.GetCapsules() {
-				cs = append(cs, c.GetCapsuleId())
-			}
-
-		}
-
-		for _, capsuleID := range cs {
-			for _, ns := range namespaces {
-				for _, matcher := range matchers {
-					if matcher.Match(ns.GetNamespace(), capsuleID, nil) {
-						results = append(results, result{
-							ProjectID:     pID,
-							EnvironmentID: ns.GetEnvironmentId(),
-							Namespace:     ns.GetNamespace(),
-							CapsuleID:     capsuleID,
-						})
-					}
-				}
+	for _, obj := range objects {
+		for idx, matcher := range matchers {
+			if matcher.Match(obj.namespace, obj.capsule, nil) {
+				results = append(results, result{
+					Namespace: obj.namespace,
+					CapsuleID: obj.capsule,
+					StepIndex: idx,
+				})
 			}
 		}
 	}
+
 	slices.SortFunc(results, func(r1, r2 result) int {
-		if r1.ProjectID != r2.ProjectID {
-			return strings.Compare(r1.ProjectID, r2.ProjectID)
-		}
-		if r1.EnvironmentID != r2.EnvironmentID {
-			return strings.Compare(r1.EnvironmentID, r2.EnvironmentID)
-		}
 		if r1.Namespace != r2.Namespace {
 			return strings.Compare(r1.Namespace, r2.Namespace)
 		}
 		if r1.CapsuleID != r2.CapsuleID {
 			return strings.Compare(r1.CapsuleID, r2.CapsuleID)
 		}
-		return strings.Compare(r1.Plugin, r2.Plugin)
+		return r1.StepIndex - r2.StepIndex
 	})
 
 	return results, nil

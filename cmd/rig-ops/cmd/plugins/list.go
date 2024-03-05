@@ -25,7 +25,6 @@ func list(ctx context.Context,
 	if err != nil {
 		return err
 	}
-
 	var plugins []pluginStep
 	for _, s := range cfg.Steps {
 		step := pluginStep{
@@ -42,6 +41,7 @@ func list(ctx context.Context,
 					return fmt.Errorf("plugin '%s' had malformed config: %q", p.Name, err)
 				}
 			}
+			step.Plugins = append(step.Plugins, plugin)
 		}
 		plugins = append(plugins, step)
 	}
@@ -56,16 +56,25 @@ func list(ctx context.Context,
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
-	tbl := table.New("Index", "Plugin", "Namespaces", "Capsules")
+	tbl := table.New("Index", "Plugins", "Namespaces", "Capsules")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	for idx, p := range plugins {
-		n := max(1, len(p.Capsules), len(p.Namespaces))
+		var pluginNames []string
+		for _, pp := range p.Plugins {
+			pluginNames = append(pluginNames, pp.Name)
+		}
+
+		n := max(1, len(p.Capsules), len(p.Namespaces), len(p.Plugins))
 		for i := 0; i < n; i++ {
-			col1, col2, def := "", "", ""
+			col1, def := "", ""
 			if i == 0 {
-				col1, col2, def = strconv.Itoa(idx), p.Plugin, "Matches all"
+				col1, def = strconv.Itoa(idx), "Matches all"
 			}
-			tbl.AddRow(col1, col2, getString(p.Namespaces, i, def), getString(p.Capsules, i, def))
+			tbl.AddRow(col1,
+				getString(pluginNames, i, ""),
+				getString(p.Namespaces, i, def),
+				getString(p.Capsules, i, def),
+			)
 		}
 	}
 	tbl.Print()
@@ -74,7 +83,6 @@ func list(ctx context.Context,
 }
 
 type pluginStep struct {
-	Plugin     string       `json:"plugin"`
 	Namespaces []string     `json:"namespaces"`
 	Capsules   []string     `json:"capsules"`
 	Plugins    []pluginInfo `json:"plugins"`
@@ -117,7 +125,7 @@ func get(ctx context.Context,
 			}
 			choices = append(choices, []string{strconv.Itoa(idx), strings.Join(plugins, ", ")})
 		}
-		idx, err = common.PromptTableSelect("Choose a plugin", choices, []string{"Index", "Type"})
+		idx, err = common.PromptTableSelect("Choose a plugin", choices, []string{"Index", "Plugins"})
 		if err != nil {
 			return err
 		}
