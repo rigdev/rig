@@ -23,38 +23,6 @@ type Step struct {
 	matcher Matcher
 }
 
-func NewStep(step v1alpha1.Step, logger logr.Logger) (s *Step, err error) {
-	var ps []Plugin
-	defer func() {
-		if err != nil {
-			for _, p := range ps {
-				p.Stop(context.Background())
-			}
-		}
-	}()
-
-	for _, plugin := range step.Plugins {
-		p, err := NewExternalPlugin(plugin.Name, logger, plugin.Config)
-		if err != nil {
-			return nil, err
-		}
-
-		ps = append(ps, p)
-	}
-
-	matcher, err := NewMatcher(step.Namespaces, step.Capsules, step.Selector)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Step{
-		step:    step,
-		logger:  logger,
-		plugins: ps,
-		matcher: matcher,
-	}, nil
-}
-
 func makeGlobs(strings []string) ([]glob.Glob, error) {
 	var res []glob.Glob
 	for _, s := range strings {

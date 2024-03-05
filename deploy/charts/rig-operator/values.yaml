@@ -18,52 +18,57 @@ config:
   prometheusServiceMonitor:
     path: ""
     portName: ""
-  steps:
-    []
-    # - plugin: objectTemplate
-    #   config: |
-    #     group: apps
-    #     kind: Deployment
-    #     object: |
-    #       spec:
-    #         template:
-    #           spec:
-    #             containers:
-    #             - name: {{ .capsule.metadata.name }}
-    #               image: alpine
-    #               command: ['sh', '-c', 'echo "Hello from {{ .capsule.metadata.name }}!"']
-    # - plugin: sidecar
-    #   config: |
-    #     container:
-    #       name: foobar
-    #       image: alpine
-    #       command: ['sh', '-c', 'sleep 1000']
-    # - plugin: initContainer
-    #   config: |
-    #     container:
-    #       name: startup
-    #       image: alpine
-    #       command: ['sh', '-c', 'echo "Startup!"']
-    # - plugin: annotations
-    #   config: |
-    #     group: apps
-    #     kind: Deployment
-    #     annotations:
-    #       some-annotation: some-value
-    #       templated-annotation: value-{{ .capsule.spec.image }}
-    #       deleted-annotation: ""
-    # - plugin: datadog
-    #   config: |
-    #     libraryTag:
-    #       java: latest
-    #       javascript: latest
-    #       python: latest
-    #       net: latest
-    #       ruby: latest
-    #     unifiedServiceTags:
-    #       env: some-env
-    #       service: some-service
-    #       version: some-version
+  steps: []
+    # - plugins:
+    #   - name: objectTemplate
+    #     config: |
+    #       group: apps
+    #       kind: Deployment
+    #       object: |
+    #         spec:
+    #           template:
+    #             spec:
+    #               containers:
+    #               - name: {{ .capsule.metadata.name }}
+    #                 image: alpine
+    #                 command: ['sh', '-c', 'echo "Hello from {{ .capsule.metadata.name }}!"']
+    #   - name: sidecar
+    #     config: |
+    #       container:
+    #         name: foobar
+    #         image: alpine
+    #         command: ['sh', '-c', 'sleep 1000']
+    #   - name: initContainer
+    #     config: |
+    #       container:
+    #         name: startup
+    #         image: alpine
+    #         command: ['sh', '-c', 'echo "Startup!"']
+    #   - name: annotations
+    #     config: |
+    #       group: apps
+    #       kind: Deployment
+    #       annotations:
+    #         some-annotation: some-value
+    #         templated-annotation: value-{{ .capsule.spec.image }}
+    #         deleted-annotation: ""
+    #   - name: datadog
+    #     config: |
+    #       libraryTag:
+    #         java: latest
+    #         javascript: latest
+    #         python: latest
+    #         net: latest
+    #         ruby: latest
+    #       unifiedServiceTags:
+    #         env: some-env
+    #         service: some-service
+    #         version: some-version
+    #   - name: my-name
+  customPlugins: []
+    # - image: some-image
+    # - image: some-other-image
+    #   name: my-name
 
 replicaCount: 1
 

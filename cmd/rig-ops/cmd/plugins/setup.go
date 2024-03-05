@@ -77,7 +77,7 @@ The dry run will be executed with the resulting list of plugins.`,
 		RunE: base.Register(dryRun),
 	}
 	//nolint:lll
-	check.Flags().StringVar(&pluginConfig, "config", "", "If given, will read the config file at the path and use that as the plugin config. If empty, will use the plugin config of the running operator.")
+	dryRun.Flags().StringVar(&pluginConfig, "config", "", "If given, will read the config file at the path and use that as the plugin config. If empty, will use the plugin config of the running operator.")
 	//nolint:lll
 	dryRun.Flags().StringVar(&specPath, "spec", "", "If given, will read the capsule spec at the path instead of using the capsule spec of an existing capsule from the platform")
 	//nolint:lll
