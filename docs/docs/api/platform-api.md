@@ -1628,7 +1628,7 @@ Change to a capsule that ultimately results in a new rollout.
 | command_arguments | [Change.CommandArguments](#api-v1-capsule-Change-CommandArguments) |  | Entrypoint for capsule instances. |
 | add_cron_job | [CronJob](#api-v1-capsule-CronJob) |  | Add a cron job. |
 | remove_cron_job | [Change.RemoveCronJob](#api-v1-capsule-Change-RemoveCronJob) |  | Remove a cron job. |
-| add_interface | [Interface](#api-v1-capsule-Interface) |  | Add a network interface. |
+| set_interface | [Interface](#api-v1-capsule-Interface) |  | Add or update a network interface. |
 | remove_interface | [string](#string) |  | Remove a network interface. |
 | set_annotations | [Change.Annotations](#api-v1-capsule-Change-Annotations) |  | Set capsule annotations. |
 | set_annotation | [Change.KeyValue](#api-v1-capsule-Change-KeyValue) |  | Update or add a single capsule annotation. |
