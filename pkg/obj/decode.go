@@ -3,6 +3,7 @@ package obj
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 
 	"github.com/rigdev/rig/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,7 +25,26 @@ func DecodeInto(bs []byte, into runtime.Object, scheme *runtime.Scheme) error {
 	return nil
 }
 
-func Decode(bs []byte, out interface{}) error {
+func DecodeIntoT[T runtime.Object](bs []byte, into T, scheme *runtime.Scheme) (T, error) {
+	codecs := serializer.NewCodecFactory(scheme)
+
+	info, _ := runtime.SerializerInfoForMediaType(codecs.SupportedMediaTypes(), runtime.ContentTypeYAML)
+
+	var empty T
+	out, _, err := info.Serializer.Decode(bs, nil, into)
+	if err != nil {
+		return empty, err
+	}
+
+	t, ok := out.(T)
+	if !ok {
+		return empty, fmt.Errorf("decoded object had unexpected type %T", out)
+	}
+
+	return t, nil
+}
+
+func Decode(bs []byte, out any) error {
 	r := yaml.NewYAMLToJSONDecoder(bufio.NewReader(bytes.NewReader(bs)))
 	if err := r.Decode(out); err != nil {
 		return errors.InvalidArgumentErrorf("bad yaml input: %v", err)

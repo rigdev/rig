@@ -10,24 +10,23 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
-	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func dryRun(ctx context.Context,
 	_ *cobra.Command,
 	args []string,
 	operatorClient *base.OperatorClient,
-	rc rig.Client,
+	cc client.Client,
 	scheme *runtime.Scheme,
 ) error {
 	cfg, err := getOperatorConfig(ctx, operatorClient, scheme)
@@ -91,45 +90,41 @@ func dryRun(ctx context.Context,
 	}
 
 	var spec string
-	if specPath != "" {
+	var capsule v1alpha2.Capsule
+	if len(args) > 0 {
+		if err := cc.Get(ctx, client.ObjectKey{
+			Namespace: args[0],
+			Name:      args[1],
+		}, &capsule); err != nil {
+			return err
+		}
+	} else if specPath != "" {
 		bytes, err := os.ReadFile(specPath)
 		if err != nil {
 			return err
 		}
 		spec = string(bytes)
-	}
-
-	var capsule string
-	if len(args) > 0 {
-		capsule = args[0]
 	} else {
-		resp, err := rc.Capsule().List(ctx, connect.NewRequest(&capsule_api.ListRequest{
-			ProjectId: base.Flags.Project,
-		}))
+		capsuleList := v1alpha2.CapsuleList{}
+		if err := cc.List(ctx, &capsuleList); err != nil {
+			return err
+		}
+		var choices [][]string
+		for _, c := range capsuleList.Items {
+			choices = append(choices, []string{c.Namespace, c.Name})
+		}
+		idx, err := common.PromptTableSelect("Choose a capsule", choices, []string{"Namespace", "Capsule"})
 		if err != nil {
 			return err
 		}
-		var capsules []string
-		for _, c := range resp.Msg.GetCapsules() {
-			capsules = append(capsules, c.GetCapsuleId())
-		}
-		idx, _, err := common.PromptSelect("Choose a capsule", capsules)
-		if err != nil {
+		choice := choices[idx]
+		if err := cc.Get(ctx, client.ObjectKey{
+			Namespace: choice[0],
+			Name:      choice[1],
+		}, &capsule); err != nil {
 			return err
 		}
-		capsule = capsules[idx]
 	}
-
-	resp, err := rc.Environment().GetNamespaces(ctx, connect.NewRequest(&environment.GetNamespacesRequest{
-		ProjectEnvs: []*environment.ProjectEnvironment{{
-			ProjectId:     base.Flags.Project,
-			EnvironmentId: base.Flags.Environment,
-		}},
-	}))
-	if err != nil {
-		return err
-	}
-	namespace := resp.Msg.GetNamespaces()[0].GetNamespace()
 
 	cfgBytes, err := yaml.Marshal(cfg)
 	if err != nil {
@@ -137,8 +132,8 @@ func dryRun(ctx context.Context,
 	}
 
 	dryRun, err := operatorClient.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
-		Namespace:      namespace,
-		Capsule:        capsule,
+		Namespace:      capsule.Namespace,
+		Capsule:        capsule.Name,
 		OperatorConfig: string(cfgBytes),
 		CapsuleSpec:    spec,
 	}))
