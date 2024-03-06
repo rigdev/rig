@@ -129,7 +129,7 @@ func ProcessOperatorOutput(
 func processRemainingResources(
 	reports *ReportSet,
 	currentResources *CurrentResources,
-	scheme *runtime.Scheme,
+	_ *runtime.Scheme,
 ) error {
 	if currentResources.Deployment != nil {
 		if err := reports.AddObject(currentResources.Deployment, nil); err != nil {
@@ -212,8 +212,7 @@ func getWarningsView(warnings []*Warning) *tview.TextView {
 
 func showOverview(
 	currentOverview *tview.TreeView,
-	// output map[string]map[string]*dyff.Report,
-	warnings map[string][]*Warning,
+	_ map[string][]*Warning,
 ) error {
 	grid := tview.NewGrid().
 		SetRows(0).

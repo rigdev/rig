@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"connectrpc.com/connect"
-	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -25,13 +25,13 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	}
 
 	var init []*capsule.Change
-	var image string
+	var imageID string
 	var replicas int
 	if interactive {
 		if ok, err := common.PromptConfirm("Do you want to add an initial image?", true); err != nil {
 			return err
 		} else if ok {
-			if image, err = common.PromptInput("Image:", common.ValidateImageOpt); err != nil {
+			if imageID, err = common.PromptInput("Image:", common.ValidateImageOpt); err != nil {
 				return err
 			}
 
@@ -229,23 +229,21 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 
 	capsuleID := res.Msg.GetCapsuleId()
 
-	if image != "" {
-		var buildID string
-		res, err := c.Rig.Build().Create(ctx, connect.NewRequest(
-			&build.CreateRequest{
+	if imageID != "" {
+		res, err := c.Rig.Image().Create(ctx, connect.NewRequest(
+			&image.CreateRequest{
 				CapsuleId: capsuleID,
-				Image:     image,
+				Image:     imageID,
 				ProjectId: flags.GetProject(c.Cfg),
 			}),
 		)
 		if err != nil {
 			return err
 		}
-		buildID = res.Msg.GetBuildId()
 
 		init = append(init, &capsule.Change{
-			Field: &capsule.Change_BuildId{
-				BuildId: buildID,
+			Field: &capsule.Change_ImageId{
+				ImageId: res.Msg.GetImageId(),
 			},
 		})
 	}

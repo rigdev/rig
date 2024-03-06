@@ -15,8 +15,8 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/capsule/builddeploy"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/env"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule/imagedeploy"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/instance"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/jobs"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/mount"
@@ -175,7 +175,7 @@ func Setup(parent *cobra.Command) {
 	capsuleCmd.AddCommand(capsuleLogs)
 
 	scale.Setup(capsuleCmd)
-	builddeploy.Setup(capsuleCmd)
+	imagedeploy.Setup(capsuleCmd)
 	instance.Setup(capsuleCmd)
 	network.Setup(capsuleCmd)
 	rollout.Setup(capsuleCmd)

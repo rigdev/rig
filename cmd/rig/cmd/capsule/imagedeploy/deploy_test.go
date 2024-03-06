@@ -1,4 +1,4 @@
-package builddeploy
+package imagedeploy
 
 import (
 	"testing"
@@ -11,19 +11,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func Test_expandBuildID(t *testing.T) {
+func Test_expandImageID(t *testing.T) {
 	t1 := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	t2 := time.Date(2000, 1, 1, 1, 0, 0, 0, time.UTC)
-	builds := []*capsule.Build{
+	images := []*capsule.Image{
 		{
-			BuildId:    "registry.io/name:tag@sha256:0123456789",
+			ImageId:    "registry.io/name:tag@sha256:0123456789",
 			Digest:     "sha256:0123456789",
 			Repository: "registry.io/name",
 			Tag:        "tag",
 			CreatedAt:  timestamppb.New(t1),
 		},
 		{
-			BuildId:    "registry.io/name:tag@sha256:01234abcd",
+			ImageId:    "registry.io/name:tag@sha256:01234abcd",
 			Digest:     "sha256:01234abcd",
 			Repository: "registry.io/name",
 			Tag:        "tag",
@@ -33,69 +33,69 @@ func Test_expandBuildID(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		buildID string
+		imageID string
 		err     error
 		res     string
 	}{
 		{
 			name:    "exact match",
-			buildID: "registry.io/name:tag@sha256:0123456789",
+			imageID: "registry.io/name:tag@sha256:0123456789",
 			err:     nil,
 			res:     "registry.io/name:tag@sha256:0123456789",
 		},
 		{
 			name:    "sha prefix",
-			buildID: "sha256:01234567",
+			imageID: "sha256:01234567",
 			err:     nil,
 			res:     "registry.io/name:tag@sha256:0123456789",
 		},
 		{
 			name:    "hex prefix",
-			buildID: "01234567",
+			imageID: "01234567",
 			err:     nil,
 			res:     "registry.io/name:tag@sha256:0123456789",
 		},
 		{
 			name:    "not unique prefix",
-			buildID: "01234",
+			imageID: "01234",
 			err:     errors.New("digest prefix was not unique"),
 			res:     "",
 		},
 		{
 			name:    "no matching prefix",
-			buildID: "012345f",
-			err:     errors.New("no builds had a matching digest prefix"),
+			imageID: "012345f",
+			err:     errors.New("no images had a matching digest prefix"),
 			res:     "",
 		},
 		{
 			name:    "get latest by tag",
-			buildID: "registry.io/name:tag",
+			imageID: "registry.io/name:tag",
 			err:     nil,
 			res:     "registry.io/name:tag@sha256:01234abcd",
 		},
 		{
-			name:    "no build with tag",
-			buildID: "registry.io/name:tag2",
-			err:     errors.New("no builds matched the given image name"),
+			name:    "no image with tag",
+			imageID: "registry.io/name:tag2",
+			err:     errors.New("no images matched the given image name"),
 			res:     "",
 		},
 		{
 			name:    "image name + digest prefix",
-			buildID: "registry.io/name:tag@sha256:0123456",
+			imageID: "registry.io/name:tag@sha256:0123456",
 			err:     nil,
 			res:     "registry.io/name:tag@sha256:0123456789",
 		},
 		{
 			name:    "malformed",
-			buildID: "__+",
-			err:     errors.New("unable to parse buildID"),
+			imageID: "__+",
+			err:     errors.New("unable to parse image"),
 			res:     "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := expandBuildID(builds, tt.buildID)
+			res, err := expandImageID(images, tt.imageID)
 			utils.ErrorEqual(t, tt.err, err)
 			assert.Equal(t, tt.res, res)
 		})

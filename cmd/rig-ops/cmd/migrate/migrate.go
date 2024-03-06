@@ -10,8 +10,8 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
-	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -188,25 +188,26 @@ func migrate(ctx context.Context,
 		return nil
 	}
 
-	if _, err = rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
+	if _, err := rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
 		Name:      deployRequest.Msg.CapsuleId,
 		ProjectId: base.Flags.Project,
 	})); err != nil {
 		return err
 	}
 
-	buildResp, err := rc.Build().Create(ctx, connect.NewRequest(&build.CreateRequest{
-		ProjectId: base.Flags.Project,
-		CapsuleId: deployRequest.Msg.CapsuleId,
-		Image:     capsuleSpec.Spec.Image,
+	imageResp, err := rc.Image().Create(ctx, connect.NewRequest(&image.CreateRequest{
+		ProjectId:      base.Flags.Project,
+		CapsuleId:      deployRequest.Msg.CapsuleId,
+		Image:          capsuleSpec.Spec.Image,
+		SkipImageCheck: true, // TODO: This should be an argument.
 	}))
 	if err != nil {
 		return err
 	}
 
 	change := &capsule.Change{
-		Field: &capsule.Change_BuildId{
-			BuildId: buildResp.Msg.BuildId,
+		Field: &capsule.Change_ImageId{
+			ImageId: imageResp.Msg.GetImageId(),
 		},
 	}
 
@@ -214,47 +215,6 @@ func migrate(ctx context.Context,
 	deployRequest.Msg.Changes = append(deployRequest.Msg.Changes, change)
 	deployRequest.Msg.DryRun = false
 	if _, err = rc.Capsule().Deploy(ctx, deployRequest); err != nil {
-		return err
-	}
-
-	if !apply {
-		return nil
-	}
-	if apply, err = common.PromptConfirm("Do you want to apply the capsule to the rig platform?", false); err != nil {
-		return err
-	} else if !apply {
-		return nil
-	}
-
-	_, err = rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
-		Name:      deployRequest.Msg.CapsuleId,
-		ProjectId: base.Flags.Project,
-	}))
-	if err != nil {
-		return err
-	}
-
-	buildResp, err = rc.Build().Create(ctx, connect.NewRequest(&build.CreateRequest{
-		ProjectId:      base.Flags.Project,
-		CapsuleId:      deployRequest.Msg.CapsuleId,
-		Image:          capsuleSpec.Spec.Image,
-		SkipImageCheck: true,
-	}))
-	if err != nil {
-		return err
-	}
-
-	change = &capsule.Change{
-		Field: &capsule.Change_BuildId{
-			BuildId: buildResp.Msg.BuildId,
-		},
-	}
-
-	deployRequest.Msg.ProjectId = base.Flags.Project
-	deployRequest.Msg.Changes = append(deployRequest.Msg.Changes, change)
-	deployRequest.Msg.DryRun = false
-	_, err = rc.Capsule().Deploy(ctx, deployRequest)
-	if err != nil {
 		return err
 	}
 
@@ -474,8 +434,8 @@ func migrateDeployment(ctx context.Context,
 
 	changes = append(changes, []*capsule.Change{
 		{
-			Field: &capsule.Change_BuildId{
-				BuildId: currentResources.Deployment.Spec.Template.Spec.Containers[0].Image,
+			Field: &capsule.Change_ImageId{
+				ImageId: currentResources.Deployment.Spec.Template.Spec.Containers[0].Image,
 			},
 		},
 		{

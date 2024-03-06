@@ -1,4 +1,4 @@
-package builddeploy
+package imagedeploy
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/docker/docker/client"
-	"github.com/rigdev/rig-go-api/api/v1/build"
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
@@ -34,10 +34,7 @@ var (
 	forceDeploy    bool
 )
 
-var (
-	image   string
-	buildID string
-)
+var imageID string
 
 type Cmd struct {
 	fx.In
@@ -56,57 +53,57 @@ func initCmd(c Cmd) {
 }
 
 func Setup(parent *cobra.Command) {
-	setupBuild(parent)
+	setupImage(parent)
 	setupDeploy(parent)
 }
 
-func setupBuild(parent *cobra.Command) {
-	build := &cobra.Command{
-		Use:               "build",
-		Short:             "Manage builds of the capsule",
+func setupImage(parent *cobra.Command) {
+	image := &cobra.Command{
+		Use:               "image",
+		Short:             "Manage images of the capsule",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 	}
 
-	buildCreate := &cobra.Command{
+	imageCreate := &cobra.Command{
 		Use:   "create",
-		Short: "Create a new build with the given image",
+		Short: "Create a new image with the given image",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.createBuild),
+		RunE:  base.CtxWrap(cmd.createImage),
 	}
-	buildCreate.Flags().StringVarP(&image, "image", "i", "", "image to use for the build")
-	buildCreate.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy build after successful creation")
-	buildCreate.Flags().BoolVarP(
+	imageCreate.Flags().StringVarP(&imageID, "image", "i", "", "image to use for the image")
+	imageCreate.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy image after successful creation")
+	imageCreate.Flags().BoolVarP(
 		&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a deployment if one is in progress",
 	)
-	buildCreate.Flags().BoolVarP(
+	imageCreate.Flags().BoolVarP(
 		&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists",
 	)
-	buildCreate.Flags().BoolVarP(
+	imageCreate.Flags().BoolVarP(
 		&remote, "remote", "r", false, "Rig will not look for the image locally but assumes it from a remote "+
 			"registry. If not set, Rig will search locally and then remotely",
 	)
 
-	if err := buildCreate.RegisterFlagCompletionFunc("deploy", common.BoolCompletions); err != nil {
+	if err := imageCreate.RegisterFlagCompletionFunc("deploy", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if err := buildCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
+	if err := imageCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if err := buildCreate.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions); err != nil {
+	if err := imageCreate.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if err := buildCreate.RegisterFlagCompletionFunc("remote", common.BoolCompletions); err != nil {
+	if err := imageCreate.RegisterFlagCompletionFunc("remote", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	build.AddCommand(buildCreate)
+	image.AddCommand(imageCreate)
 
-	buildGet := &cobra.Command{
-		Use:   "get [build-id]",
-		Short: "Get one or multiple builds",
+	imageGet := &cobra.Command{
+		Use:   "get [image-id]",
+		Short: "Get one or multiple images",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  base.CtxWrap(cmd.getBuild),
 		ValidArgsFunction: common.Complete(
@@ -117,29 +114,28 @@ func setupBuild(parent *cobra.Command) {
 			auth.OmitEnvironment: "",
 		},
 	}
-	buildGet.Flags().IntVar(&offset, "offset", 0, "offset")
-	buildGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
-	build.AddCommand(buildGet)
+	imageGet.Flags().IntVar(&offset, "offset", 0, "offset")
+	imageGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
+	image.AddCommand(imageGet)
 
-	parent.AddCommand(build)
+	parent.AddCommand(image)
 }
 
 func setupDeploy(parent *cobra.Command) {
 	capsuleDeploy := &cobra.Command{
 		Use:               "deploy",
-		Short:             "Deploy the given build to a capsule",
+		Short:             "Deploy the given image to a capsule",
 		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
 		Args:              cobra.NoArgs,
 		RunE:              base.CtxWrap(cmd.deploy),
-		Long: `Deploy either the given rig-build or docker image to a capsule.
-If --build-id is given rig tries to find a matching existing rig-build to deploy.
-If --image is given rig tries to create a new rig-build from the docker image (if it doesn't already exist)
-Not both --build-id and --image can be given`,
+		Long: `Deploy either the given rig-image or docker image to a capsule.
+If --image-id is given rig tries to find a matching existing rig-image to deploy.
+If --image is given rig tries to create a new rig-image from the docker image (if it doesn't already exist)
+Not both --image-id and --image can be given`,
 	}
-	capsuleDeploy.Flags().StringVarP(&buildID, "build-id", "b", "", "rig build id to deploy")
 	capsuleDeploy.Flags().StringVarP(
-		&image,
-		"image", "i", "", "docker image to deploy. Will create a new rig-build from the image if it doesn't exist",
+		&imageID,
+		"image", "i", "", "docker image to deploy. Will register the image in rig if it doesn't exist",
 	)
 	capsuleDeploy.Flags().BoolVarP(
 		&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote "+
@@ -181,14 +177,14 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var buildIds []string
+	var imageIDs []string
 
 	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	resp, err := c.Rig.Build().List(ctx, connect.NewRequest(
-		&build.ListRequest{
+	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(
+		&image.ListRequest{
 			CapsuleId: capsule.CapsuleID,
 			ProjectId: flags.GetProject(c.Cfg),
 		}),
@@ -197,26 +193,26 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	for _, b := range resp.Msg.GetBuilds() {
-		if strings.HasPrefix(b.GetBuildId(), toComplete) {
-			buildIds = append(buildIds, formatBuild(b))
+	for _, b := range resp.Msg.GetImages() {
+		if strings.HasPrefix(b.GetImageId(), toComplete) {
+			imageIDs = append(imageIDs, formatBuild(b))
 		}
 	}
 
-	if len(buildIds) == 0 {
+	if len(imageIDs) == 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return buildIds, cobra.ShellCompDirectiveDefault
+	return imageIDs, cobra.ShellCompDirectiveDefault
 }
 
-func formatBuild(b *capsule_api.Build) string {
+func formatBuild(i *capsule_api.Image) string {
 	var age string
-	if b.GetCreatedAt().AsTime().IsZero() {
+	if i.GetCreatedAt().AsTime().IsZero() {
 		age = "-"
 	} else {
-		age = time.Since(b.GetCreatedAt().AsTime()).Truncate(time.Second).String()
+		age = time.Since(i.GetCreatedAt().AsTime()).Truncate(time.Second).String()
 	}
 
-	return fmt.Sprintf("%v\t (Age: %v)", b.GetBuildId(), age)
+	return fmt.Sprintf("%v\t (Age: %v)", i.GetImageId(), age)
 }

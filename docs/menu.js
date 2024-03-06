@@ -79,8 +79,8 @@ const sidebars = {
     },
     {
       type: "doc",
-      id: "platform/builds",
-      label: "Builds",
+      id: "platform/images",
+      label: "Images",
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "BiBox",
