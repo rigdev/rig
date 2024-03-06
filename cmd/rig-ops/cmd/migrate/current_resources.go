@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rivo/tview"
@@ -114,6 +115,47 @@ func (c *CurrentResources) CreateOverview() *tview.TreeView {
 	tree := tview.NewTreeView().
 		SetRoot(root).
 		SetCurrentNode(root)
+
+	add := func(parent *tview.TreeNode, kind string, name string) *tview.TreeNode {
+		node := tview.NewTreeNode(fmt.Sprintf("%s/%s", kind, name)).
+			SetSelectable(false)
+
+		parent.AddChild(node)
+		return node
+	}
+
+	if c.ServiceAccount != nil {
+		add(root, "ServiceAccount", c.ServiceAccount.GetName())
+	}
+
+	if c.HPA != nil {
+		add(root, "HorizontalPodAutoscaler", c.HPA.GetName())
+	}
+
+	for _, c := range c.ConfigMaps {
+		add(root, "ConfigMap", c.GetName())
+	}
+
+	for _, s := range c.Secrets {
+		add(root, "Secret", s.GetName())
+	}
+
+	for name := range c.Services {
+		serviceNode := add(root, "Service", name)
+
+		for name, i := range c.Ingresses {
+			for _, p := range i.Spec.Rules[0].HTTP.Paths {
+				if p.Backend.Service.Name == name {
+					add(serviceNode, "Ingress", i.GetName())
+				}
+			}
+		}
+	}
+
+	tree.Box.SetTitle("Current Resources (ESC to exit)").
+		SetTitleColor(tcell.ColorRed).
+		SetBorder(true).
+		SetBorderColor(tcell.ColorRed)
 
 	return tree
 }

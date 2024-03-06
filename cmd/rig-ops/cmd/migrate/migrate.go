@@ -10,6 +10,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
+	"github.com/pkg/errors"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
@@ -17,7 +18,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/errors"
+	rigerrors "github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
@@ -154,7 +155,7 @@ func migrate(ctx context.Context,
 	}
 
 	resp, err := oc.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
-		Namespace:   currentResources.Deployment.Namespace,
+		Namespace:   base.Flags.Project,
 		Capsule:     capsuleSpec.Name,
 		CapsuleSpec: string(capsuleSpecYAML),
 		Force:       true,
@@ -167,11 +168,16 @@ func migrate(ctx context.Context,
 		return err
 	}
 
+	migratedTree := CreateMigratedOverview(reports)
+
 	if err := processRemainingResources(reports, currentResources, cc.Scheme()); err != nil {
 		return err
 	}
 
-	if err := PromptDiffingChanges(reports, warnings, currentTree); err != nil && err.Error() != promptAborted {
+	if err := PromptDiffingChanges(reports,
+		warnings,
+		currentTree,
+		migratedTree); err != nil && err.Error() != promptAborted {
 		return err
 	}
 
@@ -227,16 +233,22 @@ func PromptDiffingChanges(
 	reports *ReportSet,
 	warnings map[string][]*Warning,
 	currentOverview *tview.TreeView,
-) error {
-	choices := reports.GetKinds()
+	migratedOverview *tview.TreeView) error {
+	choices := []string{"Overview"}
+
+	for kind := range reports.reports {
+		choices = append(choices, kind)
+	}
+
 	for {
 		_, kind, err := common.PromptSelect("Select the resource kind to view the diff for. CTRL + C to continue", choices)
 		if err != nil {
 			return err
 		}
 
-		if kind == "Overview" {
-			if err := showOverview(currentOverview, warnings); err != nil {
+		switch kind {
+		case "Overview":
+			if err := showOverview(currentOverview, migratedOverview); err != nil {
 				return err
 			}
 			continue
@@ -274,7 +286,7 @@ func getDeployment(ctx context.Context, cc client.Reader, currentResources *Curr
 	deployments := &appsv1.DeploymentList{}
 	err := cc.List(ctx, deployments, client.InNamespace(base.Flags.Namespace))
 	if err != nil {
-		return err
+		return onCCListError(err, "Deployment", base.Flags.Namespace)
 	}
 
 	headers := []string{"NAME", "NAMESPACE", "READY", "UP-TO-DATE", "AVAILABLE", "AGE"}
@@ -309,7 +321,9 @@ func getDeployment(ctx context.Context, cc client.Reader, currentResources *Curr
 			Namespace: deployment.GetNamespace(),
 		}, capsule)
 		if err != nil {
-			return err
+			return onCCGetError(err, "Capsule",
+				deployment.GetObjectMeta().GetLabels()["rig.dev/owned-by-capsule"],
+				deployment.GetNamespace())
 		}
 
 		currentResources.Capsule = capsule
@@ -426,7 +440,9 @@ func migrateDeployment(ctx context.Context,
 				Warning: "ServiceAccount not found",
 			})
 		} else if err != nil {
-			return nil, nil, err
+			return nil, nil, onCCGetError(err, "ServiceAccount",
+				currentResources.Deployment.Spec.Template.Spec.ServiceAccountName,
+				currentResources.Deployment.Namespace)
 		} else {
 			currentResources.ServiceAccount = serviceAccount
 		}
@@ -463,7 +479,7 @@ func migrateHPA(ctx context.Context,
 	hpaList := &autoscalingv2.HorizontalPodAutoscalerList{}
 	err := cc.List(ctx, hpaList, client.InNamespace(base.Flags.Namespace))
 	if err != nil {
-		return nil, err
+		return nil, onCCListError(err, "HorizontalPodAutoscaler", base.Flags.Namespace)
 	}
 
 	var changes []*capsule.Change
@@ -628,8 +644,8 @@ func migrateEnvironment(ctx context.Context,
 	if err == nil {
 		return nil, errors.New("ConfigMap already exists with the same name as the deployment" +
 			"Cannot migrate environment variables")
-	} else if !strings.HasSuffix(err.Error(), "not found") {
-		return nil, err
+	} else if !kerrors.IsNotFound(err) {
+		return nil, onCCGetError(err, "ConfigMap", currentResources.Deployment.Name, currentResources.Deployment.Namespace)
 	}
 
 	if env := currentResources.Deployment.Spec.Template.Spec.Containers[0].Env; len(env) > 0 {
@@ -649,6 +665,32 @@ func migrateEnvironment(ctx context.Context,
 					Name:    currentResources.Deployment.Name,
 					Warning: fmt.Sprintf("Environment variable %s has a valueFrom field. This is not supported.", envVar.Name),
 				})
+
+				if envVar.ValueFrom.ConfigMapKeyRef != nil {
+					configMap := &corev1.ConfigMap{}
+					err := cc.Get(ctx, types.NamespacedName{
+						Name:      envVar.ValueFrom.ConfigMapKeyRef.Name,
+						Namespace: currentResources.Deployment.Namespace,
+					}, configMap)
+					if err != nil {
+						continue
+					}
+
+					currentResources.ConfigMaps[envVar.ValueFrom.ConfigMapKeyRef.Name] = configMap
+				}
+
+				if envVar.ValueFrom.SecretKeyRef != nil {
+					secret := &corev1.Secret{}
+					err := cc.Get(ctx, types.NamespacedName{
+						Name:      envVar.ValueFrom.SecretKeyRef.Name,
+						Namespace: currentResources.Deployment.Namespace,
+					}, secret)
+					if err != nil {
+						continue
+					}
+
+					currentResources.Secrets[envVar.ValueFrom.SecretKeyRef.Name] = secret
+				}
 			}
 		}
 	}
@@ -685,7 +727,9 @@ func migrateConfigFilesAndSecrets(ctx context.Context,
 				Namespace: currentResources.Deployment.Namespace,
 			}, configMap)
 			if err != nil {
-				return nil, err
+				return nil, onCCGetError(err, "ConfigMap",
+					source.ConfigMapRef.Name,
+					currentResources.Deployment.Namespace)
 			}
 
 			name := fmt.Sprintf("env-source--%s", source.ConfigMapRef.Name)
@@ -707,7 +751,7 @@ func migrateConfigFilesAndSecrets(ctx context.Context,
 				Namespace: currentResources.Deployment.Namespace,
 			}, secret)
 			if err != nil {
-				return nil, err
+				return nil, onCCGetError(err, "Secret", source.SecretRef.Name, currentResources.Deployment.Namespace)
 			}
 
 			name := fmt.Sprintf("env-source--%s", source.SecretRef.Name)
@@ -750,7 +794,7 @@ func migrateConfigFilesAndSecrets(ctx context.Context,
 				Namespace: currentResources.Deployment.Namespace,
 			}, configMap)
 			if err != nil {
-				return nil, err
+				return nil, onCCGetError(err, "ConfigMap", volume.ConfigMap.Name, currentResources.Deployment.Namespace)
 			}
 
 			configFile = &capsule.Change_ConfigFile{
@@ -793,7 +837,7 @@ func migrateConfigFilesAndSecrets(ctx context.Context,
 				Namespace: currentResources.Deployment.Namespace,
 			}, secret)
 			if err != nil {
-				return nil, err
+				return nil, onCCGetError(err, "Secret", volume.Secret.SecretName, currentResources.Deployment.Namespace)
 			}
 
 			file = v1alpha2.File{
@@ -861,13 +905,13 @@ func migrateServicesAndIngresses(ctx context.Context,
 	services := &corev1.ServiceList{}
 	err := cc.List(ctx, services, client.InNamespace(currentResources.Deployment.GetNamespace()))
 	if err != nil {
-		return nil, err
+		return nil, onCCListError(err, "Service", currentResources.Deployment.GetNamespace())
 	}
 
 	ingresses := &netv1.IngressList{}
 	err = cc.List(ctx, ingresses, client.InNamespace(currentResources.Deployment.GetNamespace()))
 	if err != nil {
-		return nil, err
+		return nil, onCCListError(err, "Ingress", currentResources.Deployment.GetNamespace())
 	}
 
 	interfaces := make([]v1alpha2.CapsuleInterface, 0, len(container.Ports))
@@ -1047,7 +1091,7 @@ func migrateProbe(probe *corev1.Probe,
 			}, nil
 	}
 
-	return nil, nil, errors.InvalidArgumentErrorf("Probe for port %s is not supported", port.Name)
+	return nil, nil, rigerrors.InvalidArgumentErrorf("Probe for port %s is not supported", port.Name)
 }
 
 func migrateCronJobs(ctx context.Context,
@@ -1059,7 +1103,7 @@ func migrateCronJobs(ctx context.Context,
 	cronJobList := &batchv1.CronJobList{}
 	err := cc.List(ctx, cronJobList, client.InNamespace(currentResources.Deployment.GetNamespace()))
 	if err != nil {
-		return nil, err
+		return nil, onCCListError(err, "CronJob", currentResources.Deployment.GetNamespace())
 	}
 
 	cronJobs := cronJobList.Items
@@ -1202,4 +1246,12 @@ func migrateCronJob(deployment *appsv1.Deployment,
 	}
 
 	return migrated, capsuleCronjob, nil
+}
+
+func onCCGetError(err error, kind, name, namespace string) error {
+	return errors.Wrapf(err, "Error getting %s %s in namespace %s", kind, name, namespace)
+}
+
+func onCCListError(err error, kind, namespace string) error {
+	return errors.Wrapf(err, "Error listing %s in namespace %s", kind, namespace)
 }
