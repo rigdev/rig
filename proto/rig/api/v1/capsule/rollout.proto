@@ -29,7 +29,7 @@ message RolloutConfig {
   google.protobuf.Timestamp created_at = 2;
   repeated Change changes = 3;
   uint32 replicas = 4;
-  string build_id = 5;
+  string image_id = 5;
   Network network = 6;
   ContainerSettings container_settings = 7;
   bool auto_add_rig_service_accounts = 8;

@@ -1,26 +1,26 @@
 syntax = "proto3";
 
-package api.v1.build;
+package api.v1.image;
 
 import "google/protobuf/timestamp.proto";
-import "api/v1/capsule/build.proto";
+import "api/v1/capsule/image.proto";
 import "model/common.proto";
 
 service Service {
-  // Get Information about an image in a build.
+  // Get Information about an image in a image.
   rpc GetImageInfo(GetImageInfoRequest) returns (GetImageInfoResponse) {}
   // Get Information about a docker registry repository.
   rpc GetRepositoryInfo(GetRepositoryInfoRequest)
       returns (GetRepositoryInfoResponse) {}
-  // Get a build.
+  // Get a image.
   rpc Get(GetRequest) returns (GetResponse) {}
-  // Create a new build.
-  // Builds are immutable and cannot change. Create a new build to make
+  // Create a new image.
+  // Images are immutable and cannot change. Create a new image to make
   // changes from an existing one.
   rpc Create(CreateRequest) returns (CreateResponse) {}
-  // List builds for a capsule.
+  // List images for a capsule.
   rpc List(ListRequest) returns (ListResponse) {}
-  // Delete a build.
+  // Delete a image.
   rpc Delete(DeleteRequest) returns (DeleteResponse) {}
 }
 
@@ -76,17 +76,17 @@ message Tag {
   google.protobuf.Timestamp image_created_at = 2;
 }
 
-// Request to create a new build in a capsule.
+// Request to create a new image in a capsule.
 message CreateRequest {
-  // Capsule to create the build in.
+  // Capsule to create the image in.
   string capsule_id = 1;
-  // Image to create the build from.
+  // Container image to create the image from.
   string image = 2;
   // Digest of the image.
   string digest = 3;
   // Origin of the image
   api.v1.capsule.Origin origin = 4;
-  // Meta data to attach to the build.
+  // Meta data to attach to the image.
   map<string, string> labels = 5;
   // if true skip check if image exists.
   bool skip_image_check = 6;
@@ -94,17 +94,17 @@ message CreateRequest {
   string project_id = 7;
 }
 
-// Response to create a new build in a capsule.
+// Response to create a new image in a capsule.
 message CreateResponse {
-  // ID of the build.
-  string build_id = 1;
-  // True if a new build was created.
-  bool created_new_build = 2;
+  // ID of the image.
+  string image_id = 1;
+  // True if a new image was created.
+  bool created_new_image = 2;
 }
 
-// Request to list builds.
+// Request to list images.
 message ListRequest {
-  // Capsule to list builds in.
+  // Capsule to list images in.
   string capsule_id = 1;
   // Pagination options.
   model.Pagination pagination = 2;
@@ -112,39 +112,39 @@ message ListRequest {
   string project_id = 3;
 }
 
-// Reponse to list builds.
+// Reponse to list images.
 message ListResponse {
-  // Builds in the capsule.
-  repeated api.v1.capsule.Build builds = 1;
-  // Total number of builds in the capsule.
+  // Images in the capsule.
+  repeated api.v1.capsule.Image images = 1;
+  // Total number of images in the capsule.
   uint64 total = 2;
 }
 
-// Request to delete a build.
+// Request to delete a image.
 message DeleteRequest {
-  // Capsule to delete the build from.
+  // Capsule to delete the image from.
   string capsule_id = 1;
-  // Build to delete.
-  string build_id = 2;
+  // Image to delete.
+  string image_id = 2;
   // Project ID.
   string project_id = 3;
 }
 
-// Empty response to delete a build.
+// Empty response to delete a image.
 message DeleteResponse {}
 
-// Request to get a build.
+// Request to get a image.
 message GetRequest {
-  // Capsule to get the build from.
+  // Capsule to get the image from.
   string capsule_id = 1;
-  // Build to get.
-  string build_id = 2;
+  // Image to get.
+  string image_id = 2;
   // Project ID.
   string project_id = 3;
 }
 
-// Response to get a build.
+// Response to get a image.
 message GetResponse {
-  // The build to retrieve
-  api.v1.capsule.Build build = 1;
+  // The image to retrieve
+  api.v1.capsule.Image image = 1;
 }
