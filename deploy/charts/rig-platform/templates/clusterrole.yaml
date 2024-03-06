@@ -69,7 +69,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - cert-manager.io/v1
+  - cert-manager.io
   resources:
   - certificates
   verbs:
