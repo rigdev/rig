@@ -102,7 +102,7 @@ object: |
 `,
 					},
 					{
-						Name: "sidecar",
+						Name: "rigdev.sidecar",
 						Config: `
 container:
   image: nginx
