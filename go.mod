@@ -8,7 +8,6 @@ require (
 	github.com/cert-manager/cert-manager v1.13.1
 	github.com/distribution/reference v0.5.0
 	github.com/docker/docker v24.0.2+incompatible
-	github.com/docker/go-connections v0.4.0
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/color v1.16.0
 	github.com/gdamore/tcell/v2 v2.7.1
@@ -29,7 +28,6 @@ require (
 	github.com/moby/term v0.5.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 	github.com/nyaruka/phonenumbers v1.1.7
-	github.com/opencontainers/image-spec v1.1.0-rc3
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
 	github.com/rigdev/rig-go-api v0.0.0-20240306122238-fd0d5f9f476a
@@ -77,6 +75,7 @@ require (
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch v5.7.0+incompatible // indirect
@@ -129,6 +128,7 @@ require (
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.7 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
