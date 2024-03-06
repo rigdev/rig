@@ -76,7 +76,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		t.AppendRow(table.Row{
 			o.Capsule.GetCapsuleId(),
 			o.Rollout.GetConfig().GetReplicas(),
-			o.Rollout.GetConfig().GetBuildId(),
+			o.Rollout.GetConfig().GetImageId(),
 		})
 	}
 	cmd.Println(t.Render())

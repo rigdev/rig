@@ -474,8 +474,8 @@ func migrateDeployment(ctx context.Context,
 
 	changes = append(changes, []*capsule.Change{
 		{
-			Field: &capsule.Change_BuildId{
-				BuildId: currentResources.Deployment.Spec.Template.Spec.Containers[0].Image,
+			Field: &capsule.Change_ImageId{
+				ImageId: currentResources.Deployment.Spec.Template.Spec.Containers[0].Image,
 			},
 		},
 		{

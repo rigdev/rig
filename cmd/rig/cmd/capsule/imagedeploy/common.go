@@ -1,4 +1,4 @@
-package builddeploy
+package imagedeploy
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/rigdev/rig-go-api/api/v1/build"
+	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
@@ -28,7 +28,7 @@ type imageRef struct {
 
 func imageRefFromFlags() imageRef {
 	imageRef := imageRef{
-		Image:        image,
+		Image:        imageID,
 		IsKnownLocal: nil,
 	}
 	if remote {
@@ -56,12 +56,12 @@ func (c *Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 		}, nil
 	}
 
-	image, err = common.PromptInput("Enter image:", common.ValidateImageOpt)
+	imageName, err := common.PromptInput("Enter image:", common.ValidateImageOpt)
 	if err != nil {
 		return empty, nil
 	}
 	return imageRef{
-		Image:        image,
+		Image:        imageName,
 		IsKnownLocal: ptr.New(false),
 	}, nil
 }
@@ -161,8 +161,8 @@ func (c *Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef i
 		}
 	}
 
-	res, err := c.Rig.Build().Create(ctx, connect.NewRequest(
-		&build.CreateRequest{
+	res, err := c.Rig.Image().Create(ctx, connect.NewRequest(
+		&image.CreateRequest{
 			CapsuleId:      capsuleID,
 			Image:          imageRef.Image,
 			Digest:         digest,
@@ -174,11 +174,11 @@ func (c *Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef i
 		return "", err
 	}
 
-	if res.Msg.GetCreatedNewBuild() {
-		fmt.Println("Created new build:", res.Msg.GetBuildId())
+	if res.Msg.GetCreatedNewImage() {
+		fmt.Println("Created new build:", res.Msg.GetImageId())
 	} else {
 		fmt.Println("Build already exists, using existing build")
 	}
 
-	return res.Msg.GetBuildId(), nil
+	return res.Msg.GetImageId(), nil
 }

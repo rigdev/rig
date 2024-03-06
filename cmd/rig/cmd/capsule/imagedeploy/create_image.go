@@ -1,4 +1,4 @@
-package builddeploy
+package imagedeploy
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) createBuild(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) createImage(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var err error
 
 	imageRef := imageRefFromFlags()
-	if image == "" {
+	if imageID == "" {
 		imageRef, err = c.promptForImage(ctx)
 		if err != nil {
 			return err
@@ -35,8 +35,8 @@ func (c *Cmd) createBuild(ctx context.Context, cmd *cobra.Command, _ []string) e
 		Msg: &capsule.DeployRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Changes: []*capsule.Change{{
-				Field: &capsule.Change_BuildId{
-					BuildId: buildID,
+				Field: &capsule.Change_ImageId{
+					ImageId: buildID,
 				},
 			}},
 			ProjectId:     flags.GetProject(c.Cfg),

@@ -1,4 +1,4 @@
-package builddeploy
+package imagedeploy
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/rigdev/rig-go-api/api/v1/build"
+	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -16,8 +16,8 @@ import (
 )
 
 func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	resp, err := c.Rig.Build().List(ctx, connect.NewRequest(
-		&build.ListRequest{
+	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(
+		&image.ListRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			Pagination: &model.Pagination{
 				Offset:     uint32(offset),
@@ -32,12 +32,12 @@ func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, _ []string) erro
 	}
 
 	if flags.Flags.OutputType != common.OutputTypePretty {
-		return common.FormatPrint(resp.Msg.GetBuilds(), flags.Flags.OutputType)
+		return common.FormatPrint(resp.Msg.GetImages(), flags.Flags.OutputType)
 	}
 
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{fmt.Sprintf("Builds (%d)", resp.Msg.GetTotal()), "Digest", "Age", "Created By"})
-	for _, b := range resp.Msg.GetBuilds() {
+	for _, b := range resp.Msg.GetImages() {
 		t.AppendRow(table.Row{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
 			capsule_cmd.TruncatedFixed(b.GetDigest(), 19),
