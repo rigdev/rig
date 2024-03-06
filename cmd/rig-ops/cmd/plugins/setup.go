@@ -22,6 +22,7 @@ var (
 	removes      []int
 	appends      []string
 	dry          bool
+	interactive  bool
 )
 
 func Setup(parent *cobra.Command) {
@@ -92,6 +93,7 @@ The dry run will be executed with the resulting list of plugins.`,
 	dryRun.Flags().BoolVar(&dry, "dry", false, "If given, will only show the list of plugins used for the dry-run")
 	//nolint:lll
 	dryRun.Flags().StringVar(&output, "output-path", "", "If given, will write the output to a file at the given path.")
+	dryRun.Flags().BoolVar(&interactive, "interactive", false, "If set, will show differences interactively.")
 	pluginsCmd.AddCommand(dryRun)
 
 	list := &cobra.Command{

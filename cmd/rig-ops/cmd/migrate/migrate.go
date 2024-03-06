@@ -10,7 +10,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
-	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/rigdev/rig-go-api/api/v1/build"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
@@ -45,28 +44,20 @@ func migrate(ctx context.Context,
 ) error {
 	var rc rig.Client
 	var err error
-	if !skipPlatform {
+	if !skipPlatform || apply {
 		rc, err = base.NewRigClient(ctx)
 		if err != nil {
 			return err
 		}
 	}
 
-	currentResources := &CurrentResources{
-		ConfigMaps: map[string]*corev1.ConfigMap{},
-		Secrets:    map[string]*corev1.Secret{},
-		Services:   map[string]*corev1.Service{},
-		Ingresses:  map[string]*netv1.Ingress{},
-		CronJobs:   map[string]*batchv1.CronJob{},
-	}
-
-	err = getDeployment(ctx, cr, currentResources)
-	if err != nil || currentResources.Deployment == nil {
+	currentResources := NewCurrentResources()
+	if err = getDeployment(ctx, cr, currentResources); err != nil || currentResources.Deployment == nil {
 		return err
 	}
 
 	warnings := map[string][]*Warning{}
-	changes := []*capsule.Change{}
+	var changes []*capsule.Change
 
 	fmt.Print("Migrating Deployment...")
 	capsuleSpec, deploymentChanges, err := migrateDeployment(ctx, currentResources, cc, warnings)
@@ -130,10 +121,9 @@ func migrate(ctx context.Context,
 	changes = append(changes, cronJobChanges...)
 	color.Green(" ✓")
 
-	reports := map[string]map[string]*dyff.Report{}
-	currentTree := currentResources.createOverview()
+	reports := NewReportSet(cc.Scheme())
+	currentTree := currentResources.CreateOverview()
 
-	var platformResources map[string]string
 	deployRequest := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId:     capsuleSpec.Name,
@@ -145,14 +135,13 @@ func migrate(ctx context.Context,
 		},
 	}
 	if !skipPlatform {
-
 		deployResp, err := rc.Capsule().Deploy(ctx, deployRequest)
 		if err != nil {
 			fmt.Println("Error deploying capsule", err)
 			return err
 		}
 
-		platformResources = deployResp.Msg.GetResourceYaml()
+		platformResources := deployResp.Msg.GetResourceYaml()
 		capsuleSpec, err = processPlatformOutput(reports, currentResources, platformResources, cc.Scheme())
 		if err != nil {
 			return err
@@ -174,115 +163,148 @@ func migrate(ctx context.Context,
 		return err
 	}
 
-	err = processOperatorOutput(reports, currentResources, resp.Msg.OutputObjects, cc.Scheme())
+	if err := ProcessOperatorOutput(reports, currentResources, resp.Msg.OutputObjects, cc.Scheme()); err != nil {
+		return err
+	}
+
+	if err := processRemainingResources(reports, currentResources, cc.Scheme()); err != nil {
+		return err
+	}
+
+	if err := PromptDiffingChanges(reports, warnings, currentTree); err != nil && err.Error() != promptAborted {
+		return err
+	}
+
+	if !apply {
+		return nil
+	}
+
+	apply, err := common.PromptConfirm("Do you want to apply the capsule to the rig platform?", false)
 	if err != nil {
 		return err
 	}
 
-	err = processRemainingResources(reports, currentResources, cc.Scheme())
+	if !apply {
+		return nil
+	}
+
+	if _, err = rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
+		Name:      deployRequest.Msg.CapsuleId,
+		ProjectId: base.Flags.Project,
+	})); err != nil {
+		return err
+	}
+
+	buildResp, err := rc.Build().Create(ctx, connect.NewRequest(&build.CreateRequest{
+		ProjectId: base.Flags.Project,
+		CapsuleId: deployRequest.Msg.CapsuleId,
+		Image:     capsuleSpec.Spec.Image,
+	}))
 	if err != nil {
 		return err
 	}
 
-	err = promptDiffingChanges(reports, warnings, currentTree)
-	if err != nil && err.Error() != promptAborted {
+	change := &capsule.Change{
+		Field: &capsule.Change_BuildId{
+			BuildId: buildResp.Msg.BuildId,
+		},
+	}
+
+	deployRequest.Msg.ProjectId = base.Flags.Project
+	deployRequest.Msg.Changes = append(deployRequest.Msg.Changes, change)
+	deployRequest.Msg.DryRun = false
+	if _, err = rc.Capsule().Deploy(ctx, deployRequest); err != nil {
 		return err
 	}
 
-	if apply {
-		apply, err := common.PromptConfirm("Do you want to apply the capsule to the rig platform?", false)
-		if err != nil {
-			return err
-		}
-
-		if apply {
-			_, err := rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
-				Name:      deployRequest.Msg.CapsuleId,
-				ProjectId: base.Flags.Project,
-			}))
-			if err != nil {
-				return err
-			}
-
-			buildResp, err := rc.Build().Create(ctx, connect.NewRequest(&build.CreateRequest{
-				ProjectId:      base.Flags.Project,
-				CapsuleId:      deployRequest.Msg.CapsuleId,
-				Image:          capsuleSpec.Spec.Image,
-				SkipImageCheck: true,
-			}))
-			if err != nil {
-				return err
-			}
-
-			change := &capsule.Change{
-				Field: &capsule.Change_BuildId{
-					BuildId: buildResp.Msg.BuildId,
-				},
-			}
-
-			deployRequest.Msg.ProjectId = base.Flags.Project
-			deployRequest.Msg.Changes = append(deployRequest.Msg.Changes, change)
-			deployRequest.Msg.DryRun = false
-			_, err = rc.Capsule().Deploy(ctx, deployRequest)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println("Capsule applied to rig platform")
-		}
+	if !apply {
+		return nil
 	}
+	if apply, err = common.PromptConfirm("Do you want to apply the capsule to the rig platform?", false); err != nil {
+		return err
+	} else if !apply {
+		return nil
+	}
+
+	_, err = rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
+		Name:      deployRequest.Msg.CapsuleId,
+		ProjectId: base.Flags.Project,
+	}))
+	if err != nil {
+		return err
+	}
+
+	buildResp, err = rc.Build().Create(ctx, connect.NewRequest(&build.CreateRequest{
+		ProjectId:      base.Flags.Project,
+		CapsuleId:      deployRequest.Msg.CapsuleId,
+		Image:          capsuleSpec.Spec.Image,
+		SkipImageCheck: true,
+	}))
+	if err != nil {
+		return err
+	}
+
+	change = &capsule.Change{
+		Field: &capsule.Change_BuildId{
+			BuildId: buildResp.Msg.BuildId,
+		},
+	}
+
+	deployRequest.Msg.ProjectId = base.Flags.Project
+	deployRequest.Msg.Changes = append(deployRequest.Msg.Changes, change)
+	deployRequest.Msg.DryRun = false
+	_, err = rc.Capsule().Deploy(ctx, deployRequest)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Capsule applied to rig platform")
 
 	return nil
 }
 
-func promptDiffingChanges(reports map[string]map[string]*dyff.Report,
+func PromptDiffingChanges(
+	reports *ReportSet,
 	warnings map[string][]*Warning,
 	currentOverview *tview.TreeView,
 ) error {
-	choices := []string{}
-	// choices = append(choices, "Overview")
-
-	for kind := range reports {
-		choices = append(choices, kind)
-	}
-
+	choices := reports.GetKinds()
 	for {
 		_, kind, err := common.PromptSelect("Select the resource kind to view the diff for. CTRL + C to continue", choices)
 		if err != nil {
 			return err
 		}
 
-		switch kind {
-		case "Overview":
-			if err := showOverview(currentOverview, reports, warnings); err != nil {
+		if kind == "Overview" {
+			if err := showOverview(currentOverview, warnings); err != nil {
 				return err
 			}
 			continue
-		default:
-			report := reports[kind]
-			if len(report) == 1 {
-				name := maps.Keys(report)[0]
-				if err := showDiffReport(report[name], kind, name, warnings[kind]); err != nil {
-					return err
-				}
-			} else {
-				names := []string{}
-				for name := range report {
-					names = append(names, name)
-				}
+		}
 
-				for {
-					_, name, err := common.PromptSelect("Select the resource to view the diff for. CTRL + C to continue", names)
-					if err != nil && err.Error() == promptAborted {
-						break
-					} else if err != nil {
-						return err
-					}
+		report, _ := reports.GetKind(kind)
+		if len(report) == 1 {
+			name := maps.Keys(report)[0]
+			if err := showDiffReport(report[name], kind, name, warnings[kind]); err != nil {
+				return err
+			}
+			continue
+		}
+		names := []string{}
+		for name := range report {
+			names = append(names, name)
+		}
 
-					if err := showDiffReport(report[name], kind, name, warnings[kind]); err != nil {
-						return err
-					}
-				}
+		for {
+			_, name, err := common.PromptSelect("Select the resource to view the diff for. CTRL + C to continue", names)
+			if err != nil && err.Error() == promptAborted {
+				break
+			} else if err != nil {
+				return err
+			}
+
+			if err := showDiffReport(report[name], kind, name, warnings[kind]); err != nil {
+				return err
 			}
 		}
 	}

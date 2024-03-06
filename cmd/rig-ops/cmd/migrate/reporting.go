@@ -10,209 +10,51 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
+	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
-// marshall the platform resources into kubernetes resources, and then compare them to the existing k8s resources
-func processPlatformOutput(reports map[string]map[string]*dyff.Report,
-	currentResources *CurrentResources,
-	platformResources map[string]string,
-	scheme *runtime.Scheme,
-) (*v1alpha2.Capsule, error) {
-	var capsule *v1alpha2.Capsule
-	for _, resource := range platformResources {
-		// unmarshal the resource into a k8s object
-		object := &unstructured.Unstructured{}
-		err := yaml.Unmarshal([]byte(resource), object)
-		if err != nil {
-			return nil, err
-		}
-
-		orig := currentResources.getCurrentObject(object.GetKind(), object.GetName())
-
-		proposal, err := obj.DecodeAny([]byte(resource), scheme)
-		if err != nil {
-			return nil, err
-		}
-
-		b, err := getDiffingReport(orig, proposal, scheme)
-		if err != nil {
-			return nil, err
-		}
-		if _, ok := reports[object.GetKind()]; !ok {
-			if object.GetKind() == "Capsule" {
-				capsule = &v1alpha2.Capsule{}
-				err = obj.Decode([]byte(resource), capsule)
-				if err != nil {
-					return nil, err
-				}
-			}
-			reports[object.GetKind()] = map[string]*dyff.Report{}
-		}
-
-		reports[object.GetKind()][object.GetName()] = b
-	}
-
-	return capsule, nil
+type ReportSet struct {
+	reports map[string]map[string]*dyff.Report
+	scheme  *runtime.Scheme
 }
 
-func processOperatorOutput(reports map[string]map[string]*dyff.Report,
-	currentResources *CurrentResources,
-	operatorOutput []*pipeline.ObjectChange,
-	scheme *runtime.Scheme,
-) error {
-	for _, out := range operatorOutput {
-		orig := currentResources.getCurrentObject(out.GetObject().GetGvk().GetKind(), out.GetObject().GetName())
+func NewReportSet(scheme *runtime.Scheme) *ReportSet {
+	return &ReportSet{
+		reports: map[string]map[string]*dyff.Report{},
+		scheme:  scheme,
+	}
+}
 
-		proposal, err := obj.DecodeAny([]byte(out.GetObject().GetContent()), scheme)
-		if err != nil {
-			return err
-		}
-
-		b, err := getDiffingReport(orig, proposal, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports[out.GetObject().GetGvk().GetKind()]; !ok {
-			reports[out.GetObject().GetGvk().GetKind()] = map[string]*dyff.Report{}
-		}
-
-		reports[out.GetObject().GetGvk().GetKind()][out.GetObject().GetName()] = b
+func (r *ReportSet) AddObject(original, proposal client.Object) error {
+	report, err := r.getDiffingReport(original, proposal)
+	if err != nil {
+		return err
 	}
 
+	kind := original.GetObjectKind().GroupVersionKind().Kind
+	if _, ok := r.reports[kind]; !ok {
+		r.reports[kind] = map[string]*dyff.Report{}
+	}
+
+	r.reports[kind][original.GetName()] = report
 	return nil
 }
 
-func processRemainingResources(reports map[string]map[string]*dyff.Report,
-	currentResources *CurrentResources,
-	scheme *runtime.Scheme,
-) error {
-	if currentResources.Deployment != nil {
-		report, err := getDiffingReport(currentResources.Deployment, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["Deployment"]; !ok {
-			reports["Deployment"] = map[string]*dyff.Report{}
-		}
-
-		reports["Deployment"][currentResources.Deployment.GetName()] = report
-	}
-
-	if currentResources.HPA != nil {
-		report, err := getDiffingReport(currentResources.HPA, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["HorizontalPodAutoscaler"]; !ok {
-			reports["HorizontalPodAutoscaler"] = map[string]*dyff.Report{}
-		}
-
-		reports["HorizontalPodAutoscaler"][currentResources.HPA.GetName()] = report
-	}
-
-	if currentResources.ServiceAccount != nil {
-		report, err := getDiffingReport(currentResources.ServiceAccount, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["ServiceAccount"]; !ok {
-			reports["ServiceAccount"] = map[string]*dyff.Report{}
-		}
-
-		reports["ServiceAccount"][currentResources.ServiceAccount.GetName()] = report
-	}
-
-	if currentResources.Capsule != nil {
-		report, err := getDiffingReport(currentResources.Capsule, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["Capsule"]; !ok {
-			reports["Capsule"] = map[string]*dyff.Report{}
-		}
-
-		reports["Capsule"][currentResources.Capsule.GetName()] = report
-	}
-
-	for _, cm := range currentResources.ConfigMaps {
-		report, err := getDiffingReport(cm, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["ConfigMap"]; !ok {
-			reports["ConfigMap"] = map[string]*dyff.Report{}
-		}
-
-		reports["ConfigMap"][cm.GetName()] = report
-	}
-
-	for _, s := range currentResources.Secrets {
-		report, err := getDiffingReport(s, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["Secret"]; !ok {
-			reports["Secret"] = map[string]*dyff.Report{}
-		}
-
-		reports["Secret"][s.GetName()] = report
-	}
-
-	for _, s := range currentResources.Services {
-		report, err := getDiffingReport(s, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["Service"]; !ok {
-			reports["Service"] = map[string]*dyff.Report{}
-		}
-
-		reports["Service"][s.GetName()] = report
-	}
-
-	for _, i := range currentResources.Ingresses {
-		report, err := getDiffingReport(i, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["Ingress"]; !ok {
-			reports["Ingress"] = map[string]*dyff.Report{}
-		}
-
-		reports["Ingress"][i.GetName()] = report
-	}
-
-	for _, cj := range currentResources.CronJobs {
-		report, err := getDiffingReport(cj, nil, scheme)
-		if err != nil {
-			return err
-		}
-
-		if _, ok := reports["CronJob"]; !ok {
-			reports["CronJob"] = map[string]*dyff.Report{}
-		}
-
-		reports["CronJob"][cj.GetName()] = report
-	}
-
-	return nil
+func (r *ReportSet) GetKind(kind string) (map[string]*dyff.Report, bool) {
+	v, ok := r.reports[kind]
+	return v, ok
 }
 
-func getDiffingReport(orig, proposal client.Object, scheme *runtime.Scheme) (*dyff.Report, error) {
-	c := obj.NewComparison(orig, proposal, scheme)
+func (r *ReportSet) GetKinds() []string {
+	return maps.Keys(r.reports)
+}
+
+func (r *ReportSet) getDiffingReport(orig, proposal client.Object) (*dyff.Report, error) {
+	c := obj.NewComparison(orig, proposal, r.scheme)
 	c.AddFilter(obj.RemoveAnnotationsFilter(
 		"kubectl.kubernetes.io/last-applied-configuration",
 		"deployment.kubernetes.io/revision",
@@ -224,6 +66,126 @@ func getDiffingReport(orig, proposal client.Object, scheme *runtime.Scheme) (*dy
 	}
 
 	return d.Report, nil
+}
+
+// marshall the platform resources into kubernetes resources, and then compare them to the existing k8s resources
+func processPlatformOutput(
+	reports *ReportSet,
+	currentResources *CurrentResources,
+	platformResources map[string]string,
+	scheme *runtime.Scheme,
+) (*v1alpha2.Capsule, error) {
+	var capsule *v1alpha2.Capsule
+	for _, resource := range platformResources {
+		// unmarshal the resource into a k8s object
+		object := &unstructured.Unstructured{}
+		if err := yaml.Unmarshal([]byte(resource), object); err != nil {
+			return nil, err
+		}
+
+		orig := currentResources.getCurrentObject(object.GetKind(), object.GetName())
+
+		proposal, err := obj.DecodeAny([]byte(resource), scheme)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := reports.AddObject(orig, proposal); err != nil {
+			return nil, err
+		}
+
+		if object.GetKind() == "Capsule" {
+			capsule = &v1alpha2.Capsule{}
+			if err = obj.Decode([]byte(resource), capsule); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return capsule, nil
+}
+
+func ProcessOperatorOutput(
+	reports *ReportSet,
+	currentResources *CurrentResources,
+	operatorOutput []*pipeline.ObjectChange,
+	scheme *runtime.Scheme,
+) error {
+	for _, out := range operatorOutput {
+		orig := currentResources.getCurrentObject(out.GetObject().GetGvk().GetKind(), out.GetObject().GetName())
+
+		proposal, err := obj.DecodeAny([]byte(out.GetObject().GetContent()), scheme)
+		if err != nil {
+			return err
+		}
+		if err := reports.AddObject(orig, proposal); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func processRemainingResources(
+	reports *ReportSet,
+	currentResources *CurrentResources,
+	scheme *runtime.Scheme,
+) error {
+	if currentResources.Deployment != nil {
+		if err := reports.AddObject(currentResources.Deployment, nil); err != nil {
+			return err
+		}
+	}
+
+	if currentResources.HPA != nil {
+		if err := reports.AddObject(currentResources.HPA, nil); err != nil {
+			return err
+		}
+	}
+
+	if currentResources.ServiceAccount != nil {
+		if err := reports.AddObject(currentResources.ServiceAccount, nil); err != nil {
+			return err
+		}
+	}
+
+	if currentResources.Capsule != nil {
+		if err := reports.AddObject(currentResources.Capsule, nil); err != nil {
+			return err
+		}
+	}
+
+	for _, cm := range currentResources.ConfigMaps {
+		if err := reports.AddObject(cm, nil); err != nil {
+			return err
+		}
+	}
+
+	for _, s := range currentResources.Secrets {
+		if err := reports.AddObject(s, nil); err != nil {
+			return err
+		}
+	}
+
+	for _, s := range currentResources.Services {
+		if err := reports.AddObject(s, nil); err != nil {
+			return err
+		}
+	}
+
+	for _, i := range currentResources.Ingresses {
+		if err := reports.AddObject(i, nil); err != nil {
+			return err
+		}
+	}
+
+	for _, cj := range currentResources.CronJobs {
+		if err := reports.AddObject(cj, nil); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func getWarningsView(warnings []*Warning) *tview.TextView {
@@ -248,9 +210,11 @@ func getWarningsView(warnings []*Warning) *tview.TextView {
 	return text
 }
 
-func showOverview(currentOverview *tview.TreeView,
-	output map[string]map[string]*dyff.Report,
-	warnings map[string][]*Warning) error {
+func showOverview(
+	currentOverview *tview.TreeView,
+	// output map[string]map[string]*dyff.Report,
+	warnings map[string][]*Warning,
+) error {
 	grid := tview.NewGrid().
 		SetRows(0).
 		SetColumns(0, 0).

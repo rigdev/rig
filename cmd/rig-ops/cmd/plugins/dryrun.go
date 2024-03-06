@@ -13,6 +13,7 @@ import (
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
+	"github.com/rigdev/rig/cmd/rig-ops/cmd/migrate"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/obj"
@@ -150,6 +151,10 @@ func dryRun(ctx context.Context,
 		objects = append(objects, object)
 	}
 
+	if interactive {
+		return interactiveDiff(scheme, dryRun.Msg)
+	}
+
 	out, err := common.Format(objects, common.OutputTypeYAML)
 	if err != nil {
 		return err
@@ -161,6 +166,32 @@ func dryRun(ctx context.Context,
 	}
 
 	return os.WriteFile(output, []byte(out), 0666)
+}
+
+func interactiveDiff(scheme *runtime.Scheme, dryRun *pipeline.DryRunResponse) error {
+	current := migrate.NewCurrentResources()
+	for _, o := range dryRun.InputObjects {
+		object, err := obj.DecodeAny([]byte(o.GetContent()), scheme)
+		if err != nil {
+			return err
+		}
+		if err := current.AddResource(o.GetGvk().Kind, o.GetName(), object); err != nil {
+			return err
+		}
+	}
+	overview := current.CreateOverview()
+
+	reports := migrate.NewReportSet(scheme)
+	if err := migrate.ProcessOperatorOutput(reports, current, dryRun.GetOutputObjects(), scheme); err != nil {
+		return err
+	}
+
+	warnings := map[string][]*migrate.Warning{}
+	for _, k := range reports.GetKinds() {
+		warnings[k] = nil
+	}
+
+	return migrate.PromptDiffingChanges(reports, warnings, overview)
 }
 
 func readPlugin(path string) (v1alpha1.Step, error) {
