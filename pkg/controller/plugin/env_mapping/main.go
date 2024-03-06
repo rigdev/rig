@@ -69,13 +69,12 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 			container = req.Capsule().GetName()
 		}
 
-		for _, c := range deployment.Spec.Template.Spec.Containers {
+		for i, c := range deployment.Spec.Template.Spec.Containers {
 			if c.Name != container {
 				continue
 			}
 
 			for _, m := range source.Mappings {
-
 				envVar := corev1.EnvVar{
 					Name: m.Env,
 				}
@@ -114,6 +113,8 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 
 				c.Env = append(c.Env, envVar)
 			}
+
+			deployment.Spec.Template.Spec.Containers[i] = c
 
 			break
 		}
