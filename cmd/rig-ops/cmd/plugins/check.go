@@ -3,19 +3,14 @@ package plugins
 import (
 	"context"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 
-	"connectrpc.com/connect"
 	"github.com/fatih/color"
-	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
-	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/plugin"
-	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,7 +24,7 @@ func check(ctx context.Context,
 	cc client.Client,
 	scheme *runtime.Scheme,
 ) error {
-	cfg, err := getOperatorConfig(ctx, operatorClient, scheme)
+	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
 	if err != nil {
 		return err
 	}
@@ -96,28 +91,6 @@ func check(ctx context.Context,
 type capsuleNamespace struct {
 	namespace string
 	capsule   string
-}
-
-func getOperatorConfig(
-	ctx context.Context,
-	operatorClient *base.OperatorClient,
-	scheme *runtime.Scheme,
-) (*v1alpha1.OperatorConfig, error) {
-	var cfgYAML string
-	if operatorConfig == "" {
-		cfgResp, err := operatorClient.Capabilities.GetConfig(ctx, connect.NewRequest(&capabilities.GetConfigRequest{}))
-		if err != nil {
-			return nil, err
-		}
-		cfgYAML = cfgResp.Msg.GetYaml()
-	} else {
-		bytes, err := os.ReadFile(operatorConfig)
-		if err != nil {
-			return nil, err
-		}
-		cfgYAML = string(bytes)
-	}
-	return obj.DecodeIntoT([]byte(cfgYAML), &v1alpha1.OperatorConfig{}, scheme)
 }
 
 type result struct {

@@ -59,7 +59,7 @@ tasks:
       - "pkg/controller/plugin/**/*.go"
     vars:
       PLUGINS:
-        sh: find ./pkg/controller/plugin/ -mindepth 1 -type d | xargs -I{} basename {}
+        sh: find ./pkg/controller/plugin/ -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
     cmds:
       - for: { var: PLUGINS }
         task: build-plugin

@@ -146,6 +146,12 @@ func SelectFuzzyFilterOpt(s *selection.Selection[string]) {
 	}
 }
 
+func SelectPageSizeOpt(size int) SelectInputOption {
+	return func(s *selection.Selection[string]) {
+		s.PageSize = size
+	}
+}
+
 func SelectExtendTemplateOpt(t template.FuncMap) SelectInputOption {
 	return func(s *selection.Selection[string]) {
 		s.ExtendedTemplateFuncs = t
