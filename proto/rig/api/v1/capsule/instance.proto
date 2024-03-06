@@ -16,7 +16,7 @@ enum State {
 
 message Instance {
   string instance_id = 1;
-  string build_id = 2;
+  string image_id = 2;
   State state = 3;
   uint32 restart_count = 4;
   google.protobuf.Timestamp created_at = 5;

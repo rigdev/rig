@@ -1783,7 +1783,7 @@ An event that is associated with a rollout.
 <a name="api-v1-capsule-GitReference"></a>
 
 ### GitReference
-GitReference is an origin of a build.
+GitReference is an origin of a image.
 
 
 | Field | Type | Label | Description |
@@ -1810,10 +1810,10 @@ metadata for a capsule.
 | digest | [string](#string) |  | digest of the image |
 | repository | [string](#string) |  | repository of the image |
 | tag | [string](#string) |  | tag of the image |
-| created_by | [model.Author](#model-Author) |  | user who created the build |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | time the build was created |
-| origin | [Origin](#api-v1-capsule-Origin) |  | origin of the build |
-| labels | [Image.LabelsEntry](#api-v1-capsule-Image-LabelsEntry) | repeated | labels of the build |
+| created_by | [model.Author](#model-Author) |  | user who created the image |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | time the image was created |
+| origin | [Origin](#api-v1-capsule-Origin) |  | origin of the image |
+| labels | [Image.LabelsEntry](#api-v1-capsule-Image-LabelsEntry) | repeated | labels of the image |
 
 
 
@@ -1839,12 +1839,12 @@ metadata for a capsule.
 <a name="api-v1-capsule-Origin"></a>
 
 ### Origin
-Where the build came from
+Where the image came from
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| git_reference | [GitReference](#api-v1-capsule-GitReference) |  | The build came from a git repository |
+| git_reference | [GitReference](#api-v1-capsule-GitReference) |  | The image came from a git repository |
 
 
 
@@ -2057,7 +2057,7 @@ Where the build came from
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | instance_id | [string](#string) |  |  |
-| build_id | [string](#string) |  |  |
+| image_id | [string](#string) |  |  |
 | state | [State](#api-v1-capsule-State) |  |  |
 | restart_count | [uint32](#uint32) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
