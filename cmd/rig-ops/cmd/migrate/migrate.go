@@ -188,7 +188,7 @@ func migrate(ctx context.Context,
 		return nil
 	}
 
-	if _, err = rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
+	if _, err := rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
 		Name:      deployRequest.Msg.CapsuleId,
 		ProjectId: base.Flags.Project,
 	})); err != nil {

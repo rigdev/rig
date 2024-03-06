@@ -212,8 +212,7 @@ func getWarningsView(warnings []*Warning) *tview.TextView {
 
 func showOverview(
 	currentOverview *tview.TreeView,
-	// output map[string]map[string]*dyff.Report,
-	warnings map[string][]*Warning,
+	_ map[string][]*Warning,
 ) error {
 	grid := tview.NewGrid().
 		SetRows(0).
