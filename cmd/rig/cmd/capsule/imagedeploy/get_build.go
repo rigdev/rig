@@ -36,7 +36,7 @@ func (c *Cmd) getBuild(ctx context.Context, cmd *cobra.Command, _ []string) erro
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Builds (%d)", resp.Msg.GetTotal()), "Digest", "Age", "Created By"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Images (%d)", resp.Msg.GetTotal()), "Digest", "Age", "Created By"})
 	for _, b := range resp.Msg.GetImages() {
 		t.AppendRow(table.Row{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),

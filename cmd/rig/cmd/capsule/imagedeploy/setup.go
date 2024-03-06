@@ -177,7 +177,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var buildIds []string
+	var imageIDs []string
 
 	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
@@ -195,15 +195,15 @@ func (c *Cmd) completions(
 
 	for _, b := range resp.Msg.GetImages() {
 		if strings.HasPrefix(b.GetImageId(), toComplete) {
-			buildIds = append(buildIds, formatBuild(b))
+			imageIDs = append(imageIDs, formatBuild(b))
 		}
 	}
 
-	if len(buildIds) == 0 {
+	if len(imageIDs) == 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return buildIds, cobra.ShellCompDirectiveDefault
+	return imageIDs, cobra.ShellCompDirectiveDefault
 }
 
 func formatBuild(i *capsule_api.Image) string {

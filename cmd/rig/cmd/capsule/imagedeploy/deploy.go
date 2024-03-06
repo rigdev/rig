@@ -70,91 +70,91 @@ func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) 
 		if err != nil {
 			return "", err
 		}
-		builds := resp.Msg.GetImages()
-		return expandBuildID(builds, imageID)
+		images := resp.Msg.GetImages()
+		return expandImageID(images, imageID)
 	}
 
 	return c.promptForImageOrBuild(ctx, capsuleID)
 }
 
-func expandBuildID(builds []*capsule.Image, buildID string) (string, error) {
-	if strings.HasPrefix(buildID, "sha256:") {
-		return expandByDigestPrefix(buildID, builds)
+func expandImageID(images []*capsule.Image, imageID string) (string, error) {
+	if strings.HasPrefix(imageID, "sha256:") {
+		return expandByDigestPrefix(imageID, images)
 	}
-	if isHexString(buildID) {
-		return expandByDigestPrefix("sha256:"+buildID, builds)
+	if isHexString(imageID) {
+		return expandByDigestPrefix("sha256:"+imageID, images)
 	}
-	if strings.Contains(buildID, "@") {
-		return expandByDigestName(buildID, builds)
+	if strings.Contains(imageID, "@") {
+		return expandByDigestName(imageID, images)
 	}
-	if ref, err := container_name.NewTag(buildID); err == nil {
-		return expandByLatestTag(ref, builds)
+	if ref, err := container_name.NewTag(imageID); err == nil {
+		return expandByLatestTag(ref, images)
 	}
 
-	return "", errors.New("unable to parse buildID")
+	return "", errors.New("unable to parse image")
 }
 
-func expandByDigestName(buildID string, builds []*capsule.Image) (string, error) {
-	idx := strings.Index(buildID, "@")
-	name := buildID[:idx]
-	digest := buildID[idx+1:]
+func expandByDigestName(imageID string, images []*capsule.Image) (string, error) {
+	idx := strings.Index(imageID, "@")
+	name := imageID[:idx]
+	digest := imageID[idx+1:]
 	tag, err := container_name.NewTag(name)
 	if err != nil {
 		return "", err
 	}
-	var validBuilds []*capsule.Image
-	for _, b := range builds {
+	var validImages []*capsule.Image
+	for _, b := range images {
 		repoMatch := b.GetRepository() == fmt.Sprintf("%s/%s", tag.RegistryStr(), tag.RepositoryStr())
 		tagMatch := b.GetTag() == tag.TagStr()
 		digMatch := strings.HasPrefix(b.GetDigest(), digest)
 		if repoMatch && tagMatch && digMatch {
-			validBuilds = append(validBuilds, b)
+			validImages = append(validImages, b)
 		}
 	}
 
-	if len(validBuilds) == 0 {
-		return "", errors.New("no builds matched the image name and digest prefix")
+	if len(validImages) == 0 {
+		return "", errors.New("no images matched the image name and digest prefix")
 	}
-	if len(validBuilds) > 1 {
+	if len(validImages) > 1 {
 		return "", errors.New("the image name and digest prefix was not unique")
 	}
 
-	return validBuilds[0].GetImageId(), nil
+	return validImages[0].GetImageId(), nil
 }
 
-func expandByLatestTag(ref container_name.Reference, builds []*capsule.Image) (string, error) {
+func expandByLatestTag(ref container_name.Reference, images []*capsule.Image) (string, error) {
 	var latest *capsule.Image
-	for _, b := range builds {
-		if b.GetRepository() != fmt.Sprintf("%s/%s", ref.Context().RegistryStr(), ref.Context().RepositoryStr()) ||
-			b.GetTag() != ref.Identifier() {
+	for _, i := range images {
+		if i.GetRepository() != fmt.Sprintf("%s/%s", ref.Context().RegistryStr(), ref.Context().RepositoryStr()) ||
+			i.GetTag() != ref.Identifier() {
 			continue
 		}
-		if latest == nil || latest.CreatedAt.AsTime().Before(b.CreatedAt.AsTime()) {
-			latest = b
+		if latest == nil || latest.CreatedAt.AsTime().Before(i.CreatedAt.AsTime()) {
+			latest = i
 		}
 	}
 
 	if latest == nil {
-		return "", errors.New("no builds matched the given image name")
+		return "", errors.New("no images matched the given image name")
 	}
 
 	return latest.GetImageId(), nil
 }
 
-func expandByDigestPrefix(digestPrefix string, builds []*capsule.Image) (string, error) {
-	var validBuilds []*capsule.Image
-	for _, b := range builds {
+func expandByDigestPrefix(digestPrefix string, images []*capsule.Image) (string, error) {
+	var validImages []*capsule.Image
+	for _, b := range images {
 		if strings.HasPrefix(b.GetDigest(), digestPrefix) {
-			validBuilds = append(validBuilds, b)
+			validImages = append(validImages, b)
 		}
 	}
-	if len(validBuilds) > 1 {
+	if len(validImages) > 1 {
 		return "", errors.New("digest prefix was not unique")
 	}
-	if len(validBuilds) == 0 {
-		return "", errors.New("no builds had a matching digest prefix")
+	if len(validImages) == 0 {
+		return "", errors.New("no images had a matching digest prefix")
 	}
-	return validBuilds[0].GetImageId(), nil
+	return validImages[0].GetImageId(), nil
 }
 
 func isHexString(s string) bool {
@@ -178,7 +178,7 @@ func (c *Cmd) promptForImageOrBuild(ctx context.Context, capsuleID string) (stri
 		if err != nil {
 			return "", err
 		}
-		return c.createBuildInner(ctx, capsuleID, imgRef)
+		return c.createImageInner(ctx, capsuleID, imgRef)
 	case 1:
 		return c.promptForExistingBuild(ctx, capsuleID)
 	default:
@@ -195,8 +195,8 @@ func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (str
 	if err != nil {
 		return "", err
 	}
-	builds := resp.Msg.GetImages()
-	slices.SortFunc(builds, func(b1, b2 *capsule.Image) int {
+	images := resp.Msg.GetImages()
+	slices.SortFunc(images, func(b1, b2 *capsule.Image) int {
 		t1 := b1.CreatedAt.AsTime()
 		t2 := b2.CreatedAt.AsTime()
 		if t1.Equal(t2) {
@@ -208,12 +208,12 @@ func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (str
 		return -1
 	})
 
-	if len(builds) == 0 {
-		return "", errors.New("capsule has no builds")
+	if len(images) == 0 {
+		return "", errors.New("capsule has no images")
 	}
 
 	var rows [][]string
-	for _, b := range builds {
+	for _, b := range images {
 		rows = append(rows, []string{
 			fmt.Sprint(b.GetRepository(), ":", b.GetTag()),
 			capsule_cmd.TruncatedFixed(b.GetDigest(), 19),
@@ -222,7 +222,7 @@ func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (str
 	}
 
 	idx, err := common.PromptTableSelect(
-		"Select a Rig build",
+		"Select a Rig image",
 		rows,
 		[]string{"Image name", "Digest", "Age"},
 		common.SelectFuzzyFilterOpt,
@@ -231,7 +231,7 @@ func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (str
 		return "", err
 	}
 
-	return builds[idx].GetImageId(), nil
+	return images[idx].GetImageId(), nil
 }
 
 func (c *Cmd) listenForEvents(ctx context.Context, rolloutID uint64, capsuleID string) error {

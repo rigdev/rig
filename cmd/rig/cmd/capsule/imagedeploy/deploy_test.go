@@ -11,10 +11,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func Test_expandBuildID(t *testing.T) {
+func Test_expandImageID(t *testing.T) {
 	t1 := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	t2 := time.Date(2000, 1, 1, 1, 0, 0, 0, time.UTC)
-	builds := []*capsule.Image{
+	images := []*capsule.Image{
 		{
 			ImageId:    "registry.io/name:tag@sha256:0123456789",
 			Digest:     "sha256:0123456789",
@@ -64,7 +64,7 @@ func Test_expandBuildID(t *testing.T) {
 		{
 			name:    "no matching prefix",
 			imageID: "012345f",
-			err:     errors.New("no builds had a matching digest prefix"),
+			err:     errors.New("no images had a matching digest prefix"),
 			res:     "",
 		},
 		{
@@ -74,9 +74,9 @@ func Test_expandBuildID(t *testing.T) {
 			res:     "registry.io/name:tag@sha256:01234abcd",
 		},
 		{
-			name:    "no build with tag",
+			name:    "no image with tag",
 			imageID: "registry.io/name:tag2",
-			err:     errors.New("no builds matched the given image name"),
+			err:     errors.New("no images matched the given image name"),
 			res:     "",
 		},
 		{
@@ -88,14 +88,14 @@ func Test_expandBuildID(t *testing.T) {
 		{
 			name:    "malformed",
 			imageID: "__+",
-			err:     errors.New("unable to parse imageID"),
+			err:     errors.New("unable to parse image"),
 			res:     "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := expandBuildID(builds, tt.imageID)
+			res, err := expandImageID(images, tt.imageID)
 			utils.ErrorEqual(t, tt.err, err)
 			assert.Equal(t, tt.res, res)
 		})

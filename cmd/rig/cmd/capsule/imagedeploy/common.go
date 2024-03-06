@@ -137,7 +137,7 @@ type imageInfo struct {
 	created time.Time
 }
 
-func (c *Cmd) createBuildInner(ctx context.Context, capsuleID string, imageRef imageRef) (string, error) {
+func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef imageRef) (string, error) {
 	if strings.Contains(imageRef.Image, "@") {
 		return "", errors.UnimplementedErrorf("referencing images by digest is not yet supported")
 	}

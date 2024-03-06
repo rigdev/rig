@@ -22,7 +22,7 @@ func (c *Cmd) createImage(ctx context.Context, cmd *cobra.Command, _ []string) e
 		}
 	}
 
-	buildID, err := c.createBuildInner(ctx, capsule_cmd.CapsuleID, imageRef)
+	imageID, err := c.createImageInner(ctx, capsule_cmd.CapsuleID, imageRef)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func (c *Cmd) createImage(ctx context.Context, cmd *cobra.Command, _ []string) e
 			CapsuleId: capsule_cmd.CapsuleID,
 			Changes: []*capsule.Change{{
 				Field: &capsule.Change_ImageId{
-					ImageId: buildID,
+					ImageId: imageID,
 				},
 			}},
 			ProjectId:     flags.GetProject(c.Cfg),
@@ -56,7 +56,7 @@ func (c *Cmd) createImage(ctx context.Context, cmd *cobra.Command, _ []string) e
 		return err
 	}
 
-	cmd.Printf("Deployed build %v \n", buildID)
+	cmd.Printf("Deployed build %v \n", imageID)
 
 	return nil
 }
