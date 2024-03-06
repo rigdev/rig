@@ -145,6 +145,7 @@ func (r *capsuleRequest) Set(obj client.Object) error {
 		return err
 	}
 
+
 	o, ok := r.objects[key]
 	if !ok {
 		o = &Object{}
@@ -188,7 +189,6 @@ func (r *capsuleRequest) getKey(obj client.Object) (objectKey, error) {
 	if err != nil {
 		return objectKey{}, err
 	}
-
 	obj.SetNamespace(r.capsule.Namespace)
 	return r.namedObjectKey(obj.GetName(), gvk), nil
 }
@@ -242,6 +242,7 @@ func (r *capsuleRequest) loadExisting(ctx context.Context) error {
 
 		co.SetName(o.Ref.Name)
 		co.SetNamespace(r.capsule.Namespace)
+		co.GetObjectKind().SetGroupVersionKind(gvk)
 		if err := r.pipeline.reader.Get(ctx, client.ObjectKeyFromObject(co), co); kerrors.IsNotFound(err) {
 			// Okay it doesn't exist, ignore the resource.
 			continue
@@ -264,7 +265,9 @@ func (r *capsuleRequest) prepare() *Result {
 		r.objects[k] = &Object{
 			Current: o.DeepCopyObject().(client.Object),
 		}
-		result.InputObjects = append(result.InputObjects, o.DeepCopyObject().(client.Object))
+		oo := o.DeepCopyObject()
+		oo.GetObjectKind().SetGroupVersionKind(k.GroupVersionKind)
+		result.InputObjects = append(result.InputObjects, oo.(client.Object))
 	}
 	return result
 }
