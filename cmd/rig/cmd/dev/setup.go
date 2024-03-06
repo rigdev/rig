@@ -1,7 +1,6 @@
 package dev
 
 import (
-	"github.com/rigdev/rig/cmd/rig/cmd/dev/docker"
 	"github.com/rigdev/rig/cmd/rig/cmd/dev/kind"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
@@ -19,7 +18,6 @@ func Setup(parent *cobra.Command) {
 	}
 
 	kind.Setup(dev)
-	docker.Setup(dev)
 
 	parent.AddCommand(dev)
 }
