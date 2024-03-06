@@ -144,13 +144,6 @@ Not both --image-id and --image can be given`,
 	capsuleDeploy.Flags().BoolVarP(
 		&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a rollout if one is in progress",
 	)
-	if err := capsuleDeploy.RegisterFlagCompletionFunc(
-		"build-id",
-		base.CtxWrapCompletion(cmd.completions),
-	); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 	if err := capsuleDeploy.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

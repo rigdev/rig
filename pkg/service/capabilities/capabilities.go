@@ -121,9 +121,8 @@ func (s *service) GetPlugins() *capabilities.GetPluginsResponse {
 			plugins = append(plugins, &capabilities.GetPluginsResponse_Plugin{
 				Plugin: &capabilities.GetPluginsResponse_Plugin_ThirdParty{
 					ThirdParty: &capabilities.GetPluginsResponse_Thirdparty{
-						Name:         p.Name,
-						Image:        p.Image,
-						OriginalName: p.OriginalName,
+						Name:  p.Name,
+						Image: p.Image,
 					},
 				},
 			})

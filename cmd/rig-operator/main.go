@@ -27,7 +27,6 @@ import (
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
 	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -111,7 +110,7 @@ func run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	pluginManager, err := plugin.NewManager(afero.NewOsFs())
+	pluginManager, err := plugin.NewManager()
 	capabilitiesSvc := svccapabilities.NewService(cfg, cc, clientSet.DiscoveryClient, pluginManager)
 	capabilitiesH := capabilities.NewHandler(capabilitiesSvc, cfg, scheme)
 	if err != nil {

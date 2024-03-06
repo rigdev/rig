@@ -74,9 +74,9 @@ tasks:
     sources:
       - "./pkg/controller/plugin/{{ .PLUGIN }}/**/*.go"
     generates:
-      - "bin/plugin/{{ .PLUGIN }}"
+      - "bin/plugin/rigdev.{{ .PLUGIN }}"
     cmds:
-      - go build -o ./bin/plugin/{{ .PLUGIN }} ./pkg/controller/plugin/{{ .PLUGIN }}
+      - go build -o ./bin/plugin/rigdev.{{ .PLUGIN }} ./pkg/controller/plugin/{{ .PLUGIN }}
 
   gen:
     desc: "🪄 Run code generation"

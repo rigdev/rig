@@ -9,13 +9,13 @@ RUN apk add --no-cache curl
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY rig-operator /usr/local/bin/
-COPY sidecar /usr/local/bin/plugin/
-COPY init_container /usr/local/bin/plugin/
-COPY object_template /usr/local/bin/plugin/
-COPY annotations /usr/local/bin/plugin/
-COPY datadog /usr/local/bin/plugin/
-COPY google_sql_proxy /usr/local/bin/plugin/
-COPY env_mapping /usr/local/bin/plugin/
+COPY rigdev.sidecar /usr/local/bin/plugin/
+COPY rigdev.init_container /usr/local/bin/plugin/
+COPY rigdev.object_template /usr/local/bin/plugin/
+COPY rigdev.annotations /usr/local/bin/plugin/
+COPY rigdev.datadog /usr/local/bin/plugin/
+COPY rigdev.google_sql_proxy /usr/local/bin/plugin/
+COPY rigdev.env_mapping /usr/local/bin/plugin/
 COPY --from=builder /etc/passwd /etc/passwd
 
 USER 1000
