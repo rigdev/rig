@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rig-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: registry
+  name: registry
+  namespace: rig-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: registry
+  template:
+    metadata:
+      labels:
+        run: registry
+    spec:
+      containers:
+        - name: registry
+          image: registry:2
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: rig-system
+spec:
+  type: NodePort
+  selector:
+    run: registry
+  ports:
+    - name: registry-tcp
+      nodePort: 30000
+      protocol: TCP
+      port: 5000
+      targetPort: 5000

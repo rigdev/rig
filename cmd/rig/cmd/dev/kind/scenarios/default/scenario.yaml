@@ -1,0 +1,46 @@
+apiVersion: config.rig.dev/v1alpha1
+kind: KindScenarioConfig
+name: default
+steps:
+  - manifest:
+      path: manifests/registry.yaml
+  - helm:
+      name: cert-manager
+      namespace: cert-manager
+      chart: cert-manager
+      repo: https://charts.jetstack.io
+      version: 1.14.1
+      values:
+        installCRDs: true
+  - helm:
+      name: rig-operator
+      namespace: rig-system
+      chart: rig-operator
+      repo: https://charts.rig.dev
+      wait: true
+  - helm:
+      name: rig-platform
+      namespace: rig-system
+      chart: rig-platform
+      repo: https://charts.rig.dev
+      wait: true
+  - exec:
+      reference: deploy/rig-platform
+      namespace: rig-system
+      tty: true
+      stdin: true
+      command: ["rig-admin", "init"]
+kindConfig: |
+  kind: Cluster
+  apiVersion: kind.x-k8s.io/v1alpha4
+  nodes:
+    - role: control-plane
+      extraPortMappings:
+        - containerPort: 30000
+          hostPort: 30000
+          listenAddress: "127.0.0.1"
+          protocol: TCP
+        - containerPort: 30047
+          hostPort: 4747
+          listenAddress: "127.0.0.1"
+          protocol: TCP

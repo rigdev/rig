@@ -8,6 +8,7 @@ custom_edit_url: null
 Package v1alpha1 contains API Schema definitions for the config v1alpha1 API group
 
 ## Resource Types
+- [KindScenarioConfig](#kindscenarioconfig)
 - [OperatorConfig](#operatorconfig)
 - [PlatformConfig](#platformconfig)
 
@@ -341,6 +342,90 @@ _Appears in:_
 | `className` _string_ | ClassName specifies the default ingress class to use for all ingress resources created. |
 | `pathType` _[PathType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#pathtype-v1-networking)_ | PathType defines how ingress paths should be interpreted. Allowed values: Exact, Prefix, ImplementationSpecific |
 | `disableTLS` _boolean_ | DisableTLS for ingress resources generated. This is useful if a 3rd-party component is handling the HTTPS TLS termination and certificates. |
+
+
+### KindScenarioConfig
+
+
+
+KindScenarioConfig is the Schema for the CLI kind example config
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `config.rig.dev/v1alpha1`
+| `kind` _string_ | `KindScenarioConfig`
+| `steps` _[KindScenarioStep](#kindscenariostep) array_ | Steps is a list of steps to perform against the cluster after creation |
+| `kindConfig` _string_ | KindConfig is the kind configuration we will use to create the kind cluster. If left empty we will use the default rig example configuration. |
+
+
+### KindScenarioExecStep
+
+
+
+
+
+_Appears in:_
+- [KindScenarioStep](#kindscenariostep)
+
+| Field | Description |
+| --- | --- |
+| `reference` _string_ | Reference to pod where command should be executed. This can either be a pod name or a TYPE/name eg. deployment/mydeploy. |
+| `namespace` _string_ | Namespace where pod lives |
+| `container` _string_ | Container is the name of the container where the command should be run |
+| `tty` _boolean_ | TTY wether to use tty |
+| `stdin` _boolean_ | Stdin wether to attach stdin |
+| `command` _string array_ | Command is the command to run |
+
+
+### KindScenarioHelmStep
+
+
+
+
+
+_Appears in:_
+- [KindScenarioStep](#kindscenariostep)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is the helm release name. |
+| `namespace` _string_ | Namespace is the namespace where the helm release will be installed. |
+| `chart` _string_ | Chart is the name of the helm chart. |
+| `repo` _string_ | Repo is a URL pointing to the helm repository where the chart lives. |
+| `version` _string_ | Version is the chart version to install |
+| `wait` _boolean_ | Wait toggle wether or not to set the `--wait` flag for helm. |
+
+
+### KindScenarioManifestStep
+
+
+
+
+
+_Appears in:_
+- [KindScenarioStep](#kindscenariostep)
+
+| Field | Description |
+| --- | --- |
+| `path` _string_ | Path is the relative path to the manifest file or folder to apply in the step. |
+
+
+### KindScenarioStep
+
+
+
+
+
+_Appears in:_
+- [KindScenarioConfig](#kindscenarioconfig)
+
+| Field | Description |
+| --- | --- |
+| `helm` _[KindScenarioHelmStep](#kindscenariohelmstep)_ |  |
+| `manifest` _[KindScenarioManifestStep](#kindscenariomanifeststep)_ |  |
+| `exec` _[KindScenarioExecStep](#kindscenarioexecstep)_ |  |
 
 
 ### Logging

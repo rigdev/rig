@@ -1,0 +1,12 @@
+rig:
+  clusters:
+    kind:
+      type: k8s
+  environments:
+    kind:
+      cluster: kind
+postgres:
+  enabled: true
+loadBalancer:
+  enabled: true
+  nodePort: 30047

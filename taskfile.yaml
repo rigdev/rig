@@ -1,9 +1,11 @@
 version: "3"
 
 env:
-  TAG: dev
-  PLATFORM_TAG: latest
-  KUBECTX: kind-rig
+  TOOLS_BIN: "{{ .ROOT_DIR }}/tools/bin"
+  RIG_OPERATOR_DOCKER_TAG: dev
+  RIG_PLATFORM_DOCKER_TAG: latest
+  RIG_OPERATOR_CHART_PATH: "{{ .ROOT_DIR }}/deploy/charts/rig-operator"
+  RIG_PLATFORM_CHART_PATH: "{{ .ROOT_DIR }}/deploy/charts/rig-platform"
 
 run: once
 
@@ -23,6 +25,7 @@ tasks:
     env:
       CGO_ENABLED: "0"
     sources:
+      - cmd/rig/cmd/dev/kind/**/*
       - "**/*.go"
     generates:
       - "bin/rig"
@@ -99,7 +102,7 @@ tasks:
       - mkdir -p gen/go/rig
       - printf "module github.com/rigdev/rig-go-api\n\ngo 1.20\n" > ./gen/go/rig/go.mod
       - find . -path './gen/go/rig/*' -type f -name '*.go' -delete
-      - ./tools/bin/buf generate proto/rig --template proto/buf.gen.yaml
+      - $TOOLS_BIN/buf generate proto/rig --template proto/buf.gen.yaml
       - cd gen/go/rig/; go get -u ./...
       - find proto/rig/ -iname *.proto | xargs clang-format -i
 
@@ -118,7 +121,7 @@ tasks:
     cmds:
       - cmd: rm -r gen/mocks
         ignore_error: true
-      - ./tools/bin/mockery
+      - $TOOLS_BIN/mockery
 
   manifests:
     desc: "🪄 Run k8s manifests generation"
@@ -133,7 +136,7 @@ tasks:
       - deploy/kustomize/crd/**/*.yaml
     cmds:
       - |
-        ./tools/bin/controller-gen rbac:roleName=rig crd webhook \
+        $TOOLS_BIN/controller-gen rbac:roleName=rig crd webhook \
           paths="./pkg/api/v1alpha1;./pkg/api/v1alpha2;./pkg/controller" \
           output:rbac:dir=deploy/kustomize/rbac \
           output:webhook:dir=deploy/kustomize/webhook \
@@ -147,7 +150,7 @@ tasks:
     generates:
       - pkg/api/**/zz_generated.deepcopy.go
     cmds:
-      - ./tools/bin/controller-gen object paths="./pkg/api/..."
+      - $TOOLS_BIN/controller-gen object paths="./pkg/api/..."
 
   docs:
     desc: "📝 Run documentation site"
@@ -170,19 +173,19 @@ tasks:
       - docs/docs/api/v1alpha2.md
     cmds:
       - |
-        ./tools/bin/crd-ref-docs --renderer markdown \
+        $TOOLS_BIN/crd-ref-docs --renderer markdown \
           --config ./docs/crd-ref-docs/config.yaml \
           --templates-dir ./docs/crd-ref-docs/templates \
           --source-path ./pkg/api/config/v1alpha1 \
           --output-path ./docs/docs/api/config/v1alpha1.md
       - |
-        ./tools/bin/crd-ref-docs --renderer markdown \
+        $TOOLS_BIN/crd-ref-docs --renderer markdown \
           --config ./docs/crd-ref-docs/config.yaml \
           --templates-dir ./docs/crd-ref-docs/templates \
           --source-path ./pkg/api/v1alpha1 \
           --output-path ./docs/docs/api/v1alpha1.md
       - |
-        ./tools/bin/crd-ref-docs --renderer markdown \
+        $TOOLS_BIN/crd-ref-docs --renderer markdown \
           --config ./docs/crd-ref-docs/v1alpha2-config.yaml \
           --templates-dir ./docs/crd-ref-docs/templates \
           --source-path ./pkg/api/v1alpha2 \
@@ -192,14 +195,14 @@ tasks:
     desc: "🚨 Run linting"
     deps: [tools:golangci-lint, proto]
     cmds:
-      - ./tools/bin/golangci-lint run --timeout 3m
+      - $TOOLS_BIN/golangci-lint run --timeout 3m
 
   test:
     desc: "✅ Run unit tests"
     deps: [tools:gotestsum, proto]
     cmds:
       - |
-        ./tools/bin/gotestsum \
+        $TOOLS_BIN/gotestsum \
           --format-hide-empty-pkg \
           --hide-summary skipped -- \
           -race \
@@ -212,11 +215,11 @@ tasks:
       [tools:gotestsum, tools:setup-envtest, proto, manifests, build-plugins]
     env:
       KUBEBUILDER_ASSETS:
-        sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
+        sh: $TOOLS_BIN/setup-envtest use 1.28.0 --bin-dir $TOOLS_BIN -p path
       RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
     cmds:
       - |
-        ./tools/bin/gotestsum \
+        $TOOLS_BIN/gotestsum \
           --format-hide-empty-pkg \
           --junitfile test-result.xml -- \
           -race \
@@ -230,12 +233,12 @@ tasks:
     deps:
       [tools:gotestsum, tools:setup-envtest, proto, manifests, build-plugins]
     env:
-      KUBEBUILDER_ASSETS:
-        sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
       RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
+      KUBEBUILDER_ASSETS:
+        sh: $TOOLS_BIN/setup-envtest use 1.28.0 --bin-dir $TOOLS_BIN -p path
     cmds:
       - |
-        ./tools/bin/gotestsum \
+        $TOOLS_BIN/gotestsum \
           --format-hide-empty-pkg -- \
           -race \
           -run "^TestIntegration" \
@@ -244,60 +247,31 @@ tasks:
   docker:
     desc: "🐳 Build docker image"
     cmds:
-      - docker build -t ghcr.io/rigdev/rig-operator:${TAG} -f ./build/package/Dockerfile .
-
-  deploy-operator:
-    desc: "🚀 Deploy operator to k8s context defined by $KUBECTX (default: kind-rig)"
-    cmds:
       - |
-        helm --kube-context ${KUBECTX} \
-          upgrade --install rig-operator ./deploy/charts/rig-operator \
-          --namespace rig-system \
-          --create-namespace \
-          --set image.tag=${TAG} \
-          --set config.devModeEnabled=true
-
-  deploy-platform:
-    desc: "🚀 Deploy platform to k8s context defined by $KUBECTX (default: kind-rig)"
-    cmds:
-      - |
-        helm --kube-context ${KUBECTX} \
-          upgrade --install rig-platform ./deploy/charts/rig-platform \
-          --namespace rig-system \
-          --create-namespace \
-          --set postgres.enabled=true	\
-          --set image.tag=${PLATFORM_TAG} \
-          --set rig.cluster.dev_registry.enabled=true \
-          --set rig.cluster.dev_registry.host=localhost:30000 \
-          --set rig.cluster.dev_registry.cluster_host=registry:5000
+        docker build \
+          -t ghcr.io/rigdev/rig-operator:${RIG_OPERATOR_DOCKER_TAG} \
+          -f ./build/package/Dockerfile .
 
   kind-create:
     desc: "🐋 Create kind cluster with rig dependencies"
-    deps: [tools:kind]
-    env:
-      KIND: /tools/bin/kind
+    deps: [tools:kind, build-rig, docker]
     cmds:
-      - ./deploy/kind/create.sh
-
-  kind-load:
-    desc: "🐋 Load docker image into kind cluster"
-    deps: [tools:kind, docker]
-    cmds:
-      - ./tools/bin/kind load docker-image ghcr.io/rigdev/rig-operator:${TAG} -n rig
-
-  kind-load-platform:
-    desc: "🐋 Load platform docker image into kind cluster"
-    deps: [tools:kind]
-    cmds:
-      - ./tools/bin/kind load docker-image ghcr.io/rigdev/rig-platform:${PLATFORM_TAG} -n rig
+      - ./bin/rig dev kind create
 
   kind-deploy:
-    desc: "🐋 Deploy rig to kind cluster"
-    deps: [tools:kind, kind-load, deploy-operator]
+    desc: "🐋 Deploy rig-operator and rig-platform to kind"
+    deps: [tools:kind, docker]
+    vars:
+      KIND_EXAMPLE: "default"
     cmds:
+      # TODO: fix deploy command
+      # - maybe merge it into the create command (skip everything but operator and platform post creation)
       - |
-        kubectl --context ${KUBECTX} \
-          rollout restart deployment -n rig-system rig-operator
+        ./bin/rig dev kind deploy \
+          --operator-chart-path ./charts/rig-operator \
+          --platform-chart-path ./charts/rig-platform \
+          --operator-values ./deploy/kind/examples/{{ .KIND_EXAMPLE }}/operator.yaml \
+          --platform-values ./deploy/kind/examples/{{ .KIND_EXAMPLE }}/platform.yaml
 
   clean:
     desc: "🧹 Clean everything"
@@ -307,7 +281,7 @@ tasks:
     desc: "🧹 Clean kind cluster"
     deps: [tools:kind]
     cmds:
-      - cmd: kind delete clusters rig
+      - cmd: ./bin/rig dev kind delete
         ignore_error: true
 
   clean-gen:
@@ -321,7 +295,7 @@ tasks:
     deps: [tools:goreleaser, proto]
     cmds:
       - |
-        ./tools/bin/goreleaser release \
+        $TOOLS_BIN/goreleaser release \
           -f ./build/package/goreleaser/goreleaser.yml
 
   release-build:
@@ -329,5 +303,5 @@ tasks:
     deps: [tools:goreleaser, proto]
     cmds:
       - |
-        ./tools/bin/goreleaser build \
+        $TOOLS_BIN/goreleaser release --skip-publish \
           -f ./build/package/goreleaser/goreleaser.yml --snapshot --clean
