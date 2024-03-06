@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
+	"connectrpc.com/connect"
 	"github.com/pkg/errors"
+	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/obj"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
@@ -82,4 +88,26 @@ func NewOperatorClient(ctx context.Context, cc client.Client, cfg *rest.Config) 
 		Pipeline:     pipelineconnect.NewServiceClient(http.DefaultClient, baseURL),
 		Capabilities: capabilitiesconnect.NewServiceClient(http.DefaultClient, baseURL),
 	}, nil
+}
+
+func GetOperatorConfig(
+	ctx context.Context,
+	operatorClient *OperatorClient,
+	scheme *runtime.Scheme,
+) (*v1alpha1.OperatorConfig, error) {
+	var cfgYAML string
+	if Flags.OperatorConfig == "" {
+		cfgResp, err := operatorClient.Capabilities.GetConfig(ctx, connect.NewRequest(&capabilities.GetConfigRequest{}))
+		if err != nil {
+			return nil, err
+		}
+		cfgYAML = cfgResp.Msg.GetYaml()
+	} else {
+		bytes, err := os.ReadFile(Flags.OperatorConfig)
+		if err != nil {
+			return nil, err
+		}
+		cfgYAML = string(bytes)
+	}
+	return obj.DecodeIntoT([]byte(cfgYAML), &v1alpha1.OperatorConfig{}, scheme)
 }

@@ -30,7 +30,7 @@ func dryRun(ctx context.Context,
 	cc client.Client,
 	scheme *runtime.Scheme,
 ) error {
-	cfg, err := getOperatorConfig(ctx, operatorClient, scheme)
+	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
 	if err != nil {
 		return err
 	}

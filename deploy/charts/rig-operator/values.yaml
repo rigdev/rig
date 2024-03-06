@@ -19,7 +19,9 @@ config:
     path: ""
     portName: ""
   steps:
-    []
+    # []
+    - plugins:
+      - name: env_mapping
     # - plugins:
     #   - name: rigdev.object_template
     #     config: |

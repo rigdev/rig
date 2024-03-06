@@ -8,13 +8,10 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/controller/plugin/env_mapping/types"
 	"github.com/rigdev/rig/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-)
-
-const (
-	AnnotationEnvMapping = "plugin.rig.dev/env-mapping"
 )
 
 type envMapping struct{}
@@ -23,35 +20,13 @@ func (p *envMapping) LoadConfig(_ []byte) error {
 	return nil
 }
 
-type AnnotationValue struct {
-	Sources []AnnotationSource `json:"sources"`
-}
-
-type AnnotationSource struct {
-	// Container name default to capsule name.
-	Container string `json:"container,omitempty"`
-	// Optional ConfigMap reference.
-	ConfigMap string `json:"configMap,omitempty"`
-	// Optional Secret reference.
-	Secret string `json:"secret,omitempty"`
-	// Mappings within this ConfigMap or Secret.
-	Mappings []annotationMappings `json:"mappings"`
-}
-
-type annotationMappings struct {
-	// Env is the environment name the property should be exposed as.
-	Env string `json:"env"`
-	// Key is the ConfigMap or Secret property that should me mapped from.
-	Key string `json:"key"`
-}
-
 func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
-	value, ok := req.Capsule().Annotations[AnnotationEnvMapping]
+	value, ok := req.Capsule().Annotations[types.AnnotationEnvMapping]
 	if !ok {
 		return nil
 	}
 
-	var data AnnotationValue
+	var data types.AnnotationValue
 	if err := json.Unmarshal([]byte(value), &data); err != nil {
 		return err
 	}

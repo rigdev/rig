@@ -164,7 +164,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 	switch kind {
 	case "Deployment":
 		if c.Deployment != nil {
-			return errors.New("deployment already set in CurrentResources")
+			return errors.New("deployment already set in current resources")
 		}
 		d, err := convertResource[*appsv1.Deployment](object, kind)
 		if err != nil {
@@ -173,7 +173,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		c.Deployment = d
 	case "HorizontalPodAutoscaler":
 		if c.HPA != nil {
-			return errors.New("horizontal pod autoscaler already set in CurrentResources")
+			return errors.New("horizontal pod autoscaler already set in current resources")
 		}
 		hpa, err := convertResource[*autoscalingv2.HorizontalPodAutoscaler](object, kind)
 		if err != nil {
@@ -182,7 +182,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		c.HPA = hpa
 	case "ConfigMap":
 		if _, ok := c.ConfigMaps[name]; ok {
-			return fmt.Errorf("ConfigMap '%s' already set in CurrentResources", name)
+			return fmt.Errorf("config map '%s' already set in current resources", name)
 		}
 		cm, err := convertResource[*corev1.ConfigMap](object, kind)
 		if err != nil {
@@ -191,7 +191,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		c.ConfigMaps[name] = cm
 	case "Secret":
 		if _, ok := c.Secrets[name]; ok {
-			return fmt.Errorf("Secret '%s' already set in CurrentResources", name)
+			return fmt.Errorf("secret '%s' already set in current resources", name)
 		}
 		cm, err := convertResource[*corev1.Secret](object, kind)
 		if err != nil {
@@ -200,7 +200,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		c.Secrets[name] = cm
 	case "Service":
 		if _, ok := c.Services[name]; ok {
-			return fmt.Errorf("Service '%s' already set in CurrentResources", name)
+			return fmt.Errorf("service '%s' already set in current resources", name)
 		}
 		cm, err := convertResource[*corev1.Service](object, kind)
 		if err != nil {
@@ -209,7 +209,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		c.Services[name] = cm
 	case "Ingress":
 		if _, ok := c.Ingresses[name]; ok {
-			return fmt.Errorf("Ingress '%s' already set in CurrentResources", name)
+			return fmt.Errorf("ingress '%s' already set in current resources", name)
 		}
 		cm, err := convertResource[*netv1.Ingress](object, kind)
 		if err != nil {
@@ -218,7 +218,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		c.Ingresses[name] = cm
 	case "CronJob":
 		if _, ok := c.CronJobs[name]; ok {
-			return fmt.Errorf("CronJobs '%s' already set in CurrentResources", name)
+			return fmt.Errorf("cron jobs '%s' already set in current resources", name)
 		}
 		cm, err := convertResource[*batchv1.CronJob](object, kind)
 		if err != nil {
@@ -227,7 +227,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		c.CronJobs[name] = cm
 	case "ServiceAccount":
 		if c.ServiceAccount != nil {
-			return errors.New("ServiceAccount already set in CurrentResources")
+			return errors.New("service account already set in current resources")
 		}
 		cm, err := convertResource[*corev1.ServiceAccount](object, kind)
 		if err != nil {
@@ -236,7 +236,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		c.ServiceAccount = cm
 	case "Capsule":
 		if c.Capsule != nil {
-			return errors.New("Capsule already set in CurrentResources")
+			return errors.New("capsule already set in current resources")
 		}
 		cm, err := convertResource[*v1alpha2.Capsule](object, kind)
 		if err != nil {
@@ -244,7 +244,7 @@ func (c *CurrentResources) AddResource(kind, name string, object client.Object) 
 		}
 		c.Capsule = cm
 	default:
-		return fmt.Errorf("unexpected kind '%s' to CurrentResources", kind)
+		return fmt.Errorf("unexpected kind '%s' to current resources", kind)
 	}
 
 	return nil

@@ -2,8 +2,10 @@ package migrate
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -18,12 +20,14 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	envplugin "github.com/rigdev/rig/pkg/controller/plugin/env_mapping/types"
 	rigerrors "github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
@@ -53,6 +57,13 @@ func migrate(ctx context.Context,
 	}
 
 	currentResources := NewCurrentResources()
+
+	plugins, err := getPlugins(ctx, oc, cc.Scheme())
+	if err != nil {
+		return nil
+	}
+	fmt.Println("Enabled Plugins:", strings.Join(plugins, ", "))
+
 	if err = getDeployment(ctx, cr, currentResources); err != nil || currentResources.Deployment == nil {
 		return err
 	}
@@ -81,7 +92,7 @@ func migrate(ctx context.Context,
 	color.Green(" ✓")
 
 	fmt.Print("Migrating Environment...")
-	environmentChanges, err := migrateEnvironment(ctx, cc, currentResources, warnings)
+	environmentChanges, err := migrateEnvironment(ctx, cc, plugins, currentResources, warnings)
 	if err != nil {
 		color.Red(" ✗")
 		return err
@@ -122,6 +133,11 @@ func migrate(ctx context.Context,
 	changes = append(changes, cronJobChanges...)
 	color.Green(" ✓")
 
+	err = setCapsulename(currentResources, capsuleSpec)
+	if err != nil {
+		return err
+	}
+
 	reports := NewReportSet(cc.Scheme())
 	currentTree := currentResources.CreateOverview()
 
@@ -138,7 +154,6 @@ func migrate(ctx context.Context,
 	if !skipPlatform {
 		deployResp, err := rc.Capsule().Deploy(ctx, deployRequest)
 		if err != nil {
-			fmt.Println("Error deploying capsule", err)
 			return err
 		}
 
@@ -154,11 +169,22 @@ func migrate(ctx context.Context,
 		return err
 	}
 
+	cfg, err := base.GetOperatorConfig(ctx, oc, cc.Scheme())
+	if err != nil {
+		return err
+	}
+
+	cfgBytes, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
 	resp, err := oc.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
-		Namespace:   base.Flags.Project,
-		Capsule:     capsuleSpec.Name,
-		CapsuleSpec: string(capsuleSpecYAML),
-		Force:       true,
+		Namespace:      base.Flags.Project,
+		Capsule:        capsuleSpec.Name,
+		CapsuleSpec:    string(capsuleSpecYAML),
+		Force:          true,
+		OperatorConfig: string(cfgBytes),
 	}))
 	if err != nil {
 		return err
@@ -229,6 +255,27 @@ func migrate(ctx context.Context,
 	return nil
 }
 
+func setCapsulename(currentResources *CurrentResources, capsuleSpec *v1alpha2.Capsule) error {
+	switch name {
+	case CapsuleNameDeployment:
+		capsuleSpec.Name = currentResources.Deployment.Name
+	case CapsuleNameService:
+		if len(currentResources.Services) == 0 {
+			return errors.New("No services found to inherit name from")
+		}
+		capsuleSpec.Name = maps.Keys(currentResources.Services)[0]
+	case CapsuleNameInput:
+		inputName, err := common.PromptInput("Enter the name for the capsule", common.ValidateSystemNameOpt)
+		if err != nil {
+			return err
+		}
+
+		capsuleSpec.Name = inputName
+	}
+
+	return nil
+}
+
 func PromptDiffingChanges(
 	reports *ReportSet,
 	warnings map[string][]*Warning,
@@ -241,7 +288,10 @@ func PromptDiffingChanges(
 	}
 
 	for {
-		_, kind, err := common.PromptSelect("Select the resource kind to view the diff for. CTRL + C to continue", choices)
+		_, kind, err := common.PromptSelect("Select the resource kind to view the diff for. CTRL + C to continue",
+			choices,
+			common.SelectDontShowResultOpt,
+			common.SelectPageSizeOpt(8))
 		if err != nil {
 			return err
 		}
@@ -302,7 +352,7 @@ func getDeployment(ctx context.Context, cc client.Reader, currentResources *Curr
 		})
 	}
 	i, err := common.PromptTableSelect("Select the deployment to migrate",
-		deploymentNames, headers, common.SelectEnableFilterOpt)
+		deploymentNames, headers, common.SelectEnableFilterOpt, common.SelectPageSizeOpt(10))
 	if err != nil {
 		return err
 	}
@@ -349,15 +399,9 @@ func migrateDeployment(ctx context.Context,
 		})
 	}
 
-	var capsuleName string
-	if name == "" {
-		capsuleName = currentResources.Deployment.Name
-	}
-
 	container := currentResources.Deployment.Spec.Template.Spec.Containers[0]
 	capsuleSpec := &v1alpha2.Capsule{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      capsuleName,
 			Namespace: currentResources.Deployment.Namespace,
 		},
 		Spec: v1alpha2.CapsuleSpec{
@@ -631,6 +675,7 @@ func migrateHPA(ctx context.Context,
 
 func migrateEnvironment(ctx context.Context,
 	cc client.Client,
+	plugins []string,
 	currentResources *CurrentResources,
 	warnings map[string][]*Warning,
 ) ([]*capsule.Change, error) {
@@ -642,11 +687,14 @@ func migrateEnvironment(ctx context.Context,
 		Name:      currentResources.Deployment.Name,
 	}, configMap)
 	if err == nil {
-		return nil, errors.New("ConfigMap already exists with the same name as the deployment" +
+		return nil, errors.New("ConfigMap already exists with the same name as the deployment. " +
 			"Cannot migrate environment variables")
 	} else if !kerrors.IsNotFound(err) {
 		return nil, onCCGetError(err, "ConfigMap", currentResources.Deployment.Name, currentResources.Deployment.Namespace)
 	}
+
+	configMapMappings := map[string][]envplugin.AnnotationMappings{}
+	secretMappings := map[string][]envplugin.AnnotationMappings{}
 
 	if env := currentResources.Deployment.Spec.Template.Spec.Containers[0].Env; len(env) > 0 {
 		for _, envVar := range env {
@@ -660,39 +708,97 @@ func migrateEnvironment(ctx context.Context,
 					},
 				})
 			} else if envVar.ValueFrom != nil {
-				warnings["Deployment"] = append(warnings["Deployment"], &Warning{
-					Kind:    "Deployment",
-					Name:    currentResources.Deployment.Name,
-					Warning: fmt.Sprintf("Environment variable %s has a valueFrom field. This is not supported.", envVar.Name),
-				})
-
-				if envVar.ValueFrom.ConfigMapKeyRef != nil {
+				if cfgMap := envVar.ValueFrom.ConfigMapKeyRef; cfgMap != nil {
 					configMap := &corev1.ConfigMap{}
 					err := cc.Get(ctx, types.NamespacedName{
-						Name:      envVar.ValueFrom.ConfigMapKeyRef.Name,
+						Name:      cfgMap.Name,
 						Namespace: currentResources.Deployment.Namespace,
 					}, configMap)
 					if err != nil {
 						continue
 					}
 
-					currentResources.ConfigMaps[envVar.ValueFrom.ConfigMapKeyRef.Name] = configMap
-				}
+					if !slices.Contains(plugins, "env_mapping") {
+						warnings["Deployment"] = append(warnings["Deployment"], &Warning{
+							Kind: "Deployment",
+							Name: currentResources.Deployment.Name,
+							Warning: fmt.Sprintf("Environment variable %s has a valueFrom config map field. "+
+								"This is not natively supported.", envVar.Name),
+							Suggestion: "Enable the env_mapping plugin to migrate envVars from configMaps",
+						})
+					} else {
+						configMapMappings[cfgMap.Name] = append(configMapMappings[cfgMap.Name], envplugin.AnnotationMappings{
+							Env: envVar.Name,
+							Key: cfgMap.Key,
+						})
+					}
+					currentResources.ConfigMaps[cfgMap.Name] = configMap
 
-				if envVar.ValueFrom.SecretKeyRef != nil {
+				} else if secretRef := envVar.ValueFrom.SecretKeyRef; secretRef != nil {
 					secret := &corev1.Secret{}
 					err := cc.Get(ctx, types.NamespacedName{
-						Name:      envVar.ValueFrom.SecretKeyRef.Name,
+						Name:      secretRef.Name,
 						Namespace: currentResources.Deployment.Namespace,
 					}, secret)
 					if err != nil {
 						continue
 					}
 
-					currentResources.Secrets[envVar.ValueFrom.SecretKeyRef.Name] = secret
+					if !slices.Contains(plugins, "env_mapping") {
+						warnings["Deployment"] = append(warnings["Deployment"], &Warning{
+							Kind: "Deployment",
+							Name: currentResources.Deployment.Name,
+							Warning: fmt.Sprintf("Environment variable %s has a valueFrom secret  field. "+
+								"This is not natively supported.", envVar.Name),
+							Suggestion: "Enable the env_mapping plugin to migrate envVars from secrets",
+						})
+					} else {
+						secretMappings[secretRef.Name] = append(secretMappings[secretRef.Name], envplugin.AnnotationMappings{
+							Env: envVar.Name,
+							Key: secretRef.Key,
+						})
+					}
+					currentResources.Secrets[secretRef.Name] = secret
+				} else {
+					warnings["Deployment"] = append(warnings["Deployment"], &Warning{
+						Kind:    "Deployment",
+						Name:    currentResources.Deployment.Name,
+						Warning: fmt.Sprintf("Environment variable %s has a valueFrom field that is not supported", envVar.Name),
+					})
 				}
 			}
 		}
+	}
+
+	if len(configMapMappings) > 0 || len(secretMappings) > 0 {
+		annotationValue := envplugin.AnnotationValue{}
+		for configmap, mappings := range configMapMappings {
+			annotationValue.Sources = append(annotationValue.Sources, envplugin.AnnotationSource{
+				ConfigMap: configmap,
+				Mappings:  mappings,
+			})
+		}
+
+		for secret, mappings := range secretMappings {
+			annotationValue.Sources = append(annotationValue.Sources, envplugin.AnnotationSource{
+				Secret:   secret,
+				Mappings: mappings,
+			})
+		}
+
+		annotationValueJSON, err := json.Marshal(annotationValue)
+		if err != nil {
+			return nil, err
+		}
+
+		changes = append(changes, &capsule.Change{
+			Field: &capsule.Change_SetAnnotation{
+				SetAnnotation: &capsule.Change_KeyValue{
+					Name:  envplugin.AnnotationEnvMapping,
+					Value: string(annotationValueJSON),
+				},
+			},
+		})
 	}
 
 	return changes, nil
@@ -902,6 +1008,14 @@ func migrateServicesAndIngresses(ctx context.Context,
 	livenessProbe := container.LivenessProbe
 	readinessProbe := container.ReadinessProbe
 
+	if container.StartupProbe != nil {
+		warnings["Deployment"] = append(warnings["Deployment"], &Warning{
+			Kind:    "Deployment",
+			Name:    currentResources.Deployment.Name,
+			Warning: "StartupProbe is not supported",
+		})
+	}
+
 	services := &corev1.ServiceList{}
 	err := cc.List(ctx, services, client.InNamespace(currentResources.Deployment.GetNamespace()))
 	if err != nil {
@@ -1028,10 +1142,6 @@ func migrateServicesAndIngresses(ctx context.Context,
 					},
 				},
 			},
-		}
-
-		if len(currentResources.Services) > 0 && name == "" {
-			capsuleSpec.Name = maps.Keys(currentResources.Services)[0]
 		}
 	}
 

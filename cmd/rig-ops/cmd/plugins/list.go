@@ -23,7 +23,7 @@ func listSteps(ctx context.Context,
 	operatorClient *base.OperatorClient,
 	scheme *runtime.Scheme,
 ) error {
-	cfg, err := getOperatorConfig(ctx, operatorClient, scheme)
+	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func get(ctx context.Context,
 	operatorClient *base.OperatorClient,
 	scheme *runtime.Scheme,
 ) error {
-	cfg, err := getOperatorConfig(ctx, operatorClient, scheme)
+	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
 	if err != nil {
 		return err
 	}

@@ -24,6 +24,9 @@ func Run() error {
 	rootCmd.PersistentFlags().StringVar(&base.Flags.RigContext,
 		"rig-context", "", "The context to use from your rigconfig file. Default is the current context")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.RigConfig, "rig-config", "", "Path to your rigconfig file")
+	rootCmd.PersistentFlags().StringVar(&base.Flags.OperatorConfig, "operator-config", "",
+		"If given, will read the config file at the path and use that as an operator config."+
+			"If empty, will use the operator config of the running operator.")
 	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 
 	migrate.Setup(rootCmd)
