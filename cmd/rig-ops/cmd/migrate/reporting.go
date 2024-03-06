@@ -129,7 +129,7 @@ func ProcessOperatorOutput(
 func processRemainingResources(
 	reports *ReportSet,
 	currentResources *CurrentResources,
-	scheme *runtime.Scheme,
+	_ *runtime.Scheme,
 ) error {
 	if currentResources.Deployment != nil {
 		if err := reports.AddObject(currentResources.Deployment, nil); err != nil {
