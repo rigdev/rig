@@ -35,7 +35,7 @@ resources created from a capsulespec
 	migrate.PersistentFlags().StringVarP(&base.Flags.Project, "project", "p", "", "The project to migrate to")
 	migrate.Flags().StringVar(&name, "name", "", "The name of the capsule to create.\n"+
 		"If empty, the capsule name defaults to the service name."+
-		" If no service is found, it defaults to the deployment name. \n"+
+		"If no service is found, it defaults to the deployment name.\n"+
 		"The name will be propagated to the created resources.")
 	migrate.Flags().BoolVarP(&apply, "apply", "a", false, "Apply the capsule to the rig platform")
 	migrate.MarkFlagsMutuallyExclusive("apply", "skip-platform")

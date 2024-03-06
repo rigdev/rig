@@ -186,12 +186,14 @@ func interactiveDiff(scheme *runtime.Scheme, dryRun *pipeline.DryRunResponse) er
 		return err
 	}
 
+	migratedOverview := migrate.CreateMigratedOverview(reports)
+
 	warnings := map[string][]*migrate.Warning{}
 	for _, k := range reports.GetKinds() {
 		warnings[k] = nil
 	}
 
-	return migrate.PromptDiffingChanges(reports, warnings, overview)
+	return migrate.PromptDiffingChanges(reports, warnings, overview, migratedOverview)
 }
 
 func readPlugin(path string) (v1alpha1.Step, error) {

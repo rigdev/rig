@@ -35,12 +35,21 @@ func (r *ReportSet) AddObject(original, proposal client.Object) error {
 		return err
 	}
 
-	kind := original.GetObjectKind().GroupVersionKind().Kind
+	var kind string
+	var name string
+	if proposal != nil {
+		kind = proposal.GetObjectKind().GroupVersionKind().Kind
+		name = proposal.GetName()
+	} else {
+		kind = original.GetObjectKind().GroupVersionKind().Kind
+		name = original.GetName()
+	}
+
 	if _, ok := r.reports[kind]; !ok {
 		r.reports[kind] = map[string]*dyff.Report{}
 	}
 
-	r.reports[kind][original.GetName()] = report
+	r.reports[kind][name] = report
 	return nil
 }
 
@@ -199,7 +208,7 @@ func getWarningsView(warnings []*Warning) *tview.TextView {
 	}
 
 	text := tview.NewTextView()
-	text.SetTitle("Warnings (ESC to exit)")
+	text.SetTitle("Warnings (ESC to remove)")
 	text.SetBorder(true)
 	text.SetDynamicColors(true)
 	text.SetWrap(true)
@@ -212,15 +221,13 @@ func getWarningsView(warnings []*Warning) *tview.TextView {
 
 func showOverview(
 	currentOverview *tview.TreeView,
-	_ map[string][]*Warning,
-) error {
+	migratedOverview *tview.TreeView) error {
+
 	grid := tview.NewGrid().
 		SetRows(0).
 		SetColumns(0, 0).
-		SetBorders(true).
 		AddItem(currentOverview, 0, 0, 10, 1, 0, 0, false).
-		AddItem(tview.NewTreeView(), 0, 1, 10, 1, 0, 0, false)
-
+		AddItem(migratedOverview, 0, 1, 10, 1, 0, 0, false)
 	app := tview.NewApplication().SetRoot(grid, true)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyESC {
@@ -257,7 +264,7 @@ func showDiffReport(r *dyff.Report, kind, name string, warnings []*Warning) erro
 		SetBorders(false)
 
 	if warningsText != nil {
-		grid.SetRows(10, 0).
+		grid.SetRows(-1, -2).
 			AddItem(warningsText, 0, 0, 1, 1, 0, 0, false).
 			AddItem(text, 1, 0, 1, 1, 0, 0, true)
 	} else {
@@ -268,10 +275,101 @@ func showDiffReport(r *dyff.Report, kind, name string, warnings []*Warning) erro
 	app := tview.NewApplication().SetRoot(grid, true).EnableMouse(true)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyESC {
-			app.Stop()
+			prim := app.GetFocus()
+			if prim == text {
+				app.Stop()
+			} else {
+				grid.RemoveItem(warningsText)
+				grid.RemoveItem(text)
+				grid.AddItem(text, 0, 0, 2, 1, 0, 0, true)
+				app.SetFocus(text)
+			}
+
 		}
 		return event
 	})
 
 	return app.Run()
+}
+
+func CreateMigratedOverview(reportSet *ReportSet) *tview.TreeView {
+	capsuleRoot := "Capsule/"
+	for name := range reportSet.reports["Capsule"] {
+		capsuleRoot = capsuleRoot + name
+	}
+
+	root := tview.NewTreeNode(capsuleRoot).SetSelectable(false)
+	tree := tview.NewTreeView().
+		SetRoot(root).
+		SetCurrentNode(root)
+
+	add := func(parent *tview.TreeNode, kind string, name string) *tview.TreeNode {
+		node := tview.NewTreeNode(fmt.Sprintf("%s/%s", kind, name)).
+			SetSelectable(false)
+
+		parent.AddChild(node)
+		return node
+	}
+
+	deploymentName := ""
+	for name := range reportSet.reports["Deployment"] {
+		deploymentName = name
+	}
+
+	deploymentNode := add(root, "Deployment", deploymentName)
+
+	serviceName := ""
+	for name := range reportSet.reports["Service"] {
+		serviceName = name
+	}
+
+	var serviceNode *tview.TreeNode
+	if serviceName != "" {
+		serviceNode = add(deploymentNode, "Service", serviceName)
+	}
+
+	for kind, reports := range reportSet.reports {
+		if kind == "Deployment" || kind == "Capsule" || kind == "Service" {
+			continue
+		}
+
+		names := make([]string, 0, len(reports))
+		for name := range reports {
+			names = append(names, name)
+		}
+
+		switch kind {
+		case "ServiceAccount":
+			for _, name := range names {
+				add(deploymentNode, kind, name)
+			}
+		case "ConfigMap":
+			for _, name := range names {
+				add(deploymentNode, kind, name)
+			}
+		case "Secret":
+			for _, name := range names {
+				add(deploymentNode, kind, name)
+			}
+		case "Ingress":
+			for _, name := range names {
+				add(serviceNode, kind, name)
+			}
+		case "CronJob":
+			for _, name := range names {
+				add(root, kind, name)
+			}
+		case "HorizontalPodAutoscaler":
+			for _, name := range names {
+				add(deploymentNode, kind, name)
+			}
+		}
+	}
+
+	tree.Box.SetTitle("Migrated Resources (ESC to exit)").
+		SetTitleColor(tcell.ColorGreen).
+		SetBorder(true).
+		SetBorderColor(tcell.ColorGreen)
+
+	return tree
 }
