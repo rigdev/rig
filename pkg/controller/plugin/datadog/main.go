@@ -111,5 +111,5 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 }
 
 func main() {
-	plugin.StartPlugin("datadog", &pluginParent{})
+	plugin.StartPlugin("rigdev.datadog", &pluginParent{})
 }

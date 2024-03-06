@@ -28,6 +28,7 @@ spec:
         {{- range $i, $p := .Values.config.customPlugins }}
         - name: plugin{{$i}}
           image: {{$p.image}}
+          # command: ['echo', 'image: {{$p.image}}', '>', '/plugins/manifest.yaml']
           volumeMounts:
             - name: plugins
               mountPath: /plugins
@@ -82,8 +83,6 @@ spec:
             {{- end }}
             - name: plugins
               mountPath: /app/bin/plugins-thirdparty
-            - name: plugins-info
-              mountPath: /etc/plugins-info
       volumes:
         - name: config
           secret:
@@ -96,12 +95,6 @@ spec:
         {{- end }}
         - name: plugins
           emptyDir: {}
-        - name: plugins-info
-          configMap:
-            name: {{ include "rig-operator.fullname" . }}-3rdparty-plugins
-            items:
-              - key: contents
-                path: contents.yaml
       terminationGracePeriodSeconds: 10
       {{- with .Values.nodeSelector }}
       nodeSelector: {{ toYaml . | nindent 8 }}
@@ -112,15 +105,3 @@ spec:
       {{- with .Values.tolerations }}
       tolerations: {{ toYaml . | nindent 8 }}
       {{- end }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "rig-operator.fullname" . }}-3rdparty-plugins
-data:
-  contents: |
-  {{- range $i, $p := .Values.config.customPlugins }}
-    - dirpath: plugin{{$i}}
-      image: {{$p.image}}
-      {{if $p.name  }}name: {{$p.name}}{{ end }}
-  {{- end }}

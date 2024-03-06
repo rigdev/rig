@@ -34,7 +34,6 @@ message GetPluginsResponse {
   message Thirdparty {
     string name = 1;
     string image = 2;
-    string original_name = 3;
   }
 
   message Plugin {

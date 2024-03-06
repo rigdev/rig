@@ -21,19 +21,17 @@ import (
 
 type ExternalPlugin struct {
 	name         string
-	originalName string
 	logger       logr.Logger
 	client       *plugin.Client
 	pluginClient *pluginClient
 	path         string
 }
 
-func NewExternalPlugin(name, originalName, pluginConfig, path string, logger logr.Logger) (Plugin, error) {
+func NewExternalPlugin(name, pluginConfig, path string, logger logr.Logger) (Plugin, error) {
 	p := &ExternalPlugin{
-		name:         name,
-		originalName: originalName,
-		logger:       logger,
-		path:         path,
+		name:   name,
+		logger: logger,
+		path:   path,
 	}
 
 	return p, p.start(context.Background(), pluginConfig)
@@ -66,7 +64,7 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 		HandshakeConfig: plugin.HandshakeConfig{
 			ProtocolVersion:  1,
 			MagicCookieKey:   "RIG_OPERATOR_PLUGIN",
-			MagicCookieValue: p.originalName,
+			MagicCookieValue: p.name,
 		},
 		Plugins: map[string]plugin.Plugin{
 			"rigOperatorPlugin": &rigOperatorPlugin{},

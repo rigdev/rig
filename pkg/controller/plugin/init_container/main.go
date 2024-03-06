@@ -38,5 +38,5 @@ func (p *initContainerPlugin) Run(_ context.Context, req pipeline.CapsuleRequest
 }
 
 func main() {
-	plugin.StartPlugin("init_container", &initContainerPlugin{})
+	plugin.StartPlugin("rigdev.init_container", &initContainerPlugin{})
 }

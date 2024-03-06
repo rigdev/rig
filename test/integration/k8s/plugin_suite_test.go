@@ -3,7 +3,6 @@ package k8s_test
 import (
 	"context"
 	"fmt"
-	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -15,7 +14,6 @@ import (
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	netv1 "k8s.io/api/networking/v1"
@@ -94,7 +92,7 @@ func (s *PluginTestSuite) SetupSuite() {
 			{
 				Plugins: []configv1alpha1.Plugin{
 					{
-						Name: "object_template",
+						Name: "rigdev.object_template",
 						Config: `
 group: "apps"
 kind: "Deployment"
@@ -112,7 +110,7 @@ container:
 `,
 					},
 					{
-						Name: "init_container",
+						Name: "rigdev.init_container",
 						Config: `
 container:
   image: alpine
@@ -131,14 +129,15 @@ container:
 		Scheme: scheme,
 	})
 	require.NoError(t, err)
-
+	pmanager, err := plugin.NewManager()
+	require.NoError(t, err)
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
 		Scheme:              scheme,
 		Config:              opConfig,
 		ClientSet:           clientSet,
 		CapabilitiesService: capabilities.NewService(configService, cc, clientSet.Discovery(), nil),
-		PluginManager:       makePluginManager(t),
+		PluginManager:       pmanager,
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))
@@ -150,29 +149,6 @@ container:
 
 	s.cancel = cancel
 	setupDone = true
-}
-
-func makePluginManager(t *testing.T) *plugin.Manager {
-	fs := afero.NewMemMapFs()
-	dir, err := plugin.BuiltinPluginDir()
-	require.NoError(t, err)
-	require.NoError(t, fs.MkdirAll(dir, 0o666))
-	// The filesystem need not have the actual plugin binaries, just that a file exists
-	// with the binary name.
-	// The manager checks for file existence. It does not perform execution.
-	builtinPluginNames := []string{"sidecar", "object_template", "init_container"}
-	for _, n := range builtinPluginNames {
-		_, err := fs.Create(path.Join(dir, n))
-		require.NoError(t, err)
-	}
-
-	require.NoError(t, fs.MkdirAll("/etc/plugins-info", 0o666))
-	_, err = fs.Create("/etc/plugins-info/contents.yaml")
-	require.NoError(t, err)
-
-	pluginManager, err := plugin.NewManager(fs)
-	require.NoError(t, err)
-	return pluginManager
 }
 
 func (s *PluginTestSuite) TearDownSuite() {

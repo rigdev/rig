@@ -185,9 +185,8 @@ func list(ctx context.Context,
 			result.Builtin = append(result.Builtin, b.GetName())
 		} else if t := p.GetThirdParty(); t != nil {
 			result.Thirdparty = append(result.Thirdparty, thirdparty{
-				Name:         t.GetName(),
-				OriginalName: t.GetOriginalName(),
-				Image:        t.GetImage(),
+				Name:  t.GetName(),
+				Image: t.GetImage(),
 			})
 		}
 	}
@@ -198,13 +197,13 @@ func list(ctx context.Context,
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
-	tbl := table.New("Type", "Name", "Original Name", "Image")
+	tbl := table.New("Type", "Name", "Image")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	for _, p := range result.Builtin {
 		tbl.AddRow("Builtin", p, "", "")
 	}
 	for _, p := range result.Thirdparty {
-		tbl.AddRow("Thirdparty", p.Name, p.OriginalName, p.Image)
+		tbl.AddRow("Thirdparty", p.Name, p.Image)
 	}
 	tbl.Print()
 
@@ -212,7 +211,6 @@ func list(ctx context.Context,
 }
 
 type thirdparty struct {
-	Name         string `json:"name,omitempty"`
-	OriginalName string `json:"original_name,omitempty"`
-	Image        string `json:"image,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Image string `json:"image,omitempty"`
 }
