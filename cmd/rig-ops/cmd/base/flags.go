@@ -20,7 +20,6 @@ var Flags = FlagsStruct{
 	Namespace:   "",
 	RigConfig:   "",
 	RigContext:  "",
-	Project:     "",
 	Environment: "",
 	OutputType:  common.OutputTypePretty,
 }
