@@ -196,9 +196,10 @@ func migrate(ctx context.Context,
 	}
 
 	imageResp, err := rc.Image().Create(ctx, connect.NewRequest(&image.CreateRequest{
-		ProjectId: base.Flags.Project,
-		CapsuleId: deployRequest.Msg.CapsuleId,
-		Image:     capsuleSpec.Spec.Image,
+		ProjectId:      base.Flags.Project,
+		CapsuleId:      deployRequest.Msg.CapsuleId,
+		Image:          capsuleSpec.Spec.Image,
+		SkipImageCheck: true, // TODO: This should be an argument.
 	}))
 	if err != nil {
 		return err
