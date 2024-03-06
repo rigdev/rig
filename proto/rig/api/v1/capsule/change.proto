@@ -58,8 +58,8 @@ message Change {
   oneof field {
     // Number of replicas changed.
     uint32 replicas = 1;
-    // New build change.
-    string build_id = 2;
+    // New image change.
+    string image_id = 2;
     // Network interfaces change.
     Network network = 3;
     // Container settings of the instances.

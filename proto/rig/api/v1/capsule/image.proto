@@ -5,28 +5,28 @@ package api.v1.capsule;
 import "google/protobuf/timestamp.proto";
 import "model/author.proto";
 
-// Build is an environment wide abstraction of an image along with metadata for
-// a capsule.
-message Build {
-  // unique identifier for the build
-  string build_id = 2;
+// Image is an cross-environment abstraction of an container image along with
+// metadata for a capsule.
+message Image {
+  // unique identifier for the image
+  string image_id = 2;
   // digest of the image
   string digest = 7;
   // repository of the image
   string repository = 8;
   // tag of the image
   string tag = 9;
-  // user who created the build
+  // user who created the image
   model.Author created_by = 3;
-  // time the build was created
+  // time the image was created
   google.protobuf.Timestamp created_at = 4;
-  // origin of the build
+  // origin of the image
   Origin origin = 5;
-  // labels of the build
+  // labels of the image
   map<string, string> labels = 6;
 }
 
-// GitReference is an origin of a build.
+// GitReference is an origin of a image.
 message GitReference {
   // The url of the git repository
   string repository_url = 1;
@@ -36,10 +36,10 @@ message GitReference {
   string commit_url = 3;
 }
 
-// Where the build came from
+// Where the image came from
 message Origin {
   oneof kind {
-    // The build came from a git repository
+    // The image came from a git repository
     GitReference git_reference = 1;
   }
 }

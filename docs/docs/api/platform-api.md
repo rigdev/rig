@@ -33,25 +33,6 @@
 
 
 
-### api.v1.build.Service
-<a name="api-v1-build-Service"></a>
-
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| /api.v1.build.Service/GetImageInfo | [GetImageInfoRequest](#api-v1-build-GetImageInfoRequest) | [GetImageInfoResponse](#api-v1-build-GetImageInfoResponse) | Get Information about an image in a build. |
-| /api.v1.build.Service/GetRepositoryInfo | [GetRepositoryInfoRequest](#api-v1-build-GetRepositoryInfoRequest) | [GetRepositoryInfoResponse](#api-v1-build-GetRepositoryInfoResponse) | Get Information about a docker registry repository. |
-| /api.v1.build.Service/Get | [GetRequest](#api-v1-build-GetRequest) | [GetResponse](#api-v1-build-GetResponse) | Get a build. |
-| /api.v1.build.Service/Create | [CreateRequest](#api-v1-build-CreateRequest) | [CreateResponse](#api-v1-build-CreateResponse) | Create a new build. Builds are immutable and cannot change. Create a new build to make changes from an existing one. |
-| /api.v1.build.Service/List | [ListRequest](#api-v1-build-ListRequest) | [ListResponse](#api-v1-build-ListResponse) | List builds for a capsule. |
-| /api.v1.build.Service/Delete | [DeleteRequest](#api-v1-build-DeleteRequest) | [DeleteResponse](#api-v1-build-DeleteResponse) | Delete a build. |
-
-
-
-
-
-
 
 
 
@@ -144,6 +125,25 @@
 | /api.v1.group.Service/RemoveMember | [RemoveMemberRequest](#api-v1-group-RemoveMemberRequest) | [RemoveMemberResponse](#api-v1-group-RemoveMemberResponse) | Remove member from group. |
 | /api.v1.group.Service/ListMembers | [ListMembersRequest](#api-v1-group-ListMembersRequest) | [ListMembersResponse](#api-v1-group-ListMembersResponse) | Get Group Members. |
 | /api.v1.group.Service/ListGroupsForMember | [ListGroupsForMemberRequest](#api-v1-group-ListGroupsForMemberRequest) | [ListGroupsForMemberResponse](#api-v1-group-ListGroupsForMemberResponse) | Get Groups. |
+
+
+
+
+
+
+### api.v1.image.Service
+<a name="api-v1-image-Service"></a>
+
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| /api.v1.image.Service/GetImageInfo | [GetImageInfoRequest](#api-v1-image-GetImageInfoRequest) | [GetImageInfoResponse](#api-v1-image-GetImageInfoResponse) | Get Information about an image in a image. |
+| /api.v1.image.Service/GetRepositoryInfo | [GetRepositoryInfoRequest](#api-v1-image-GetRepositoryInfoRequest) | [GetRepositoryInfoResponse](#api-v1-image-GetRepositoryInfoResponse) | Get Information about a docker registry repository. |
+| /api.v1.image.Service/Get | [GetRequest](#api-v1-image-GetRequest) | [GetResponse](#api-v1-image-GetResponse) | Get a image. |
+| /api.v1.image.Service/Create | [CreateRequest](#api-v1-image-CreateRequest) | [CreateResponse](#api-v1-image-CreateResponse) | Create a new image. Images are immutable and cannot change. Create a new image to make changes from an existing one. |
+| /api.v1.image.Service/List | [ListRequest](#api-v1-image-ListRequest) | [ListResponse](#api-v1-image-ListResponse) | List images for a capsule. |
+| /api.v1.image.Service/Delete | [DeleteRequest](#api-v1-image-DeleteRequest) | [DeleteResponse](#api-v1-image-DeleteResponse) | Delete a image. |
 
 
 
@@ -958,470 +958,6 @@ The type of SSO. Currently only OIDC is supported.
 
 
 
-<a name="api_v1_capsule_build-proto"></a>
-
-## api/v1/capsule/build.proto
-
-
-
-<a name="api-v1-capsule-Build"></a>
-
-### Build
-Build is an environment wide abstraction of an image along with metadata for
-a capsule.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| build_id | [string](#string) |  | unique identifier for the build |
-| digest | [string](#string) |  | digest of the image |
-| repository | [string](#string) |  | repository of the image |
-| tag | [string](#string) |  | tag of the image |
-| created_by | [model.Author](#model-Author) |  | user who created the build |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | time the build was created |
-| origin | [Origin](#api-v1-capsule-Origin) |  | origin of the build |
-| labels | [Build.LabelsEntry](#api-v1-capsule-Build-LabelsEntry) | repeated | labels of the build |
-
-
-
-
-
-
-<a name="api-v1-capsule-Build-LabelsEntry"></a>
-
-### Build.LabelsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-GitReference"></a>
-
-### GitReference
-GitReference is an origin of a build.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| repository_url | [string](#string) |  | The url of the git repository |
-| commit_sha | [string](#string) |  | The commit sha of the git repository |
-| commit_url | [string](#string) |  | The commit url of the git repository |
-
-
-
-
-
-
-<a name="api-v1-capsule-Origin"></a>
-
-### Origin
-Where the build came from
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| git_reference | [GitReference](#api-v1-capsule-GitReference) |  | The build came from a git repository |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="model_common-proto"></a>
-
-## model/common.proto
-
-
-
-<a name="model-BcryptHashingConfig"></a>
-
-### BcryptHashingConfig
-Bcrypt hashing configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| cost | [int32](#int32) |  | The cost of the hashing algorithm. |
-
-
-
-
-
-
-<a name="model-BcryptHashingInstance"></a>
-
-### BcryptHashingInstance
-Bcrypt hashing instance.
-
-
-
-
-
-
-<a name="model-HashingConfig"></a>
-
-### HashingConfig
-Hashing configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| bcrypt | [BcryptHashingConfig](#model-BcryptHashingConfig) |  | if bcrypt is set, use bcrypt. |
-| scrypt | [ScryptHashingConfig](#model-ScryptHashingConfig) |  | if scrypt is set, use scrypt. |
-
-
-
-
-
-
-<a name="model-HashingInstance"></a>
-
-### HashingInstance
-Hashing instance.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| config | [HashingConfig](#model-HashingConfig) |  | The hashing configuration. |
-| hash | [bytes](#bytes) |  | A hash |
-| bcrypt | [BcryptHashingInstance](#model-BcryptHashingInstance) |  | if bcrypt is set, this bcrypt instance was used. |
-| scrypt | [ScryptHashingInstance](#model-ScryptHashingInstance) |  | if scrypt is set, this scrypt instance was used. |
-
-
-
-
-
-
-<a name="model-Pagination"></a>
-
-### Pagination
-Pagination option.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| offset | [uint32](#uint32) |  | Where to start the pagination. |
-| limit | [uint32](#uint32) |  | How many items to return. |
-| descending | [bool](#bool) |  | Whether to sort in descending order. |
-
-
-
-
-
-
-<a name="model-ScryptHashingConfig"></a>
-
-### ScryptHashingConfig
-Scrypt hashing configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| signer_key | [string](#string) |  | The key used to sign the salt. |
-| salt_separator | [string](#string) |  | The salt separator. |
-| rounds | [int32](#int32) |  | The number of rounds in the algorithm. |
-| mem_cost | [int32](#int32) |  | The memory cost of the algorithm. |
-| p | [int32](#int32) |  | The parallelization factor of the algorithm. |
-| key_len | [int32](#int32) |  | The length of the key. |
-
-
-
-
-
-
-<a name="model-ScryptHashingInstance"></a>
-
-### ScryptHashingInstance
-Scrypt hashing instance.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| salt | [bytes](#bytes) |  | The salt used to hash the password. |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="api_v1_build_service-proto"></a>
-
-## api/v1/build/service.proto
-
-
-
-<a name="api-v1-build-CreateRequest"></a>
-
-### CreateRequest
-Request to create a new build in a capsule.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | Capsule to create the build in. |
-| image | [string](#string) |  | Image to create the build from. |
-| digest | [string](#string) |  | Digest of the image. |
-| origin | [api.v1.capsule.Origin](#api-v1-capsule-Origin) |  | Origin of the image |
-| labels | [CreateRequest.LabelsEntry](#api-v1-build-CreateRequest-LabelsEntry) | repeated | Meta data to attach to the build. |
-| skip_image_check | [bool](#bool) |  | if true skip check if image exists. |
-| project_id | [string](#string) |  | Project ID. |
-
-
-
-
-
-
-<a name="api-v1-build-CreateRequest-LabelsEntry"></a>
-
-### CreateRequest.LabelsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="api-v1-build-CreateResponse"></a>
-
-### CreateResponse
-Response to create a new build in a capsule.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| build_id | [string](#string) |  | ID of the build. |
-| created_new_build | [bool](#bool) |  | True if a new build was created. |
-
-
-
-
-
-
-<a name="api-v1-build-DeleteRequest"></a>
-
-### DeleteRequest
-Request to delete a build.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | Capsule to delete the build from. |
-| build_id | [string](#string) |  | Build to delete. |
-| project_id | [string](#string) |  | Project ID. |
-
-
-
-
-
-
-<a name="api-v1-build-DeleteResponse"></a>
-
-### DeleteResponse
-Empty response to delete a build.
-
-
-
-
-
-
-<a name="api-v1-build-GetImageInfoRequest"></a>
-
-### GetImageInfoRequest
-Request to get information about an image.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| image | [string](#string) |  | The image to get information about. |
-
-
-
-
-
-
-<a name="api-v1-build-GetImageInfoResponse"></a>
-
-### GetImageInfoResponse
-Reponse to GetImageInfo request, containing information about an image.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| image_id | [ImageId](#api-v1-build-ImageId) |  | Image ID. |
-| image_string | [string](#string) |  | Image from the request. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the image was created. |
-| origin | [api.v1.capsule.Origin](#api-v1-capsule-Origin) |  | Origin of the image. |
-
-
-
-
-
-
-<a name="api-v1-build-GetRepositoryInfoRequest"></a>
-
-### GetRepositoryInfoRequest
-Get repository information request.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| registry | [string](#string) |  | Docker Registry |
-| repository | [string](#string) |  | Docker Repository |
-
-
-
-
-
-
-<a name="api-v1-build-GetRepositoryInfoResponse"></a>
-
-### GetRepositoryInfoResponse
-Get repository information response.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| tags | [Tag](#api-v1-build-Tag) | repeated | Image Tags in the repository. |
-
-
-
-
-
-
-<a name="api-v1-build-GetRequest"></a>
-
-### GetRequest
-Request to get a build.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | Capsule to get the build from. |
-| build_id | [string](#string) |  | Build to get. |
-| project_id | [string](#string) |  | Project ID. |
-
-
-
-
-
-
-<a name="api-v1-build-GetResponse"></a>
-
-### GetResponse
-Response to get a build.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| build | [api.v1.capsule.Build](#api-v1-capsule-Build) |  | The build to retrieve |
-
-
-
-
-
-
-<a name="api-v1-build-ImageId"></a>
-
-### ImageId
-A collection of image properties that uniquely identifies an image.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| registry | [string](#string) |  | Docker Registry. |
-| repository | [string](#string) |  | Docker Repository. |
-| tag | [string](#string) |  | Tag of the image. |
-| digest | [string](#string) |  | Digest of the image. |
-
-
-
-
-
-
-<a name="api-v1-build-ListRequest"></a>
-
-### ListRequest
-Request to list builds.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | Capsule to list builds in. |
-| pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
-| project_id | [string](#string) |  | Project ID. |
-
-
-
-
-
-
-<a name="api-v1-build-ListResponse"></a>
-
-### ListResponse
-Reponse to list builds.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| builds | [api.v1.capsule.Build](#api-v1-capsule-Build) | repeated | Builds in the capsule. |
-| total | [uint64](#uint64) |  | Total number of builds in the capsule. |
-
-
-
-
-
-
-<a name="api-v1-build-Tag"></a>
-
-### Tag
-A docker image tag.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| tag | [string](#string) |  | Tag of the image. |
-| image_created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the image was created. |
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="api_v1_capsule_capsule-proto"></a>
 
 ## api/v1/capsule/capsule.proto
@@ -1613,7 +1149,7 @@ Change to a capsule that ultimately results in a new rollout.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | replicas | [uint32](#uint32) |  | Number of replicas changed. |
-| build_id | [string](#string) |  | New build change. |
+| image_id | [string](#string) |  | New image change. |
 | network | [Network](#api-v1-capsule-Network) |  | Network interfaces change. |
 | container_settings | [ContainerSettings](#api-v1-capsule-ContainerSettings) |  | Container settings of the instances. |
 | auto_add_rig_service_accounts | [bool](#bool) |  | Automatically add a rig-service account. |
@@ -2238,6 +1774,90 @@ An event that is associated with a rollout.
 
 
 
+<a name="api_v1_capsule_image-proto"></a>
+
+## api/v1/capsule/image.proto
+
+
+
+<a name="api-v1-capsule-GitReference"></a>
+
+### GitReference
+GitReference is an origin of a image.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_url | [string](#string) |  | The url of the git repository |
+| commit_sha | [string](#string) |  | The commit sha of the git repository |
+| commit_url | [string](#string) |  | The commit url of the git repository |
+
+
+
+
+
+
+<a name="api-v1-capsule-Image"></a>
+
+### Image
+Image is an cross-environment abstraction of an container image along with
+metadata for a capsule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image_id | [string](#string) |  | unique identifier for the image |
+| digest | [string](#string) |  | digest of the image |
+| repository | [string](#string) |  | repository of the image |
+| tag | [string](#string) |  | tag of the image |
+| created_by | [model.Author](#model-Author) |  | user who created the image |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | time the image was created |
+| origin | [Origin](#api-v1-capsule-Origin) |  | origin of the image |
+| labels | [Image.LabelsEntry](#api-v1-capsule-Image-LabelsEntry) | repeated | labels of the image |
+
+
+
+
+
+
+<a name="api-v1-capsule-Image-LabelsEntry"></a>
+
+### Image.LabelsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-Origin"></a>
+
+### Origin
+Where the image came from
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| git_reference | [GitReference](#api-v1-capsule-GitReference) |  | The image came from a git repository |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_instance-proto"></a>
 
 ## api/v1/capsule/instance.proto
@@ -2437,7 +2057,7 @@ An event that is associated with a rollout.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | instance_id | [string](#string) |  |  |
-| build_id | [string](#string) |  |  |
+| image_id | [string](#string) |  |  |
 | state | [State](#api-v1-capsule-State) |  |  |
 | restart_count | [uint32](#uint32) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
@@ -3667,7 +3287,7 @@ The rollout model.
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | changes | [Change](#api-v1-capsule-Change) | repeated |  |
 | replicas | [uint32](#uint32) |  |  |
-| build_id | [string](#string) |  |  |
+| image_id | [string](#string) |  |  |
 | network | [Network](#api-v1-capsule-Network) |  |  |
 | container_settings | [ContainerSettings](#api-v1-capsule-ContainerSettings) |  |  |
 | auto_add_rig_service_accounts | [bool](#bool) |  |  |
@@ -3710,6 +3330,130 @@ The rollout model.
 | ---- | ------ | ----------- |
 | EVENT_TYPE_UNSPECIFIED | 0 |  |
 | EVENT_TYPE_ABORT | 1 |  |
+
+
+
+
+
+
+
+
+<a name="model_common-proto"></a>
+
+## model/common.proto
+
+
+
+<a name="model-BcryptHashingConfig"></a>
+
+### BcryptHashingConfig
+Bcrypt hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cost | [int32](#int32) |  | The cost of the hashing algorithm. |
+
+
+
+
+
+
+<a name="model-BcryptHashingInstance"></a>
+
+### BcryptHashingInstance
+Bcrypt hashing instance.
+
+
+
+
+
+
+<a name="model-HashingConfig"></a>
+
+### HashingConfig
+Hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| bcrypt | [BcryptHashingConfig](#model-BcryptHashingConfig) |  | if bcrypt is set, use bcrypt. |
+| scrypt | [ScryptHashingConfig](#model-ScryptHashingConfig) |  | if scrypt is set, use scrypt. |
+
+
+
+
+
+
+<a name="model-HashingInstance"></a>
+
+### HashingInstance
+Hashing instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| config | [HashingConfig](#model-HashingConfig) |  | The hashing configuration. |
+| hash | [bytes](#bytes) |  | A hash |
+| bcrypt | [BcryptHashingInstance](#model-BcryptHashingInstance) |  | if bcrypt is set, this bcrypt instance was used. |
+| scrypt | [ScryptHashingInstance](#model-ScryptHashingInstance) |  | if scrypt is set, this scrypt instance was used. |
+
+
+
+
+
+
+<a name="model-Pagination"></a>
+
+### Pagination
+Pagination option.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| offset | [uint32](#uint32) |  | Where to start the pagination. |
+| limit | [uint32](#uint32) |  | How many items to return. |
+| descending | [bool](#bool) |  | Whether to sort in descending order. |
+
+
+
+
+
+
+<a name="model-ScryptHashingConfig"></a>
+
+### ScryptHashingConfig
+Scrypt hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| signer_key | [string](#string) |  | The key used to sign the salt. |
+| salt_separator | [string](#string) |  | The salt separator. |
+| rounds | [int32](#int32) |  | The number of rounds in the algorithm. |
+| mem_cost | [int32](#int32) |  | The memory cost of the algorithm. |
+| p | [int32](#int32) |  | The parallelization factor of the algorithm. |
+| key_len | [int32](#int32) |  | The length of the key. |
+
+
+
+
+
+
+<a name="model-ScryptHashingInstance"></a>
+
+### ScryptHashingInstance
+Scrypt hashing instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| salt | [bytes](#bytes) |  | The salt used to hash the password. |
+
+
+
+
+
 
 
 
@@ -5105,6 +4849,262 @@ The request of a Groups.Update RPC.
 
 ### UpdateResponse
 The response of a Groups.Update RPC.
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_image_service-proto"></a>
+
+## api/v1/image/service.proto
+
+
+
+<a name="api-v1-image-CreateRequest"></a>
+
+### CreateRequest
+Request to create a new image in a capsule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | Capsule to create the image in. |
+| image | [string](#string) |  | Container image to create the image from. |
+| digest | [string](#string) |  | Digest of the image. |
+| origin | [api.v1.capsule.Origin](#api-v1-capsule-Origin) |  | Origin of the image |
+| labels | [CreateRequest.LabelsEntry](#api-v1-image-CreateRequest-LabelsEntry) | repeated | Meta data to attach to the image. |
+| skip_image_check | [bool](#bool) |  | if true skip check if image exists. |
+| project_id | [string](#string) |  | Project ID. |
+
+
+
+
+
+
+<a name="api-v1-image-CreateRequest-LabelsEntry"></a>
+
+### CreateRequest.LabelsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-image-CreateResponse"></a>
+
+### CreateResponse
+Response to create a new image in a capsule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image_id | [string](#string) |  | ID of the image. |
+| created_new_image | [bool](#bool) |  | True if a new image was created. |
+
+
+
+
+
+
+<a name="api-v1-image-DeleteRequest"></a>
+
+### DeleteRequest
+Request to delete a image.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | Capsule to delete the image from. |
+| image_id | [string](#string) |  | Image to delete. |
+| project_id | [string](#string) |  | Project ID. |
+
+
+
+
+
+
+<a name="api-v1-image-DeleteResponse"></a>
+
+### DeleteResponse
+Empty response to delete a image.
+
+
+
+
+
+
+<a name="api-v1-image-GetImageInfoRequest"></a>
+
+### GetImageInfoRequest
+Request to get information about an image.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  | The image to get information about. |
+
+
+
+
+
+
+<a name="api-v1-image-GetImageInfoResponse"></a>
+
+### GetImageInfoResponse
+Reponse to GetImageInfo request, containing information about an image.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image_id | [ImageId](#api-v1-image-ImageId) |  | Image ID. |
+| image_string | [string](#string) |  | Image from the request. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the image was created. |
+| origin | [api.v1.capsule.Origin](#api-v1-capsule-Origin) |  | Origin of the image. |
+
+
+
+
+
+
+<a name="api-v1-image-GetRepositoryInfoRequest"></a>
+
+### GetRepositoryInfoRequest
+Get repository information request.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| registry | [string](#string) |  | Docker Registry |
+| repository | [string](#string) |  | Docker Repository |
+
+
+
+
+
+
+<a name="api-v1-image-GetRepositoryInfoResponse"></a>
+
+### GetRepositoryInfoResponse
+Get repository information response.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tags | [Tag](#api-v1-image-Tag) | repeated | Image Tags in the repository. |
+
+
+
+
+
+
+<a name="api-v1-image-GetRequest"></a>
+
+### GetRequest
+Request to get a image.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | Capsule to get the image from. |
+| image_id | [string](#string) |  | Image to get. |
+| project_id | [string](#string) |  | Project ID. |
+
+
+
+
+
+
+<a name="api-v1-image-GetResponse"></a>
+
+### GetResponse
+Response to get a image.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [api.v1.capsule.Image](#api-v1-capsule-Image) |  | The image to retrieve |
+
+
+
+
+
+
+<a name="api-v1-image-ImageId"></a>
+
+### ImageId
+A collection of image properties that uniquely identifies an image.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| registry | [string](#string) |  | Docker Registry. |
+| repository | [string](#string) |  | Docker Repository. |
+| tag | [string](#string) |  | Tag of the image. |
+| digest | [string](#string) |  | Digest of the image. |
+
+
+
+
+
+
+<a name="api-v1-image-ListRequest"></a>
+
+### ListRequest
+Request to list images.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | Capsule to list images in. |
+| pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
+| project_id | [string](#string) |  | Project ID. |
+
+
+
+
+
+
+<a name="api-v1-image-ListResponse"></a>
+
+### ListResponse
+Reponse to list images.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| images | [api.v1.capsule.Image](#api-v1-capsule-Image) | repeated | Images in the capsule. |
+| total | [uint64](#uint64) |  | Total number of images in the capsule. |
+
+
+
+
+
+
+<a name="api-v1-image-Tag"></a>
+
+### Tag
+A docker image tag.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tag | [string](#string) |  | Tag of the image. |
+| image_created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the image was created. |
 
 
 
