@@ -11,7 +11,6 @@ The following are the different installation options for how to install the CLI
 Add the rig homebrew tap and install the CLI.
 
 ```bash
-brew tap rigdev/tap
 brew install rigdev/tap/rig
 ```
 
