@@ -137,7 +137,7 @@ func migrate(ctx context.Context,
 	deployRequest := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId:     capsuleSpec.Name,
-			ProjectId:     currentResources.Deployment.Namespace,
+			ProjectId:     base.Flags.Project,
 			EnvironmentId: base.Flags.Environment,
 			Message:       "Migrated from kubernetes deployment",
 			DryRun:        true,
@@ -205,9 +205,10 @@ func migrate(ctx context.Context,
 			}
 
 			buildResp, err := rc.Build().Create(ctx, connect.NewRequest(&build.CreateRequest{
-				ProjectId: base.Flags.Project,
-				CapsuleId: deployRequest.Msg.CapsuleId,
-				Image:     capsuleSpec.Spec.Image,
+				ProjectId:      base.Flags.Project,
+				CapsuleId:      deployRequest.Msg.CapsuleId,
+				Image:          capsuleSpec.Spec.Image,
+				SkipImageCheck: true,
 			}))
 			if err != nil {
 				return err
@@ -236,7 +237,8 @@ func migrate(ctx context.Context,
 
 func promptDiffingChanges(reports map[string]map[string]*dyff.Report,
 	warnings map[string][]*Warning,
-	currentOverview *tview.TreeView) error {
+	currentOverview *tview.TreeView,
+) error {
 	choices := []string{}
 	// choices = append(choices, "Overview")
 

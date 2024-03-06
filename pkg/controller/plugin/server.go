@@ -153,7 +153,7 @@ func (c *capsuleRequestClient) Delete(_ client.Object) error {
 }
 
 func (c *capsuleRequestClient) MarkUsedResource(_ v1alpha2.UsedResource) {
-	panic("unimplemented `MarkUsedResource` command")
+	// panic("unimplemented `MarkUsedResource` command")
 }
 
 type Server interface {
