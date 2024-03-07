@@ -88,35 +88,37 @@ func (s *PluginTestSuite) SetupSuite() {
 			Path:     "metrics",
 			PortName: "metricsport",
 		},
-		Steps: []configv1alpha1.Step{
-			{
-				Plugins: []configv1alpha1.Plugin{
-					{
-						Name: "rigdev.object_template",
-						Config: `
+		Pipeline: configv1alpha1.Pipeline{
+			Steps: []configv1alpha1.Step{
+				{
+					Plugins: []configv1alpha1.Plugin{
+						{
+							Name: "rigdev.object_template",
+							Config: `
 group: "apps"
 kind: "Deployment"
 object: |
   spec:
     replicas: 2
 `,
-					},
-					{
-						Name: "rigdev.sidecar",
-						Config: `
+						},
+						{
+							Name: "rigdev.sidecar",
+							Config: `
 container:
   image: nginx
   name: nginx
 `,
-					},
-					{
-						Name: "rigdev.init_container",
-						Config: `
+						},
+						{
+							Name: "rigdev.init_container",
+							Config: `
 container:
   image: alpine
   name: startup
   command: ['sh', '-c', 'echo Hello']
 `,
+						},
 					},
 				},
 			},

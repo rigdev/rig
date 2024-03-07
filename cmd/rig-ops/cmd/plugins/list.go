@@ -139,7 +139,10 @@ func get(ctx context.Context,
 	}
 
 	if idx >= len(cfg.Pipeline.Steps) {
-		return fmt.Errorf("there are %v plugins configured. Max index allowed is %v", len(cfg.Pipeline.Steps), len(cfg.Pipeline.Steps)-1)
+		return fmt.Errorf(
+			"there are %v plugins configured. Max index allowed is %v",
+			len(cfg.Pipeline.Steps), len(cfg.Pipeline.Steps)-1,
+		)
 	}
 
 	s := cfg.Pipeline.Steps[idx]
