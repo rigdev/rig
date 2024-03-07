@@ -16,6 +16,7 @@ COPY rigdev.annotations /usr/local/bin/plugin/
 COPY rigdev.datadog /usr/local/bin/plugin/
 COPY rigdev.google_sql_proxy /usr/local/bin/plugin/
 COPY rigdev.env_mapping /usr/local/bin/plugin/
+COPY rigdev.placement /usr/local/bin/plugin/
 COPY --from=builder /etc/passwd /etc/passwd
 
 USER 1000

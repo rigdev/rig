@@ -28,7 +28,11 @@ func (m *GRPCServer) Initialize(
 	_ context.Context,
 	req *apiplugin.InitializeRequest,
 ) (*apiplugin.InitializeResponse, error) {
-	if err := m.Impl.LoadConfig([]byte(req.GetPluginConfig())); err != nil {
+	if err := m.Impl.Initialize(InitializeRequest{
+		Config:   []byte(req.GetPluginConfig()),
+		StepID:   req.GetStepId(),
+		PluginID: req.GetPluginId(),
+	}); err != nil {
 		return nil, err
 	}
 
@@ -48,6 +52,12 @@ func (m *GRPCServer) RunCapsule(
 	capsule := &v1alpha2.Capsule{}
 	if err := obj.DecodeInto(req.CapsuleObject, capsule, m.scheme); err != nil {
 		return nil, err
+	}
+	if capsule.Annotations == nil {
+		capsule.Annotations = map[string]string{}
+	}
+	if capsule.Labels == nil {
+		capsule.Labels = map[string]string{}
 	}
 
 	if err := m.Impl.Run(ctx, &capsuleRequestClient{
@@ -158,7 +168,13 @@ func (c *capsuleRequestClient) MarkUsedResource(_ v1alpha2.UsedResource) {
 
 type Server interface {
 	Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error
-	LoadConfig(data []byte) error
+	Initialize(req InitializeRequest) error
+}
+
+type InitializeRequest struct {
+	Config   []byte
+	StepID   string
+	PluginID string
 }
 
 func StartPlugin(name string, rigPlugin Server) {

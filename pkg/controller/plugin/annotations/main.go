@@ -23,8 +23,8 @@ type pluginParent struct {
 	configBytes []byte
 }
 
-func (p *pluginParent) LoadConfig(data []byte) error {
-	p.configBytes = data
+func (p *pluginParent) Initialize(req plugin.InitializeRequest) error {
+	p.configBytes = req.Config
 	return nil
 }
 
@@ -48,6 +48,7 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 	if name == "" {
 		name = req.Capsule().Name
 	}
+
 	object, err := plugin.GetNew(p.config.Group, p.config.Kind, name, req)
 	if err != nil {
 		return err
@@ -77,5 +78,5 @@ func handleMap(values map[string]string, updates map[string]string) map[string]s
 }
 
 func main() {
-	plugin.StartPlugin("annotations", &pluginParent{})
+	plugin.StartPlugin("rigdev.annotations", &pluginParent{})
 }

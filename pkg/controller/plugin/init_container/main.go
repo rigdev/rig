@@ -19,8 +19,8 @@ type initContainerPlugin struct {
 	config Config
 }
 
-func (p *initContainerPlugin) LoadConfig(data []byte) error {
-	return plugin.LoadYAMLConfig(data, &p.config)
+func (p *initContainerPlugin) Initialize(req plugin.InitializeRequest) error {
+	return plugin.LoadYAMLConfig(req.Config, &p.config)
 }
 
 func (p *initContainerPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {

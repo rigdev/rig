@@ -145,7 +145,6 @@ func (r *capsuleRequest) Set(obj client.Object) error {
 		return err
 	}
 
-
 	o, ok := r.objects[key]
 	if !ok {
 		o = &Object{}

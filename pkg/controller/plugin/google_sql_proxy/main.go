@@ -36,8 +36,8 @@ type pluginParent struct {
 	configBytes []byte
 }
 
-func (p *pluginParent) LoadConfig(data []byte) error {
-	p.configBytes = data
+func (p *pluginParent) Initialize(req plugin.InitializeRequest) error {
+	p.configBytes = req.Config
 	return nil
 }
 
