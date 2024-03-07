@@ -40,8 +40,8 @@ func dryRun(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		cfg.Steps = nil // Is this necessary?
-		if err := yaml.Unmarshal(bytes, &cfg.Steps); err != nil {
+		cfg.Pipeline.Steps = nil // Is this necessary?
+		if err := yaml.Unmarshal(bytes, &cfg.Pipeline.Steps); err != nil {
 			return err
 		}
 	}
@@ -51,31 +51,31 @@ func dryRun(ctx context.Context,
 		if err != nil {
 			return fmt.Errorf("replace '%s' was malfored: %q", r, err)
 		}
-		if idx >= len(cfg.Steps) {
-			return fmt.Errorf("replace idx %v too high (only %v steps)", idx, len(cfg.Steps))
+		if idx >= len(cfg.Pipeline.Steps) {
+			return fmt.Errorf("replace idx %v too high (only %v steps)", idx, len(cfg.Pipeline.Steps))
 		}
 		step, err := readPlugin(path)
 		if err != nil {
 			return err
 		}
-		cfg.Steps[idx] = step
+		cfg.Pipeline.Steps[idx] = step
 	}
 
 	idx := 0
-	for i, step := range cfg.Steps {
+	for i, step := range cfg.Pipeline.Steps {
 		if !slices.Contains(removes, i) {
-			cfg.Steps[idx] = step
+			cfg.Pipeline.Steps[idx] = step
 			idx++
 		}
 	}
-	cfg.Steps = cfg.Steps[:idx]
+	cfg.Pipeline.Steps = cfg.Pipeline.Steps[:idx]
 
 	for _, a := range appends {
 		step, err := readPlugin(a)
 		if err != nil {
 			return err
 		}
-		cfg.Steps = append(cfg.Steps, step)
+		cfg.Pipeline.Steps = append(cfg.Pipeline.Steps, step)
 	}
 
 	if dry {
@@ -83,7 +83,7 @@ func dryRun(ctx context.Context,
 		if base.Flags.OutputType != common.OutputTypePretty {
 			o = base.Flags.OutputType
 		}
-		return common.FormatPrint(cfg.Steps, o)
+		return common.FormatPrint(cfg.Pipeline.Steps, o)
 	}
 
 	if specPath != "" && len(args) > 0 {

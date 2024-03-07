@@ -29,7 +29,7 @@ func check(ctx context.Context,
 		return err
 	}
 	var matchers []plugin.Matcher
-	for _, step := range cfg.Steps {
+	for _, step := range cfg.Pipeline.Steps {
 		matcher, err := plugin.NewMatcher(step.Namespaces, step.Capsules, step.Selector)
 		if err != nil {
 			return fmt.Errorf("failed to make matcher for step '%v': %q", step, err)
