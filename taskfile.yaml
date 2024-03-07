@@ -56,10 +56,10 @@ tasks:
   build-plugins:
     desc: "🔨 Build rig-operator plugins"
     sources:
-      - "pkg/controller/plugin/**/*.go"
+      - "./plugins/**/*.go"
     vars:
       PLUGINS:
-        sh: find ./pkg/controller/plugin/ -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
+        sh: find ./plugins/ -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
     cmds:
       - for: { var: PLUGINS }
         task: build-plugin
@@ -72,11 +72,11 @@ tasks:
     env:
       CGO_ENABLED: "0"
     sources:
-      - "./pkg/controller/plugin/{{ .PLUGIN }}/**/*.go"
+      - "./plugins/{{ .PLUGIN }}/**/*.go"
     generates:
       - "bin/plugin/rigdev.{{ .PLUGIN }}"
     cmds:
-      - go build -o ./bin/plugin/rigdev.{{ .PLUGIN }} ./pkg/controller/plugin/{{ .PLUGIN }}
+      - go build -o ./bin/plugin/rigdev.{{ .PLUGIN }} ./plugins/{{ .PLUGIN }}
 
   gen:
     desc: "🪄 Run code generation"

@@ -199,7 +199,3 @@ func StartPlugin(name string, rigPlugin Server) {
 		Logger:     logger,
 	})
 }
-
-func LoadYAMLConfig(data []byte, out any) error {
-	return obj.Decode(data, out)
-}

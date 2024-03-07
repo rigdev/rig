@@ -8,8 +8,8 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
-	"github.com/rigdev/rig/pkg/controller/plugin/env_mapping/types"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/plugins/env_mapping/types"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
