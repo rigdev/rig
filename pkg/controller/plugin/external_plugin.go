@@ -24,14 +24,21 @@ type ExternalPlugin struct {
 	logger       logr.Logger
 	client       *plugin.Client
 	pluginClient *pluginClient
-	path         string
+	binaryPath   string
+	stepID       string
+	pluginID     string
 }
 
-func NewExternalPlugin(name, pluginConfig, path string, logger logr.Logger) (Plugin, error) {
+func NewExternalPlugin(
+	name, stepID, pluginID, pluginConfig, path string,
+	logger logr.Logger,
+) (Plugin, error) {
 	p := &ExternalPlugin{
-		name:   name,
-		logger: logger,
-		path:   path,
+		name:       name,
+		logger:     logger,
+		binaryPath: path,
+		stepID:     stepID,
+		pluginID:   pluginID,
 	}
 
 	return p, p.start(context.Background(), pluginConfig)
@@ -69,7 +76,7 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 		Plugins: map[string]plugin.Plugin{
 			"rigOperatorPlugin": &rigOperatorPlugin{},
 		},
-		Cmd:              exec.CommandContext(ctx, p.path),
+		Cmd:              exec.CommandContext(ctx, p.binaryPath),
 		Logger:           pLogger,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		Stderr:           os.Stderr,
@@ -87,7 +94,7 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 
 	p.pluginClient = raw.(*pluginClient)
 
-	return p.pluginClient.Initialize(ctx, pluginConfig)
+	return p.pluginClient.Initialize(ctx, pluginConfig, p.stepID, p.pluginID)
 }
 
 func (p *ExternalPlugin) Stop(context.Context) {
@@ -134,9 +141,11 @@ type pluginClient struct {
 	client apiplugin.PluginServiceClient
 }
 
-func (m *pluginClient) Initialize(ctx context.Context, pluginConfig string) error {
+func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, stepID, pluginID string) error {
 	_, err := m.client.Initialize(ctx, &apiplugin.InitializeRequest{
 		PluginConfig: pluginConfig,
+		StepId:       stepID,
+		PluginId:     pluginID,
 	})
 	return err
 }

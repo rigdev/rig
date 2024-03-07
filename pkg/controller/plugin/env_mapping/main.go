@@ -16,7 +16,7 @@ import (
 
 type envMapping struct{}
 
-func (p *envMapping) LoadConfig(_ []byte) error {
+func (p *envMapping) Initialize(_ plugin.InitializeRequest) error {
 	return nil
 }
 
