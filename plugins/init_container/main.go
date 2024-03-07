@@ -1,3 +1,4 @@
+// +groupName=plugins.rig.dev -- Only used for config doc generation
 package main
 
 import (
@@ -11,19 +12,28 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// Configuration for the init_container plugin
+// +kubebuilder:object:root=true
 type Config struct {
+	// Container holds the configuration for the init container
 	Container *corev1.Container `json:"container"`
 }
 
 type initContainerPlugin struct {
-	config Config
+	configBytes []byte
+	// config Config
 }
 
 func (p *initContainerPlugin) Initialize(req plugin.InitializeRequest) error {
-	return plugin.LoadYAMLConfig(req.Config, &p.config)
+	p.configBytes = req.Config
+	return nil
 }
 
 func (p *initContainerPlugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
+	if err != nil {
+		return err
+	}
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		return nil
@@ -31,7 +41,7 @@ func (p *initContainerPlugin) Run(_ context.Context, req pipeline.CapsuleRequest
 		return err
 	}
 
-	c := *p.config.Container.DeepCopy()
+	c := *config.Container.DeepCopy()
 	deployment.Spec.Template.Spec.InitContainers = append(deployment.Spec.Template.Spec.InitContainers, c)
 
 	return req.Set(deployment)

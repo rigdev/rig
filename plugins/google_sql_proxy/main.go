@@ -1,3 +1,4 @@
+// +groupName=plugins.rig.dev -- Only used for config doc generation
 package main
 
 import (
@@ -16,47 +17,52 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+// Configuration for the google_sql_proxy plugin
+// +kubebuilder:object:root=true
 type Config struct {
-	Image                   string                  `json:"image,omitempty"`
-	Tag                     string                  `json:"tag,omitempty"`
-	Args                    []string                `json:"args,omitempty"`
-	EnvFromSource           []v1alpha2.EnvReference `json:"envFromSource,omitempty"`
-	EnvVars                 []corev1.EnvVar         `json:"envVars,omitempty"`
-	Files                   []v1alpha2.File         `json:"files,omitempty"`
-	Resources               Resources               `json:"resources,omitempty"`
-	InstanceConnectionNames []string                `json:"instanceConnectionNames,omitempty"`
+	// The image running on the new container. Defaults to gcr.io/cloud-sql-connectors/cloud-sql-proxy
+	Image string `json:"image,omitempty"`
+	// The tag of the image
+	Tag string `json:"tag,omitempty"`
+	// Arguments to pass to the cloud sql proxy. These will be appended after the instance connection names.
+	Args []string `json:"args,omitempty"`
+	// A list of either ConfigMaps or Secrets which will be mounted in as environment variables to the container.
+	// It's a reuse of the Capsule CRD
+	EnvFromSource []v1alpha2.EnvReference `json:"envFromSource,omitempty"`
+	// A list of environment variables to set in the container
+	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
+	// Files is a list of files to mount in the container. These can either be
+	// based on ConfigMaps or Secrets.
+	// It's a reuse of the Capsule CRD
+	Files []v1alpha2.File `json:"files,omitempty"`
+	// Resources defines how large the container request should be. Defaults to the Kubernetes defaults.
+	Resources Resources `json:"resources,omitempty"`
+	// The instance_connection_names passed to the cloud_sql_proxy.
+	InstanceConnectionNames []string `json:"instanceConnectionNames,omitempty"`
 }
 
+// Resources configures the size of the request of the cloud_sql_proxy container
 type Resources struct {
-	CPU    string `json:"cpu"`
+	// The number of CPU cores to request.
+	CPU string `json:"cpu"`
+	// The bytes of memory to request.
 	Memory string `json:"memory"`
 }
 
-type pluginParent struct {
+type cloudSQLProxy struct {
 	configBytes []byte
 }
 
-func (p *pluginParent) Initialize(req plugin.InitializeRequest) error {
+func (p *cloudSQLProxy) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
 	return nil
 }
 
-func (p *pluginParent) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *cloudSQLProxy) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err
 	}
-	pp := &pluginImpl{
-		config: config,
-	}
-	return pp.run(ctx, req, logger)
-}
-
-type pluginImpl struct {
-	config Config
-}
-
-func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		return nil
@@ -70,38 +76,38 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 		}
 	}
 
-	image := p.config.Image
+	image := config.Image
 	if image == "" {
 		image = "gcr.io/cloud-sql-connectors/cloud-sql-proxy"
 	}
-	if p.config.Tag != "" {
-		image = fmt.Sprintf("%s:%s", image, p.config.Tag)
+	if config.Tag != "" {
+		image = fmt.Sprintf("%s:%s", image, config.Tag)
 	}
 
 	var args []string
-	if len(p.config.InstanceConnectionNames) == 0 {
+	if len(config.InstanceConnectionNames) == 0 {
 		return errors.New("instanceConnectionName was not given")
 	}
-	args = append(args, p.config.InstanceConnectionNames...)
-	args = append(args, p.config.Args...)
+	args = append(args, config.InstanceConnectionNames...)
+	args = append(args, config.Args...)
 
 	resources := map[corev1.ResourceName]resource.Quantity{}
-	if p.config.Resources.CPU != "" {
-		cpu, err := resource.ParseQuantity(p.config.Resources.CPU)
+	if config.Resources.CPU != "" {
+		cpu, err := resource.ParseQuantity(config.Resources.CPU)
 		if err != nil {
 			return fmt.Errorf("cpu was malformed: %q", err)
 		}
 		resources[corev1.ResourceCPU] = cpu
 	}
-	if p.config.Resources.Memory != "" {
-		memory, err := resource.ParseQuantity(p.config.Resources.Memory)
+	if config.Resources.Memory != "" {
+		memory, err := resource.ParseQuantity(config.Resources.Memory)
 		if err != nil {
 			return fmt.Errorf("memory was malformed: %q", err)
 		}
 		resources[corev1.ResourceMemory] = memory
 	}
 
-	volume, mounts := controller.FilesToVolumes(p.config.Files)
+	volume, mounts := controller.FilesToVolumes(config.Files)
 	for _, v := range volume {
 		for _, vv := range deployment.Spec.Template.Spec.Volumes {
 			found := false
@@ -119,8 +125,8 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 		Name:    "google-cloud-sql-proxy",
 		Image:   image,
 		Args:    args,
-		EnvFrom: controller.EnvSources(p.config.EnvFromSource),
-		Env:     p.config.EnvVars,
+		EnvFrom: controller.EnvSources(config.EnvFromSource),
+		Env:     config.EnvVars,
 		Resources: corev1.ResourceRequirements{
 			Requests: resources,
 		},
@@ -135,5 +141,5 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 }
 
 func main() {
-	plugin.StartPlugin("rigdev.google_sql_proxy", &pluginParent{})
+	plugin.StartPlugin("rigdev.google_sql_proxy", &cloudSQLProxy{})
 }

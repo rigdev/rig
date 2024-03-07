@@ -1,3 +1,4 @@
+// +groupName=plugins.rig.dev -- Only used for config doc generation
 package main
 
 import (
@@ -10,51 +11,57 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
+// Configuration for the datadog plugin
+// +kubebuilder:object:root=true
 type Config struct {
-	DontAddEnabledAnnotation bool               `json:"dontAddEnabledAnnotation,omitempty"`
-	LibraryTag               LibraryTag         `json:"libraryTag,omitempty"`
-	UnifiedServiceTags       UnifiedServiceTags `json:"unifiedServiceTags,omitempty"`
+	// DontAddEnabledAnnotation toggles if the pods should have an annotation allowed the Datadog Admission controller to modify them.
+	DontAddEnabledAnnotation bool `json:"dontAddEnabledAnnotation,omitempty"`
+	// LibraryTag defines configuration for which datadog libraries to inject into the pods.
+	LibraryTag LibraryTag `json:"libraryTag,omitempty"`
+	// UnifiedServiceTags configures the values for the Unified Service datadog tags.
+	UnifiedServiceTags UnifiedServiceTags `json:"unifiedServiceTags,omitempty"`
 }
 
+// LibraryTag defines configuration for which datadog libraries to let the admission controller inject into the pods
+// The admission controller will inject libraries from a container with the specified tag if the field is set.
 type LibraryTag struct {
-	Java       string `json:"java,omitempty"`
+	// Tag of the Java library container
+	Java string `json:"java,omitempty"`
+	// Tag of the JavaScript library container
 	JavaScript string `json:"javascript,omitempty"`
-	Python     string `json:"python,omitempty"`
-	NET        string `json:"net,omitempty"`
-	Ruby       string `json:"ruby,omitempty"`
+	// Tag of the Python library container
+	Python string `json:"python,omitempty"`
+	// Tag of the .NET library container
+	NET string `json:"net,omitempty"`
+	// Tag of the Ruby library container
+	Ruby string `json:"ruby,omitempty"`
 }
 
+// UnifiedServiceTags configures the values of the Unified Service datadog tags on both Deployment and Pods
 type UnifiedServiceTags struct {
-	Env     string `json:"env,omitempty"`
+	// The env tag
+	Env string `json:"env,omitempty"`
+	// The service tag
 	Service string `json:"service,omitempty"`
+	// The version tag
 	Version string `json:"version,omitempty"`
 }
 
-type pluginParent struct {
+type datadog struct {
 	configBytes []byte
 }
 
-func (p *pluginParent) Initialize(req plugin.InitializeRequest) error {
-	p.configBytes = req.Config
+func (d *datadog) Initialize(req plugin.InitializeRequest) error {
+	d.configBytes = req.Config
 	return nil
 }
 
-func (p *pluginParent) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
-	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
+func (d *datadog) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+	config, err := plugin.ParseTemplatedConfig[Config](d.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err
 	}
-	pp := &pluginImpl{
-		config: config,
-	}
-	return pp.run(ctx, req, logger)
-}
 
-type pluginImpl struct {
-	config Config
-}
-
-func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		return nil
@@ -72,11 +79,11 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 		deployment.Spec.Template.Annotations = map[string]string{}
 	}
 
-	if !p.config.DontAddEnabledAnnotation {
+	if !config.DontAddEnabledAnnotation {
 		deployment.Spec.Template.Labels["admission.datadoghq.com/enabled"] = "true"
 	}
 
-	l := p.config.LibraryTag
+	l := config.LibraryTag
 	tags := map[string]string{
 		"admission.datadoghq.com/java-lib.version":   l.Java,
 		"admission.datadoghq.com/js-lib.version":     l.JavaScript,
@@ -92,7 +99,7 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 		annotations[k] = v
 	}
 
-	u := p.config.UnifiedServiceTags
+	u := config.UnifiedServiceTags
 	tags = map[string]string{
 		"tags.datadoghq.com/env":     u.Env,
 		"tags.datadoghq.com/service": u.Service,
@@ -111,5 +118,5 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 }
 
 func main() {
-	plugin.StartPlugin("rigdev.datadog", &pluginParent{})
+	plugin.StartPlugin("rigdev.datadog", &datadog{})
 }

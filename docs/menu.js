@@ -174,6 +174,15 @@ const sidebars = {
     },
     {
       type: "doc",
+      id: "plugins/builtin/placement",
+      label: "Plugin",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "SiGit",
+      }
+    },
+    {
+      type: "doc",
       id: "platform/cronjobs",
       label: "Cron Jobs",
       className: "homepage-sidebar-item",
