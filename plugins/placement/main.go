@@ -37,7 +37,7 @@ func (p *placement) Initialize(req plugin.InitializeRequest) error {
 	return nil
 }
 
-func (p *placement) Run(_ context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *placement) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	var err error
 	p.config, err = plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
@@ -61,10 +61,7 @@ func (p *placement) Run(_ context.Context, req pipeline.CapsuleRequest, logger h
 		selector[k] = v
 	}
 	deployment.Spec.Template.Spec.NodeSelector = selector
-
-	for _, t := range p.config.Tolerations {
-		deployment.Spec.Template.Spec.Tolerations = append(deployment.Spec.Template.Spec.Tolerations, t)
-	}
+	deployment.Spec.Template.Spec.Tolerations = append(deployment.Spec.Template.Spec.Tolerations, p.config.Tolerations...)
 
 	return req.Set(deployment)
 }
