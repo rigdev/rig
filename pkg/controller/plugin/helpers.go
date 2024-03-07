@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/obj"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -74,4 +75,8 @@ func ParseTemplatedConfig[T any](data []byte, req pipeline.CapsuleRequest, steps
 
 func CapsuleStep[T any](_ T, req pipeline.CapsuleRequest) (string, any, error) {
 	return "capsule", req.Capsule(), nil
+}
+
+func LoadYAMLConfig(data []byte, out any) error {
+	return obj.Decode(data, out)
 }
