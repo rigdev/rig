@@ -28,7 +28,7 @@ func listSteps(ctx context.Context,
 		return err
 	}
 	var plugins []pluginStep
-	for _, s := range cfg.Steps {
+	for _, s := range cfg.Pipeline.Steps {
 		step := pluginStep{
 			Namespaces: s.Namespaces,
 			Capsules:   s.Capsules,
@@ -115,12 +115,12 @@ func get(ctx context.Context,
 
 	var idx int
 	if len(args) == 0 {
-		if len(cfg.Steps) == 0 {
+		if len(cfg.Pipeline.Steps) == 0 {
 			fmt.Println("operator has no plugins configured")
 			return nil
 		}
 		var choices [][]string
-		for idx, s := range cfg.Steps {
+		for idx, s := range cfg.Pipeline.Steps {
 			var plugins []string
 			for _, p := range s.Plugins {
 				plugins = append(plugins, p.Name)
@@ -138,11 +138,11 @@ func get(ctx context.Context,
 		}
 	}
 
-	if idx >= len(cfg.Steps) {
-		return fmt.Errorf("there are %v plugins configured. Max index allowed is %v", len(cfg.Steps), len(cfg.Steps)-1)
+	if idx >= len(cfg.Pipeline.Steps) {
+		return fmt.Errorf("there are %v plugins configured. Max index allowed is %v", len(cfg.Pipeline.Steps), len(cfg.Pipeline.Steps)-1)
 	}
 
-	s := cfg.Steps[idx]
+	s := cfg.Pipeline.Steps[idx]
 	step := pluginStep{
 		Namespaces: s.Namespaces,
 		Capsules:   s.Capsules,

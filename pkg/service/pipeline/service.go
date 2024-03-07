@@ -89,7 +89,7 @@ func (s *service) DryRun(
 		p.AddStep(step)
 	}
 
-	for _, step := range cfg.Steps {
+	for _, step := range cfg.Pipeline.Steps {
 		ps, err := s.pluginManager.NewStep(step, s.logger)
 		if err != nil {
 			return nil, err

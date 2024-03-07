@@ -166,7 +166,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		r.Pipeline.AddStep(step)
 	}
 
-	for _, step := range r.Config.Steps {
+	for _, step := range r.Config.Pipeline.Steps {
 		ps, err := r.PluginManager.NewStep(step, logger)
 		if err != nil {
 			return err

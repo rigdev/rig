@@ -21,7 +21,7 @@ func getPlugins(ctx context.Context, operatorClient *base.OperatorClient, scheme
 	}
 
 	var plugins []string
-	for _, step := range cfg.Steps {
+	for _, step := range cfg.Pipeline.Steps {
 		if step.Capsules != nil && step.Namespaces != nil && step.Selector.Size() > 0 {
 			continue
 		}
