@@ -395,6 +395,7 @@ func migrateDeployment(ctx context.Context,
 		warnings["Deployment"] = append(warnings["Deployment"], &Warning{
 			Kind:    "Deployment",
 			Name:    currentResources.Deployment.Name,
+			Field:   "spec.template.spec.containers",
 			Warning: "Multiple containers in a pod are not supported by capsule. The first will be migrated",
 		})
 	}
@@ -439,6 +440,7 @@ func migrateDeployment(ctx context.Context,
 			warnings["Deployment"] = append(warnings["Deployment"], &Warning{
 				Kind:    "Deployment",
 				Name:    currentResources.Deployment.Name,
+				Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.requests", container.Name),
 				Warning: fmt.Sprintf("Request of %s:%v is not supported by capsule", key, request.Value()),
 			})
 		}
@@ -456,6 +458,7 @@ func migrateDeployment(ctx context.Context,
 			warnings["Deployment"] = append(warnings["Deployment"], &Warning{
 				Kind:    "Deployment",
 				Name:    currentResources.Deployment.Name,
+				Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.limit", container.Name),
 				Warning: fmt.Sprintf("Limit of %s:%v is not supported by capsule", key, limit.Value()),
 			})
 		}
@@ -481,6 +484,7 @@ func migrateDeployment(ctx context.Context,
 			warnings["ServiceAccount"] = append(warnings["ServiceAccount"], &Warning{
 				Kind:    "ServiceAccount",
 				Name:    currentResources.Deployment.Spec.Template.Spec.ServiceAccountName,
+				Field:   "spec.template.spec.serviceAccountName",
 				Warning: "ServiceAccount not found",
 			})
 		} else if err != nil {
@@ -559,17 +563,18 @@ func migrateHPA(ctx context.Context,
 								}
 							default:
 								warnings["HorizontalPodAutoscaler"] = append(warnings["HorizontalPodAutoscaler"], &Warning{
-									Kind: "HorizontalPodAutoscaler",
-									Name: hpa.Name,
-									Warning: fmt.Sprintf("Scaling on target %s for %s is not supported",
-										metric.Resource.Target.Type,
-										metric.Resource.Name),
+									Kind:  "HorizontalPodAutoscaler",
+									Name:  hpa.Name,
+									Field: fmt.Sprintf("spec.metrics.resource.%s.target.type", metric.Resource.Name),
+									Warning: fmt.Sprintf("Scaling on target type %s is not supported",
+										metric.Resource.Target.Type),
 								})
 							}
 						default:
 							warnings["HorizontalPodAutoscaler"] = append(warnings["HorizontalPodAutoscaler"], &Warning{
 								Kind:    "HorizontalPodAutoscaler",
 								Name:    hpa.Name,
+								Field:   fmt.Sprintf("spec.metrics.resource.%s", metric.Resource.Name),
 								Warning: fmt.Sprintf("Scaling on resource %s is not supported", metric.Resource.Name),
 							})
 						}
@@ -607,6 +612,7 @@ func migrateHPA(ctx context.Context,
 							warning = &Warning{
 								Kind:    "HorizontalPodAutoscaler",
 								Name:    hpa.Name,
+								Field:   "spec.metrics.object.target.type",
 								Warning: fmt.Sprintf("Scaling on target %s for object metrics is not supported", metric.Object.Target.Type),
 							}
 						}
@@ -642,6 +648,7 @@ func migrateHPA(ctx context.Context,
 							warning = &Warning{
 								Kind:    "HorizontalPodAutoscaler",
 								Name:    hpa.Name,
+								Field:   "spec.metrics.pods.target.type",
 								Warning: fmt.Sprintf("Scaling on target %s for pod metrics is not supported", metric.Pods.Target.Type),
 							}
 						}
@@ -715,15 +722,16 @@ func migrateEnvironment(ctx context.Context,
 						Namespace: currentResources.Deployment.Namespace,
 					}, configMap)
 					if err != nil {
-						continue
+						return nil, onCCGetError(err, "ConfigMap", cfgMap.Name, currentResources.Deployment.Namespace)
 					}
 
 					if !slices.Contains(plugins, "env_mapping") {
 						warnings["Deployment"] = append(warnings["Deployment"], &Warning{
 							Kind: "Deployment",
 							Name: currentResources.Deployment.Name,
-							Warning: fmt.Sprintf("Environment variable %s has a valueFrom config map field. "+
-								"This is not natively supported.", envVar.Name),
+							Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom.configMapKeyRef",
+								currentResources.Deployment.Spec.Template.Spec.Containers[0].Name, envVar.Name),
+							Warning:    "valueFrom configMap field is not natively supported.",
 							Suggestion: "Enable the env_mapping plugin to migrate envVars from configMaps",
 						})
 					} else {
@@ -741,15 +749,16 @@ func migrateEnvironment(ctx context.Context,
 						Namespace: currentResources.Deployment.Namespace,
 					}, secret)
 					if err != nil {
-						continue
+						return nil, onCCGetError(err, "Secret", secretRef.Name, currentResources.Deployment.Namespace)
 					}
 
 					if !slices.Contains(plugins, "env_mapping") {
 						warnings["Deployment"] = append(warnings["Deployment"], &Warning{
 							Kind: "Deployment",
 							Name: currentResources.Deployment.Name,
-							Warning: fmt.Sprintf("Environment variable %s has a valueFrom secret  field. "+
-								"This is not natively supported.", envVar.Name),
+							Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom.secretKeyRef",
+								currentResources.Deployment.Spec.Template.Spec.Containers[0].Name, envVar.Name),
+							Warning:    "valueFrom secret field is not natively supported.",
 							Suggestion: "Enable the env_mapping plugin to migrate envVars from secrets",
 						})
 					} else {
@@ -761,9 +770,11 @@ func migrateEnvironment(ctx context.Context,
 					currentResources.Secrets[secretRef.Name] = secret
 				} else {
 					warnings["Deployment"] = append(warnings["Deployment"], &Warning{
-						Kind:    "Deployment",
-						Name:    currentResources.Deployment.Name,
-						Warning: fmt.Sprintf("Environment variable %s has a valueFrom field that is not supported", envVar.Name),
+						Kind: "Deployment",
+						Name: currentResources.Deployment.Name,
+						Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom",
+							currentResources.Deployment.Spec.Template.Spec.Containers[0].Name, envVar.Name),
+						Warning: "ValueFrom field is not supported",
 					})
 				}
 			}
@@ -918,8 +929,9 @@ func migrateConfigFilesAndSecrets(ctx context.Context,
 				warnings["Deployment"] = append(warnings["Deployment"], &Warning{
 					Kind: "Deployment",
 					Name: currentResources.Deployment.Name,
-					Warning: fmt.Sprintf("Volume %s of config map %s does not have exactly one item. Cannot migrate files",
-						volume.Name, volume.ConfigMap.Name),
+					Field: fmt.Sprintf("spec.template.spec.volumes.%s.configMap",
+						volume.Name),
+					Warning: "Volume does not have exactly one item. Cannot migrate files",
 				})
 				continue
 			}
@@ -970,8 +982,9 @@ func migrateConfigFilesAndSecrets(ctx context.Context,
 				warnings["Deployment"] = append(warnings["Deployment"], &Warning{
 					Kind: "Deployment",
 					Name: currentResources.Deployment.Name,
-					Warning: fmt.Sprintf("Volume %s of secret %s does not have exactly one item. Cannot migrate files",
-						volume.Name, volume.Secret.SecretName),
+					Field: fmt.Sprintf("spec.template.spec.volumes.%s.secret",
+						volume.Name),
+					Warning: "Volume does not have exactly one item. Cannot migrate files",
 				})
 			}
 			currentResources.Secrets[file.Path] = secret
@@ -979,8 +992,9 @@ func migrateConfigFilesAndSecrets(ctx context.Context,
 			warnings["Deployment"] = append(warnings["Deployment"], &Warning{
 				Kind: "Deployment",
 				Name: currentResources.Deployment.Name,
-				Warning: fmt.Sprintf("Volume %s is not a ConfigMap or Secret. Cannot migrate files",
+				Field: fmt.Sprintf("spec.template.spec.volumes.%s",
 					volume.Name),
+				Warning: "Volume is not a ConfigMap or Secret. Cannot migrate files",
 			})
 		}
 
@@ -1010,8 +1024,10 @@ func migrateServicesAndIngresses(ctx context.Context,
 
 	if container.StartupProbe != nil {
 		warnings["Deployment"] = append(warnings["Deployment"], &Warning{
-			Kind:    "Deployment",
-			Name:    currentResources.Deployment.Name,
+			Kind: "Deployment",
+			Name: currentResources.Deployment.Name,
+			Field: fmt.Sprintf("spec.template.spec.containers.%s.startupProbe",
+				container.Name),
 			Warning: "StartupProbe is not supported",
 		})
 	}
@@ -1051,7 +1067,7 @@ func migrateServicesAndIngresses(ctx context.Context,
 			warnings["Service"] = append(warnings["Service"], &Warning{
 				Kind: "Service",
 				Name: currentResources.Deployment.Name,
-				Warning: fmt.Sprintf("Deployment has more than one service: %s",
+				Warning: fmt.Sprintf("More than one service is configured for the deployment: %s",
 					strings.Join(maps.Keys(currentResources.Services), ", ")),
 			})
 		}
@@ -1084,7 +1100,7 @@ func migrateServicesAndIngresses(ctx context.Context,
 					warnings["Ingress"] = append(warnings["Ingress"], &Warning{
 						Kind: "Ingress",
 						Name: ingress.GetName(),
-						Warning: fmt.Sprintf("Previous Ingress host: %s already configured for port %s. Ingress %s is ignored.",
+						Warning: fmt.Sprintf("Previous Ingress host: %s already configured for port %s. This Ingress %s is ignored.",
 							i.Public.Ingress.Host, port.Name, ingress.GetName()),
 					})
 					continue
@@ -1289,6 +1305,7 @@ func migrateCronJob(deployment *appsv1.Deployment,
 		warnings["CronJob"] = append(warnings["Cronjob"], &Warning{
 			Kind:    "CronJob",
 			Name:    cronJob.Name,
+			Field:   "spec.template.spec.containers",
 			Warning: "CronJob has more than one container. Only the first container will be migrated",
 		})
 	}
