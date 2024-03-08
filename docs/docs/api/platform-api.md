@@ -1169,6 +1169,22 @@ Change to a capsule that ultimately results in a new rollout.
 | set_annotations | [Change.Annotations](#api-v1-capsule-Change-Annotations) |  | Set capsule annotations. |
 | set_annotation | [Change.KeyValue](#api-v1-capsule-Change-KeyValue) |  | Update or add a single capsule annotation. |
 | remove_annotation | [string](#string) |  | Name of a single capsule annotation to remove. |
+| add_image | [Change.AddImage](#api-v1-capsule-Change-AddImage) |  | Image to deploy, adding it to images if not already present. |
+
+
+
+
+
+
+<a name="api-v1-capsule-Change-AddImage"></a>
+
+### Change.AddImage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  |  |
 
 
 

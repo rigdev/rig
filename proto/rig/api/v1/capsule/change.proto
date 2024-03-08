@@ -54,6 +54,10 @@ message Change {
     map<string, string> annotations = 1;
   }
 
+  message AddImage {
+    string image = 1;
+  }
+
   // Different types of changes.
   oneof field {
     // Number of replicas changed.
@@ -98,6 +102,8 @@ message Change {
     KeyValue set_annotation = 21;
     // Name of a single capsule annotation to remove.
     string remove_annotation = 22;
+    // Image to deploy, adding it to images if not already present.
+    AddImage add_image = 23;
   }
 }
 
