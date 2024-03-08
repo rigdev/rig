@@ -60,7 +60,8 @@ func Setup(parent *cobra.Command) {
 		RunE:              base.CtxWrap(cmd.deploy),
 		Long: `Deploy a number of changes to a Capsule.
 
-All the changes given will be deployed as one rollout, then waiting for the rollout to complete. Use '--no-wait' to skip this
+All the changes given will be deployed as one rollout, then waiting for the rollout to complete.
+Use '--no-wait' to skip this.
 
 If --image is given, rig creates a new reference to the docker image if it doesn't already exist`,
 	}
@@ -80,7 +81,8 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 	capsuleDeploy.Flags().IntVarP(
 		&replicas,
 		"replicas", "r", 0,
-		"replicas of the Capsule to run. If Autoscaler is enabled, this will change the minimum number of replicas for the Capsule",
+		"replicas of the Capsule to run. If Autoscaler is enabled, this will change the minimum number of replicas "+
+			"for the Capsule",
 	)
 	capsuleDeploy.Flags().StringToStringVarP(
 		&annotations,
@@ -96,12 +98,14 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 	capsuleDeploy.Flags().StringSliceVar(
 		&environmentSources,
 		"set-env-source", nil,
-		"environment source references to set on the Capsule. Must be of the format `[ConfigMap|Secret]/name`, e.g. `Secret/my-secret`",
+		"environment source references to set on the Capsule. Must be of the format `[ConfigMap|Secret]/name`, "+
+			"e.g. `Secret/my-secret`",
 	)
 	capsuleDeploy.Flags().StringSliceVar(
 		&removeEnvironmentSources,
 		"rm-env-source", nil,
-		"environment source references to remove from the Capsule. Must be of the format `[ConfigMap|Secret]/name`, e.g. `Secret/my-secret`",
+		"environment source references to remove from the Capsule. Must be of the format `[ConfigMap|Secret]/name`, "+
+			"e.g. `Secret/my-secret`",
 	)
 	capsuleDeploy.Flags().StringVarP(
 		&imageID,
@@ -112,10 +116,15 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 			"registry. If not set, Rig will search locally and then remotely",
 	)
 	capsuleDeploy.Flags().StringArrayVar(
-		&configFiles, "set-config-file", nil, "config files to set in the capsule, adding if not already exists. Must be a mapping from `path=<container-path>,src=<file-path>,[options]`, where `file-path` must be a local file and `container-path` is an absolute path within the container. Options can be `secret`, which would create the resource as a Kubernetes Secret.",
+		&configFiles, "set-config-file", nil,
+		"config files to set in the capsule, adding if not already exists. Must be a mapping from "+
+			"`path=<container-path>,src=<file-path>,[options]`, where `file-path` must be a local file and `container-path` "+
+			"is an absolute path within the container. Options can be `secret`, which "+
+			"would create the resource as a Kubernetes Secret.",
 	)
 	capsuleDeploy.Flags().StringSliceVar(
-		&removeConfigFiles, "rm-config-file", nil, "config files to remove from the capsule. Must be an absolute path of the config-file within the container",
+		&removeConfigFiles, "rm-config-file", nil, "config files to remove from the capsule. Must be an absolute path "+
+			"of the config-file within the container",
 	)
 
 	if err := capsuleDeploy.RegisterFlagCompletionFunc(
