@@ -59,7 +59,6 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 
 	labels := handleMap(object.GetLabels(), p.config.Labels)
 	object.SetLabels(labels)
-
 	return req.Set(object)
 }
 

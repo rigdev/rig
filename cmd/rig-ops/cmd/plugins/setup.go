@@ -36,7 +36,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  base.Register(check),
 	}
 	//nolint:lll
-	check.Flags().StringSliceVar(&capsules, "capsules", nil, "If given, will use those capsule names instead of reading them from the platform")
+	check.Flags().StringSliceVar(&capsules, "capsules", nil, "If given, will use those capsule names instead of reading them from kubernetes")
 	check.Flags().StringSliceVar(&namespaces, "namespaces", nil, "If given, will only use those namespaces")
 	check.Flags().StringSliceVar(&plugins, "plugins", nil, "If given, will only use those plugins names.")
 	pluginsCmd.AddCommand(check)
@@ -77,15 +77,15 @@ The dry run will be executed with the resulting list of plugins.`,
 		RunE: base.Register(dryRun),
 	}
 	//nolint:lll
-	dryRun.Flags().StringVar(&pluginConfig, "config", "", "If given, will read the config file at the path and use that as the plugin config. If empty, will use the plugin config of the running operator.")
+	dryRun.Flags().StringVar(&pluginConfig, "config", "", "If given, will read the config file at the path and use that as the pipeline config. If empty, will use the plugin config of the running operator.")
 	//nolint:lll
 	dryRun.Flags().StringVar(&specPath, "spec", "", "If given, will read the capsule spec at the path instead of using the capsule spec of an existing capsule from the platform")
 	//nolint:lll
-	dryRun.Flags().StringSliceVar(&replaces, "replace", nil, "Assumes argument of the form '<idx>:<path>' (e.g. '2:conf.yaml'). Will replace the plugin at the given index (0-indexed) with the config at the path.")
+	dryRun.Flags().StringSliceVar(&replaces, "replace", nil, "Assumes argument of the form '<idx>:<path>' (e.g. '2:conf.yaml'). Will replace the step at the given index (0-indexed) with the config at the path.")
 	//nolint:lll
-	dryRun.Flags().IntSliceVar(&removes, "remove", nil, "Will remove the plugins at the specified index(es) (0-indexed)")
+	dryRun.Flags().IntSliceVar(&removes, "remove", nil, "Will remove the steps at the specified index(es) (0-indexed)")
 	//nolint:lll
-	dryRun.Flags().StringSliceVar(&appends, "append", nil, "Will append plugins given by the configs at the given paths. Will append them in the order of the arguments.")
+	dryRun.Flags().StringSliceVar(&appends, "append", nil, "Will append steps given by the configs at the given paths. Will append them in the order of the arguments.")
 	//nolint:lll
 	dryRun.Flags().BoolVar(&dry, "dry", false, "If given, will only show the list of plugins used for the dry-run")
 	//nolint:lll
