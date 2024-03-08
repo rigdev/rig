@@ -230,13 +230,11 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	capsuleID := res.Msg.GetCapsuleId()
 
 	if imageID != "" {
-		res, err := c.Rig.Image().Create(ctx, connect.NewRequest(
-			&image.CreateRequest{
-				CapsuleId: capsuleID,
-				Image:     imageID,
-				ProjectId: flags.GetProject(c.Cfg),
-			}),
-		)
+		res, err := c.Rig.Image().Add(ctx, connect.NewRequest(&image.AddRequest{
+			CapsuleId: capsuleID,
+			Image:     imageID,
+			ProjectId: flags.GetProject(c.Cfg),
+		}))
 		if err != nil {
 			return err
 		}
