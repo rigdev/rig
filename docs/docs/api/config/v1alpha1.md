@@ -481,7 +481,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Optional ID which is readable by plugin when executed |
+| `tag` _string_ | Optional tag which is readable by plugin when executed |
 | `name` _string_ | Name of the plugin to run. |
 | `config` _string_ | Config is a string defining the plugin-specific configuration of the plugin. |
 
@@ -570,7 +570,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | Optional ID which is readable by plugins when executed |
+| `tag` _string_ | Optional tag which is readable by plugins when executed |
 | `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. |
 | `capsules` _string array_ | If set, only execute the plugin on the capsules specified. |
 | `selector` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#labelselector-v1-meta)_ | If set, only execute the plugin on the matching capsules. |

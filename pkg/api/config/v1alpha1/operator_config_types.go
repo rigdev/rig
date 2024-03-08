@@ -64,8 +64,8 @@ type Pipeline struct {
 }
 
 type Step struct {
-	// Optional ID which is readable by plugins when executed
-	ID string `json:"id,omitempty"`
+	// Optional tag which is readable by plugins when executed
+	Tag string `json:"tag,omitempty"`
 	// If set, only capsules in one of the namespaces given will have this step run.
 	Namespaces []string `json:"namespaces,omitempty"`
 	// If set, only execute the plugin on the capsules specified.
@@ -82,8 +82,8 @@ type CustomPlugin struct {
 }
 
 type Plugin struct {
-	// Optional ID which is readable by plugin when executed
-	ID string `json:"id,omitempty"`
+	// Optional tag which is readable by plugin when executed
+	Tag string `json:"tag,omitempty"`
 	// Name of the plugin to run.
 	Name string `json:"name,omitempty"`
 	// Config is a string defining the plugin-specific configuration of the plugin.

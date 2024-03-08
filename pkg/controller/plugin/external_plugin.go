@@ -25,20 +25,22 @@ type ExternalPlugin struct {
 	client       *plugin.Client
 	pluginClient *pluginClient
 	binaryPath   string
-	stepID       string
-	pluginID     string
+	tag          string
 }
 
 func NewExternalPlugin(
-	name, stepID, pluginID, pluginConfig, path string,
+	name, stepTag, pluginTag, pluginConfig, path string,
 	logger logr.Logger,
 ) (Plugin, error) {
+	tag := stepTag
+	if pluginTag != "" {
+		tag = pluginTag
+	}
 	p := &ExternalPlugin{
 		name:       name,
 		logger:     logger,
 		binaryPath: path,
-		stepID:     stepID,
-		pluginID:   pluginID,
+		tag:        tag,
 	}
 
 	return p, p.start(context.Background(), pluginConfig)
@@ -94,7 +96,7 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 
 	p.pluginClient = raw.(*pluginClient)
 
-	return p.pluginClient.Initialize(ctx, pluginConfig, p.stepID, p.pluginID)
+	return p.pluginClient.Initialize(ctx, pluginConfig, p.tag)
 }
 
 func (p *ExternalPlugin) Stop(context.Context) {
@@ -141,11 +143,10 @@ type pluginClient struct {
 	client apiplugin.PluginServiceClient
 }
 
-func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, stepID, pluginID string) error {
+func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, tag string) error {
 	_, err := m.client.Initialize(ctx, &apiplugin.InitializeRequest{
 		PluginConfig: pluginConfig,
-		StepId:       stepID,
-		PluginId:     pluginID,
+		Tag:          tag,
 	})
 	return err
 }
