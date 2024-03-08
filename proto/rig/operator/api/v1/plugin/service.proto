@@ -15,8 +15,7 @@ service RequestService {
 message InitializeRequest {
   string plugin_config = 1;
   bytes operator_config = 2;
-  string step_id = 3;
-  string plugin_id = 4;
+  string tag = 3;
 }
 message InitializeResponse {}
 

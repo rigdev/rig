@@ -182,7 +182,7 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 			return nil, fmt.Errorf("plugin '%s' was unknown", plugin.Name)
 		}
 		p, err := NewExternalPlugin(
-			plugin.Name, step.ID, plugin.ID, plugin.Config, info.BinaryPath,
+			plugin.Name, step.Tag, plugin.Tag, plugin.Config, info.BinaryPath,
 			logger,
 		)
 		if err != nil {
