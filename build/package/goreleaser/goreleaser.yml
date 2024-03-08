@@ -34,7 +34,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.sidecar
     binary: plugin/rigdev.sidecar
-    main: ./pkg/controller/plugin/sidecar
+    main: ./plugins/sidecar
     env:
       - CGO_ENABLED=0
     goos:
@@ -49,7 +49,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.init_container
     binary: plugin/rigdev.init_container
-    main: ./pkg/controller/plugin/init_container
+    main: ./plugins/init_container
     env:
       - CGO_ENABLED=0
     goos:
@@ -64,7 +64,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.object_template
     binary: plugin/rigdev.object_template
-    main: ./pkg/controller/plugin/object_template
+    main: ./plugins/object_template
     env:
       - CGO_ENABLED=0
     goos:
@@ -79,7 +79,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.annotations
     binary: plugin/rigdev.annotations
-    main: ./pkg/controller/plugin/annotations
+    main: ./plugins/annotations
     env:
       - CGO_ENABLED=0
     goos:
@@ -94,7 +94,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.datadog
     binary: plugin/rigdev.datadog
-    main: ./pkg/controller/plugin/datadog
+    main: ./plugins/datadog
     env:
       - CGO_ENABLED=0
     goos:
@@ -109,7 +109,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.google_sql_proxy
     binary: plugin/rigdev.google_sql_proxy
-    main: ./pkg/controller/plugin/google_sql_proxy
+    main: ./plugins/google_sql_proxy
     env:
       - CGO_ENABLED=0
     goos:
@@ -124,7 +124,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.env_mapping
     binary: plugin/rigdev.env_mapping
-    main: ./pkg/controller/plugin/env_mapping
+    main: ./plugins/env_mapping
     env:
       - CGO_ENABLED=0
     goos:
@@ -139,7 +139,7 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.placement
     binary: plugin/rigdev.placement
-    main: ./pkg/controller/plugin/placement
+    main: ./plugins/placement
     env:
       - CGO_ENABLED=0
     goos:
