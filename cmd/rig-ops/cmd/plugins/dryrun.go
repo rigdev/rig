@@ -41,7 +41,7 @@ func dryRun(ctx context.Context,
 			return err
 		}
 		cfg.Pipeline.Steps = nil // Is this necessary?
-		if err := yaml.Unmarshal(bytes, &cfg.Pipeline.Steps); err != nil {
+		if err := yaml.Unmarshal(bytes, &cfg.Pipeline); err != nil {
 			return err
 		}
 	}
