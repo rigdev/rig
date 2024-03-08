@@ -14,7 +14,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -227,19 +226,11 @@ func migrate(ctx context.Context,
 		return err
 	}
 
-	imageResp, err := rc.Image().Create(ctx, connect.NewRequest(&image.CreateRequest{
-		ProjectId:      base.Flags.Project,
-		CapsuleId:      deployRequest.Msg.CapsuleId,
-		Image:          capsuleSpec.Spec.Image,
-		SkipImageCheck: true, // TODO: This should be an argument.
-	}))
-	if err != nil {
-		return err
-	}
-
 	change := &capsule.Change{
-		Field: &capsule.Change_ImageId{
-			ImageId: imageResp.Msg.GetImageId(),
+		Field: &capsule.Change_AddImage_{
+			AddImage: &capsule.Change_AddImage{
+				Image: capsuleSpec.Spec.Image,
+			},
 		},
 	}
 
@@ -280,7 +271,8 @@ func PromptDiffingChanges(
 	reports *ReportSet,
 	warnings map[string][]*Warning,
 	currentOverview *tview.TreeView,
-	migratedOverview *tview.TreeView) error {
+	migratedOverview *tview.TreeView,
+) error {
 	choices := []string{"Overview"}
 
 	for kind := range reports.reports {
