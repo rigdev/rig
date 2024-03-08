@@ -179,6 +179,32 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 	return stream.Err()
 }
 
+func SelectCapsule(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) (string, error) {
+	resp, err := rc.Capsule().List(ctx, connect.NewRequest(&capsule.ListRequest{
+		Pagination: &model.Pagination{},
+		ProjectId:  flags.GetProject(cfg),
+	}))
+	if err != nil {
+		return "", err
+	}
+
+	var capsuleNames []string
+	for _, c := range resp.Msg.GetCapsules() {
+		capsuleNames = append(capsuleNames, c.GetCapsuleId())
+	}
+
+	if len(capsuleNames) == 0 {
+		return "", errors.New("This project has no capsules. Create one, to get started")
+	}
+
+	_, name, err := common.PromptSelect("Capsule: ", capsuleNames, common.SelectFuzzyFilterOpt)
+	if err != nil {
+		return "", err
+	}
+
+	return name, nil
+}
+
 var colors = []color.Attribute{
 	color.FgRed,
 	color.FgBlue,

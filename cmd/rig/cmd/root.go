@@ -49,8 +49,10 @@ func initCmd(c Cmd) {
 
 func Run() error {
 	rootCmd := &cobra.Command{
-		Use:   "rig",
-		Short: "CLI tool for managing your Rig projects",
+		Use:           "rig",
+		Short:         "CLI tool for managing your Rig projects",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 	rootCmd.PersistentFlags().VarP(&flags.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Environment,

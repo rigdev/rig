@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig/cmd/common"
@@ -12,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"golang.org/x/term"
 )
 
 var Module = fx.Module(
@@ -116,19 +118,22 @@ func computeNumOfPreRuns(cmd *cobra.Command) int {
 	return res
 }
 
-func Provide(cmd *cobra.Command, args []string, invokes ...any) error {
-	for _, invoke := range invokes {
-		options = append(options, fx.Invoke(invoke))
-	}
-
-	allOpts := []fx.Option{
+func createOptions(cmd *cobra.Command, args []string) []fx.Option {
+	return []fx.Option{
 		Module,
 		fx.NopLogger,
 		fx.Provide(func() *cobra.Command { return cmd }),
 		fx.Provide(func() []string { return args }),
 		// provide a flag to indicate that we cannot prompt for resource creation
-		fx.Provide(func() Interactive { return false }),
+		fx.Provide(func() Interactive { return Interactive(term.IsTerminal(int(os.Stdin.Fd()))) }),
 	}
+}
+
+func Provide(cmd *cobra.Command, args []string, invokes ...any) error {
+	for _, invoke := range invokes {
+		options = append(options, fx.Invoke(invoke))
+	}
+	allOpts := createOptions(cmd, args)
 	allOpts = append(allOpts, options...)
 	return fx.New(allOpts...).Err()
 }
@@ -141,14 +146,7 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	preRunsLeft--
 
 	if preRunsLeft == 0 && !SkipChecks(cmd) {
-		allOpts := []fx.Option{
-			Module,
-			fx.NopLogger,
-			fx.Provide(func() *cobra.Command { return cmd }),
-			fx.Provide(func() []string { return args }),
-			// provide a flag to indicate that we can prompt for resource creation
-			fx.Provide(func() Interactive { return true }),
-		}
+		allOpts := createOptions(cmd, args)
 		allOpts = append(allOpts, options...)
 		return fx.New(allOpts...).Err()
 	}
@@ -172,8 +170,10 @@ func MakeInvokePreRunE(fs ...any) func(cmd *cobra.Command, args []string) error 
 	}
 }
 
-type FCtx = func(ctx context.Context, cmd *cobra.Command, args []string) error
-type F = func(cmd *cobra.Command, args []string) error
+type (
+	FCtx = func(ctx context.Context, cmd *cobra.Command, args []string) error
+	F    = func(cmd *cobra.Command, args []string) error
+)
 
 func CtxWrap(f FCtx) F {
 	return func(cmd *cobra.Command, args []string) error {
@@ -181,8 +181,10 @@ func CtxWrap(f FCtx) F {
 	}
 }
 
-type FCompleteCtx = func(context.Context, *cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
-type FComplete = func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+type (
+	FCompleteCtx = func(context.Context, *cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+	FComplete    = func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+)
 
 func CtxWrapCompletion(f FCompleteCtx) FComplete {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

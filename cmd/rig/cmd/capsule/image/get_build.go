@@ -1,4 +1,4 @@
-package imagedeploy
+package image
 
 import (
 	"context"
