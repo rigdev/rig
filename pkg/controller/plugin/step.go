@@ -37,11 +37,18 @@ func makeGlobs(strings []string) ([]glob.Glob, error) {
 
 func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest) error {
 	c := req.Capsule()
-	if !s.matcher.Match(c.Name, c.Namespace, c.Annotations) {
+	if !s.matcher.Match(c.Namespace, c.Name, c.Annotations) {
 		return nil
 	}
 	for i, p := range s.plugins {
-		s.logger.Info("running plugin", "plugin", s.step.Plugins[i].Name)
+		tag := s.step.Tag
+		if s.step.Plugins[i].Tag != "" {
+			tag = s.step.Plugins[i].Tag
+		}
+		s.logger.Info(
+			"running plugin",
+			"plugin", s.step.Plugins[i].Name, "capsule_id", c.Name, "namespace", c.Namespace, "tag", tag,
+		)
 		if err := p.Run(ctx, req); err != nil {
 			return err
 		}

@@ -39,7 +39,7 @@ func check(ctx context.Context,
 
 	var objects []capsuleNamespace
 
-	if len(capsules) != 0 || len(namespaces) != 0 {
+	if len(capsules) == 0 || len(namespaces) == 0 {
 		capsuleList := v1alpha2.CapsuleList{}
 		if err := cc.List(ctx, &capsuleList); err != nil {
 			return err
