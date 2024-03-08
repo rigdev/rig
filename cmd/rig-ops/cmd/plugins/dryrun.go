@@ -169,24 +169,29 @@ func dryRun(ctx context.Context,
 }
 
 func interactiveDiff(scheme *runtime.Scheme, dryRun *pipeline.DryRunResponse) error {
-	current := migrate.NewCurrentResources()
+	current := migrate.NewResources()
 	for _, o := range dryRun.InputObjects {
 		object, err := obj.DecodeAny([]byte(o.GetContent()), scheme)
 		if err != nil {
 			return err
 		}
-		if err := current.AddResource(o.GetGvk().Kind, o.GetName(), object); err != nil {
+		if err := current.AddObject(o.GetGvk().Kind, o.GetName(), object); err != nil {
 			return err
 		}
 	}
 	overview := current.CreateOverview()
 
-	reports := migrate.NewReportSet(scheme)
-	if err := migrate.ProcessOperatorOutput(reports, current, dryRun.GetOutputObjects(), scheme); err != nil {
+	migrated := migrate.NewResources()
+	if err := migrate.ProcessOperatorOutput(migrated, dryRun.GetOutputObjects(), scheme); err != nil {
 		return err
 	}
 
-	migratedOverview := migrate.CreateMigratedOverview(reports)
+	migratedOverview := migrated.CreateOverview()
+
+	reports, err := migrated.Compare(current, scheme)
+	if err != nil {
+		return err
+	}
 
 	warnings := map[string][]*migrate.Warning{}
 	for _, k := range reports.GetKinds() {

@@ -172,7 +172,7 @@ func (r *reader) getObjectsFromContent(bs []byte) ([]object, error) {
 		if col, ok := ro.(client.ObjectList); ok {
 			list := col.(*v1.List)
 			for _, i := range list.Items {
-				ro, _, err := s.Decode(i.Raw, nil, nil)
+				ro, gvk, err := s.Decode(i.Raw, nil, nil)
 				if err != nil {
 					return nil, err
 				}
@@ -183,6 +183,8 @@ func (r *reader) getObjectsFromContent(bs []byte) ([]object, error) {
 						errors.UnimplementedErrorf("unknown object resource type in file '%v'",
 							ro.GetObjectKind().GroupVersionKind())
 				}
+
+				co.GetObjectKind().SetGroupVersionKind(*gvk)
 
 				res = append(res, object{
 					Object: co,

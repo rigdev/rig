@@ -11,10 +11,8 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
 	"golang.org/x/exp/maps"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
 )
 
 type ReportSet struct {
@@ -29,10 +27,14 @@ func NewReportSet(scheme *runtime.Scheme) *ReportSet {
 	}
 }
 
-func (r *ReportSet) AddObject(original, proposal client.Object) error {
+func (r *ReportSet) AddReport(original, proposal client.Object) error {
 	report, err := r.getDiffingReport(original, proposal)
 	if err != nil {
 		return err
+	}
+
+	if len(report.Diffs) == 0 {
+		return nil
 	}
 
 	var kind string
@@ -40,7 +42,7 @@ func (r *ReportSet) AddObject(original, proposal client.Object) error {
 	if proposal != nil {
 		kind = proposal.GetObjectKind().GroupVersionKind().Kind
 		name = proposal.GetName()
-	} else {
+	} else if original != nil {
 		kind = original.GetObjectKind().GroupVersionKind().Kind
 		name = original.GetName()
 	}
@@ -79,31 +81,24 @@ func (r *ReportSet) getDiffingReport(orig, proposal client.Object) (*dyff.Report
 
 // marshall the platform resources into kubernetes resources, and then compare them to the existing k8s resources
 func processPlatformOutput(
-	reports *ReportSet,
-	currentResources *CurrentResources,
+	migratedResources *Resources,
 	platformResources map[string]string,
 	scheme *runtime.Scheme,
 ) (*v1alpha2.Capsule, error) {
 	var capsule *v1alpha2.Capsule
 	for _, resource := range platformResources {
-		// unmarshal the resource into a k8s object
-		object := &unstructured.Unstructured{}
-		if err := yaml.Unmarshal([]byte(resource), object); err != nil {
-			return nil, err
-		}
-
-		orig := currentResources.getCurrentObject(object.GetKind(), object.GetName())
-
 		proposal, err := obj.DecodeAny([]byte(resource), scheme)
 		if err != nil {
 			return nil, err
 		}
 
-		if err := reports.AddObject(orig, proposal); err != nil {
+		if err := migratedResources.AddObject(proposal.GetObjectKind().GroupVersionKind().Kind,
+			proposal.GetName(),
+			proposal); err != nil {
 			return nil, err
 		}
 
-		if object.GetKind() == "Capsule" {
+		if proposal.GetObjectKind().GroupVersionKind().Kind == "Capsule" {
 			capsule = &v1alpha2.Capsule{}
 			if err = obj.Decode([]byte(resource), capsule); err != nil {
 				return nil, err
@@ -115,81 +110,19 @@ func processPlatformOutput(
 }
 
 func ProcessOperatorOutput(
-	reports *ReportSet,
-	currentResources *CurrentResources,
+	migratedResources *Resources,
 	operatorOutput []*pipeline.ObjectChange,
 	scheme *runtime.Scheme,
 ) error {
 	for _, out := range operatorOutput {
-		orig := currentResources.getCurrentObject(out.GetObject().GetGvk().GetKind(), out.GetObject().GetName())
-
 		proposal, err := obj.DecodeAny([]byte(out.GetObject().GetContent()), scheme)
 		if err != nil {
 			return err
 		}
-		if err := reports.AddObject(orig, proposal); err != nil {
-			return err
-		}
-	}
 
-	return nil
-}
-
-func processRemainingResources(
-	reports *ReportSet,
-	currentResources *CurrentResources,
-	_ *runtime.Scheme,
-) error {
-	if currentResources.Deployment != nil {
-		if err := reports.AddObject(currentResources.Deployment, nil); err != nil {
-			return err
-		}
-	}
-
-	if currentResources.HPA != nil {
-		if err := reports.AddObject(currentResources.HPA, nil); err != nil {
-			return err
-		}
-	}
-
-	if currentResources.ServiceAccount != nil {
-		if err := reports.AddObject(currentResources.ServiceAccount, nil); err != nil {
-			return err
-		}
-	}
-
-	if currentResources.Capsule != nil {
-		if err := reports.AddObject(currentResources.Capsule, nil); err != nil {
-			return err
-		}
-	}
-
-	for _, cm := range currentResources.ConfigMaps {
-		if err := reports.AddObject(cm, nil); err != nil {
-			return err
-		}
-	}
-
-	for _, s := range currentResources.Secrets {
-		if err := reports.AddObject(s, nil); err != nil {
-			return err
-		}
-	}
-
-	for _, s := range currentResources.Services {
-		if err := reports.AddObject(s, nil); err != nil {
-			return err
-		}
-	}
-
-	for _, i := range currentResources.Ingresses {
-		if err := reports.AddObject(i, nil); err != nil {
-			return err
-		}
-	}
-
-	for _, cj := range currentResources.CronJobs {
-		if err := reports.AddObject(cj, nil); err != nil {
+		if err := migratedResources.AddObject(proposal.GetObjectKind().GroupVersionKind().Kind,
+			proposal.GetName(),
+			proposal); err != nil {
 			return err
 		}
 	}
@@ -223,6 +156,9 @@ func showOverview(
 	currentOverview *tview.TreeView,
 	migratedOverview *tview.TreeView) error {
 
+	currentOverview.Box.SetTitleColor(tcell.ColorRed).SetBorderColor(tcell.ColorRed)
+	migratedOverview.Box.SetTitleColor(tcell.ColorGreen).SetBorderColor(tcell.ColorGreen)
+
 	grid := tview.NewGrid().
 		SetRows(0).
 		SetColumns(0, 0).
@@ -238,6 +174,26 @@ func showOverview(
 
 	return app.Run()
 }
+
+// func showRaw(yaml, kind, name string) error {
+// 	text := tview.NewTextView()
+// 	text.SetTitle(fmt.Sprintf("%s/%s (ESC to exit)", kind, name))
+// 	text.SetBorder(true)
+// 	text.SetDynamicColors(true)
+// 	text.SetWrap(true)
+// 	text.SetText(yaml)
+// 	text.SetBackgroundColor(tcell.ColorNone)
+
+// 	app := tview.NewApplication().SetRoot(text, true)
+// 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+// 		if event.Key() == tcell.KeyESC {
+// 			app.Stop()
+// 		}
+// 		return event
+// 	})
+
+// 	return app.Run()
+// }
 
 func showDiffReport(r *dyff.Report, kind, name string, warnings []*Warning) error {
 	var out bytes.Buffer
