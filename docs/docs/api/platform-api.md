@@ -141,7 +141,7 @@
 | /api.v1.image.Service/GetImageInfo | [GetImageInfoRequest](#api-v1-image-GetImageInfoRequest) | [GetImageInfoResponse](#api-v1-image-GetImageInfoResponse) | Get Information about an image in a image. |
 | /api.v1.image.Service/GetRepositoryInfo | [GetRepositoryInfoRequest](#api-v1-image-GetRepositoryInfoRequest) | [GetRepositoryInfoResponse](#api-v1-image-GetRepositoryInfoResponse) | Get Information about a docker registry repository. |
 | /api.v1.image.Service/Get | [GetRequest](#api-v1-image-GetRequest) | [GetResponse](#api-v1-image-GetResponse) | Get a image. |
-| /api.v1.image.Service/Create | [CreateRequest](#api-v1-image-CreateRequest) | [CreateResponse](#api-v1-image-CreateResponse) | Create a new image. Images are immutable and cannot change. Create a new image to make changes from an existing one. |
+| /api.v1.image.Service/Add | [AddRequest](#api-v1-image-AddRequest) | [AddResponse](#api-v1-image-AddResponse) | Add a new image. Images are immutable and cannot change. Add a new image to make changes from an existing one. |
 | /api.v1.image.Service/List | [ListRequest](#api-v1-image-ListRequest) | [ListResponse](#api-v1-image-ListResponse) | List images for a capsule. |
 | /api.v1.image.Service/Delete | [DeleteRequest](#api-v1-image-DeleteRequest) | [DeleteResponse](#api-v1-image-DeleteResponse) | Delete a image. |
 
@@ -4884,19 +4884,19 @@ The response of a Groups.Update RPC.
 
 
 
-<a name="api-v1-image-CreateRequest"></a>
+<a name="api-v1-image-AddRequest"></a>
 
-### CreateRequest
-Request to create a new image in a capsule.
+### AddRequest
+Request to add a new image in a capsule.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | Capsule to create the image in. |
-| image | [string](#string) |  | Container image to create the image from. |
+| capsule_id | [string](#string) |  | Capsule to add the image in. |
+| image | [string](#string) |  | Container image to add the image from. |
 | digest | [string](#string) |  | Digest of the image. |
 | origin | [api.v1.capsule.Origin](#api-v1-capsule-Origin) |  | Origin of the image |
-| labels | [CreateRequest.LabelsEntry](#api-v1-image-CreateRequest-LabelsEntry) | repeated | Meta data to attach to the image. |
+| labels | [AddRequest.LabelsEntry](#api-v1-image-AddRequest-LabelsEntry) | repeated | Meta data to attach to the image. |
 | skip_image_check | [bool](#bool) |  | if true skip check if image exists. |
 | project_id | [string](#string) |  | Project ID. |
 
@@ -4905,9 +4905,9 @@ Request to create a new image in a capsule.
 
 
 
-<a name="api-v1-image-CreateRequest-LabelsEntry"></a>
+<a name="api-v1-image-AddRequest-LabelsEntry"></a>
 
-### CreateRequest.LabelsEntry
+### AddRequest.LabelsEntry
 
 
 
@@ -4921,16 +4921,16 @@ Request to create a new image in a capsule.
 
 
 
-<a name="api-v1-image-CreateResponse"></a>
+<a name="api-v1-image-AddResponse"></a>
 
-### CreateResponse
-Response to create a new image in a capsule.
+### AddResponse
+Response to add a new image in a capsule.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | image_id | [string](#string) |  | ID of the image. |
-| created_new_image | [bool](#bool) |  | True if a new image was created. |
+| added_new_image | [bool](#bool) |  | True if a new image was added, false if the image already existed. |
 
 
 
