@@ -29,9 +29,9 @@ func (m *GRPCServer) Initialize(
 	req *apiplugin.InitializeRequest,
 ) (*apiplugin.InitializeResponse, error) {
 	if err := m.Impl.Initialize(InitializeRequest{
-		Config:   []byte(req.GetPluginConfig()),
-		StepID:   req.GetStepId(),
-		PluginID: req.GetPluginId(),
+		Config:     []byte(req.GetPluginConfig()),
+		StepName:   req.GetStepName(),
+		PluginName: req.GetPluginName(),
 	}); err != nil {
 		return nil, err
 	}
@@ -172,9 +172,9 @@ type Server interface {
 }
 
 type InitializeRequest struct {
-	Config   []byte
-	StepID   string
-	PluginID string
+	Config     []byte
+	StepName   string
+	PluginName string
 }
 
 func StartPlugin(name string, rigPlugin Server) {

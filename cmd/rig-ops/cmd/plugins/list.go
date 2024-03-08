@@ -185,10 +185,10 @@ func list(ctx context.Context,
 
 	for _, p := range resp.Msg.GetPlugins() {
 		if b := p.GetBuiltin(); b != nil {
-			result.Builtin = append(result.Builtin, b.GetName())
+			result.Builtin = append(result.Builtin, b.GetType())
 		} else if t := p.GetThirdParty(); t != nil {
 			result.Thirdparty = append(result.Thirdparty, thirdparty{
-				Name:  t.GetName(),
+				Type:  t.GetType(),
 				Image: t.GetImage(),
 			})
 		}
@@ -206,7 +206,7 @@ func list(ctx context.Context,
 		tbl.AddRow("Builtin", p, "", "")
 	}
 	for _, p := range result.Thirdparty {
-		tbl.AddRow("Thirdparty", p.Name, p.Image)
+		tbl.AddRow("Thirdparty", p.Type, p.Image)
 	}
 	tbl.Print()
 
@@ -214,6 +214,6 @@ func list(ctx context.Context,
 }
 
 type thirdparty struct {
-	Name  string `json:"name,omitempty"`
+	Type  string `json:"type,omitempty"`
 	Image string `json:"image,omitempty"`
 }

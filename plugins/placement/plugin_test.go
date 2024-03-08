@@ -23,8 +23,8 @@ func Test_Plugin(t *testing.T) {
 		annotations map[string]string
 		podSpec     corev1.PodSpec
 		config      string
-		stepID      string
-		pluginID    string
+		stepName    string
+		pluginName  string
 
 		expected corev1.PodSpec
 	}{
@@ -60,11 +60,11 @@ nodeSelector:
 nodeSelector:
   key1: value3
   key3: value4
-requirePluginID: true`,
+requirePluginName: true`,
 			annotations: map[string]string{
-				PluginIDAnnotation: "other-id",
+				PluginNameAnnotation: "other-id",
 			},
-			pluginID: "pluginID",
+			pluginName: "pluginName",
 			expected: corev1.PodSpec{
 				NodeSelector: map[string]string{
 					"key1": "value1",
@@ -79,14 +79,14 @@ requirePluginID: true`,
 tolerations:
   - key: tol
     value: val		
-requirePluginID: true
-requireStepID: true`,
+requirePluginName: true
+requireStepName: true`,
 			annotations: map[string]string{
-				PluginIDAnnotation: "pluginID",
-				StepIDAnnotation:   "stepID",
+				PluginNameAnnotation: "pluginName",
+				StepNameAnnotation:   "stepName",
 			},
-			pluginID: "pluginID",
-			stepID:   "stepID",
+			pluginName: "pluginName",
+			stepName:   "stepName",
 			expected: corev1.PodSpec{
 				NodeSelector: map[string]string{},
 				Tolerations: []corev1.Toleration{{
@@ -117,8 +117,8 @@ requireStepID: true`,
 			}))
 			pp := &placement{
 				configBytes: []byte(tt.config),
-				stepID:      tt.stepID,
-				pluginID:    tt.pluginID,
+				stepName:    tt.stepName,
+				pluginName:  tt.pluginName,
 			}
 			assert.NoError(t, pp.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}

@@ -11,29 +11,29 @@ import (
 )
 
 type Config struct {
-	NodeSelector    map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations     []corev1.Toleration `json:"tolerations,omitempty"`
-	RequireStepID   bool                `json:"requireStepID,omitempty"`
-	RequirePluginID bool                `json:"requirePluginID,omitempty"`
+	NodeSelector      map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations       []corev1.Toleration `json:"tolerations,omitempty"`
+	RequireStepName   bool                `json:"requireStepName,omitempty"`
+	RequirePluginName bool                `json:"requirePluginName,omitempty"`
 }
 
 type placement struct {
 	configBytes []byte
 
-	config   Config
-	stepID   string
-	pluginID string
+	config     Config
+	stepName   string
+	pluginName string
 }
 
 const (
-	StepIDAnnotation   = "rigdev.placement/step_id"
-	PluginIDAnnotation = "rigdev.placement/plugin_id"
+	StepNameAnnotation   = "rigdev.placement/step_name"
+	PluginNameAnnotation = "rigdev.placement/plugin_name"
 )
 
 func (p *placement) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
-	p.stepID = req.StepID
-	p.pluginID = req.PluginID
+	p.stepName = req.StepName
+	p.pluginName = req.PluginName
 	return nil
 }
 
@@ -68,19 +68,19 @@ func (p *placement) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.
 
 func (p *placement) shouldRun(req pipeline.CapsuleRequest) bool {
 	capsule := req.Capsule()
-	if p.config.RequireStepID {
-		if p.stepID == "" {
+	if p.config.RequireStepName {
+		if p.stepName == "" {
 			return false
 		}
-		if v := capsule.Annotations[StepIDAnnotation]; v != p.stepID {
+		if v := capsule.Annotations[StepNameAnnotation]; v != p.stepName {
 			return false
 		}
 	}
-	if p.config.RequirePluginID {
-		if p.pluginID == "" {
+	if p.config.RequirePluginName {
+		if p.pluginName == "" {
 			return false
 		}
-		if v := capsule.Annotations[PluginIDAnnotation]; v != p.pluginID {
+		if v := capsule.Annotations[PluginNameAnnotation]; v != p.pluginName {
 			return false
 		}
 	}

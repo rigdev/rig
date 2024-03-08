@@ -20,25 +20,25 @@ import (
 )
 
 type ExternalPlugin struct {
-	name         string
+	type_        string
 	logger       logr.Logger
 	client       *plugin.Client
 	pluginClient *pluginClient
 	binaryPath   string
-	stepID       string
-	pluginID     string
+	stepName     string
+	pluginName   string
 }
 
 func NewExternalPlugin(
-	name, stepID, pluginID, pluginConfig, path string,
+	type_, stepName, pluginName, pluginConfig, path string,
 	logger logr.Logger,
 ) (Plugin, error) {
 	p := &ExternalPlugin{
-		name:       name,
+		type_:      type_,
 		logger:     logger,
 		binaryPath: path,
-		stepID:     stepID,
-		pluginID:   pluginID,
+		stepName:   stepName,
+		pluginName: pluginName,
 	}
 
 	return p, p.start(context.Background(), pluginConfig)
@@ -58,7 +58,7 @@ func (l *loggerSink) Accept(name string, level hclog.Level, msg string, args ...
 
 func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 	pLogger := hclog.NewInterceptLogger(&hclog.LoggerOptions{
-		Name:       p.name,
+		Name:       p.type_,
 		Output:     io.Discard,
 		Level:      hclog.Info,
 		JSONFormat: true,
@@ -71,7 +71,7 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 		HandshakeConfig: plugin.HandshakeConfig{
 			ProtocolVersion:  1,
 			MagicCookieKey:   "RIG_OPERATOR_PLUGIN",
-			MagicCookieValue: p.name,
+			MagicCookieValue: p.type_,
 		},
 		Plugins: map[string]plugin.Plugin{
 			"rigOperatorPlugin": &rigOperatorPlugin{},
@@ -94,7 +94,7 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 
 	p.pluginClient = raw.(*pluginClient)
 
-	return p.pluginClient.Initialize(ctx, pluginConfig, p.stepID, p.pluginID)
+	return p.pluginClient.Initialize(ctx, pluginConfig, p.stepName, p.pluginName)
 }
 
 func (p *ExternalPlugin) Stop(context.Context) {
@@ -141,11 +141,11 @@ type pluginClient struct {
 	client apiplugin.PluginServiceClient
 }
 
-func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, stepID, pluginID string) error {
+func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, stepName, pluginName string) error {
 	_, err := m.client.Initialize(ctx, &apiplugin.InitializeRequest{
 		PluginConfig: pluginConfig,
-		StepId:       stepID,
-		PluginId:     pluginID,
+		StepName:     stepName,
+		PluginName:   pluginName,
 	})
 	return err
 }

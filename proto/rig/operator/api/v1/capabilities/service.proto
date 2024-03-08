@@ -28,11 +28,11 @@ message GetPluginsRequest {}
 
 message GetPluginsResponse {
   message Builtin {
-    string name = 1;
+    string type = 1;
   }
 
   message Thirdparty {
-    string name = 1;
+    string type = 1;
     string image = 2;
   }
 

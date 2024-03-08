@@ -113,7 +113,7 @@ func (s *service) GetPlugins() *capabilities.GetPluginsResponse {
 			plugins = append(plugins, &capabilities.GetPluginsResponse_Plugin{
 				Plugin: &capabilities.GetPluginsResponse_Plugin_Builtin{
 					Builtin: &capabilities.GetPluginsResponse_Builtin{
-						Name: p.Name,
+						Type: p.Type,
 					},
 				},
 			})
@@ -121,7 +121,7 @@ func (s *service) GetPlugins() *capabilities.GetPluginsResponse {
 			plugins = append(plugins, &capabilities.GetPluginsResponse_Plugin{
 				Plugin: &capabilities.GetPluginsResponse_Plugin_ThirdParty{
 					ThirdParty: &capabilities.GetPluginsResponse_Thirdparty{
-						Name:  p.Name,
+						Type:  p.Type,
 						Image: p.Image,
 					},
 				},

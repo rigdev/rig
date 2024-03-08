@@ -31,12 +31,12 @@ func getPlugins(ctx context.Context, operatorClient *base.OperatorClient, scheme
 			for _, plugin := range resp.Msg.Plugins {
 				switch v := plugin.GetPlugin().(type) {
 				case *capabilities.GetPluginsResponse_Plugin_Builtin:
-					if v.Builtin.GetName() == p.Name {
-						plugins = append(plugins, p.Name)
+					if v.Builtin.GetType() == p.Type {
+						plugins = append(plugins, p.Type)
 					}
 				case *capabilities.GetPluginsResponse_Plugin_ThirdParty:
-					if v.ThirdParty.Name == p.Name {
-						plugins = append(plugins, p.Name)
+					if v.ThirdParty.GetType() == p.Type {
+						plugins = append(plugins, p.Type)
 					}
 				}
 			}

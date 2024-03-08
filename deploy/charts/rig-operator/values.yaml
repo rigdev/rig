@@ -22,7 +22,7 @@ config:
     steps:
       []
       # - plugins:
-      #   - name: rigdev.object_template
+      #   - type: rigdev.object_template
       #     config: |
       #       group: apps
       #       kind: Deployment
@@ -31,22 +31,22 @@ config:
       #           template:
       #             spec:
       #               containers:
-      #               - name: {{ .capsule.metadata.name }}
+      #               - type: {{ .capsule.metadata.type }}
       #                 image: alpine
-      #                 command: ['sh', '-c', 'echo "Hello from {{ .capsule.metadata.name }}!"']
-      #   - name: rigdev.sidecar
+      #                 command: ['sh', '-c', 'echo "Hello from {{ .capsule.metadata.type }}!"']
+      #   - type: rigdev.sidecar
       #     config: |
       #       container:
-      #         name: foobar
+      #         type: foobar
       #         image: alpine
       #         command: ['sh', '-c', 'sleep 1000']
-      #   - name: rigdev.init_container
+      #   - type: rigdev.init_container
       #     config: |
       #       container:
-      #         name: startup
+      #         type: startup
       #         image: alpine
       #         command: ['sh', '-c', 'echo "Startup!"']
-      #   - name: rigdev.annotations
+      #   - type: rigdev.annotations
       #     config: |
       #       group: apps
       #       kind: Deployment
@@ -54,7 +54,7 @@ config:
       #         some-annotation: some-value
       #         templated-annotation: value-{{ .capsule.spec.image }}
       #         deleted-annotation: ""
-      #   - name: rigdev.datadog
+      #   - type: rigdev.datadog
       #     config: |
       #       libraryTag:
       #         java: latest
@@ -66,7 +66,7 @@ config:
       #         env: some-env
       #         service: some-service
       #         version: some-version
-      #   - name: my-name
+      #   - type: my-type
     customPlugins: []
       # - image: some-image
 

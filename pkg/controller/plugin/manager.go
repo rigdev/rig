@@ -21,7 +21,7 @@ type Manager struct {
 }
 
 type Info struct {
-	Name       string
+	Type       string
 	Image      string
 	IsBuiltin  bool
 	BinaryPath string
@@ -46,21 +46,21 @@ func thirdpartyPluginDir() string {
 	return "/app/bin/plugins-thirdparty"
 }
 
-func validatePluginName(s string) error {
+func validatePluginType(s string) error {
 	i := strings.Index(s, ".")
 	if i == -1 {
 		return fmt.Errorf(
-			"plugin name '%s' was malformed. Must be of the form <group>.<name> where <group> and <name> are system names",
+			"plugin type '%s' was malformed. Must be of the form <group>.<type> where <group> and <type> are system names",
 			s,
 		)
 	}
 
-	group, name := s[:i], s[i+1:]
+	group, type_ := s[:i], s[i+1:]
 	if err := common.ValidateKubernetesName(group); err != nil {
-		return fmt.Errorf("plugin name '%s' was malformed: %q", s, err)
+		return fmt.Errorf("plugin type '%s' was malformed: %q", s, err)
 	}
-	if err := common.ValidateKubernetesName(name); err != nil {
-		return fmt.Errorf("plugin name '%s' was malformed: %q", s, err)
+	if err := common.ValidateKubernetesName(type_); err != nil {
+		return fmt.Errorf("plugin type '%s' was malformed: %q", s, err)
 	}
 	return nil
 }
@@ -88,12 +88,12 @@ func NewManager() (*Manager, error) {
 				// Should be impossible
 				return nil, fmt.Errorf("builtin plugin '%s' seen twice", e.Name())
 			}
-			if err := validatePluginName(e.Name()); err != nil {
+			if err := validatePluginType(e.Name()); err != nil {
 				return nil, err
 			}
 			manager.plugins[e.Name()] = Info{
 				IsBuiltin:  true,
-				Name:       e.Name(),
+				Type:       e.Name(),
 				BinaryPath: path.Join(pluginDir, e.Name()),
 			}
 		}
@@ -110,23 +110,23 @@ func NewManager() (*Manager, error) {
 			if err != nil {
 				return nil, err
 			}
-			var names []string
+			var types []string
 			for _, ee := range entries {
 				if ee.Name() == "manifest.yaml" {
 					continue
 				}
 				if _, ok := manager.plugins[ee.Name()]; ok {
-					return nil, fmt.Errorf("multiple plugins with name '%s'", ee.Name())
+					return nil, fmt.Errorf("multiple plugins with type '%s'", ee.Name())
 				}
-				if err := validatePluginName(ee.Name()); err != nil {
+				if err := validatePluginType(ee.Name()); err != nil {
 					return nil, err
 				}
 				manager.plugins[ee.Name()] = Info{
-					Name:       ee.Name(),
+					Type:       ee.Name(),
 					IsBuiltin:  false,
 					BinaryPath: path.Join(pluginPath, ee.Name()),
 				}
-				names = append(names, ee.Name())
+				types = append(types, ee.Name())
 			}
 			bytes, err := os.ReadFile(path.Join(pluginPath, "manifest.yaml"))
 			if os.IsNotExist(err) {
@@ -141,10 +141,10 @@ func NewManager() (*Manager, error) {
 			if err := yaml.Unmarshal(bytes, &manifest); err != nil {
 				return nil, err
 			}
-			for _, name := range names {
-				info := manager.plugins[name]
+			for _, type_ := range types {
+				info := manager.plugins[type_]
 				info.Image = manifest.Image
-				manager.plugins[name] = info
+				manager.plugins[type_] = info
 			}
 		}
 	}
@@ -152,15 +152,15 @@ func NewManager() (*Manager, error) {
 	return manager, nil
 }
 
-func (m *Manager) GetPlugin(name string) (Info, bool) {
-	info, ok := m.plugins[name]
+func (m *Manager) GetPlugin(type_ string) (Info, bool) {
+	info, ok := m.plugins[type_]
 	return info, ok
 }
 
 func (m *Manager) GetPlugins() []Info {
 	plugins := maps.Values(m.plugins)
 	slices.SortFunc(plugins, func(p1, p2 Info) int {
-		return strings.Compare(p1.Name, p2.Name)
+		return strings.Compare(p1.Type, p2.Type)
 	})
 	return plugins
 }
@@ -177,12 +177,12 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 	}()
 
 	for _, plugin := range step.Plugins {
-		info, ok := m.plugins[plugin.Name]
+		info, ok := m.plugins[plugin.Type]
 		if !ok {
-			return nil, fmt.Errorf("plugin '%s' was unknown", plugin.Name)
+			return nil, fmt.Errorf("plugin '%s' was unknown", plugin.Type)
 		}
 		p, err := NewExternalPlugin(
-			plugin.Name, step.ID, plugin.ID, plugin.Config, info.BinaryPath,
+			plugin.Type, step.Name, plugin.Name, plugin.Config, info.BinaryPath,
 			logger,
 		)
 		if err != nil {

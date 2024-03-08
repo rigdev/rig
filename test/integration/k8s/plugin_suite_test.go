@@ -93,7 +93,7 @@ func (s *PluginTestSuite) SetupSuite() {
 				{
 					Plugins: []configv1alpha1.Plugin{
 						{
-							Name: "rigdev.object_template",
+							Type: "rigdev.object_template",
 							Config: `
 group: "apps"
 kind: "Deployment"
@@ -103,7 +103,7 @@ object: |
 `,
 						},
 						{
-							Name: "rigdev.sidecar",
+							Type: "rigdev.sidecar",
 							Config: `
 container:
   image: nginx
@@ -111,7 +111,7 @@ container:
 `,
 						},
 						{
-							Name: "rigdev.init_container",
+							Type: "rigdev.init_container",
 							Config: `
 container:
   image: alpine
