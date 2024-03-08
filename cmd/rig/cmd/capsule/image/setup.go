@@ -1,15 +1,13 @@
-package imagedeploy
+package image
 
 import (
 	"context"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/docker/docker/client"
-	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -53,11 +51,6 @@ func initCmd(c Cmd) {
 }
 
 func Setup(parent *cobra.Command) {
-	setupImage(parent)
-	setupDeploy(parent)
-}
-
-func setupImage(parent *cobra.Command) {
 	image := &cobra.Command{
 		Use:               "image",
 		Short:             "Manage images of the capsule",
@@ -121,44 +114,6 @@ func setupImage(parent *cobra.Command) {
 	parent.AddCommand(image)
 }
 
-func setupDeploy(parent *cobra.Command) {
-	capsuleDeploy := &cobra.Command{
-		Use:               "deploy",
-		Short:             "Deploy the given image to a capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
-		Args:              cobra.NoArgs,
-		RunE:              base.CtxWrap(cmd.deploy),
-		Long: `Deploy either the given rig-image or docker image to a capsule.
-If --image-id is given rig tries to find a matching existing rig-image to deploy.
-If --image is given rig tries to create a new rig-image from the docker image (if it doesn't already exist)
-Not both --image-id and --image can be given`,
-	}
-	capsuleDeploy.Flags().StringVarP(
-		&imageID,
-		"image", "i", "", "docker image to deploy. Will register the image in rig if it doesn't exist",
-	)
-	capsuleDeploy.Flags().BoolVarP(
-		&remote, "remote", "r", false, "if --image is also given, Rig will assume the image is from a remote "+
-			"registry. If not set, Rig will search locally and then remotely",
-	)
-	capsuleDeploy.Flags().BoolVarP(
-		&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a rollout if one is in progress",
-	)
-	if err := capsuleDeploy.RegisterFlagCompletionFunc(
-		"image",
-		base.CtxWrapCompletion(cmd.completions),
-	); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	if err := capsuleDeploy.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	parent.AddCommand(capsuleDeploy)
-}
-
 func (c *Cmd) completions(
 	ctx context.Context,
 	cmd *cobra.Command,
@@ -195,7 +150,7 @@ func (c *Cmd) completions(
 
 	for _, b := range resp.Msg.GetImages() {
 		if strings.HasPrefix(b.GetImageId(), toComplete) {
-			imageIDs = append(imageIDs, formatBuild(b))
+			imageIDs = append(imageIDs, formatImage(b))
 		}
 	}
 
@@ -204,15 +159,4 @@ func (c *Cmd) completions(
 	}
 
 	return imageIDs, cobra.ShellCompDirectiveDefault
-}
-
-func formatBuild(i *capsule_api.Image) string {
-	var age string
-	if i.GetCreatedAt().AsTime().IsZero() {
-		age = "-"
-	} else {
-		age = time.Since(i.GetCreatedAt().AsTime()).Truncate(time.Second).String()
-	}
-
-	return fmt.Sprintf("%v\t (Age: %v)", i.GetImageId(), age)
 }

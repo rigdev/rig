@@ -10,13 +10,13 @@ import (
 	"connectrpc.com/connect"
 	"github.com/docker/docker/client"
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/base"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule/deploy"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/env"
-	"github.com/rigdev/rig/cmd/rig/cmd/capsule/imagedeploy"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule/image"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/instance"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/jobs"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/mount"
@@ -26,7 +26,6 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
-	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -174,16 +173,17 @@ func Setup(parent *cobra.Command) {
 	capsuleLogs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
 	capsuleCmd.AddCommand(capsuleLogs)
 
+	parent.AddCommand(capsuleCmd)
+
 	scale.Setup(capsuleCmd)
-	imagedeploy.Setup(capsuleCmd)
+	image.Setup(capsuleCmd)
+	deploy.Setup(capsuleCmd)
 	instance.Setup(capsuleCmd)
 	network.Setup(capsuleCmd)
 	rollout.Setup(capsuleCmd)
 	env.Setup(capsuleCmd)
 	mount.Setup(capsuleCmd)
 	jobs.Setup(capsuleCmd)
-
-	parent.AddCommand(capsuleCmd)
 }
 
 func (c *Cmd) completions(
@@ -239,28 +239,11 @@ func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []str
 		return nil
 	}
 
-	resp, err := c.Rig.Capsule().List(ctx, connect.NewRequest(&capsule_api.ListRequest{
-		Pagination: &model.Pagination{},
-		ProjectId:  flags.GetProject(c.Cfg),
-	}))
+	name, err := capsule.SelectCapsule(ctx, c.Rig, c.Cfg)
 	if err != nil {
 		return err
 	}
 
-	var capsuleNames []string
-	for _, c := range resp.Msg.GetCapsules() {
-		capsuleNames = append(capsuleNames, c.GetCapsuleId())
-	}
-
-	if len(capsuleNames) == 0 {
-		return errors.New("This project has no capsules. Create one, to get started")
-	}
-
-	_, name, err := common.PromptSelect("Capsule: ", capsuleNames, common.SelectFuzzyFilterOpt)
-	if err != nil {
-		return err
-	}
 	capsule.CapsuleID = name
-
 	return nil
 }

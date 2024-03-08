@@ -1,4 +1,4 @@
-package imagedeploy
+package deploy
 
 import (
 	"testing"
