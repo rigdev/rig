@@ -168,20 +168,19 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 		}
 	}
 
-	res, err := c.Rig.Image().Create(ctx, connect.NewRequest(
-		&image.CreateRequest{
-			CapsuleId:      capsuleID,
-			Image:          imageRef.Image,
-			Digest:         digest,
-			SkipImageCheck: skipImageCheck,
-			ProjectId:      flags.GetProject(c.Cfg),
-		}),
+	res, err := c.Rig.Image().Add(ctx, connect.NewRequest(&image.AddRequest{
+		CapsuleId:      capsuleID,
+		Image:          imageRef.Image,
+		Digest:         digest,
+		SkipImageCheck: skipImageCheck,
+		ProjectId:      flags.GetProject(c.Cfg),
+	}),
 	)
 	if err != nil {
 		return "", err
 	}
 
-	if res.Msg.GetCreatedNewImage() {
+	if res.Msg.GetAddedNewImage() {
 		fmt.Println("Created new build:", res.Msg.GetImageId())
 	} else {
 		fmt.Println("Build already exists, using existing build")
