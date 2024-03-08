@@ -10,20 +10,23 @@ import ThemedImage from '@theme/ThemedImage';
 
 In this document, you'll learn how to build and deploy your application automatically using [Github Actions](https://github.com/features/actions).
 
+For CI/CD Rig currently supports [Github Actions](https://github.com/features/actions). This doc will show how to build and deploy your application automatically using them.
+
 ## Prerequisites
 
 It is assumed that you have a Rig Capsule up and running, see [Deploy Your Application](/getting-started/first-capsule) if not. You should also have a GitHub repository from which you would like to build and deploy to your capsule.
 
 ## Example workflow using the actions
 
-Rig exposes [two different actions](https://github.com/rigdev/actions), `build` and `deploy`. The `build` action assumes you have a Docker image you want to deploy and makes a Rig build off of it. The `deploy` action can then deploy the previously (or any other) generated build to a capsule. It is also possible to let the `build` action deploy the newly created build to the capsule.
+Rig exposes [two different actions](https://github.com/rigdev/actions), `build` and `deploy`. The `build` action assumes you have a Docker image you want to deploy and makes a Rig build off of it. The `deploy` action can then deploy the previously (or any other) generated build to a capsule.
 As you need a Docker image to build and deploy, it is common to prefix these two actions with [Docker Github actions](https://docs.docker.com/build/ci/github-actions/) to build and publish an image.
 
 The following GitHub workflow example showcases how you can
 
 1. Build a Docker image from a new commit
 2. Push that Docker image to Docker Hub
-3. Make a Rig build from that Docker image and deploy it to the capsule
+3. Make a Rig build from that Docker image
+4. Deploy that Rig build to your Rig capsule
 
 In this example a username and password to Dockerhub is stored as a Github secret in the repository of the workflow. The same is done with the client secret to the Rig project
 
@@ -35,35 +38,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/DOCKER_IMAGE_NAME:latest
 
-      - name: Make build and deploy to the Rig capsule
+      - name: Create build on Rig
         uses: rigdev/actions/build@v3
-        id: build_deploy_rig
+        id: build_rig
         with:
           url: url-to-rig-cluster
           project: YOUR_PROJECT_NAME
-          environment: YOUR_ENVIRONMENT_NAME
           clientID: YOUR_ID
           clientSecret: ${{ secrets.RIG_PROJECT_CLIENT_SECRET }}
           image: ${{ secrets.DOCKER_HUB_USERNAME }}/DOCKER_IMAGE_NAME:latest
           capsule: YOUR_CAPSULE
-          deploy: true
+
+      - name: Deploy to capsule
+        uses: rigdev/actions/deploy@v3
+        with:
+          url: url-to-rig-cluster
+          project: YOUR_PROJECT_NAME
+          clientID: YOUR_ID
+          clientSecret: ${{ secrets.RIG_PROJECT_CLIENT_SECRET }}
+          capsule: YOUR_CAPSULE
+          build: ${{ steps.build_rig.outputs.build }}
 ```
