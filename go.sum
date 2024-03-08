@@ -393,8 +393,6 @@ github.com/prometheus/common v0.45.0 h1:2BGz0eBc2hdMDLnO/8n0jeB3oPrt2D08CekT0lne
 github.com/prometheus/common v0.45.0/go.mod h1:YJmSTw9BoKxJplESWWxlbyttQR4uaEcGyv9MZjVOJsY=
 github.com/prometheus/procfs v0.12.0 h1:jluTpSng7V9hY0O2R9DzzJHYb2xULk9VTR1V1R/k6Bo=
 github.com/prometheus/procfs v0.12.0/go.mod h1:pcuDEFsWDnvcgNzo4EEweacyhjeA9Zk3cnaOZAZEfOo=
-github.com/rigdev/rig-go-api v0.0.0-20240308091527-e78c230fd0a9 h1:oYQEufG5kEH7q5Jc5tCFbdaOLpTxcTh5AI1M8/aWbNw=
-github.com/rigdev/rig-go-api v0.0.0-20240308091527-e78c230fd0a9/go.mod h1:yf1c5zj4YnD3yQcstnUMUEMFCLEKqVqqqWVb50YE85Y=
 github.com/rigdev/rig-go-api v0.0.0-20240308211059-002207e2147a h1:NdauLFwFDb0G26Z9YnXd364CcpEiL0QOLwwPLr49qdk=
 github.com/rigdev/rig-go-api v0.0.0-20240308211059-002207e2147a/go.mod h1:FLLDte/5E2n82s0+w2URsa9sn6Nzbb+PxA2s2D0YEXY=
 github.com/rigdev/rig-go-sdk v0.0.0-20240306122601-f36342e359ef h1:g2VRoPd/fZWmuLZ8c+Nqo1QkpHd6ohMfcKf+1JzpoeQ=
@@ -790,8 +788,7 @@ google.golang.org/genproto v0.0.0-20201210142538-e3217bee35cc/go.mod h1:FWY/as6D
 google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
 google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
 google.golang.org/genproto v0.0.0-20210226172003-ab064af71705/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240304212257-790db918fca8 h1:IR+hp6ypxjH24bkMfEJ0yHR21+gwPWdV+/IBrPQyn3k=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240304212257-790db918fca8/go.mod h1:UCOku4NytXMJuLQE5VuqA5lX3PcHCBo8pxNyvkf4xBs=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240308144416-29370a3891b7 h1:em/y72n4XlYRtayY/cVj6pnVzHa//BDA1BdoO+z9mdE=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240308144416-29370a3891b7/go.mod h1:UCOku4NytXMJuLQE5VuqA5lX3PcHCBo8pxNyvkf4xBs=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=
