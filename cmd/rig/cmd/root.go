@@ -56,14 +56,18 @@ func Run() error {
 	}
 	rootCmd.PersistentFlags().VarP(&flags.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Environment,
-		"environment", "E", flags.Flags.Environment, "Override environment from the context")
+		"environment", "E", flags.Flags.Environment,
+		"select which environment to use. Can also be set with environment variable `RIG_ENVIRONMENT`")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Project,
-		"project", "P", flags.Flags.Project, "Override project from the context")
+		"project", "P", flags.Flags.Project,
+		"select which project to use. Can also be set with environment variable `RIG_PROJECT`")
 	rootCmd.PersistentFlags().BoolVarP(&flags.Flags.BasicAuth,
 		"basic-auth", "B", flags.Flags.BasicAuth,
 		"Use basic auth with environment in context. Otherwise use access token from the context")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Host,
-		"host", "H", flags.Flags.Host, "Override the rig host from the context")
+		"host", "H", flags.Flags.Host,
+		"select which host to access the Rig Platform at. Should be of the form `http[s]://hostname:port/`."+
+			" Can also be set with environment variable `RIG_HOST`")
 
 	license := &cobra.Command{
 		Use:               "license",

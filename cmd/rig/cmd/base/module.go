@@ -63,27 +63,56 @@ func skipContext(cmd *cobra.Command) bool {
 	return true
 }
 
-func getContext(cmd *cobra.Command, cfg *cmdconfig.Config, promptInfo *PromptInformation) (*cmdconfig.Context, error) {
+func getContext(
+	cmd *cobra.Command,
+	cfg *cmdconfig.Config,
+	promptInfo *PromptInformation,
+	interactive Interactive,
+) (*cmdconfig.Context, error) {
 	if skipContext(cmd) {
 		return &cmdconfig.Context{}, nil
 	}
 
 	if cfg.CurrentContextName == "" {
-		if len(cfg.Contexts) > 0 {
-			fmt.Println("No context selected, please select one")
-			if err := cfg.SelectContext(); err != nil {
-				return nil, err
-			}
-		} else {
-			promptInfo.ContextCreation = true
-			fmt.Println("No context available, please create one")
-			if err := cfg.CreateDefaultContext(); err != nil {
-				return nil, err
+		if interactive {
+			if len(cfg.Contexts) > 0 {
+				fmt.Println("No context selected, please select one")
+				if err := cfg.SelectContext(); err != nil {
+					return nil, err
+				}
+			} else {
+				promptInfo.ContextCreation = true
+				fmt.Println("No context available, please create one")
+				if err := cfg.CreateDefaultContext(); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
 
 	c := cfg.GetCurrentContext()
+	if c == nil && !interactive {
+		// No context configured. See if there is both host and auth available.
+		if flags.Flags.Host == "" {
+			return nil, fmt.Errorf("no host configured, used `--host` to specify the host of the Rig platform`")
+		}
+
+		if _, ok := os.LookupEnv("RIG_CLIENT_ID"); !ok {
+			return nil, fmt.Errorf("missing RIG_CLIENT_ID environment variable")
+		}
+
+		if _, ok := os.LookupEnv("RIG_CLIENT_SECRET"); !ok {
+			return nil, fmt.Errorf("missing RIG_CLIENT_SECRET environment variable")
+		}
+
+		flags.Flags.BasicAuth = true
+
+		c = &cmdconfig.Context{}
+		c.SetService(&cmdconfig.Service{
+			Server: flags.Flags.Host,
+		})
+		return c, nil
+	}
 	if c == nil {
 		// This shouldn't happen as we prompt for a config if one is missing above
 		return nil, fmt.Errorf("no current context in config, run `rig config init`")

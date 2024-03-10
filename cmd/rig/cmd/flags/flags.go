@@ -1,6 +1,8 @@
 package flags
 
 import (
+	"os"
+
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 )
@@ -18,10 +20,10 @@ type FlagsStruct struct {
 var Flags = FlagsStruct{
 	OutputType:     common.OutputTypePretty,
 	NonInteractive: false,
-	Environment:    "",
-	Project:        "",
+	Environment:    os.Getenv("RIG_ENVIRONMENT"),
+	Project:        os.Getenv("RIG_PROJECT"),
 	BasicAuth:      false,
-	Host:           "",
+	Host:           os.Getenv("RIG_HOST"),
 }
 
 func GetEnvironment(cfg *cmdconfig.Config) string {
