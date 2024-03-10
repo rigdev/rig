@@ -103,8 +103,12 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 
 func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
 	environmentID := flags.GetEnvironment(s.cfg)
-	if environmentID == "" && !interactive {
-		return errors.FailedPreconditionErrorf("Please select an environment or use the --environment flag")
+	if !interactive {
+		if environmentID == "" {
+			return errors.FailedPreconditionErrorf("no environment selected, use --environment or -E to select an environment")
+		}
+
+		return nil
 	}
 
 	if environmentID == "" {
@@ -187,8 +191,12 @@ func (s *Service) authUser(ctx context.Context, interactive bool) error {
 
 func (s *Service) authProject(ctx context.Context, interactive bool) error {
 	projectID := flags.GetProject(s.cfg)
-	if projectID == "" && !interactive {
-		return errors.FailedPreconditionErrorf("Select a project to continue")
+	if !interactive {
+		if projectID == "" {
+			return errors.FailedPreconditionErrorf("no project selected, use --project or -P to select a project")
+		}
+
+		return nil
 	}
 
 	res, err := s.rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
