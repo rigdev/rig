@@ -37,7 +37,7 @@ func (e *OutputType) Set(v string) error {
 
 // Type is only used in help text
 func (e *OutputType) Type() string {
-	return "OutputType"
+	return `pretty,json,yaml`
 }
 
 // If 'v' is of type protoreflect.Message or a slice of protoreflect.Message

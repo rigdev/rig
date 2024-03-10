@@ -193,7 +193,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 	projectID := flags.GetProject(s.cfg)
 	if !interactive {
 		if projectID == "" {
-			return errors.FailedPreconditionErrorf("no project selected, use --project or -P to select a project")
+			return errors.FailedPreconditionErrorf("no project selected, use --project/-P or RIG_PROJECT= to select a project")
 		}
 
 		return nil
