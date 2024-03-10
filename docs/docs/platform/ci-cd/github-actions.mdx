@@ -6,15 +6,56 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import ThemedImage from '@theme/ThemedImage';
 
-# Deploy your application to a Capsule using Github Actions
+# Github Actions
 
-In this document, you'll learn how to build and deploy your application automatically using [Github Actions](https://github.com/features/actions).
+The [Rig CLI](/getting-started/cli-install) can be used to deploy changes to Capsules to any pipeline.
+Additionally for GitHub Actions, there are some built-in GitHub actions that makes it even easier.
 
-For CI/CD Rig currently supports [Github Actions](https://github.com/features/actions). This doc will show how to build and deploy your application automatically using them.
+## Setup Step
 
-## Prerequisites
+For easy access to the Rig CLI in any GitHub Action, use the following step `rigdev/setup-rig@v1`:
 
-It is assumed that you have a Rig Capsule up and running, see [Deploy Your Application](/getting-started/first-capsule) if not. You should also have a GitHub repository from which you would like to build and deploy to your capsule.
+```yaml
+jobs:
+  deploy:
+    steps:
+      - name: Setup Rig
+        uses: rigdev/setup-rig@v1
+
+      - run: |
+          rig deploy my-capsule ...
+```
+
+This step assumes `RIG_CLIENT_ID` and `RIG_CLIENT_SECRET` is configured for the workflow.
+
+### Custom version
+
+To pin the step to fetch a specific version of the CLI, the version can explicitly be configured:
+
+```yaml
+    steps:
+      - uses: rigdev/setup-rig@v1
+        with:
+          version: 1.7.1
+```
+
+The default version is the latest released.
+
+## Deploy Step
+
+Additionally, a pre-built step is available that wraps the CLI and makes deploying even simpler:
+
+```yaml
+      - name: Deploy to capsule
+        uses: rigdev/actions/deploy@v3
+        with:
+          url: url-to-rig-cluster
+          project: YOUR_PROJECT_NAME
+          capsule: YOUR_CAPSULE
+          image: image-name
+```
+
+This step assumes `RIG_CLIENT_ID` and `RIG_CLIENT_SECRET` is configured for the workflow.
 
 ## Example workflow using the actions
 
