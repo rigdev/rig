@@ -48,13 +48,13 @@ The Rig Platform supports the concept of a _dev_ registry. This registry is used
 
 When starting a local dev cluster (using the `rig dev ...` CLI command), a dev registry is automatically created and registered.
 
-When running the command `rig capsule deploy`, you can access local images and have them automatically pushed to the dev registry as part of deploying the local image:
+When running the command `rig deploy`, you can access local images and have them automatically pushed to the dev registry as part of deploying the local image:
 
 <Tabs>
   <TabItem value="cli" label="CLI">
 
 ```sh
-$ rig capsule deploy -c webserver
+$ rig deploy webserver
 Deploy from docker image or existing rig build? Image
 Use a local image?
 Select image:

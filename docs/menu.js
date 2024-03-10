@@ -182,13 +182,27 @@ const sidebars = {
       },
     },
     {
-      type: "doc",
-      id: "platform/ci-cd",
+      type: "category",
+      link: {
+        type: "doc",
+        id: "platform/ci-cd",
+      },
       label: "CI/CD",
       className: "homepage-sidebar-item",
       customProps: {
-        sidebar_icon: "SiGit",
+        sidebar_icon: "TbRepeat",
       },
+      items: [
+        {
+          type: "doc",
+          id: "platform/ci-cd/github-actions",
+          label: "GitHub Actions",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "TbBrandGithub",
+          },
+        }
+      ]
     },
     {
       type: "doc",
