@@ -6,9 +6,6 @@ import ThemedImage from '@theme/ThemedImage';
 
 Rig is easily integratable in _any_ CI/CD environment, due to it's rich CLI tool. From the CLI, you can issues deploys to any Capsule in any environment.
 
-For CI/CD steps where Rig runs in a workflow environment, the Rig CLI automatically looks for a `RIG_CLIENT_ID` and  `RIG_CLIENT_SECRET` environment variables,
-of the [service-account](/platform/service-accounts) to use.
-
 ## Deploying changes
 
 All changes to a Capsule can be done through the powerful `rig deploy` command. It takes a number of arguments, combining them all into a single Rollout to
@@ -23,6 +20,26 @@ rig deploy my-capsule --image nginx:1.25 -e FOO=bar
 will update `my-capsule` to use the container image `nginx:1.25` and set the environment variable `FOO` to the value `bar`.
 
 See `rig deploy --help` for a list of all the options available.
+
+## Environments and Projects
+
+When deploying to a Capsule from a CI/CD environment, it's often useful to indicate which project the Capsule is located in and which environment to deploy to.
+
+This is done using the `--project`/`-P` and `--environment`/`-E` flags:
+
+```bash
+rig deploy my-capsule -P my-project -E staging --image image:v1.25
+```
+
+Alternatively, the project and environment can be given using the `RIG_PROJECT` and `RIG_ENVIRONMENT` environment variables.
+
+## Rig Platform host and credentials
+
+The Rig Platform hostname is controlled using the `--host`/`-H` flag. It should include the scheme,
+e.g. `https://my-host/`. Alternatively, `RIG_HOST` can be set.
+
+The Rig CLI automatically looks for a `RIG_CLIENT_ID` and  `RIG_CLIENT_SECRET` environment variables,
+of the [Service Account](/platform/service-accounts) to use.
 
 ## Rollout progress
 
@@ -52,12 +69,17 @@ not exit and keep running, even though an recoverable error happened. A sane tim
 
 To disable waiting for rollout to succeed, use `--no-wait`.
 
-## Environments and Projects
 
-When deploying to a Capsule from a CI/CD environment, it's often useful to indicate which project the Capsule is located in and which environment to deploy to.
+## Complete example
 
-This is done using the `--project`/`-P` and `--environment`/`-E` flags:
+The following is a complete example of deploying an image change, with all required arguments of the non-interactive CLI.
 
 ```bash
-rig deploy my-capsule -P my-project -E staging --image image:v1.25
+export RIG_CLIENT_ID=rig_...
+export RIG_CLIENT_SECRET=secret_...
+rig deploy my-capsule \
+  --host http://localhost:4747 \
+  --project my-project \
+  --environment production \
+  --image nginx:1.25
 ```

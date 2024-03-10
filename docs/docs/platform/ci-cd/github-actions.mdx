@@ -41,7 +41,21 @@ To pin the step to fetch a specific version of the CLI, the version can explicit
 
 The default version is the latest released.
 
-## Deploy Step
+## Deploy using CLI
+
+To deploy using the CLI, the following command can be used:
+
+```yaml
+      - name: Deploy to Capsule
+        env:
+          RIG_HOST: https://my-host/
+          RIG_CLIENT_ID: ${{ secrets.RIG_CLIENT_ID }}
+          RIG_CLIENT_SECRET: ${{ secrets.RIG_CLIENT_SECRET }}
+        run: |
+          rig deploy my-capsule -P my-project -E production --image nginx:1.25
+```
+
+## Deploy using Action
 
 Additionally, a pre-built step is available that wraps the CLI and makes deploying even simpler:
 
