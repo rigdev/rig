@@ -183,7 +183,7 @@ files:
 			}})
 			tt.deployment.ObjectMeta.Name = name
 			assert.NoError(t, req.Set(tt.deployment))
-			plugin := pluginParent{
+			plugin := cloudSQLProxy{
 				configBytes: []byte(tt.config),
 			}
 			err := plugin.Run(context.Background(), req, hclog.Default())
