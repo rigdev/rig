@@ -78,7 +78,7 @@ func check(ctx context.Context,
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
 	tbl := table.
-		New("Namespace", "Capsule", "Step Index").
+		New("Namespace", "Capsule", "StepIndex").
 		WithHeaderFormatter(headerFmt)
 	for _, r := range results {
 		tbl.AddRow(r.Namespace, r.CapsuleID, r.StepIndex)
