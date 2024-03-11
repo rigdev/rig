@@ -20,7 +20,17 @@ config:
     portName: ""
   pipeline:
     steps:
-      - plugins: []
+      - plugins:
+        - name: rigdev.placement
+          config: |
+            nodeSelector:
+              slow-worker: true
+            tolerations:
+            - key: "slow-worker"
+              operator: "Equal"
+              value: "true"
+              effect: "NoSchedule"
+      # - plugins: []
       # - plugins:
       #   - name: rigdev.env_mapping
       #   - name: rigdev.object_template

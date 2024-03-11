@@ -218,7 +218,7 @@ tasks:
       - python3 ./tools/readme_truncate.py plugins/{{ .PLUGIN }}/README.md
       - cat ./plugins/{{ .PLUGIN }}/temp.md >> ./plugins/{{ .PLUGIN }}/README.md
       - rm ./plugins/{{ .PLUGIN }}/temp.md
-      - cp plugins/{{ .PLUGIN }}/README.md docs/docs/plugins/builtin/{{ .PLUGIN }}.mdx
+      - cp plugins/{{ .PLUGIN }}/README.md docs/docs/operator-manual/plugins/builtin/{{ .PLUGIN }}.mdx
      
   lint:
     desc: "🚨 Run linting"

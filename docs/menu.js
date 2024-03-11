@@ -174,15 +174,6 @@ const sidebars = {
     },
     {
       type: "doc",
-      id: "plugins/builtin/placement",
-      label: "Plugin",
-      className: "homepage-sidebar-item",
-      customProps: {
-        sidebar_icon: "SiGit",
-      }
-    },
-    {
-      type: "doc",
       id: "platform/cronjobs",
       label: "Cron Jobs",
       className: "homepage-sidebar-item",
@@ -356,6 +347,75 @@ const sidebars = {
       customProps: {
         sidebar_icon: "BiDna",
       },
+    },
+    {
+      type: "category",
+      label: "Plugins",
+      link: { type: "doc", id: "operator-manual/plugins" },
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiInjection",
+      },
+      collapsed: true,
+      items: [
+        {
+          type: "category",
+          label: "Builtin",
+          link: { type: "doc", id: "operator-manual/plugins/builtin" },
+          className: "homepage-sidebar-item",
+          collapsed: true,
+          items: [
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/annotations",
+              label: "Annotations",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/datadog",
+              label: "Datadog",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/env_mapping",
+              label: "Env Mapping",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/google_sql_proxy",
+              label: "Google SQL Proxy",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/init_container",
+              label: "Init Container",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/object_template",
+              label: "Object Template",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/placement",
+              label: "Placement",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/sidecar",
+              label: "Sidecar",
+              className: "homepage-sidebar-item",
+            },
+          ],
+        },
+      ],
     },
     {
       type: "html",
