@@ -17,15 +17,40 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+// CapsuleRequest contains a single reconcile request for a given capsule.
+// It contains both the set of existing kubernetes objects owned by the capsule
+// and the set of objects recorded to be applied after all steps in the pipeline has been executed (called 'new' objects).
+// The set of existing objects cannot be modified (as the interface does not allow for writing to Kubernetes)
+// but there are both read and write access to the set of new objects.
+//
+//nolint:lll
 type CapsuleRequest interface {
+	// Scheme returns the serialization scheme used by the rig operator.
+	// It contains all the types used by a Capsule.
 	Scheme() *runtime.Scheme
+	// Reader is a Kubernetes reader with access to the cluster the rig operator is running in.
 	Reader() client.Reader
+	// Capsule returns a deepcopy of the capsule object being reconciled.
 	Capsule() *v1alpha2.Capsule
-	GetCurrent(obj client.Object) error
+	// GetExisting populates 'obj' with a copy of the corresponding object owned by the capsule currently present in the cluster.
+	// If the name of 'obj' isn't set, it defaults to the Capsule name.
+	GetExisting(obj client.Object) error
+	// GetNew populates 'obj' with a copy of the corresponding object owned by the capsule about to be applied.
+	// If the name of 'obj' isn't set, it defaults to the Capsule name.
 	GetNew(obj client.Object) error
+	// Set updates the object recorded to be applied.
+	// If the name of 'obj' isn't set, it defaults to the Capsule name.
 	Set(obj client.Object) error
+	// Delete records the given object to be deleted.
+	// The behaviour is such that that calling
+	// req.Delete(obj) and then req.GetNew(obj)
+	// returns a not-found error from GetNew.
+	// If an object of the given type and name is present in the cluster, calling req.GetExisting(obj) succeds
+	// as calls to Delete (or Set) will only be applied to the cluster at the very end.
+	// If the name of 'obj' isn't set, it defaults to the Capsule name.
 	Delete(obj client.Object) error
-	MarkUsedResource(res v1alpha2.UsedResource)
+	// MarkUsedObject marks the object as used by the Capsule which will be present in the Capsule's Status
+	MarkUsedObject(res v1alpha2.UsedResource) error
 }
 
 type capsuleRequest struct {
@@ -103,7 +128,7 @@ func (r *capsuleRequest) Reader() client.Reader {
 	return r.pipeline.reader
 }
 
-func (r *capsuleRequest) GetCurrent(obj client.Object) error {
+func (r *capsuleRequest) GetExisting(obj client.Object) error {
 	key, err := r.getKey(obj)
 	if err != nil {
 		return err
@@ -202,8 +227,9 @@ func (r *capsuleRequest) namedObjectKey(name string, gvk schema.GroupVersionKind
 	}
 }
 
-func (r *capsuleRequest) MarkUsedResource(res v1alpha2.UsedResource) {
+func (r *capsuleRequest) MarkUsedObject(res v1alpha2.UsedResource) error {
 	r.usedResources = append(r.usedResources, res)
+	return nil
 }
 
 func (r *capsuleRequest) loadExisting(ctx context.Context) error {
