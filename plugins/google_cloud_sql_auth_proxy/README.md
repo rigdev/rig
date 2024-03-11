@@ -1,6 +1,6 @@
-# Google SQL Proxy Plugin
+# Google Cloud SQL Auth Proxy Plugin
 
-The `rigdev.google_sql_proxy` plugins injects a Google Cloud SQL auth proxy container into your deployment. See [here](https://cloud.google.com/sql/docs/mysql/sql-proxy) for a description of the auth proxy.
+The `rigdev.google_cloud_sql_auth_proxy` plugins injects a Google Cloud SQL auth proxy container into your deployment. See [here](https://cloud.google.com/sql/docs/mysql/sql-proxy) for a description of the auth proxy.
 It will append a container named `google-cloud-sql-proxy` running the `gcr.io/cloud-sql-connectors/cloud-sql-proxy` image to your deployment and set its arguments, environment variables and config files according the the configuration of this plugin.
 
 The config can be templated with standard Go templating and has
@@ -54,7 +54,7 @@ spec:
 
 
 
-Configuration for the google_sql_proxy plugin
+Configuration for the google_cloud_sql_auth_proxy plugin hej
 
 | Field | Description |
 | --- | --- |
@@ -72,8 +72,7 @@ Configuration for the google_sql_proxy plugin
 ### Resources
 
 Resources configures the size of the request of the cloud_sql_proxy container
-_Appears in:_
-- [Config](#config)
+
 | Field | Description |
 | --- | --- |
 | `cpu` _string_ | The number of CPU cores to request. |

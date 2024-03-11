@@ -211,8 +211,8 @@ tasks:
     cmds:
       - | 
         ./tools/bin/crd-ref-docs --renderer markdown \
-          --config ./docs/crd-ref-docs/config.yaml \
-          --templates-dir ./docs/crd-ref-docs/plugins/templates \
+          --config ./docs/plugin-ref-docs/config.yaml \
+          --templates-dir ./docs/plugin-ref-docs/templates \
           --source-path ./plugins/{{ .PLUGIN }} \
           --output-path ./plugins/{{ .PLUGIN }}/temp.md
       - python3 ./tools/readme_truncate.py plugins/{{ .PLUGIN }}/README.md
