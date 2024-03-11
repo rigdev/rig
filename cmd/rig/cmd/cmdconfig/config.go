@@ -192,12 +192,16 @@ func NewConfig(cfgPath string) (*Config, error) {
 	if cfg.filePath != "" {
 		viper.AddConfigPath(cfg.filePath)
 	} else {
-		p, err := os.UserConfigDir()
-		if err != nil {
-			return nil, err
+		configPath := os.Getenv("XDG_CONFIG_HOME")
+		if configPath == "" {
+			p, err := os.UserConfigDir()
+			if err != nil {
+				return nil, err
+			}
+			configPath = p
 		}
 
-		cfg.filePath = path.Join(p, "rig", "config.yaml")
+		cfg.filePath = path.Join(configPath, "rig", "config.yaml")
 
 		if _, err := os.Stat(cfg.filePath); os.IsNotExist(err) {
 			if err := os.MkdirAll(path.Dir(cfg.filePath), 0o775); err != nil {
