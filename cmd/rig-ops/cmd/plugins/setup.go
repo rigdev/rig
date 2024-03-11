@@ -10,7 +10,6 @@ import (
 var (
 	capsules   []string
 	namespaces []string
-	plugins    []string
 
 	showConfig bool
 
@@ -38,7 +37,6 @@ func Setup(parent *cobra.Command) {
 	//nolint:lll
 	check.Flags().StringSliceVar(&capsules, "capsules", nil, "If given, will use those capsule names instead of reading them from kubernetes")
 	check.Flags().StringSliceVar(&namespaces, "namespaces", nil, "If given, will only use those namespaces")
-	check.Flags().StringSliceVar(&plugins, "plugins", nil, "If given, will only use those plugins names.")
 	pluginsCmd.AddCommand(check)
 
 	listSteps := &cobra.Command{
@@ -53,7 +51,7 @@ func Setup(parent *cobra.Command) {
 	get := &cobra.Command{
 		Use: "get 2",
 		//nolint:lll
-		Short: "Gets the configuration for a single plugin given by index. If no index is given, it will prompt you to choose a plugin.",
+		Short: "Gets the configuration for a single step given by index. If no index is given, it will prompt you to choose a step.",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  base.Register(get),
 	}

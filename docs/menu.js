@@ -235,7 +235,7 @@ const sidebars = {
         {
           type: "doc",
           id: "operator-manual/sso",
-          label: "Single Sing-on",
+          label: "Single Sign-on",
           className: "docpage-sidebar-item",
         },
         {
@@ -346,6 +346,15 @@ const sidebars = {
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "BiDna",
+      },
+    },
+    {
+      type: "doc",
+      id: "operator-manual/cli",
+      label: "Rig Ops CLI",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiSolidTerminal",
       },
     },
     {

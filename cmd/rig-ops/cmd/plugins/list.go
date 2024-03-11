@@ -58,7 +58,7 @@ func listSteps(ctx context.Context,
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
-	tbl := table.New("Index", "Plugins", "Namespaces", "Capsules")
+	tbl := table.New("StepIndex", "Plugins", "Namespaces", "Capsules")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	for idx, p := range plugins {
 		var pluginNames []string
