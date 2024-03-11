@@ -50,7 +50,7 @@ func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.CapsuleRequest)
 	}
 
 	current := &appsv1.Deployment{}
-	if err := req.GetCurrent(current); errors.IsNotFound(err) {
+	if err := req.GetExisting(current); errors.IsNotFound(err) {
 		current = nil
 	} else if err != nil {
 		return err
@@ -561,7 +561,7 @@ func (s *DeploymentStep) setUsedSource(
 			ref.State = "found"
 		}
 
-		req.MarkUsedResource(ref)
+		req.MarkUsedObject(ref)
 	}()
 
 	switch kind {

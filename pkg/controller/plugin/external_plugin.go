@@ -11,10 +11,12 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/scheme"
 	"google.golang.org/grpc"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -207,7 +209,7 @@ func (s requestServer) GetObject(
 	co := ro.(client.Object)
 	co.SetName(req.GetName())
 	if req.GetCurrent() {
-		if err := s.req.GetCurrent(co); err != nil {
+		if err := s.req.GetExisting(co); err != nil {
 			return nil, err
 		}
 	} else {
@@ -226,24 +228,68 @@ func (s requestServer) GetObject(
 	}, nil
 }
 
-func (s requestServer) SetObject(
-	_ context.Context,
-	req *apiplugin.SetObjectRequest,
-) (*apiplugin.SetObjectResponse, error) {
-	gvk := toGVK(req.GetGvk())
-	ro, err := s.req.Scheme().New(gvk)
+func (s requestServer) decodeObject(gvk *apiplugin.GVK, bytes []byte) (client.Object, error) {
+	ro, err := s.req.Scheme().New(toGVK(gvk))
 	if err != nil {
 		return nil, err
 	}
 
 	co := ro.(client.Object)
-	if err := obj.DecodeInto(req.GetObject(), co, s.req.Scheme()); err != nil {
+	if err := obj.DecodeInto(bytes, co, s.req.Scheme()); err != nil {
 		return nil, err
 	}
 
-	if err := s.req.Set(co); err != nil {
+	return co, nil
+}
+
+func (s requestServer) SetObject(
+	_ context.Context,
+	req *apiplugin.SetObjectRequest,
+) (*apiplugin.SetObjectResponse, error) {
+	obj, err := s.decodeObject(req.GetGvk(), req.GetObject())
+	if err != nil {
+		return nil, err
+	}
+	if err := s.req.Set(obj); err != nil {
 		return nil, err
 	}
 
 	return &apiplugin.SetObjectResponse{}, nil
+}
+
+func (s requestServer) Delete(
+	_ context.Context,
+	req *apiplugin.DeleteObjectRequest,
+) (*apiplugin.DeleteObjectResponse, error) {
+	obj, err := s.decodeObject(req.GetGvk(), req.GetObject())
+	if err != nil {
+		return nil, err
+	}
+	if err := s.req.Delete(obj); err != nil {
+		return nil, err
+	}
+
+	return &apiplugin.DeleteObjectResponse{}, nil
+}
+
+func (s requestServer) MarkUsedObject(
+	_ context.Context,
+	req *apiplugin.MarkUsedObjectRequest,
+) (*apiplugin.MarkUsedObjectResponse, error) {
+	var group *string
+	if g := req.GetGvk().GetGroup(); g != "" {
+		group = &g
+	}
+	if err := s.req.MarkUsedObject(v1alpha2.UsedResource{
+		Ref: &v1.TypedLocalObjectReference{
+			APIGroup: group,
+			Kind:     req.GetGvk().GetKind(),
+			Name:     req.GetName(),
+		},
+		State:   req.GetState(),
+		Message: req.GetMessage(),
+	}); err != nil {
+		return nil, err
+	}
+	return &apiplugin.MarkUsedObjectResponse{}, nil
 }

@@ -9,7 +9,6 @@ import (
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
-	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -128,7 +127,7 @@ func (c *capsuleRequestClient) get(o client.Object, current bool) error {
 	return obj.DecodeInto(res.GetObject(), o, c.scheme)
 }
 
-func (c *capsuleRequestClient) GetCurrent(obj client.Object) error {
+func (c *capsuleRequestClient) GetExisting(obj client.Object) error {
 	return c.get(obj, true)
 }
 
@@ -137,16 +136,10 @@ func (c *capsuleRequestClient) GetNew(obj client.Object) error {
 }
 
 func (c *capsuleRequestClient) Set(co client.Object) error {
-	gvk, err := c.getGVK(co)
+	gvk, bs, err := c.getGVKAndBytes(co)
 	if err != nil {
 		return err
 	}
-
-	bs, err := obj.Encode(co, c.scheme)
-	if err != nil {
-		return err
-	}
-
 	if _, err := c.client.SetObject(c.ctx, &apiplugin.SetObjectRequest{
 		Object: bs,
 		Gvk:    fromGVK(gvk),
@@ -157,12 +150,52 @@ func (c *capsuleRequestClient) Set(co client.Object) error {
 	return nil
 }
 
-func (c *capsuleRequestClient) Delete(_ client.Object) error {
-	return errors.UnimplementedErrorf("unimplemented `Delete` command")
+func (c *capsuleRequestClient) getGVKAndBytes(o client.Object) (schema.GroupVersionKind, []byte, error) {
+	gvk, err := c.getGVK(o)
+	if err != nil {
+		return schema.GroupVersionKind{}, nil, err
+	}
+
+	bs, err := obj.Encode(o, c.scheme)
+	if err != nil {
+		return schema.GroupVersionKind{}, nil, err
+	}
+
+	return gvk, bs, nil
 }
 
-func (c *capsuleRequestClient) MarkUsedResource(_ v1alpha2.UsedResource) {
-	// panic("unimplemented `MarkUsedResource` command")
+func (c *capsuleRequestClient) Delete(obj client.Object) error {
+	gvk, bytes, err := c.getGVKAndBytes(obj)
+	if err != nil {
+		return err
+	}
+	if _, err := c.client.DeleteObject(c.ctx, &apiplugin.DeleteObjectRequest{
+		Gvk:    fromGVK(gvk),
+		Object: bytes,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *capsuleRequestClient) MarkUsedObject(r v1alpha2.UsedResource) error {
+	var group string
+	if r.Ref.APIGroup != nil {
+		group = *r.Ref.APIGroup
+	}
+	if _, err := c.client.MarkUsedObject(c.ctx, &apiplugin.MarkUsedObjectRequest{
+		Gvk: &apiplugin.GVK{
+			Group: group,
+			Kind:  r.Ref.Kind,
+		},
+		Name:    r.Ref.Name,
+		State:   r.State,
+		Message: r.Message,
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 type Server interface {

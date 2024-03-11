@@ -10,6 +10,8 @@ service PluginService {
 service RequestService {
   rpc GetObject(GetObjectRequest) returns (GetObjectResponse) {}
   rpc SetObject(SetObjectRequest) returns (SetObjectResponse) {}
+  rpc DeleteObject(DeleteObjectRequest) returns (DeleteObjectResponse) {}
+  rpc MarkUsedObject(MarkUsedObjectRequest) returns (MarkUsedObjectResponse) {}
 }
 
 message InitializeRequest {
@@ -45,3 +47,19 @@ message GVK {
   string version = 2;
   string kind = 3;
 }
+
+message DeleteObjectRequest {
+  GVK gvk = 1;
+  bytes object = 2;
+}
+
+message DeleteObjectResponse {}
+
+message MarkUsedObjectRequest {
+  GVK gvk = 1;
+  string name = 2;
+  string state = 3;
+  string message = 4;
+}
+
+message MarkUsedObjectResponse {}

@@ -63,7 +63,7 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 							Key: m.Key,
 						},
 					}
-					req.MarkUsedResource(v1alpha2.UsedResource{
+					req.MarkUsedObject(v1alpha2.UsedResource{
 						Ref: &corev1.TypedLocalObjectReference{
 							Kind: "ConfigMap",
 							Name: source.ConfigMap,
@@ -78,7 +78,7 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 							Key: m.Key,
 						},
 					}
-					req.MarkUsedResource(v1alpha2.UsedResource{
+					req.MarkUsedObject(v1alpha2.UsedResource{
 						Ref: &corev1.TypedLocalObjectReference{
 							Kind: "Secret",
 							Name: source.Secret,
