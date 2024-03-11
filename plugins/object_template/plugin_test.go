@@ -139,7 +139,7 @@ object: |
 group: apps
 kind: Deployment
 name: name`
-			plugin := pluginParent{
+			plugin := objectTemplate{
 				configBytes: []byte(c),
 			}
 			assert.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))

@@ -1,3 +1,4 @@
+// +groupName=plugins.rig.dev -- Only used for config doc generation
 package main
 
 import (
@@ -13,6 +14,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// Configuration for the object_template plugin
+// +kubebuilder:object:root=true
 type Config struct {
 	// The yaml to apply to the object. The yaml can be templated.
 	Object string `json:"object,omitempty"`
@@ -24,16 +27,16 @@ type Config struct {
 	Name string `json:"name,omitempty"`
 }
 
-type pluginParent struct {
+type objectTemplate struct {
 	configBytes []byte
 }
 
-func (p *pluginParent) Initialize(req plugin.InitializeRequest) error {
+func (p *objectTemplate) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
 	return nil
 }
 
-func (p *pluginParent) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *objectTemplate) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req,
 		plugin.CapsuleStep[Config],
 		func(c Config, req pipeline.CapsuleRequest) (string, any, error) {
@@ -51,29 +54,19 @@ func (p *pluginParent) Run(ctx context.Context, req pipeline.CapsuleRequest, log
 	if err != nil {
 		return err
 	}
-	pp := &pluginImpl{
-		config: config,
-	}
-	return pp.run(ctx, req, logger)
-}
 
-type pluginImpl struct {
-	config Config
-}
-
-func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
-	name := p.config.Name
+	name := config.Name
 	if name == "" {
 		name = req.Capsule().Name
 	}
-	currentObject, err := plugin.GetNew(p.config.Group, p.config.Kind, name, req)
+	currentObject, err := plugin.GetNew(config.Group, config.Kind, name, req)
 	if errors.IsNotFound(err) {
 		return nil
 	} else if err != nil {
 		return err
 	}
 
-	patchBytes, err := yaml.YAMLToJSON([]byte(p.config.Object))
+	patchBytes, err := yaml.YAMLToJSON([]byte(config.Object))
 	if err != nil {
 		return err
 	}
@@ -97,5 +90,5 @@ func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 }
 
 func main() {
-	plugin.StartPlugin("rigdev.object_template", &pluginParent{})
+	plugin.StartPlugin("rigdev.object_template", &objectTemplate{})
 }

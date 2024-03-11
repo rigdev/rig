@@ -1,3 +1,4 @@
+// +groupName=plugins.rig.dev -- Only used for config doc generation
 package main
 
 import (
@@ -10,10 +11,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// Configuration for the placement plugin
+// +kubebuilder:object:root=true
 type Config struct {
-	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
-	RequireTag   bool                `json:"requireTag,omitempty"`
+	// Nodeselectors which will be inserted into the deployment's podSpec
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// Tolerations which will be appended to the deployment's podSpec
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+	// True if a capsule needs a Tag annotation to be run
+	RequireTag bool `json:"requireTag,omitempty"`
 }
 
 type placement struct {

@@ -28,7 +28,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 FROM alpine:3
 
 RUN apk add --no-cache curl
-
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/bin/rig-operator /usr/local/bin/
 COPY --from=builder /app/bin/plugin/ /usr/local/bin/plugin/

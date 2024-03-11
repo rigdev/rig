@@ -102,7 +102,7 @@ unifiedServiceTags:
 					Name: name,
 				},
 			}))
-			plugin := pluginParent{
+			plugin := datadog{
 				configBytes: []byte(tt.config),
 			}
 			assert.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))

@@ -1,3 +1,4 @@
+// +groupName=plugins.rig.dev -- Only used for config doc generation
 package main
 
 import (
@@ -8,14 +9,18 @@ import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 )
 
+// Configuration for the annotations plugin
+// +kubebuilder:object:root=true
 type Config struct {
+	// Annotations are the annotations to insert into the object
 	Annotations map[string]string `json:"annotations,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
+	// Labels are the labels to insert into the object
+	Labels map[string]string `json:"labels,omitempty"`
 	// Group to match, for which objects to apply the patch to.
 	Group string `json:"group,omitempty"`
 	// Kind to match, for which objects to apply the patch to.
 	Kind string `json:"kind,omitempty"`
-	// Name of the object to match. Default to Capsule-name.
+	// Name of the object to match. Defaults to Capsule-name.
 	Name string `json:"name,omitempty"`
 }
 
