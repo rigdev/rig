@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-// Configuration for the google_sql_proxy plugin
+// Configuration for the google_cloud_sql_auth_proxy plugin
 // +kubebuilder:object:root=true
 type Config struct {
 	// The image running on the new container. Defaults to gcr.io/cloud-sql-connectors/cloud-sql-proxy
@@ -141,5 +141,5 @@ func (p *cloudSQLProxy) Run(_ context.Context, req pipeline.CapsuleRequest, _ hc
 }
 
 func main() {
-	plugin.StartPlugin("rigdev.google_sql_proxy", &cloudSQLProxy{})
+	plugin.StartPlugin("rigdev.google_cloud_sql_auth_proxy", &cloudSQLProxy{})
 }

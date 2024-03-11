@@ -394,8 +394,8 @@ const sidebars = {
             },
             {
               type: "doc",
-              id: "operator-manual/plugins/builtin/google_sql_proxy",
-              label: "Google SQL Proxy",
+              id: "operator-manual/plugins/builtin/google_cloud_sql_auth_proxy",
+              label: "Google Cloud SQL Auth Proxy",
               className: "homepage-sidebar-item",
             },
             {

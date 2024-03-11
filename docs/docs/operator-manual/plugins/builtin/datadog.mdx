@@ -48,7 +48,7 @@ Configuration for the datadog plugin
 
 | Field | Description |
 | --- | --- |
-| `dontAddEnabledAnnotation` _boolean_ | DontAddEnabledAnnotation toggles if the pods should have an annotation allowed the Datadog Admission controller to modify them. |
+| `dontAddEnabledAnnotation` _boolean_ | DontAddEnabledAnnotation toggles if the pods should have an annotation allowing the Datadog Admission controller to modify them. |
 | `libraryTag` _[LibraryTag](#librarytag)_ | LibraryTag defines configuration for which datadog libraries to inject into the pods. |
 | `unifiedServiceTags` _[UnifiedServiceTags](#unifiedservicetags)_ | UnifiedServiceTags configures the values for the Unified Service datadog tags. |
 
@@ -57,8 +57,7 @@ Configuration for the datadog plugin
 ### LibraryTag
 
 LibraryTag defines configuration for which datadog libraries to let the admission controller inject into the pods The admission controller will inject libraries from a container with the specified tag if the field is set.
-_Appears in:_
-- [Config](#config)
+
 | Field | Description |
 | --- | --- |
 | `java` _string_ | Tag of the Java library container |
@@ -72,8 +71,7 @@ _Appears in:_
 ### UnifiedServiceTags
 
 UnifiedServiceTags configures the values of the Unified Service datadog tags on both Deployment and Pods
-_Appears in:_
-- [Config](#config)
+
 | Field | Description |
 | --- | --- |
 | `env` _string_ | The env tag |
