@@ -35,8 +35,9 @@ resources created from a capsulespec
 	)
 	migrate.PersistentFlags().StringVarP(&base.Flags.Namespace, "namespace", "n", "", "The k8s namespace to migrate from")
 	migrate.PersistentFlags().StringVarP(&base.Flags.Project, "project", "p", "", "The project to migrate to")
-	migrate.Flags().Var(&nameOrigin, "name-origin", "From where to inherit the name of the capsule. One of `service,deployment,input`."+
-		" Default is service, if one exists, otherwise deployment.")
+	migrate.Flags().Var(&nameOrigin, "name-origin",
+		"From where to inherit the name of the capsule. One of `service,deployment,input`."+
+			" Default is service, if one exists, otherwise deployment.")
 	migrate.Flags().BoolVarP(&apply, "apply", "a", false, "Apply the capsule to the rig platform")
 	migrate.MarkFlagsMutuallyExclusive("apply", "skip-platform")
 
