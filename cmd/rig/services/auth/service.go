@@ -363,7 +363,7 @@ func (s *Service) login(ctx context.Context) error {
 		return err
 	}
 
-	s.cfg.GetCurrentAuth().UserID = uid
+	s.cfg.GetCurrentAuth().UserID = uid.String()
 	s.cfg.GetCurrentAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
 	s.cfg.GetCurrentAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
 	if err := s.cfg.Save(); err != nil {

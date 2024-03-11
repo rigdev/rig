@@ -12,9 +12,9 @@ import (
 )
 
 type Auth struct {
-	UserID       uuid.UUID `yaml:"user_id,omitempty"`
-	AccessToken  string    `yaml:"access_token,omitempty"`
-	RefreshToken string    `yaml:"refresh_token,omitempty"`
+	UserID       string `yaml:"user_id,omitempty"`
+	AccessToken  string `yaml:"access_token,omitempty"`
+	RefreshToken string `yaml:"refresh_token,omitempty"`
 }
 
 type Context struct {
@@ -112,6 +112,7 @@ func (cfg *Config) GetCurrentAuth() *Auth {
 			return u.Auth
 		}
 	}
+
 	return nil
 }
 

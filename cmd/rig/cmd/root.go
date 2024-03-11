@@ -61,9 +61,6 @@ func Run() error {
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Project,
 		"project", "P", flags.Flags.Project,
 		"select which project to use. Can also be set with environment variable `RIG_PROJECT`")
-	rootCmd.PersistentFlags().BoolVarP(&flags.Flags.BasicAuth,
-		"basic-auth", "B", flags.Flags.BasicAuth,
-		"Use basic auth with environment in context. Otherwise use access token from the context")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Host,
 		"host", "H", flags.Flags.Host,
 		"select which host to access the Rig Platform at. Should be of the form `http[s]://hostname:port/`."+
