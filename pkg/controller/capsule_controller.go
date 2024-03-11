@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/go-logr/logr"
@@ -63,6 +64,8 @@ const (
 	AnnotationChecksumAutoEnv   = "rig.dev/config-checksum-auto-env"
 	AnnotationChecksumEnv       = "rig.dev/config-checksum-env"
 	AnnotationChecksumSharedEnv = "rig.dev/config-checksum-shared-env"
+
+	AnnotationOverrideOwnership = "rig.dev/override-ownership"
 
 	LabelSharedConfig = "rig.dev/shared-config"
 	LabelCapsule      = "rig.dev/capsule"
@@ -329,7 +332,12 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
 	}
 
-	if _, err := r.Pipeline.RunCapsule(ctx, capsule); err != nil {
+	var options []pipeline.CapsuleRequestOption
+	if v, _ := strconv.ParseBool(capsule.Annotations[AnnotationOverrideOwnership]); v {
+		options = append(options, pipeline.WithForce())
+	}
+
+	if _, err := r.Pipeline.RunCapsule(ctx, capsule, options...); err != nil {
 		log.Error(err, "reconciliation ended with error")
 		return ctrl.Result{}, err
 	}

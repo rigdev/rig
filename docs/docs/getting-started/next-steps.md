@@ -10,4 +10,4 @@ Next, check out the different features of capsules and the Rig platform such as
 - [Configure container registries](/platform/container-registries)
 - [Inject config files](/platform/config-files)
 - [Using GitOps](/operator-manual/gitops)
-- [Deploy to capsules using GitHub actions](/platform/ci-cd)
+- [Deploy to capsules within CI/CD](/operator-manual/ci-cd)
