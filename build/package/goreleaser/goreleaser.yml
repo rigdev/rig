@@ -32,6 +32,21 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
       - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
+  - id: rig-ops
+    binary: rig-ops
+    main: ./cmd/rig-ops
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
+      - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
+      - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
   - id: plugin/rigdev.sidecar
     binary: plugin/rigdev.sidecar
     main: ./plugins/sidecar
@@ -237,6 +252,17 @@ brews:
       name: homebrew-tap
       token: "{{ .Env.RIGBOT_GITHUB_TOKEN }}"
     install: bin.install "rig"
+  - name: rig-ops
+    ids:
+      - rig-ops
+    commit_author:
+      name: rig-bot
+      email: shared@rig.dev
+    repository:
+      owner: rigdev
+      name: homebrew-tap
+      token: "{{ .Env.RIGBOT_GITHUB_TOKEN }}"
+    install: bin.install "rig-ops"
 
 release:
   github:
