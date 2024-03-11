@@ -91,7 +91,7 @@ func (cfg *Config) CreateContext(name, url string) error {
 	cfg.Users = append(cfg.Users, &User{
 		Name: name,
 		Auth: &Auth{
-			UserID: uuid.Nil,
+			UserID: uuid.Nil.String(),
 		},
 	})
 
@@ -102,4 +102,35 @@ func (cfg *Config) CreateContext(name, url string) error {
 	}
 
 	return cfg.Save()
+}
+
+func (cfg *Config) CreateContextNoPrompt(name, url string) error {
+	for _, c := range cfg.Contexts {
+		if c.Name == name {
+			return fmt.Errorf("context '%v' already exists", name)
+		}
+	}
+
+	cfg.Contexts = append(cfg.Contexts, &Context{
+		Name:          name,
+		ServiceName:   name,
+		ProjectID:     "",
+		EnvironmentID: "",
+	})
+
+	cfg.Services = append(cfg.Services, &Service{
+		Name:   name,
+		Server: url,
+	})
+
+	cfg.Users = append(cfg.Users, &User{
+		Name: name,
+		Auth: &Auth{
+			UserID: uuid.Nil.String(),
+		},
+	})
+
+	cfg.CurrentContextName = name
+
+	return nil
 }
