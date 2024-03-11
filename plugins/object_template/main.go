@@ -36,7 +36,7 @@ func (p *objectTemplate) Initialize(req plugin.InitializeRequest) error {
 	return nil
 }
 
-func (p *objectTemplate) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *objectTemplate) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req,
 		plugin.CapsuleStep[Config],
 		func(c Config, req pipeline.CapsuleRequest) (string, any, error) {

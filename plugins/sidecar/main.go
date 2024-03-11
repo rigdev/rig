@@ -29,7 +29,7 @@ func (s *sidecar) Initialize(req plugin.InitializeRequest) error {
 	return nil
 }
 
-func (s *sidecar) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (s *sidecar) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](s.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err

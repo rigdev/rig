@@ -58,7 +58,7 @@ func (p *cloudSQLProxy) Initialize(req plugin.InitializeRequest) error {
 	return nil
 }
 
-func (p *cloudSQLProxy) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *cloudSQLProxy) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err

@@ -14,7 +14,8 @@ import (
 // Configuration for the datadog plugin
 // +kubebuilder:object:root=true
 type Config struct {
-	// DontAddEnabledAnnotation toggles if the pods should have an annotation allowed the Datadog Admission controller to modify them.
+	// DontAddEnabledAnnotation toggles if the pods should have an annotation
+	// allowing the Datadog Admission controller to modify them.
 	DontAddEnabledAnnotation bool `json:"dontAddEnabledAnnotation,omitempty"`
 	// LibraryTag defines configuration for which datadog libraries to inject into the pods.
 	LibraryTag LibraryTag `json:"libraryTag,omitempty"`
@@ -56,7 +57,7 @@ func (d *datadog) Initialize(req plugin.InitializeRequest) error {
 	return nil
 }
 
-func (d *datadog) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (d *datadog) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](d.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err
