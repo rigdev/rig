@@ -20,8 +20,9 @@ config:
     portName: ""
   pipeline:
     steps:
-      []
+      - plugins: []
       # - plugins:
+      #   - name: rigdev.env_mapping
       #   - name: rigdev.object_template
       #     config: |
       #       group: apps
