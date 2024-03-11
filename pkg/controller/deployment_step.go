@@ -561,7 +561,7 @@ func (s *DeploymentStep) setUsedSource(
 			ref.State = "found"
 		}
 
-		req.MarkUsedObject(ref)
+		_ = req.MarkUsedObject(ref)
 	}()
 
 	switch kind {

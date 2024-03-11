@@ -22,6 +22,8 @@ import (
 // and the set of objects recorded to be applied after all steps in the pipeline has been executed (called 'new' objects).
 // The set of existing objects cannot be modified (as the interface does not allow for writing to Kubernetes)
 // but there are both read and write access to the set of new objects.
+//
+//nolint:lll
 type CapsuleRequest interface {
 	// Scheme returns the serialization scheme used by the rig operator.
 	// It contains all the types used by a Capsule.

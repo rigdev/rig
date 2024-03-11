@@ -63,12 +63,14 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 							Key: m.Key,
 						},
 					}
-					req.MarkUsedObject(v1alpha2.UsedResource{
+					if err := req.MarkUsedObject(v1alpha2.UsedResource{
 						Ref: &corev1.TypedLocalObjectReference{
 							Kind: "ConfigMap",
 							Name: source.ConfigMap,
 						},
-					})
+					}); err != nil {
+						return err
+					}
 				case source.Secret != "":
 					envVar.ValueFrom = &corev1.EnvVarSource{
 						SecretKeyRef: &corev1.SecretKeySelector{
@@ -78,12 +80,14 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 							Key: m.Key,
 						},
 					}
-					req.MarkUsedObject(v1alpha2.UsedResource{
+					if err := req.MarkUsedObject(v1alpha2.UsedResource{
 						Ref: &corev1.TypedLocalObjectReference{
 							Kind: "Secret",
 							Name: source.Secret,
 						},
-					})
+					}); err != nil {
+						return err
+					}
 				}
 
 				c.Env = append(c.Env, envVar)
