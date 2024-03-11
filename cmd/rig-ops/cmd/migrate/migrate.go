@@ -248,9 +248,13 @@ func migrate(ctx context.Context,
 }
 
 func setCapsulename(currentResources *Resources, capsuleSpec *v1alpha2.Capsule) error {
-	switch name {
+	capsuleSpec.Name = currentResources.Deployment.Name
+	switch nameOrigin {
+	case CapsuleName(""):
+		if currentResources.Service != nil {
+			capsuleSpec.Name = currentResources.Service.Name
+		}
 	case CapsuleNameDeployment:
-		capsuleSpec.Name = currentResources.Deployment.Name
 	case CapsuleNameService:
 		if currentResources.Service == nil {
 			return rerrors.FailedPreconditionErrorf("No services found to inherit name from")

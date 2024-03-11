@@ -22,7 +22,7 @@ func (c *CapsuleName) Set(v string) error {
 
 // Type is only used in help text
 func (c *CapsuleName) Type() string {
-	return "string"
+	return "service,deployment,input"
 }
 
 const (
