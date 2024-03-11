@@ -182,29 +182,6 @@ const sidebars = {
       },
     },
     {
-      type: "category",
-      link: {
-        type: "doc",
-        id: "platform/ci-cd",
-      },
-      label: "CI/CD",
-      className: "homepage-sidebar-item",
-      customProps: {
-        sidebar_icon: "TbRepeat",
-      },
-      items: [
-        {
-          type: "doc",
-          id: "platform/ci-cd/github-actions",
-          label: "GitHub Actions",
-          className: "docpage-sidebar-item",
-          customProps: {
-            sidebar_icon: "TbBrandGithub",
-          },
-        }
-      ]
-    },
-    {
       type: "doc",
       id: "platform/service-accounts",
       label: "Service Accounts",
@@ -222,28 +199,6 @@ const sidebars = {
         sidebar_icon: "BiLock",
       },
     },
-
-    //   items: [
-    //     {
-    //       type: "doc",
-    //       id: "platform/ci-cd/github-actions",
-    //       label: "GitHub Actions",
-    //       className: "docpage-sidebar-item",
-    //       customProps: {
-    //         sidebar_icon: "SiGithub",
-    //       },
-    //     },
-    //     {
-    //       type: "doc",
-    //       id: "platform/ci-cd/circle-ci",
-    //       label: "CircleCI [Preview]",
-    //       className: "docpage-sidebar-item",
-    //       customProps: {
-    //         sidebar_icon: "SiCircleci",
-    //       },
-    //     },
-    //   ],
-
     {
       type: "html",
       value: "Operator Manual",
@@ -302,6 +257,29 @@ const sidebars = {
           className: "docpage-sidebar-item",
         },
       ],
+    },
+    {
+      type: "category",
+      link: {
+        type: "doc",
+        id: "operator-manual/ci-cd",
+      },
+      label: "CI/CD",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "TbRepeat",
+      },
+      items: [
+        {
+          type: "doc",
+          id: "operator-manual/ci-cd/github-actions",
+          label: "GitHub Actions",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "TbBrandGithub",
+          },
+        }
+      ]
     },
     {
       type: "doc",
