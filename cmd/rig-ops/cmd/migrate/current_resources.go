@@ -51,29 +51,11 @@ func (r *Resources) getObject(kind, name string) client.Object {
 			return hpa
 		}
 	case "ConfigMap":
-		parts := strings.Split(name, "--")
-		if len(parts) < 2 {
-			name = fmt.Sprintf("env-source--%s", name)
-		} else {
-			name = strings.Replace("/"+parts[1], "-", "/", -1)
-			i := strings.LastIndex(name, "/")
-			name = name[:i] + "." + name[i+1:]
-		}
-
 		if cm, ok := r.ConfigMaps[name]; ok {
 			delete(r.ConfigMaps, name)
 			return cm
 		}
 	case "Secret":
-		parts := strings.Split(name, "--")
-		if len(parts) < 2 {
-			name = fmt.Sprintf("env-source--%s", name)
-		} else {
-			name = strings.Replace("/"+parts[1], "-", "/", -1)
-			i := strings.LastIndex(name, "/")
-			name = name[:i] + "." + name[i+1:]
-		}
-
 		if s, ok := r.Secrets[name]; ok {
 			delete(r.Secrets, name)
 			return s
@@ -110,12 +92,6 @@ func (r *Resources) getObject(kind, name string) client.Object {
 }
 
 func (r *Resources) CreateOverview() *tview.TreeView {
-	deploymentRoot := fmt.Sprintf("Deployment/%s", r.Deployment.GetName())
-	root := tview.NewTreeNode(deploymentRoot).SetSelectable(false)
-	tree := tview.NewTreeView().
-		SetRoot(root).
-		SetCurrentNode(root)
-
 	add := func(parent *tview.TreeNode, kind string, name string) *tview.TreeNode {
 		node := tview.NewTreeNode(fmt.Sprintf("%s/%s", kind, name)).
 			SetSelectable(false)
@@ -124,30 +100,48 @@ func (r *Resources) CreateOverview() *tview.TreeView {
 		return node
 	}
 
+	var root *tview.TreeNode
+	var deploymentRoot *tview.TreeNode
+	if r.Capsule != nil {
+		root = tview.NewTreeNode(fmt.Sprintf("Capsule/%s", r.Capsule.GetName())).SetSelectable(false)
+		deploymentRoot = add(root, "Deployment", r.Capsule.GetName())
+	} else {
+		root = tview.NewTreeNode(fmt.Sprintf("Deployment/%s", r.Deployment.GetName()))
+		deploymentRoot = root
+	}
+
+	tree := tview.NewTreeView().
+		SetRoot(root)
+
 	if r.ServiceAccount != nil {
-		add(root, "ServiceAccount", r.ServiceAccount.GetName())
+		add(deploymentRoot, "ServiceAccount", r.ServiceAccount.GetName())
 	}
 
 	if r.HPA != nil {
-		add(root, "HorizontalPodAutoscaler", r.HPA.GetName())
+		add(deploymentRoot, "HorizontalPodAutoscaler", r.HPA.GetName())
 	}
 
 	for _, c := range r.ConfigMaps {
-		add(root, "ConfigMap", c.GetName())
+		add(deploymentRoot, "ConfigMap", c.GetName())
 	}
 
 	for _, s := range r.Secrets {
-		add(root, "Secret", s.GetName())
+		add(deploymentRoot, "Secret", s.GetName())
 	}
 
 	if r.Service != nil {
-		serviceNode := add(root, "Service", r.Service.GetName())
+		serviceNode := add(deploymentRoot, "Service", r.Service.GetName())
 
-		for name, i := range r.Ingresses {
+		for _, i := range r.Ingresses {
+			ingress := i
+			added := false
 			for _, p := range i.Spec.Rules[0].HTTP.Paths {
-				if p.Backend.Service.Name == name {
-					add(serviceNode, "Ingress", i.GetName())
+				if p.Backend.Service.Name != r.Service.GetName() || added {
+					continue
 				}
+
+				add(serviceNode, "Ingress", ingress.GetName())
+				added = true
 			}
 		}
 
@@ -198,14 +192,34 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 	}
 
 	for _, configMap := range r.ConfigMaps {
-		originalConfigMap := other.getObject("ConfigMap", configMap.Name)
+		name := configMap.Name
+		parts := strings.Split(configMap.Name, "--")
+		if len(parts) < 2 {
+			name = fmt.Sprintf("env-source--%s", name)
+		} else {
+			name = strings.Replace("/"+parts[1], "-", "/", -1)
+			i := strings.LastIndex(name, "/")
+			name = name[:i] + "." + name[i+1:]
+		}
+
+		originalConfigMap := other.getObject("ConfigMap", name)
 		if err := reportSet.AddReport(originalConfigMap, configMap); err != nil {
 			return nil, err
 		}
 	}
 
 	for _, secret := range r.Secrets {
-		originalSecret := other.getObject("Secret", secret.Name)
+		name := secret.Name
+		parts := strings.Split(name, "--")
+		if len(parts) < 2 {
+			name = fmt.Sprintf("env-source--%s", name)
+		} else {
+			name = strings.Replace("/"+parts[1], "-", "/", -1)
+			i := strings.LastIndex(name, "/")
+			name = name[:i] + "." + name[i+1:]
+		}
+
+		originalSecret := other.getObject("Secret", name)
 		if err := reportSet.AddReport(originalSecret, secret); err != nil {
 			return nil, err
 		}
@@ -219,7 +233,13 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 	}
 
 	for _, cronJob := range r.CronJobs {
-		originalCronJob := other.getObject("CronJob", cronJob.Name)
+		name := cronJob.Name
+		parts := strings.SplitN(name, "-", 2)
+		if r.Capsule != nil && parts[0] == r.Capsule.Name {
+			name = parts[1]
+		}
+
+		originalCronJob := other.getObject("CronJob", name)
 		if err := reportSet.AddReport(originalCronJob, cronJob); err != nil {
 			return nil, err
 		}

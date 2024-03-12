@@ -19,8 +19,7 @@ config:
     path: ""
     portName: ""
   pipeline:
-    steps:
-      - plugins: []
+    steps: []
       # - plugins:
       #   - name: rigdev.env_mapping
       #   - name: rigdev.object_template
