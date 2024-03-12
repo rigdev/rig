@@ -2381,6 +2381,22 @@ Where the image came from
 
 
 
+<a name="api-v1-capsule-instance-ContainerInfo"></a>
+
+### ContainerInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| type | [ContainerType](#api-v1-capsule-instance-ContainerType) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-instance-ContainerTermination"></a>
 
 ### ContainerTermination
@@ -2443,6 +2459,9 @@ An executing step of the running stage.
 | ----- | ---- | ----- | ----------- |
 | info | [StepInfo](#api-v1-capsule-instance-StepInfo) |  | Meta information about the step. |
 | started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which the step started. |
+| finished_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Time at which the step finished. |
+| restarts | [uint32](#uint32) |  | Number of restarts of the container |
+| last_container_termination | [ContainerTermination](#api-v1-capsule-instance-ContainerTermination) |  | Information about the last container termination. |
 
 
 
@@ -2523,6 +2542,7 @@ A step of the preparing stage.
 | ----- | ---- | ----- | ----------- |
 | generic | [GenericStep](#api-v1-capsule-instance-GenericStep) |  | Generic step. |
 | image_pulling | [ImagePullingStep](#api-v1-capsule-instance-ImagePullingStep) |  | Image pulling step. |
+| init_executing | [ExecutingStep](#api-v1-capsule-instance-ExecutingStep) |  | Executing step for init containers |
 
 
 
@@ -2680,11 +2700,26 @@ Meta data about a step.
 | message | [string](#string) |  | Message of the step. |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last update time of the step. |
 | state | [StepState](#api-v1-capsule-instance-StepState) |  | State of the step. |
+| container | [ContainerInfo](#api-v1-capsule-instance-ContainerInfo) |  | Information about the container associated with the step. |
 
 
 
 
 
+
+
+
+<a name="api-v1-capsule-instance-ContainerType"></a>
+
+### ContainerType
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTAINER_TYPE_UNSPECIFIED | 0 |  |
+| CONTAINER_TYPE_MAIN | 1 |  |
+| CONTAINER_TYPE_SIDECAR | 2 |  |
+| CONTAINER_TYPE_INIT | 3 |  |
 
 
 

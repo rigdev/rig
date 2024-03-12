@@ -103,7 +103,7 @@ files:
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{{
+							InitContainers: []corev1.Container{{
 								Name:  "google-cloud-sql-proxy",
 								Image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:v1",
 								Args:  []string{"ins1", "ins2", "arg1", "arg2", "arg-name"},
@@ -140,6 +140,7 @@ files:
 								SecurityContext: &corev1.SecurityContext{
 									RunAsNonRoot: ptr.New(true),
 								},
+								RestartPolicy: ptr.New(corev1.ContainerRestartPolicyAlways),
 							}},
 							Volumes: []corev1.Volume{
 								{

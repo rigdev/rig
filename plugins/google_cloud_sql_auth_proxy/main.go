@@ -70,8 +70,15 @@ func (p *cloudSQLProxy) Run(_ context.Context, req pipeline.CapsuleRequest, _ hc
 		return err
 	}
 
+	var allnames []string
 	for _, c := range deployment.Spec.Template.Spec.Containers {
-		if c.Name == "google-cloud-sql-proxy" {
+		allnames = append(allnames, c.Name)
+	}
+	for _, c := range deployment.Spec.Template.Spec.InitContainers {
+		allnames = append(allnames, c.Name)
+	}
+	for _, name := range allnames {
+		if name == "google-cloud-sql-proxy" {
 			return errors.New("there was already a container named 'google-cloud-sql-proxy'")
 		}
 	}
@@ -134,8 +141,9 @@ func (p *cloudSQLProxy) Run(_ context.Context, req pipeline.CapsuleRequest, _ hc
 		SecurityContext: &corev1.SecurityContext{
 			RunAsNonRoot: ptr.New(true),
 		},
+		RestartPolicy: ptr.New(corev1.ContainerRestartPolicyAlways),
 	}
-	deployment.Spec.Template.Spec.Containers = append(deployment.Spec.Template.Spec.Containers, container)
+	deployment.Spec.Template.Spec.InitContainers = append(deployment.Spec.Template.Spec.InitContainers, container)
 
 	return req.Set(deployment)
 }
