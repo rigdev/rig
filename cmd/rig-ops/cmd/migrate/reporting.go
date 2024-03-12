@@ -80,14 +80,13 @@ func (r *ReportSet) getDiffingReport(orig, proposal client.Object) (*dyff.Report
 }
 
 // marshall the platform resources into kubernetes resources, and then compare them to the existing k8s resources
-func processPlatformOutput(
+func (c *Cmd) processPlatformOutput(
 	migratedResources *Resources,
 	platformResources map[string]string,
-	scheme *runtime.Scheme,
 ) (*v1alpha2.Capsule, error) {
 	var capsule *v1alpha2.Capsule
 	for _, resource := range platformResources {
-		proposal, err := obj.DecodeAny([]byte(resource), scheme)
+		proposal, err := obj.DecodeAny([]byte(resource), c.Scheme)
 		if err != nil {
 			return nil, err
 		}

@@ -14,16 +14,10 @@ import (
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func listSteps(ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
-	operatorClient *base.OperatorClient,
-	scheme *runtime.Scheme,
-) error {
-	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
+func (c *Cmd) listSteps(ctx context.Context, _ *cobra.Command, _ []string) error {
+	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
 	if err != nil {
 		return err
 	}
@@ -102,13 +96,8 @@ func getString(strings []string, idx int, def string) string {
 	return def
 }
 
-func get(ctx context.Context,
-	_ *cobra.Command,
-	args []string,
-	operatorClient *base.OperatorClient,
-	scheme *runtime.Scheme,
-) error {
-	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
+func (c *Cmd) get(ctx context.Context, _ *cobra.Command, args []string) error {
+	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
 	if err != nil {
 		return err
 	}
@@ -168,12 +157,8 @@ func get(ctx context.Context,
 	return common.FormatPrint(step, outputType)
 }
 
-func list(ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
-	operatorClient *base.OperatorClient,
-) error {
-	resp, err := operatorClient.Capabilities.GetPlugins(ctx, connect.NewRequest(&capabilities.GetPluginsRequest{}))
+func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
+	resp, err := c.OperatorClient.Capabilities.GetPlugins(ctx, connect.NewRequest(&capabilities.GetPluginsRequest{}))
 	if err != nil {
 		return err
 	}

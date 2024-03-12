@@ -6,16 +6,16 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
-	"k8s.io/apimachinery/pkg/runtime"
+	// "k8s.io/apimachinery/pkg/runtime"
 )
 
 // Get plugins from the operator config that matches all capsules and namespaces and is installed in the cluster
-func getPlugins(ctx context.Context, operatorClient *base.OperatorClient, scheme *runtime.Scheme) ([]string, error) {
-	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
+func (c *Cmd) getPlugins(ctx context.Context) ([]string, error) {
+	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := operatorClient.Capabilities.GetPlugins(ctx, connect.NewRequest(&capabilities.GetPluginsRequest{}))
+	resp, err := c.OperatorClient.Capabilities.GetPlugins(ctx, connect.NewRequest(&capabilities.GetPluginsRequest{}))
 	if err != nil {
 		return nil, err
 	}

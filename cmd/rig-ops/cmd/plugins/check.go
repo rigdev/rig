@@ -13,18 +13,10 @@ import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func check(ctx context.Context,
-	_ *cobra.Command,
-	_ []string,
-	operatorClient *base.OperatorClient,
-	cc client.Client,
-	scheme *runtime.Scheme,
-) error {
-	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
+func (c *Cmd) check(ctx context.Context, _ *cobra.Command, _ []string) error {
+	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
 	if err != nil {
 		return err
 	}
@@ -41,7 +33,7 @@ func check(ctx context.Context,
 
 	if len(capsules) == 0 || len(namespaces) == 0 {
 		capsuleList := v1alpha2.CapsuleList{}
-		if err := cc.List(ctx, &capsuleList); err != nil {
+		if err := c.K8s.List(ctx, &capsuleList); err != nil {
 			return err
 		}
 		for _, c := range capsuleList.Items {

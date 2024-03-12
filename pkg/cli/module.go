@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -35,6 +36,7 @@ import (
 var Module = fx.Module(
 	"rig-cli",
 	clientModule,
+	fx.Provide(scheme.New),
 	fx.Provide(func() (*cmdconfig.Config, error) {
 		return cmdconfig.NewConfig("")
 	}),
@@ -131,6 +133,10 @@ var (
 	firstPreRun = true
 	preRunsLeft = 0
 )
+
+func AddOptions(opts ...fx.Option) {
+	options = append(options, opts...)
+}
 
 func computeNumOfPreRuns(cmd *cobra.Command) int {
 	res := 0

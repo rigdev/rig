@@ -19,18 +19,11 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func dryRun(ctx context.Context,
-	_ *cobra.Command,
-	args []string,
-	operatorClient *base.OperatorClient,
-	cc client.Client,
-	scheme *runtime.Scheme,
-) error {
-	cfg, err := base.GetOperatorConfig(ctx, operatorClient, scheme)
+func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error {
+	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
 	if err != nil {
 		return err
 	}
@@ -93,7 +86,7 @@ func dryRun(ctx context.Context,
 	var spec string
 	var capsule v1alpha2.Capsule
 	if len(args) > 0 {
-		if err := cc.Get(ctx, client.ObjectKey{
+		if err := c.K8s.Get(ctx, client.ObjectKey{
 			Namespace: args[0],
 			Name:      args[1],
 		}, &capsule); err != nil {
@@ -107,7 +100,7 @@ func dryRun(ctx context.Context,
 		spec = string(bytes)
 	} else {
 		capsuleList := v1alpha2.CapsuleList{}
-		if err := cc.List(ctx, &capsuleList); err != nil {
+		if err := c.K8s.List(ctx, &capsuleList); err != nil {
 			return err
 		}
 		var choices [][]string
@@ -119,7 +112,7 @@ func dryRun(ctx context.Context,
 			return err
 		}
 		choice := choices[idx]
-		if err := cc.Get(ctx, client.ObjectKey{
+		if err := c.K8s.Get(ctx, client.ObjectKey{
 			Namespace: choice[0],
 			Name:      choice[1],
 		}, &capsule); err != nil {
@@ -132,7 +125,7 @@ func dryRun(ctx context.Context,
 		return err
 	}
 
-	dryRun, err := operatorClient.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
+	dryRun, err := c.OperatorClient.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
 		Namespace:      capsule.Namespace,
 		Capsule:        capsule.Name,
 		OperatorConfig: string(cfgBytes),
@@ -144,7 +137,7 @@ func dryRun(ctx context.Context,
 
 	var objects []any
 	for _, o := range dryRun.Msg.GetOutputObjects() {
-		object, err := obj.DecodeAny([]byte(o.GetObject().GetContent()), scheme)
+		object, err := obj.DecodeAny([]byte(o.GetObject().GetContent()), c.Scheme)
 		if err != nil {
 			return err
 		}
@@ -152,7 +145,7 @@ func dryRun(ctx context.Context,
 	}
 
 	if interactive {
-		return interactiveDiff(scheme, dryRun.Msg)
+		return c.interactiveDiff(dryRun.Msg)
 	}
 
 	out, err := common.Format(objects, common.OutputTypeYAML)
@@ -168,10 +161,10 @@ func dryRun(ctx context.Context,
 	return os.WriteFile(output, []byte(out), 0666)
 }
 
-func interactiveDiff(scheme *runtime.Scheme, dryRun *pipeline.DryRunResponse) error {
+func (c *Cmd) interactiveDiff(dryRun *pipeline.DryRunResponse) error {
 	current := migrate.NewResources()
 	for _, o := range dryRun.InputObjects {
-		object, err := obj.DecodeAny([]byte(o.GetContent()), scheme)
+		object, err := obj.DecodeAny([]byte(o.GetContent()), c.Scheme)
 		if err != nil {
 			return err
 		}
@@ -182,13 +175,13 @@ func interactiveDiff(scheme *runtime.Scheme, dryRun *pipeline.DryRunResponse) er
 	overview := current.CreateOverview()
 
 	migrated := migrate.NewResources()
-	if err := migrate.ProcessOperatorOutput(migrated, dryRun.GetOutputObjects(), scheme); err != nil {
+	if err := migrate.ProcessOperatorOutput(migrated, dryRun.GetOutputObjects(), c.Scheme); err != nil {
 		return err
 	}
 
 	migratedOverview := migrated.CreateOverview()
 
-	reports, err := migrated.Compare(current, scheme)
+	reports, err := migrated.Compare(current, c.Scheme)
 	if err != nil {
 		return err
 	}

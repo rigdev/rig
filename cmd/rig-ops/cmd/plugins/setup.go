@@ -4,7 +4,11 @@ import (
 	"errors"
 
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -23,16 +27,31 @@ var (
 	interactive  bool
 )
 
+type Cmd struct {
+	fx.In
+
+	OperatorClient *base.OperatorClient
+	K8s            client.Client
+	Scheme         *runtime.Scheme
+}
+
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd = c
+}
+
 func Setup(parent *cobra.Command) {
 	pluginsCmd := &cobra.Command{
-		Use:   "plugins",
-		Short: "Migrate you kubernetes deployments to Rig Capsules",
+		Use:               "plugins",
+		Short:             "Migrate you kubernetes deployments to Rig Capsules",
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	check := &cobra.Command{
 		Use:   "check",
 		Short: "Check which plugins will be run on which capsules",
-		RunE:  base.Register(check),
+		RunE:  cli.CtxWrap(cmd.check),
 	}
 	//nolint:lll
 	check.Flags().StringSliceVar(&capsules, "capsules", nil, "If given, will use those capsule names instead of reading them from kubernetes")
@@ -42,7 +61,7 @@ func Setup(parent *cobra.Command) {
 	listSteps := &cobra.Command{
 		Use:   "list-steps",
 		Short: "Lists the plugin steps currently configured in the operator",
-		RunE:  base.Register(listSteps),
+		RunE:  cli.CtxWrap(cmd.listSteps),
 	}
 	//nolint:lll
 	listSteps.Flags().BoolVar(&showConfig, "show-config", false, "If set, will also display the YAML configuration for each plugin.")
@@ -53,7 +72,7 @@ func Setup(parent *cobra.Command) {
 		//nolint:lll
 		Short: "Gets the configuration for a single step given by index. If no index is given, it will prompt you to choose a step.",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.Register(get),
+		RunE:  cli.CtxWrap(cmd.get),
 	}
 	pluginsCmd.AddCommand(get)
 
@@ -72,7 +91,7 @@ The dry run will be executed with the resulting list of plugins.`,
 			}
 			return nil
 		},
-		RunE: base.Register(dryRun),
+		RunE: cli.CtxWrap(cmd.dryRun),
 	}
 	//nolint:lll
 	dryRun.Flags().StringVar(&pluginConfig, "config", "", "If given, will read the config file at the path and use that as the pipeline config. If empty, will use the plugin config of the running operator.")
@@ -94,7 +113,7 @@ The dry run will be executed with the resulting list of plugins.`,
 	list := &cobra.Command{
 		Use:   "list",
 		Short: "Lists the set of plugins available in the operator",
-		RunE:  base.Register(list),
+		RunE:  cli.CtxWrap(cmd.list),
 	}
 	pluginsCmd.AddCommand(list)
 
