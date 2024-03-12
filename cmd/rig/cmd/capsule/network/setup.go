@@ -6,7 +6,7 @@ import (
 
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
@@ -35,7 +35,7 @@ func Setup(parent *cobra.Command) {
 	network := &cobra.Command{
 		Use:               "network",
 		Short:             "Configure and inspect the network of the capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	networkConfigure := &cobra.Command{
@@ -43,7 +43,7 @@ func Setup(parent *cobra.Command) {
 		Short: "configure the network of the capsule. If no filepath is given it goes through an interactive " +
 			"configuration",
 		Args: cobra.MaximumNArgs(1),
-		RunE: base.CtxWrap(cmd.configure),
+		RunE: cli.CtxWrap(cmd.configure),
 	}
 	networkConfigure.Flags().BoolVarP(
 		&forceDeploy,
@@ -55,9 +55,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "get [name]",
 		Short: "get the entire network or a specific interface of the capsule",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -76,7 +76,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

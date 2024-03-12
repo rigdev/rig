@@ -11,7 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -54,14 +54,14 @@ func Setup(parent *cobra.Command) {
 	image := &cobra.Command{
 		Use:               "image",
 		Short:             "Manage images of the capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	imageCreate := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new image with the given image",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.createImage),
+		RunE:  cli.CtxWrap(cmd.createImage),
 	}
 	imageCreate.Flags().StringVarP(&imageID, "image", "i", "", "image to use for the image")
 	imageCreate.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy image after successful creation")
@@ -98,9 +98,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "get [image-id]",
 		Short: "Get one or multiple images",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.getBuild),
+		RunE:  cli.CtxWrap(cmd.getBuild),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 		Annotations: map[string]string{
@@ -128,7 +128,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

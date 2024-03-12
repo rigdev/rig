@@ -10,7 +10,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
@@ -52,7 +52,7 @@ func Setup(parent *cobra.Command) {
 	project := &cobra.Command{
 		Use:               "project",
 		Short:             "Manage Rig projects",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitEnvironment: "",
 			auth.OmitProject:     "",
@@ -63,7 +63,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "get-settings",
 		Short: "Get project settings",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.getSettings),
+		RunE:  cli.CtxWrap(cmd.getSettings),
 	}
 	project.AddCommand(getSettings)
 
@@ -71,7 +71,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "update-settings",
 		Short: "Update project settings",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.updateSettings),
+		RunE:  cli.CtxWrap(cmd.updateSettings),
 	}
 	updateSettings.Flags().StringVarP(&field, "field", "f", "", "Field to update")
 	updateSettings.Flags().StringVarP(&value, "value", "v", "", "Value to set")
@@ -104,7 +104,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "create [project-id]",
 		Short: "Create a new project",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.create),
+		RunE:  cli.CtxWrap(cmd.create),
 	}
 	createProject.Flags().BoolVar(&useProject, "use", false, "Use the created project")
 	if err := createProject.RegisterFlagCompletionFunc("use", common.BoolCompletions); err != nil {
@@ -118,10 +118,10 @@ func Setup(parent *cobra.Command) {
 		Short: "Delete a project. If project-ID is left out, delete the current project",
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.projectCompletions),
+			cli.CtxWrapCompletion(cmd.projectCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
-		RunE: base.CtxWrap(cmd.delete),
+		RunE: cli.CtxWrap(cmd.delete),
 	}
 	project.AddCommand(deleteProject)
 
@@ -130,10 +130,10 @@ func Setup(parent *cobra.Command) {
 		Short: "Update a project. If project-ID is left out, update the current project",
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.projectCompletions),
+			cli.CtxWrapCompletion(cmd.projectCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
-		RunE: base.CtxWrap(cmd.update),
+		RunE: cli.CtxWrap(cmd.update),
 	}
 	updateProject.Flags().StringVarP(&field, "field", "f", "", "Field to update")
 	updateProject.Flags().StringVarP(&value, "value", "v", "", "Value to set")
@@ -164,10 +164,10 @@ func Setup(parent *cobra.Command) {
 		Short: "Get one or multiple projects",
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.projectCompletions),
+			cli.CtxWrapCompletion(cmd.projectCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
-		RunE: base.CtxWrap(cmd.get),
+		RunE: cli.CtxWrap(cmd.get),
 	}
 	getProjects.Flags().BoolVarP(&current, "current", "c", false, "Get the current project")
 	getProjects.Flags().IntVar(&offset, "offset", 0, "Offset")
@@ -186,7 +186,7 @@ func (c *Cmd) projectCompletions(ctx context.Context,
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

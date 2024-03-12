@@ -1,4 +1,4 @@
-package base
+package cli
 
 import (
 	"context"
@@ -47,7 +47,7 @@ func newRigClient(
 	r := rig.NewClient(options...)
 	a := auth.NewService(r, cfg)
 
-	if !SkipChecks(cmd) {
+	if !SkipFX(cmd) {
 		if err := a.CheckAuth(context.TODO(), cmd, bool(interactive), flags.Flags.BasicAuth); err != nil {
 			return nil, nil, err
 		}

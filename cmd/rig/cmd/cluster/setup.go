@@ -2,7 +2,7 @@ package cluster
 
 import (
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
@@ -26,7 +26,7 @@ func Setup(parent *cobra.Command) {
 	cluster := &cobra.Command{
 		Use:               "cluster",
 		Short:             "Manage Rig clusters",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject: "",
 		},
@@ -36,7 +36,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "get-config",
 		Short: "Returns the config of the Rig cluster",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 	}
 
 	cluster.AddCommand(getConfig)

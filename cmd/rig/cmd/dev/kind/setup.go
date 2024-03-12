@@ -2,7 +2,7 @@ package kind
 
 import (
 	"github.com/docker/docker/client"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -34,14 +34,14 @@ func Setup(parent *cobra.Command) {
 		Use: "kind",
 		Short: "The kind command is used to setup and manage a development kubernetes cluster running " +
 			"Rig using Kind",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "Create a rig cluster in Kind for local development",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.create),
+		RunE:  cli.CtxWrap(cmd.create),
 	}
 	create.Flags().StringVarP(
 		&installationID,
@@ -84,7 +84,7 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 		Use:   "deploy",
 		Short: "Deploy a new (or specific) version of Rig to the kind cluster",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.deploy),
+		RunE:  cli.CtxWrap(cmd.deploy),
 	}
 	kind.AddCommand(deploy)
 	deploy.Flags().StringVarP(
@@ -119,7 +119,7 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 		Use:   "clean",
 		Short: "Deletes the rig kind-cluster",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.clean),
+		RunE:  cli.CtxWrap(cmd.clean),
 	}
 	kind.AddCommand(clean)
 

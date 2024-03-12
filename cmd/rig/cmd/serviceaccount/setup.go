@@ -11,7 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -43,7 +43,7 @@ func Setup(parent *cobra.Command) {
 	serviceAccount := &cobra.Command{
 		Use:               "service-account",
 		Short:             "Manage service accounts",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -53,7 +53,7 @@ func Setup(parent *cobra.Command) {
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new service account",
-		RunE:  base.CtxWrap(cmd.create),
+		RunE:  cli.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
 	serviceAccount.PersistentFlags().StringVarP(&name, "name", "n", "", "name of the credential")
@@ -67,9 +67,9 @@ func Setup(parent *cobra.Command) {
 	get := &cobra.Command{
 		Use:               "get [id]",
 		Short:             "Get one or multiple service accounts",
-		RunE:              base.CtxWrap(cmd.list),
+		RunE:              cli.CtxWrap(cmd.list),
 		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: base.CtxWrapCompletion(cmd.completions),
+		ValidArgsFunction: cli.CtxWrapCompletion(cmd.completions),
 	}
 	get.Flags().IntVar(&offset, "offset", 0, "offset")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
@@ -78,9 +78,9 @@ func Setup(parent *cobra.Command) {
 	deleteCmd := &cobra.Command{
 		Use:               "delete [id]",
 		Short:             "Delete a service account",
-		RunE:              base.CtxWrap(cmd.delete),
+		RunE:              cli.CtxWrap(cmd.delete),
 		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: base.CtxWrapCompletion(cmd.completions),
+		ValidArgsFunction: cli.CtxWrapCompletion(cmd.completions),
 	}
 	serviceAccount.AddCommand(deleteCmd)
 
@@ -93,7 +93,7 @@ func (c *Cmd) completions(
 	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
@@ -32,7 +32,7 @@ func Setup(parent *cobra.Command) {
 	authCmd := &cobra.Command{
 		Use:               "auth",
 		Short:             "Manage authentication for the current user",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -46,7 +46,7 @@ func Setup(parent *cobra.Command) {
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
-		RunE: base.CtxWrap(cmd.login),
+		RunE: cli.CtxWrap(cmd.login),
 	}
 	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
 	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
@@ -67,7 +67,7 @@ invalidated by the server.`,
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
-		RunE: base.CtxWrap(cmd.activateServiceAccount),
+		RunE: cli.CtxWrap(cmd.activateServiceAccount),
 	}
 	authCmd.AddCommand(activateServiceAccount)
 
@@ -75,7 +75,7 @@ invalidated by the server.`,
 		Use:   "get",
 		Short: "Get user information associated with the current user",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 	}
 	authCmd.AddCommand(get)
 

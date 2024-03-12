@@ -11,7 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -48,7 +48,7 @@ func Setup(parent *cobra.Command) {
 	user := &cobra.Command{
 		Use:               "user",
 		Short:             "Manage users in your projects",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -58,7 +58,7 @@ func Setup(parent *cobra.Command) {
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new user",
-		RunE:  base.CtxWrap(cmd.create),
+		RunE:  cli.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
 	create.Flags().StringVarP(&email, "email", "e", "", "email of the user")
@@ -74,10 +74,10 @@ func Setup(parent *cobra.Command) {
 	update := &cobra.Command{
 		Use:   "update [user-id | {email|username|phone}]",
 		Short: "Update a user",
-		RunE:  base.CtxWrap(cmd.update),
+		RunE:  cli.CtxWrap(cmd.update),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.userCompletions),
+			cli.CtxWrapCompletion(cmd.userCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -115,9 +115,9 @@ func Setup(parent *cobra.Command) {
 	get := &cobra.Command{
 		Use:   "get [user-id | {email|username|phone}]",
 		Short: "Get one or multiple users",
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.userCompletions),
+			cli.CtxWrapCompletion(cmd.userCompletions),
 			common.MaxArgsCompletionFilter(1)),
 		Args: cobra.MaximumNArgs(1),
 	}
@@ -128,10 +128,10 @@ func Setup(parent *cobra.Command) {
 	deleteCmd := &cobra.Command{
 		Use:   "delete [user-id | {email|username|phone}]",
 		Short: "Delete a user",
-		RunE:  base.CtxWrap(cmd.delete),
+		RunE:  cli.CtxWrap(cmd.delete),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.userCompletions),
+			cli.CtxWrapCompletion(cmd.userCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -140,10 +140,10 @@ func Setup(parent *cobra.Command) {
 	getSessions := &cobra.Command{
 		Use:   "get-sessions [user-id | {email|username|phone}]",
 		Short: "Get sessions of a user",
-		RunE:  base.CtxWrap(cmd.listSessions),
+		RunE:  cli.CtxWrap(cmd.listSessions),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.userCompletions),
+			cli.CtxWrapCompletion(cmd.userCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -154,7 +154,7 @@ func Setup(parent *cobra.Command) {
 	getSettings := &cobra.Command{
 		Use:   "get-settings",
 		Short: "Get the user-settings for the current project",
-		RunE:  base.CtxWrap(cmd.getSettings),
+		RunE:  cli.CtxWrap(cmd.getSettings),
 		Args:  cobra.NoArgs,
 	}
 	user.AddCommand(getSettings)
@@ -162,7 +162,7 @@ func Setup(parent *cobra.Command) {
 	updateSettings := &cobra.Command{
 		Use:   "update-settings",
 		Short: "Update the user-settings for the current project",
-		RunE:  base.CtxWrap(cmd.updateSettings),
+		RunE:  cli.CtxWrap(cmd.updateSettings),
 		Args:  cobra.NoArgs,
 	}
 	updateSettings.Flags().StringVarP(&field, "field", "f", "", "field to update")
@@ -210,7 +210,7 @@ func (c *Cmd) userCompletions(
 	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
