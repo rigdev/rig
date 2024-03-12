@@ -6,14 +6,24 @@ import (
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/migrate"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/plugins"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 	"k8s.io/client-go/util/homedir"
 )
 
 func Run() error {
+	cli.AddOptions(
+		fx.Provide(base.NewKubernetesClient),
+		fx.Provide(base.NewKubernetesReader),
+		fx.Provide(base.NewOperatorClient),
+	)
+
 	rootCmd := &cobra.Command{
-		Use:   "rig-ops",
-		Short: "CLI tool for managing your Rig Clusters",
+		Use:           "rig-ops",
+		Short:         "CLI tool for managing your Rig Clusters",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 	rootCmd.PersistentFlags().StringVar(&base.Flags.KubeConfig,
 		"kube-config", filepath.Join(homedir.HomeDir(), ".kube", "config"), "Path to your kubeconfig file")

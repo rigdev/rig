@@ -2,7 +2,11 @@ package migrate
 
 import (
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -16,11 +20,26 @@ var (
 
 var nameOrigin CapsuleName
 
+type Cmd struct {
+	fx.In
+
+	OperatorClient *base.OperatorClient
+	K8s            client.Client
+	Scheme         *runtime.Scheme
+}
+
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd = c
+}
+
 func Setup(parent *cobra.Command) {
 	migrate := &cobra.Command{
-		Use:   "migrate",
-		Short: "Migrate you kubernetes deployments to Rig Capsules",
-		RunE:  base.Register(migrate),
+		Use:               "migrate",
+		Short:             "Migrate you kubernetes deployments to Rig Capsules",
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		RunE:              cli.CtxWrap(cmd.migrate),
 	}
 
 	migrate.Flags().BoolVar(&skipPlatform,
