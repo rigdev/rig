@@ -2,7 +2,7 @@ package scale
 
 import (
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -49,14 +49,14 @@ func Setup(parent *cobra.Command) {
 	scale := &cobra.Command{
 		Use:               "scale",
 		Short:             "Scale and inspect the resources of the capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	scaleGet := &cobra.Command{
 		Use:   "get",
 		Short: "Displays the resources (container size) and replicas of the capsule",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 	}
 	scale.AddCommand(scaleGet)
 
@@ -64,7 +64,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "vertical",
 		Short: "Vertically scaling the capsule (setting the container size)",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.vertical),
+		RunE:  cli.CtxWrap(cmd.vertical),
 	}
 	scaleVertical.Flags().StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
 	scaleVertical.Flags().StringVar(&requestMemory, "request-memory", "", "Minimum memory per container")
@@ -84,7 +84,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "horizontal",
 		Short: "Horizontally scaling the capsule (setting the number of replicas and configuring the autoscaler)",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.horizontal),
+		RunE:  cli.CtxWrap(cmd.horizontal),
 	}
 	scaleHorizontal.Flags().Uint32VarP(&replicas, "replicas", "r", 0, "number of replicas to scale to")
 	scaleHorizontal.Flags().BoolVarP(
@@ -101,7 +101,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "autoscale",
 		Short: "Configure the autoscaler for horizontal scaling",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.autoscale),
+		RunE:  cli.CtxWrap(cmd.autoscale),
 	}
 	scaleHorizontalAuto.Flags().Uint32VarP(
 		&utilizationPercentage,

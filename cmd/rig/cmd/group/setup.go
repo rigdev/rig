@@ -13,7 +13,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -42,7 +42,7 @@ func Setup(parent *cobra.Command) {
 	group := &cobra.Command{
 		Use:               "group",
 		Short:             "Manage groups",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -52,7 +52,7 @@ func Setup(parent *cobra.Command) {
 	create := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new group",
-		RunE:  base.CtxWrap(cmd.create),
+		RunE:  cli.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
 	create.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
@@ -61,10 +61,10 @@ func Setup(parent *cobra.Command) {
 	deleteCmd := &cobra.Command{
 		Use:   "delete [group-id]",
 		Short: "Delete a group",
-		RunE:  base.CtxWrap(cmd.delete),
+		RunE:  cli.CtxWrap(cmd.delete),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -74,9 +74,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "update [group-id]",
 		Short: "Update a group",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.update),
+		RunE:  cli.CtxWrap(cmd.update),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -87,9 +87,9 @@ func Setup(parent *cobra.Command) {
 		Short:   "Get one or multiple groups",
 		Args:    cobra.MaximumNArgs(1),
 		Aliases: []string{"ls"},
-		RunE:    base.CtxWrap(cmd.get),
+		RunE:    cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -100,10 +100,10 @@ func Setup(parent *cobra.Command) {
 	getMembers := &cobra.Command{
 		Use:   "get-members [group-id]",
 		Short: "Get members of a group",
-		RunE:  base.CtxWrap(cmd.listMembers),
+		RunE:  cli.CtxWrap(cmd.listMembers),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -114,10 +114,10 @@ func Setup(parent *cobra.Command) {
 	getGroupsForMember := &cobra.Command{
 		Use:   "get-groups-for-member [member-id]",
 		Short: "Get groups that a user or service account is a member of",
-		RunE:  base.CtxWrap(cmd.listGroupsForUser),
+		RunE:  cli.CtxWrap(cmd.listGroupsForUser),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.memberCompletions),
+			cli.CtxWrapCompletion(cmd.memberCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -128,17 +128,17 @@ func Setup(parent *cobra.Command) {
 	addUser := &cobra.Command{
 		Use:   "add-member [member-id]",
 		Short: "Add a member to a group",
-		RunE:  base.CtxWrap(cmd.addMember),
+		RunE:  cli.CtxWrap(cmd.addMember),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.memberCompletions),
+			cli.CtxWrapCompletion(cmd.memberCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
 	addUser.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
 	if err := addUser.RegisterFlagCompletionFunc(
 		"group-id",
-		base.CtxWrapCompletion(cmd.completions),
+		cli.CtxWrapCompletion(cmd.completions),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -148,17 +148,17 @@ func Setup(parent *cobra.Command) {
 	removeUser := &cobra.Command{
 		Use:   "remove-member [member-id]",
 		Short: "Remove a member from a group",
-		RunE:  base.CtxWrap(cmd.removeMember),
+		RunE:  cli.CtxWrap(cmd.removeMember),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.memberCompletions),
+			cli.CtxWrapCompletion(cmd.memberCompletions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
 	removeUser.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
 	if err := removeUser.RegisterFlagCompletionFunc(
 		"group-id",
-		base.CtxWrapCompletion(cmd.completions),
+		cli.CtxWrapCompletion(cmd.completions),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -174,7 +174,7 @@ func (c *Cmd) completions(
 	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
@@ -209,7 +209,7 @@ func (c *Cmd) memberCompletions(
 	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

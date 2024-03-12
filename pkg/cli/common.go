@@ -1,4 +1,4 @@
-package base
+package cli
 
 import (
 	"strings"
@@ -24,6 +24,6 @@ func cmdPathContainsUsePrefix(cmd *cobra.Command, use string) bool {
 	return false
 }
 
-func SkipChecks(cmd *cobra.Command) bool {
+func SkipFX(cmd *cobra.Command) bool {
 	return cmdPathContainsUsePrefix(cmd, "completion") || cmdPathContainsUsePrefix(cmd, "help ")
 }

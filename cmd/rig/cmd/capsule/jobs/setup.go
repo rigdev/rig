@@ -8,7 +8,7 @@ import (
 
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
@@ -44,20 +44,20 @@ func Setup(parent *cobra.Command) {
 	jobs := &cobra.Command{
 		Use:               "jobs",
 		Short:             "Manage jobs for the capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	jobsGet := &cobra.Command{
 		Use:   "get",
 		Short: "Get cronjobs defined for the capsule",
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 	}
 	jobs.AddCommand(jobsGet)
 
 	jobsAdd := &cobra.Command{
 		Use:   "add",
 		Short: "Add a cronjob to the capsule",
-		RunE:  base.CtxWrap(cmd.add),
+		RunE:  cli.CtxWrap(cmd.add),
 	}
 	jobsAdd.Flags().StringVarP(&path, "path", "p", "", "Path to a json or yaml file containing a cronjob specification")
 	jobs.AddCommand(jobsAdd)
@@ -66,9 +66,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "delete [job-name]",
 		Short: "Delete one or more cronjobs to the capsule",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.delete),
+		RunE:  cli.CtxWrap(cmd.delete),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -77,12 +77,12 @@ func Setup(parent *cobra.Command) {
 	executions := &cobra.Command{
 		Use:   "executions",
 		Short: "See executions of jobs",
-		RunE:  base.CtxWrap(cmd.executions),
+		RunE:  cli.CtxWrap(cmd.executions),
 	}
 	executions.Flags().StringVarP(&jobName, "job", "j", "", "Name of the job to fetch executions from")
 	if err := executions.RegisterFlagCompletionFunc(
 		"job",
-		base.CtxWrapCompletion(cmd.completions),
+		cli.CtxWrapCompletion(cmd.completions),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -133,7 +133,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

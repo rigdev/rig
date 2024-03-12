@@ -12,7 +12,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	capsule_root "github.com/rigdev/rig/cmd/rig/cmd/capsule/root"
 	"github.com/rigdev/rig/cmd/rig/cmd/cluster"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
@@ -70,8 +70,8 @@ func Run() error {
 		Use:               "license",
 		Short:             "Get License Information for the current project",
 		Args:              cobra.NoArgs,
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
-		RunE:              base.CtxWrap(cmd.getLicenseInfo),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		RunE:              cli.CtxWrap(cmd.getLicenseInfo),
 		Annotations: map[string]string{
 			auth_service.OmitProject:     "",
 			auth_service.OmitEnvironment: "",
@@ -82,8 +82,8 @@ func Run() error {
 	version := &cobra.Command{
 		Use:               "version",
 		Short:             "print version information",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
-		RunE:              base.CtxWrap(cmd.version),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		RunE:              cli.CtxWrap(cmd.version),
 		Annotations: map[string]string{
 			auth_service.OmitProject:     "",
 			auth_service.OmitEnvironment: "",

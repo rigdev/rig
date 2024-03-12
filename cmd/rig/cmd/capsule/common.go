@@ -12,7 +12,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
@@ -151,7 +151,7 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 			if err := printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stdout); err != nil {
 				return err
 			}
-			os.Stdout.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
+			os.Stdout.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(cli.RFC3339NanoFixed))
 			os.Stdout.WriteString(": ")
 			if _, err := os.Stdout.Write(v.Stdout); err != nil {
 				return err
@@ -160,7 +160,7 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 			if err := printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stderr); err != nil {
 				return err
 			}
-			os.Stderr.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
+			os.Stderr.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(cli.RFC3339NanoFixed))
 			os.Stderr.WriteString(": ")
 			if _, err := os.Stderr.Write(v.Stderr); err != nil {
 				return err
@@ -169,7 +169,7 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 			if err := printInstanceID(stream.Msg().GetLog().GetInstanceId(), os.Stderr); err != nil {
 				return err
 			}
-			os.Stdout.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(base.RFC3339NanoFixed))
+			os.Stdout.WriteString(stream.Msg().GetLog().GetTimestamp().AsTime().Format(cli.RFC3339NanoFixed))
 			os.Stdout.WriteString(" Container Terminated.\n\n")
 		default:
 			return errors.InvalidArgumentErrorf("invalid log message")

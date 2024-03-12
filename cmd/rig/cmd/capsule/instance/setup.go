@@ -11,7 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -54,16 +54,16 @@ func Setup(parent *cobra.Command) {
 	instance := &cobra.Command{
 		Use:               "instance",
 		Short:             "Inspect and restart instances",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	getInstances := &cobra.Command{
 		Use:   "get [instance-id]",
 		Short: "Get one or more instances",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -80,9 +80,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "restart [instance-id]",
 		Short: "Restart a single instance",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.restart),
+		RunE:  cli.CtxWrap(cmd.restart),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -92,9 +92,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "logs [instance-id]",
 		Short: "Read instance logs from the capsule ",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.logs),
+		RunE:  cli.CtxWrap(cmd.logs),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -115,9 +115,9 @@ func Setup(parent *cobra.Command) {
 	exec := &cobra.Command{
 		Use:   "exec [instance-id] -- [command] [args...]",
 		Short: "Open a shell to the instance",
-		RunE:  base.CtxWrap(cmd.exec),
+		RunE:  cli.CtxWrap(cmd.exec),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -176,7 +176,7 @@ func (c *Cmd) completions(
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
 
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

@@ -12,7 +12,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -43,7 +43,7 @@ type Cmd struct {
 	Rig          rig.Client
 	Cfg          *cmdconfig.Config
 	DockerClient *client.Client
-	Interactive  base.Interactive
+	Interactive  cli.Interactive
 }
 
 var cmd Cmd
@@ -56,8 +56,8 @@ func Setup(parent *cobra.Command) {
 	capsuleDeploy := &cobra.Command{
 		Use:               "deploy [capsule] [flags] [-- command]",
 		Short:             "Deploy changes to a capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
-		RunE:              base.CtxWrap(cmd.deploy),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		RunE:              cli.CtxWrap(cmd.deploy),
 		Long: `Deploy a number of changes to a Capsule.
 
 All the changes given will be deployed as one rollout, then waiting for the rollout to complete.
@@ -129,7 +129,7 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 
 	if err := capsuleDeploy.RegisterFlagCompletionFunc(
 		"image",
-		base.CtxWrapCompletion(cmd.completions),
+		cli.CtxWrapCompletion(cmd.completions),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -155,7 +155,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

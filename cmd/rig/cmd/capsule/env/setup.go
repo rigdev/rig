@@ -6,7 +6,7 @@ import (
 
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
@@ -36,14 +36,14 @@ func Setup(parent *cobra.Command) {
 	env := &cobra.Command{
 		Use:               "env",
 		Short:             "Manage environment variables for the capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	envSet := &cobra.Command{
 		Use:   "set key value",
 		Short: "Set an environment variable",
 		Args:  cobra.ExactArgs(2),
-		RunE:  base.CtxWrap(cmd.set),
+		RunE:  cli.CtxWrap(cmd.set),
 	}
 	envSet.Flags().BoolVarP(
 		&forceDeploy,
@@ -55,9 +55,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "get [key]",
 		Short: "Get an environment variable",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -67,9 +67,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "remove [key]",
 		Short: "Remove an environment variable",
 		Args:  cobra.ExactArgs(1),
-		RunE:  base.CtxWrap(cmd.remove),
+		RunE:  cli.CtxWrap(cmd.remove),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -83,7 +83,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "source kind name",
 		Short: "Set or remove an environment source",
 		Args:  cobra.ExactArgs(2),
-		RunE:  base.CtxWrap(cmd.source),
+		RunE:  cli.CtxWrap(cmd.source),
 	}
 	envSource.Flags().BoolVarP(
 		&remove,
@@ -104,7 +104,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	err := base.Provide(cmd, args, initCmd)
+	err := cli.ExecuteInvokes(cmd, args, initCmd)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

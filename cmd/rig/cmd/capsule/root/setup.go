@@ -12,7 +12,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/deploy"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/env"
@@ -65,7 +65,7 @@ func Setup(parent *cobra.Command) {
 	capsuleCmd := &cobra.Command{
 		Use:   "capsule",
 		Short: "Manage capsules",
-		PersistentPreRunE: base.MakeInvokePreRunE(
+		PersistentPreRunE: cli.MakeInvokePreRunE(
 			initCmd,
 			func(ctx context.Context, cmd Cmd, c *cobra.Command, args []string) error {
 				return cmd.persistentPreRunE(ctx, c, args)
@@ -75,7 +75,7 @@ func Setup(parent *cobra.Command) {
 	capsuleCmd.PersistentFlags().StringVarP(&capsule.CapsuleID, "capsule-id", "c", "", "Id of the capsule")
 	if err := capsuleCmd.RegisterFlagCompletionFunc(
 		"capsule-id",
-		base.CtxWrapCompletion(cmd.completions),
+		cli.CtxWrapCompletion(cmd.completions),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -85,7 +85,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "create",
 		Short: "Create a new capsule",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.create),
+		RunE:  cli.CtxWrap(cmd.create),
 		Annotations: map[string]string{
 			auth.OmitCapsule: "",
 		},
@@ -109,7 +109,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "abort",
 		Short: "Abort the current rollout. This will leave the capsule in a undefined state",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.abort),
+		RunE:  cli.CtxWrap(cmd.abort),
 	}
 	capsuleCmd.AddCommand(capsuleAbort)
 
@@ -120,19 +120,19 @@ func Setup(parent *cobra.Command) {
 		Annotations: map[string]string{
 			auth.OmitEnvironment: "",
 		},
-		RunE: base.CtxWrap(cmd.delete),
+		RunE: cli.CtxWrap(cmd.delete),
 	}
 	capsuleCmd.AddCommand(capsuleDelete)
 
 	capsuleGet := &cobra.Command{
 		Use:               "get",
 		Short:             "Get one or more capsules",
-		PersistentPreRunE: base.PersistentPreRunE,
+		PersistentPreRunE: cli.PersistentPreRunE,
 		Args:              cobra.NoArgs,
 		Annotations: map[string]string{
 			auth.OmitCapsule: "",
 		},
-		RunE: base.CtxWrap(cmd.get),
+		RunE: cli.CtxWrap(cmd.get),
 	}
 	capsuleGet.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
 	capsuleGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
@@ -141,7 +141,7 @@ func Setup(parent *cobra.Command) {
 	capsuleCmdArgs := &cobra.Command{
 		Use:   "cmd [some-command arg1 arg2]",
 		Short: "Add command and arguments to the capsule",
-		RunE:  base.CtxWrap(cmd.cmdArgs),
+		RunE:  cli.CtxWrap(cmd.cmdArgs),
 	}
 	capsuleCmdArgs.Flags().BoolVarP(
 		&forceDeploy,
@@ -161,7 +161,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "logs",
 		Short: "Get logs across all instances of the capsule",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.logs),
+		RunE:  cli.CtxWrap(cmd.logs),
 	}
 	capsuleLogs.Flags().BoolVarP(
 		&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced",
@@ -192,7 +192,7 @@ func (c *Cmd) completions(
 	args []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

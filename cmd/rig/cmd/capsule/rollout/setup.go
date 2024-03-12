@@ -9,7 +9,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -42,16 +42,16 @@ func Setup(parent *cobra.Command) {
 	rollout := &cobra.Command{
 		Use:               "rollout",
 		Short:             "Inspect the rollouts of the capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	rolloutGet := &cobra.Command{
 		Use:   "get [rollout-id]",
 		Short: "Get one or more rollouts",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -63,9 +63,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "events [rollout-id]",
 		Short: "List events related to a rollout, default to the current rollout",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.capsuleEvents),
+		RunE:  cli.CtxWrap(cmd.capsuleEvents),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -75,9 +75,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "rollback [rollout-id]",
 		Short: "Rollback the capsule to a previous rollout",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.rollback),
+		RunE:  cli.CtxWrap(cmd.rollback),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -100,7 +100,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

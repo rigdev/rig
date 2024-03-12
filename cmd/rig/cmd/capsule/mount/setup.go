@@ -10,7 +10,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/base"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/spf13/cobra"
@@ -45,16 +45,16 @@ func Setup(parent *cobra.Command) {
 	mount := &cobra.Command{
 		Use:               "mount",
 		Short:             "Manage config files mounts in the capsule",
-		PersistentPreRunE: base.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
 	mountGet := &cobra.Command{
 		Use:   "get [mount-path]",
 		Short: "Get one or multiple mounts",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -67,7 +67,7 @@ func Setup(parent *cobra.Command) {
 		Use:   "set",
 		Short: "Mount a local configuration file in specified path the capsule",
 		Args:  cobra.NoArgs,
-		RunE:  base.CtxWrap(cmd.set),
+		RunE:  cli.CtxWrap(cmd.set),
 	}
 	mountSet.Flags().StringVar(&srcPath, "src", "", "source path")
 	mountSet.Flags().StringVar(&dstPath, "dst", "", "destination path")
@@ -82,9 +82,9 @@ func Setup(parent *cobra.Command) {
 		Use:   "remove [mount-path]",
 		Short: "Remove a mount",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  base.CtxWrap(cmd.remove),
+		RunE:  cli.CtxWrap(cmd.remove),
 		ValidArgsFunction: common.Complete(
-			base.CtxWrapCompletion(cmd.completions),
+			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -112,7 +112,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := base.Provide(cmd, args, initCmd); err != nil {
+	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

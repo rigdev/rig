@@ -1,4 +1,4 @@
-package base
+package cli
 
 import (
 	"context"
@@ -13,6 +13,24 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/term"
 )
+
+// The way we use FX has some issues working with Cobra.
+// Cobra works in the following stages:
+//
+// 1. You construct the entire Command structure and *the functions cobra needs to execute*
+// 2. Cobra parses the command line arguments and find the command chain to execute
+// 3. Cobra executes all PreRun functions
+// 4. Cobra executes the main function
+//
+// We use FX to construct all dependencies needed for all the PreRuns + main function and group them
+// into `Cmd` objects to encapsulate dependencies as member variables.
+// For some dependencies, we may prompt the user during construction. This means we only want to build
+// the exact set of dependencies needed for the PreRuns+main function to work.
+// Unfortunately, Cobra:
+// - Expects all functions it could potentially execute to exist before any parsing happens
+// - Does not supply a step between parsing and execution of PreRun functions.
+// We only have enough information to run FX after parsing and need to run FX before PreRuns are executed.
+// This file contains functions which circumvent this issue.
 
 var Module = fx.Module(
 	"rig-cli",
@@ -135,7 +153,7 @@ func createOptions(cmd *cobra.Command, args []string) []fx.Option {
 	}
 }
 
-func Provide(cmd *cobra.Command, args []string, invokes ...any) error {
+func ExecuteInvokes(cmd *cobra.Command, args []string, invokes ...any) error {
 	for _, invoke := range invokes {
 		options = append(options, fx.Invoke(invoke))
 	}
@@ -144,6 +162,15 @@ func Provide(cmd *cobra.Command, args []string, invokes ...any) error {
 	return fx.New(allOpts...).Err()
 }
 
+// PersistentPreRunE solves the issue described at the top of the file.
+// It assumes all PreRunEs on the command chain has been wrapped in FX invokes
+// and registered using InvokePreRunE.
+// When Cobra starts executing PreRunEs, the following happens:
+// If the current PreRunE being executed is not the last one, we simply do nothing.
+// If the current PreRunE is the last one in the chain, we call FX to build all dependencies
+// and run all Invokes.
+// It is only this point we know exactly which dependencies are needed. It is assumed the Cobra
+// main Run function has had its dependencies initialized by one of the Invokes registered.
 func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	if firstPreRun {
 		firstPreRun = false
@@ -151,7 +178,7 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	}
 	preRunsLeft--
 
-	if preRunsLeft == 0 && !SkipChecks(cmd) {
+	if preRunsLeft == 0 && !SkipFX(cmd) {
 		allOpts := createOptions(cmd, args)
 		allOpts = append(allOpts, options...)
 		return fx.New(allOpts...).Err()
@@ -159,6 +186,8 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// IvokePreRunE registers FX invokes to be executed at the time a corresponding
+// PreRunE would have been executed by Cobra had we not used FX.
 func InvokePreRunE(cmd *cobra.Command, args []string, invokes ...any) error {
 	for _, invoke := range invokes {
 		options = append(options, fx.Invoke(invoke))
@@ -170,9 +199,12 @@ func InvokePreRunE(cmd *cobra.Command, args []string, invokes ...any) error {
 	return nil
 }
 
-func MakeInvokePreRunE(fs ...any) func(cmd *cobra.Command, args []string) error {
+// MakeInvokePreRunE constructs a PreRunE function signature which registers the
+// supplied invokes to be executed at the time Cobra would have executed the returned PreRunE
+// if we did not use FX at all.
+func MakeInvokePreRunE(invokes ...any) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		return InvokePreRunE(cmd, args, fs...)
+		return InvokePreRunE(cmd, args, invokes...)
 	}
 }
 
