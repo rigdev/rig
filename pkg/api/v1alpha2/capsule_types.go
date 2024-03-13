@@ -227,6 +227,50 @@ type CapsuleInterface struct {
 
 	// Public specifies if and how the interface should be published.
 	Public *CapsulePublicInterface `json:"public,omitempty"`
+
+	// Host routes that are mapped to this interface.
+	Routes []HostRoute `json:"routes,omitempty"`
+}
+
+// HostRoute is the configuration of a route to the network interface
+// it's configured on.
+type HostRoute struct {
+	// Host of the route. The value "*" means a wildcard, that matches any hostname.
+	// The character "*" is not valid in any other cases.
+	Host string `json:"host"`
+	// HTTP paths of the host that maps to the interface. If empty, all paths are
+	// automatically matched.
+	Paths []HTTPPathRoute `json:"paths,omitempty"`
+	// Options for all paths of this host.
+	RouteOptions `json:",inline"`
+}
+
+// PathMatchType specifies the semantics of how HTTP paths should be compared.
+type PathMatchType string
+
+const (
+	// Exact match type, for when the path should match exactly.
+	Exact PathMatchType = "Exact"
+	// Path prefix, for when only the prefix needs to match.
+	PathPrefix PathMatchType = "PathMatch"
+)
+
+// A HTTP path routing.
+type HTTPPathRoute struct {
+	// Path of the route.
+	Path string `json:"path"`
+	// The method of matching. By default, `PathPrefix` is used.
+	// +kubebuilder:validation:Enum=PathPrefix;Exact
+	Match PathMatchType `json:"match,omitempty"`
+	// Path-specific options for the route.
+	RouteOptions `json:",inline"`
+}
+
+// Route options.
+type RouteOptions struct {
+	// Annotations of the route option. This can be plugin-specific configuration
+	// that allows custom plugins to add non-standard behavior.
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // InterfaceProbe specifies an interface probe
