@@ -76,6 +76,11 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 		return false, origErr
 	}
 
+	if strings.Contains(origErr.Error(), "wrong password") {
+		fmt.Println("Wrong username or password.")
+		return true, nil
+	}
+
 	cmdContext := s.cfg.GetCurrentContext()
 	str := fmt.Sprintf(
 		"There seems to be an issue with the authentication information stored in your current context '%s'",
