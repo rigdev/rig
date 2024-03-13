@@ -53,6 +53,11 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	currentResources := NewResources()
 	migratedResources := NewResources()
 
+	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
+	if err != nil {
+		return err
+	}
+
 	plugins, err := c.getPlugins(ctx)
 	if err != nil {
 		return nil
@@ -77,7 +82,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	color.Green(" ✓")
 
 	fmt.Print("Migrating Services and Ingress...")
-	serviceChanges, err := c.migrateServicesAndIngresses(ctx, currentResources, capsuleSpec, warnings)
+	serviceChanges, err := c.migrateServicesAndIngresses(ctx, currentResources, capsuleSpec, warnings, cfg)
 	if err != nil {
 		color.Red(" ✗")
 		return err
@@ -164,11 +169,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
-	if err != nil {
-		return err
-	}
-
+	// TODO: Remove this when error from operator is provided
 	if capsuleHasIngress(capsuleSpec) && !ingressIsSupported(cfg) {
 		warnings["Capsule"] = append(warnings["Capsule"], &Warning{
 			Kind:    "Capsule",
@@ -339,7 +340,7 @@ func PromptDiffingChanges(
 
 func (c *Cmd) getDeployment(ctx context.Context, currentResources *Resources) error {
 	deployments := &appsv1.DeploymentList{}
-	err := c.K8s.List(ctx, deployments, client.InNamespace(base.Flags.Namespace))
+	err := c.K8sReader.List(ctx, deployments, client.InNamespace(base.Flags.Namespace))
 	if err != nil {
 		return onCCListError(err, "Deployment", base.Flags.Namespace)
 	}
@@ -371,7 +372,7 @@ func (c *Cmd) getDeployment(ctx context.Context, currentResources *Resources) er
 		}
 
 		capsule := &v1alpha2.Capsule{}
-		err := c.K8s.Get(ctx, client.ObjectKey{
+		err := c.K8sReader.Get(ctx, client.ObjectKey{
 			Name:      deployment.GetObjectMeta().GetLabels()["rig.dev/owned-by-capsule"],
 			Namespace: deployment.GetNamespace(),
 		}, capsule)
@@ -485,7 +486,7 @@ func (c *Cmd) migrateDeployment(
 	// Check if the deployment has a service account, and if so add it to the current resources
 	if currentResources.Deployment.Spec.Template.Spec.ServiceAccountName != "" {
 		serviceAccount := &corev1.ServiceAccount{}
-		err := c.K8s.Get(ctx, client.ObjectKey{
+		err := c.K8sReader.Get(ctx, client.ObjectKey{
 			Name:      currentResources.Deployment.Spec.Template.Spec.ServiceAccountName,
 			Namespace: currentResources.Deployment.Namespace,
 		}, serviceAccount)
@@ -533,7 +534,7 @@ func (c *Cmd) migrateHPA(ctx context.Context,
 ) ([]*capsule.Change, error) {
 	// Get HPA in namespace
 	hpaList := &autoscalingv2.HorizontalPodAutoscalerList{}
-	err := c.K8s.List(ctx, hpaList, client.InNamespace(base.Flags.Namespace))
+	err := c.K8sReader.List(ctx, hpaList, client.InNamespace(base.Flags.Namespace))
 	if err != nil {
 		return nil, onCCListError(err, "HorizontalPodAutoscaler", base.Flags.Namespace)
 	}
@@ -700,7 +701,7 @@ func (c *Cmd) migrateEnvironment(ctx context.Context,
 	changes := []*capsule.Change{}
 
 	configMap := &corev1.ConfigMap{}
-	err := c.K8s.Get(ctx, client.ObjectKey{
+	err := c.K8sReader.Get(ctx, client.ObjectKey{
 		Namespace: currentResources.Deployment.Namespace,
 		Name:      capsuleSpec.Name,
 	}, configMap)
@@ -728,7 +729,7 @@ func (c *Cmd) migrateEnvironment(ctx context.Context,
 			} else if envVar.ValueFrom != nil {
 				if cfgMap := envVar.ValueFrom.ConfigMapKeyRef; cfgMap != nil {
 					configMap := &corev1.ConfigMap{}
-					err := c.K8s.Get(ctx, client.ObjectKey{
+					err := c.K8sReader.Get(ctx, client.ObjectKey{
 						Name:      cfgMap.Name,
 						Namespace: currentResources.Deployment.Namespace,
 					}, configMap)
@@ -858,7 +859,7 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context,
 			}
 
 			configMap := &corev1.ConfigMap{}
-			err := c.K8s.Get(ctx, client.ObjectKey{
+			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      source.ConfigMapRef.Name,
 				Namespace: currentResources.Deployment.Namespace,
 			}, configMap)
@@ -888,7 +889,7 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context,
 			}
 
 			secret := &corev1.Secret{}
-			err := c.K8s.Get(ctx, client.ObjectKey{
+			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      source.SecretRef.Name,
 				Namespace: currentResources.Deployment.Namespace,
 			}, secret)
@@ -936,7 +937,7 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context,
 		// If Volume is a ConfigMap
 		if volume.ConfigMap != nil {
 			configMap := &corev1.ConfigMap{}
-			err := c.K8s.Get(ctx, client.ObjectKey{
+			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      volume.ConfigMap.Name,
 				Namespace: currentResources.Deployment.Namespace,
 			}, configMap)
@@ -981,7 +982,7 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context,
 			// If Volume is a Secret
 		} else if volume.Secret != nil {
 			secret := &corev1.Secret{}
-			err := c.K8s.Get(ctx, client.ObjectKey{
+			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      volume.Secret.SecretName,
 				Namespace: currentResources.Deployment.Namespace,
 			}, secret)
@@ -1050,6 +1051,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	currentResources *Resources,
 	capsuleSpec *v1alpha2.Capsule,
 	warnings map[string][]*Warning,
+	cfg *v1alpha1.OperatorConfig,
 ) ([]*capsule.Change, error) {
 	container := currentResources.Deployment.Spec.Template.Spec.Containers[0]
 	livenessProbe := container.LivenessProbe
@@ -1066,7 +1068,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	}
 
 	services := &corev1.ServiceList{}
-	err := c.K8s.List(ctx, services, client.InNamespace(currentResources.Deployment.GetNamespace()))
+	err := c.K8sReader.List(ctx, services, client.InNamespace(currentResources.Deployment.GetNamespace()))
 	if err != nil {
 		return nil, onCCListError(err, "Service", currentResources.Deployment.GetNamespace())
 	}
@@ -1104,7 +1106,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	}
 
 	ingresses := &netv1.IngressList{}
-	err = c.K8s.List(ctx, ingresses, client.InNamespace(currentResources.Deployment.GetNamespace()))
+	err = c.K8sReader.List(ctx, ingresses, client.InNamespace(currentResources.Deployment.GetNamespace()))
 	if err != nil {
 		return nil, onCCListError(err, "Ingress", currentResources.Deployment.GetNamespace())
 	}
@@ -1133,8 +1135,16 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					continue
 				}
 
+				name := fmt.Sprintf("%s-%s", host, ingress.GetName())
+				if err := currentResources.AddObject("Ingress", name, &ingress); err != nil &&
+					!rerrors.IsAlreadyExists(err) {
+					return nil, err
+				}
+
+				cfgPathType := cfg.Ingress.PathType
+
 				switch *path.PathType {
-				case netv1.PathTypeExact, netv1.PathTypeImplementationSpecific:
+				case netv1.PathTypeImplementationSpecific:
 					warnings["Ingress"] = append(warnings["Ingress"], &Warning{
 						Kind:  "Ingress",
 						Name:  ingress.GetName(),
@@ -1143,17 +1153,22 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 							*path.PathType, path.Path),
 					})
 					continue
+				case netv1.PathTypePrefix, netv1.PathTypeExact:
+					if cfgPathType != *path.PathType {
+						warnings["Ingress"] = append(warnings["Ingress"], &Warning{
+							Kind:  "Ingress",
+							Name:  ingress.GetName(),
+							Field: fmt.Sprintf("spec.rules.http.paths.%s.pathType", path.Path),
+							Warning: fmt.Sprintf("Operator has configured PathType %s. Transforming PathType %s to %s",
+								cfgPathType, *path.PathType, cfgPathType),
+						})
+					}
 				}
 
 				paths = append(paths, path.Path)
 			}
 
 			if len(paths) > 0 {
-				if err := currentResources.AddObject("Ingress", ingress.GetName(), &ingress); err != nil &&
-					!rerrors.IsAlreadyExists(err) {
-					return nil, err
-				}
-
 				if host == "" {
 					i.Public = &v1alpha2.CapsulePublicInterface{
 						Ingress: &v1alpha2.CapsuleInterfaceIngress{
@@ -1182,8 +1197,9 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					warnings["Ingress"] = append(warnings["Ingress"], &Warning{
 						Kind: "Ingress",
 						Name: ingress.GetName(),
-						Warning: fmt.Sprintf("Previous Ingress host: %s already configured for port %s. This Ingress %s is ignored.",
-							host, port.Name, ingress.GetName()),
+						Warning: fmt.Sprintf("Previous Ingress host: %s already configured for port %s."+
+							" Ingress: %s with host %s is ignored.",
+							host, port.Name, ingress.GetName(), ingress.Spec.Rules[0].Host),
 					})
 				}
 			}
@@ -1285,7 +1301,7 @@ func (c *Cmd) migrateCronJobs(ctx context.Context,
 	warnings map[string][]*Warning,
 ) ([]*capsule.Change, error) {
 	cronJobList := &batchv1.CronJobList{}
-	err := c.K8s.List(ctx, cronJobList, client.InNamespace(currentResources.Deployment.GetNamespace()))
+	err := c.K8sReader.List(ctx, cronJobList, client.InNamespace(currentResources.Deployment.GetNamespace()))
 	if err != nil {
 		return nil, onCCListError(err, "CronJob", currentResources.Deployment.GetNamespace())
 	}

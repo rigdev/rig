@@ -27,7 +27,7 @@ func NewReportSet(scheme *runtime.Scheme) *ReportSet {
 	}
 }
 
-func (r *ReportSet) AddReport(original, proposal client.Object) error {
+func (r *ReportSet) AddReport(original, proposal client.Object, reportName string) error {
 	report, err := r.getDiffingReport(original, proposal)
 	if err != nil {
 		return err
@@ -47,11 +47,15 @@ func (r *ReportSet) AddReport(original, proposal client.Object) error {
 		name = original.GetName()
 	}
 
+	if reportName == "" {
+		reportName = name
+	}
+
 	if _, ok := r.reports[kind]; !ok {
 		r.reports[kind] = map[string]*dyff.Report{}
 	}
 
-	r.reports[kind][name] = report
+	r.reports[kind][reportName] = report
 	return nil
 }
 

@@ -66,9 +66,18 @@ func (r *Resources) getObject(kind, name string) client.Object {
 			return s
 		}
 	case "Ingress":
-		if i, ok := r.Ingresses[name]; ok {
-			delete(r.Ingresses, name)
-			return i
+		// ingresses are input as host-name and param name is host, so we match on the host
+		for n, i := range r.Ingresses {
+			parts := strings.SplitN(n, "-", 2)
+			if len(parts) == 2 {
+				if parts[0] == name {
+					delete(r.Ingresses, n)
+					return i
+				}
+			} else if n == name {
+				delete(r.Ingresses, n)
+				return i
+			}
 		}
 	case "CronJob":
 		if cj, ok := r.CronJobs[name]; ok {
@@ -158,35 +167,35 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 
 	if r.Deployment != nil {
 		originalDeployment := other.getObject("Deployment", r.Deployment.Name)
-		if err := reportSet.AddReport(originalDeployment, r.Deployment); err != nil {
+		if err := reportSet.AddReport(originalDeployment, r.Deployment, ""); err != nil {
 			return nil, err
 		}
 	}
 
 	if r.HPA != nil {
 		originalHPA := other.getObject("HorizontalPodAutoscaler", r.HPA.Name)
-		if err := reportSet.AddReport(originalHPA, r.HPA); err != nil {
+		if err := reportSet.AddReport(originalHPA, r.HPA, ""); err != nil {
 			return nil, err
 		}
 	}
 
 	if r.ServiceAccount != nil {
 		originalServiceAccount := other.getObject("ServiceAccount", r.ServiceAccount.Name)
-		if err := reportSet.AddReport(originalServiceAccount, r.ServiceAccount); err != nil {
+		if err := reportSet.AddReport(originalServiceAccount, r.ServiceAccount, ""); err != nil {
 			return nil, err
 		}
 	}
 
 	if r.Service != nil {
 		originalService := other.getObject("Service", r.Service.Name)
-		if err := reportSet.AddReport(originalService, r.Service); err != nil {
+		if err := reportSet.AddReport(originalService, r.Service, ""); err != nil {
 			return nil, err
 		}
 	}
 
 	if r.Capsule != nil {
 		originalCapsule := other.getObject("Capsule", r.Capsule.Name)
-		if err := reportSet.AddReport(originalCapsule, r.Capsule); err != nil {
+		if err := reportSet.AddReport(originalCapsule, r.Capsule, ""); err != nil {
 			return nil, err
 		}
 	}
@@ -203,7 +212,13 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 		}
 
 		originalConfigMap := other.getObject("ConfigMap", name)
-		if err := reportSet.AddReport(originalConfigMap, configMap); err != nil {
+
+		reportName := configMap.Name
+		if originalConfigMap != nil {
+			reportName = fmt.Sprintf("%s -> %s", originalConfigMap.GetName(), configMap.Name)
+		}
+
+		if err := reportSet.AddReport(originalConfigMap, configMap, reportName); err != nil {
 			return nil, err
 		}
 	}
@@ -220,15 +235,35 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 		}
 
 		originalSecret := other.getObject("Secret", name)
-		if err := reportSet.AddReport(originalSecret, secret); err != nil {
+
+		reportName := secret.Name
+		if originalSecret != nil {
+			reportName = fmt.Sprintf("%s -> %s", originalSecret.GetName(), secret.Name)
+		}
+
+		if err := reportSet.AddReport(originalSecret, secret, reportName); err != nil {
 			return nil, err
 		}
 	}
 
 	for _, ingress := range r.Ingresses {
-		originalIngress := other.getObject("Ingress", ingress.Name)
-		if err := reportSet.AddReport(originalIngress, ingress); err != nil {
-			return nil, err
+		reportWritten := false
+		for {
+			originalIngress := other.getObject("Ingress", ingress.Spec.Rules[0].Host)
+			if reportWritten && originalIngress == nil {
+				break
+			}
+
+			originalName := "nil"
+			if originalIngress != nil {
+				originalName = originalIngress.GetName()
+			}
+			if err := reportSet.AddReport(originalIngress, ingress,
+				fmt.Sprintf("%s -> %s", originalName, ingress.Name)); err != nil {
+				return nil, err
+			}
+
+			reportWritten = true
 		}
 	}
 
@@ -240,7 +275,12 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 		}
 
 		originalCronJob := other.getObject("CronJob", name)
-		if err := reportSet.AddReport(originalCronJob, cronJob); err != nil {
+
+		reportName := cronJob.Name
+		if originalCronJob != nil {
+			reportName = fmt.Sprintf("%s -> %s", originalCronJob.GetName(), cronJob.Name)
+		}
+		if err := reportSet.AddReport(originalCronJob, cronJob, reportName); err != nil {
 			return nil, err
 		}
 	}
