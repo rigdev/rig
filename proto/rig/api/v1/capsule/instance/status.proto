@@ -95,6 +95,20 @@ message StepInfo {
   google.protobuf.Timestamp updated_at = 3;
   // State of the step.
   StepState state = 4;
+  // Information about the container associated with the step.
+  ContainerInfo container = 5;
+}
+
+message ContainerInfo {
+  string name = 1;
+  ContainerType type = 2;
+}
+
+enum ContainerType {
+  CONTAINER_TYPE_UNSPECIFIED = 0;
+  CONTAINER_TYPE_MAIN = 1;
+  CONTAINER_TYPE_SIDECAR = 2;
+  CONTAINER_TYPE_INIT = 3;
 }
 
 // Different states a step can be in.
@@ -136,6 +150,8 @@ message PreparingStep {
     GenericStep generic = 1;
     // Image pulling step.
     ImagePullingStep image_pulling = 2;
+    // Executing step for init containers
+    ExecutingStep init_executing = 3;
   }
 }
 
@@ -217,6 +233,12 @@ message ExecutingStep {
   StepInfo info = 1;
   // Time at which the step started.
   google.protobuf.Timestamp started_at = 2;
+  // Time at which the step finished.
+  google.protobuf.Timestamp finished_at = 3;
+  // Number of restarts of the container
+  uint32 restarts = 4;
+  // Information about the last container termination.
+  ContainerTermination last_container_termination = 5;
 }
 
 // Information about the last container termination.
