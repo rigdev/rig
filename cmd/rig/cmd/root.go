@@ -12,7 +12,6 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
-	"github.com/rigdev/rig/pkg/cli"
 	capsule_root "github.com/rigdev/rig/cmd/rig/cmd/capsule/root"
 	"github.com/rigdev/rig/cmd/rig/cmd/cluster"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
@@ -25,6 +24,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/user"
 	auth_service "github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/build"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -65,6 +65,10 @@ func Run() error {
 		"host", "H", flags.Flags.Host,
 		"select which host to access the Rig Platform at. Should be of the form `http[s]://hostname:port/`."+
 			" Can also be set with environment variable `RIG_HOST`")
+	rootCmd.PersistentFlags().BoolVar(&flags.Flags.BasicAuth, "basic-auth", false,
+		`If set, will authenticate using service account.
+The service account is read from the environment variables RIG_CLIENT_ID and RIG_CLIENT_SECRET`,
+	)
 
 	license := &cobra.Command{
 		Use:               "license",
