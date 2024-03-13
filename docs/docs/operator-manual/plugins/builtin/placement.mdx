@@ -58,3 +58,5 @@ Configuration for the placement plugin
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations which will be appended to the deployment's podSpec |
 | `requireTag` _boolean_ | True if a capsule needs a Tag annotation to be run |
 
+
+

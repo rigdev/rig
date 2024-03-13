@@ -1,6 +1,6 @@
 # Google Cloud SQL Auth Proxy Plugin
 
-The `rigdev.google_cloud_sql_auth_proxy` plugins injects a Google Cloud SQL auth proxy container into your deployment. See [here](https://cloud.google.com/sql/docs/mysql/sql-proxy) for a description of the auth proxy.
+The `rigdev.google_cloud_sql_auth_proxy` plugins injects a Google Cloud SQL auth proxy container into your deployment as a [sidecar](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/). See [here](https://cloud.google.com/sql/docs/mysql/sql-proxy) for a description of the auth proxy.
 It will append a container named `google-cloud-sql-proxy` running the `gcr.io/cloud-sql-connectors/cloud-sql-proxy` image to your deployment and set its arguments, environment variables and config files according the the configuration of this plugin.
 
 The config can be templated with standard Go templating and has
@@ -32,7 +32,7 @@ Resulting Deployment
 ```
 kind: Deployment
 spec:
-  containers:
+  initContainers:
     ...
     - name: google-cloud-sql-proxy
       image: gcr.io/cloud-sql-connectors/cloud-sql-proxy
@@ -49,12 +49,13 @@ spec:
           memory: 128M
       securityContext:
         runAsNonRoot: true
+      restartPolicy: Always
 ```
 ## Config
 
 
 
-Configuration for the google_cloud_sql_auth_proxy plugin hej
+Configuration for the google_cloud_sql_auth_proxy plugin
 
 | Field | Description |
 | --- | --- |
@@ -66,6 +67,8 @@ Configuration for the google_cloud_sql_auth_proxy plugin hej
 | `files` _File array_ | Files is a list of files to mount in the container. These can either be based on ConfigMaps or Secrets. It's a reuse of the Capsule CRD |
 | `resources` _[Resources](#resources)_ | Resources defines how large the container request should be. Defaults to the Kubernetes defaults. |
 | `instanceConnectionNames` _string array_ | The instance_connection_names passed to the cloud_sql_proxy. |
+
+
 
 
 

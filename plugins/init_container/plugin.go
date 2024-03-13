@@ -1,5 +1,5 @@
 // +groupName=plugins.rig.dev -- Only used for config doc generation
-package main
+package initcontainer
 
 import (
 	"context"
@@ -8,33 +8,34 @@ import (
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
-// Configuration for the sidecar plugin
+const Name = "rigdev.init_container"
+
+// Configuration for the init_container plugin
 // +kubebuilder:object:root=true
 type Config struct {
-	// Container is the configuration of the sidecar injected into the deployment
+	// Container holds the configuration for the init container
 	Container *corev1.Container `json:"container"`
 }
 
-type sidecar struct {
+type Plugin struct {
 	configBytes []byte
+	// config Config
 }
 
-func (s *sidecar) Initialize(req plugin.InitializeRequest) error {
-	s.configBytes = req.Config
+func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
+	p.configBytes = req.Config
 	return nil
 }
 
-func (s *sidecar) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
-	config, err := plugin.ParseTemplatedConfig[Config](s.configBytes, req, plugin.CapsuleStep[Config])
+func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err
 	}
-
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		return nil
@@ -43,12 +44,7 @@ func (s *sidecar) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Lo
 	}
 
 	c := *config.Container.DeepCopy()
-	c.RestartPolicy = ptr.New(corev1.ContainerRestartPolicyAlways)
 	deployment.Spec.Template.Spec.InitContainers = append(deployment.Spec.Template.Spec.InitContainers, c)
 
 	return req.Set(deployment)
-}
-
-func main() {
-	plugin.StartPlugin("rigdev.sidecar", &sidecar{})
 }

@@ -27,11 +27,13 @@ type ExternalPlugin struct {
 	client       *plugin.Client
 	pluginClient *pluginClient
 	binaryPath   string
+	args         []string
 	tag          string
 }
 
 func NewExternalPlugin(
 	name, stepTag, pluginTag, pluginConfig, path string,
+	args []string,
 	logger logr.Logger,
 ) (Plugin, error) {
 	tag := stepTag
@@ -42,6 +44,7 @@ func NewExternalPlugin(
 		name:       name,
 		logger:     logger,
 		binaryPath: path,
+		args:       args,
 		tag:        tag,
 	}
 
@@ -80,7 +83,7 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 		Plugins: map[string]plugin.Plugin{
 			"rigOperatorPlugin": &rigOperatorPlugin{},
 		},
-		Cmd:              exec.CommandContext(ctx, p.binaryPath),
+		Cmd:              exec.CommandContext(ctx, p.binaryPath, p.args...),
 		Logger:           pLogger,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		Stderr:           os.Stderr,

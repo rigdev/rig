@@ -1,4 +1,4 @@
-package main
+package annotations
 
 import (
 	"context"
@@ -103,7 +103,7 @@ annotations:
 group: apps
 kind: Deployment
 name: name`
-			pp := &pluginParent{configBytes: []byte(c)}
+			pp := &Plugin{configBytes: []byte(c)}
 			assert.NoError(t, pp.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}
 			assert.NoError(t, req.GetNew(deploy))

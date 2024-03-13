@@ -1,5 +1,5 @@
 // +groupName=plugins.rig.dev -- Only used for config doc generation
-package main
+package objecttemplate
 
 import (
 	"bytes"
@@ -14,6 +14,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const Name = "rigdev.object_template"
+
 // Configuration for the object_template plugin
 // +kubebuilder:object:root=true
 type Config struct {
@@ -27,16 +29,16 @@ type Config struct {
 	Name string `json:"name,omitempty"`
 }
 
-type objectTemplate struct {
+type Plugin struct {
 	configBytes []byte
 }
 
-func (p *objectTemplate) Initialize(req plugin.InitializeRequest) error {
+func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
 	return nil
 }
 
-func (p *objectTemplate) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req,
 		plugin.CapsuleStep[Config],
 		func(c Config, req pipeline.CapsuleRequest) (string, any, error) {
@@ -87,8 +89,4 @@ func (p *objectTemplate) Run(_ context.Context, req pipeline.CapsuleRequest, _ h
 	}
 
 	return req.Set(currentObject)
-}
-
-func main() {
-	plugin.StartPlugin("rigdev.object_template", &objectTemplate{})
 }

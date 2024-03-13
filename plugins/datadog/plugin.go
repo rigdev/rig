@@ -1,5 +1,5 @@
 // +groupName=plugins.rig.dev -- Only used for config doc generation
-package main
+package datadog
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 )
+
+const Name = "rigdev.datadog"
 
 // Configuration for the datadog plugin
 // +kubebuilder:object:root=true
@@ -48,16 +50,16 @@ type UnifiedServiceTags struct {
 	Version string `json:"version,omitempty"`
 }
 
-type datadog struct {
+type Plugin struct {
 	configBytes []byte
 }
 
-func (d *datadog) Initialize(req plugin.InitializeRequest) error {
+func (d *Plugin) Initialize(req plugin.InitializeRequest) error {
 	d.configBytes = req.Config
 	return nil
 }
 
-func (d *datadog) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+func (d *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](d.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err
@@ -116,8 +118,4 @@ func (d *datadog) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Lo
 	}
 
 	return req.Set(deployment)
-}
-
-func main() {
-	plugin.StartPlugin("rigdev.datadog", &datadog{})
 }

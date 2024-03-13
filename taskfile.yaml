@@ -14,7 +14,7 @@ includes:
 tasks:
   build:
     desc: "🔨 Build all binaries"
-    deps: [build-rig, build-rig-ops, build-rig-operator, build-plugins]
+    deps: [build-rig, build-rig-ops, build-rig-operator]
 
   build-rig:
     desc: "🔨 Build rig binary"
@@ -42,7 +42,7 @@ tasks:
 
   build-rig-operator:
     desc: "🔨 Build rig-operator binary"
-    deps: [proto, build-plugins]
+    deps: [proto]
     env:
       CGO_ENABLED: "0"
     sources:
@@ -51,35 +51,6 @@ tasks:
       - "bin/rig-operator"
     cmds:
       - go build -o ./bin/rig-operator ./cmd/rig-operator
-
-  build-plugins:
-    desc: "🔨 Build rig-operator plugins"
-    sources:
-      - "plugins/**/*.go"
-    vars:
-      PLUGINS:
-        sh: find ./plugins/ -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
-    cmds:
-      - for: { var: PLUGINS }
-        task: build-plugin
-        vars:
-          PLUGIN: "{{ .ITEM }}"
-
-  build-plugin:
-    run: when_changed
-    deps: [proto]
-    env:
-      CGO_ENABLED: "0"
-    sources:
-      - "plugins/{{ .PLUGIN }}/**/*.go"
-    generates:
-      - "bin/plugin/rigdev.{{ .PLUGIN }}"
-    cmds:
-      - go build -o ./bin/plugin/rigdev.{{ .PLUGIN }} ./plugins/{{ .PLUGIN }}
-
-  gen:
-    desc: "🪄 Run code generation"
-    deps: [proto, manifests, generate-k8s, docs-gen, mocks]
 
   proto:
     desc: "🪄 Run protobuf generation"
@@ -241,7 +212,7 @@ tasks:
   test-all:
     desc: "✅ Run all tests"
     deps:
-      [tools:gotestsum, tools:setup-envtest, proto, manifests, build-plugins]
+      [tools:gotestsum, tools:setup-envtest, proto, manifests]
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
@@ -260,7 +231,7 @@ tasks:
   test-integration:
     desc: "✅ Run integration tests"
     deps:
-      [tools:gotestsum, tools:setup-envtest, proto, manifests, build-plugins]
+      [tools:gotestsum, tools:setup-envtest, proto, manifests]
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path

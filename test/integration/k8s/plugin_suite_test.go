@@ -3,6 +3,8 @@ package k8s_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -131,7 +133,11 @@ container:
 		Scheme: scheme,
 	})
 	require.NoError(t, err)
-	pmanager, err := plugin.NewManager()
+
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	builtinBinPath := path.Join(path.Dir(path.Dir(path.Dir(wd))), "bin", "rig-operator")
+	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),

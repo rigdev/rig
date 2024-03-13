@@ -40,28 +40,31 @@ const (
 )
 
 func main() {
-	c := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "rig-operator",
 		Short: "operator for the rig.dev CRDs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd, args)
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
-
-	flags := c.PersistentFlags()
+	flags := cmd.PersistentFlags()
 	flags.StringP(flagConfigFile, "c", "/etc/rig-operator/config.yaml", "path to rig-operator config file")
 
-	c.AddCommand(build.VersionCommand())
+	cmd.AddCommand(build.VersionCommand())
 	certGenCmd, err := certgen.CMD()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	c.AddCommand(certGenCmd)
-	c.AddCommand(apichecker.CMD())
+	cmd.AddCommand(certGenCmd)
+	cmd.AddCommand(apichecker.CMD())
+
+	pluginSetup(cmd)
 
 	ctx := context.Background()
-	if err := c.ExecuteContext(ctx); err != nil {
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
