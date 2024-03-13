@@ -122,9 +122,9 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
       - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
-  - id: plugin/rigdev.google_sql_proxy
-    binary: plugin/rigdev.google_sql_proxy
-    main: ./plugins/google_sql_proxy
+  - id: plugin/rigdev.google_cloud_sql_auth_proxy
+    binary: plugin/rigdev.google_cloud_sql_auth_proxy
+    main: ./plugins/google_cloud_sql_auth_proxy
     env:
       - CGO_ENABLED=0
     goos:
@@ -181,6 +181,18 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+  - id: rig-ops
+    format: tar.gz
+    builds:
+      - rig-ops
+    name_template: >-
+      rig-ops_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
   - id: rig-operator
     format: tar.gz
     builds:
@@ -190,7 +202,7 @@ archives:
       - plugin/rigdev.object_template
       - plugin/rigdev.annotations
       - plugin/rigdev.datadog
-      - plugin/rigdev.google_sql_proxy
+      - plugin/rigdev.google_cloud_sql_auth_proxy
       - plugin/rigdev.env_mapping
     name_template: >-
       rig-operator_
