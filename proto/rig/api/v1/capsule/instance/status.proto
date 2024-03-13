@@ -30,7 +30,6 @@ message Stages {
   DeletedStage deleted = 4;
 }
 
-
 // Meta information about a stage.
 message StageInfo {
   // Name of the stage.
