@@ -12,10 +12,10 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -177,7 +177,7 @@ func (c *Cmd) completions(
 
 	for _, b := range resp.Msg.GetImages() {
 		if strings.HasPrefix(b.GetImageId(), toComplete) {
-			imageIDs = append(imageIDs, formatBuild(b))
+			imageIDs = append(imageIDs, formatImage(b))
 		}
 	}
 
@@ -188,7 +188,7 @@ func (c *Cmd) completions(
 	return imageIDs, cobra.ShellCompDirectiveDefault
 }
 
-func formatBuild(i *capsule_api.Image) string {
+func formatImage(i *capsule_api.Image) string {
 	var age string
 	if i.GetCreatedAt().AsTime().IsZero() {
 		age = "-"

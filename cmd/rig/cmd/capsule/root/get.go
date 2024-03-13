@@ -71,7 +71,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Capsules (%d)", resp.Msg.GetTotal()), "Replicas", "Build ID"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Capsules (%d)", resp.Msg.GetTotal()), "Replicas", "Image ID"})
 	for _, o := range outputs {
 		t.AppendRow(table.Row{
 			o.Capsule.GetCapsuleId(),

@@ -305,7 +305,7 @@ func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) 
 		return expandImageID(images, imageID)
 	}
 
-	return c.promptForImageOrBuild(ctx, capsuleID)
+	return c.promptForDockerOrImage(ctx, capsuleID)
 }
 
 func expandImageID(images []*capsule.Image, imageID string) (string, error) {
@@ -398,8 +398,8 @@ func isHexString(s string) bool {
 	return true
 }
 
-func (c *Cmd) promptForImageOrBuild(ctx context.Context, capsuleID string) (string, error) {
-	i, _, err := common.PromptSelect("Deploy from docker image or existing rig build?", []string{"Image", "Build"})
+func (c *Cmd) promptForDockerOrImage(ctx context.Context, capsuleID string) (string, error) {
+	i, _, err := common.PromptSelect("Deploy from docker image rig-registered image?", []string{"Docker", "Rig registered"})
 	if err != nil {
 		return "", err
 	}
@@ -411,13 +411,13 @@ func (c *Cmd) promptForImageOrBuild(ctx context.Context, capsuleID string) (stri
 		}
 		return c.createImageInner(ctx, capsuleID, imgRef)
 	case 1:
-		return c.promptForExistingBuild(ctx, capsuleID)
+		return c.promptForExistingImage(ctx, capsuleID)
 	default:
 		return "", errors.New("something went wrong")
 	}
 }
 
-func (c *Cmd) promptForExistingBuild(ctx context.Context, capsuleID string) (string, error) {
+func (c *Cmd) promptForExistingImage(ctx context.Context, capsuleID string) (string, error) {
 	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(&api_image.ListRequest{
 		CapsuleId:  capsuleID,
 		Pagination: &model.Pagination{},
@@ -865,9 +865,9 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	}
 
 	if res.Msg.GetAddedNewImage() {
-		fmt.Println("Created new build:", res.Msg.GetImageId())
+		fmt.Println("Added new image:", res.Msg.GetImageId())
 	} else {
-		fmt.Println("Build already exists, using existing build")
+		fmt.Println("Image already exists, using existing image")
 	}
 
 	return res.Msg.GetImageId(), nil
