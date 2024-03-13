@@ -399,7 +399,10 @@ func isHexString(s string) bool {
 }
 
 func (c *Cmd) promptForDockerOrImage(ctx context.Context, capsuleID string) (string, error) {
-	i, _, err := common.PromptSelect("Deploy from docker image rig-registered image?", []string{"Docker", "Rig registered"})
+	i, _, err := common.PromptSelect(
+		"Deploy from docker image rig-registered image?",
+		[]string{"Docker", "Rig registered"},
+	)
 	if err != nil {
 		return "", err
 	}
