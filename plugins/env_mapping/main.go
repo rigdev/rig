@@ -49,9 +49,9 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 				continue
 			}
 
-			for _, m := range source.Mappings {
+			for env, key := range source.Mappings {
 				envVar := corev1.EnvVar{
-					Name: m.Env,
+					Name: env,
 				}
 				switch {
 				case source.ConfigMap != "":
@@ -60,7 +60,7 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: source.ConfigMap,
 							},
-							Key: m.Key,
+							Key: key,
 						},
 					}
 					if err := req.MarkUsedObject(v1alpha2.UsedResource{
@@ -77,7 +77,7 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: source.Secret,
 							},
-							Key: m.Key,
+							Key: key,
 						},
 					}
 					if err := req.MarkUsedObject(v1alpha2.UsedResource{

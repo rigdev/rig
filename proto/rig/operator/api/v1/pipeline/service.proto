@@ -18,6 +18,8 @@ message DryRunRequest {
   // If force is enabled, existing resources will be handled as if they were
   // supposed to be replaced.
   bool force = 5;
+  // Additional objects to be considered materialized when performing the dryrun
+  repeated Object additional_objects = 6;
 }
 
 message DryRunResponse {

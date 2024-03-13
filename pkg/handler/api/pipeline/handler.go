@@ -62,6 +62,10 @@ func (h *handler) DryRun(
 		opts = append(opts, pipeline.WithForce())
 	}
 
+	if len(req.Msg.GetAdditionalObjects()) > 0 {
+		opts = append(opts, pipeline.WithAdditionalResources(req.Msg.AdditionalObjects))
+	}
+
 	result, err := h.pipeline.DryRun(ctx, cfg, req.Msg.GetNamespace(), req.Msg.GetCapsule(), spec, opts...)
 	if err != nil {
 		return nil, err

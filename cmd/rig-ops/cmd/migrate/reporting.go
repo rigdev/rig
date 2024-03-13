@@ -83,29 +83,42 @@ func (r *ReportSet) getDiffingReport(orig, proposal client.Object) (*dyff.Report
 func (c *Cmd) processPlatformOutput(
 	migratedResources *Resources,
 	platformResources map[string]string,
-) (*v1alpha2.Capsule, error) {
+) (*v1alpha2.Capsule, []*pipeline.Object, error) {
 	var capsule *v1alpha2.Capsule
+	objects := make([]*pipeline.Object, 0, len(platformResources))
 	for _, resource := range platformResources {
 		proposal, err := obj.DecodeAny([]byte(resource), c.Scheme)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if err := migratedResources.AddObject(proposal.GetObjectKind().GroupVersionKind().Kind,
 			proposal.GetName(),
 			proposal); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if proposal.GetObjectKind().GroupVersionKind().Kind == "Capsule" {
 			capsule = &v1alpha2.Capsule{}
 			if err = obj.Decode([]byte(resource), capsule); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
+		} else {
+			object := &pipeline.Object{
+				Gvk: &pipeline.GVK{
+					Group:   proposal.GetObjectKind().GroupVersionKind().Group,
+					Version: proposal.GetObjectKind().GroupVersionKind().Version,
+					Kind:    proposal.GetObjectKind().GroupVersionKind().Kind,
+				},
+				Name:    proposal.GetName(),
+				Content: resource,
+			}
+
+			objects = append(objects, object)
 		}
 	}
 
-	return capsule, nil
+	return capsule, objects, nil
 }
 
 func ProcessOperatorOutput(

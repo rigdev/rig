@@ -11,6 +11,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -99,6 +100,17 @@ func (r *reader) List(_ context.Context, list client.ObjectList, opts ...client.
 	var objs []gojson.RawMessage
 	for _, o := range r.objects {
 		oGVK := o.GetObjectKind().GroupVersionKind()
+
+		if listOpts.LabelSelector != nil && !listOpts.LabelSelector.Empty() {
+			if o.GetLabels() == nil {
+				continue
+			}
+
+			if !listOpts.LabelSelector.Matches(labels.Set(o.GetLabels())) {
+				continue
+			}
+		}
+
 		if (listOpts.Namespace == "" || listOpts.Namespace == o.GetNamespace()) && gvk.GroupKind() == oGVK.GroupKind() {
 			objs = append(objs, o.raw)
 		}

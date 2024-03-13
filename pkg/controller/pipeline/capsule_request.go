@@ -5,8 +5,11 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/obj"
+	"github.com/rigdev/rig/pkg/roclient"
 	"golang.org/x/exp/maps"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -74,6 +77,29 @@ type withDryRun struct{}
 func (withDryRun) apply(r *capsuleRequest) { r.dryRun = true }
 func WithDryRun() CapsuleRequestOption {
 	return withDryRun{}
+}
+
+type withAdditionalResources struct {
+	resources []*pipeline.Object
+}
+
+func (w withAdditionalResources) apply(r *capsuleRequest) {
+	reader := roclient.NewReader(r.pipeline.scheme)
+	for _, o := range w.resources {
+		proposal, err := obj.DecodeAny([]byte(o.Content), r.pipeline.scheme)
+		if err != nil {
+			continue
+		}
+
+		if err := reader.AddObject(proposal); err != nil {
+			continue
+		}
+	}
+
+	r.pipeline.reader = roclient.NewLayeredReader(r.pipeline.reader, reader)
+}
+func WithAdditionalResources(resources []*pipeline.Object) CapsuleRequestOption {
+	return withAdditionalResources{resources}
 }
 
 type withForce struct{}

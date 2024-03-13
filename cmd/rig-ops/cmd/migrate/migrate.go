@@ -18,6 +18,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	rerrors "github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
@@ -124,9 +125,8 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	fmt.Print("Migrating Cronjobs...")
 	cronJobChanges, err := c.migrateCronJobs(ctx, currentResources, capsuleSpec, warnings)
-	if err != nil && err.Error() == promptAborted {
-		fmt.Println("Migrating Cronjobs...")
-	} else if err != nil {
+	if err != nil && err.Error() != promptAborted {
+		fmt.Print("Migrating Cronjobs...")
 		color.Red(" ✗")
 		return err
 	}
@@ -145,6 +145,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 			Changes:       changes,
 		},
 	}
+	platformObjects := []*pipeline.Object{}
 	if !skipPlatform {
 		deployResp, err := rc.Capsule().Deploy(ctx, deployRequest)
 		if err != nil {
@@ -152,7 +153,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		}
 
 		platformResources := deployResp.Msg.GetResourceYaml()
-		capsuleSpec, err = c.processPlatformOutput(migratedResources, platformResources)
+		capsuleSpec, platformObjects, err = c.processPlatformOutput(migratedResources, platformResources)
 		if err != nil {
 			return err
 		}
@@ -168,17 +169,29 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if capsuleHasIngress(capsuleSpec) && !ingressIsSupported(cfg) {
+		warnings["Capsule"] = append(warnings["Capsule"], &Warning{
+			Kind:    "Capsule",
+			Name:    capsuleSpec.Name,
+			Field:   "spec.interfaces",
+			Warning: "Ingress is not supported by the operator. Ingress resources are not created",
+			Suggestion: "Configure the operator to support ingress by setting the certmanager.clusterIssuer field" +
+				" and enabling the certmanager.createCertificateResources field",
+		})
+	}
+
 	cfgBytes, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
 	}
 
 	resp, err := c.OperatorClient.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
-		Namespace:      base.Flags.Project,
-		Capsule:        capsuleSpec.Name,
-		CapsuleSpec:    string(capsuleSpecYAML),
-		Force:          true,
-		OperatorConfig: string(cfgBytes),
+		Namespace:         base.Flags.Project,
+		Capsule:           capsuleSpec.Name,
+		CapsuleSpec:       string(capsuleSpecYAML),
+		Force:             true,
+		OperatorConfig:    string(cfgBytes),
+		AdditionalObjects: platformObjects,
 	}))
 	if err != nil {
 		return err
@@ -698,8 +711,8 @@ func (c *Cmd) migrateEnvironment(ctx context.Context,
 		return nil, onCCGetError(err, "ConfigMap", currentResources.Deployment.Name, currentResources.Deployment.Namespace)
 	}
 
-	configMapMappings := map[string][]envplugin.AnnotationMappings{}
-	secretMappings := map[string][]envplugin.AnnotationMappings{}
+	configMapMappings := map[string]map[string]string{}
+	secretMappings := map[string]map[string]string{}
 
 	if env := currentResources.Deployment.Spec.Template.Spec.Containers[0].Env; len(env) > 0 {
 		for _, envVar := range env {
@@ -738,11 +751,7 @@ func (c *Cmd) migrateEnvironment(ctx context.Context,
 							Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from configMaps",
 						})
 					} else {
-						configMapMappings[cfgMap.Name] = append(configMapMappings[cfgMap.Name], envplugin.AnnotationMappings{
-							Env: envVar.Name,
-							Key: cfgMap.Key,
-						})
-
+						configMapMappings[cfgMap.Name][envVar.Name] = cfgMap.Key
 						if err := migratedResources.AddObject("ConfigMap", name, configMap); err != nil && !rerrors.IsAlreadyExists(err) {
 							return nil, err
 						}
@@ -773,11 +782,7 @@ func (c *Cmd) migrateEnvironment(ctx context.Context,
 							Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from secrets",
 						})
 					} else {
-						secretMappings[secretRef.Name] = append(secretMappings[secretRef.Name], envplugin.AnnotationMappings{
-							Env: envVar.Name,
-							Key: secretRef.Key,
-						})
-
+						secretMappings[secretRef.Name][envVar.Name] = secretRef.Key
 						// if err := migratedResources.AddObject("Secret", name, secret); err != nil && !rerrors.IsAlreadyExists(err) {
 						// 	return nil, err
 						// }
@@ -1066,43 +1071,45 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 		return nil, onCCListError(err, "Service", currentResources.Deployment.GetNamespace())
 	}
 
+	interfaces := make([]v1alpha2.CapsuleInterface, 0, len(container.Ports))
+	capsuleInterfaces := make([]*capsule.Interface, 0, len(container.Ports))
+	changes := []*capsule.Change{}
+
+	// Find service
+	for _, service := range services.Items {
+		match := len(service.Spec.Selector) > 0
+		for key, value := range service.Spec.Selector {
+			if currentResources.Deployment.Spec.Template.Labels[key] != value {
+				match = false
+				break
+			}
+		}
+
+		if match {
+			service := service
+			if err := currentResources.AddObject("Service", service.GetName(), &service); err != nil &&
+				rerrors.IsAlreadyExists(err) {
+				if service.Name != currentResources.Service.Name {
+					warnings["Service"] = append(warnings["Service"], &Warning{
+						Kind:    "Service",
+						Name:    currentResources.Deployment.Name,
+						Warning: "More than one service is configured for the deployment",
+					})
+				}
+				continue
+			} else if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	ingresses := &netv1.IngressList{}
 	err = c.K8s.List(ctx, ingresses, client.InNamespace(currentResources.Deployment.GetNamespace()))
 	if err != nil {
 		return nil, onCCListError(err, "Ingress", currentResources.Deployment.GetNamespace())
 	}
 
-	interfaces := make([]v1alpha2.CapsuleInterface, 0, len(container.Ports))
-	capsuleInterfaces := make([]*capsule.Interface, 0, len(container.Ports))
-
 	for _, port := range container.Ports {
-		for _, service := range services.Items {
-			match := len(service.Spec.Selector) > 0
-			for key, value := range service.Spec.Selector {
-				if currentResources.Deployment.Spec.Template.Labels[key] != value {
-					match = false
-					break
-				}
-			}
-
-			if match {
-				service := service
-				if err := currentResources.AddObject("Service", service.GetName(), &service); err != nil &&
-					rerrors.IsAlreadyExists(err) {
-					if service.Name != currentResources.Service.Name {
-						warnings["Service"] = append(warnings["Service"], &Warning{
-							Kind:    "Service",
-							Name:    currentResources.Deployment.Name,
-							Warning: "More than one service is configured for the deployment",
-						})
-					}
-					continue
-				} else if err != nil {
-					return nil, err
-				}
-			}
-		}
-
 		i := v1alpha2.CapsuleInterface{
 			Name: port.Name,
 			Port: port.ContainerPort,
@@ -1113,11 +1120,28 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 			Port: uint32(port.ContainerPort),
 		}
 
-		found := false
+		host := ""
 		for _, ingress := range ingresses.Items {
+			ingress := ingress
 			var paths []string
 			for _, path := range ingress.Spec.Rules[0].HTTP.Paths {
-				if path.Backend.Service.Port.Name != port.Name {
+				if path.Backend.Service.Name != currentResources.Service.Name {
+					continue
+				}
+
+				if path.Backend.Service.Port.Name != port.Name && path.Backend.Service.Port.Number != port.ContainerPort {
+					continue
+				}
+
+				switch *path.PathType {
+				case netv1.PathTypeExact, netv1.PathTypeImplementationSpecific:
+					warnings["Ingress"] = append(warnings["Ingress"], &Warning{
+						Kind:  "Ingress",
+						Name:  ingress.GetName(),
+						Field: fmt.Sprintf("spec.rules.http.paths.%s.pathType", path.Path),
+						Warning: fmt.Sprintf("PathType %s is not supported. Path %s is ignored",
+							*path.PathType, path.Path),
+					})
 					continue
 				}
 
@@ -1125,40 +1149,43 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 			}
 
 			if len(paths) > 0 {
-				if err := currentResources.AddObject("Ingress", ingress.GetName(), &ingress); err != nil {
+				if err := currentResources.AddObject("Ingress", ingress.GetName(), &ingress); err != nil &&
+					!rerrors.IsAlreadyExists(err) {
 					return nil, err
 				}
 
-				if found {
+				if host == "" {
+					i.Public = &v1alpha2.CapsulePublicInterface{
+						Ingress: &v1alpha2.CapsuleInterfaceIngress{
+							Host:  ingress.Spec.Rules[0].Host,
+							Paths: paths,
+						},
+					}
+
+					ci.Public = &capsule.PublicInterface{
+						Enabled: true,
+						Method: &capsule.RoutingMethod{
+							Kind: &capsule.RoutingMethod_Ingress_{
+								Ingress: &capsule.RoutingMethod_Ingress{
+									Host:  i.Public.Ingress.Host,
+									Paths: paths,
+								},
+							},
+						},
+					}
+
+					host = ingress.Spec.Rules[0].Host
+				} else if host != "" && ingress.Spec.Rules[0].Host == host {
+					i.Public.Ingress.Paths = append(i.Public.Ingress.Paths, paths...)
+					ci.Public.Method.GetIngress().Paths = append(ci.Public.Method.GetIngress().Paths, paths...)
+				} else {
 					warnings["Ingress"] = append(warnings["Ingress"], &Warning{
 						Kind: "Ingress",
 						Name: ingress.GetName(),
 						Warning: fmt.Sprintf("Previous Ingress host: %s already configured for port %s. This Ingress %s is ignored.",
-							i.Public.Ingress.Host, port.Name, ingress.GetName()),
+							host, port.Name, ingress.GetName()),
 					})
-					continue
 				}
-
-				i.Public = &v1alpha2.CapsulePublicInterface{
-					Ingress: &v1alpha2.CapsuleInterfaceIngress{
-						Host:  ingress.Spec.Rules[0].Host,
-						Paths: paths,
-					},
-				}
-
-				ci.Public = &capsule.PublicInterface{
-					Enabled: true,
-					Method: &capsule.RoutingMethod{
-						Kind: &capsule.RoutingMethod_Ingress_{
-							Ingress: &capsule.RoutingMethod_Ingress{
-								Host:  i.Public.Ingress.Host,
-								Paths: paths,
-							},
-						},
-					},
-				}
-
-				found = true
 			}
 		}
 
@@ -1180,7 +1207,6 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 		interfaces = append(interfaces, i)
 	}
 
-	changes := []*capsule.Change{}
 	if len(interfaces) > 0 {
 		capsuleSpec.Spec.Interfaces = interfaces
 		changes = []*capsule.Change{
@@ -1294,7 +1320,7 @@ func (c *Cmd) migrateCronJobs(ctx context.Context,
 
 		cronJob := cronJobs[i]
 
-		migratedCronJob, addCronjob, err := migrateCronJob(currentResources.Deployment, cronJob, warnings)
+		migratedCronJob, addCronjob, err := migrateCronJob(currentResources, cronJob, warnings)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -1318,22 +1344,28 @@ func (c *Cmd) migrateCronJobs(ctx context.Context,
 	return changes, nil
 }
 
-func migrateCronJob(deployment *appsv1.Deployment,
+func migrateCronJob(currentResources *Resources,
 	cronJob batchv1.CronJob,
 	warnings map[string][]*Warning,
 ) (*v1alpha2.CronJob, *capsule.CronJob, error) {
 	migrated := &v1alpha2.CronJob{
-		Name:           cronJob.Name,
-		Schedule:       cronJob.Spec.Schedule,
-		MaxRetries:     ptr.To(uint(*cronJob.Spec.JobTemplate.Spec.BackoffLimit)),
-		TimeoutSeconds: ptr.To(uint(*cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds)),
+		Name:     cronJob.Name,
+		Schedule: cronJob.Spec.Schedule,
 	}
 
 	capsuleCronjob := &capsule.CronJob{
-		JobName:    cronJob.Name,
-		Schedule:   cronJob.Spec.Schedule,
-		MaxRetries: *cronJob.Spec.JobTemplate.Spec.BackoffLimit,
-		Timeout:    durationpb.New(time.Duration(*cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds)),
+		JobName:  cronJob.Name,
+		Schedule: cronJob.Spec.Schedule,
+	}
+
+	if cronJob.Spec.JobTemplate.Spec.BackoffLimit != nil {
+		migrated.MaxRetries = ptr.To(uint(*cronJob.Spec.JobTemplate.Spec.BackoffLimit))
+		capsuleCronjob.MaxRetries = *cronJob.Spec.JobTemplate.Spec.BackoffLimit
+	}
+
+	if cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds != nil {
+		migrated.TimeoutSeconds = ptr.To(uint(*cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds))
+		capsuleCronjob.Timeout = durationpb.New(time.Duration(*cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds))
 	}
 
 	if len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers) > 1 {
@@ -1346,7 +1378,7 @@ func migrateCronJob(deployment *appsv1.Deployment,
 	}
 
 	if cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image ==
-		deployment.Spec.Template.Spec.Containers[0].Image {
+		currentResources.Deployment.Spec.Template.Spec.Containers[0].Image {
 		cmd := cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command[0]
 		args := append(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command[1:],
 			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args...)
@@ -1370,7 +1402,7 @@ func migrateCronJob(deployment *appsv1.Deployment,
 			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Command[0],
 			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args)
 		urlString, err := common.PromptInput("Finish the path to the service",
-			common.InputDefaultOpt(fmt.Sprintf("http://%s:[PORT]/[PATH]?[PARAMS1]&[PARAM2]", deployment.Name)))
+			common.InputDefaultOpt(fmt.Sprintf("http://%s:[PORT]/[PATH]?[PARAMS1]&[PARAM2]", currentResources.Deployment.Name)))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1416,4 +1448,18 @@ func onCCGetError(err error, kind, name, namespace string) error {
 
 func onCCListError(err error, kind, namespace string) error {
 	return errors.Wrapf(err, "Error listing %s in namespace %s", kind, namespace)
+}
+
+func capsuleHasIngress(capsule *v1alpha2.Capsule) bool {
+	for _, inf := range capsule.Spec.Interfaces {
+		if inf.Public != nil && inf.Public.Ingress != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func ingressIsSupported(cfg *v1alpha1.OperatorConfig) bool {
+	return cfg.Ingress.IsTLSDisabled() ||
+		(cfg.Certmanager != nil && cfg.Certmanager.ClusterIssuer != "")
 }

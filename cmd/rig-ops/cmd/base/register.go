@@ -94,7 +94,18 @@ func NewRigClient(ctx context.Context) (rig.Client, error) {
 	}
 
 	sessionManager := &sessionManager{cfg: cfg}
-	rc := rig.NewClient(rig.WithSessionManager(sessionManager), rig.WithHost(cfg.GetCurrentService().Server))
+
+	host := cfg.GetCurrentService().Server
+	if Flags.RigContext != "" {
+		serv, err := cfg.GetService(Flags.RigContext)
+		if err != nil {
+			return nil, err
+		}
+
+		host = serv.Server
+	}
+
+	rc := rig.NewClient(rig.WithSessionManager(sessionManager), rig.WithHost(host))
 
 	// check if we need to authenticate
 	projectListResp, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
@@ -160,7 +171,7 @@ func NewRigClient(ctx context.Context) (rig.Client, error) {
 
 	if !found {
 		promptStr := "Select an environment to continue"
-		if Flags.Project != "" {
+		if Flags.Environment != "" {
 			promptStr = "The environment you selected does not exist. " + promptStr
 		}
 
