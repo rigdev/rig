@@ -1,0 +1,43 @@
+---
+pagination_prev: null
+---
+
+import {RIG_VERSION} from "../../../src/constants/versions"
+
+# GitLab CI/CD Pipelines
+
+When using GitLab, we recommend that the `rig` CLI is used in its
+docker image format.
+
+## Preparing variables
+
+We recommend that you define the following variables to be available
+for pipelines.
+
+- `RIG_HOST` containing the full URL to your Rig API.
+- `RIG_CLIENT_ID` containing the client ID of your service account.
+- `RIG_CLIENT_SECRET` containing the client secret of your service account.
+
+For more information about how to set variables please refer to the [GitLab
+CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/) documentation.
+
+## Using `rig` CLI in a job
+
+The easiest way to use the Rig CLI in your GitLab jobs is by running your job
+in our CLI image. See the following for a simple example of a GitLab Pipeline.
+
+<pre><code className="language-yaml">
+{`deploy:
+  image: ghcr.io/rigdev/rig:` + RIG_VERSION + `
+  script:
+    # Activate the service account from RIG_CLIENT_ID, RIG_CLIENT_SECRET and
+    # RIG_HOST. This will enable you to use the CLI on behalf of the service
+    # account.
+    - rig auth activate-service-account -H $RIG_HOST
+    # When the service account is activated you can go ahead and issue commands
+    # on the CLI.
+    - rig capsule deploy ...`}
+</code></pre>
+
+Now that you know how to run the `rig` CLI in GitLab. You can go ahead and
+checkout our documentation for how to effectively [use the CLI in CI Systems](../ci-cd#deploying-changes).

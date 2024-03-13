@@ -27,7 +27,7 @@ page](https://github.com/rigdev/rig/releases/latest) to find yours.
 
 Installation from source requires the go toolchain to be installed.
 
-<pre><code className="language-bash">go install github.com/rigdev/rig/cmd/rig@{RIG_VERSION}</code></pre>
+<pre><code className="language-bash">go install github.com/rigdev/rig/cmd/rig@v{RIG_VERSION}</code></pre>
 
 ## Next step
 

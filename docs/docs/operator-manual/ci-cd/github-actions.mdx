@@ -5,131 +5,109 @@ pagination_prev: null
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import ThemedImage from '@theme/ThemedImage';
+import {RIG_VERSION} from "../../../src/constants/versions"
 
 # Github Actions
 
 The [Rig CLI](/getting-started/cli-install) can be used to deploy changes to Capsules to any pipeline.
 Additionally for GitHub Actions, there are some built-in GitHub actions that makes it even easier.
 
+## Preparing variables
+
+We recommend that you define the following variables to be available
+for Github actions.
+
+- `RIG_HOST` containing the full URL to your Rig API.
+- `RIG_CLIENT_ID` containing the client ID of your service account.
+- `RIG_CLIENT_SECRET` containing the client secret of your service account.
+  This should be stored as a secret variable in Github.
+
+For more information about how to set variables and secrets please refer to the
+official Github documentation for
+[configuration variables](https://docs.github.com/en/actions/learn-github-actions/variables)
+and
+[secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions).
+
 ## Setup Step
 
-For easy access to the Rig CLI in any GitHub Action, use the following step `rigdev/setup-rig@v1`:
+For easy access to the Rig CLI in any GitHub Actions workflow, use our rig
+setup action `rigdev/setup-rig@v1`:
 
-```yaml
-jobs:
+<pre><code className="language-yaml">
+{`jobs:
   deploy:
     steps:
+      # Ensure that the rig CLI is installed and that the service account is
+      # activated. This will enable you to use the CLI on behalf of the service
+      # account.
       - name: Setup Rig
         uses: rigdev/setup-rig@v1
-
+        with:
+          # specify what version of the rig CLI you need. If left empty we use
+          # the latest release.
+          version: ${RIG_VERSION}
+          host: \${{ vars.RIG_HOST }}
+          client-id: \${{ vars.CLIENT_ID }}
+          client-secret: \${{ secrets.CLIENT_SECRET }}
+      # With the CLI installed and service account activated you can use the
+      # CLI to send commands to the Rig API.
       - run: |
-          rig deploy my-capsule ...
-```
+          rig deploy ...`}
+</code></pre>
 
-This step assumes `RIG_CLIENT_ID` and `RIG_CLIENT_SECRET` is configured for the workflow.
+Now that you are able to run the `rig` CLI you can either checkout our general
+documentation about [using the CLI in CI/CD systems](../ci-cd#deploying-changes) or read through the below
+example.
 
-### Custom version
+## Example workflow: Build and deploy docker image
 
-To pin the step to fetch a specific version of the CLI, the version can explicitly be configured:
+This example will show a full GitHub Actions workflow which builds a docker
+image, and deploys it using the `rig` CLI.
 
-```yaml
-    steps:
-      - uses: rigdev/setup-rig@v1
-        with:
-          version: 1.7.1
-```
-
-The default version is the latest released.
-
-## Deploy using CLI
-
-To deploy using the CLI, the following command can be used:
-
-```yaml
-      - name: Deploy to Capsule
-        env:
-          RIG_HOST: https://my-host/
-          RIG_CLIENT_ID: ${{ secrets.RIG_CLIENT_ID }}
-          RIG_CLIENT_SECRET: ${{ secrets.RIG_CLIENT_SECRET }}
-        run: |
-          rig deploy my-capsule -P my-project -E production --image nginx:1.25
-```
-
-## Deploy using Action
-
-Additionally, a pre-built step is available that wraps the CLI and makes deploying even simpler:
-
-```yaml
-      - name: Deploy to capsule
-        uses: rigdev/actions/deploy@v3
-        with:
-          url: url-to-rig-cluster
-          project: YOUR_PROJECT_NAME
-          capsule: YOUR_CAPSULE
-          image: image-name
-```
-
-This step assumes `RIG_CLIENT_ID` and `RIG_CLIENT_SECRET` is configured for the workflow.
-
-## Example workflow using the actions
-
-Rig exposes [two different actions](https://github.com/rigdev/actions), `build` and `deploy`. The `build` action assumes you have a Docker image you want to deploy and makes a Rig build off of it. The `deploy` action can then deploy the previously (or any other) generated build to a capsule.
-As you need a Docker image to build and deploy, it is common to prefix these two actions with [Docker Github actions](https://docs.docker.com/build/ci/github-actions/) to build and publish an image.
-
-The following GitHub workflow example showcases how you can
+In the workflow we will go through the following steps
 
 1. Build a Docker image from a new commit
-2. Push that Docker image to Docker Hub
-3. Make a Rig build from that Docker image
-4. Deploy that Rig build to your Rig capsule
+2. Push that Docker image GitHub container registry
+3. Deploy the image in to a capsule named the same as the repository in the rig
+   project 'my-project' for the production environment.
 
-In this example a username and password to Dockerhub is stored as a Github secret in the repository of the workflow. The same is done with the client secret to the Rig project
-
-```yaml
-on: [push]
+<pre><code className="language-yaml">
+{`on: [push]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: "ghcr.io/\${{ github.repository_owner }}/\${{ github.repository }}:\${{ github.sha }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
+      - name: Login to GitHub container registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+          registry: ghcr.io
+          username: \${{ github.actor }}
+          password: \${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/DOCKER_IMAGE_NAME:latest
+          tags: \${{ env.IMAGE_NAME }}
 
-      - name: Create build on Rig
-        uses: rigdev/actions/build@v3
-        id: build_rig
+      - name: Setup Rig
+        uses: rigdev/setup-rig@v1
         with:
-          url: url-to-rig-cluster
-          project: YOUR_PROJECT_NAME
-          clientID: YOUR_ID
-          clientSecret: ${{ secrets.RIG_PROJECT_CLIENT_SECRET }}
-          image: ${{ secrets.DOCKER_HUB_USERNAME }}/DOCKER_IMAGE_NAME:latest
-          capsule: YOUR_CAPSULE
+          version: ${RIG_VERSION}
+          host: \${{ vars.RIG_HOST }}
+          client-id: \${{ vars.RIG_CLIENT_ID }}
+          client-secret: \${{ secrets.RIG_CLIENT_SECRET }}
 
-      - name: Deploy to capsule
-        uses: rigdev/actions/deploy@v3
-        with:
-          url: url-to-rig-cluster
-          project: YOUR_PROJECT_NAME
-          clientID: YOUR_ID
-          clientSecret: ${{ secrets.RIG_PROJECT_CLIENT_SECRET }}
-          capsule: YOUR_CAPSULE
-          build: ${{ steps.build_rig.outputs.build }}
-```
+      - name: Deploy Capsule to production
+        run: |
+          rig deploy \${{ github.repository }} \\
+            --project my-project \\
+            --environment production \\
+            --image \${{ env.IMAGE_NAME }}`}
+</code></pre>

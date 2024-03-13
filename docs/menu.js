@@ -161,7 +161,7 @@ const sidebars = {
             sidebar_icon: "BiHardHat",
           },
         },
-      ]
+      ],
     },
     {
       type: "doc",
@@ -278,8 +278,17 @@ const sidebars = {
           customProps: {
             sidebar_icon: "TbBrandGithub",
           },
-        }
-      ]
+        },
+        {
+          type: "doc",
+          id: "operator-manual/ci-cd/gitlab-pipelines",
+          label: "GitLab CI/CD Pipelines",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "TbBrandGitlab",
+          },
+        },
+      ],
     },
     {
       type: "doc",
@@ -306,7 +315,7 @@ const sidebars = {
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "SiGit",
-      }
+      },
     },
     //collapsed: true,
     //items: [
