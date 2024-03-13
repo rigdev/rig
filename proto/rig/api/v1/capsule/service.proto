@@ -247,6 +247,10 @@ message DeployRequest {
   // currently running rollout matches this identifier. If this check fails, the
   // request will return an `Aborted` error.
   uint64 current_rollout_id = 8;
+  // if true, existing resources will be handled as if they were created by the
+  // platform, and ownership set to the capsule. Otherwise reconsillication will
+  // be skipped, and ownership remains unchanged.
+  bool override_ownership = 9;
 }
 
 // Deploy response.

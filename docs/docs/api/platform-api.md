@@ -3656,6 +3656,7 @@ rollout.
 | message | [string](#string) |  | Deploy message. |
 | dry_run | [bool](#bool) |  | if true, the deploy will not be executed, but the request will return the rollout config. |
 | current_rollout_id | [uint64](#uint64) |  | If not zero, this will constrain the rollout only to be created if the currently running rollout matches this identifier. If this check fails, the request will return an `Aborted` error. |
+| override_ownership | [bool](#bool) |  | if true, existing resources will be handled as if they were created by the platform, and ownership set to the capsule. Otherwise reconsillication will be skipped, and ownership remains unchanged. |
 
 
 
