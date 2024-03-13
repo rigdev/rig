@@ -25,6 +25,7 @@ type Cmd struct {
 
 	OperatorClient *base.OperatorClient
 	K8s            client.Client
+	K8sReader      client.Reader
 	Scheme         *runtime.Scheme
 }
 
