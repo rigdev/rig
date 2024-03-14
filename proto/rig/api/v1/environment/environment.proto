@@ -16,4 +16,6 @@ message Environment {
   bool default = 2;
   // The version of the Rig-operator CRD for this environment.
   string operator_version = 3;
+  // ID of the backing cluster.
+  string cluster_id = 4;
 }

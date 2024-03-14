@@ -17,6 +17,7 @@ service Service {
 message CreateRequest {
   string environment_id = 1;
   repeated api.v1.environment.Update initializers = 2;
+  string cluster_id = 3;
 }
 
 message CreateResponse {}

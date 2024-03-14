@@ -4414,6 +4414,7 @@ Environment model.
 | environment_id | [string](#string) |  | ID of the environment. |
 | default | [bool](#bool) |  | If true, this is the default environment. |
 | operator_version | [string](#string) |  | The version of the Rig-operator CRD for this environment. |
+| cluster_id | [string](#string) |  | ID of the backing cluster. |
 
 
 
@@ -4458,6 +4459,7 @@ Environment model.
 | ----- | ---- | ----- | ----------- |
 | environment_id | [string](#string) |  |  |
 | initializers | [Update](#api-v1-environment-Update) | repeated |  |
+| cluster_id | [string](#string) |  |  |
 
 
 
