@@ -11,11 +11,11 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -57,48 +57,48 @@ func Setup(parent *cobra.Command) {
 		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
 	}
 
-	imageCreate := &cobra.Command{
-		Use:   "create",
-		Short: "Create a new image with the given image",
+	imageAdd := &cobra.Command{
+		Use:   "add",
+		Short: "Add a new container image",
 		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.createImage),
+		RunE:  cli.CtxWrap(cmd.addImage),
 	}
-	imageCreate.Flags().StringVarP(&imageID, "image", "i", "", "image to use for the image")
-	imageCreate.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy image after successful creation")
-	imageCreate.Flags().BoolVarP(
+	imageAdd.Flags().StringVarP(&imageID, "image", "i", "", "image to use for the image")
+	imageAdd.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy image after successful creation")
+	imageAdd.Flags().BoolVarP(
 		&forceDeploy, "force-deploy", "f", false, "force deploy. Aborting a deployment if one is in progress",
 	)
-	imageCreate.Flags().BoolVarP(
+	imageAdd.Flags().BoolVarP(
 		&skipImageCheck, "skip-image-check", "s", false, "skip validating that the docker image exists",
 	)
-	imageCreate.Flags().BoolVarP(
+	imageAdd.Flags().BoolVarP(
 		&remote, "remote", "r", false, "Rig will not look for the image locally but assumes it from a remote "+
 			"registry. If not set, Rig will search locally and then remotely",
 	)
 
-	if err := imageCreate.RegisterFlagCompletionFunc("deploy", common.BoolCompletions); err != nil {
+	if err := imageAdd.RegisterFlagCompletionFunc("deploy", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if err := imageCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
+	if err := imageAdd.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if err := imageCreate.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions); err != nil {
+	if err := imageAdd.RegisterFlagCompletionFunc("skip-image-check", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if err := imageCreate.RegisterFlagCompletionFunc("remote", common.BoolCompletions); err != nil {
+	if err := imageAdd.RegisterFlagCompletionFunc("remote", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	image.AddCommand(imageCreate)
+	image.AddCommand(imageAdd)
 
 	imageGet := &cobra.Command{
 		Use:   "get [image-id]",
 		Short: "Get one or multiple images",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  cli.CtxWrap(cmd.getBuild),
+		RunE:  cli.CtxWrap(cmd.getImage),
 		ValidArgsFunction: common.Complete(
 			cli.CtxWrapCompletion(cmd.completions),
 			common.MaxArgsCompletionFilter(1),

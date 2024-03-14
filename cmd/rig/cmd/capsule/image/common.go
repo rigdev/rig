@@ -181,9 +181,9 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	}
 
 	if res.Msg.GetAddedNewImage() {
-		fmt.Println("Created new build:", res.Msg.GetImageId())
+		fmt.Println("Added new image:", res.Msg.GetImageId())
 	} else {
-		fmt.Println("Build already exists, using existing build")
+		fmt.Println("Image already added, using existing image reference.")
 	}
 
 	return res.Msg.GetImageId(), nil

@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) createImage(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) addImage(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var err error
 
 	imageRef := imageRefFromFlags()

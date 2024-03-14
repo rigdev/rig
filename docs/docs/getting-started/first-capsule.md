@@ -31,12 +31,12 @@ This will list all capsules in the current project, where you should see the cap
 Next, we need to create a image with the Nginx image for the capsule. This is done using the following command:
 
 ```bash
-rig capsule -c nginx-capsule image create --image nginx:latest
+rig capsule -c nginx-capsule image add --image nginx:latest
 ```
 
 Note that if you are on an arm chip, you should the arm version of the image, 'arm64v8/nginx:latest'.
 
-From the command, we should see an output similar to: `Created new image: <image-id>`
+From the command, we should see an output similar to: `Added new image: <image-id>`
 
 We can verify that the image was created by running:
 
