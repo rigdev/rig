@@ -274,6 +274,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 			ProjectId:     flags.GetProject(c.Cfg),
 			EnvironmentId: flags.GetEnvironment(c.Cfg),
 			Force:         true,
+			ForceOverride: forceOverride,
 		},
 	}
 

@@ -6,27 +6,31 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
-	// "k8s.io/apimachinery/pkg/runtime"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 )
 
-// Get plugins from the operator config that matches all capsules and namespaces and is installed in the cluster
-func (c *Cmd) getPlugins(ctx context.Context) ([]string, error) {
+// Get plugins from the operator config that matches the name of the capsule and the namespace
+func (c *Cmd) getPlugins(ctx context.Context, migration *Migration) error {
 	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	resp, err := c.OperatorClient.Capabilities.GetPlugins(ctx, connect.NewRequest(&capabilities.GetPluginsRequest{}))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var plugins []string
 	for _, step := range cfg.Pipeline.Steps {
-		if step.Capsules != nil && step.Namespaces != nil && step.Selector.Size() > 0 {
+		matcher, err := plugin.NewMatcher(step.Namespaces, step.Capsules, step.Selector)
+		if err != nil {
+			return err
+		}
+		if !matcher.Match(migration.capsule.Namespace, migration.capsule.Name, migration.capsule.Annotations) {
 			continue
 		}
 
-		// Plugin matches all capsules
+		// Plugin matches capsule
 		for _, p := range step.Plugins {
 			for _, plugin := range resp.Msg.Plugins {
 				switch v := plugin.GetPlugin().(type) {
@@ -43,5 +47,7 @@ func (c *Cmd) getPlugins(ctx context.Context) ([]string, error) {
 		}
 	}
 
-	return plugins, nil
+	migration.plugins = plugins
+
+	return nil
 }
