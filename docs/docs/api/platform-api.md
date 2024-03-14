@@ -4460,6 +4460,7 @@ Environment model.
 | environment_id | [string](#string) |  |  |
 | initializers | [Update](#api-v1-environment-Update) | repeated |  |
 | cluster_id | [string](#string) |  |  |
+| namespace_template | [string](#string) |  | Namespace template is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. Default value is: {{ .Project.Name }} Valid template properties are: .Project.Name - name of the project .Environment.Name - name of the environment. |
 
 
 
