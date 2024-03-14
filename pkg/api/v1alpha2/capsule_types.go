@@ -235,8 +235,7 @@ type CapsuleInterface struct {
 // HostRoute is the configuration of a route to the network interface
 // it's configured on.
 type HostRoute struct {
-	// Host of the route. The value "*" means a wildcard, that matches any hostname.
-	// The character "*" is not valid in any other cases.
+	// Host of the route. This field is required and cannot be empty.
 	Host string `json:"host"`
 	// HTTP paths of the host that maps to the interface. If empty, all paths are
 	// automatically matched.
