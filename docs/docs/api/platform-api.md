@@ -99,6 +99,9 @@
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| /api.v1.environment.Service/Create | [CreateRequest](#api-v1-environment-CreateRequest) | [CreateResponse](#api-v1-environment-CreateResponse) |  |
+| /api.v1.environment.Service/Update | [UpdateRequest](#api-v1-environment-UpdateRequest) | [UpdateResponse](#api-v1-environment-UpdateResponse) |  |
+| /api.v1.environment.Service/Delete | [DeleteRequest](#api-v1-environment-DeleteRequest) | [DeleteResponse](#api-v1-environment-DeleteResponse) |  |
 | /api.v1.environment.Service/List | [ListRequest](#api-v1-environment-ListRequest) | [ListResponse](#api-v1-environment-ListResponse) | List available environments. |
 | /api.v1.environment.Service/GetNamespaces | [GetNamespacesRequest](#api-v1-environment-GetNamespacesRequest) | [GetNamespacesResponse](#api-v1-environment-GetNamespacesResponse) |  |
 
@@ -4411,6 +4414,22 @@ Environment model.
 | environment_id | [string](#string) |  | ID of the environment. |
 | default | [bool](#bool) |  | If true, this is the default environment. |
 | operator_version | [string](#string) |  | The version of the Rig-operator CRD for this environment. |
+| cluster_id | [string](#string) |  | ID of the backing cluster. |
+
+
+
+
+
+
+<a name="api-v1-environment-Update"></a>
+
+### Update
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| default | [bool](#bool) |  |  |
 
 
 
@@ -4427,6 +4446,59 @@ Environment model.
 <a name="api_v1_environment_service-proto"></a>
 
 ## api/v1/environment/service.proto
+
+
+
+<a name="api-v1-environment-CreateRequest"></a>
+
+### CreateRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  |  |
+| initializers | [Update](#api-v1-environment-Update) | repeated |  |
+| cluster_id | [string](#string) |  |  |
+| namespace_template | [string](#string) |  | Namespace template is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. Default value is: {{ .Project.Name }} Valid template properties are: .Project.Name - name of the project .Environment.Name - name of the environment. |
+
+
+
+
+
+
+<a name="api-v1-environment-CreateResponse"></a>
+
+### CreateResponse
+
+
+
+
+
+
+
+<a name="api-v1-environment-DeleteRequest"></a>
+
+### DeleteRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-environment-DeleteResponse"></a>
+
+### DeleteResponse
+
+
+
+
 
 
 
@@ -4518,6 +4590,32 @@ Response for listing available environments.
 | project_id | [string](#string) |  |  |
 | environment_id | [string](#string) |  |  |
 | namespace | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-environment-UpdateRequest"></a>
+
+### UpdateRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  |  |
+| updates | [Update](#api-v1-environment-Update) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-environment-UpdateResponse"></a>
+
+### UpdateResponse
+
 
 
 

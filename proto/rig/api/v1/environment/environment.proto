@@ -2,6 +2,12 @@ syntax = "proto3";
 
 package api.v1.environment;
 
+message Update {
+  oneof field {
+    bool default = 1;
+  }
+}
+
 // Environment model.
 message Environment {
   // ID of the environment.
@@ -10,4 +16,6 @@ message Environment {
   bool default = 2;
   // The version of the Rig-operator CRD for this environment.
   string operator_version = 3;
+  // ID of the backing cluster.
+  string cluster_id = 4;
 }
