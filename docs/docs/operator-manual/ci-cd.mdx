@@ -4,12 +4,49 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import ThemedImage from '@theme/ThemedImage';
 
-Rig is easily integratable in _any_ CI/CD environment, due to it's rich [CLI tool](/getting-started/cli-install). From the CLI, you can issues deploys to any Capsule in any environment.
+Rig is easily integratable in _any_ CI/CD environment, due to it's rich [CLI
+tool](/getting-started/cli-install). From the CLI, you can deploy to any
+Capsule in any environment.
+
+## Preparing your CI/CD system
+
+When using the CLI in a CI/CD environment, you will first need to create a Rig
+service account which the CLI will use to authenticate against the Rig APIs. If
+you need help creating a service account, please see the instructions in [the
+Service Account documentation](/platform/service-accounts).
+
+Your service account will have a client ID and secret which we will need when
+configuring the CI/CD system. Take note of these.
+
+Lastly you will need the URL for where the CI/CD system should contact the Rig
+APIs.
+
+With these in hand follow the guide for your CI/CD system of choice:
+
+- [GitHub Actions](./ci-cd/github-actions)
+- [GitLab CI/CD pipelines](./ci-cd/gitlab-pipelines)
+
+If you are interested in better support for a CI/CD system not mentioned in the
+above list, please open an issue on GitHub: https://github.com/rigdev/rig.
+
+## Rig Platform host and credentials
+
+If you followed the above instructions for one of the supported CI/CD systems,
+you can disregard this section.
+
+The Rig Platform hostname is controlled using the `--host`/`-H` flag. It should
+include the scheme, e.g. `https://my-host/`. Alternatively, `RIG_HOST` can be
+set.
+
+The Rig CLI automatically looks for a `RIG_CLIENT_ID` and  `RIG_CLIENT_SECRET`
+environment variables, of the [Service Account](/platform/service-accounts) to
+use.
 
 ## Deploying changes
 
-All changes to a Capsule can be done through the powerful `rig deploy` command. It takes a number of arguments, combining them all into a single Rollout to
-the Capsule.
+All changes to a Capsule can be done through the powerful `rig deploy` command.
+It takes a number of arguments, combining them all into a single Rollout to the
+Capsule.
 
 As an example, the following command
 
@@ -17,13 +54,16 @@ As an example, the following command
 rig deploy my-capsule --image nginx:1.25 -e FOO=bar
 ```
 
-will update `my-capsule` to use the container image `nginx:1.25` and set the environment variable `FOO` to the value `bar`.
+will update `my-capsule` to use the container image `nginx:1.25` and set the
+environment variable `FOO` to the value `bar`.
 
 See `rig deploy --help` for a list of all the options available.
 
 ## Environments and Projects
 
-When deploying to a Capsule from a CI/CD environment, it's often useful to indicate which project the Capsule is located in and which environment to deploy to.
+When deploying to a Capsule from a CI/CD environment, it's often useful to
+indicate which project the Capsule is located in and which environment to
+deploy to.
 
 This is done using the `--project`/`-P` and `--environment`/`-E` flags:
 
@@ -31,23 +71,18 @@ This is done using the `--project`/`-P` and `--environment`/`-E` flags:
 rig deploy my-capsule -P my-project -E staging --image image:v1.25
 ```
 
-Alternatively, the project and environment can be given using the `RIG_PROJECT` and `RIG_ENVIRONMENT` environment variables.
-
-## Rig Platform host and credentials
-
-The Rig Platform hostname is controlled using the `--host`/`-H` flag. It should include the scheme,
-e.g. `https://my-host/`. Alternatively, `RIG_HOST` can be set.
-
-The Rig CLI automatically looks for a `RIG_CLIENT_ID` and  `RIG_CLIENT_SECRET` environment variables,
-of the [Service Account](/platform/service-accounts) to use.
+Alternatively, the project and environment can be given using the `RIG_PROJECT`
+and `RIG_ENVIRONMENT` environment variables.
 
 ## Rollout progress
 
-By default, the `rig deploy` command will wait for the rollout to "succeed". For the Rig Platform, that means it will wait
-until all changes are applied, all new resources are up and all instances are up and running.
+By default, the `rig deploy` command will wait for the rollout to "succeed".
+For the Rig Platform, that means it will wait until all changes are applied,
+all new resources are up and all instances are up and running.
 
-While the rollout is progressing, the command will print events as they happen. It's thus possible to use the tool as an feedback
-in a CI/CD workflow, of if the rollback failed or contained changes:
+While the rollout is progressing, the command will print events as they happen.
+It's thus possible to use the tool as an feedback in a CI/CD workflow, of if
+the rollback failed or contained changes:
 
 ```bash
 rig deploy my-capsule --image nginx:1.25
@@ -64,21 +99,25 @@ Deploying to capsule test in rollout 52
 Done ✅ - All instances are running
 ```
 
-Note that most errors are treated as recoverable, as resources in Kubernetes may progress to a working state. The command will thus
-not exit and keep running, even though an recoverable error happened. A sane timeout should thus be applied.
+Note that most errors are treated as recoverable, as resources in Kubernetes
+may progress to a working state. The command will thus not exit and keep
+running, even though an recoverable error happened. A sane timeout should thus
+be applied.
 
 To disable waiting for rollout to succeed, use `--no-wait`.
 
 
 ## Complete example
 
-The following is a complete example of deploying an image change, with all required arguments of the non-interactive CLI.
+The following is a complete example of deploying an image change, with all
+required arguments of the non-interactive CLI.
 
 ```bash
 export RIG_CLIENT_ID=rig_...
 export RIG_CLIENT_SECRET=secret_...
+export RIG_HOST=https://rig.my-company.com
+rig auth activate-service-account -H $RIG_HOST
 rig deploy my-capsule \
-  --host http://localhost:4747 \
   --project my-project \
   --environment production \
   --image nginx:1.25
