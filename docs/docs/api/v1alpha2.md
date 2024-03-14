@@ -58,6 +58,7 @@ _Appears in:_
 | `liveness` _[InterfaceProbe](#interfaceprobe)_ | Liveness specifies that this interface should be used for liveness probing. Only one of the Capsule interfaces can be used as liveness probe. |
 | `readiness` _[InterfaceProbe](#interfaceprobe)_ | Readiness specifies that this interface should be used for readiness probing. Only one of the Capsule interfaces can be used as readiness probe. |
 | `public` _[CapsulePublicInterface](#capsulepublicinterface)_ | Public specifies if and how the interface should be published. |
+| `routes` _[HostRoute](#hostroute) array_ | Host routes that are mapped to this interface. |
 
 
 ### CapsuleInterfaceIngress
@@ -229,6 +230,17 @@ _Appears in:_
 | `key` _string_ | Key in reference which holds file contents. |
 
 
+### HTTPPathRoute
+
+_Underlying type:_ _[struct{Path string "json:\"path\""; Match PathMatchType "json:\"match,omitempty\""; RouteOptions "json:\",inline\""}](#struct{path-string-"json:\"path\"";-match-pathmatchtype-"json:\"match,omitempty\"";-routeoptions-"json:\",inline\""})_
+
+A HTTP path routing.
+
+_Appears in:_
+- [HostRoute](#hostroute)
+
+
+
 ### HorizontalScale
 
 
@@ -243,6 +255,22 @@ _Appears in:_
 | `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule instances. |
 | `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
 | `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on |
+
+
+### HostRoute
+
+
+
+HostRoute is the configuration of a route to the network interface it's configured on.
+
+_Appears in:_
+- [CapsuleInterface](#capsuleinterface)
+
+| Field | Description |
+| --- | --- |
+| `host` _string_ | Host of the route. This field is required and cannot be empty. |
+| `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are automatically matched. |
+| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration that allows custom plugins to add non-standard behavior. |
 
 
 ### InstanceMetric
@@ -324,6 +352,8 @@ _Appears in:_
 
 
 
+
+
 ### ResourceLimits
 
 
@@ -351,6 +381,20 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `request` _[Quantity](#quantity)_ | Request specifies the request of a resource. |
+
+
+### RouteOptions
+
+
+
+Route options.
+
+_Appears in:_
+- [HostRoute](#hostroute)
+
+| Field | Description |
+| --- | --- |
+| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration that allows custom plugins to add non-standard behavior. |
 
 
 ### URL
