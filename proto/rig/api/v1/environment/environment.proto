@@ -2,6 +2,12 @@ syntax = "proto3";
 
 package api.v1.environment;
 
+message Update {
+  oneof field {
+    bool default = 1;
+  }
+}
+
 // Environment model.
 message Environment {
   // ID of the environment.

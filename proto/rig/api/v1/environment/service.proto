@@ -6,10 +6,33 @@ import "api/v1/environment/environment.proto";
 import "model/common.proto";
 
 service Service {
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
   // List available environments.
   rpc List(ListRequest) returns (ListResponse) {}
   rpc GetNamespaces(GetNamespacesRequest) returns (GetNamespacesResponse) {}
 }
+
+message CreateRequest {
+  string environment_id = 1;
+  repeated api.v1.environment.Update initializers = 2;
+}
+
+message CreateResponse {}
+
+message UpdateRequest {
+  string environment_id = 1;
+  repeated api.v1.environment.Update updates = 2;
+}
+
+message UpdateResponse {}
+
+message DeleteRequest {
+  string environment_id = 1;
+}
+
+message DeleteResponse {}
 
 // Request for listing available environments.
 message ListRequest {
