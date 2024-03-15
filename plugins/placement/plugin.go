@@ -1,5 +1,5 @@
 // +groupName=plugins.rig.dev -- Only used for config doc generation
-package main
+package placement
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
+
+const Name = "rigdev.placement"
 
 // Configuration for the placement plugin
 // +kubebuilder:object:root=true
@@ -22,7 +24,7 @@ type Config struct {
 	RequireTag bool `json:"requireTag,omitempty"`
 }
 
-type placement struct {
+type Plugin struct {
 	configBytes []byte
 
 	config Config
@@ -33,13 +35,13 @@ const (
 	TagAnnotation = "rigdev.placement/tag"
 )
 
-func (p *placement) Initialize(req plugin.InitializeRequest) error {
+func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
 	p.tag = req.Tag
 	return nil
 }
 
-func (p *placement) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	var err error
 	p.config, err = plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
@@ -68,7 +70,7 @@ func (p *placement) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.
 	return req.Set(deployment)
 }
 
-func (p *placement) shouldRun(req pipeline.CapsuleRequest) bool {
+func (p *Plugin) shouldRun(req pipeline.CapsuleRequest) bool {
 	capsule := req.Capsule()
 	if p.config.RequireTag {
 		if p.tag == "" {
@@ -79,8 +81,4 @@ func (p *placement) shouldRun(req pipeline.CapsuleRequest) bool {
 		}
 	}
 	return true
-}
-
-func main() {
-	plugin.StartPlugin("rigdev.placement", &placement{})
 }

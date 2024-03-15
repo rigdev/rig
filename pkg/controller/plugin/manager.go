@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"slices"
@@ -16,8 +17,8 @@ import (
 )
 
 type Manager struct {
-	builtinPath string
-	plugins     map[string]Info
+	plugins           map[string]Info
+	builtinBinaryPath string
 }
 
 type Info struct {
@@ -25,18 +26,23 @@ type Info struct {
 	Image      string
 	IsBuiltin  bool
 	BinaryPath string
+	Args       []string
 }
 
-func builtinPluginDir() (string, error) {
-	execPath, err := os.Executable()
-	if err != nil {
-		return "", err
+type ThirdPartyConfig struct {
+	Plugins []ThirdPartyPlugin `json:"plugins"`
+}
+
+type ThirdPartyPlugin struct {
+	Name string `json:"name"`
+}
+
+type ManagerOption func(m *Manager)
+
+func SetBuiltinBinaryPathOption(path string) ManagerOption {
+	return func(m *Manager) {
+		m.builtinBinaryPath = path
 	}
-	pluginDir := path.Join(path.Dir(execPath), "plugin")
-	if dir := os.Getenv("RIG_PLUGIN_DIR"); dir != "" {
-		pluginDir = dir
-	}
-	return pluginDir, nil
 }
 
 func thirdpartyPluginDir() string {
@@ -65,37 +71,44 @@ func validatePluginName(s string) error {
 	return nil
 }
 
-func NewManager() (*Manager, error) {
-	pluginDir, err := builtinPluginDir()
-	if err != nil {
-		return nil, err
-	}
+// TODO Find a way to import the names of all plugins here using the map from  github.com/rigdev/rig/plugins/allplugins
+// This creates a dependency cycle
+var allPlugins = []string{
+	"rigdev.annotations",
+	"rigdev.datadog",
+	"rigdev.env_mapping",
+	"rigdev.google_cloud_sql_auth_proxy",
+	"rigdev.init_container",
+	"rigdev.object_template",
+	"rigdev.placement",
+	"rigdev.sidecar",
+}
 
+func NewManager(opts ...ManagerOption) (*Manager, error) {
 	manager := &Manager{
-		builtinPath: pluginDir,
-		plugins:     map[string]Info{},
+		plugins: map[string]Info{},
 	}
 
-	if entries, err := os.ReadDir(pluginDir); os.IsNotExist(err) {
-	} else if err != nil {
-		return nil, err
-	} else {
-		for _, e := range entries {
-			if e.IsDir() {
-				continue
-			}
-			if _, ok := manager.plugins[e.Name()]; ok {
-				// Should be impossible
-				return nil, fmt.Errorf("builtin plugin '%s' seen twice", e.Name())
-			}
-			if err := validatePluginName(e.Name()); err != nil {
-				return nil, err
-			}
-			manager.plugins[e.Name()] = Info{
-				IsBuiltin:  true,
-				Name:       e.Name(),
-				BinaryPath: path.Join(pluginDir, e.Name()),
-			}
+	for _, o := range opts {
+		o(manager)
+	}
+
+	if manager.builtinBinaryPath == "" {
+		var err error
+		manager.builtinBinaryPath, err = os.Executable()
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, name := range allPlugins {
+		if err := validatePluginName(name); err != nil {
+			return nil, err
+		}
+		manager.plugins[name] = Info{
+			IsBuiltin:  true,
+			Name:       name,
+			BinaryPath: manager.builtinBinaryPath,
+			Args:       []string{"plugin", name},
 		}
 	}
 
@@ -106,50 +119,95 @@ func NewManager() (*Manager, error) {
 	} else {
 		for _, e := range entries {
 			pluginPath := path.Join(p, e.Name())
-			entries, err := os.ReadDir(pluginPath)
-			if err != nil {
+			if err := manager.loadThirdPartyPlugins(pluginPath); err != nil {
 				return nil, err
-			}
-			var names []string
-			for _, ee := range entries {
-				if ee.Name() == "manifest.yaml" {
-					continue
-				}
-				if _, ok := manager.plugins[ee.Name()]; ok {
-					return nil, fmt.Errorf("multiple plugins with name '%s'", ee.Name())
-				}
-				if err := validatePluginName(ee.Name()); err != nil {
-					return nil, err
-				}
-				manager.plugins[ee.Name()] = Info{
-					Name:       ee.Name(),
-					IsBuiltin:  false,
-					BinaryPath: path.Join(pluginPath, ee.Name()),
-				}
-				names = append(names, ee.Name())
-			}
-			bytes, err := os.ReadFile(path.Join(pluginPath, "manifest.yaml"))
-			if os.IsNotExist(err) {
-				continue
-			} else if err != nil {
-				return nil, err
-			}
-
-			manifest := struct {
-				Image string `json:"image,omitempty"`
-			}{}
-			if err := yaml.Unmarshal(bytes, &manifest); err != nil {
-				return nil, err
-			}
-			for _, name := range names {
-				info := manager.plugins[name]
-				info.Image = manifest.Image
-				manager.plugins[name] = info
 			}
 		}
 	}
 
 	return manager, nil
+}
+
+var configNames = []string{"config.yaml", "config.yml", "config.json"}
+
+func (m *Manager) loadThirdPartyPlugins(pluginPath string) error {
+	entries, err := os.ReadDir(pluginPath)
+	if os.IsNotExist(err) {
+	} else if err != nil {
+		return err
+	}
+
+	for _, e := range entries {
+		if slices.Contains(configNames, e.Name()) {
+			return m.loadThirdPartyWithConfig(pluginPath, entries)
+		}
+	}
+
+	for _, e := range entries {
+		if _, ok := m.plugins[e.Name()]; ok {
+			return fmt.Errorf("multiple plugins with name '%s'", e.Name())
+		}
+		if err := validatePluginName(e.Name()); err != nil {
+			return err
+		}
+		m.plugins[e.Name()] = Info{
+			Name:       e.Name(),
+			IsBuiltin:  false,
+			BinaryPath: path.Join(pluginPath, e.Name()),
+		}
+	}
+
+	return nil
+}
+
+func (m *Manager) loadThirdPartyWithConfig(pluginPath string, entries []fs.DirEntry) error {
+	var configPath string
+	var binaryPath string
+
+	if len(entries) != 2 {
+		return fmt.Errorf("third-party plugin dir contained a config file, but it did not contain exactly 2 entries")
+	}
+
+	for _, e := range entries {
+		if e.IsDir() {
+			return fmt.Errorf("third-party plugin dir contained subdirectory %s", e.Name())
+		}
+		p := path.Join(pluginPath, e.Name())
+		if slices.Contains(configNames, e.Name()) {
+			if configPath != "" {
+				return fmt.Errorf("third-party plugin dir contained multiple config files")
+			}
+			configPath = p
+		} else {
+			binaryPath = p
+		}
+	}
+
+	bytes, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+	var config ThirdPartyConfig
+	if err := yaml.Unmarshal(bytes, &config); err != nil {
+		return err
+	}
+
+	for _, plugin := range config.Plugins {
+		if _, ok := m.plugins[plugin.Name]; ok {
+			return fmt.Errorf("multiple plugins with name '%s'", plugin.Name)
+		}
+		if err := validatePluginName(plugin.Name); err != nil {
+			return err
+		}
+		m.plugins[plugin.Name] = Info{
+			Name:       plugin.Name,
+			IsBuiltin:  false,
+			BinaryPath: binaryPath,
+			Args:       []string{plugin.Name},
+		}
+	}
+
+	return nil
 }
 
 func (m *Manager) GetPlugin(name string) (Info, bool) {
@@ -183,6 +241,7 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 		}
 		p, err := NewExternalPlugin(
 			plugin.Name, step.Tag, plugin.Tag, plugin.Config, info.BinaryPath,
+			info.Args,
 			logger,
 		)
 		if err != nil {

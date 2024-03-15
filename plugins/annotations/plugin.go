@@ -1,5 +1,5 @@
 // +groupName=plugins.rig.dev -- Only used for config doc generation
-package main
+package annotations
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 )
+
+const Name = "rigdev.annotations"
 
 // Configuration for the annotations plugin
 // +kubebuilder:object:root=true
@@ -24,45 +26,35 @@ type Config struct {
 	Name string `json:"name,omitempty"`
 }
 
-type pluginParent struct {
+type Plugin struct {
 	configBytes []byte
 }
 
-func (p *pluginParent) Initialize(req plugin.InitializeRequest) error {
+func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
 	return nil
 }
 
-func (p *pluginParent) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err
 	}
-	pp := &pluginImpl{
-		config: config,
-	}
-	return pp.run(ctx, req, logger)
-}
 
-type pluginImpl struct {
-	config Config
-}
-
-func (p *pluginImpl) run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
-	name := p.config.Name
+	name := config.Name
 	if name == "" {
 		name = req.Capsule().Name
 	}
 
-	object, err := plugin.GetNew(p.config.Group, p.config.Kind, name, req)
+	object, err := plugin.GetNew(config.Group, config.Kind, name, req)
 	if err != nil {
 		return err
 	}
 
-	annotations := handleMap(object.GetAnnotations(), p.config.Annotations)
+	annotations := handleMap(object.GetAnnotations(), config.Annotations)
 	object.SetAnnotations(annotations)
 
-	labels := handleMap(object.GetLabels(), p.config.Labels)
+	labels := handleMap(object.GetLabels(), config.Labels)
 	object.SetLabels(labels)
 	return req.Set(object)
 }
@@ -79,8 +71,4 @@ func handleMap(values map[string]string, updates map[string]string) map[string]s
 		values[k] = v
 	}
 	return values
-}
-
-func main() {
-	plugin.StartPlugin("rigdev.annotations", &pluginParent{})
 }

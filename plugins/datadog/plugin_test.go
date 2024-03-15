@@ -1,4 +1,4 @@
-package main
+package datadog
 
 import (
 	"context"
@@ -102,7 +102,7 @@ unifiedServiceTags:
 					Name: name,
 				},
 			}))
-			plugin := datadog{
+			plugin := Plugin{
 				configBytes: []byte(tt.config),
 			}
 			assert.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))

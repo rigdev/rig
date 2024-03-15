@@ -1,4 +1,4 @@
-package main
+package placement
 
 import (
 	"context"
@@ -112,7 +112,7 @@ requireTag: true`,
 					},
 				},
 			}))
-			pp := &placement{
+			pp := &Plugin{
 				configBytes: []byte(tt.config),
 				tag:         tt.tag,
 			}

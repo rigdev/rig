@@ -1,5 +1,5 @@
 // +groupName=plugins.rig.dev -- Only used for config doc generation
-package main
+package googlesqlproxy
 
 import (
 	"context"
@@ -16,6 +16,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
+
+const Name = "rigdev.google_cloud_sql_auth_proxy"
 
 // Configuration for the google_cloud_sql_auth_proxy plugin
 // +kubebuilder:object:root=true
@@ -49,16 +51,16 @@ type Resources struct {
 	Memory string `json:"memory"`
 }
 
-type cloudSQLProxy struct {
+type Plugin struct {
 	configBytes []byte
 }
 
-func (p *cloudSQLProxy) Initialize(req plugin.InitializeRequest) error {
+func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
 	return nil
 }
 
-func (p *cloudSQLProxy) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err
@@ -146,8 +148,4 @@ func (p *cloudSQLProxy) Run(_ context.Context, req pipeline.CapsuleRequest, _ hc
 	deployment.Spec.Template.Spec.InitContainers = append(deployment.Spec.Template.Spec.InitContainers, container)
 
 	return req.Set(deployment)
-}
-
-func main() {
-	plugin.StartPlugin("rigdev.google_cloud_sql_auth_proxy", &cloudSQLProxy{})
 }

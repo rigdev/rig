@@ -22,7 +22,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	rerrors "github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
-	envplugin "github.com/rigdev/rig/plugins/env_mapping/types"
+	envmapping "github.com/rigdev/rig/plugins/env_mapping"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
@@ -862,16 +862,16 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 	}
 
 	if len(configMapMappings) > 0 || len(secretMappings) > 0 {
-		annotationValue := envplugin.AnnotationValue{}
+		annotationValue := envmapping.AnnotationValue{}
 		for configmap, mappings := range configMapMappings {
-			annotationValue.Sources = append(annotationValue.Sources, envplugin.AnnotationSource{
+			annotationValue.Sources = append(annotationValue.Sources, envmapping.AnnotationSource{
 				ConfigMap: configmap,
 				Mappings:  mappings,
 			})
 		}
 
 		for secret, mappings := range secretMappings {
-			annotationValue.Sources = append(annotationValue.Sources, envplugin.AnnotationSource{
+			annotationValue.Sources = append(annotationValue.Sources, envmapping.AnnotationSource{
 				Secret:   secret,
 				Mappings: mappings,
 			})
@@ -885,7 +885,7 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 		changes = append(changes, &capsule.Change{
 			Field: &capsule.Change_SetAnnotation{
 				SetAnnotation: &capsule.Change_KeyValue{
-					Name:  envplugin.AnnotationEnvMapping,
+					Name:  envmapping.AnnotationEnvMapping,
 					Value: string(annotationValueJSON),
 				},
 			},

@@ -1,4 +1,4 @@
-package main
+package envmapping
 
 import (
 	"context"
@@ -9,24 +9,47 @@ import (
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/plugins/env_mapping/types"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
-type envMapping struct{}
+const (
+	Name                 = "rigdev.env_mapping"
+	AnnotationEnvMapping = "plugin.rig.dev/env-mapping"
+)
 
-func (p *envMapping) Initialize(_ plugin.InitializeRequest) error {
+// Configuration for the env_mapping plugin
+// +kubebuilder:object:root=true
+type Config struct{}
+
+type AnnotationValue struct {
+	Sources []AnnotationSource `json:"sources"`
+}
+
+type AnnotationSource struct {
+	// Container name default to capsule name.
+	Container string `json:"container,omitempty"`
+	// Optional ConfigMap reference.
+	ConfigMap string `json:"configMap,omitempty"`
+	// Optional Secret reference.
+	Secret string `json:"secret,omitempty"`
+	// Mappings ENV:KEY
+	Mappings map[string]string `json:"mappings"`
+}
+
+type Plugin struct{}
+
+func (p *Plugin) Initialize(_ plugin.InitializeRequest) error {
 	return nil
 }
 
-func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
-	value, ok := req.Capsule().Annotations[types.AnnotationEnvMapping]
+func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+	value, ok := req.Capsule().Annotations[AnnotationEnvMapping]
 	if !ok {
 		return nil
 	}
 
-	var data types.AnnotationValue
+	var data AnnotationValue
 	if err := json.Unmarshal([]byte(value), &data); err != nil {
 		return err
 	}
@@ -100,8 +123,4 @@ func (p *envMapping) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog
 	}
 
 	return req.Set(deployment)
-}
-
-func main() {
-	plugin.StartPlugin("rigdev.env_mapping", &envMapping{})
 }

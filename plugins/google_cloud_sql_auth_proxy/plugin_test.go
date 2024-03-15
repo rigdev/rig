@@ -1,4 +1,4 @@
-package main
+package googlesqlproxy
 
 import (
 	"context"
@@ -184,7 +184,7 @@ files:
 			}})
 			tt.deployment.ObjectMeta.Name = name
 			assert.NoError(t, req.Set(tt.deployment))
-			plugin := cloudSQLProxy{
+			plugin := Plugin{
 				configBytes: []byte(tt.config),
 			}
 			err := plugin.Run(context.Background(), req, hclog.Default())

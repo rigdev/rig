@@ -1,4 +1,4 @@
-package main
+package objecttemplate
 
 import (
 	"context"
@@ -139,7 +139,7 @@ object: |
 group: apps
 kind: Deployment
 name: name`
-			plugin := objectTemplate{
+			plugin := Plugin{
 				configBytes: []byte(c),
 			}
 			assert.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))

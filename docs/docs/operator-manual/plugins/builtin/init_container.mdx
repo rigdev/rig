@@ -37,3 +37,5 @@ Configuration for the init_container plugin
 | --- | --- |
 | `container` _[Container](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#container-v1-core)_ | Container holds the configuration for the init container |
 
+
+

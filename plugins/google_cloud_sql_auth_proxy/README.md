@@ -55,7 +55,7 @@ spec:
 
 
 
-Configuration for the google_cloud_sql_auth_proxy plugin hej
+Configuration for the google_cloud_sql_auth_proxy plugin
 
 | Field | Description |
 | --- | --- |
@@ -67,6 +67,8 @@ Configuration for the google_cloud_sql_auth_proxy plugin hej
 | `files` _File array_ | Files is a list of files to mount in the container. These can either be based on ConfigMaps or Secrets. It's a reuse of the Capsule CRD |
 | `resources` _[Resources](#resources)_ | Resources defines how large the container request should be. Defaults to the Kubernetes defaults. |
 | `instanceConnectionNames` _string array_ | The instance_connection_names passed to the cloud_sql_proxy. |
+
+
 
 
 

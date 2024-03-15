@@ -38,3 +38,5 @@ Configuration for the sidecar plugin
 | --- | --- |
 | `container` _[Container](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#container-v1-core)_ | Container is the configuration of the sidecar injected into the deployment |
 
+
+

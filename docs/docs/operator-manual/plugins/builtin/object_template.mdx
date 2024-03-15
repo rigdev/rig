@@ -42,3 +42,5 @@ Configuration for the object_template plugin
 | `kind` _string_ | Kind to match, for which objects to apply the patch to. |
 | `name` _string_ | Name of the object to match. Default to Capsule-name. |
 
+
+

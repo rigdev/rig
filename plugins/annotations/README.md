@@ -59,3 +59,5 @@ Configuration for the annotations plugin
 | `kind` _string_ | Kind to match, for which objects to apply the patch to. |
 | `name` _string_ | Name of the object to match. Defaults to Capsule-name. |
 
+
+

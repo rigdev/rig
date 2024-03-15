@@ -21,16 +21,16 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download # && go mod verify
 
 COPY . .
+
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go-task proto build-rig-operator build-plugins
+    go-task proto build-rig-operator
 
 FROM alpine:3
 
 RUN apk add --no-cache curl
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/bin/rig-operator /usr/local/bin/
-COPY --from=builder /app/bin/plugin/ /usr/local/bin/plugin/
 COPY --from=builder /etc/passwd /etc/passwd
 
 USER 1000
