@@ -232,7 +232,7 @@ _Appears in:_
 
 ### HTTPPathRoute
 
-_Underlying type:_ _[struct{Path string "json:\"path\""; Match PathMatchType "json:\"match,omitempty\""; RouteOptions "json:\",inline\""}](#struct{path-string-"json:\"path\"";-match-pathmatchtype-"json:\"match,omitempty\"";-routeoptions-"json:\",inline\""})_
+_Underlying type:_ _[struct{Path string "json:\"path\""; Match PathMatchType "json:\"match,omitempty\""}](#struct{path-string-"json:\"path\"";-match-pathmatchtype-"json:\"match,omitempty\""})_
 
 A HTTP path routing.
 
