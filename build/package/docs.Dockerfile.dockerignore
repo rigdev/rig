@@ -1,0 +1,9 @@
+*
+!/babel.config.js
+!/docs
+!/docusaurus.config.js
+!/menu.js
+!/package-lock.json
+!/package.json
+!/src
+!/static
