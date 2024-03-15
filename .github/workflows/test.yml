@@ -65,6 +65,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-tools-
 
+      - name: Build rig-operator
+        run: task build-rig-operator
+
       - name: Run tests
         run: task test-all
 
