@@ -52,6 +52,10 @@ tasks:
     cmds:
       - go build -o ./bin/rig-operator ./cmd/rig-operator
 
+  gen:
+    desc: "🪄 Run code generation"
+    deps: [proto, manifests, generate-k8s, docs-gen, mocks]
+
   proto:
     desc: "🪄 Run protobuf generation"
     deps:
