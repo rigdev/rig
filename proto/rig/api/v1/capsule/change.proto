@@ -182,6 +182,30 @@ message Interface {
   InterfaceProbe liveness = 7;
   // Readiness probe.
   InterfaceProbe readiness = 8;
+  // Routes for the network interface.
+  repeated HostRoute routes = 9;
+}
+
+message HostRoute {
+  string host = 1;
+  RouteOptions options = 2;
+  repeated HTTPPathRoute paths = 3;
+}
+
+enum PathMatchType {
+  PATH_MATCH_TYPE_UNSPECIFIED = 0;
+  PATH_MATCH_TYPE_PATH_PREFIX = 1;
+  PATH_MATCH_TYPE_EXACT = 2;
+}
+
+message HTTPPathRoute {
+  string path = 1;
+  PathMatchType match = 2;
+  RouteOptions options = 3;
+}
+
+message RouteOptions {
+  map<string, string> annotations = 1;
 }
 
 // Probe for liveness or readiness.
