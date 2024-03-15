@@ -1402,6 +1402,23 @@ GPU resource limits
 
 
 
+<a name="api-v1-capsule-HTTPPathRoute"></a>
+
+### HTTPPathRoute
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| match | [PathMatchType](#api-v1-capsule-PathMatchType) |  |  |
+| options | [RouteOptions](#api-v1-capsule-RouteOptions) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-HorizontalScale"></a>
 
 ### HorizontalScale
@@ -1414,6 +1431,23 @@ Horizontal scaling settings.
 | min_replicas | [uint32](#uint32) |  | Minimum number of replicas. |
 | cpu_target | [CPUTarget](#api-v1-capsule-CPUTarget) |  | CPU target for autoscaling. |
 | custom_metrics | [CustomMetric](#api-v1-capsule-CustomMetric) | repeated | If scaling based on custom metrics. |
+
+
+
+
+
+
+<a name="api-v1-capsule-HostRoute"></a>
+
+### HostRoute
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| options | [RouteOptions](#api-v1-capsule-RouteOptions) |  |  |
+| paths | [HTTPPathRoute](#api-v1-capsule-HTTPPathRoute) | repeated |  |
 
 
 
@@ -1466,6 +1500,7 @@ A single network interface.
 | public | [PublicInterface](#api-v1-capsule-PublicInterface) |  | If public interface is enabled. Contains ingress or load balancer settings. |
 | liveness | [InterfaceProbe](#api-v1-capsule-InterfaceProbe) |  | Liveness probe. |
 | readiness | [InterfaceProbe](#api-v1-capsule-InterfaceProbe) |  | Readiness probe. |
+| routes | [HostRoute](#api-v1-capsule-HostRoute) | repeated | Routes for the network interface. |
 
 
 
@@ -1645,6 +1680,37 @@ Container resources requests and limits
 
 
 
+<a name="api-v1-capsule-RouteOptions"></a>
+
+### RouteOptions
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| annotations | [RouteOptions.AnnotationsEntry](#api-v1-capsule-RouteOptions-AnnotationsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-RouteOptions-AnnotationsEntry"></a>
+
+### RouteOptions.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-RoutingMethod"></a>
 
 ### RoutingMethod
@@ -1706,6 +1772,19 @@ Loadbalancer routing.
 | KIND_UNSPECIFIED | 0 | Unspecified. |
 | KIND_CONFIG_MAP | 1 | Environment variables from a config map. |
 | KIND_SECRET | 2 | Environment variables from a secret. |
+
+
+
+<a name="api-v1-capsule-PathMatchType"></a>
+
+### PathMatchType
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PATH_MATCH_TYPE_UNSPECIFIED | 0 |  |
+| PATH_MATCH_TYPE_PATH_PREFIX | 1 |  |
+| PATH_MATCH_TYPE_EXACT | 2 |  |
 
 
 

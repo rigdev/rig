@@ -251,7 +251,7 @@ const (
 	// Exact match type, for when the path should match exactly.
 	Exact PathMatchType = "Exact"
 	// Path prefix, for when only the prefix needs to match.
-	PathPrefix PathMatchType = "PathMatch"
+	PathPrefix PathMatchType = "PathPrefix"
 )
 
 // A HTTP path routing.
