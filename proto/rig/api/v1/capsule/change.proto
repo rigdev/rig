@@ -201,7 +201,6 @@ enum PathMatchType {
 message HTTPPathRoute {
   string path = 1;
   PathMatchType match = 2;
-  RouteOptions options = 3;
 }
 
 message RouteOptions {

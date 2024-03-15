@@ -1412,7 +1412,6 @@ GPU resource limits
 | ----- | ---- | ----- | ----------- |
 | path | [string](#string) |  |  |
 | match | [PathMatchType](#api-v1-capsule-PathMatchType) |  |  |
-| options | [RouteOptions](#api-v1-capsule-RouteOptions) |  |  |
 
 
 
