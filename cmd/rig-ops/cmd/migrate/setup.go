@@ -14,8 +14,10 @@ const (
 )
 
 var (
-	skipPlatform bool
-	apply        bool
+	skipPlatform   bool
+	apply          bool
+	deploymentName string
+	annotations    map[string]string
 )
 
 var nameOrigin CapsuleName
@@ -53,13 +55,21 @@ resources created from a capsulespec
 			- A valid rig-cli config and context must be set either according to defaults or through flags
 			- Valid access- and refresh tokens must be provided in the context. Otherwise a login is prompted.`,
 	)
-	migrate.PersistentFlags().StringVarP(&base.Flags.Namespace, "namespace", "n", "", "The k8s namespace to migrate from")
-	migrate.PersistentFlags().StringVarP(&base.Flags.Project, "project", "p", "", "The project to migrate to")
+	migrate.Flags().StringVarP(&base.Flags.Namespace, "namespace", "n", "", "The k8s namespace to migrate from")
+	migrate.Flags().StringVarP(&base.Flags.Project, "project", "p", "", "The project to migrate to")
 	migrate.Flags().Var(&nameOrigin, "name-origin",
 		"From where to inherit the name of the capsule. One of `service,deployment,input`."+
 			" Default is service, if one exists, otherwise deployment.")
 	migrate.Flags().BoolVarP(&apply, "apply", "a", false, "Apply the capsule to the rig platform")
 	migrate.MarkFlagsMutuallyExclusive("apply", "skip-platform")
+	migrate.Flags().StringVar(&deploymentName, "deployment", "",
+		"The deployment to migrate. If not set, a list of deployments will be prompted for.")
+	migrate.Flags().StringToStringVarP(
+		&annotations,
+		"annotation", "A", nil,
+		"annotations to add to the Capsule of the format `key=value`."+
+			" Can for example be used to target migration with a specific plugin",
+	)
 
 	parent.AddCommand(migrate)
 }

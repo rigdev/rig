@@ -24,6 +24,7 @@ var (
 	skipImageCheck             bool
 	remote                     bool
 	noWait                     bool
+	forceOverride              bool
 	environmentVariables       map[string]string
 	removeEnvironmentVariables []string
 	environmentSources         []string
@@ -125,6 +126,14 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 	capsuleDeploy.Flags().StringSliceVar(
 		&removeConfigFiles, "rm-config-file", nil, "config files to remove from the capsule. Must be an absolute path "+
 			"of the config-file within the container",
+	)
+	capsuleDeploy.Flags().BoolVar(&forceOverride, "force-override", false,
+		"By default, existing objects will be kept in favor of overriding them."+
+			"To force the override of resources, set this flag to true."+
+			"An example of this use-case is a migration step, where resource created by a previous toolchain e.g."+
+			"based on Helm charts, are to be replaced and instead be created by the Rig operator."+
+			"While the override is irreversible, this flag is not \"sticky\" and must be set by each"+
+			"deploy that should use this behavior.",
 	)
 
 	if err := capsuleDeploy.RegisterFlagCompletionFunc(
