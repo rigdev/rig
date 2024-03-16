@@ -261,8 +261,8 @@ const (
 type HTTPPathRoute struct {
 	// Path of the route.
 	Path string `json:"path"`
-	// The method of matching. By default, `PathPrefix` is used.
-	// +kubebuilder:validation:Enum=PathPrefix;Exact
+	// The method of matching. By default, `Prefix` is used.
+	// +kubebuilder:validation:Enum=Prefix;Exact
 	Match PathMatchType `json:"match,omitempty"`
 }
 
