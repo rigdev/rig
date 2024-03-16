@@ -1447,6 +1447,7 @@ Horizontal scaling settings.
 | host | [string](#string) |  |  |
 | options | [RouteOptions](#api-v1-capsule-RouteOptions) |  |  |
 | paths | [HTTPPathRoute](#api-v1-capsule-HTTPPathRoute) | repeated |  |
+| name | [string](#string) |  |  |
 
 
 

@@ -235,6 +235,9 @@ type CapsuleInterface struct {
 // HostRoute is the configuration of a route to the network interface
 // it's configured on.
 type HostRoute struct {
+	// Name of the route. This field is required and cannot be empty, and must be unique for the interface.
+	// If this field is changed, it may result in downtime, as it is used to generate resources.
+	Name string `json:"name"`
 	// Host of the route. This field is required and cannot be empty.
 	Host string `json:"host"`
 	// HTTP paths of the host that maps to the interface. If empty, all paths are
