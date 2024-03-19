@@ -190,6 +190,7 @@ message HostRoute {
   string host = 1;
   RouteOptions options = 2;
   repeated HTTPPathRoute paths = 3;
+  string id = 4;
 }
 
 enum PathMatchType {
