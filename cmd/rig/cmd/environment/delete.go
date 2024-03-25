@@ -13,8 +13,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	req := &environment.DeleteRequest{
 		EnvironmentId: environmentID,
-		// TODO: Use API when updated.
-		// Force:         force,
+		Force:         force,
 	}
 
 	_, err := c.Rig.Environment().Delete(ctx, &connect.Request[environment.DeleteRequest]{Msg: req})
