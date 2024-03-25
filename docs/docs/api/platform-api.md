@@ -4494,6 +4494,7 @@ Environment model.
 | default | [bool](#bool) |  | If true, this is the default environment. |
 | operator_version | [string](#string) |  | The version of the Rig-operator CRD for this environment. |
 | cluster_id | [string](#string) |  | ID of the backing cluster. |
+| namespace_template | [string](#string) |  | Namespace template is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. |
 
 
 
