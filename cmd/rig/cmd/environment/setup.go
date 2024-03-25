@@ -75,7 +75,8 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.delete),
 	}
-	deleteEnvironment.Flags().BoolVarP(&force, "force", "f", false, "Force deletion of all running capsules in the environment")
+	deleteEnvironment.Flags().BoolVarP(&force, "force", "f", false,
+		"Force deletion of all running capsules in the environment")
 	environment.AddCommand(deleteEnvironment)
 
 	parent.AddCommand(environment)
