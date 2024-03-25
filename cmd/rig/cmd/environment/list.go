@@ -24,9 +24,19 @@ func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Environments (%d)", len(resp.Msg.GetEnvironments())), "Name", "Cluster", "Namespace Template"})
+	t.AppendHeader(table.Row{
+		fmt.Sprintf("Environments (%d)", len(resp.Msg.GetEnvironments())),
+		"Name",
+		"Cluster",
+		"Namespace Template",
+	})
 	for i, p := range resp.Msg.GetEnvironments() {
-		t.AppendRow(table.Row{i + 1, p.GetEnvironmentId(), p.GetClusterId(), p.GetNamespaceTemplate()})
+		t.AppendRow(table.Row{
+			i + 1,
+			p.GetEnvironmentId(),
+			p.GetClusterId(),
+			p.GetNamespaceTemplate(),
+		})
 	}
 	cmd.Println(t.Render())
 	return nil
