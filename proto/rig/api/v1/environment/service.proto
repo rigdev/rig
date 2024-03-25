@@ -38,6 +38,10 @@ message UpdateResponse {}
 
 message DeleteRequest {
   string environment_id = 1;
+  // Force delete all running capsules in the enviornment. If false,
+  // the request will be aborted if any capsules is running in the
+  // environment.
+  bool force = 2;
 }
 
 message DeleteResponse {}

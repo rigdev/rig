@@ -6,7 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/rigdev/rig-go-api/api/v1/environment"
+	environment_api "github.com/rigdev/rig-go-api/api/v1/environment"
 	project_api "github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
 	"github.com/rigdev/rig-go-sdk"
@@ -17,6 +17,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/config"
 	"github.com/rigdev/rig/cmd/rig/cmd/dev"
+	"github.com/rigdev/rig/cmd/rig/cmd/environment"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/cmd/group"
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
@@ -101,6 +102,7 @@ func Run() error {
 	cluster.Setup(rootCmd)
 	config.Setup(rootCmd)
 	project.Setup(rootCmd)
+	environment.Setup(rootCmd)
 
 	cobra.EnableTraverseRunHooks = true
 	return rootCmd.Execute()
@@ -155,7 +157,7 @@ func (c *Cmd) version(ctx context.Context, cmd *cobra.Command, _ []string) error
 	}
 
 	if full {
-		resp, err := c.Rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
+		resp, err := c.Rig.Environment().List(ctx, &connect.Request[environment_api.ListRequest]{})
 		if err != nil {
 			cmd.Println("Unable to get platform version", err)
 		} else {

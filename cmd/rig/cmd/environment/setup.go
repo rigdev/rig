@@ -1,0 +1,82 @@
+package environment
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/rigdev/rig/pkg/cli"
+	"github.com/spf13/cobra"
+	"go.uber.org/fx"
+)
+
+var (
+	useEnvironment    bool
+	namespaceTemplate string
+	force             bool
+)
+
+type Cmd struct {
+	fx.In
+
+	Rig  rig.Client
+	Cfg  *cmdconfig.Config
+	Auth *auth.Service
+}
+
+var cmd Cmd
+
+func initCmd(c Cmd) {
+	cmd.Rig = c.Rig
+	cmd.Cfg = c.Cfg
+	cmd.Auth = c.Auth
+}
+
+func Setup(parent *cobra.Command) {
+	environment := &cobra.Command{
+		Use:               "environment",
+		Aliases:           []string{"env"},
+		Short:             "Manage Rig environments",
+		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		Annotations: map[string]string{
+			auth.OmitEnvironment: "",
+			auth.OmitProject:     "",
+		},
+	}
+
+	listEnvironments := &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "List all environments",
+		Args:    cobra.NoArgs,
+		RunE:    cli.CtxWrap(cmd.list),
+	}
+	environment.AddCommand(listEnvironments)
+
+	createEnvironment := &cobra.Command{
+		Use:   "create [environment] [cluster]",
+		Short: "Create a new environment",
+		Args:  cobra.MaximumNArgs(2),
+		RunE:  cli.CtxWrap(cmd.create),
+	}
+	createEnvironment.Flags().BoolVar(&useEnvironment, "use", false, "Use the created environment")
+	if err := createEnvironment.RegisterFlagCompletionFunc("use", common.BoolCompletions); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	environment.AddCommand(createEnvironment)
+
+	deleteEnvironment := &cobra.Command{
+		Use:   "delete [environment]",
+		Short: "Delete an environment. If environment is left out, delete the current environment",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  cli.CtxWrap(cmd.delete),
+	}
+	deleteEnvironment.Flags().BoolVarP(&force, "force", "f", false, "Force deletion of all running capsules in the environment")
+	environment.AddCommand(deleteEnvironment)
+
+	parent.AddCommand(environment)
+}

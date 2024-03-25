@@ -4566,6 +4566,7 @@ Environment model.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | environment_id | [string](#string) |  |  |
+| force | [bool](#bool) |  | Force delete all running capsules in the enviornment. If false, the request will be aborted if any capsules is running in the environment. |
 
 
 
