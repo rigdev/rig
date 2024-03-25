@@ -393,8 +393,8 @@ github.com/prometheus/common v0.45.0 h1:2BGz0eBc2hdMDLnO/8n0jeB3oPrt2D08CekT0lne
 github.com/prometheus/common v0.45.0/go.mod h1:YJmSTw9BoKxJplESWWxlbyttQR4uaEcGyv9MZjVOJsY=
 github.com/prometheus/procfs v0.12.0 h1:jluTpSng7V9hY0O2R9DzzJHYb2xULk9VTR1V1R/k6Bo=
 github.com/prometheus/procfs v0.12.0/go.mod h1:pcuDEFsWDnvcgNzo4EEweacyhjeA9Zk3cnaOZAZEfOo=
-github.com/rigdev/rig-go-api v0.0.0-20240325073926-4b85155d9a3b h1:00CfOSsm8EdO4BQ9WWEvNr+32NAofLCwt53OVtG6Fbo=
-github.com/rigdev/rig-go-api v0.0.0-20240325073926-4b85155d9a3b/go.mod h1:bNsaO1ZOv+KYuR4UeEwsFhCmD/Lck9NhHjYKVZv9m2w=
+github.com/rigdev/rig-go-api v0.0.0-20240325214858-51f8e3cc06e7 h1:ZDCtk3JTOPhS58MH3cx/aSwWyqGqJMbKHaQhwQyQJw4=
+github.com/rigdev/rig-go-api v0.0.0-20240325214858-51f8e3cc06e7/go.mod h1:cw9JhoLNpUu26jp5YZEpjRuKkCIe47zLMK4VHJ4gVqc=
 github.com/rigdev/rig-go-sdk v0.0.0-20240306122601-f36342e359ef h1:g2VRoPd/fZWmuLZ8c+Nqo1QkpHd6ohMfcKf+1JzpoeQ=
 github.com/rigdev/rig-go-sdk v0.0.0-20240306122601-f36342e359ef/go.mod h1:RSzrgNlAsBiUgcSORU0YKw3e97G7GFfQCcM3Sj1pznc=
 github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e h1:7ubTieBkl4KCz5ABZzh0zPkBYWPguSOHUundUsorIzQ=
@@ -788,8 +788,8 @@ google.golang.org/genproto v0.0.0-20201210142538-e3217bee35cc/go.mod h1:FWY/as6D
 google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
 google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
 google.golang.org/genproto v0.0.0-20210226172003-ab064af71705/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 h1:NnYq6UN9ReLM9/Y01KWNOWyI5xQ9kbIms5GGJVwS/Yc=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa h1:RBgMaUMP+6soRkik4VoN8ojR2nex2TqZwjSSogic+eo=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=
 google.golang.org/grpc v1.21.1/go.mod h1:oYelfM1adQP15Ek0mdvEgi9Df8B9CZIaU1084ijfRaM=
