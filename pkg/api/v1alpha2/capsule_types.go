@@ -237,7 +237,7 @@ type CapsuleInterface struct {
 type HostRoute struct {
 	// ID of the route. This field is required and cannot be empty, and must be unique for the interface.
 	// If this field is changed, it may result in downtime, as it is used to generate resources.
-	ID string `json:"name"`
+	ID string `json:"id"`
 	// Host of the route. This field is required and cannot be empty.
 	Host string `json:"host"`
 	// HTTP paths of the host that maps to the interface. If empty, all paths are
@@ -254,7 +254,7 @@ const (
 	// Exact match type, for when the path should match exactly.
 	Exact PathMatchType = "Exact"
 	// Path prefix, for when only the prefix needs to match.
-	PathPrefix PathMatchType = "PathPrefix"
+	PathPrefix PathMatchType = "Prefix"
 )
 
 // A HTTP path routing.

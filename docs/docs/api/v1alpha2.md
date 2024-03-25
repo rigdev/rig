@@ -268,7 +268,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface. If this field is changed, it may result in downtime, as it is used to generate resources. |
+| `id` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface. If this field is changed, it may result in downtime, as it is used to generate resources. |
 | `host` _string_ | Host of the route. This field is required and cannot be empty. |
 | `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are automatically matched. |
 | `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration that allows custom plugins to add non-standard behavior. |
