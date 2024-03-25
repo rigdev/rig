@@ -22,9 +22,10 @@ var (
 type Cmd struct {
 	fx.In
 
-	Rig  rig.Client
-	Cfg  *cmdconfig.Config
-	Auth *auth.Service
+	Rig         rig.Client
+	Cfg         *cmdconfig.Config
+	Auth        *auth.Service
+	Interactive cli.Interactive
 }
 
 var cmd Cmd
@@ -70,9 +71,9 @@ func Setup(parent *cobra.Command) {
 	environment.AddCommand(createEnvironment)
 
 	deleteEnvironment := &cobra.Command{
-		Use:   "delete [environment]",
-		Short: "Delete an environment. If environment is left out, delete the current environment",
-		Args:  cobra.MaximumNArgs(1),
+		Use:   "delete environment",
+		Short: "Delete an environment",
+		Args:  cobra.ExactArgs(1),
 		RunE:  cli.CtxWrap(cmd.delete),
 	}
 	deleteEnvironment.Flags().BoolVarP(&force, "force", "f", false,

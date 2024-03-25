@@ -25,6 +25,9 @@ func (c *Cmd) create(ctx context.Context, _ *cobra.Command, args []string) error
 func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string, useNewEnvironment *bool) error {
 	var err error
 	if name == "" {
+		if !c.Interactive {
+			return fmt.Errorf("missing environment argument")
+		}
 		name, err = common.PromptInput("Environment:", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
@@ -32,6 +35,9 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 	}
 
 	if cluster == "" {
+		if !c.Interactive {
+			return fmt.Errorf("missing cluster argument")
+		}
 		cluster, err = common.PromptInput("Cluster:", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
@@ -54,6 +60,9 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 	fmt.Printf("Successfully created environment %s in cluster %s\n", name, cluster)
 
 	if useNewEnvironment == nil {
+		if !c.Interactive {
+			return nil
+		}
 		ok, err := common.PromptConfirm("Would you like to use this environment now?", true)
 		if err != nil {
 			return err

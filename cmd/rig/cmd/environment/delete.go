@@ -9,10 +9,7 @@ import (
 )
 
 func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) error {
-	var environmentID string
-	if len(args) > 0 {
-		environmentID = args[0]
-	}
+	environmentID := args[0]
 
 	req := &environment.DeleteRequest{
 		EnvironmentId: environmentID,
