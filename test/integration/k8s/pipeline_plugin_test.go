@@ -7,7 +7,6 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -107,7 +106,7 @@ func (s *PluginTestSuite) TestSidecarPluginNginxContainer() {
 							{
 								Name:          "nginx",
 								Image:         "nginx",
-								RestartPolicy: ptr.New(corev1.ContainerRestartPolicyAlways),
+								RestartPolicy: ptr.New(v1.ContainerRestartPolicyAlways),
 							},
 						},
 					},

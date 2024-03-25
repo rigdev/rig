@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// Deprecaaated: use DecodeIntoT instead
 func DecodeInto(bs []byte, into runtime.Object, scheme *runtime.Scheme) error {
 	codecs := serializer.NewCodecFactory(scheme)
 

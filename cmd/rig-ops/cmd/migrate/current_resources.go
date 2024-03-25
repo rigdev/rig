@@ -66,18 +66,9 @@ func (r *Resources) getObject(kind, name string) client.Object {
 			return s
 		}
 	case "Ingress":
-		// ingresses are input as host-name and param name is host, so we match on the host
-		for n, i := range r.Ingresses {
-			parts := strings.SplitN(n, "-", 2)
-			if len(parts) == 2 {
-				if parts[0] == name {
-					delete(r.Ingresses, n)
-					return i
-				}
-			} else if n == name {
-				delete(r.Ingresses, n)
-				return i
-			}
+		if i, ok := r.Ingresses[name]; ok {
+			delete(r.Ingresses, name)
+			return i
 		}
 	case "CronJob":
 		if cj, ok := r.CronJobs[name]; ok {
@@ -247,23 +238,20 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 	}
 
 	for _, ingress := range r.Ingresses {
-		reportWritten := false
-		for {
-			originalIngress := other.getObject("Ingress", ingress.Spec.Rules[0].Host)
-			if reportWritten && originalIngress == nil {
-				break
-			}
+		name := ingress.GetName()
+		parts := strings.SplitN(ingress.GetName(), "-", 2)
+		if parts[0] == r.Capsule.Name {
+			name = parts[1]
+		}
 
-			originalName := "nil"
-			if originalIngress != nil {
-				originalName = originalIngress.GetName()
-			}
-			if err := reportSet.AddReport(originalIngress, ingress,
-				fmt.Sprintf("%s -> %s", originalName, ingress.Name)); err != nil {
-				return nil, err
-			}
+		originalIngress := other.getObject("Ingress", name)
 
-			reportWritten = true
+		reportName := ingress.GetName()
+		if originalIngress != nil {
+			reportName = fmt.Sprintf("%s -> %s", name, ingress.GetName())
+		}
+		if err := reportSet.AddReport(originalIngress, ingress, reportName); err != nil {
+			return nil, err
 		}
 	}
 

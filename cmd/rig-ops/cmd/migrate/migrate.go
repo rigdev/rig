@@ -178,7 +178,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 
 	// TODO: Remove this when error from operator is provided
-	if capsuleHasIngress(migration.capsule) && !ingressIsSupported(cfg) {
+	if capsuleHasIngress(migration.capsule) && !ingressIsSupported(migration.operatorConfig) {
 		migration.warnings["Capsule"] = append(migration.warnings["Capsule"], &Warning{
 			Kind:    "Capsule",
 			Name:    migration.capsule.Name,
@@ -189,18 +189,23 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		})
 	}
 
-	cfgBytes, err := yaml.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-
-	resp, err := c.OperatorClient.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
+	request := &pipeline.DryRunRequest{
 		Namespace:         base.Flags.Project,
 		Capsule:           migration.capsule.Name,
 		CapsuleSpec:       string(capsuleSpecYAML),
-		OperatorConfig:    string(cfgBytes),
 		AdditionalObjects: platformObjects,
-	}))
+	}
+
+	if base.Flags.OperatorConfig != "" {
+		cfgBytes, err := yaml.Marshal(migration.operatorConfig)
+		if err != nil {
+			return err
+		}
+
+		request.OperatorConfig = string(cfgBytes)
+	}
+
+	resp, err := c.OperatorClient.Pipeline.DryRun(ctx, connect.NewRequest(request))
 	if err != nil {
 		return err
 	}
@@ -1184,10 +1189,13 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 			Port: uint32(port.ContainerPort),
 		}
 
-		host := ""
+		routes := []v1alpha2.HostRoute{}
+		capsuleRoutes := []*capsule.HostRoute{}
 		for _, ingress := range ingresses.Items {
 			ingress := ingress
-			var paths []string
+			routePaths := []v1alpha2.HTTPPathRoute{}
+			capsuleRoutePaths := []*capsule.HTTPPathRoute{}
+
 			for _, path := range ingress.Spec.Rules[0].HTTP.Paths {
 				if path.Backend.Service.Name != migration.currentResources.Service.Name {
 					continue
@@ -1197,14 +1205,13 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					continue
 				}
 
-				name := fmt.Sprintf("%s-%s", ingress.Spec.Rules[0].Host, ingress.GetName())
-				if err := migration.currentResources.AddObject("Ingress", name, &ingress); err != nil &&
+				if err := migration.currentResources.AddObject("Ingress", ingress.GetName(), &ingress); err != nil &&
 					!rerrors.IsAlreadyExists(err) {
 					return err
 				}
 
-				cfgPathType := migration.operatorConfig.Ingress.PathType
-
+				var pathType v1alpha2.PathMatchType
+				var capsulePathType capsule.PathMatchType
 				switch *path.PathType {
 				case netv1.PathTypeImplementationSpecific:
 					migration.warnings["Ingress"] = append(migration.warnings["Ingress"], &Warning{
@@ -1215,57 +1222,50 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 							*path.PathType, path.Path),
 					})
 					continue
-				case netv1.PathTypePrefix, netv1.PathTypeExact:
-					if cfgPathType != *path.PathType {
-						migration.warnings["Ingress"] = append(migration.warnings["Ingress"], &Warning{
-							Kind:  "Ingress",
-							Name:  ingress.GetName(),
-							Field: fmt.Sprintf("spec.rules.http.paths.%s.pathType", path.Path),
-							Warning: fmt.Sprintf("Operator has configured PathType %s. Transforming PathType %s to %s",
-								cfgPathType, *path.PathType, cfgPathType),
-						})
-					}
+				case netv1.PathTypePrefix:
+					pathType = v1alpha2.PathPrefix
+					capsulePathType = capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX
+				case netv1.PathTypeExact:
+					pathType = v1alpha2.Exact
+					capsulePathType = capsule.PathMatchType_PATH_MATCH_TYPE_EXACT
 				}
 
-				paths = append(paths, path.Path)
+				routePaths = append(routePaths, v1alpha2.HTTPPathRoute{
+					Path:  path.Path,
+					Match: pathType,
+				})
+
+				capsuleRoutePaths = append(capsuleRoutePaths, &capsule.HTTPPathRoute{
+					Path:  path.Path,
+					Match: capsulePathType,
+				})
 			}
 
-			if len(paths) > 0 {
-				if host == "" {
-					i.Public = &v1alpha2.CapsulePublicInterface{
-						Ingress: &v1alpha2.CapsuleInterfaceIngress{
-							Host:  ingress.Spec.Rules[0].Host,
-							Paths: paths,
-						},
-					}
+			if len(routePaths) > 0 {
+				routes = append(routes, v1alpha2.HostRoute{
+					ID:   ingress.GetName(),
+					Host: ingress.Spec.Rules[0].Host,
+					RouteOptions: v1alpha2.RouteOptions{
+						Annotations: ingress.Annotations,
+					},
+					Paths: routePaths,
+				})
+			}
 
-					ci.Public = &capsule.PublicInterface{
-						Enabled: true,
-						Method: &capsule.RoutingMethod{
-							Kind: &capsule.RoutingMethod_Ingress_{
-								Ingress: &capsule.RoutingMethod_Ingress{
-									Host:  i.Public.Ingress.Host,
-									Paths: paths,
-								},
-							},
-						},
-					}
-
-					host = ingress.Spec.Rules[0].Host
-				} else if host != "" && ingress.Spec.Rules[0].Host == host {
-					i.Public.Ingress.Paths = append(i.Public.Ingress.Paths, paths...)
-					ci.Public.Method.GetIngress().Paths = append(ci.Public.Method.GetIngress().Paths, paths...)
-				} else {
-					migration.warnings["Ingress"] = append(migration.warnings["Ingress"], &Warning{
-						Kind: "Ingress",
-						Name: ingress.GetName(),
-						Warning: fmt.Sprintf("Previous Ingress host: %s already configured for port %s."+
-							" Ingress: %s with host %s is ignored.",
-							host, port.Name, ingress.GetName(), ingress.Spec.Rules[0].Host),
-					})
-				}
+			if len(capsuleRoutePaths) > 0 {
+				capsuleRoutes = append(capsuleRoutes, &capsule.HostRoute{
+					Id:   ingress.GetName(),
+					Host: ingress.Spec.Rules[0].Host,
+					Options: &capsule.RouteOptions{
+						Annotations: ingress.Annotations,
+					},
+					Paths: capsuleRoutePaths,
+				})
 			}
 		}
+
+		i.Routes = routes
+		ci.Routes = capsuleRoutes
 
 		if livenessProbe != nil {
 			i.Liveness, ci.Liveness, err = migrateProbe(livenessProbe, port)

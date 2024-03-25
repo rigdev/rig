@@ -1,6 +1,6 @@
 module github.com/rigdev/rig
 
-go 1.21
+go 1.22
 
 require (
 	connectrpc.com/connect v1.15.0
@@ -30,7 +30,7 @@ require (
 	github.com/nyaruka/phonenumbers v1.1.7
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20240313175958-cf90b4bdfccc
+	github.com/rigdev/rig-go-api v0.0.0-20240319120233-05c87965951b
 	github.com/rigdev/rig-go-sdk v0.0.0-20240306122601-f36342e359ef
 	github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e
 	github.com/robfig/cron v1.2.0
@@ -159,7 +159,7 @@ require (
 	golang.org/x/tools v0.18.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240311173647-c811ad7063a7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect

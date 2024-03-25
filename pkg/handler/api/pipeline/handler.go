@@ -32,10 +32,12 @@ func (h *handler) decodeOperatorConfig(config string) (*v1alpha1.OperatorConfig,
 		return nil, nil
 	}
 	cfg := &v1alpha1.OperatorConfig{}
-	if err := obj.DecodeInto([]byte(config), cfg, h.scheme); err != nil {
+	cfg, err := obj.DecodeIntoT([]byte(config), cfg, h.scheme)
+	if err != nil {
 		return nil, err
 	}
 	cfg.Default()
+
 	return cfg, nil
 }
 

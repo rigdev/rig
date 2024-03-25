@@ -263,6 +263,7 @@ func (s *K8sTestSuite) TestController() {
 	s.testInterface(ctx)
 	s.testIngress(ctx)
 	s.testLoadbalancer(ctx)
+	s.testIngressRoutes(ctx)
 	s.testEnvVar(ctx)
 	s.testConfigMap(ctx)
 	s.testHPA(ctx)
@@ -597,6 +598,88 @@ func (s *K8sTestSuite) testLoadbalancer(ctx context.Context) {
 					TargetPort: intstr.FromString("http"),
 				}},
 				Type: v1.ServiceTypeLoadBalancer,
+			},
+		},
+	})
+}
+
+func (s *K8sTestSuite) testIngressRoutes(ctx context.Context) {
+	s.by("Adding ingress routes")
+	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
+		c.Spec.Interfaces[0].Routes = []v1alpha2.HostRoute{
+			{
+				ID:   "test1",
+				Host: "test1.com",
+				RouteOptions: v1alpha2.RouteOptions{
+					Annotations: map[string]string{
+						"te": "st",
+					},
+				},
+				Paths: []v1alpha2.HTTPPathRoute{
+					{
+						Path:  "/route1",
+						Match: v1alpha2.PathPrefix,
+					},
+					{
+						Path:  "/route2",
+						Match: v1alpha2.Exact,
+					},
+				},
+			},
+		}
+		c.Spec.Interfaces[0].Public = nil
+	})
+
+	s.expectResources(ctx, []client.Object{
+		&netv1.Ingress{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-test1", nsName.Name),
+				Namespace: nsName.Namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					capsuleOwnerRef,
+				},
+				Annotations: map[string]string{
+					"te": "st",
+				},
+			},
+			Spec: netv1.IngressSpec{
+				Rules: []netv1.IngressRule{{
+					Host: "test1.com",
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: []netv1.HTTPIngressPath{
+								{
+									Path:     "/route1",
+									PathType: ptr.New(netv1.PathTypePrefix),
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: "test",
+											Port: netv1.ServiceBackendPort{
+												Name: "http",
+											},
+										},
+									},
+								},
+								{
+									Path:     "/route2",
+									PathType: ptr.New(netv1.PathTypeExact),
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: "test",
+											Port: netv1.ServiceBackendPort{
+												Name: "http",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}},
+				TLS: []netv1.IngressTLS{{
+					Hosts:      []string{"test1.com"},
+					SecretName: "test-tls",
+				}},
 			},
 		},
 	})
