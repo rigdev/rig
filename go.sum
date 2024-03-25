@@ -35,8 +35,8 @@ cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohl
 cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RXyy7KQOVs=
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3fOKtUw0Xmo=
-connectrpc.com/connect v1.15.0 h1:lFdeCbZrVVDydAqwr4xGV2y+ULn+0Z73s5JBj2LikWo=
-connectrpc.com/connect v1.15.0/go.mod h1:bQmjpDY8xItMnttnurVgOkHUBMRT9cpsNi2O4AjKhmA=
+connectrpc.com/connect v1.16.0 h1:rdtfQjZ0OyFkWPTegBNcH7cwquGAN1WzyJy80oFNibg=
+connectrpc.com/connect v1.16.0/go.mod h1:XpZAduBQUySsb4/KO5JffORVkDI4B6/EYPi7N8xpNZw=
 connectrpc.com/grpcreflect v1.2.0 h1:Q6og1S7HinmtbEuBvARLNwYmTbhEGRpHDhqrPNlmK+U=
 connectrpc.com/grpcreflect v1.2.0/go.mod h1:nwSOKmE8nU5u/CidgHtPYk1PFI3U9ignz7iDMxOYkSY=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
@@ -393,8 +393,8 @@ github.com/prometheus/common v0.45.0 h1:2BGz0eBc2hdMDLnO/8n0jeB3oPrt2D08CekT0lne
 github.com/prometheus/common v0.45.0/go.mod h1:YJmSTw9BoKxJplESWWxlbyttQR4uaEcGyv9MZjVOJsY=
 github.com/prometheus/procfs v0.12.0 h1:jluTpSng7V9hY0O2R9DzzJHYb2xULk9VTR1V1R/k6Bo=
 github.com/prometheus/procfs v0.12.0/go.mod h1:pcuDEFsWDnvcgNzo4EEweacyhjeA9Zk3cnaOZAZEfOo=
-github.com/rigdev/rig-go-api v0.0.0-20240319120233-05c87965951b h1:pZg9WsUGDAGj0dQLzIkIe+yCMyVofQtkNB9aM+3UW7U=
-github.com/rigdev/rig-go-api v0.0.0-20240319120233-05c87965951b/go.mod h1:OtCJc78382oDwXd5xG1spQ5Lzed/zg+S0uFH79Gwbv8=
+github.com/rigdev/rig-go-api v0.0.0-20240325073926-4b85155d9a3b h1:00CfOSsm8EdO4BQ9WWEvNr+32NAofLCwt53OVtG6Fbo=
+github.com/rigdev/rig-go-api v0.0.0-20240325073926-4b85155d9a3b/go.mod h1:bNsaO1ZOv+KYuR4UeEwsFhCmD/Lck9NhHjYKVZv9m2w=
 github.com/rigdev/rig-go-sdk v0.0.0-20240306122601-f36342e359ef h1:g2VRoPd/fZWmuLZ8c+Nqo1QkpHd6ohMfcKf+1JzpoeQ=
 github.com/rigdev/rig-go-sdk v0.0.0-20240306122601-f36342e359ef/go.mod h1:RSzrgNlAsBiUgcSORU0YKw3e97G7GFfQCcM3Sj1pznc=
 github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e h1:7ubTieBkl4KCz5ABZzh0zPkBYWPguSOHUundUsorIzQ=
