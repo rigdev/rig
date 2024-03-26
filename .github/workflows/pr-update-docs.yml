@@ -1,0 +1,86 @@
+name: PR Update docs
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docs
+          file: ./build/package/docs.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/rigdev/docs:${{ github.sha }}
+
+      # - name: Setup rig
+      #   uses: rigdev/setup-rig@v1
+      #   with:
+      #     host: ${{ vars.RIG_HOST }}
+      #     client-id: ${{ vars.RIG_CLIENT_ID }}
+      #     client-secret: ${{ secrets.RIG_CLIENT_SECRET }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+
+      - name: Setup rig (TODO RM ME)
+        env:
+          RIG_HOST: ${{ vars.RIG_HOST }}
+          RIG_CLIENT_ID: ${{ vars.RIG_CLIENT_ID }}
+          RIG_CLIENT_SECRET: ${{ secrets.RIG_CLIENT_SECRET }}
+        run: |
+          go install github.com/rigdev/rig/cmd/rig@ca8e22e98a1db7f4d77fb704bdd3ba7a475ccf5e
+          rig auth activate-service-account
+
+      - name: Create Environment
+        run: |
+          rig env create \
+            "docs-pr-${{ github.event.number }}" \
+            prod \
+            --namespace-template "{{ .Project.Name }}-{{ .Environment.Name }}"
+
+      - name: Deploy
+        run: |
+          echo "
+          name: http
+          port: 80
+          public:
+            enabled: true
+            method:
+              ingress:
+                host: pr${{ github.event.number }}.docs.prod.rig.dev
+          " > interface.yaml
+          rig deploy docs \
+            --project docs \
+            --environment "docs-pr-${{ github.event.number }}" \
+            --set-network-interface interface.yaml \
+            --image ghcr.io/rigdev/docs:${{ github.sha }}
+
+      - name: Post a comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📝 Docs preview ready at https://pr${{ github.event.number }}.docs.prod.rig.dev'
+            })
