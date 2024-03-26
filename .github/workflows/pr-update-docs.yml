@@ -66,10 +66,21 @@ jobs:
             enabled: true
             method:
               ingress:
-                host: ${{ github.event.number }}.docs.prod.rig.dev
+                host: pr${{ github.event.number }}.docs.prod.rig.dev
           " > interface.yaml
           rig deploy docs \
             --project docs \
             --environment "docs-pr-${{ github.event.number }}" \
             --set-network-interface interface.yaml \
             --image ghcr.io/rigdev/docs:${{ github.sha }}
+
+      - name: Post a comment
+        uses: actions/github-script@v6
+          with:
+            script: |
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '📝 Docs preview ready at https://pr${{ github.event.number }}.docs.prod.rig.dev'
+              })
