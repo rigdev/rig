@@ -64,8 +64,9 @@ func Test_Matcher(t *testing.T) {
 						"foo": "baz",
 					},
 				},
+				newInp("ns", "cap"),
 			},
-			expected: []bool{true, false},
+			expected: []bool{true, false, false},
 			selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"foo": "bar",

@@ -432,7 +432,7 @@ func (c *Cmd) promptContainerSelectIndex(containers []corev1.Container) (int, er
 		containerNames = append(containerNames, container.Name)
 	}
 
-	i, _, err := common.PromptSelect("The deployment has more than 1 container. Select the primary container to migrate",
+	i, _, err := common.PromptSelect("\nThe deployment has more than 1 container. Select the primary container to migrate",
 		containerNames,
 		common.SelectDontShowResultOpt,
 	)
@@ -449,7 +449,7 @@ func (c *Cmd) migrateDeployment(
 ) error {
 	changes := []*capsule.Change{}
 	var err error
-	containerIndex := 0
+	migration.containerIndex = 0
 	if containers := migration.currentResources.Deployment.Spec.Template.Spec.Containers; len(containers) > 1 {
 		migration.containerIndex, err = c.promptContainerSelectIndex(containers)
 		if err != nil {
@@ -467,12 +467,14 @@ func (c *Cmd) migrateDeployment(
 			Field: "spec.template.spec.containers",
 			Warning: fmt.Sprintf("Multiple containers: %s in a deployment are not supported by capsule. "+
 				"Only container: %s will be migrated",
-				strings.Join(allContainerNames, ", "), containers[containerIndex].Name),
+				strings.Join(allContainerNames, ", "), containers[migration.containerIndex].Name),
 			Suggestion: "Use the rigdev.init_container plugin or the rigdev.sidecar plugin to migrate the other containers",
 		})
+
+		fmt.Print("Migrating Deployment...")
 	}
 
-	container := migration.currentResources.Deployment.Spec.Template.Spec.Containers[containerIndex]
+	container := migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex]
 
 	migration.capsule.Spec = v1alpha2.CapsuleSpec{
 		Image: container.Image,
@@ -567,7 +569,7 @@ func (c *Cmd) migrateDeployment(
 	changes = append(changes, []*capsule.Change{
 		{
 			Field: &capsule.Change_ImageId{
-				ImageId: migration.currentResources.Deployment.Spec.Template.Spec.Containers[containerIndex].Image,
+				ImageId: migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex].Image,
 			},
 		},
 		{
@@ -813,6 +815,10 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 							Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from configMaps",
 						})
 					} else {
+						if _, ok := configMapMappings[cfgMap.Name]; !ok {
+							configMapMappings[cfgMap.Name] = map[string]string{}
+						}
+
 						configMapMappings[cfgMap.Name][envVar.Name] = cfgMap.Key
 						if err := migration.migratedResources.
 							AddObject("ConfigMap", name, configMap); err != nil && !rerrors.IsAlreadyExists(err) {
@@ -846,6 +852,9 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 							Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from secrets",
 						})
 					} else {
+						if _, ok := secretMappings[secretRef.Name]; !ok {
+							secretMappings[secretRef.Name] = map[string]string{}
+						}
 						secretMappings[secretRef.Name][envVar.Name] = secretRef.Key
 						// if err := migration.migratedResources.AddObject("Secret", name,
 						//	secret); err != nil && !rerrors.IsAlreadyExists(err) {
@@ -996,6 +1005,19 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 				path = volumeMount.MountPath
 				break
 			}
+		}
+
+		if path == "" {
+			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+				Kind: "Deployment",
+				Name: migration.currentResources.Deployment.Name,
+				Field: fmt.Sprintf("spec.template.spec.volumes.%s",
+					volume.Name),
+				Warning: "Volume is not mounted in the container. It is removed from the capsule",
+				Suggestion: "If the volume is mounted in another container (init or sidecar)," +
+					"use the rigdev.object_template plugin to add the volume",
+			})
+			continue
 		}
 		// If Volume is a ConfigMap
 		if volume.ConfigMap != nil {
