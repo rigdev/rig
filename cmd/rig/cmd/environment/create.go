@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -46,14 +47,19 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 
 	initializers := []*environment.Update{}
 
-	if _, err := c.Rig.Environment().Create(ctx, &connect.Request[environment.CreateRequest]{
+	_, err = c.Rig.Environment().Create(ctx, &connect.Request[environment.CreateRequest]{
 		Msg: &environment.CreateRequest{
 			EnvironmentId:     name,
 			ClusterId:         cluster,
 			Initializers:      initializers,
 			NamespaceTemplate: namespaceTemplate,
 		},
-	}); err != nil {
+	})
+	if errors.IsAlreadyExists(err) {
+		if failIfExists {
+			return err
+		}
+	} else if err != nil {
 		return err
 	}
 

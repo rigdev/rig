@@ -31,6 +31,8 @@ import (
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
+	"sigs.k8s.io/yaml"
 )
 
 func parseEnvironmentSource(value string) (capsule.EnvironmentSource_Kind, string, error) {
@@ -130,6 +132,38 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 				AddImage: &capsule.Change_AddImage{
 					Image: imageID,
 				},
+			},
+		})
+	}
+
+	// Network interfaces.
+	for _, file := range networkInterfaces {
+		bs, err := os.ReadFile(file)
+		if err != nil {
+			return errors.InvalidArgumentErrorf("errors reading network interface: %v", err)
+		}
+
+		raw, err := yaml.YAMLToJSON(bs)
+		if err != nil {
+			return err
+		}
+
+		ci := &capsule.Interface{}
+		if err := protojson.Unmarshal(raw, ci); err != nil {
+			return err
+		}
+
+		changes = append(changes, &capsule.Change{
+			Field: &capsule.Change_SetInterface{
+				SetInterface: ci,
+			},
+		})
+	}
+
+	for _, name := range removeNetworkInterfaces {
+		changes = append(changes, &capsule.Change{
+			Field: &capsule.Change_RemoveInterface{
+				RemoveInterface: name,
 			},
 		})
 	}

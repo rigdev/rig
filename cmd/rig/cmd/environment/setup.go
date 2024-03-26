@@ -17,6 +17,7 @@ var (
 	useEnvironment    bool
 	namespaceTemplate string
 	force             bool
+	failIfExists      bool
 )
 
 type Cmd struct {
@@ -63,6 +64,8 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(2),
 		RunE:  cli.CtxWrap(cmd.create),
 	}
+	createEnvironment.Flags().BoolVar(&failIfExists, "fail-if-exists", false,
+		"Fail the request if the environment already exists")
 	createEnvironment.Flags().StringVar(&namespaceTemplate, "namespace-template", "",
 		"Set the namespace-template used to generate namespaces for the given environment. ")
 	createEnvironment.Flags().BoolVar(&useEnvironment, "use", false, "Use the created environment")

@@ -34,6 +34,8 @@ var (
 	replicas                   int
 	configFiles                []string
 	removeConfigFiles          []string
+	networkInterfaces          []string
+	removeNetworkInterfaces    []string
 )
 
 var imageID string
@@ -128,13 +130,18 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 			"of the config-file within the container",
 	)
 	capsuleDeploy.Flags().BoolVar(&forceOverride, "force-override", false,
-		"By default, existing objects will be kept in favor of overriding them."+
+		"by default, existing objects will be kept in favor of overriding them."+
 			"To force the override of resources, set this flag to true."+
 			"An example of this use-case is a migration step, where resource created by a previous toolchain e.g."+
 			"based on Helm charts, are to be replaced and instead be created by the Rig operator."+
 			"While the override is irreversible, this flag is not \"sticky\" and must be set by each"+
 			"deploy that should use this behavior.",
 	)
+	capsuleDeploy.Flags().StringSliceVar(&networkInterfaces, "set-network-interface", nil,
+		"create or update the network interface. The argument is a file from where the network interface "+
+			"can be read. The Network Interface must have both a name and a port.")
+	capsuleDeploy.Flags().StringSliceVar(&removeNetworkInterfaces, "rm-network-interface", nil,
+		"remove a network interface by name.")
 
 	if err := capsuleDeploy.RegisterFlagCompletionFunc(
 		"image",
