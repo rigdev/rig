@@ -59,7 +59,17 @@ jobs:
 
       - name: Deploy
         run: |
+          echo "
+          name: http
+          port: 80
+          public:
+            enabled: true
+            method:
+              ingress:
+                host: docs-${{ github.event.number }}.prod.rig.dev
+          " > interface.yaml
           rig deploy docs \
             --project docs \
             --environment "docs-pr-${{ github.event.number }}" \
+            --set-network-interface interface.yaml \
             --image ghcr.io/rigdev/docs:${{ github.sha }}
