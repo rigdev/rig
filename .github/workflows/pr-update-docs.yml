@@ -43,8 +43,13 @@ jobs:
           go-version-file: go.mod
 
       - name: Setup rig (TODO RM ME)
+        env:
+          RIG_HOST: ${{ vars.RIG_HOST }}
+          RIG_CLIENT_ID: ${{ vars.RIG_CLIENT_ID }}
+          RIG_CLIENT_SECRET: ${{ secrets.RIG_CLIENT_SECRET }}
         run: |
           go install github.com/rigdev/rig/cmd/rig@1b6ecd953bb761cf6bad0997d466d5f36016d89c
+          rig auth activate-service-account
 
       - name: Create Environment
         run: |
