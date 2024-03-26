@@ -35,7 +35,6 @@ jobs:
       #     host: ${{ vars.RIG_HOST }}
       #     client-id: ${{ vars.RIG_CLIENT_ID }}
       #     client-secret: ${{ secrets.RIG_CLIENT_SECRET }}
-      #     version: 1b6ecd953bb761cf6bad0997d466d5f36016d89c
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -48,7 +47,7 @@ jobs:
           RIG_CLIENT_ID: ${{ vars.RIG_CLIENT_ID }}
           RIG_CLIENT_SECRET: ${{ secrets.RIG_CLIENT_SECRET }}
         run: |
-          go install github.com/rigdev/rig/cmd/rig@1b6ecd953bb761cf6bad0997d466d5f36016d89c
+          go install github.com/rigdev/rig/cmd/rig@ca8e22e98a1db7f4d77fb704bdd3ba7a475ccf5e
           rig auth activate-service-account
 
       - name: Create Environment
