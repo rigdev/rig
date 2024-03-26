@@ -76,11 +76,11 @@ jobs:
 
       - name: Post a comment
         uses: actions/github-script@v6
-          with:
-            script: |
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: '📝 Docs preview ready at https://pr${{ github.event.number }}.docs.prod.rig.dev'
-              })
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📝 Docs preview ready at https://pr${{ github.event.number }}.docs.prod.rig.dev'
+            })
