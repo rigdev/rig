@@ -20,6 +20,7 @@ func (c *Cmd) check(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
+
 	var matchers []plugin.Matcher
 	for _, step := range cfg.Pipeline.Steps {
 		matcher, err := plugin.NewMatcher(step.Namespaces, step.Capsules, step.Selector)
@@ -44,8 +45,9 @@ func (c *Cmd) check(ctx context.Context, _ *cobra.Command, _ []string) error {
 				continue
 			}
 			objects = append(objects, capsuleNamespace{
-				namespace: c.Namespace,
-				capsule:   c.Name,
+				namespace:   c.Namespace,
+				capsule:     c.Name,
+				annotations: c.Annotations,
 			})
 		}
 	} else {
@@ -81,8 +83,9 @@ func (c *Cmd) check(ctx context.Context, _ *cobra.Command, _ []string) error {
 }
 
 type capsuleNamespace struct {
-	namespace string
-	capsule   string
+	namespace   string
+	capsule     string
+	annotations map[string]string
 }
 
 type result struct {
@@ -95,7 +98,7 @@ func getResults(matchers []plugin.Matcher, objects []capsuleNamespace) ([]result
 	var results []result
 	for _, obj := range objects {
 		for idx, matcher := range matchers {
-			if matcher.Match(obj.namespace, obj.capsule, nil) {
+			if matcher.Match(obj.namespace, obj.capsule, obj.annotations) {
 				results = append(results, result{
 					Namespace: obj.namespace,
 					CapsuleID: obj.capsule,
