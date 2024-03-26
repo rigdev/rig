@@ -59,11 +59,13 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 		if failIfExists {
 			return err
 		}
+
+		fmt.Printf("Environment %s already exists\n", name)
 	} else if err != nil {
 		return err
+	} else {
+		fmt.Printf("Successfully created environment %s in cluster %s\n", name, cluster)
 	}
-
-	fmt.Printf("Successfully created environment %s in cluster %s\n", name, cluster)
 
 	if useNewEnvironment == nil {
 		if !c.Interactive {
