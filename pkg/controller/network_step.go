@@ -8,6 +8,7 @@ import (
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
@@ -289,10 +290,14 @@ func (s *NetworkStep) createIngresses(req pipeline.CapsuleRequest) []*netv1.Ingr
 				}
 			} else {
 				for _, path := range route.Paths {
+					match := netv1.PathTypePrefix
+					if path.Match == v1alpha2.Exact {
+						match = netv1.PathTypeExact
+					}
 					rule.IngressRuleValue.HTTP.Paths = append(
 						rule.IngressRuleValue.HTTP.Paths,
 						netv1.HTTPIngressPath{
-							PathType: ptr.New(netv1.PathType(path.Match)),
+							PathType: ptr.New(match),
 							Path:     path.Path,
 							Backend: netv1.IngressBackend{
 								Service: &netv1.IngressServiceBackend{
