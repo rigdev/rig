@@ -46,23 +46,27 @@ func PromptForContext(cfg *Config) (string, error) {
 	return cfg.Contexts[n].Name, nil
 }
 
-func (cfg *Config) CreateDefaultContext() error {
-	return cfg.CreateContext("local", "http://localhost:4747/")
+func (cfg *Config) CreateDefaultContext(interactive bool) error {
+	return cfg.CreateContext("local", "http://localhost:4747/", interactive)
 }
 
-func (cfg *Config) CreateContext(name, url string) error {
-	var names []string
-	for _, c := range cfg.Contexts {
-		names = append(names, c.Name)
-	}
+func (cfg *Config) CreateContext(name, host string, interactive bool) error {
+	var err error
 
-	name, err := common.PromptInput("Name:",
-		common.ValidateSystemNameOpt,
-		common.InputDefaultOpt(name),
-		common.ValidateUniqueOpt(names),
-	)
-	if err != nil {
-		return err
+	if name == "" {
+		var names []string
+		for _, c := range cfg.Contexts {
+			names = append(names, c.Name)
+		}
+
+		name, err = common.PromptInput("Name:",
+			common.ValidateSystemNameOpt,
+			common.InputDefaultOpt(name),
+			common.ValidateUniqueOpt(names),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, c := range cfg.Contexts {
@@ -71,9 +75,11 @@ func (cfg *Config) CreateContext(name, url string) error {
 		}
 	}
 
-	server, err := common.PromptInput("Server:", common.ValidateURLOpt, common.InputDefaultOpt(url))
-	if err != nil {
-		return err
+	if host == "" {
+		host, err = common.PromptInput("Host:", common.ValidateURLOpt, common.InputDefaultOpt(host))
+		if err != nil {
+			return err
+		}
 	}
 
 	cfg.Contexts = append(cfg.Contexts, &Context{
@@ -85,7 +91,7 @@ func (cfg *Config) CreateContext(name, url string) error {
 
 	cfg.Services = append(cfg.Services, &Service{
 		Name:   name,
-		Server: server,
+		Server: host,
 	})
 
 	cfg.Users = append(cfg.Users, &User{
@@ -95,10 +101,16 @@ func (cfg *Config) CreateContext(name, url string) error {
 		},
 	})
 
-	if ok, err := common.PromptConfirm("Do you want activate this Rig context now?", true); err != nil {
-		return err
-	} else if ok {
-		cfg.CurrentContextName = name
+	if interactive {
+		if ok, err := common.PromptConfirm("Do you want activate this Rig context now?", true); err != nil {
+			return err
+		} else if ok {
+			cfg.CurrentContextName = name
+		}
+	} else {
+		if len(cfg.Contexts) == 0 {
+			cfg.CurrentContextName = name
+		}
 	}
 
 	return cfg.Save()
