@@ -624,6 +624,54 @@ spec:
                             probe.
                           type: boolean
                       type: object
+                    routes:
+                      description: Host routes that are mapped to this interface.
+                      items:
+                        description: HostRoute is the configuration of a route to
+                          the network interface it's configured on.
+                        properties:
+                          annotations:
+                            additionalProperties:
+                              type: string
+                            description: Annotations of the route option. This can
+                              be plugin-specific configuration that allows custom
+                              plugins to add non-standard behavior.
+                            type: object
+                          host:
+                            description: Host of the route. This field is required
+                              and cannot be empty.
+                            type: string
+                          id:
+                            description: ID of the route. This field is required and
+                              cannot be empty, and must be unique for the interface.
+                              If this field is changed, it may result in downtime,
+                              as it is used to generate resources.
+                            type: string
+                          paths:
+                            description: HTTP paths of the host that maps to the interface.
+                              If empty, all paths are automatically matched.
+                            items:
+                              description: A HTTP path routing.
+                              properties:
+                                match:
+                                  description: The method of matching. By default,
+                                    `Prefix` is used.
+                                  enum:
+                                  - Prefix
+                                  - Exact
+                                  type: string
+                                path:
+                                  description: Path of the route.
+                                  type: string
+                              required:
+                              - path
+                              type: object
+                            type: array
+                        required:
+                        - host
+                        - id
+                        type: object
+                      type: array
                   required:
                   - name
                   - port
