@@ -11,9 +11,9 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -21,16 +21,18 @@ import (
 type Cmd struct {
 	fx.In
 
-	Rig        rig.Client
-	Cfg        *cmdconfig.Config
-	PromptInfo *cli.PromptInformation
+	Rig         rig.Client
+	Cfg         *cmdconfig.Config
+	PromptInfo  *cli.PromptInformation
+	Interactive cli.Interactive
 }
 
 var minify bool
 
 var (
-	field string
-	value string
+	field       string
+	value       string
+	contextName string
 )
 
 var cmd Cmd
@@ -58,8 +60,10 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.NoArgs,
 		RunE:  cmd.init,
 		Annotations: map[string]string{
-			auth.OmitUser: ""},
+			auth.OmitUser: "",
+		},
 	}
+	init.Flags().StringVar(&contextName, "name", "", "name of the context to create")
 	config.AddCommand(init)
 
 	deleteContext := &cobra.Command{

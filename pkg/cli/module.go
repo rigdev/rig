@@ -75,7 +75,7 @@ func getContext(
 			} else {
 				promptInfo.ContextCreation = true
 				fmt.Println("No context available, please create one")
-				if err := cfg.CreateDefaultContext(); err != nil {
+				if err := cfg.CreateDefaultContext(bool(interactive)); err != nil {
 					return nil, err
 				}
 			}

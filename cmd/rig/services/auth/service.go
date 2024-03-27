@@ -99,7 +99,7 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 	}
 
 	s.cfg.DeleteContext(cmdContext.Name)
-	if err := s.cfg.CreateContext(cmdContext.Name, cmdContext.GetService().Server); err != nil {
+	if err := s.cfg.CreateContext(cmdContext.Name, cmdContext.GetService().Server, interactive); err != nil {
 		return false, err
 	}
 
