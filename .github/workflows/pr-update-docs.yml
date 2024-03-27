@@ -29,26 +29,12 @@ jobs:
           tags: |
             ghcr.io/rigdev/docs:${{ github.sha }}
 
-      # - name: Setup rig
-      #   uses: rigdev/setup-rig@v1
-      #   with:
-      #     host: ${{ vars.RIG_HOST }}
-      #     client-id: ${{ vars.RIG_CLIENT_ID }}
-      #     client-secret: ${{ secrets.RIG_CLIENT_SECRET }}
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Setup rig
+        uses: rigdev/setup-rig@v1
         with:
-          go-version-file: go.mod
-
-      - name: Setup rig (TODO RM ME)
-        env:
-          RIG_HOST: ${{ vars.RIG_HOST }}
-          RIG_CLIENT_ID: ${{ vars.RIG_CLIENT_ID }}
-          RIG_CLIENT_SECRET: ${{ secrets.RIG_CLIENT_SECRET }}
-        run: |
-          go install github.com/rigdev/rig/cmd/rig@ca8e22e98a1db7f4d77fb704bdd3ba7a475ccf5e
-          rig auth activate-service-account
+          host: ${{ vars.RIG_HOST }}
+          client-id: ${{ vars.RIG_CLIENT_ID }}
+          client-secret: ${{ secrets.RIG_CLIENT_SECRET }}
 
       - name: Create Environment
         run: |
