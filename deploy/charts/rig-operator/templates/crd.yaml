@@ -655,9 +655,9 @@ spec:
                               properties:
                                 match:
                                   description: The method of matching. By default,
-                                    `Prefix` is used.
+                                    `PathPrefix` is used.
                                   enum:
-                                  - Prefix
+                                  - PathPrefix
                                   - Exact
                                   type: string
                                 path:
