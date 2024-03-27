@@ -19,7 +19,8 @@ config:
     path: ""
     portName: ""
   pipeline:
-    steps: []
+    steps:
+      []
       # - plugins:
       #   - name: rigdev.env_mapping
       #   - name: rigdev.object_template
@@ -67,7 +68,8 @@ config:
       #         service: some-service
       #         version: some-version
       #   - name: my-name
-    customPlugins: []
+    customPlugins:
+      []
       # - image: some-image
 
 replicaCount: 1
