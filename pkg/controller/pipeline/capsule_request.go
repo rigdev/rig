@@ -98,6 +98,7 @@ func (w withAdditionalResources) apply(r *capsuleRequest) {
 
 	r.pipeline.reader = roclient.NewLayeredReader(r.pipeline.reader, reader)
 }
+
 func WithAdditionalResources(resources []*pipeline.Object) CapsuleRequestOption {
 	return withAdditionalResources{resources}
 }
@@ -239,7 +240,7 @@ func (r *capsuleRequest) getKey(obj client.Object) (objectKey, error) {
 	if err != nil {
 		return objectKey{}, err
 	}
-	obj.SetNamespace(r.capsule.Namespace)
+
 	return r.namedObjectKey(obj.GetName(), gvk), nil
 }
 
@@ -388,7 +389,7 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 				changes[key] = &change{state: ResourceStateAlreadyExists}
 				continue
 			} else if err != nil {
-				return nil, fmt.Errorf("could not render create to %s: %w", key.GroupVersionKind, err)
+				return nil, fmt.Errorf("could not render create to %s: %w", key, err)
 			}
 
 			cObj.Materialized = normalizeObject(key, materializedObj)
@@ -423,7 +424,7 @@ func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, err
 		if err := r.pipeline.client.Update(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
 			return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
 		} else if err != nil {
-			return nil, fmt.Errorf("could not render update to %s: %w", key.GroupVersionKind, err)
+			return nil, fmt.Errorf("could not render update to %s: %w", key, err)
 		}
 
 		if ObjectsEquals(cObj.Current, materializedObj) {
