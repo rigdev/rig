@@ -84,7 +84,7 @@ func (s *service) DryRun(
 		return nil, err
 	}
 
-	p := pipeline.New(s.client, s.client, cfg, scheme.New(), s.logger)
+	p := pipeline.NewCapsulePipeline(s.client, s.client, cfg, scheme.New(), s.logger)
 	for _, step := range steps {
 		p.AddStep(step)
 	}

@@ -55,7 +55,7 @@ type CapsuleReconciler struct {
 	Config              *configv1alpha1.OperatorConfig
 	ClientSet           clientset.Interface
 	CapabilitiesService capabilities.Service
-	Pipeline            *pipeline.Pipeline
+	Pipeline            *pipeline.CapsulePipeline
 	PluginManager       *plugin.Manager
 }
 
@@ -79,8 +79,7 @@ const (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logger) error {
-	// TODO Where to get the context from?
-	ctx := context.Background()
+	ctx := context.TODO()
 
 	if err := mgr.GetFieldIndexer().IndexField(
 		context.Background(),
@@ -164,7 +163,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		return err
 	}
 
-	r.Pipeline = pipeline.New(r.Client, r.Client, r.Config, r.Scheme, logger)
+	r.Pipeline = pipeline.NewCapsulePipeline(r.Client, r.Client, r.Config, r.Scheme, logger)
 	for _, step := range steps {
 		r.Pipeline.AddStep(step)
 	}
@@ -351,13 +350,13 @@ func GetDefaultPipelineSteps(
 	ctx context.Context,
 	capSvc capabilities.Service,
 	cfg *v1alpha1.OperatorConfig,
-) ([]pipeline.Step, error) {
+) ([]pipeline.CapsuleStep, error) {
 	capabilities, err := capSvc.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var steps []pipeline.Step
+	var steps []pipeline.CapsuleStep
 
 	steps = append(steps,
 		NewServiceAccountStep(),

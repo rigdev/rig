@@ -23,7 +23,7 @@ func preparePipelineTest(t *testing.T, opts ...CapsuleRequestOption) (
 	cc := mockclient.NewMockClient(t)
 	ctx := context.Background()
 
-	p := New(cc, cc, &v1alpha1.OperatorConfig{}, scheme, logr.Discard())
+	p := NewCapsulePipeline(cc, cc, &v1alpha1.OperatorConfig{}, scheme, logr.Discard())
 	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, opts...)
 
 	return ctx, cc, c
@@ -42,7 +42,7 @@ func TestOverrideUntrackedWithForceGivesAborted(t *testing.T) {
 	cc.EXPECT().Get(ctx, client.ObjectKey{Name: sa.GetName()}, &v1.ServiceAccount{}).
 		Return(nil)
 
-	_, err := c.commit(ctx)
+	_, err := c.Commit(ctx)
 	require.EqualError(t, err, "aborted: object exists but not in capsule status")
 }
 
@@ -59,10 +59,10 @@ func TestOverrideUntrackedWithoutForceGivesNoop(t *testing.T) {
 	cc.EXPECT().Get(ctx, client.ObjectKey{Name: sa.GetName()}, &v1.ServiceAccount{}).
 		Return(nil)
 
-	cs, err := c.commit(ctx)
+	cs, err := c.Commit(ctx)
 	require.NoError(t, err)
 
-	require.Equal(t, map[objectKey]*change{
+	require.Equal(t, map[ObjectKey]*Change{
 		{ObjectKey: client.ObjectKeyFromObject(sa), GroupVersionKind: CoreServiceAccount}: {
 			state: ResourceStateAlreadyExists,
 		},

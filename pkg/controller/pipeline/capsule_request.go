@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/roclient"
 	"golang.org/x/exp/maps"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+)
+
+const (
+	LabelOwnedByCapsule = "rig.dev/owned-by-capsule"
 )
 
 // CapsuleRequest contains a single reconcile request for a given capsule.
@@ -28,44 +28,17 @@ import (
 //
 //nolint:lll
 type CapsuleRequest interface {
-	// Scheme returns the serialization scheme used by the rig operator.
-	// It contains all the types used by a Capsule.
-	Scheme() *runtime.Scheme
-	// Reader is a Kubernetes reader with access to the cluster the rig operator is running in.
-	Reader() client.Reader
+	Request
 	// Capsule returns a deepcopy of the capsule object being reconciled.
 	Capsule() *v1alpha2.Capsule
-	// GetExisting populates 'obj' with a copy of the corresponding object owned by the capsule currently present in the cluster.
-	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	GetExisting(obj client.Object) error
-	// GetNew populates 'obj' with a copy of the corresponding object owned by the capsule about to be applied.
-	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	GetNew(obj client.Object) error
-	// Set updates the object recorded to be applied.
-	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	Set(obj client.Object) error
-	// Delete records the given object to be deleted.
-	// The behaviour is such that that calling
-	// req.Delete(obj) and then req.GetNew(obj)
-	// returns a not-found error from GetNew.
-	// If an object of the given type and name is present in the cluster, calling req.GetExisting(obj) succeds
-	// as calls to Delete (or Set) will only be applied to the cluster at the very end.
-	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	Delete(obj client.Object) error
 	// MarkUsedObject marks the object as used by the Capsule which will be present in the Capsule's Status
 	MarkUsedObject(res v1alpha2.UsedResource) error
 }
 
 type capsuleRequest struct {
-	pipeline           *Pipeline
-	capsule            *v1alpha2.Capsule
-	currentObjects     map[objectKey]client.Object
-	objects            map[objectKey]*Object
-	observedGeneration int64
-	usedResources      []v1alpha2.UsedResource
-	logger             logr.Logger
-	dryRun             bool
-	force              bool
+	RequestBase
+	capsule       *v1alpha2.Capsule
+	usedResources []v1alpha2.UsedResource
 }
 
 type CapsuleRequestOption interface {
@@ -84,9 +57,9 @@ type withAdditionalResources struct {
 }
 
 func (w withAdditionalResources) apply(r *capsuleRequest) {
-	reader := roclient.NewReader(r.pipeline.scheme)
+	reader := roclient.NewReader(r.scheme)
 	for _, o := range w.resources {
-		proposal, err := obj.DecodeAny([]byte(o.Content), r.pipeline.scheme)
+		proposal, err := obj.DecodeAny([]byte(o.Content), r.scheme)
 		if err != nil {
 			continue
 		}
@@ -96,7 +69,7 @@ func (w withAdditionalResources) apply(r *capsuleRequest) {
 		}
 	}
 
-	r.pipeline.reader = roclient.NewLayeredReader(r.pipeline.reader, reader)
+	r.reader = roclient.NewLayeredReader(r.reader, reader)
 }
 
 func WithAdditionalResources(resources []*pipeline.Object) CapsuleRequestOption {
@@ -110,19 +83,18 @@ func WithForce() CapsuleRequestOption {
 	return withForce{}
 }
 
-func NewCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule, opts ...CapsuleRequestOption) CapsuleRequest {
+func NewCapsuleRequest(p *CapsulePipeline, capsule *v1alpha2.Capsule, opts ...CapsuleRequestOption) CapsuleRequest {
 	return newCapsuleRequest(p, capsule, opts...)
 }
 
-func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule, opts ...CapsuleRequestOption) *capsuleRequest {
+func newCapsuleRequest(p *CapsulePipeline, capsule *v1alpha2.Capsule, opts ...CapsuleRequestOption) *capsuleRequest {
 	r := &capsuleRequest{
-		pipeline:       p,
-		capsule:        capsule,
-		currentObjects: map[objectKey]client.Object{},
-		objects:        map[objectKey]*Object{},
-		usedResources:  []v1alpha2.UsedResource{},
-		logger:         p.logger.WithValues("capsule", capsule.Name),
+		RequestBase: NewRequestBase(p.client, p.reader, p.config, p.scheme, p.logger, nil, capsule),
+		capsule:     capsule,
 	}
+	// TODO This is an ugly hack. Find a better solution
+	// Good rule of thumb: If the Rust compiler would throw a fit, do it differently.
+	r.Strategies = r
 
 	for _, opt := range opts {
 		opt.apply(r)
@@ -143,85 +115,12 @@ func newCapsuleRequest(p *Pipeline, capsule *v1alpha2.Capsule, opts ...CapsuleRe
 	return r
 }
 
-func (r *capsuleRequest) Scheme() *runtime.Scheme {
-	return r.pipeline.scheme
-}
-
 func (r *capsuleRequest) Capsule() *v1alpha2.Capsule {
 	return r.capsule.DeepCopy()
 }
 
-func (r *capsuleRequest) Reader() client.Reader {
-	return r.pipeline.reader
-}
-
-func (r *capsuleRequest) GetExisting(obj client.Object) error {
-	key, err := r.getKey(obj)
-	if err != nil {
-		return err
-	}
-
-	o, ok := r.objects[key]
-	if !ok {
-		return errors.NotFoundErrorf("object '%v' of type '%v' not found", key.Name, key.GroupVersionKind)
-	}
-
-	if o.Current == nil {
-		return errors.NotFoundErrorf("object '%v' of type '%v' has no existing version", key.Name, key.GroupVersionKind)
-	}
-
-	return r.pipeline.scheme.Converter().Convert(o.Current, obj, nil)
-}
-
-func (r *capsuleRequest) GetNew(obj client.Object) error {
-	key, err := r.getKey(obj)
-	if err != nil {
-		return err
-	}
-
-	o, ok := r.objects[key]
-	if !ok {
-		return errors.NotFoundErrorf("object '%v' of type '%v' not found", key.Name, key.GroupVersionKind)
-	}
-
-	if o.New == nil {
-		return errors.NotFoundErrorf("object '%v' of type '%v' has no new version", key.Name, key.GroupVersionKind)
-	}
-
-	return r.pipeline.scheme.Converter().Convert(o.New, obj, nil)
-}
-
-func (r *capsuleRequest) Set(obj client.Object) error {
-	key, err := r.getKey(obj)
-	if err != nil {
-		return err
-	}
-
-	o, ok := r.objects[key]
-	if !ok {
-		o = &Object{}
-	}
-	o.New = obj
-	r.objects[key] = o
-	return nil
-}
-
-func (r *capsuleRequest) Delete(obj client.Object) error {
-	key, err := r.getKey(obj)
-	if err != nil {
-		return err
-	}
-
-	o, ok := r.objects[key]
-	if ok {
-		o.New = nil
-	}
-
-	return nil
-}
-
 func (r *capsuleRequest) getGVK(obj client.Object) (schema.GroupVersionKind, error) {
-	gvks, _, err := r.pipeline.scheme.ObjectKinds(obj)
+	gvks, _, err := r.scheme.ObjectKinds(obj)
 	if err != nil {
 		r.logger.Error(err, "invalid object type")
 		return schema.GroupVersionKind{}, err
@@ -230,7 +129,7 @@ func (r *capsuleRequest) getGVK(obj client.Object) (schema.GroupVersionKind, err
 	return gvks[0], nil
 }
 
-func (r *capsuleRequest) getKey(obj client.Object) (objectKey, error) {
+func (r *capsuleRequest) GetKey(obj client.Object) (ObjectKey, error) {
 	if obj.GetName() == "" {
 		obj.SetName(r.capsule.Name)
 	}
@@ -238,14 +137,14 @@ func (r *capsuleRequest) getKey(obj client.Object) (objectKey, error) {
 
 	gvk, err := r.getGVK(obj)
 	if err != nil {
-		return objectKey{}, err
+		return ObjectKey{}, err
 	}
 
 	return r.namedObjectKey(obj.GetName(), gvk), nil
 }
 
-func (r *capsuleRequest) namedObjectKey(name string, gvk schema.GroupVersionKind) objectKey {
-	return objectKey{
+func (r *capsuleRequest) namedObjectKey(name string, gvk schema.GroupVersionKind) ObjectKey {
+	return ObjectKey{
 		ObjectKey: types.NamespacedName{
 			Name:      name,
 			Namespace: r.capsule.Namespace,
@@ -259,7 +158,7 @@ func (r *capsuleRequest) MarkUsedObject(res v1alpha2.UsedResource) error {
 	return nil
 }
 
-func (r *capsuleRequest) loadExisting(ctx context.Context) error {
+func (r *capsuleRequest) LoadExistingObjects(ctx context.Context) error {
 	// Read all status objects.
 	s := r.capsule.Status
 	if s == nil {
@@ -282,7 +181,7 @@ func (r *capsuleRequest) loadExisting(ctx context.Context) error {
 			return err
 		}
 
-		ro, err := r.pipeline.scheme.New(gvk)
+		ro, err := r.scheme.New(gvk)
 		if err != nil {
 			return err
 		}
@@ -295,245 +194,35 @@ func (r *capsuleRequest) loadExisting(ctx context.Context) error {
 		co.SetName(o.Ref.Name)
 		co.SetNamespace(r.capsule.Namespace)
 		co.GetObjectKind().SetGroupVersionKind(gvk)
-		if err := r.pipeline.reader.Get(ctx, client.ObjectKeyFromObject(co), co); kerrors.IsNotFound(err) {
+		if err := r.reader.Get(ctx, client.ObjectKeyFromObject(co), co); kerrors.IsNotFound(err) {
 			// Okay it doesn't exist, ignore the resource.
 			continue
 		} else if err != nil {
 			return err
 		}
 
-		r.currentObjects[r.namedObjectKey(o.Ref.Name, gvk)] = co
+		r.existingObjects[r.namedObjectKey(o.Ref.Name, gvk)] = co
 	}
 
 	return nil
 }
 
-func (r *capsuleRequest) prepare() *Result {
-	result := &Result{}
+func (r *capsuleRequest) Prepare() {
 	r.usedResources = nil
-	r.objects = map[objectKey]*Object{}
-	for _, k := range sortedKeys(maps.Keys(r.currentObjects)) {
-		o := r.currentObjects[k]
-		r.objects[k] = &Object{
-			Current: o.DeepCopyObject().(client.Object),
-		}
-		oo := o.DeepCopyObject()
-		oo.GetObjectKind().SetGroupVersionKind(k.GroupVersionKind)
-		result.InputObjects = append(result.InputObjects, oo.(client.Object))
-	}
-	return result
 }
 
-type change struct {
-	state   ResourceState
-	applied bool
-	err     error
-}
-
-func (r *capsuleRequest) commit(ctx context.Context) (map[objectKey]*change, error) {
-	allKeys := sortedKeys(maps.Keys(r.objects))
-
-	// Prepare all the new objects with default labels / owner refs.
-	for _, key := range allKeys {
-		cObj := r.objects[key]
-		if cObj.New == nil {
-			continue
-		}
-
-		cObj.New.GetObjectKind().SetGroupVersionKind(key.GroupVersionKind)
-		normalizeObject(key, cObj.New)
-
-		labels := cObj.New.GetLabels()
-		if labels == nil {
-			labels = map[string]string{}
-		}
-		labels[LabelOwnedByCapsule] = r.capsule.Name
-		cObj.New.SetLabels(labels)
-
-		if err := controllerutil.SetControllerReference(r.capsule, cObj.New, r.pipeline.scheme); err != nil {
-			return nil, err
-		}
-	}
-
-	changes := map[objectKey]*change{}
-
-	// Dry run to detect no-op vs create vs update.
-	for _, key := range allKeys {
-		cObj := r.objects[key]
-
-		if cObj.Current == nil {
-			materializedObj := cObj.New.DeepCopyObject().(client.Object)
-			if err := r.pipeline.client.Create(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
-				return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
-			} else if kerrors.IsAlreadyExists(err) || kerrors.IsInvalid(err) {
-				o, newErr := r.pipeline.scheme.New(key.GroupVersionKind)
-				if newErr != nil {
-					return nil, err
-				}
-
-				co := o.(client.Object)
-				if getErr := r.pipeline.client.Get(ctx, key.ObjectKey, co); kerrors.IsNotFound(getErr) {
-					r.logger.Info("configuration is invalid", "object", key, "error", err)
-					return nil, err
-				} else if getErr != nil {
-					return nil, fmt.Errorf("could not get existing object: %w", getErr)
-				}
-
-				if r.force || IsOwnedBy(r.capsule, co) {
-					r.logger.Info("object exists but not in status, retrying", "object", key)
-					r.currentObjects[key] = normalizeObject(key, co)
-					return nil, errors.AbortedErrorf("object exists but not in capsule status")
-				}
-
-				r.logger.Info("create object skipped, not owned by controller", "object", key)
-				changes[key] = &change{state: ResourceStateAlreadyExists}
-				continue
-			} else if err != nil {
-				return nil, fmt.Errorf("could not render create to %s: %w", key, err)
-			}
-
-			cObj.Materialized = normalizeObject(key, materializedObj)
-
-			r.logger.Info("create object", "object", key)
-			changes[key] = &change{state: ResourceStateCreated}
-			continue
-		}
-
-		if !(r.force || IsOwnedBy(r.capsule, cObj.Current)) {
-			r.logger.Info("update object skipped, not owned by controller", "object", key)
-			changes[key] = &change{state: ResourceStateAlreadyExists}
-			continue
-		}
-
-		if cObj.New == nil {
-			r.logger.Info("delete object", "object", key)
-			changes[key] = &change{state: ResourceStateDeleted}
-			continue
-		}
-
-		materializedObj := cObj.New.DeepCopyObject().(client.Object)
-		materializedObj.GetObjectKind().SetGroupVersionKind(cObj.Current.GetObjectKind().GroupVersionKind())
-
-		// Dry run to fully materialize the new spec.
-		materializedObj.SetResourceVersion(cObj.Current.GetResourceVersion())
-		if r.force && r.dryRun {
-			// TODO: If just force, we probably need to delete and re-create. Let's explore workarounds.
-			materializedObj.SetOwnerReferences(cObj.Current.GetOwnerReferences())
-		}
-		r.logger.Info("generating materialized version", "object", key)
-		if err := r.pipeline.client.Update(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
-			return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
-		} else if err != nil {
-			return nil, fmt.Errorf("could not render update to %s: %w", key, err)
-		}
-
-		if ObjectsEquals(cObj.Current, materializedObj) {
-			r.logger.Info("update object skipped, not changed", "object", key)
-			changes[key] = &change{state: ResourceStateUnchanged}
-			continue
-		}
-
-		cObj.Materialized = normalizeObject(key, materializedObj)
-
-		r.logger.Info("update object", "object", key)
-		changes[key] = &change{state: ResourceStateUpdated}
-	}
-
-	// Skip update if no changes.
-	if r.observedGeneration == r.capsule.Generation {
-		r.logger.Info("already at generation", "generation", r.observedGeneration)
-		hasChanges := false
-		for _, change := range changes {
-			switch change.state {
-			case ResourceStateUpdated, ResourceStateCreated, ResourceStateDeleted:
-				hasChanges = true
-			}
-		}
-		if !hasChanges {
-			r.logger.Info("no changes to apply", "generation", r.observedGeneration)
-			return changes, nil
-		}
-	}
-
-	if r.dryRun {
-		return changes, nil
-	}
-
-	if err := r.updateStatusChanges(ctx, changes, r.observedGeneration); err != nil {
-		return nil, err
-	}
-
-	var errs []error
-	for _, key := range sortedKeys(maps.Keys(changes)) {
-		change := changes[key]
-		if err := r.applyChange(ctx, key, change.state); err != nil {
-			change.err = err
-			errs = append(errs, err)
-		} else {
-			change.applied = true
-		}
-	}
-
-	if err := errors.Join(errs...); err != nil {
-		return nil, err
-	}
-
-	if err := r.updateStatusChanges(ctx, changes, r.capsule.Generation); err != nil {
-		return nil, err
-	}
-
-	return changes, nil
-}
-
-func (r *capsuleRequest) applyChange(ctx context.Context, key objectKey, state ResourceState) error {
-	switch state {
-	case ResourceStateUpdated:
-		r.logger.Info("update object", "object", key)
-		obj := r.objects[key]
-		obj.New.SetResourceVersion(obj.Current.GetResourceVersion())
-		if err := r.pipeline.client.Update(ctx, obj.New); err != nil {
-			return fmt.Errorf("could not update %s: %w", key.GroupVersionKind, err)
-		}
-
-	case ResourceStateCreated:
-		r.logger.Info("create object", "object", key)
-		obj := r.objects[key]
-		if err := r.pipeline.client.Create(ctx, obj.New); err != nil {
-			return fmt.Errorf("could not create %s: %w", key.GroupVersionKind, err)
-		}
-
-	case ResourceStateDeleted:
-		r.logger.Info("delete object", "object", key)
-		obj := r.objects[key]
-		if err := r.pipeline.client.Delete(ctx, obj.Current); err != nil {
-			return fmt.Errorf("could not update %s: %w", key.GroupVersionKind, err)
-		}
-	}
-
-	return nil
-}
-
-type ResourceState string
-
-const (
-	ResourceStateDeleted       ResourceState = "deleted"
-	ResourceStateUpdated       ResourceState = "updated"
-	ResourceStateUnchanged     ResourceState = "unchanged"
-	ResourceStateCreated       ResourceState = "created"
-	ResourceStateFailed        ResourceState = "failed"
-	ResourceStateAlreadyExists ResourceState = "alreadyExists"
-	ResourceStateChangePending ResourceState = "changePending"
-)
-
-func (r *capsuleRequest) updateStatusChanges(
+func (r *capsuleRequest) UpdateStatusWithChanges(
 	ctx context.Context,
-	changes map[objectKey]*change,
-	generation int64,
+	changes map[ObjectKey]*Change,
 ) error {
-	capsule := r.capsule.DeepCopy()
+	capsule, ok := r.requestObject.(*v1alpha2.Capsule)
+	if !ok {
+		return fmt.Errorf("object given to capsuleStatusUpdater had wrong type: %T", r.requestObject)
+	}
+	capsuleCopy := capsule.DeepCopy()
 
 	status := &v1alpha2.CapsuleStatus{
-		ObservedGeneration: generation,
+		ObservedGeneration: r.observedGeneration,
 	}
 
 	for _, key := range sortedKeys(maps.Keys(changes)) {
@@ -561,46 +250,47 @@ func (r *capsuleRequest) updateStatusChanges(
 
 	status.UsedResources = r.usedResources
 
-	capsule.Status = status
+	capsuleCopy.Status = status
 
-	if err := r.pipeline.client.Status().Update(ctx, capsule); err != nil {
+	if err := r.client.Status().Update(ctx, capsuleCopy); err != nil {
 		return err
 	}
 
-	r.observedGeneration = generation
-	r.capsule.Status = status
-	r.capsule.SetResourceVersion(capsule.GetResourceVersion())
+	capsule.Status = status
+	capsule.SetResourceVersion(capsule.GetResourceVersion())
 
 	return nil
 }
 
-func (r *capsuleRequest) updateStatusError(ctx context.Context, err error) error {
-	capsule := r.capsule.DeepCopy()
+func (r *capsuleRequest) UpdateStatusWithError(ctx context.Context, err error) error {
+	capsule, ok := r.requestObject.(*v1alpha2.Capsule)
+	if !ok {
+		return fmt.Errorf("object had unexpected type %T", r.requestObject)
+	}
+	capsuleCopy := capsule.DeepCopy()
 
 	status := &v1alpha2.CapsuleStatus{
 		ObservedGeneration: r.observedGeneration,
 		Errors:             []string{err.Error()},
 	}
 
-	if capsule.Status != nil {
-		status.OwnedResources = capsule.Status.OwnedResources
-		status.UsedResources = capsule.Status.UsedResources
+	if capsuleCopy.Status != nil {
+		status.OwnedResources = capsuleCopy.Status.OwnedResources
+		status.UsedResources = capsuleCopy.Status.UsedResources
 	}
 
-	capsule.Status = status
+	capsuleCopy.Status = status
 
-	if err := r.pipeline.client.Status().Update(ctx, capsule); err != nil {
+	if err := r.client.Status().Update(ctx, capsuleCopy); err != nil {
 		return err
 	}
 
-	r.capsule.Status = status
-	r.capsule.SetResourceVersion(capsule.GetResourceVersion())
+	capsule.Status = status
+	capsule.SetResourceVersion(capsuleCopy.GetResourceVersion())
 
 	return nil
 }
 
-func normalizeObject(key objectKey, obj client.Object) client.Object {
-	obj.SetManagedFields(nil)
-	obj.GetObjectKind().SetGroupVersionKind(key.GroupVersionKind)
-	return obj
+func (*capsuleRequest) OwnedLabel() string {
+	return LabelOwnedByCapsule
 }
