@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+//nolint:lll
 type Request interface {
 	// Scheme returns the serialization scheme used by the rig operator.
 	// It contains all the types used by a Capsule.
