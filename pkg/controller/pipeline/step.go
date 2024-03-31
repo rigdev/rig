@@ -2,6 +2,6 @@ package pipeline
 
 import "context"
 
-type Step interface {
+type CapsuleStep interface {
 	Apply(ctx context.Context, req CapsuleRequest) error
 }

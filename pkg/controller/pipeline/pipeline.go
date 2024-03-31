@@ -16,31 +16,27 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	LabelOwnedByCapsule = "rig.dev/owned-by-capsule"
-)
-
 type Object struct {
 	Current      client.Object
 	New          client.Object
 	Materialized client.Object
 }
 
-type objectKey struct {
+type ObjectKey struct {
 	client.ObjectKey
 	schema.GroupVersionKind
 }
 
-func sortedKeys(keys []objectKey) []objectKey {
-	slices.SortStableFunc(keys, func(k1, k2 objectKey) int { return strings.Compare(k1.String(), k2.String()) })
+func sortedKeys(keys []ObjectKey) []ObjectKey {
+	slices.SortStableFunc(keys, func(k1, k2 ObjectKey) int { return strings.Compare(k1.String(), k2.String()) })
 	return keys
 }
 
-func (ok objectKey) String() string {
+func (ok ObjectKey) String() string {
 	return fmt.Sprintf("%s/%s", ok.GroupVersionKind.String(), ok.ObjectKey.String())
 }
 
-func (ok objectKey) MarshalLog() interface{} {
+func (ok ObjectKey) MarshalLog() interface{} {
 	return struct {
 		Group     string `json:"group,omitempty"`
 		Version   string `json:"version,omitempty"`
@@ -56,24 +52,24 @@ func (ok objectKey) MarshalLog() interface{} {
 	}
 }
 
-type Pipeline struct {
+type CapsulePipeline struct {
 	client client.Client
 	reader client.Reader
 	config *configv1alpha1.OperatorConfig
 	scheme *runtime.Scheme
 	// TODO Use zap instead
 	logger logr.Logger
-	steps  []Step
+	steps  []CapsuleStep
 }
 
-func New(
+func NewCapsulePipeline(
 	cc client.Client,
 	cr client.Reader,
 	config *configv1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
 	logger logr.Logger,
-) *Pipeline {
-	p := &Pipeline{
+) *CapsulePipeline {
+	p := &CapsulePipeline{
 		client: cc,
 		reader: cr,
 		config: config,
@@ -84,23 +80,47 @@ func New(
 	return p
 }
 
-func (p *Pipeline) AddStep(step Step) {
+func (p *CapsulePipeline) AddStep(step CapsuleStep) {
 	p.steps = append(p.steps, step)
 }
 
-func (p *Pipeline) RunCapsule(
+func (p *CapsulePipeline) RunCapsule(
 	ctx context.Context,
 	capsule *v1alpha2.Capsule,
 	opts ...CapsuleRequestOption,
 ) (*Result, error) {
 	req := newCapsuleRequest(p, capsule, opts...)
+	var steps []func(context.Context, CapsuleRequest) error
+	for _, s := range p.steps {
+		steps = append(steps, s.Apply)
+	}
+	return ExecuteRequest(ctx, CapsuleRequest(req), &req.RequestBase, steps, true)
+}
 
-	result, err := p.RunSteps(ctx, req, true)
+type OutputObject struct {
+	ObjectKey ObjectKey
+	Object    client.Object
+	State     ResourceState
+}
+
+type Result struct {
+	InputObjects  []client.Object
+	OutputObjects []OutputObject
+}
+
+// TODO Fix this req/base shit
+func ExecuteRequest[T Request](
+	ctx context.Context,
+	req T, base *RequestBase,
+	steps []func(context.Context, T) error,
+	commit bool,
+) (*Result, error) {
+	result, err := executeRequestInner(ctx, req, base, steps, commit)
 	if errors.IsFailedPrecondition(err) {
 		return nil, err
 	} else if err != nil {
-		if !req.dryRun {
-			if err := req.updateStatusError(ctx, err); err != nil {
+		if !base.dryRun {
+			if err := base.Strategies.UpdateStatusWithError(ctx, err); err != nil {
 				return nil, err
 			}
 		}
@@ -111,34 +131,22 @@ func (p *Pipeline) RunCapsule(
 	return result, nil
 }
 
-type OutputObject struct {
-	ObjectKey objectKey
-	Object    client.Object
-	State     ResourceState
-}
-type Result struct {
-	InputObjects  []client.Object
-	OutputObjects []OutputObject
-	Objects       []*Object
-}
-
-func (p *Pipeline) RunSteps(ctx context.Context, capReq CapsuleRequest, commit bool) (*Result, error) {
-	req, ok := capReq.(*capsuleRequest)
-	if !ok {
-		return nil, fmt.Errorf("invalid CapsuleRequest")
-	}
-
-	if err := req.loadExisting(ctx); err != nil {
+func executeRequestInner[T Request](
+	ctx context.Context,
+	req T, base *RequestBase,
+	steps []func(context.Context, T) error, commit bool,
+) (*Result, error) {
+	if err := base.Strategies.LoadExistingObjects(ctx); err != nil {
 		return nil, err
 	}
 
 	for {
-		result := req.prepare()
+		result := base.PrepareRequest()
 
-		p.logger.Info("run steps", "current_objects", maps.Keys(req.currentObjects))
+		base.logger.Info("run steps", "existing_objects", maps.Keys(base.existingObjects))
 
-		for _, s := range p.steps {
-			if err := s.Apply(ctx, req); err != nil {
+		for _, s := range steps {
+			if err := s(ctx, req); err != nil {
 				return nil, err
 			}
 		}
@@ -147,19 +155,19 @@ func (p *Pipeline) RunSteps(ctx context.Context, capReq CapsuleRequest, commit b
 			return result, nil
 		}
 
-		changes, err := req.commit(ctx)
+		changes, err := base.Commit(ctx)
 		if errors.IsAborted(err) {
-			p.logger.Error(err, "retry running steps")
+			base.logger.Error(err, "retry running steps")
 			continue
 		} else if err != nil {
-			p.logger.Error(err, "error committing changes")
+			base.logger.Error(err, "error committing changes")
 			return nil, err
 		}
 
 		for key, c := range changes {
-			obj := req.objects[key].Materialized
+			obj := base.newObjects[key].Materialized
 			if obj == nil {
-				obj = req.objects[key].New
+				obj = base.newObjects[key].New
 			}
 			result.OutputObjects = append(result.OutputObjects, OutputObject{
 				ObjectKey: key,

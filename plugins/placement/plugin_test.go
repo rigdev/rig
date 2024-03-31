@@ -96,7 +96,7 @@ requireTag: true`,
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := pipeline.New(nil, nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
+			p := pipeline.NewCapsulePipeline(nil, nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
 			if tt.annotations == nil {
 				tt.annotations = map[string]string{}
 			}
