@@ -53,14 +53,11 @@ func main() {
 	flags.StringP(flagConfigFile, "c", "/etc/rig-operator/config.yaml", "path to rig-operator config file")
 
 	cmd.AddCommand(build.VersionCommand())
-	certGenCmd, err := certgen.CMD()
-	if err != nil {
+	if err := certgen.Setup(cmd); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	cmd.AddCommand(certGenCmd)
-	cmd.AddCommand(apichecker.CMD())
-
+	apichecker.Setup(cmd)
 	pluginSetup(cmd)
 
 	ctx := context.Background()

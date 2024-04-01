@@ -22,60 +22,47 @@ const (
 	flagNamespace = "namespace"
 )
 
-func createCMD() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "create [name]",
-		Short: "Generate ca, server cert and key and store it in a secret",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			k8s, err := newK8s()
-			if err != nil {
-				return err
-			}
-
-			namespace, err := cmd.Flags().GetString(flagNamespace)
-			if err != nil {
-				return err
-			}
-			name := args[0]
-
-			log := log.New(false).WithValues("namespace", namespace, "name", name)
-
-			log.Info("checking wether we should create secret...")
-			if _, err := k8s.getSecret(cmd.Context(), namespace, name); err != nil {
-				if kerrors.IsNotFound(err) {
-					log.Info("creating secret")
-					hosts, err := cmd.Flags().GetStringSlice(flagHosts)
-					if err != nil {
-						return err
-					}
-
-					certs, err := generateCerts(hosts)
-					if err != nil {
-						return err
-					}
-
-					if err := k8s.createSecret(cmd.Context(), namespace, name, certs); err != nil {
-						return err
-					}
-					log.Info("secret created")
-					// create
-				} else {
-					return err
-				}
-			} else {
-				log.Info("secret already exists")
-			}
-
-			return nil
-		},
+func create(cmd *cobra.Command, args []string) error {
+	k8s, err := newK8s()
+	if err != nil {
+		return err
 	}
 
-	flags := cmd.PersistentFlags()
-	flags.StringP(flagNamespace, "n", "default", "Namespace for certificate secret")
-	flags.StringSlice(flagHosts, nil, "IPs and DNS names to include in the certificate")
+	namespace, err := cmd.Flags().GetString(flagNamespace)
+	if err != nil {
+		return err
+	}
+	name := args[0]
 
-	return cmd
+	log := log.New(false).WithValues("namespace", namespace, "name", name)
+
+	log.Info("checking wether we should create secret...")
+	if _, err := k8s.getSecret(cmd.Context(), namespace, name); err != nil {
+		if kerrors.IsNotFound(err) {
+			log.Info("creating secret")
+			hosts, err := cmd.Flags().GetStringSlice(flagHosts)
+			if err != nil {
+				return err
+			}
+
+			certs, err := generateCerts(hosts)
+			if err != nil {
+				return err
+			}
+
+			if err := k8s.createSecret(cmd.Context(), namespace, name, certs); err != nil {
+				return err
+			}
+			log.Info("secret created")
+			// create
+		} else {
+			return err
+		}
+	} else {
+		log.Info("secret already exists")
+	}
+
+	return nil
 }
 
 func serialNumer() (*big.Int, error) {
