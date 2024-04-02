@@ -59,7 +59,7 @@ type CapsulePipeline struct {
 	scheme *runtime.Scheme
 	// TODO Use zap instead
 	logger logr.Logger
-	steps  []CapsuleStep
+	steps  []Step[CapsuleRequest]
 }
 
 func NewCapsulePipeline(
@@ -80,7 +80,7 @@ func NewCapsulePipeline(
 	return p
 }
 
-func (p *CapsulePipeline) AddStep(step CapsuleStep) {
+func (p *CapsulePipeline) AddStep(step Step[CapsuleRequest]) {
 	p.steps = append(p.steps, step)
 }
 
@@ -90,11 +90,7 @@ func (p *CapsulePipeline) RunCapsule(
 	opts ...CapsuleRequestOption,
 ) (*Result, error) {
 	req := newCapsuleRequest(p, capsule, opts...)
-	var steps []func(context.Context, CapsuleRequest) error
-	for _, s := range p.steps {
-		steps = append(steps, s.Apply)
-	}
-	return ExecuteRequest(ctx, CapsuleRequest(req), &req.RequestBase, steps, true)
+	return ExecuteRequest(ctx, req, p.steps, true)
 }
 
 type OutputObject struct {
@@ -108,19 +104,25 @@ type Result struct {
 	OutputObjects []OutputObject
 }
 
-// TODO Fix this req/base shit
+// TODO This ExecuteableRequest type construction is a bit messy
+// Find a better abstraction
+type ExecutableRequest[T Request] interface {
+	GetRequest() T
+	GetBase() *RequestBase
+}
+
 func ExecuteRequest[T Request](
 	ctx context.Context,
-	req T, base *RequestBase,
-	steps []func(context.Context, T) error,
+	req ExecutableRequest[T],
+	steps []Step[T],
 	commit bool,
 ) (*Result, error) {
-	result, err := executeRequestInner(ctx, req, base, steps, commit)
+	result, err := executeRequestInner(ctx, req, steps, commit)
 	if errors.IsFailedPrecondition(err) {
 		return nil, err
 	} else if err != nil {
-		if !base.dryRun {
-			if err := base.Strategies.UpdateStatusWithError(ctx, err); err != nil {
+		if !req.GetBase().dryRun {
+			if err := req.GetBase().Strategies.UpdateStatusWithError(ctx, err); err != nil {
 				return nil, err
 			}
 		}
@@ -133,20 +135,18 @@ func ExecuteRequest[T Request](
 
 func executeRequestInner[T Request](
 	ctx context.Context,
-	req T, base *RequestBase,
-	steps []func(context.Context, T) error, commit bool,
-) (*Result, error) {
-	if err := base.Strategies.LoadExistingObjects(ctx); err != nil {
+	req ExecutableRequest[T], steps []Step[T],
+	commit bool) (*Result, error) {
+	if err := req.GetBase().Strategies.LoadExistingObjects(ctx); err != nil {
 		return nil, err
 	}
 
 	for {
-		result := base.PrepareRequest()
-
-		base.logger.Info("run steps", "existing_objects", maps.Keys(base.existingObjects))
+		result := req.GetBase().PrepareRequest()
+		req.GetBase().logger.Info("run steps", "existing_objects", maps.Keys(req.GetBase().existingObjects))
 
 		for _, s := range steps {
-			if err := s(ctx, req); err != nil {
+			if err := s.Apply(ctx, req.GetRequest()); err != nil {
 				return nil, err
 			}
 		}
@@ -155,19 +155,19 @@ func executeRequestInner[T Request](
 			return result, nil
 		}
 
-		changes, err := base.Commit(ctx)
+		changes, err := req.GetBase().Commit(ctx)
 		if errors.IsAborted(err) {
-			base.logger.Error(err, "retry running steps")
+			req.GetBase().logger.Error(err, "retry running steps")
 			continue
 		} else if err != nil {
-			base.logger.Error(err, "error committing changes")
+			req.GetBase().logger.Error(err, "error committing changes")
 			return nil, err
 		}
 
 		for key, c := range changes {
-			obj := base.newObjects[key].Materialized
+			obj := req.GetBase().newObjects[key].Materialized
 			if obj == nil {
-				obj = base.newObjects[key].New
+				obj = req.GetBase().newObjects[key].New
 			}
 			result.OutputObjects = append(result.OutputObjects, OutputObject{
 				ObjectKey: key,

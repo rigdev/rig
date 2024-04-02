@@ -350,13 +350,13 @@ func GetDefaultPipelineSteps(
 	ctx context.Context,
 	capSvc capabilities.Service,
 	cfg *v1alpha1.OperatorConfig,
-) ([]pipeline.CapsuleStep, error) {
+) ([]pipeline.Step[pipeline.CapsuleRequest], error) {
 	capabilities, err := capSvc.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var steps []pipeline.CapsuleStep
+	var steps []pipeline.Step[pipeline.CapsuleRequest]
 
 	steps = append(steps,
 		NewServiceAccountStep(),

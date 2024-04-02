@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -119,24 +118,15 @@ func (r *capsuleRequest) Capsule() *v1alpha2.Capsule {
 	return r.capsule.DeepCopy()
 }
 
-func (r *capsuleRequest) getGVK(obj client.Object) (schema.GroupVersionKind, error) {
-	gvks, _, err := r.scheme.ObjectKinds(obj)
-	if err != nil {
-		r.logger.Error(err, "invalid object type")
-		return schema.GroupVersionKind{}, err
-	}
-
-	return gvks[0], nil
-}
-
 func (r *capsuleRequest) GetKey(obj client.Object) (ObjectKey, error) {
 	if obj.GetName() == "" {
 		obj.SetName(r.capsule.Name)
 	}
 	obj.SetNamespace(r.capsule.Namespace)
 
-	gvk, err := r.getGVK(obj)
+	gvk, err := getGVK(obj, r.scheme)
 	if err != nil {
+		r.logger.Error(err, "invalid object type")
 		return ObjectKey{}, err
 	}
 
@@ -159,7 +149,6 @@ func (r *capsuleRequest) MarkUsedObject(res v1alpha2.UsedResource) error {
 }
 
 func (r *capsuleRequest) LoadExistingObjects(ctx context.Context) error {
-	// Read all status objects.
 	s := r.capsule.Status
 	if s == nil {
 		return nil
@@ -215,11 +204,7 @@ func (r *capsuleRequest) UpdateStatusWithChanges(
 	ctx context.Context,
 	changes map[ObjectKey]*Change,
 ) error {
-	capsule, ok := r.requestObject.(*v1alpha2.Capsule)
-	if !ok {
-		return fmt.Errorf("object given to capsuleStatusUpdater had wrong type: %T", r.requestObject)
-	}
-	capsuleCopy := capsule.DeepCopy()
+	capsuleCopy := r.capsule.DeepCopy()
 
 	status := &v1alpha2.CapsuleStatus{
 		ObservedGeneration: r.observedGeneration,
@@ -256,18 +241,14 @@ func (r *capsuleRequest) UpdateStatusWithChanges(
 		return err
 	}
 
-	capsule.Status = status
-	capsule.SetResourceVersion(capsule.GetResourceVersion())
+	r.capsule.Status = status
+	r.capsule.SetResourceVersion(r.capsule.GetResourceVersion())
 
 	return nil
 }
 
 func (r *capsuleRequest) UpdateStatusWithError(ctx context.Context, err error) error {
-	capsule, ok := r.requestObject.(*v1alpha2.Capsule)
-	if !ok {
-		return fmt.Errorf("object had unexpected type %T", r.requestObject)
-	}
-	capsuleCopy := capsule.DeepCopy()
+	capsuleCopy := r.capsule.DeepCopy()
 
 	status := &v1alpha2.CapsuleStatus{
 		ObservedGeneration: r.observedGeneration,
@@ -285,12 +266,20 @@ func (r *capsuleRequest) UpdateStatusWithError(ctx context.Context, err error) e
 		return err
 	}
 
-	capsule.Status = status
-	capsule.SetResourceVersion(capsuleCopy.GetResourceVersion())
+	r.capsule.Status = status
+	r.capsule.SetResourceVersion(capsuleCopy.GetResourceVersion())
 
 	return nil
 }
 
 func (*capsuleRequest) OwnedLabel() string {
 	return LabelOwnedByCapsule
+}
+
+func (r *capsuleRequest) GetBase() *RequestBase {
+	return &r.RequestBase
+}
+
+func (r *capsuleRequest) GetRequest() CapsuleRequest {
+	return r
 }

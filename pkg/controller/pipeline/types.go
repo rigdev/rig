@@ -19,6 +19,7 @@ import (
 var (
 	AppsDeploymentGVK                      = appsv1.SchemeGroupVersion.WithKind("Deployment")
 	CoreServiceGVK                         = corev1.SchemeGroupVersion.WithKind("Service")
+	CoreNamespace                          = corev1.SchemeGroupVersion.WithKind("Namespace")
 	CMCertificateGVK                       = cmv1.SchemeGroupVersion.WithKind(cmv1.CertificateKind)
 	NetIngressGVK                          = netv1.SchemeGroupVersion.WithKind("Ingress")
 	AutoscalingvHorizontalPodAutoscalerGVK = autoscalingv2.SchemeGroupVersion.WithKind("HorizontalPodAutoscaler")
@@ -30,6 +31,7 @@ var (
 	_allGVKs = []schema.GroupVersionKind{
 		AppsDeploymentGVK,
 		CoreServiceGVK,
+		CoreNamespace,
 		CMCertificateGVK,
 		NetIngressGVK,
 		AutoscalingvHorizontalPodAutoscalerGVK,

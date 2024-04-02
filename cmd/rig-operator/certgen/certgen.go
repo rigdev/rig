@@ -16,7 +16,7 @@ func Setup(parent *cobra.Command) error {
 		Args:  cobra.ExactArgs(1),
 		RunE:  create,
 	}
-	flags := cmd.PersistentFlags()
+	flags := createCmd.PersistentFlags()
 	flags.StringP(flagNamespace, "n", "default", "Namespace for certificate secret")
 	flags.StringSlice(flagHosts, nil, "IPs and DNS names to include in the certificate")
 	cmd.AddCommand(createCmd)
@@ -27,7 +27,7 @@ func Setup(parent *cobra.Command) error {
 		Short: "Patch validating/mutating webhook configurations and CRDs",
 		RunE:  patch,
 	}
-	flags = cmd.PersistentFlags()
+	flags = patchCmd.PersistentFlags()
 	flags.Bool(flagValidating, true, "wether to patch ValidatingWebhookConfiguration with given name")
 	flags.Bool(flagMutating, true, "wether to patch MutatingWebhookConfiguration with given name")
 	flags.Bool(flagCRDs, true, "wether to patch CRDs")

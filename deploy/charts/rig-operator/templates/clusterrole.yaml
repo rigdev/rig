@@ -19,6 +19,7 @@ rules:
   resources:
   - services
   - serviceaccounts
+  - namespaces
   verbs:
   - create
   - delete
@@ -80,6 +81,7 @@ rules:
   - rig.dev
   resources:
   - capsules
+  - projects
   verbs:
   - create
   - delete
@@ -98,6 +100,7 @@ rules:
   - rig.dev
   resources:
   - capsules/status
+  - projects/status
   verbs:
   - get
   - patch
