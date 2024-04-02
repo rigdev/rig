@@ -111,7 +111,7 @@ func run(cmd *cobra.Command, _ []string) error {
 	}
 
 	pluginManager, err := plugin.NewManager()
-	capabilitiesSvc := svccapabilities.NewService(cfg, cc, clientSet.DiscoveryClient, pluginManager)
+	capabilitiesSvc := svccapabilities.NewService(cc, clientSet.DiscoveryClient, pluginManager)
 	capabilitiesH := capabilities.NewHandler(capabilitiesSvc, cfg, scheme)
 	if err != nil {
 		return err

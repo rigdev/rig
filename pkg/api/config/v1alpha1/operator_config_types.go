@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"github.com/rigdev/rig/pkg/ptr"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -30,17 +29,9 @@ type OperatorConfig struct {
 	// instances of the operator.
 	LeaderElectionEnabled *bool `json:"leaderElectionEnabled,omitempty"`
 
-	// Certmanager holds configuration for how the operator should create
-	// certificates for ingress resources.
-	Certmanager *CertManagerConfig `json:"certManager,omitempty"`
-
 	// Service holds the configuration for service resources created by the
 	// operator.
 	Service ServiceConfig `json:"service,omitempty"`
-
-	// Ingress holds the configuration for ingress resources created by the
-	// operator.
-	Ingress IngressConfig `json:"ingress,omitempty"`
 
 	// PrometheusServiceMonitor defines if Rig should spawn a Prometheus ServiceMonitor per capsule
 	// for use with a Prometheus Operator stack.
@@ -55,12 +46,24 @@ type OperatorConfig struct {
 }
 
 type Pipeline struct {
+	// How to handle the routes for capsules in the cluster.
+	RoutesStep RoutesStep `json:"routes_step,omitempty"`
 	// Steps to perform as part of running the operator.
 	// +patchStrategy=merge
 	Steps []Step `json:"steps,omitempty"`
 	// CustomPlugins enables custom plugins to be injected into the
 	// operator. The plugins injected here can then be referenced in 'steps'
 	CustomPlugins []CustomPlugin `json:"customPlugins,omitempty"`
+}
+
+type RoutesStep struct {
+	// The plugin to use for handling routes in capsule interfaces. If not set,
+	// routes will not be handled.
+	// fx. "rigdev.ingress_routes" will create an ingress resource per route.
+	Plugin string `json:"plugin,omitempty"`
+
+	// Config is a string defining the plugin-specific configuration of the plugin.
+	Config string `json:"config,omitempty"`
 }
 
 type Step struct {
@@ -104,41 +107,10 @@ type PrometheusServiceMonitor struct {
 	PortName string `json:"portName"`
 }
 
-type CertManagerConfig struct {
-	// ClusterIssuer to use for issueing ingress certificates
-	ClusterIssuer string `json:"clusterIssuer,omitempty"`
-
-	// CreateCertificateResources specifies wether to create Certificate
-	// resources. If this is not enabled we will use ingress annotations. This
-	// is handy in environments where the ingress-shim isn't enabled.
-	CreateCertificateResources bool `json:"createCertificateResources,omitempty"`
-}
-
 type ServiceConfig struct {
 	// Type of the service to generate. By default, services are of type ClusterIP.
 	// Valid values are ClusterIP, NodePort.
 	Type corev1.ServiceType `json:"type,omitempty"`
-}
-
-type IngressConfig struct {
-	// Annotations for all ingress resources created.
-	Annotations map[string]string `json:"annotations,omitempty"`
-
-	// ClassName specifies the default ingress class to use for all ingress
-	// resources created.
-	ClassName string `json:"className,omitempty"`
-
-	// PathType defines how ingress paths should be interpreted.
-	// Allowed values: Exact, Prefix, ImplementationSpecific
-	PathType networkingv1.PathType `json:"pathType,omitempty"`
-
-	// DisableTLS for ingress resources generated. This is useful if a 3rd-party component
-	// is handling the HTTPS TLS termination and certificates.
-	DisableTLS *bool `json:"disableTLS,omitempty"`
-}
-
-func (cfg IngressConfig) IsTLSDisabled() bool {
-	return cfg.DisableTLS != nil && *cfg.DisableTLS
 }
 
 func (c *OperatorConfig) Default() *OperatorConfig {
@@ -157,12 +129,6 @@ func (c *OperatorConfig) Default() *OperatorConfig {
 	}
 	if c.Service.Type == "" {
 		c.Service.Type = corev1.ServiceTypeClusterIP
-	}
-	if c.Ingress.Annotations == nil {
-		c.Ingress.Annotations = map[string]string{}
-	}
-	if c.Ingress.PathType == "" {
-		c.Ingress.PathType = networkingv1.PathTypePrefix
 	}
 	return c
 }

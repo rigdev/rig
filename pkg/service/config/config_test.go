@@ -66,60 +66,6 @@ port: 42
 				return cfg
 			},
 		},
-		{
-			name: "v1alpha1 operator override from multiple files",
-			files: [][]byte{
-				[]byte(`apiVersion: config.rig.dev/v1alpha1
-kind: OperatorConfig
-ingress:
-  annotations:
-    test1: test1
-    test2: test2
-`),
-				[]byte(`apiVersion: config.rig.dev/v1alpha1
-kind: OperatorConfig
-ingress:
-  annotations:
-    test1: overridden
-    test3: test3
-`),
-			},
-			oCFG: func(cfg *v1alpha1.OperatorConfig) *v1alpha1.OperatorConfig {
-				cfg.Ingress.Annotations = map[string]string{
-					"test1": "overridden",
-					"test2": "test2",
-					"test3": "test3",
-				}
-				return cfg
-			},
-		},
-		{
-			name: "v1alpha1 operator set from envVar",
-			envVars: map[string]string{
-				"RIG_INGRESS_CLASSNAME": "test",
-			},
-			oCFG: func(cfg *v1alpha1.OperatorConfig) *v1alpha1.OperatorConfig {
-				cfg.Ingress.ClassName = "test"
-				return cfg
-			},
-		},
-		{
-			name: "v1alpha1 operator envvars override files",
-			files: [][]byte{
-				[]byte(`apiVersion: config.rig.dev/v1alpha1
-kind: OperatorConfig
-ingress:
-  className: "test"
-`),
-			},
-			envVars: map[string]string{
-				"RIG_INGRESS_CLASSNAME": "overridden",
-			},
-			oCFG: func(cfg *v1alpha1.OperatorConfig) *v1alpha1.OperatorConfig {
-				cfg.Ingress.ClassName = "overridden"
-				return cfg
-			},
-		},
 	}
 
 	sch := scheme.New()

@@ -82,6 +82,7 @@ var allPlugins = []string{
 	"rigdev.object_template",
 	"rigdev.placement",
 	"rigdev.sidecar",
+	"rigdev.ingress_routes",
 }
 
 func NewManager(opts ...ManagerOption) (*Manager, error) {

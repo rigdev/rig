@@ -132,7 +132,7 @@ tasks:
 
   docs-gen:
     desc: "📚 Generate api references"
-    deps: [tools:crd-ref-docs, proto]
+    deps: [tools:crd-ref-docs, proto, docs-gen-plugins]
     sources:
       - docs/crd-ref-docs/**/*
       - pkg/api/config/v1alpha1/**/*

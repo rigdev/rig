@@ -3,6 +3,8 @@ package k8s_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -12,12 +14,11 @@ import (
 	"github.com/nsf/jsondiff"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
-	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,12 +84,16 @@ func (s *K8sTestSuite) SetupSuite() {
 	s.Client = k8sClient
 
 	opConfig := &configv1alpha1.OperatorConfig{
-		Certmanager: &configv1alpha1.CertManagerConfig{
-			ClusterIssuer:              "test",
-			CreateCertificateResources: true,
-		},
-		Ingress: configv1alpha1.IngressConfig{
-			PathType: netv1.PathTypeExact,
+		Pipeline: configv1alpha1.Pipeline{
+			RoutesStep: configv1alpha1.RoutesStep{
+				Plugin: "rigdev.ingress_routes",
+				Config: `
+clusterIssuer: "test"
+createCertificateResources: true
+ingressClassName: ""
+disableTLS: false
+`,
+			},
 		},
 		PrometheusServiceMonitor: &configv1alpha1.PrometheusServiceMonitor{
 			Path:     "metrics",
@@ -96,11 +101,15 @@ func (s *K8sTestSuite) SetupSuite() {
 		},
 	}
 
-	configService := config.NewServiceFromConfigs(opConfig, nil)
-
 	cc, err := client.New(cfg, client.Options{
 		Scheme: scheme,
 	})
+	require.NoError(t, err)
+
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	builtinBinPath := path.Join(path.Dir(path.Dir(path.Dir(wd))), "bin", "rig-operator")
+	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
 
 	capsuleReconciler := &controller.CapsuleReconciler{
@@ -108,7 +117,8 @@ func (s *K8sTestSuite) SetupSuite() {
 		Scheme:              scheme,
 		Config:              opConfig,
 		ClientSet:           clientSet,
-		CapabilitiesService: capabilities.NewService(configService, cc, clientSet.Discovery(), nil),
+		CapabilitiesService: capabilities.NewService(cc, clientSet.Discovery(), nil),
+		PluginManager:       pmanager,
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))
