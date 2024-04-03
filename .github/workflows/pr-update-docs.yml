@@ -49,11 +49,9 @@ jobs:
           echo "
           name: http
           port: 80
-          public:
-            enabled: true
-            method:
-              ingress:
-                host: pr${{ github.event.number }}.docs.prod.rig.dev
+          routes:
+          - host: pr${{ github.event.number }}.docs.prod.rig.dev
+            id: pr${{ github.event.number }}
           " > interface.yaml
           rig deploy docs \
             --project docs \

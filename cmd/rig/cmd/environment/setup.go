@@ -35,6 +35,7 @@ func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Cfg = c.Cfg
 	cmd.Auth = c.Auth
+	cmd.Interactive = c.Interactive
 }
 
 func Setup(parent *cobra.Command) {
