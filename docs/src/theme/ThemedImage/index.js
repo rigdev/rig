@@ -14,7 +14,7 @@ export default function ThemedImage(props) {
     : // We need to render both images on the server to avoid flash
       // See https://github.com/facebook/docusaurus/pull/3730
       ['light', 'dark'];
-  
+
       if(customProps && customProps.zoom){
     return (
       <>
@@ -42,7 +42,6 @@ export default function ThemedImage(props) {
         <img
         key={sourceName}
         src={sources[sourceName]}
-        key={sourceName}
         alt={alt}
         className={clsx(
           styles.themedImage,

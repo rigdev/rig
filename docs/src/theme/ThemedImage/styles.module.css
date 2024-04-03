@@ -1,5 +1,6 @@
 .themedImage {
-  display: none;
+  display: block;
+  margin: auto auto 20px auto;
 }
 
 .themedImageZoom {
@@ -8,9 +9,9 @@
 }
 
 [data-theme='light'] .themedImage--light {
-  display: initial;
+  display: block;
 }
 
 [data-theme='dark'] .themedImage--dark {
-  display: initial;
+  display: block;
 }
