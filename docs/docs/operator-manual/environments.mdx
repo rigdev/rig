@@ -28,7 +28,7 @@ To create a new environment, use the following CLI command:
 rig env create my-environment my-cluster
 ```
 
-The newly created environment is immediate available for existing Capsules as a deployment target:
+The newly created environment is immediately available for existing Capsules as a deployment target:
 
 ```bash
 rig deploy -E my-environment my-capsule --image nginx
@@ -36,7 +36,7 @@ rig deploy -E my-environment my-capsule --image nginx
 
 ### Custom namespace templating
 
-By default, Capsules in the new environment will be named after the project. To change this,
+By default, namespaces in the new environment will be named after the project. To change this,
 a custom namespace template can be provided:
 
 ```bash
@@ -45,7 +45,7 @@ rig env create my-environment my-cluster \
 ```
 
 This example will suffix all namespaces with the environment, allowing multiple environments in a single
-namespace.
+cluster.
 
 ## Deleting environments
 
