@@ -251,7 +251,7 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 		ps = append(ps, p)
 	}
 
-	matcher, err := NewMatcher(step.Namespaces, step.Capsules, step.Selector)
+	matcher, err := NewMatcher(step.Namespaces, step.Capsules, step.Selector, step.EnableForPlatform)
 	if err != nil {
 		return nil, err
 	}

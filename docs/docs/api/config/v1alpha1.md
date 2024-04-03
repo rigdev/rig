@@ -589,6 +589,7 @@ _Appears in:_
 | `tag` _string_ | Optional tag which is readable by plugins when executed |
 | `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. |
 | `capsules` _string array_ | If set, only execute the plugin on the capsules specified. |
+| `enableForPlatform` _boolean_ | If set, will enable the step for the Rig platform which is a Capsule as well |
 | `selector` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#labelselector-v1-meta)_ | If set, only execute the plugin on the matching capsules. |
 | `plugins` _[Plugin](#plugin) array_ | Plugins to run as part of this step. |
 

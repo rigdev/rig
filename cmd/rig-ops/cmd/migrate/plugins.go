@@ -22,7 +22,7 @@ func (c *Cmd) getPlugins(ctx context.Context, migration *Migration) error {
 
 	var plugins []string
 	for _, step := range cfg.Pipeline.Steps {
-		matcher, err := plugin.NewMatcher(step.Namespaces, step.Capsules, step.Selector)
+		matcher, err := plugin.NewMatcher(step.Namespaces, step.Capsules, step.Selector, false)
 		if err != nil {
 			return err
 		}

@@ -64,12 +64,13 @@ func (s *Step) Stop(ctx context.Context) {
 }
 
 type Matcher struct {
-	namespaces []glob.Glob
-	capsules   []glob.Glob
-	selector   labels.Selector
+	namespaces        []glob.Glob
+	capsules          []glob.Glob
+	selector          labels.Selector
+	enableForPlatform bool
 }
 
-func NewMatcher(namespaces, capsules []string, selector metav1.LabelSelector) (Matcher, error) {
+func NewMatcher(namespaces, capsules []string, selector metav1.LabelSelector, enableForPlatform bool) (Matcher, error) {
 	s, err := metav1.LabelSelectorAsSelector(&selector)
 	if err != nil {
 		return Matcher{}, err
@@ -84,9 +85,10 @@ func NewMatcher(namespaces, capsules []string, selector metav1.LabelSelector) (M
 		return Matcher{}, err
 	}
 	return Matcher{
-		namespaces: nsGlobs,
-		capsules:   cGlobs,
-		selector:   s,
+		namespaces:        nsGlobs,
+		capsules:          cGlobs,
+		selector:          s,
+		enableForPlatform: enableForPlatform,
 	}, nil
 }
 
@@ -98,6 +100,9 @@ func (m Matcher) Match(namespace, capsule string, capsuleLabels map[string]strin
 		return false
 	}
 	if !match(m.capsules, capsule) {
+		return false
+	}
+	if capsule == "rig-platform" && !m.enableForPlatform {
 		return false
 	}
 	return true
