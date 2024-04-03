@@ -12,6 +12,14 @@
   display: block;
 }
 
+[data-theme='dark'] .themedImage--light {
+  display: none;
+}
+
+[data-theme='light'] .themedImage--dark {
+  display: none;
+}
+
 [data-theme='dark'] .themedImage--dark {
   display: block;
 }
