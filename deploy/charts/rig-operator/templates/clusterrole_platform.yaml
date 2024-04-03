@@ -49,6 +49,7 @@ rules:
     - rig.dev
   resources:
     - capsules
+    - projects
   verbs:
     - "*"
 - apiGroups:

@@ -10,6 +10,7 @@ import (
 	"golang.org/x/exp/maps"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -197,7 +198,7 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 		cObj.New.SetLabels(labels)
 
 		if err := controllerutil.SetControllerReference(r.requestObject, cObj.New, r.scheme); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not set controller ref: %q", err)
 		}
 	}
 
@@ -400,4 +401,13 @@ func (r *RequestBase) PrepareRequest() *Result {
 	r.Strategies.Prepare()
 
 	return result
+}
+
+func getGVK(obj client.Object, scheme *runtime.Scheme) (schema.GroupVersionKind, error) {
+	gvks, _, err := scheme.ObjectKinds(obj)
+	if err != nil {
+		return schema.GroupVersionKind{}, err
+	}
+
+	return gvks[0], nil
 }

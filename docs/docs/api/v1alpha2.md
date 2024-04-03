@@ -9,6 +9,8 @@ Package v1alpha2 contains API Schema definitions for the v1alpha2 API group
 
 ## Resource Types
 - [Capsule](#capsule)
+- [Project](#project)
+- [ProjectList](#projectlist)
 
 
 
@@ -351,6 +353,71 @@ ObjectMetric defines a custom object metric for the autoscaler
 _Appears in:_
 - [CustomMetric](#custommetric)
 
+
+
+### OwnedGlobalResource
+
+
+
+
+
+_Appears in:_
+- [ProjectStatus](#projectstatus)
+
+| Field | Description |
+| --- | --- |
+| `ref` _[TypedObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#typedobjectreference-v1-core)_ |  |
+| `state` _string_ |  |
+| `message` _string_ |  |
+
+
+
+
+### Project
+
+
+
+
+
+_Appears in:_
+- [ProjectList](#projectlist)
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `rig.dev/v1alpha2`
+| `kind` _string_ | `Project`
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[ProjectSpec](#projectspec)_ | Spec holds the specification of the Project. |
+
+
+### ProjectList
+
+
+
+ProjectList contains a list of Projects
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `rig.dev/v1alpha2`
+| `kind` _string_ | `ProjectList`
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `items` _[Project](#project) array_ |  |
+
+
+### ProjectSpec
+
+
+
+
+
+_Appears in:_
+- [Project](#project)
+
+| Field | Description |
+| --- | --- |
+| `namespaces` _string array_ |  |
 
 
 
