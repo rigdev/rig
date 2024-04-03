@@ -5,7 +5,7 @@ import ThemedImage from "@theme/ThemedImage";
 The Rig Platform supports a multi-environment architecture out-of-the-box. All Capsules in the Platform are
 automatically deployable to all environments. That means a single Environment always contains some sub-set of all Platform Capsules.
 
-Each environment has it's own configuration of a given Capsule. Capsule A can e.g. have 10 replicas in `production` but only 2 in `staging`.
+Each environment has its own configuration of a given Capsule. Capsule A can e.g. have 10 replicas in `production` but only 2 in `staging`.
 
 <ThemedImage
   alt="Topology"
@@ -18,9 +18,7 @@ Each environment has it's own configuration of a given Capsule. Capsule A can e.
   }}
 />
 
-
-Environments are associated to a single cluster, meaning Rig supports multiple clusters
-through environments.
+In this example, changes made to Capsules in Environment B are not reflected to Capsules in Environment A, and vice-versa.
 
 ## Creating new environments
 
@@ -89,3 +87,28 @@ The following steps are easily implemented in any CI/CD systems, such as GitHub 
     ```bash
     rig env delete "temp-env-$BRANCH_NAME" --force
     ```
+
+## Multi-Cluster setup using Environments
+
+Environments are associated to a single cluster, meaning Rig supports multiple clusters
+through environments.
+
+Multiple environments can also exist in a single cluster (useful for ephemeral environments), meaning
+any mix and match of environments and clusters are possible:
+
+<ThemedImage
+  alt="Topology"
+  customProps={{
+    zoom: false,
+  }}
+  sources={{
+    light: "/img/operator-manual/environment-cluster.svg",
+    dark: "/img/operator-manual/environment-cluster-dark.svg",
+  }}
+/>
+
+Here two production-clusters each have a single environment, while a staging has a number of testing environments.
+
+:::info unique namespaces
+When having multiple environments in a single cluster, it's important to ensure the namespace template generated unique
+namespaces, preferable by having the environments as part of the namespace name.
