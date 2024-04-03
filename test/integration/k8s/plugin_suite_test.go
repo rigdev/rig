@@ -15,10 +15,8 @@ import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
-	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -79,13 +77,6 @@ func (s *PluginTestSuite) SetupSuite() {
 	s.Client = k8sClient
 
 	opConfig := &configv1alpha1.OperatorConfig{
-		Certmanager: &configv1alpha1.CertManagerConfig{
-			ClusterIssuer:              "test",
-			CreateCertificateResources: true,
-		},
-		Ingress: configv1alpha1.IngressConfig{
-			PathType: netv1.PathTypeExact,
-		},
 		PrometheusServiceMonitor: &configv1alpha1.PrometheusServiceMonitor{
 			Path:     "metrics",
 			PortName: "metricsport",
@@ -127,8 +118,6 @@ container:
 		},
 	}
 
-	configService := config.NewServiceFromConfigs(opConfig, nil)
-
 	cc, err := client.New(cfg, client.Options{
 		Scheme: scheme,
 	})
@@ -144,7 +133,7 @@ container:
 		Scheme:              scheme,
 		Config:              opConfig,
 		ClientSet:           clientSet,
-		CapabilitiesService: capabilities.NewService(configService, cc, clientSet.Discovery(), nil),
+		CapabilitiesService: capabilities.NewService(cc, clientSet.Discovery(), nil),
 		PluginManager:       pmanager,
 	}
 

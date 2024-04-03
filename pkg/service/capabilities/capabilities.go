@@ -5,7 +5,6 @@ import (
 
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig/pkg/controller/plugin"
-	"github.com/rigdev/rig/pkg/service/config"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
@@ -18,13 +17,11 @@ type Service interface {
 }
 
 func NewService(
-	cfg config.Service,
 	client client.Client,
 	discoveryClient discovery.DiscoveryInterface,
 	pluginManager *plugin.Manager,
 ) Service {
 	return &service{
-		cfg:             cfg,
 		client:          client,
 		discoveryClient: discoveryClient,
 		pluginManager:   pluginManager,
@@ -32,7 +29,6 @@ func NewService(
 }
 
 type service struct {
-	cfg             config.Service
 	client          client.Client
 	discoveryClient discovery.DiscoveryInterface
 	pluginManager   *plugin.Manager
@@ -42,12 +38,13 @@ type service struct {
 func (s *service) Get(ctx context.Context) (*capabilities.GetResponse, error) {
 	res := &capabilities.GetResponse{}
 
-	cfg := s.cfg.Operator()
-	if cfg.Certmanager != nil && cfg.Certmanager.ClusterIssuer != "" {
-		res.Ingress = true
+	ok, err := s.hasCertManager(ctx)
+	if err != nil {
+		return nil, err
 	}
+	res.Ingress = ok
 
-	ok, err := s.hasServiceMonitor(ctx)
+	ok, err = s.hasServiceMonitor(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +85,18 @@ func (s *service) hasVPA(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func (s *service) hasCertManager(ctx context.Context) (bool, error) {
+	if err := s.client.Get(ctx, client.ObjectKey{
+		Name: "certificates.cert-manager.io",
+	}, &apiextensionsv1.CustomResourceDefinition{}); errors.IsNotFound(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
+
 }
 
 func (s *service) hasCustomMetricsAPI() (bool, error) {

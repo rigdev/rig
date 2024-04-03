@@ -177,18 +177,6 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	// TODO: Remove this when error from operator is provided
-	if capsuleHasIngress(migration.capsule) && !ingressIsSupported(migration.operatorConfig) {
-		migration.warnings["Capsule"] = append(migration.warnings["Capsule"], &Warning{
-			Kind:    "Capsule",
-			Name:    migration.capsule.Name,
-			Field:   "spec.interfaces",
-			Warning: "Ingress is not supported by the operator. Ingress resources are not created",
-			Suggestion: "Configure the operator to support ingress by setting the certmanager.clusterIssuer field" +
-				" and enabling the certmanager.createCertificateResources field",
-		})
-	}
-
 	request := &pipeline.DryRunRequest{
 		Namespace:         base.Flags.Project,
 		Capsule:           migration.capsule.Name,
@@ -305,6 +293,16 @@ func PromptDiffingChanges(
 		choices = append(choices, kind)
 	}
 
+	for kind, warnings := range warnings {
+		choice := fmt.Sprintf("%s (%v Warnings)", kind, len(warnings))
+		i := slices.Index(choices, kind)
+		if i == -1 {
+			choices = append(choices, choice)
+		} else {
+			choices[i] = choice
+		}
+	}
+
 	for {
 		_, kind, err := common.PromptSelect("Select the resource kind to view the diff for. CTRL + C to continue",
 			choices,
@@ -312,6 +310,11 @@ func PromptDiffingChanges(
 			common.SelectPageSizeOpt(8))
 		if err != nil {
 			return err
+		}
+
+		// if kind contains warnings, strip it from the kind
+		if i := strings.Index(kind, " ("); i != -1 {
+			kind = kind[:i]
 		}
 
 		switch kind {
@@ -323,6 +326,12 @@ func PromptDiffingChanges(
 		}
 
 		report, _ := reports.GetKind(kind)
+		if len(report) == 0 {
+			if err := showDiffReport(nil, kind, "", warnings[kind]); err != nil {
+				return err
+			}
+			continue
+		}
 		if len(report) == 1 {
 			name := maps.Keys(report)[0]
 			if err := showDiffReport(report[name], kind, name, warnings[kind]); err != nil {
@@ -1180,6 +1189,8 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	livenessProbe := container.LivenessProbe
 	readinessProbe := container.ReadinessProbe
 
+	ingressEnabled := migration.operatorConfig.Pipeline.RoutesStep.Plugin != ""
+
 	if container.StartupProbe != nil {
 		migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
 			Kind: "Deployment",
@@ -1264,6 +1275,21 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 			}
 
 			if len(routePaths) > 0 {
+				if !ingressEnabled {
+					migration.warnings["Ingress"] = append(migration.warnings["Ingress"],
+						&Warning{
+							Kind:    "Ingress",
+							Name:    ingress.GetName(),
+							Field:   "",
+							Warning: "Routes are not configured in the operator config, and thus the ingresses cannot be migrated.",
+							Suggestion: "Enable routes in the operator pipeline. If you want to create ingresses" +
+								" use the rigdev.ingress_routes plugin",
+						},
+					)
+
+					continue
+				}
+
 				routes = append(routes, v1alpha2.HostRoute{
 					ID:   ingress.GetName(),
 					Host: ingress.Spec.Rules[0].Host,
@@ -1549,18 +1575,4 @@ func onCCGetError(err error, kind, name, namespace string) error {
 
 func onCCListError(err error, kind, namespace string) error {
 	return errors.Wrapf(err, "Error listing %s in namespace %s", kind, namespace)
-}
-
-func capsuleHasIngress(capsule *v1alpha2.Capsule) bool {
-	for _, inf := range capsule.Spec.Interfaces {
-		if inf.Public != nil && inf.Public.Ingress != nil {
-			return true
-		}
-	}
-	return false
-}
-
-func ingressIsSupported(cfg *v1alpha1.OperatorConfig) bool {
-	return cfg.Ingress.IsTLSDisabled() ||
-		(cfg.Certmanager != nil && cfg.Certmanager.ClusterIssuer != "")
 }

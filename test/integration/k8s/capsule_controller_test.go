@@ -450,11 +450,11 @@ func (s *K8sTestSuite) testIngress(ctx context.Context) {
 		}
 	})
 
-	pt := netv1.PathTypeExact
+	pt := netv1.PathTypePrefix
 	s.expectResources(ctx, []client.Object{
 		&netv1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      nsName.Name,
+				Name:      fmt.Sprintf("%s-public", nsName.Name),
 				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
@@ -507,6 +507,8 @@ func (s *K8sTestSuite) testIngress(ctx context.Context) {
 		},
 	})
 
+	fmt.Println("Ingress created")
+
 	capsuleOwnerRef = s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
 		c.Spec.Interfaces[0].Public.Ingress.Paths = []string{"/test1", "/test2"}
 	})
@@ -514,7 +516,7 @@ func (s *K8sTestSuite) testIngress(ctx context.Context) {
 	s.expectResources(ctx, []client.Object{
 		&netv1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      nsName.Name,
+				Name:      fmt.Sprintf("%s-public", nsName.Name),
 				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,

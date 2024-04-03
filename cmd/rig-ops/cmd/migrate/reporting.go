@@ -212,22 +212,25 @@ func showOverview(
 // }
 
 func showDiffReport(r *dyff.Report, kind, name string, warnings []*Warning) error {
-	var out bytes.Buffer
-	hr := &dyff.HumanReport{
-		Report:     *r,
-		OmitHeader: true,
-	}
-	if err := hr.WriteReport(tview.ANSIWriter(&out)); err != nil {
-		return err
-	}
+	var text *tview.TextView
+	if r != nil {
+		var out bytes.Buffer
+		hr := &dyff.HumanReport{
+			Report:     *r,
+			OmitHeader: true,
+		}
+		if err := hr.WriteReport(tview.ANSIWriter(&out)); err != nil {
+			return err
+		}
 
-	text := tview.NewTextView()
-	text.SetTitle(fmt.Sprintf("%s/%s (ESC to exit)", kind, name))
-	text.SetBorder(true)
-	text.SetDynamicColors(true)
-	text.SetWrap(true)
-	text.SetText(out.String())
-	text.SetBackgroundColor(tcell.ColorNone)
+		text = tview.NewTextView()
+		text.SetTitle(fmt.Sprintf("%s/%s (ESC to exit)", kind, name))
+		text.SetBorder(true)
+		text.SetDynamicColors(true)
+		text.SetWrap(true)
+		text.SetText(out.String())
+		text.SetBackgroundColor(tcell.ColorNone)
+	}
 
 	warningsText := getWarningsView(warnings)
 
@@ -235,20 +238,23 @@ func showDiffReport(r *dyff.Report, kind, name string, warnings []*Warning) erro
 		SetColumns(0).
 		SetBorders(false)
 
-	if warningsText != nil {
+	if warningsText != nil && text != nil {
 		grid.SetRows(-1, -2).
 			AddItem(warningsText, 0, 0, 1, 1, 0, 0, false).
 			AddItem(text, 1, 0, 1, 1, 0, 0, true)
-	} else {
+	} else if text != nil {
 		grid.SetRows(0).
 			AddItem(text, 0, 0, 1, 1, 0, 0, true)
+	} else {
+		grid.SetRows(0).
+			AddItem(warningsText, 0, 0, 1, 1, 0, 0, false)
 	}
 
 	app := tview.NewApplication().SetRoot(grid, true).EnableMouse(true)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyESC {
 			prim := app.GetFocus()
-			if prim == text {
+			if prim == text || text == nil {
 				app.Stop()
 			} else {
 				grid.RemoveItem(warningsText)

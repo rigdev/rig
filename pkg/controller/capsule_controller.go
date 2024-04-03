@@ -24,7 +24,6 @@ import (
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/go-logr/logr"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
@@ -158,7 +157,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		return err
 	}
 
-	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService, r.Config)
+	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService, r.Config, r.PluginManager, logger)
 	if err != nil {
 		return err
 	}
@@ -188,7 +187,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		b = b.Owns(&vpav1.VerticalPodAutoscaler{})
 	}
 
-	if r.Config.Certmanager != nil && r.Config.Certmanager.ClusterIssuer != "" {
+	if capabilities.GetIngress() {
 		b = b.Owns(&cmv1.Certificate{})
 	}
 
@@ -349,7 +348,9 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func GetDefaultPipelineSteps(
 	ctx context.Context,
 	capSvc capabilities.Service,
-	cfg *v1alpha1.OperatorConfig,
+	cfg *configv1alpha1.OperatorConfig,
+	pluginManager *plugin.Manager,
+	logger logr.Logger,
 ) ([]pipeline.Step[pipeline.CapsuleRequest], error) {
 	capabilities, err := capSvc.Get(ctx)
 	if err != nil {
@@ -363,6 +364,18 @@ func GetDefaultPipelineSteps(
 		NewDeploymentStep(),
 		NewVPAStep(cfg),
 		NewNetworkStep(cfg),
+	)
+
+	if cfg.Pipeline.RoutesStep.Plugin != "" {
+		routesStep, err := NewRoutesStep(cfg, pluginManager, logger)
+		if err != nil {
+			return nil, err
+		}
+
+		steps = append(steps, routesStep)
+	}
+
+	steps = append(steps,
 		NewCronJobStep(),
 	)
 
@@ -371,4 +384,23 @@ func GetDefaultPipelineSteps(
 	}
 
 	return steps, nil
+}
+
+func NewRoutesStep(cfg *configv1alpha1.OperatorConfig,
+	pluginManager *plugin.Manager,
+	logger logr.Logger,
+) (pipeline.Step[pipeline.CapsuleRequest], error) {
+	routesStep, err := pluginManager.NewStep(configv1alpha1.Step{
+		Plugins: []configv1alpha1.Plugin{
+			{
+				Name:   cfg.Pipeline.RoutesStep.Plugin,
+				Config: cfg.Pipeline.RoutesStep.Config,
+			},
+		},
+	}, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return routesStep, nil
 }

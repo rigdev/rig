@@ -6,6 +6,7 @@ import (
 	"github.com/rigdev/rig/plugins/datadog"
 	envmapping "github.com/rigdev/rig/plugins/env_mapping"
 	googlesqlproxy "github.com/rigdev/rig/plugins/google_cloud_sql_auth_proxy"
+	ingressroutes "github.com/rigdev/rig/plugins/ingress_routes"
 	initcontainer "github.com/rigdev/rig/plugins/init_container"
 	objecttemplate "github.com/rigdev/rig/plugins/object_template"
 	"github.com/rigdev/rig/plugins/placement"
@@ -21,4 +22,5 @@ var Plugins = map[string]plugin.Server{
 	objecttemplate.Name: &objecttemplate.Plugin{},
 	placement.Name:      &placement.Plugin{},
 	sidecar.Name:        &sidecar.Plugin{},
+	ingressroutes.Name:  &ingressroutes.Plugin{},
 }
