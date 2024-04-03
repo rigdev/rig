@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func init() {
@@ -295,7 +296,11 @@ type ClusterGit struct {
 	Branch string `json:"branch,omitempty"`
 
 	// PathPrefix path to commit to in git repository.
+	// Deprecated: Use `pathPrefixes` instead.
 	PathPrefix string `json:"pathPrefix,omitempty"`
+
+	// PathPrefixes path to commit to in git repository
+	PathPrefixes PathPrefixes `json:"pathPrefixes,omitempty"`
 
 	// Credentials to use when connecting to git.
 	Credentials GitCredentials `json:"credentials,omitempty"`
@@ -305,6 +310,13 @@ type ClusterGit struct {
 
 	// Templates used for commit messages.
 	Templates GitTemplates `json:"templates,omitempty"`
+}
+
+// PathPrefixes is the (possibly templated) path prefix to commit to in git repository
+// depending on which resource is being written.
+type PathPrefixes struct {
+	Capsule string `json:"capsule,omitempty"`
+	Project string `json:"project,omitempty"`
 }
 
 // GitCredentials specifies how to authenticate against git.
@@ -457,5 +469,21 @@ func (cfg *PlatformConfig) Validate() error {
 		return fmt.Errorf("only one of `cluster` and `clusters` must be set")
 	}
 
-	return nil
+	var errs field.ErrorList
+	errs = append(errs, cfg.Cluster.validate(field.NewPath("clusters"))...)
+
+	return errs.ToAggregate()
+}
+
+func (c Cluster) validate(path *field.Path) field.ErrorList {
+	return c.Git.validate(path.Child("git"))
+}
+
+func (g ClusterGit) validate(path *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	if g.PathPrefix != "" && g.PathPrefixes != (PathPrefixes{}) {
+		return append(errs, field.Invalid(path, g, "can't set both `pathPrefix` and `pathPrefixes`"))
+	}
+
+	return errs
 }
