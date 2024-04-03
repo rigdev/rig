@@ -70,6 +70,8 @@ type Step struct {
 	Namespaces []string `json:"namespaces,omitempty"`
 	// If set, only execute the plugin on the capsules specified.
 	Capsules []string `json:"capsules,omitempty"`
+	// If set, will enable the step for the Rig platform which is a Capsule as well
+	EnableForPlatform bool `json:"enableForPlatform,omitempty"`
 	// If set, only execute the plugin on the matching capsules.
 	Selector metav1.LabelSelector `json:"selector,omitempty"`
 	// Plugins to run as part of this step.

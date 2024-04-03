@@ -19,12 +19,13 @@ func newInp(ns, capsule string) inp {
 
 func Test_Matcher(t *testing.T) {
 	tests := []struct {
-		name       string
-		namespaces []string
-		capsules   []string
-		inputs     []inp
-		expected   []bool
-		selector   metav1.LabelSelector
+		name        string
+		namespaces  []string
+		capsules    []string
+		rigplatform bool
+		inputs      []inp
+		expected    []bool
+		selector    metav1.LabelSelector
 	}{
 		{
 			name:     "match all",
@@ -73,11 +74,28 @@ func Test_Matcher(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "dont match rig-platform",
+			rigplatform: false,
+			inputs: []inp{
+				newInp("ns", "cap"),
+				newInp("ns", "rig-platform"),
+			},
+			expected: []bool{true, false},
+		},
+		{
+			name:        "match rig-platform",
+			rigplatform: true,
+			inputs: []inp{
+				newInp("ns", "rig-platform"),
+			},
+			expected: []bool{true},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			matcher, err := NewMatcher(tt.namespaces, tt.capsules, tt.selector)
+			matcher, err := NewMatcher(tt.namespaces, tt.capsules, tt.selector, tt.rigplatform)
 			assert.NoError(t, err)
 			for idx, inp := range tt.inputs {
 				res := matcher.Match(inp.ns, inp.capsule, inp.labels)
