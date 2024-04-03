@@ -33,9 +33,9 @@ spec:
       readiness:
         path: /api/v1/status
       {{- if .Values.ingress.enabled }}
-      public:
-        ingress:
-          host: {{ .Values.ingress.host }}
+      routes:
+      - host: {{ .Values.ingress.host }}
+        id: rig-platform
       {{- end}}
   files:
     - path: /etc/rig/config.yaml
