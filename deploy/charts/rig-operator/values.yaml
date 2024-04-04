@@ -9,7 +9,7 @@ config:
     path: ""
     portName: ""
   pipeline:
-    routes_step:
+    routesStep:
       plugin: "rigdev.ingress_routes"
       config: |
         clusterIssuer: ""
