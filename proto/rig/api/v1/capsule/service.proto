@@ -45,6 +45,8 @@ service Service {
   rpc ListRollouts(ListRolloutsRequest) returns (ListRolloutsResponse) {}
   // Abort the rollout.
   rpc AbortRollout(AbortRolloutRequest) returns (AbortRolloutResponse) {}
+  // Stop a Rollout, removing all resources associated with it.
+  rpc StopRollout(StopRolloutRequest) returns (StopRolloutResponse) {}
   // List capsule events.
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
   // Get metrics for a capsule
@@ -393,12 +395,23 @@ message AbortRolloutRequest {
   uint64 rollout_id = 2;
   // The project in which the capsule lives.
   string project_id = 3;
-  // The environment the rollout is in.
-  string environment_id = 4;
 }
 
 // AbortRolloutResponse is an empty response.
 message AbortRolloutResponse {}
+
+// StopRolloutRequest aborts a rollout.
+message StopRolloutRequest {
+  // The capsule of the aborting rollout.
+  string capsule_id = 1;
+  // The rollout to stop.
+  uint64 rollout_id = 2;
+  // The project in which the capsule lives.
+  string project_id = 3;
+}
+
+// StopRolloutResponse is an empty response.
+message StopRolloutResponse {}
 
 // ListEvents request for listing rollout events for a given rollout in a
 // capsule and environment.

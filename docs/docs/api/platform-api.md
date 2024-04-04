@@ -62,6 +62,7 @@
 | /api.v1.capsule.Service/GetRollout | [GetRolloutRequest](#api-v1-capsule-GetRolloutRequest) | [GetRolloutResponse](#api-v1-capsule-GetRolloutResponse) | Get a single rollout by ID. |
 | /api.v1.capsule.Service/ListRollouts | [ListRolloutsRequest](#api-v1-capsule-ListRolloutsRequest) | [ListRolloutsResponse](#api-v1-capsule-ListRolloutsResponse) | Lists all rollouts for the capsule. |
 | /api.v1.capsule.Service/AbortRollout | [AbortRolloutRequest](#api-v1-capsule-AbortRolloutRequest) | [AbortRolloutResponse](#api-v1-capsule-AbortRolloutResponse) | Abort the rollout. |
+| /api.v1.capsule.Service/StopRollout | [StopRolloutRequest](#api-v1-capsule-StopRolloutRequest) | [StopRolloutResponse](#api-v1-capsule-StopRolloutResponse) | Stop a Rollout, removing all resources associated with it. |
 | /api.v1.capsule.Service/ListEvents | [ListEventsRequest](#api-v1-capsule-ListEventsRequest) | [ListEventsResponse](#api-v1-capsule-ListEventsResponse) | List capsule events. |
 | /api.v1.capsule.Service/CapsuleMetrics | [CapsuleMetricsRequest](#api-v1-capsule-CapsuleMetricsRequest) | [CapsuleMetricsResponse](#api-v1-capsule-CapsuleMetricsResponse) | Get metrics for a capsule |
 | /api.v1.capsule.Service/GetInstanceStatus | [GetInstanceStatusRequest](#api-v1-capsule-GetInstanceStatusRequest) | [GetInstanceStatusResponse](#api-v1-capsule-GetInstanceStatusResponse) | GetInstanceStatus returns the current status for the given instance. |
@@ -3612,7 +3613,6 @@ AbortRolloutRequest aborts a rollout.
 | capsule_id | [string](#string) |  | The capsule to abort the rollout in. |
 | rollout_id | [uint64](#uint64) |  | The rollout to abort. |
 | project_id | [string](#string) |  | The project in which the capsule lives. |
-| environment_id | [string](#string) |  | The environment the rollout is in. |
 
 
 
@@ -4267,6 +4267,33 @@ RestartInstanceRequest restarts a single instance.
 
 ### RestartInstanceResponse
 RestartInstanceResponse is an empty response.
+
+
+
+
+
+
+<a name="api-v1-capsule-StopRolloutRequest"></a>
+
+### StopRolloutRequest
+StopRolloutRequest aborts a rollout.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | The capsule of the aborting rollout. |
+| rollout_id | [uint64](#uint64) |  | The rollout to stop. |
+| project_id | [string](#string) |  | The project in which the capsule lives. |
+
+
+
+
+
+
+<a name="api-v1-capsule-StopRolloutResponse"></a>
+
+### StopRolloutResponse
+StopRolloutResponse is an empty response.
 
 
 
