@@ -146,7 +146,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 	color.Green(" ✓")
 
-	currentTree := migration.currentResources.CreateOverview()
+	currentTree := migration.currentResources.CreateOverview("Current Resources")
 	deployRequest := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId:     migration.capsule.Name,
@@ -172,7 +172,20 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		}
 	}
 
-	capsuleSpecYAML, err := obj.Encode(migration.capsule, c.Scheme)
+	// Add "fake" CapsuleSpec status field, to inject current objects into the Pipeline.
+	capsuleSpec := migration.capsule.DeepCopy()
+	capsuleSpec.Status = &v1alpha2.CapsuleStatus{}
+	for _, res := range migration.currentResources.All() {
+		capsuleSpec.Status.OwnedResources = append(capsuleSpec.Status.OwnedResources, v1alpha2.OwnedResource{
+			Ref: &corev1.TypedLocalObjectReference{
+				APIGroup: ptr.To(res.GetObjectKind().GroupVersionKind().Group),
+				Kind:     res.GetObjectKind().GroupVersionKind().Kind,
+				Name:     res.GetName(),
+			},
+		})
+	}
+
+	capsuleSpecYAML, err := obj.Encode(capsuleSpec, c.Scheme)
 	if err != nil {
 		return err
 	}
@@ -182,6 +195,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		Capsule:           migration.capsule.Name,
 		CapsuleSpec:       string(capsuleSpecYAML),
 		AdditionalObjects: platformObjects,
+		Force:             true,
 	}
 
 	if base.Flags.OperatorConfig != "" {
@@ -202,7 +216,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	migratedTree := migration.migratedResources.CreateOverview()
+	migratedTree := migration.migratedResources.CreateOverview("New Resources")
 
 	reports, err := migration.migratedResources.Compare(migration.currentResources, c.Scheme)
 	if err != nil {
@@ -232,7 +246,9 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if _, err := rc.Capsule().Create(ctx, connect.NewRequest(&capsule.CreateRequest{
 		Name:      deployRequest.Msg.CapsuleId,
 		ProjectId: base.Flags.Project,
-	})); err != nil {
+	})); rerrors.IsAlreadyExists(err) {
+		// Okay, just do the deployment.
+	} else if err != nil {
 		return err
 	}
 
@@ -769,8 +785,14 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 		Name:      migration.capsule.Name,
 	}, configMap)
 	if err == nil {
-		return rerrors.AlreadyExistsErrorf("ConfigMap already exists with the same name as the deployment. " +
-			"Cannot migrate environment variables")
+		for key, value := range configMap.Data {
+			changes = append(changes, &capsule.Change{Field: &capsule.Change_SetEnvironmentVariable{
+				SetEnvironmentVariable: &capsule.Change_KeyValue{
+					Name:  key,
+					Value: value,
+				},
+			}})
+		}
 	} else if !kerrors.IsNotFound(err) {
 		return onCCGetError(err, "ConfigMap",
 			migration.currentResources.Deployment.Name,

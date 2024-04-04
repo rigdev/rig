@@ -38,6 +38,17 @@ func NewResources() *Resources {
 	}
 }
 
+func (r *Resources) All() []client.Object {
+	var res []client.Object
+	if r.Deployment != nil {
+		res = append(res, r.Deployment)
+	}
+	if r.Service != nil {
+		res = append(res, r.Service)
+	}
+	return res
+}
+
 func (r *Resources) getObject(kind, name string) client.Object {
 	switch kind {
 	case "Deployment":
@@ -91,7 +102,7 @@ func (r *Resources) getObject(kind, name string) client.Object {
 	return nil
 }
 
-func (r *Resources) CreateOverview() *tview.TreeView {
+func (r *Resources) CreateOverview(title string) *tview.TreeView {
 	add := func(parent *tview.TreeNode, kind string, name string) *tview.TreeNode {
 		node := tview.NewTreeNode(fmt.Sprintf("%s/%s", kind, name)).
 			SetSelectable(false)
@@ -147,7 +158,8 @@ func (r *Resources) CreateOverview() *tview.TreeView {
 
 	}
 
-	tree.Box.SetTitle("Current Resources (ESC to exit)").
+	tree.Box.
+		SetTitle(title + " (ESC to exit)").
 		SetBorder(true)
 
 	return tree
