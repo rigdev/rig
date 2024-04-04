@@ -106,7 +106,6 @@ func (s *NetworkStep) createService(req pipeline.CapsuleRequest) *corev1.Service
 			Selector: map[string]string{
 				LabelCapsule: req.Capsule().Name,
 			},
-			Type: s.cfg.Service.Type,
 		},
 	}
 
