@@ -158,7 +158,7 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 		return nil
 	}
 
-	return os.WriteFile(output, []byte(out), 0666)
+	return os.WriteFile(output, []byte(out), 0o666)
 }
 
 func (c *Cmd) interactiveDiff(dryRun *pipeline.DryRunResponse) error {
@@ -172,14 +172,14 @@ func (c *Cmd) interactiveDiff(dryRun *pipeline.DryRunResponse) error {
 			return err
 		}
 	}
-	overview := current.CreateOverview()
+	overview := current.CreateOverview("Current Resources")
 
 	migrated := migrate.NewResources()
 	if err := migrate.ProcessOperatorOutput(migrated, dryRun.GetOutputObjects(), c.Scheme); err != nil {
 		return err
 	}
 
-	migratedOverview := migrated.CreateOverview()
+	migratedOverview := migrated.CreateOverview("New Resources")
 
 	reports, err := migrated.Compare(current, c.Scheme)
 	if err != nil {

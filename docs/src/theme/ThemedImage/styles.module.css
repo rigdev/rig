@@ -6,6 +6,7 @@
 .themedImageZoom {
   display: none;
   border-radius: 8px !important;
+  margin: auto auto 20px auto;
 }
 
 [data-theme='light'] .themedImage--light {

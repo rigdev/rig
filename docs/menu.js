@@ -310,6 +310,15 @@ const sidebars = {
     },
     {
       type: "doc",
+      id: "operator-manual/onboarding",
+      label: "Live Onboarding",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiTask",
+      },
+    },
+    {
+      type: "doc",
       id: "operator-manual/gitops",
       label: "GitOps",
       className: "homepage-sidebar-item",

@@ -15,7 +15,7 @@ export default function ThemedImage(props) {
       // See https://github.com/facebook/docusaurus/pull/3730
       ['light', 'dark'];
 
-      if(customProps && customProps.zoom){
+  if(customProps && customProps.zoom){
     return (
       <>
         {renderedSourceNames.map((sourceName) => (
