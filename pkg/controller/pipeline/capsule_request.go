@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -150,7 +149,6 @@ func (r *capsuleRequest) MarkUsedObject(res v1alpha2.UsedResource) error {
 }
 
 func (r *capsuleRequest) LoadExistingObjects(ctx context.Context) error {
-	fmt.Println("LOAD EXISTING ONES!")
 	s := r.capsule.Status
 	if s == nil {
 		return nil
@@ -193,7 +191,7 @@ func (r *capsuleRequest) LoadExistingObjects(ctx context.Context) error {
 		}
 
 		key := r.namedObjectKey(o.Ref.Name, gvk)
-		r.existingObjects[key] = normalizeObject(key, co)
+		r.existingObjects[key] = co
 	}
 
 	return nil

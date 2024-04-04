@@ -42,7 +42,7 @@ type OperatorConfig struct {
 
 type Pipeline struct {
 	// How to handle the routes for capsules in the cluster.
-	RoutesStep RoutesStep `json:"routes_step,omitempty"`
+	RoutesStep RoutesStep `json:"routesStep,omitempty"`
 	// Steps to perform as part of running the operator.
 	// +patchStrategy=merge
 	Steps []Step `json:"steps,omitempty"`

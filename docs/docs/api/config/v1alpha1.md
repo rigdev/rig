@@ -422,7 +422,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `routes_step` _[RoutesStep](#routesstep)_ | How to handle the routes for capsules in the cluster. |
+| `routesStep` _[RoutesStep](#routesstep)_ | How to handle the routes for capsules in the cluster. |
 | `steps` _[Step](#step) array_ | Steps to perform as part of running the operator. |
 | `customPlugins` _[CustomPlugin](#customplugin) array_ | CustomPlugins enables custom plugins to be injected into the operator. The plugins injected here can then be referenced in 'steps' |
 
