@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"github.com/rigdev/rig/pkg/ptr"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -28,10 +27,6 @@ type OperatorConfig struct {
 	// LeaderElectionEnabled enables leader election when running multiple
 	// instances of the operator.
 	LeaderElectionEnabled *bool `json:"leaderElectionEnabled,omitempty"`
-
-	// Service holds the configuration for service resources created by the
-	// operator.
-	Service ServiceConfig `json:"service,omitempty"`
 
 	// PrometheusServiceMonitor defines if Rig should spawn a Prometheus ServiceMonitor per capsule
 	// for use with a Prometheus Operator stack.
@@ -107,12 +102,6 @@ type PrometheusServiceMonitor struct {
 	PortName string `json:"portName"`
 }
 
-type ServiceConfig struct {
-	// Type of the service to generate. By default, services are of type ClusterIP.
-	// Valid values are ClusterIP, NodePort.
-	Type corev1.ServiceType `json:"type,omitempty"`
-}
-
 func (c *OperatorConfig) Default() *OperatorConfig {
 	if c == nil {
 		return c
@@ -126,9 +115,6 @@ func (c *OperatorConfig) Default() *OperatorConfig {
 	}
 	if c.LeaderElectionEnabled == nil {
 		c.LeaderElectionEnabled = ptr.New(true)
-	}
-	if c.Service.Type == "" {
-		c.Service.Type = corev1.ServiceTypeClusterIP
 	}
 	return c
 }

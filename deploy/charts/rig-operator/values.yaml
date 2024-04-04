@@ -5,20 +5,19 @@ config:
   webhooksEnabled: true
   devModeEnabled: false
   leaderElectionEnabled: true
-  service:
-    type: ClusterIP
   prometheusServiceMonitor:
     path: ""
     portName: ""
   pipeline:
-    routes_step: 
+    routes_step:
       plugin: "rigdev.ingress_routes"
       config: |
         clusterIssuer: ""
         createCertificateResources: false
         ingressClassName: ""
         disableTLS: false
-    steps: []
+    steps:
+      []
       # - plugins:
       #   - name: rigdev.env_mapping
       #   - name: rigdev.object_template

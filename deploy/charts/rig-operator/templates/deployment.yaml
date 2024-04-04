@@ -1,3 +1,16 @@
+{{- if or .Values.config.ingress .Values.config.certManager }}
+{{- fail `
+
+"config.ingress.*"" and "config.certManager.*" is deprecated, please use config.pipeline.routes_step, e.g:
+
+config:
+  pipeline:
+    routes_step:
+      config: |
+        clusterIssuer: "my-issuer"
+        ingressClassName: "nginx"
+` }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
