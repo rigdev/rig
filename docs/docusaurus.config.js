@@ -106,6 +106,7 @@ const config = {
       },
       prism: {
         theme: themes.themes.vsDark,
+        additionalLanguages: ['hcl'],
       },
     }),
 };

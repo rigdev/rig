@@ -1,6 +1,7 @@
 import {
 RIG_OPERATOR_CHART_VERSION
 } from "../../../src/constants/versions"
+import CodeBlock from '@theme/CodeBlock';
 
 # Rig Operator
 
@@ -13,12 +14,14 @@ Helm chart available the makes it easy to get all the resources up and running.
 
 To install the operator run:
 
-<pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
+<CodeBlock language="bash">
+{`helm upgrade --install rig-operator rig-operator \\
   --repo https://charts.rig.dev \\
   --version ${RIG_OPERATOR_CHART_VERSION} \\
   --namespace rig-system \\
   --create-namespace
-`}</code></pre>
+`}
+</CodeBlock>
 
 ## Configuration
 
@@ -62,12 +65,14 @@ config:
 
 To apply a config to a cluster, save the file as `operator.yaml` run the following command:
 
-<pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
+<CodeBlock language="bash">
+{`helm upgrade --install rig-operator rig-operator \\
   --repo https://charts.rig.dev \\
   --version ${RIG_OPERATOR_CHART_VERSION} \\
   --namespace rig-system \\
   --create-namespace \\
   -f operator.yaml
-`}</code></pre>
+`}
+</CodeBlock>
 
 This can be done several times, after each change.

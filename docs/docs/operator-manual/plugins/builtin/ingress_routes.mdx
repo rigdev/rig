@@ -18,7 +18,6 @@ config:
             createCertificateResources: true
             ingressClassName: nginx
             disableTLS: false
-
 ```
 
 ## Config

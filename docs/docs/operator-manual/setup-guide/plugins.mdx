@@ -6,7 +6,7 @@ Plugins are a way for the rig administrator to extend the capability of a capsul
 
 Which plugins are run for which capsules and their configuration is defined in the [Operator Config](/api/config/v1alpha1#pipeline) configured by the Helm `values.yaml` file.
 
-Rig supplies a list of builtin plugins you can see [here](plugins/builtin).
+Rig supplies a list of builtin plugins you can see [here](/operator-manual/plugins/builtin).
 
 
 ## Configuring Plugins
@@ -47,7 +47,7 @@ The `config` of a plugin is a single string passed to the plugin which it will i
 
 ## Tooling
 
-The `rig-ops` CLI contains tooling for working with plugins. To install it, see [here](cli). The plugin tooling includes
+The `rig-ops` CLI contains tooling for working with plugins. To install it, see [here](/operator-manual/cli). The plugin tooling includes
 - `rig-ops plugins list`: Shows a list of available plugins in the operator. 
 - `rig-ops plugins list-steps`: Shows the steps the operator is configured to run.
 - `rig-ops plugins check`: Shows which steps are run for which namespace/capsules. This cam be nice if you have globbing logic in your pipeline config.

@@ -139,7 +139,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `url` _string_ | URL to communicate to the cluster. If set, a Token and CertificateAuthority should be provided as well. |
+| `url` _string_ | URL to communicate to the cluster. If set, a Token and CertificateAuthority should be provided as well. If not set, the cluster is interpreted to be the cluster in which the platform runs. |
 | `token` _string_ | Token for communicating with the cluster. Available through a service-account's secret. |
 | `certificateAuthority` _string_ | Certificate authority for communicating with the cluster. Available through a service-account's secret. |
 | `type` _[ClusterType](#clustertype)_ | Type of the cluster - either `docker` or `k8s`. |

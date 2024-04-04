@@ -1,0 +1,48 @@
+# Multicluster Setup
+
+Rig supports multiple clusters. The rig-platform will run in just one of the clusters, but the rig-operator will need to be installed in each of the clusters.
+With a multi-cluster setup the user can access them through environments, see [here](/operator-manual/environments#multi-cluster-setup-using-environments) for an architectural overview.
+
+The platform config contains a [`clusters`](/api/config/v1alpha1#cluster) section where you can define which clusters the platform operates on. If no clusters are configured, it assumes the cluster it itself runs in.
+
+## Token and Credentials
+
+If you configure the platform to use a cluster which is not the one in which it runs, the rig-operator running in the cluster must create an authentication token. This is set under the `rbac` section of the rig-operator's Helm values:
+```yaml
+rbac:
+  platform:
+    # If true, a rig-platform service-account and secret will be created,
+    # with a service-account token for external communication from a Rig Platform.
+    create_token: true
+```
+Deploying the rig-operator with this configuration creates a secret `rig-platform-token` in the `rig-system` namespace containing a token and certificate which is needed in the platform's configuration for the cluster. You can extract the token and certificate with these commands
+
+Token:
+```bash 
+kubectl get secret/rig-platform-token -n rig-system -oyaml | yq '.data.token' | base64 -d
+```
+
+Certificate:
+```bash 
+kubectl get secret/rig-platform-token -n rig-system -oyaml | yq '.data."ca.crt"' | base64 -d
+```
+
+Then in the `clusters` section of the rig-platform Helm values you can configure these values for the cluster
+
+```yaml
+rig:
+  clusters:
+    my-other-cluster:
+      kind: k8s
+      url: k8s.example.com
+      token: eyJhbGciOiJ....
+      certificateAuthority: |
+        -----BEGIN CERTIFICATE-----
+        MIIDBTCCAe2gA...
+        ...
+        -----END CERTIFICATE-----
+```
+
+## GitOps
+
+GitOps can be configured on a per-cluster level, thus one cluster can run without GitOps where the platform directly applies resources and in another cluster the platform applies through GitOps. 
