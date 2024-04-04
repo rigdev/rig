@@ -24,10 +24,10 @@ func (c *Cmd) login(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	c.Cfg.GetCurrentAuth().UserID = uid.String()
-	c.Cfg.GetCurrentAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
-	c.Cfg.GetCurrentAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
-	if err := c.Cfg.Save(); err != nil {
+	c.Scope.GetCurrentContext().GetAuth().UserID = uid.String()
+	c.Scope.GetCurrentContext().GetAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
+	c.Scope.GetCurrentContext().GetAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
+	if err := c.Scope.GetCfg().Save(); err != nil {
 		return err
 	}
 

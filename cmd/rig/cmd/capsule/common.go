@@ -12,9 +12,9 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/utils"
 )
@@ -24,9 +24,9 @@ var CapsuleID string
 func GetCurrentContainerResources(
 	ctx context.Context,
 	client rig.Client,
-	cfg *cmdconfig.Config,
+	scope scope.Scope,
 ) (*capsule.ContainerSettings, uint32, error) {
-	rollout, err := GetCurrentRollout(ctx, client, cfg)
+	rollout, err := GetCurrentRollout(ctx, client, scope)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -43,22 +43,22 @@ func GetCurrentContainerResources(
 	return container, rollout.GetConfig().GetReplicas(), nil
 }
 
-func GetCurrentNetwork(ctx context.Context, client rig.Client, cfg *cmdconfig.Config) (*capsule.Network, error) {
-	rollout, err := GetCurrentRollout(ctx, client, cfg)
+func GetCurrentNetwork(ctx context.Context, client rig.Client, scope scope.Scope) (*capsule.Network, error) {
+	rollout, err := GetCurrentRollout(ctx, client, scope)
 	if err != nil {
 		return nil, err
 	}
 	return rollout.GetConfig().GetNetwork(), nil
 }
 
-func GetCurrentRollout(ctx context.Context, client rig.Client, cfg *cmdconfig.Config) (*capsule.Rollout, error) {
-	return GetCurrentRolloutOfCapsule(ctx, client, cfg, CapsuleID)
+func GetCurrentRollout(ctx context.Context, client rig.Client, scope scope.Scope) (*capsule.Rollout, error) {
+	return GetCurrentRolloutOfCapsule(ctx, client, scope, CapsuleID)
 }
 
 func GetCurrentRolloutOfCapsule(
 	ctx context.Context,
 	client rig.Client,
-	cfg *cmdconfig.Config,
+	scope scope.Scope,
 	capsuleID string,
 ) (*capsule.Rollout, error) {
 	r, err := client.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
@@ -68,8 +68,8 @@ func GetCurrentRolloutOfCapsule(
 			Limit:      1,
 			Descending: true,
 		},
-		ProjectId:     flags.GetProject(cfg),
-		EnvironmentId: flags.GetEnvironment(cfg),
+		ProjectId:     flags.GetProject(scope),
+		EnvironmentId: flags.GetEnvironment(scope),
 	}))
 	if err != nil {
 		return nil, err
@@ -179,10 +179,10 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 	return stream.Err()
 }
 
-func SelectCapsule(ctx context.Context, rc rig.Client, cfg *cmdconfig.Config) (string, error) {
+func SelectCapsule(ctx context.Context, rc rig.Client, scope scope.Scope) (string, error) {
 	resp, err := rc.Capsule().List(ctx, connect.NewRequest(&capsule.ListRequest{
 		Pagination: &model.Pagination{},
-		ProjectId:  flags.GetProject(cfg),
+		ProjectId:  flags.GetProject(scope),
 	}))
 	if err != nil {
 		return "", err

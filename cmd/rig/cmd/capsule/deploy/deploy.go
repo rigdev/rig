@@ -21,7 +21,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
-	"github.com/rigdev/rig-go-api/api/v1/image"
 	api_image "github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
@@ -274,11 +273,11 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	if len(capsuleName) == 0 {
-		if !c.Interactive {
+		if !c.Scope.IsInteractive() {
 			return errors.InvalidArgumentErrorf("missing capsule name argument")
 		}
 
-		name, err := capsule_cmd.SelectCapsule(ctx, c.Rig, c.Cfg)
+		name, err := capsule_cmd.SelectCapsule(ctx, c.Rig, c.Scope)
 		if err != nil {
 			return err
 		}
@@ -287,7 +286,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	if len(changes) == 0 {
-		if !c.Interactive {
+		if !c.Scope.IsInteractive() {
 			return errors.InvalidArgumentErrorf("no changes to deploy")
 		}
 
@@ -305,8 +304,8 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		Msg: &capsule.DeployRequest{
 			CapsuleId:     capsuleName,
 			Changes:       changes,
-			ProjectId:     flags.GetProject(c.Cfg),
-			EnvironmentId: flags.GetEnvironment(c.Cfg),
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
 			Force:         true,
 			ForceOverride: forceOverride,
 		},
@@ -331,7 +330,7 @@ func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) 
 		// TODO Figure out pagination
 		resp, err := c.Rig.Image().List(ctx, connect.NewRequest(&api_image.ListRequest{
 			CapsuleId: capsuleID,
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		}))
 		if err != nil {
 			return "", err
@@ -459,7 +458,7 @@ func (c *Cmd) promptForExistingImage(ctx context.Context, capsuleID string) (str
 	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(&api_image.ListRequest{
 		CapsuleId:  capsuleID,
 		Pagination: &model.Pagination{},
-		ProjectId:  flags.GetProject(c.Cfg),
+		ProjectId:  flags.GetProject(c.Scope),
 	}))
 	if err != nil {
 		return "", err
@@ -512,7 +511,7 @@ func (c *Cmd) waitForRolloutDone(ctx context.Context, rolloutID uint64, capsuleI
 			Msg: &capsule.GetRolloutRequest{
 				CapsuleId: capsuleID,
 				RolloutId: rolloutID,
-				ProjectId: flags.GetProject(c.Cfg),
+				ProjectId: flags.GetProject(c.Scope),
 			},
 		})
 		if err != nil {
@@ -891,12 +890,12 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 		}
 	}
 
-	res, err := c.Rig.Image().Add(ctx, connect.NewRequest(&image.AddRequest{
+	res, err := c.Rig.Image().Add(ctx, connect.NewRequest(&api_image.AddRequest{
 		CapsuleId:      capsuleID,
 		Image:          imageRef.Image,
 		Digest:         digest,
 		SkipImageCheck: skipImageCheck,
-		ProjectId:      flags.GetProject(c.Cfg),
+		ProjectId:      flags.GetProject(c.Scope),
 	}))
 	if err != nil {
 		return "", err

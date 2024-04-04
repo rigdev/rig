@@ -27,8 +27,8 @@ func (c *Cmd) capsuleEvents(ctx context.Context, cmd *cobra.Command, args []stri
 		resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
 			Msg: &capsule.ListRolloutsRequest{
 				CapsuleId:     capsule_cmd.CapsuleID,
-				ProjectId:     flags.GetProject(c.Cfg),
-				EnvironmentId: flags.GetEnvironment(c.Cfg),
+				ProjectId:     flags.GetProject(c.Scope),
+				EnvironmentId: flags.GetEnvironment(c.Scope),
 				Pagination: &model.Pagination{
 					Limit:      1,
 					Descending: true,
@@ -55,8 +55,8 @@ func (c *Cmd) capsuleEvents(ctx context.Context, cmd *cobra.Command, args []stri
 				Descending: true,
 			},
 			RolloutId:     rollout,
-			ProjectId:     flags.GetProject(c.Cfg),
-			EnvironmentId: flags.GetEnvironment(c.Cfg),
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
 		},
 	})
 	if err != nil {

@@ -12,22 +12,22 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/cobra"
 )
 
 type Service struct {
-	rig rig.Client
-	cfg *cmdconfig.Config
+	rig   rig.Client
+	scope scope.Scope
 }
 
-func NewService(rig rig.Client, cfg *cmdconfig.Config) *Service {
+func NewService(rig rig.Client, scope scope.Scope) *Service {
 	return &Service{
-		rig: rig,
-		cfg: cfg,
+		rig:   rig,
+		scope: scope,
 	}
 }
 
@@ -81,7 +81,7 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 		return true, nil
 	}
 
-	cmdContext := s.cfg.GetCurrentContext()
+	cmdContext := s.scope.GetCurrentContext()
 	str := fmt.Sprintf(
 		"There seems to be an issue with the authentication information stored in your current context '%s'",
 		cmdContext.Name,
@@ -98,8 +98,8 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 		return false, origErr
 	}
 
-	s.cfg.DeleteContext(cmdContext.Name)
-	if err := s.cfg.CreateContext(cmdContext.Name, cmdContext.GetService().Server, interactive); err != nil {
+	s.scope.GetCfg().DeleteContext(cmdContext.Name)
+	if err := s.scope.GetCfg().CreateContext(cmdContext.Name, cmdContext.GetService().Server, interactive); err != nil {
 		return false, err
 	}
 
@@ -107,7 +107,7 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 }
 
 func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
-	environmentID := flags.GetEnvironment(s.cfg)
+	environmentID := flags.GetEnvironment(s.scope)
 	if !interactive {
 		if environmentID == "" {
 			return errors.FailedPreconditionErrorf("no environment selected, use --environment or -E to select an environment")
@@ -130,8 +130,8 @@ func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
 		if err != nil {
 			return err
 		}
-		s.cfg.GetCurrentContext().EnvironmentID = environmentID
-		if err := s.cfg.Save(); err != nil {
+		s.scope.GetCurrentContext().EnvironmentID = environmentID
+		if err := s.scope.GetCfg().Save(); err != nil {
 			return err
 		}
 		fmt.Println("Changed environment successfully!")
@@ -165,8 +165,8 @@ func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
 		if err != nil {
 			return err
 		}
-		s.cfg.GetCurrentContext().EnvironmentID = environmentID
-		if err := s.cfg.Save(); err != nil {
+		s.scope.GetCurrentContext().EnvironmentID = environmentID
+		if err := s.scope.GetCfg().Save(); err != nil {
 			return err
 		}
 		fmt.Println("Changed environment successfully!")
@@ -176,7 +176,7 @@ func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
 }
 
 func (s *Service) authUser(ctx context.Context, interactive bool) error {
-	user := s.cfg.GetCurrentAuth().UserID
+	user := s.scope.GetCurrentContext().GetAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil
 	}
@@ -195,7 +195,7 @@ func (s *Service) authUser(ctx context.Context, interactive bool) error {
 }
 
 func (s *Service) authProject(ctx context.Context, interactive bool) error {
-	projectID := flags.GetProject(s.cfg)
+	projectID := flags.GetProject(s.scope)
 	if !interactive {
 		if projectID == "" {
 			return errors.FailedPreconditionErrorf("no project selected, use --project/-P or RIG_PROJECT= to select a project")
@@ -222,7 +222,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 			return err
 		}
 
-		projectID = flags.GetProject(s.cfg)
+		projectID = flags.GetProject(s.scope)
 
 		res, err = s.rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 		if err != nil {
@@ -242,7 +242,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 		if err := s.useProject(ctx); err != nil {
 			return err
 		}
-		projectID = flags.GetProject(s.cfg)
+		projectID = flags.GetProject(s.scope)
 	}
 
 	found := false
@@ -312,8 +312,8 @@ func (s *Service) CreateProject(ctx context.Context, name string, useNewProject 
 	}
 
 	if *useNewProject {
-		s.cfg.GetCurrentContext().ProjectID = p.GetProjectId()
-		if err := s.cfg.Save(); err != nil {
+		s.scope.GetCurrentContext().ProjectID = p.GetProjectId()
+		if err := s.scope.GetCfg().Save(); err != nil {
 			return err
 		}
 
@@ -368,10 +368,10 @@ func (s *Service) login(ctx context.Context) error {
 		return err
 	}
 
-	s.cfg.GetCurrentAuth().UserID = uid.String()
-	s.cfg.GetCurrentAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
-	s.cfg.GetCurrentAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
-	if err := s.cfg.Save(); err != nil {
+	s.scope.GetCurrentContext().GetAuth().UserID = uid.String()
+	s.scope.GetCurrentContext().GetAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
+	s.scope.GetCurrentContext().GetAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
+	if err := s.scope.GetCfg().Save(); err != nil {
 		return err
 	}
 
@@ -399,8 +399,8 @@ func (s *Service) useProject(ctx context.Context) error {
 
 	projectID = listRes.Msg.GetProjects()[i].GetProjectId()
 
-	s.cfg.GetCurrentContext().ProjectID = projectID
-	if err := s.cfg.Save(); err != nil {
+	s.scope.GetCurrentContext().ProjectID = projectID
+	if err := s.scope.GetCfg().Save(); err != nil {
 		return err
 	}
 

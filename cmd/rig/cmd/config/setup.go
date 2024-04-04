@@ -11,9 +11,9 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -21,10 +21,9 @@ import (
 type Cmd struct {
 	fx.In
 
-	Rig         rig.Client
-	Cfg         *cmdconfig.Config
-	PromptInfo  *cli.PromptInformation
-	Interactive cli.Interactive
+	Rig        rig.Client
+	PromptInfo *cli.PromptInformation
+	Scope      scope.Scope
 }
 
 var minify bool
@@ -39,7 +38,7 @@ var cmd Cmd
 
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
-	cmd.Cfg = c.Cfg
+	cmd.Scope = c.Scope
 	cmd.PromptInfo = c.PromptInfo
 }
 
@@ -184,10 +183,10 @@ func (c *Cmd) completions(cmd *cobra.Command, args []string, toComplete string) 
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	for _, ctx := range c.Cfg.Contexts {
+	for _, ctx := range c.Scope.GetCfg().Contexts {
 		if strings.HasPrefix(ctx.Name, toComplete) {
 			var isCurrent string
-			if ctx.Name == c.Cfg.CurrentContextName {
+			if ctx.Name == c.Scope.GetCfg().CurrentContextName {
 				isCurrent = "*"
 			}
 			names = append(names, ctx.Name+isCurrent)
@@ -213,7 +212,7 @@ func (c *Cmd) useProjectCompletion(
 
 	var projectIDs []string
 
-	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
+	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
@@ -258,7 +257,7 @@ func (c *Cmd) useEnvironmentCompletion(
 
 	var environmentIDs []string
 
-	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
+	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

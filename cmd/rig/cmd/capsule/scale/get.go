@@ -13,14 +13,14 @@ import (
 )
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	rollout, err := capsule.GetCurrentRollout(ctx, c.Rig, c.Cfg)
+	rollout, err := capsule.GetCurrentRollout(ctx, c.Rig, c.Scope)
 	if errors.IsNotFound(err) {
 		cmd.Println("No scale is set")
 		return nil
 	} else if err != nil {
 		return err
 	}
-	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, c.Rig, c.Cfg)
+	containerSettings, replicas, err := capsule.GetCurrentContainerResources(ctx, c.Rig, c.Scope)
 	if err != nil {
 		return err
 	}

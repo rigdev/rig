@@ -35,7 +35,7 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 	if len(args) > 0 {
 		projectID = args[0]
 	} else {
-		projectID = flags.GetProject(c.Cfg)
+		projectID = flags.GetProject(c.Scope)
 	}
 	fmt.Println("projectID: ", projectID)
 

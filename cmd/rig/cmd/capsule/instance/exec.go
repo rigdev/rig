@@ -75,8 +75,8 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 				Interactive: interactive,
 			},
 		},
-		ProjectId:     flags.GetProject(c.Cfg),
-		EnvironmentId: flags.GetEnvironment(c.Cfg),
+		ProjectId:     flags.GetProject(c.Scope),
+		EnvironmentId: flags.GetEnvironment(c.Scope),
 	}
 
 	stream := c.Rig.Capsule().Execute(ctx)

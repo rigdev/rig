@@ -220,7 +220,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	res, err := c.Rig.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
 		Msg: &capsule.CreateRequest{
 			Name:      capsule_cmd.CapsuleID,
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		},
 	})
 	if err != nil {
@@ -233,7 +233,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		res, err := c.Rig.Image().Add(ctx, connect.NewRequest(&image.AddRequest{
 			CapsuleId: capsuleID,
 			Image:     imageID,
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		}))
 		if err != nil {
 			return err
@@ -258,8 +258,8 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		Msg: &capsule.DeployRequest{
 			CapsuleId:     capsuleID,
 			Changes:       init,
-			ProjectId:     flags.GetProject(c.Cfg),
-			EnvironmentId: flags.GetEnvironment(c.Cfg),
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
 		},
 	}
 

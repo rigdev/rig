@@ -17,7 +17,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 	if len(args) > 0 || current {
 		var projectID string
 		if current {
-			projectID = flags.GetProject(c.Cfg)
+			projectID = flags.GetProject(c.Scope)
 		} else {
 			projectID = args[0]
 		}

@@ -25,8 +25,8 @@ func (c *Cmd) useProject(ctx context.Context, cmd *cobra.Command, args []string)
 		}
 	}
 
-	c.Cfg.GetCurrentContext().ProjectID = projectID
-	if err := c.Cfg.Save(); err != nil {
+	c.Scope.GetCurrentContext().ProjectID = projectID
+	if err := c.Scope.GetCfg().Save(); err != nil {
 		return err
 	}
 

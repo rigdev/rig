@@ -173,7 +173,7 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 		Image:          imageRef.Image,
 		Digest:         digest,
 		SkipImageCheck: skipImageCheck,
-		ProjectId:      flags.GetProject(c.Cfg),
+		ProjectId:      flags.GetProject(c.Scope),
 	}),
 	)
 	if err != nil {

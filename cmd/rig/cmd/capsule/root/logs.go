@@ -22,8 +22,8 @@ func (c *Cmd) logs(ctx context.Context, _ *cobra.Command, _ []string) error {
 		CapsuleId:          capsule_cmd.CapsuleID,
 		Follow:             follow,
 		Since:              durationpb.New(duration),
-		ProjectId:          flags.GetProject(c.Cfg),
-		EnvironmentId:      flags.GetEnvironment(c.Cfg),
+		ProjectId:          flags.GetProject(c.Scope),
+		EnvironmentId:      flags.GetEnvironment(c.Scope),
 		PreviousContainers: previousContainers,
 	}))
 	if err != nil {

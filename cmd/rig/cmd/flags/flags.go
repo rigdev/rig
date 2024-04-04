@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/pkg/cli/scope"
 )
 
 //nolint:revive
@@ -15,6 +15,7 @@ type FlagsStruct struct {
 	Project        string
 	BasicAuth      bool
 	Host           string
+	Context        string
 }
 
 var Flags = FlagsStruct{
@@ -24,18 +25,19 @@ var Flags = FlagsStruct{
 	Project:        os.Getenv("RIG_PROJECT"),
 	BasicAuth:      false,
 	Host:           os.Getenv("RIG_HOST"),
+	Context:        "",
 }
 
-func GetEnvironment(cfg *cmdconfig.Config) string {
+func GetEnvironment(scope scope.Scope) string {
 	if Flags.Environment != "" {
 		return Flags.Environment
 	}
-	return cfg.GetEnvironment()
+	return scope.GetCurrentContext().EnvironmentID
 }
 
-func GetProject(cfg *cmdconfig.Config) string {
+func GetProject(scope scope.Scope) string {
 	if Flags.Project != "" {
 		return Flags.Project
 	}
-	return cfg.GetProject()
+	return scope.GetCurrentContext().ProjectID
 }

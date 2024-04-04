@@ -24,7 +24,7 @@ func (c *Cmd) getImage(ctx context.Context, cmd *cobra.Command, _ []string) erro
 				Limit:      uint32(limit),
 				Descending: true,
 			},
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		}),
 	)
 	if err != nil {

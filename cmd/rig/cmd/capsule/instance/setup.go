@@ -11,10 +11,10 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -39,15 +39,15 @@ var since string
 type Cmd struct {
 	fx.In
 
-	Rig rig.Client
-	Cfg *cmdconfig.Config
+	Rig   rig.Client
+	Scope scope.Scope
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
-	cmd.Cfg = c.Cfg
+	cmd.Scope = c.Scope
 }
 
 func Setup(parent *cobra.Command) {
@@ -144,8 +144,8 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 	res, err := c.Rig.Capsule().ListInstanceStatuses(ctx, &connect.Request[capsule.ListInstanceStatusesRequest]{
 		Msg: &capsule.ListInstanceStatusesRequest{
 			CapsuleId:     capsuleID,
-			ProjectId:     flags.GetProject(c.Cfg),
-			EnvironmentId: flags.GetEnvironment(c.Cfg),
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
 		},
 	})
 	if err != nil {
@@ -186,15 +186,15 @@ func (c *Cmd) completions(
 
 	var instanceIds []string
 
-	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
+	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
 	resp, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
-			ProjectId:     flags.GetProject(c.Cfg),
-			EnvironmentId: flags.GetEnvironment(c.Cfg),
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
 		},
 	})
 	if err != nil {

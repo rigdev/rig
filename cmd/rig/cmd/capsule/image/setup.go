@@ -12,10 +12,10 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -38,7 +38,7 @@ type Cmd struct {
 	fx.In
 
 	Rig          rig.Client
-	Cfg          *cmdconfig.Config
+	Scope        scope.Scope
 	DockerClient *client.Client
 }
 
@@ -46,7 +46,7 @@ var cmd Cmd
 
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
-	cmd.Cfg = c.Cfg
+	cmd.Scope = c.Scope
 	cmd.DockerClient = c.DockerClient
 }
 
@@ -134,14 +134,14 @@ func (c *Cmd) completions(
 
 	var imageIDs []string
 
-	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
+	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
 	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(
 		&image.ListRequest{
 			CapsuleId: capsule.CapsuleID,
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		}),
 	)
 	if err != nil {

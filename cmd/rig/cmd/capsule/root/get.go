@@ -22,7 +22,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 				Offset: uint32(offset),
 				Limit:  uint32(limit),
 			},
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		},
 	})
 	if err != nil {
@@ -52,7 +52,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 
 	var outputs []output
 	for _, cc := range capsules {
-		r, err := capsule_cmd.GetCurrentRolloutOfCapsule(ctx, c.Rig, c.Cfg, cc.GetCapsuleId())
+		r, err := capsule_cmd.GetCurrentRolloutOfCapsule(ctx, c.Rig, c.Scope, cc.GetCapsuleId())
 		if errors.IsNotFound(err) {
 			// OK, default values.
 			r = &capsule.Rollout{}

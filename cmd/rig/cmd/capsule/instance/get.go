@@ -24,8 +24,8 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 			Limit:      uint32(limit),
 			Descending: true,
 		},
-		ProjectId:       flags.GetProject(c.Cfg),
-		EnvironmentId:   flags.GetEnvironment(c.Cfg),
+		ProjectId:       flags.GetProject(c.Scope),
+		EnvironmentId:   flags.GetEnvironment(c.Scope),
 		ExcludeExisting: excludeExisting,
 		IncludeDeleted:  includeDeleted,
 	}))

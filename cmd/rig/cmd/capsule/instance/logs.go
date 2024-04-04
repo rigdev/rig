@@ -34,8 +34,8 @@ func (c *Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error
 			InstanceId:         instanceID,
 			Follow:             follow,
 			Since:              durationpb.New(duration),
-			ProjectId:          flags.GetProject(c.Cfg),
-			EnvironmentId:      flags.GetEnvironment(c.Cfg),
+			ProjectId:          flags.GetProject(c.Scope),
+			EnvironmentId:      flags.GetEnvironment(c.Scope),
 			PreviousContainers: previousContainers,
 		},
 	})
