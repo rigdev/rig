@@ -431,6 +431,12 @@ const sidebars = {
               label: "Sidecar",
               className: "homepage-sidebar-item",
             },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/builtin/ingress_routes",
+              label: "Ingress Routes",
+              className: "homepage-sidebar-item",
+            },
           ],
         },
       ],
