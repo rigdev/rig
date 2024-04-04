@@ -391,6 +391,7 @@ func NewRoutesStep(cfg *configv1alpha1.OperatorConfig,
 	logger logr.Logger,
 ) (pipeline.Step[pipeline.CapsuleRequest], error) {
 	routesStep, err := pluginManager.NewStep(configv1alpha1.Step{
+		EnableForPlatform: true,
 		Plugins: []configv1alpha1.Plugin{
 			{
 				Name:   cfg.Pipeline.RoutesStep.Plugin,
