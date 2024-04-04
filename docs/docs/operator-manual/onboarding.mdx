@@ -12,7 +12,7 @@ The tool works by scanning your targeted cluster for running deployments and fin
 
 The command uses a mix of the Rig Platform and the in-cluster running Rig Operator to compute *dry run* versions of a Capsule, that in
 turn is compared to the running resources. Using this feedback, it's trivial to adjust the `migrate` parameters and cluster configuration
-to allow a seamless migration.
+to allow a seamless onboarding.
 
 :::info Download `rig-ops` CLI
 Go to [rig-ops](/operator-manual/cli) for instructions on how to install the `rig-ops` CLI, that contains the `migrate` command.
@@ -20,8 +20,7 @@ Go to [rig-ops](/operator-manual/cli) for instructions on how to install the `ri
 
 ## Selecting a deployment
 
-First step is to select a deployment to migrate. When running `rig-ops migrate` without any arguments, the tool will help connect to both
-the Rig Platform and the Cluster, returning the list of deployments that can be migrated:
+First step is to select a deployment to onboard. When running `rig-ops migrate` without any arguments, the tool will query the Cluster and show the list of deployments that can be onboarded:
 
 <ThemedImage
   alt="Select Deployment"
@@ -79,7 +78,7 @@ the new configuration.
   }}
 />
 
-When a Capsule migrate is applied, the resources in the Kubernetes cluster are automatically overridden by Operator. That means that
+When a Capsule migration is applied, the resources in the Kubernetes cluster are automatically overridden by Operator. That means that
 objects that was previously managed by e.g. Helm resources, will now be managed by the Operator instead. Due to how Ownership References
 are handled in Kubernetes, this also means Helm will abort if used instead and thus ensuring the two systems won't compete against each
 other.
@@ -106,7 +105,7 @@ A good example is the following flow:
     ```bash
     kubectl get deployment,service,horizontalpodautoscaler.autoscaling,ingress,cronjob.batch -A -o yaml > objects.yaml
     ```
-2. With a non-production cluster (e.g. KinD running on the local machine), run the migration against the production objects:
+2. With a non-production cluster (e.g. KinD running on the local machine), run the onboarding against the production objects:
     ```bash
     rig-ops migrate -f objects.yaml
     ```
