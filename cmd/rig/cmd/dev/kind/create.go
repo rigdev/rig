@@ -96,6 +96,9 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if vpa {
 		operatorArgs = append(operatorArgs, "--set", "config.verticalPodAutoscaler.enabled=true")
 	}
+	if operatorValues != "" {
+		operatorArgs = append(operatorArgs, "--values", operatorValues)
+	}
 	if err := c.deployInner(ctx, deployParams{
 		dockerImage: "ghcr.io/rigdev/rig-operator",
 		dockerTag:   operatorDockerTag,
@@ -109,20 +112,25 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if platformDockerTag == "" {
 		platformDockerTag = "latest"
 	}
+	platformArgs := []string{
+		"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
+		"--set", "rig.clusters.kind.type=k8s",
+		"--set", "rig.clusters.kind.devRegistry.host=localhost:30000",
+		"--set", "rig.clusters.kind.devRegistry.clusterHost=registry:5000",
+		"--set", "rig.environments.kind.cluster=kind",
+		"--set", "postgres.enabled=true",
+		"--set", "loadBalancer.enabled=true",
+	}
+	if platformValues != "" {
+		platformArgs = append(platformArgs, "--values", platformValues)
+	}
+
 	if err := c.deployInner(ctx, deployParams{
 		dockerImage: "ghcr.io/rigdev/rig-platform",
 		dockerTag:   platformDockerTag,
 		chartName:   "rig-platform",
 		chartPath:   platformChartPath,
-		customArgs: []string{
-			"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
-			"--set", "rig.clusters.kind.type=k8s",
-			"--set", "rig.clusters.kind.devRegistry.host=localhost:30000",
-			"--set", "rig.clusters.kind.devRegistry.clusterHost=registry:5000",
-			"--set", "rig.environments.kind.cluster=kind",
-			"--set", "postgres.enabled=true",
-			"--set", "loadBalancer.enabled=true",
-		},
+		customArgs:  platformArgs,
 		// Restart to pick up new changes.
 		restart: true,
 	}); err != nil {
