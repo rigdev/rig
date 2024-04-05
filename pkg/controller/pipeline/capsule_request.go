@@ -204,11 +204,12 @@ func (r *capsuleRequest) Prepare() {
 func (r *capsuleRequest) UpdateStatusWithChanges(
 	ctx context.Context,
 	changes map[ObjectKey]*Change,
+	generation int64,
 ) error {
 	capsuleCopy := r.capsule.DeepCopy()
 
 	status := &v1alpha2.CapsuleStatus{
-		ObservedGeneration: r.observedGeneration,
+		ObservedGeneration: generation,
 	}
 
 	for _, key := range sortedKeys(maps.Keys(changes)) {
@@ -242,6 +243,7 @@ func (r *capsuleRequest) UpdateStatusWithChanges(
 		return err
 	}
 
+	r.observedGeneration = generation
 	r.capsule.Status = status
 	r.capsule.SetResourceVersion(r.capsule.GetResourceVersion())
 

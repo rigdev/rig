@@ -65,6 +65,7 @@ const (
 	AnnotationChecksumSharedEnv = "rig.dev/config-checksum-shared-env"
 
 	AnnotationOverrideOwnership = "rig.dev/override-ownership"
+	AnnotationPullSecret        = "rig.dev/pull-secret"
 
 	LabelSharedConfig = "rig.dev/shared-config"
 	LabelCapsule      = "rig.dev/capsule"

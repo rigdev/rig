@@ -165,7 +165,10 @@ func EnvSources(refs []v1alpha2.EnvReference) []v1.EnvFromSource {
 }
 
 func (s *DeploymentStep) createDeployment(
-	current *appsv1.Deployment, req pipeline.CapsuleRequest, cfgs *configs, checksums checksums,
+	current *appsv1.Deployment,
+	req pipeline.CapsuleRequest,
+	cfgs *configs,
+	checksums checksums,
 ) (*appsv1.Deployment, error) {
 	volumes, volumeMounts := FilesToVolumes(req.Capsule().Spec.Files)
 
@@ -274,6 +277,12 @@ func (s *DeploymentStep) createDeployment(
 				},
 			},
 		},
+	}
+
+	if cfgs.imagePullSecret != "" {
+		d.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{{
+			Name: cfgs.imagePullSecret,
+		}}
 	}
 
 	return d, nil
@@ -532,6 +541,13 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 		}
 	}
 
+	if secret := req.Capsule().Annotations[AnnotationPullSecret]; secret != "" {
+		configs.imagePullSecret = secret
+		if err := s.setUsedSource(ctx, req, configs, "Secret", secret, true); err != nil {
+			return nil, err
+		}
+	}
+
 	return configs, nil
 }
 
@@ -751,6 +767,7 @@ type configs struct {
 	secrets             map[string]*v1.Secret
 	sharedEnvConfigMaps []string
 	sharedEnvSecrets    []string
+	imagePullSecret     string
 }
 
 func (c *configs) hasSharedConfig() bool {

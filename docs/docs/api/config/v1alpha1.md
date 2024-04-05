@@ -145,6 +145,7 @@ _Appears in:_
 | `type` _[ClusterType](#clustertype)_ | Type of the cluster - either `docker` or `k8s`. |
 | `devRegistry` _[DevRegistry](#devregistry)_ | DevRegistry configuration |
 | `git` _[ClusterGit](#clustergit)_ | Git sets up gitops write back for this cluster. |
+| `createPullSecrets` _boolean_ | If set, secrets will be created if needed, for pulling images. |
 
 
 ### ClusterGit
