@@ -10,8 +10,10 @@ import (
 var (
 	platformDockerTag string
 	platformChartPath string
+	platformValues    string
 	operatorDockerTag string
 	operatorChartPath string
+	operatorValues    string
 	prometheus        bool
 	vpa               bool
 	installationID    string
@@ -58,6 +60,10 @@ func Setup(parent *cobra.Command) {
 		&platformChartPath,
 		"platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.",
 	)
+	create.Flags().StringVar(
+		&platformValues,
+		"platform-values", "", "If set, a custom values file for when installing the rig-platform chart.",
+	)
 	create.Flags().StringVarP(
 		&operatorDockerTag,
 		"operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.",
@@ -65,6 +71,10 @@ func Setup(parent *cobra.Command) {
 	create.Flags().StringVar(
 		&operatorChartPath,
 		"operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.",
+	)
+	create.Flags().StringVar(
+		&operatorValues,
+		"operator-values", "", "If set, a custom values file for when installing the rig-operator chart.",
 	)
 	create.Flags().BoolVar(
 		&prometheus,
@@ -95,6 +105,10 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 		&platformChartPath,
 		"platform-chart-path", "", "If set, uses the helm chart at platform-chart-path to build rig-platform.",
 	)
+	deploy.Flags().StringVar(
+		&platformValues,
+		"platform-values", "", "If set, a custom values file for when installing the rig-platform chart.",
+	)
 	deploy.Flags().StringVarP(
 		&operatorDockerTag,
 		"operator-docker-tag", "r", "", "The rig-operator docker image tag. Defaults to latest.",
@@ -102,6 +116,10 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 	deploy.Flags().StringVar(
 		&operatorChartPath,
 		"operator-chart-path", "", "If set, uses the helm chart at operator-chart-path to build rig-operator.",
+	)
+	deploy.Flags().StringVar(
+		&operatorValues,
+		"operator-values", "", "If set, a custom values file for when installing the rig-operator chart.",
 	)
 	deploy.Flags().BoolVar(
 		&prometheus,
