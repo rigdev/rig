@@ -52,27 +52,6 @@ app.kubernetes.io/component: rig
 {{- end }}
 
 {{/*
-Mongodb Common labels
-*/}}
-{{- define "rig-platform.mongodb.labels" -}}
-helm.sh/chart: {{ include "rig-platform.chart" . }}
-{{ include "rig-platform.mongodb.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Mongodb Selector labels
-*/}}
-{{- define "rig-platform.mongodb.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "rig-platform.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/component: mongodb
-{{- end }}
-
-{{/*
 Postgres Common labels
 */}}
 {{- define "rig-platform.postgres.labels" -}}

@@ -43,7 +43,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `postgres` _[ClientPostgres](#clientpostgres)_ | Postgres holds configuration for the postgres client. |
-| `mongo` _[ClientMongo](#clientmongo)_ | Mongo holds configuration for the Mongo client. |
 | `docker` _[ClientDocker](#clientdocker)_ | Docker sets the host for the Docker client. |
 | `mailjet` _[ClientMailjet](#clientmailjet)_ | Mailjet sets the API key and secret for the Mailjet client. |
 | `smtp` _[ClientSMTP](#clientsmtp)_ | SMTP sets the host, port, username and password for the SMTP client. |
@@ -77,22 +76,6 @@ _Appears in:_
 | --- | --- |
 | `apiKey` _string_ | APIKey is the mailjet API key |
 | `secretKey` _string_ | SecretKey is the mailjet secret key |
-
-
-### ClientMongo
-
-
-
-ClientMongo specifies the configuration for the mongo client.
-
-_Appears in:_
-- [Client](#client)
-
-| Field | Description |
-| --- | --- |
-| `user` _string_ | User is the database user used when connecting to the mongodb server. |
-| `password` _string_ | Password is used when connecting to the mongodb server. |
-| `host` _string_ | Host of the mongo server. This is both the host and port. |
 
 
 ### ClientOperator
@@ -494,7 +477,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `store` _string_ | Store is what database will be used can be either postgres or mongodb. |
+| `store` _string_ | Store is what database will be used, can only be postgres. |
 | `secret` _string_ | Secret is a secret key used for encrypting sensitive data before saving it in the database. |
 
 

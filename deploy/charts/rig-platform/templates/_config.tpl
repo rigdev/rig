@@ -63,16 +63,7 @@ client:
     insecure: {{ .client.postgres.insecure }}
     {{- end }}
     user: {{ .client.postgres.user | quote }}
-  {{- end }}
-
-  {{- if or .client.mongo.host $.Values.mongodb.enabled }}
-  mongo:
-    {{- if $.Values.mongodb.enabled }}
-    host: "{{ include "rig-platform.fullname" $ }}-mongodb:27017"
-    {{- else }}
-    host: {{ .client.mongo.host | quote }}
-    {{- end }}
-    user: {{ .client.mongo.user | quote }}
+    database: {{ .client.postgres.database | quote }}
   {{- end }}
 
   {{- if .client.mailjet.apiKey }}
@@ -136,10 +127,6 @@ client:
   {{- if .postgres.password }}
   postgres:
     password: {{ .postgres.password | quote }}
-  {{- end }}
-  {{- if .mongo.password }}
-  mongo:
-    password: {{ .mongo.password | quote }}
   {{- end }}
   {{- if .mailjet.secretKey }}
   mailjet:
