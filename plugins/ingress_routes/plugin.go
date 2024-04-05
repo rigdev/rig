@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
@@ -72,8 +71,10 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 		}
 
 		if shouldCreateCertificateResource(config) {
-			if err := req.Set(p.createCertificate(req, config)); err != nil {
-				return err
+			for _, crt := range p.createCertificate(req, config) {
+				if err := req.Set(crt); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -98,63 +99,69 @@ func capsuleHasIngress(req pipeline.CapsuleRequest) bool {
 	return false
 }
 
-func (p *Plugin) createCertificate(req pipeline.CapsuleRequest, cfg Config) *cmv1.Certificate {
-	crt := &cmv1.Certificate{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Certificate",
-			APIVersion: "cert-manager.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      req.Capsule().Name,
-			Namespace: req.Capsule().Namespace,
-		},
-		Spec: cmv1.CertificateSpec{
-			SecretName: fmt.Sprintf("%s-tls", req.Capsule().Name),
-		},
-	}
+func getRoutes(inf v1alpha2.CapsuleInterface) []v1alpha2.HostRoute {
+	routes := inf.Routes
+	if inf.Public != nil && inf.Public.Ingress != nil {
+		paths := []v1alpha2.HTTPPathRoute{}
+		for _, path := range inf.Public.Ingress.Paths {
+			paths = append(paths, v1alpha2.HTTPPathRoute{
+				Path:  path,
+				Match: v1alpha2.PathPrefix,
+			})
+		}
 
-	crt.Spec.IssuerRef = cmmetav1.ObjectReference{
-		Kind: cmv1.ClusterIssuerKind,
-		Name: cfg.ClusterIssuer,
+		routes = append(routes, v1alpha2.HostRoute{
+			ID:    "public",
+			Host:  inf.Public.Ingress.Host,
+			Paths: paths,
+		})
 	}
+	return routes
+}
+
+func getRouteName(req pipeline.CapsuleRequest, route v1alpha2.HostRoute) string {
+	return fmt.Sprintf("%s-%s", req.Capsule().Name, route.ID)
+}
+
+func (p *Plugin) createCertificate(req pipeline.CapsuleRequest, cfg Config) []*cmv1.Certificate {
+	var crts []*cmv1.Certificate
 
 	for _, inf := range req.Capsule().Spec.Interfaces {
-		if inf.Public != nil && inf.Public.Ingress != nil {
-			crt.Spec.DNSNames = append(crt.Spec.DNSNames, inf.Public.Ingress.Host)
-		}
+		for _, route := range getRoutes(inf) {
+			name := getRouteName(req, route)
 
-		for _, route := range inf.Routes {
-			if !slices.Contains(crt.Spec.DNSNames, route.Host) {
-				crt.Spec.DNSNames = append(crt.Spec.DNSNames, route.Host)
+			crt := &cmv1.Certificate{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Certificate",
+					APIVersion: "cert-manager.io/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: req.Capsule().Namespace,
+				},
+				Spec: cmv1.CertificateSpec{
+					SecretName: fmt.Sprintf("%s-tls", name),
+					IssuerRef: cmmetav1.ObjectReference{
+						Kind: cmv1.ClusterIssuerKind,
+						Name: cfg.ClusterIssuer,
+					},
+					DNSNames: []string{route.Host},
+				},
 			}
+
+			crts = append(crts, crt)
 		}
 	}
 
-	return crt
+	return crts
 }
 
 func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*netv1.Ingress {
 	var ingresses []*netv1.Ingress
 	for _, inf := range req.Capsule().Spec.Interfaces {
-		routes := inf.Routes
-		if inf.Public != nil && inf.Public.Ingress != nil {
-			paths := []v1alpha2.HTTPPathRoute{}
-			for _, path := range inf.Public.Ingress.Paths {
-				paths = append(paths, v1alpha2.HTTPPathRoute{
-					Path:  path,
-					Match: v1alpha2.PathPrefix,
-				})
-			}
-
-			routes = append(routes, v1alpha2.HostRoute{
-				ID:    "public",
-				Host:  inf.Public.Ingress.Host,
-				Paths: paths,
-			})
-		}
-
-		for _, route := range routes {
-			ing := createBasicIngress(req, cfg, fmt.Sprintf("%s-%s", req.Capsule().Name, route.ID))
+		for _, route := range getRoutes(inf) {
+			name := getRouteName(req, route)
+			ing := createBasicIngress(req, cfg, name)
 			rule := netv1.IngressRule{
 				Host: route.Host,
 				IngressRuleValue: netv1.IngressRuleValue{
@@ -212,7 +219,7 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 			if !cfg.DisableTLS && route.Host != "" {
 				if len(ing.Spec.TLS) == 0 {
 					ing.Spec.TLS = []netv1.IngressTLS{{
-						SecretName: fmt.Sprintf("%s-tls", req.Capsule().Name),
+						SecretName: fmt.Sprintf("%s-tls", name),
 					}}
 				}
 				ing.Spec.TLS[0].Hosts = append(ing.Spec.TLS[0].Hosts, route.Host)

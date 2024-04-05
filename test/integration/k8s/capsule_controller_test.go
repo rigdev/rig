@@ -482,20 +482,20 @@ func (s *K8sTestSuite) testIngress(ctx context.Context) {
 				}},
 				TLS: []netv1.IngressTLS{{
 					Hosts:      []string{"test.com"},
-					SecretName: "test-tls",
+					SecretName: "test-public-tls",
 				}},
 			},
 		},
 		&cmv1.Certificate{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      nsName.Name,
+				Name:      fmt.Sprintf("%s-public", nsName.Name),
 				Namespace: nsName.Namespace,
 				OwnerReferences: []metav1.OwnerReference{
 					capsuleOwnerRef,
 				},
 			},
 			Spec: cmv1.CertificateSpec{
-				SecretName: "test-tls",
+				SecretName: "test-public-tls",
 				IssuerRef: cmmeta.ObjectReference{
 					Kind: cmv1.ClusterIssuerKind,
 					Name: "test",
@@ -558,7 +558,7 @@ func (s *K8sTestSuite) testIngress(ctx context.Context) {
 				}},
 				TLS: []netv1.IngressTLS{{
 					Hosts:      []string{"test.com"},
-					SecretName: "test-tls",
+					SecretName: "test-public-tls",
 				}},
 			},
 		},
@@ -680,7 +680,7 @@ func (s *K8sTestSuite) testIngressRoutes(ctx context.Context) {
 				}},
 				TLS: []netv1.IngressTLS{{
 					Hosts:      []string{"test1.com"},
-					SecretName: "test-tls",
+					SecretName: "test-test1-tls",
 				}},
 			},
 		},
