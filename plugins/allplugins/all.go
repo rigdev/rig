@@ -13,7 +13,7 @@ import (
 	"github.com/rigdev/rig/plugins/sidecar"
 )
 
-var Plugins = map[string]plugin.Server{
+var Plugins = map[string]plugin.Plugin{
 	annotations.Name:    &annotations.Plugin{},
 	datadog.Name:        &datadog.Plugin{},
 	envmapping.Name:     &envmapping.Plugin{},

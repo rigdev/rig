@@ -105,6 +105,7 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 		chartName:   "rig-operator",
 		chartPath:   operatorChartPath,
 		customArgs:  operatorArgs,
+		restart:     true,
 	}); err != nil {
 		return err
 	}

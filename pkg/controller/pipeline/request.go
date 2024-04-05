@@ -32,11 +32,10 @@ type Request interface {
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
 	Set(obj client.Object) error
 	// Delete records the given object to be deleted.
-	// The behaviour is such that that calling
-	// req.Delete(obj) and then req.GetNew(obj)
+	// The behaviour is such that that calling req.Delete(obj) and then req.GetNew(obj)
 	// returns a not-found error from GetNew.
 	// If an object of the given type and name is present in the cluster, calling req.GetExisting(obj) succeds
-	// as calls to Delete (or Set) will only be applied to the cluster at the very end.
+	// as calls to Delete (or Set) will only be applied to the cluster at the very end of the reconcilliation.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
 	Delete(obj client.Object) error
 }

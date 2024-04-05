@@ -435,6 +435,9 @@ const sidebars = {
           link: { type: "doc", id: "operator-manual/plugins/builtin" },
           className: "homepage-sidebar-item",
           collapsed: true,
+          customProps: {
+            sidebar_icon: "BiChip",
+          },
           items: [
             {
               type: "doc",
@@ -491,6 +494,15 @@ const sidebars = {
               className: "homepage-sidebar-item",
             },
           ],
+        },
+        {
+          type: "doc",
+          id: "operator-manual/plugins/thirdparty",
+          label: "Custom plugins",
+          className: "homepage-sidebar-item",
+          customProps: {
+            sidebar_icon: "BiPencil",
+          },
         },
       ],
     },

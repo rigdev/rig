@@ -34,6 +34,13 @@ func GetNew(group, kind, name string, req pipeline.CapsuleRequest) (client.Objec
 
 type ParseStep[T any] func(config T, req pipeline.CapsuleRequest) (string, any, error)
 
+// ParseCapsuleTemplatedConfig parses the given data as a Go template with
+// the capsule as a templating context under '.capsule'
+// It then JSON/YAML decodes the resulting bytes into an instance of T
+func ParseCapsuleTemplatedConfig[T any](data []byte, req pipeline.CapsuleRequest) (T, error) {
+	return ParseTemplatedConfig(data, req, CapsuleStep[T])
+}
+
 // Using this, we parse the config at every execution of the plugin.
 // If we get performance issues due to that we can try and optimize that.
 func ParseTemplatedConfig[T any](data []byte, req pipeline.CapsuleRequest, steps ...ParseStep[T]) (T, error) {

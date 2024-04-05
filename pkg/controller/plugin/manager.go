@@ -226,7 +226,7 @@ func (m *Manager) GetPlugins() []Info {
 
 func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error) {
 	var err error
-	var ps []Plugin
+	var ps []*pluginExecutor
 	defer func() {
 		if err != nil {
 			for _, p := range ps {
@@ -240,7 +240,7 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 		if !ok {
 			return nil, fmt.Errorf("plugin '%s' was unknown", plugin.Name)
 		}
-		p, err := NewExternalPlugin(
+		p, err := newPluginExecutor(
 			plugin.Name, step.Tag, plugin.Tag, plugin.Config, info.BinaryPath,
 			info.Args,
 			logger,

@@ -169,6 +169,10 @@ func (cfg *Config) DeleteContext(name string) bool {
 		}
 	}
 
+	if found && name == cfg.CurrentContextName {
+		cfg.CurrentContextName = ""
+	}
+
 	return found
 }
 
