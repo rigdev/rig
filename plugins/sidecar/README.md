@@ -9,11 +9,17 @@ The config can be templated with standard Go templating and has
 as its templating context.
 
 ## Example
-Config:
+Config (in context of the rig-operator Helm values):
 ```
-container:
-  name: my-sidecar
-  image: my-container-image:v1.1
+config:
+  pipeline:
+    steps:
+      - plugins:
+        - name: rigdev.sidecar
+          config: |
+            container:
+              name: my-sidecar
+              image: my-container-image:v1.1
 ```
 The resulting Deployment resource of the Capsule
 ```

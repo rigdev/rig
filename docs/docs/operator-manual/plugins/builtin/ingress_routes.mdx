@@ -6,13 +6,19 @@ The `rigdev.ingress_routes` plugin handles the routes by creating an Ingress res
 
 ## Example
 
-Config:
-
+Config (in context of the rig-operator Helm values):
 ```
-clusterIssuer: letsencrypt-prod
-createCertificateResources: true
-ingressClassName: nginx
-disableTLS: false
+config:
+  pipeline:
+    steps:
+      - plugins:
+        - name: rigdev.ingress_routes
+          config: |
+            clusterIssuer: letsencrypt-prod
+            createCertificateResources: true
+            ingressClassName: nginx
+            disableTLS: false
+
 ```
 
 ## Config
