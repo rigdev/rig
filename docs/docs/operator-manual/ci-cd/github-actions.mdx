@@ -6,6 +6,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import ThemedImage from '@theme/ThemedImage';
 import {RIG_VERSION} from "../../../src/constants/versions"
+import CodeBlock from '@theme/CodeBlock';
 
 # Github Actions
 
@@ -33,7 +34,7 @@ and
 For easy access to the Rig CLI in any GitHub Actions workflow, use our rig
 setup action `rigdev/setup-rig@v1`:
 
-<pre><code className="language-yaml">
+<CodeBlock language="yaml">
 {`jobs:
   deploy:
     steps:
@@ -53,7 +54,7 @@ setup action `rigdev/setup-rig@v1`:
       # CLI to send commands to the Rig API.
       - run: |
           rig deploy ...`}
-</code></pre>
+</CodeBlock>
 
 Now that you are able to run the `rig` CLI you can either checkout our general
 documentation about [using the CLI in CI/CD systems](../ci-cd#deploying-changes) or read through the below
@@ -71,7 +72,7 @@ In the workflow we will go through the following steps
 3. Deploy the image in to a capsule named the same as the repository in the rig
    project 'my-project' for the production environment.
 
-<pre><code className="language-yaml">
+<CodeBlock language="yaml">
 {`on: [push]
 
 jobs:
@@ -110,4 +111,4 @@ jobs:
             --project my-project \\
             --environment production \\
             --image \${{ env.IMAGE_NAME }}`}
-</code></pre>
+</CodeBlock>

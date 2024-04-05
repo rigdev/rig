@@ -2,6 +2,7 @@ import {
 RIG_PLATFORM_CHART_VERSION,
 RIG_OPERATOR_CHART_VERSION
 } from "../../src/constants/versions"
+import CodeBlock from '@theme/CodeBlock';
 
 # Setup guide
 
@@ -28,18 +29,22 @@ For a quick installation in an existing Kubernetes cluster, you can follow the
 steps here. For a more in-depth guide, see the next section.
 
 1. Install the Rig Operator:
-  <pre><code className="language-bash">{`helm upgrade --install rig-operator rig-operator \\
+<CodeBlock language="bash">
+  {`helm upgrade --install rig-operator rig-operator \\
     --repo https://charts.rig.dev \\
     --version ${RIG_OPERATOR_CHART_VERSION} \\
     --namespace rig-system \\
-    --create-namespace`}</code></pre>
+    --create-namespace`}
+</CodeBlock>
 2. Install the Rig Platform:
-  <pre><code className="language-bash">{`helm upgrade --install rig-platform rig-platform \\
+<CodeBlock language="bash">
+{`helm upgrade --install rig-platform rig-platform \\
     --repo https://charts.rig.dev \\
     --version ${RIG_PLATFORM_CHART_VERSION} \\
     --namespace rig-system \\
     --create-namespace \\
-    --set postgres.enabled=true`}</code></pre>
+    --set postgres.enabled=true`}
+</CodeBlock>
 3. Bootstrap your first user and project by running:
   ```bash
   kubectl exec -it -n rig-system deploy/rig-platform -- rig-admin init
@@ -58,6 +63,43 @@ cluster, for the Platform to use. This is *not* recommended for production envir
 Dashboard metrics require a metrics-server in the kubernetes cluster.
 While available in most kubernetes cluster, See here for instructions on how to install it, if missing: https://github.com/kubernetes-sigs/metrics-server
 :::
+
+## Install using Terraform
+
+It is easy to install Rig with Terraform as well using Helm. The basic Terraform configuration for that is 
+
+<CodeBlock language="hcl">
+{`provider "helm" {
+  kubernetes {
+    # Your kubernetes configuration
+  }
+}
+
+resource "helm_release" "rig_operator" {
+  name = "rig-operator"
+  repository = "https://charts.rig.dev"
+  chart = "rig-operator"
+  version    = "${RIG_OPERATOR_CHART_VERSION}"
+  namespace = "rig-system"
+  create_namespace = true
+}
+
+resource "helm_release" "rig_platform" {
+  name = "rig-platform"
+  repository = "https://charts.rig.dev"
+  chart = "rig-platform"
+  version    = "${RIG_PLATFORM_CHART_VERSION}"
+  namespace = "rig-system"
+  create_namespace = true
+  set { # Not recommended for production!
+    name = "postgres.enabled"
+    value = "true"
+  }
+  depends_on = [helm_release.rig_operator]
+}`}
+
+</CodeBlock>
+This contains just basic configuration for the rig-operator and rig-platform.
 
 ## Extended installation guides
 

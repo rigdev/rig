@@ -240,6 +240,7 @@ type Repository struct {
 type Cluster struct {
 	// URL to communicate to the cluster. If set, a Token and CertificateAuthority should
 	// be provided as well.
+	// If not set, the cluster is interpreted to be the cluster in which the platform runs.
 	URL string `json:"url,omitempty"`
 
 	// Token for communicating with the cluster. Available through a service-account's secret.

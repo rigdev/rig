@@ -215,21 +215,56 @@ const sidebars = {
       collapsed: true,
       items: [
         {
-          type: "doc",
-          id: "operator-manual/setup-guide/operator",
+          type: "category",
+          link: { type: "doc", id: "operator-manual/setup-guide/operator" },
           label: "Operator",
           className: "docpage-sidebar-item",
+          items: [
+            {
+              type: "doc",
+              label: "Plugins",
+              id: "operator-manual/setup-guide/plugins",
+              className: "homepage-sidebar-item",
+              customProps: {
+                sidebar_icon: "BiInjection",
+              },
+            },
+            {
+              type: "doc",
+              label: "Networking",
+              id: "operator-manual/setup-guide/networking",
+              className: "homepage-sidebar-item",
+              customProps: {
+                sidebar_icon: "BiNetworkChart",
+              },
+            },
+          ],
         },
         {
-          type: "doc",
-          id: "operator-manual/setup-guide/platform",
+          type: "category",
           label: "Platform",
+          link: { type: "doc", id: "operator-manual/setup-guide/platform" },
           className: "docpage-sidebar-item",
+          collapsed: true,
+          items: [
+            {
+              type: "doc",
+              id: "operator-manual/setup-guide/database",
+              label: "Database",
+              className: "docpage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/setup-guide/platform-network",
+              label: "Networking",
+              className: "docpage-sidebar-item",
+            },
+          ],
         },
         {
           type: "doc",
-          id: "operator-manual/database",
-          label: "Database",
+          label: "Multicluster",
+          id: "operator-manual/setup-guide/multicluster",
           className: "docpage-sidebar-item",
         },
         {
@@ -238,16 +273,16 @@ const sidebars = {
           label: "Single Sign-on",
           className: "docpage-sidebar-item",
         },
-        {
-          type: "doc",
-          id: "operator-manual/ingress",
-          label: "Ingress",
-          className: "docpage-sidebar-item",
-        },
+        // {
+        //   type: "doc",
+        //   id: "operator-manual/ingress",
+        //   label: "Ingress",
+        //   className: "docpage-sidebar-item",
+        // },
         {
           type: "doc",
           id: "operator-manual/configuration-secrets",
-          label: "Configuration Secrets",
+          label: "Configuration as Secrets",
           className: "docpage-sidebar-item",
         },
         {
@@ -378,13 +413,22 @@ const sidebars = {
     {
       type: "category",
       label: "Plugins",
-      link: { type: "doc", id: "operator-manual/plugins" },
+      link: { type: "doc", id: "operator-manual/plugins/plugins" },
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "BiInjection",
       },
       collapsed: true,
       items: [
+        // {
+        //   type: "doc",
+        //   label: "Writing third-party plugins",
+        //   id: "operator-manual/plugins/thirdparty",
+        //   className: "homepage-sidebar-item",
+        //   customProps: {
+        //     sidebar_icon: "BiPencil",
+        //   },
+        // },
         {
           type: "category",
           label: "Builtin",

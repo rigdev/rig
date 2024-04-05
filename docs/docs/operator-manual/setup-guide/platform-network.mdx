@@ -1,0 +1,9 @@
+# Networking
+
+You can configure the platform to spin up an Ingress resource so it can be reached from outside the cluster. This can be done through the `ingress` section of the [Helm values](https://github.com/rigdev/rig/blob/main/deploy/charts/rig-platform/values.yaml) of the platform.
+
+```yaml
+ingress:
+  enabled: true
+  host: rig.example.com
+````

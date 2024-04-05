@@ -3,6 +3,7 @@ pagination_prev: null
 ---
 
 import {RIG_VERSION} from "../../../src/constants/versions"
+import CodeBlock from '@theme/CodeBlock';
 
 # GitLab CI/CD Pipelines
 
@@ -26,7 +27,7 @@ CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/) documentation.
 The easiest way to use the Rig CLI in your GitLab jobs is by running your job
 in our CLI image. See the following for a simple example of a GitLab Pipeline.
 
-<pre><code className="language-yaml">
+<CodeBlock language="yaml">
 {`deploy:
   image: ghcr.io/rigdev/rig:` + RIG_VERSION + `
   script:
@@ -37,7 +38,7 @@ in our CLI image. See the following for a simple example of a GitLab Pipeline.
     # When the service account is activated you can go ahead and issue commands
     # on the CLI.
     - rig capsule deploy ...`}
-</code></pre>
+</CodeBlock>
 
 Now that you know how to run the `rig` CLI in GitLab. You can go ahead and
 checkout our documentation for how to effectively [use the CLI in CI Systems](../ci-cd#deploying-changes).
