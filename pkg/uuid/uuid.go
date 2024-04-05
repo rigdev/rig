@@ -37,10 +37,6 @@ func (u UUID) String() string {
 	return string(u)
 }
 
-// func (u UUID) Bytes() []byte {
-// 	return u[:]
-// }
-
 func (u UUID) MarshalBSONValue() (bsontype.Type, []byte, error) {
 	return bson.MarshalValue(u.String())
 }

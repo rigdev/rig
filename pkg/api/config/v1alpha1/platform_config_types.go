@@ -146,9 +146,6 @@ type Client struct {
 	// Postgres holds configuration for the postgres client.
 	Postgres ClientPostgres `json:"postgres,omitempty"`
 
-	// Mongo holds configuration for the Mongo client.
-	Mongo ClientMongo `json:"mongo,omitempty"`
-
 	// Docker sets the host for the Docker client.
 	Docker ClientDocker `json:"docker,omitempty"`
 
@@ -193,18 +190,6 @@ type ClientPostgres struct {
 	Insecure bool `json:"insecure,omitempty"`
 }
 
-// ClientMongo specifies the configuration for the mongo client.
-type ClientMongo struct {
-	// User is the database user used when connecting to the mongodb server.
-	User string `json:"user,omitempty"`
-
-	// Password is used when connecting to the mongodb server.
-	Password string `json:"password,omitempty"`
-
-	// Host of the mongo server. This is both the host and port.
-	Host string `json:"host,omitempty"`
-}
-
 // ClientDocker specifies the configuration for the docker client.
 type ClientDocker struct {
 	// Host where the docker daemon can be reached.
@@ -243,7 +228,7 @@ type ClientOperator struct {
 
 // Repository specifies repository configuration
 type Repository struct {
-	// Store is what database will be used can be either postgres or mongodb.
+	// Store is what database will be used, can only be postgres.
 	Store string `json:"store,omitempty"`
 
 	// Secret is a secret key used for encrypting sensitive data before saving
@@ -430,9 +415,6 @@ func NewDefaultPlatform() *PlatformConfig {
 				Port:     5432,
 				Database: "rig",
 				Insecure: false,
-			},
-			Mongo: ClientMongo{
-				Host: "",
 			},
 			Docker: ClientDocker{
 				Host: "",

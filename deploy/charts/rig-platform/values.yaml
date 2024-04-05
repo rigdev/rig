@@ -62,18 +62,6 @@ tolerations: []
 
 affinity: {}
 
-mongodb:
-  enabled: false
-  image:
-    repository: mongo
-    tag: 6.0.8
-    pullPolicy: IfNotPresent
-  resources: {}
-  storage:
-    className: ""
-    size: 10Gi
-  args:
-
 postgres:
   # enables development postgres instance. When this is set we will also setup
   # the required database connection configuration.
@@ -133,10 +121,6 @@ rig:
       user: postgres
       password: postgres
       database: rig
-    mongo:
-      host: ""
-      user: mongodb
-      password: mongodb
     mailjet:
       apiKey: ""
       secretKey: ""
