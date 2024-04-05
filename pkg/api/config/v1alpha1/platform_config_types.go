@@ -257,6 +257,9 @@ type Cluster struct {
 
 	// Git sets up gitops write back for this cluster.
 	Git ClusterGit `json:"git,omitempty"`
+
+	// If set, secrets will be created if needed, for pulling images.
+	CreatePullSecrets *bool `json:"createPullSecrets,omitempty"`
 }
 
 // Environment configuration of a single environment.

@@ -61,7 +61,7 @@ type RequestState struct {
 
 type RequestStrategies interface {
 	// Status updating strategies
-	UpdateStatusWithChanges(ctx context.Context, changes map[ObjectKey]*Change) error
+	UpdateStatusWithChanges(ctx context.Context, changes map[ObjectKey]*Change, generation int64) error
 	UpdateStatusWithError(ctx context.Context, err error) error
 
 	// Execution loop strategies
@@ -306,7 +306,7 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 		return changes, nil
 	}
 
-	if err := r.Strategies.UpdateStatusWithChanges(ctx, changes); err != nil {
+	if err := r.Strategies.UpdateStatusWithChanges(ctx, changes, r.observedGeneration); err != nil {
 		return nil, err
 	}
 
@@ -325,8 +325,7 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 		return nil, err
 	}
 
-	r.observedGeneration = r.requestObject.GetGeneration()
-	if err := r.Strategies.UpdateStatusWithChanges(ctx, changes); err != nil {
+	if err := r.Strategies.UpdateStatusWithChanges(ctx, changes, r.requestObject.GetGeneration()); err != nil {
 		return nil, err
 	}
 

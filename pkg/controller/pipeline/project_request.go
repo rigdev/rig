@@ -142,11 +142,12 @@ func (p *projectRequest) LoadExistingObjects(ctx context.Context) error {
 func (p *projectRequest) UpdateStatusWithChanges(
 	ctx context.Context,
 	changes map[ObjectKey]*Change,
+	generation int64,
 ) error {
 	projectCopy := p.project.DeepCopy()
 
 	status := &v1alpha2.ProjectStatus{
-		ObservedGeneration: p.observedGeneration,
+		ObservedGeneration: generation,
 	}
 
 	for _, key := range sortedKeys(maps.Keys(changes)) {
@@ -176,6 +177,8 @@ func (p *projectRequest) UpdateStatusWithChanges(
 	if err := p.client.Status().Update(ctx, projectCopy); err != nil {
 		return err
 	}
+
+	p.observedGeneration = generation
 	p.project.Status = status
 	p.project.SetResourceVersion(p.project.GetResourceVersion())
 
