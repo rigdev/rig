@@ -9,14 +9,20 @@ The config can be templated with standard Go templating and has
 as its templating context.
 
 ## Example
-Config:
+Config (in context of the rig-operator Helm values):
 ```
-libraryTag:
-  java: v1.31.0
-unifiedServiceTags:
-  env: my-env
-  service: my-service
-  versin: my-version
+config:
+  pipeline:
+    steps:
+      - plugins:
+        - name: rigdev.datadog
+          config: |
+            libraryTag:
+              java: v1.31.0
+            unifiedServiceTags:
+              env: my-env
+              service: my-service
+              versin: my-version
 ```
 
 The resulting `Deployment` resource of the Capsule

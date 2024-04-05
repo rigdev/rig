@@ -10,14 +10,20 @@ The config can be templated with standard Go templating and has
 as its templating context where `.current` refers to the current version of the object being modified.
 
 ## Example
-Config:
+Config (in context of the rig-operator Helm values):
 ```
-object: | 
-  spec:
-   externalName: some-name 
-group: core
-kind: Service
-name: {{ .capsule.metadata.name }}
+config:
+  pipeline:
+    steps:
+      - plugins:
+        - name: rigdev.object_template
+          config: |
+            object: | 
+              spec:
+               externalName: some-name 
+            group: core
+            kind: Service
+            name: {{ .capsule.metadata.name }}
 ```
 The resulting Service resource of the Capsule, if the Capsule is named `my-capsule`
 ```

@@ -10,23 +10,29 @@ The config can be templated with standard Go templating and has
 as its templating context.
 
 ## Example
-Config:
+Config (in context of the rig-operator Helm values):
 ```
-tag: 2.9  
-args
-  - arg1
-  - arg2
-envFromSource:
-  - kind: ConfigMap
-    name: my-configmap
-envVars:
-  name: MY_ENV_VAR
-  value: some-value
-resources:
-  cpu: 0.1
-  memory: 128M
-instanceConnectionNames:
-  - instance-name
+config:
+  pipeline:
+    steps:
+      - plugins:
+        - name: rigdev.google_cloud_sql_auth_proxy
+          config: |
+            tag: 2.9  
+            args
+              - arg1
+              - arg2
+            envFromSource:
+              - kind: ConfigMap
+                name: my-configmap
+            envVars:
+              name: MY_ENV_VAR
+              value: some-value
+            resources:
+              cpu: 0.1
+              memory: 128M
+            instanceConnectionNames:
+              - instance-name
 ```
 Resulting Deployment
 ```

@@ -10,14 +10,20 @@ The config can be templated with standard Go templating and has
 as its templating context.
 
 ## Example
-Config:
+Config (in context of the rig-operator Helm values):
 ```
-annotations:
-  key1: value1
-labels:
-  key2: value2
-group: apps
-kind: Deployment
+config:
+  pipeline:
+    steps:
+      - plugins:
+        - name: rigdev.annotations
+          config: |
+            annotations:
+              key1: value1
+            labels:
+              key2: value2
+            group: apps
+            kind: Deployment
 ```
 
 If the name of the capsule in the request context is `my-capsule` with corresponding `Deployment`
