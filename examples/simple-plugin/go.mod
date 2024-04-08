@@ -7,7 +7,7 @@ toolchain go1.22.0
 require (
 	github.com/go-logr/logr v1.4.1
 	github.com/hashicorp/go-hclog v1.6.2
-	github.com/rigdev/rig v1.8.7-0.20240405190143-254e713eedca
+	github.com/rigdev/rig v1.8.7-0.20240408070912-f70d6f53a863
 	github.com/stretchr/testify v1.8.4
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
