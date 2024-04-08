@@ -7,6 +7,7 @@ on:
 
 jobs:
   deploy:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,8 +23,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./docs
-          file: ./build/package/docs.Dockerfile
+          context: .
+          file: build/package/docs/Dockerfile
           platforms: linux/amd64
           push: true
           tags: |

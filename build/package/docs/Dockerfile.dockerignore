@@ -1,0 +1,10 @@
+*
+!/build/package/docs/nginx.conf
+!/docs/babel.config.js
+!/docs/docs
+!/docs/docusaurus.config.js
+!/docs/menu.js
+!/docs/package-lock.json
+!/docs/package.json
+!/docs/src
+!/docs/static
