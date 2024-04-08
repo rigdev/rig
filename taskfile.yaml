@@ -216,7 +216,7 @@ tasks:
   test-all:
     desc: "✅ Run all tests"
     deps:
-      [tools:gotestsum, tools:setup-envtest, proto, manifests]
+      [tools:gotestsum, tools:setup-envtest, proto, manifests, build-rig-operator]
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
@@ -236,7 +236,7 @@ tasks:
   test-integration:
     desc: "✅ Run integration tests"
     deps:
-      [tools:gotestsum, tools:setup-envtest, proto, manifests]
+      [tools:gotestsum, tools:setup-envtest, proto, manifests, build-rig-operator]
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
