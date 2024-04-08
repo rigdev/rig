@@ -77,6 +77,7 @@
 
 
 
+
 ### api.v1.cluster.Service
 <a name="api-v1-cluster-Service"></a>
 
@@ -84,6 +85,7 @@
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| /api.v1.cluster.Service/List | [ListRequest](#api-v1-cluster-ListRequest) | [ListResponse](#api-v1-cluster-ListResponse) |  |
 | /api.v1.cluster.Service/GetConfig | [GetConfigRequest](#api-v1-cluster-GetConfigRequest) | [GetConfigResponse](#api-v1-cluster-GetConfigResponse) | GetConfig returns the config for the cluster. |
 | /api.v1.cluster.Service/GetConfigs | [GetConfigsRequest](#api-v1-cluster-GetConfigsRequest) | [GetConfigsResponse](#api-v1-cluster-GetConfigsResponse) | GetConfigs returns the configs for all clusters. |
 
@@ -4394,6 +4396,34 @@ Deprecated: sidecar interface configuration
 
 
 
+<a name="api_v1_cluster_cluster-proto"></a>
+
+## api/v1/cluster/cluster.proto
+
+
+
+<a name="api-v1-cluster-Cluster"></a>
+
+### Cluster
+Cluster model.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cluster_id | [string](#string) |  | ID of the cluster. |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_cluster_service-proto"></a>
 
 ## api/v1/cluster/service.proto
@@ -4462,6 +4492,36 @@ Empty Response for getting the configs of all clusters.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | clusters | [GetConfigResponse](#api-v1-cluster-GetConfigResponse) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-cluster-ListRequest"></a>
+
+### ListRequest
+Request for listing available clusters.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
+
+
+
+
+
+
+<a name="api-v1-cluster-ListResponse"></a>
+
+### ListResponse
+Response for listing available clusters.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| clusters | [Cluster](#api-v1-cluster-Cluster) | repeated | List of clusters. |
 
 
 

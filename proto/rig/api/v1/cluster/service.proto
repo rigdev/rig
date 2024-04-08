@@ -2,8 +2,12 @@ syntax = "proto3";
 
 package api.v1.cluster;
 
+import "api/v1/cluster/cluster.proto";
+import "model/common.proto";
+
 // The service to your cluster running Rig.
 service Service {
+  rpc List(ListRequest) returns (ListResponse) {}
   // GetConfig returns the config for the cluster.
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
   // GetConfigs returns the configs for all clusters.
@@ -52,4 +56,16 @@ enum ClusterType {
   CLUSTER_TYPE_UNSPECIFIED = 0;
   CLUSTER_TYPE_DOCKER = 1;
   CLUSTER_TYPE_KUBERNETES = 2;
+}
+
+// Request for listing available clusters.
+message ListRequest {
+  // Pagination options.
+  model.Pagination pagination = 1;
+}
+
+// Response for listing available clusters.
+message ListResponse {
+  // List of clusters.
+  repeated api.v1.cluster.Cluster clusters = 1;
 }
