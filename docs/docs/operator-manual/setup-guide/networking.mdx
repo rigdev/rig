@@ -9,16 +9,12 @@ See [here](plugins) for a general introduction to plugins and how to configure t
 ```yaml
 config:
   pipeline:
-    steps:
-      - plugins:
-        - name: rigdev.ingress_routes
-          config: |
-            clusterIssuer: letsencrypt-prod
-            createCertificateResources: true
-            ingressClassName: nginx
-            disableTLS: false
+    routesStep:
+      plugin: rigdev.ingress_routes
+      config: |
+        clusterIssuer: letsencrypt-prod
+        createCertificateResources: true
+        ingressClassName: nginx
+        disableTLS: false
 ```
-
-
-
 If our builtin plugin for handling routes doesn't fit your needs, you can write your own third-party plugin supplying a different behaviour. You can find a guide for that [here](/operator-manual/plugins/thirdparty)
