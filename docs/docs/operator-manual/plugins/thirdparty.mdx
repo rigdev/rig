@@ -1,0 +1,170 @@
+# Thirdparty Plugins
+
+If none of the builtin plugins fit your needs, you can write your own custom ones. Currently we support plugins written in Go and we use HashiCorp's [go-plugin](https://github.com/hashicorp/go-plugin). A custom plugin is a binary injected into the rig-operator which will call the binary (using HashiCorp's go-plugin system) during reconciliation. To inject the binary correctly into the rig-operator, you need to wrap your plugin binary in a container image which copies the binary to a designated folder and then configure this docker image in the rig-operator. A detailed description follows below.
+
+
+## Writing a custom plugin
+To follow along, see the example of a [minimal plugin](https://github.com/rigdev/rig/blob/main/examples/simple-plugin/main.go). A plugin must implement our [Plugin interface](https://github.com/rigdev/rig/blob/main/pkg/controller/plugin/server.go#L201) and have a minimal `main` function
+```go
+func main() {
+	plugin.StartPlugin("myorg.simple", &Plugin{})
+}
+```
+where `*Plugin` implements the interface. The main method of the interface is 
+```go
+Run(context.Context, CapsuleRequest, Logger) error
+```
+which implements the plugin functionality and will be called once per reconcilliation. The `CapsuleRequest` object is the plugin's interface to the Capsule, Kubernetes cluster and set of resources planned to be created/updated/deleted.
+The `CapsuleRequest` has read access to the resources currently in the cluster, either through the `Reader` method or preferrably, through `GetExisting`. With `GetExisting`, you supply an instance of the Kubernetes object you're interested in with the `Name` set. (If you don't supply `Name`, it will default to the name of the Capsule). The object will then be populated with the value of the object as it currently exist in the cluster.
+
+```go
+deployment := &appsv1.Deployment{}
+if err := req.GetExisting(deployment); err != nil {
+	return err
+}
+initContainers := deployment.Spec.Template.Spec.InitContainers
+fmt.Printf("The Deployment of the capsule currently has %v init containers.\n", len(initContainers))
+```
+Perhaps more relevant is the resource objects that we are about to apply to the cluster. These you have both read and write access to. You access these resources in the same way using `GetNew`
+```go
+deploymentNew := &appsv1.Deployment{}
+if err := req.GetNew(deploymentNew); err != nil {
+	return err
+}
+initContainers := deploymentNew.Spec.Template.Spec.InitContainers
+fmt.Printf("The Deployment of the capsule is about to be applied with %v init containers.\n", len(initContainers))
+```
+You can modify such an object and write it back to the `CapsuleRequest` using `Set`
+```go
+deploymentNew.Labels["new-label"] = "new-value"
+if err := req.Set(deploymentNew); err != nil {
+	return err
+}
+fmt.Println("The Deployment of the capsule is about to be applied with a new label.")
+```
+
+You can also tell the `CapsuleRequest` to delete a resource when applying to the cluster.
+```go
+if err := req.Delete(newDeployment); err != nil {
+	return err
+}
+fmt.Println("The capsule no longer creates a Deployment. This will probably break your system :(")
+```
+
+### Plugin Naming
+
+Every plugin needs a unique name. This name is used a couple places, the first time as an argument to `StartPlugin` in the `main` function of your plugin. To help enforce name uniqueness, all plugin names must be of the form `<org-name>.<plugin-name>` where org-name and plugin-name are qualified kubernetes names. Other than that we don't have any restrictions, thus the 'org-name' part is just a soft 'namespacing' to guard against name clashes.
+
+## Packaging a plugin as a container image
+
+Once you're finished writing your plugin, it needs to be packaged in a container image so the rig-operator can ingest it. The container image simply needs to copy a binary of the plugin into the folder `/plugins` with then name of the binary exactly the same as the plugin name. E.g., for a plugin named `myorg.simple` the image must copy the binary into `/plugins/myorg.simple`. Here is an example `Dockerfile` 
+
+```docker
+FROM golang:1.21.1-alpine3.18
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY *.go ./
+RUN go build -o simple 
+CMD cp simple /plugins/myorg.simple
+```
+
+You can also supply multiple plugins from the same container image. They just all need to be copied into the `/plugins` folder.
+
+:::info Note
+The docker image must use an `alpine` golang image as base image.
+:::
+
+
+## Configuring the rig-operator to use custom plugins
+Custom plugins can be configured in the Helm values of the rig-operator. The `config.pipeline.customPlugins` is a list of references to container images which will be mounted into the rig-operator as init containers. Binaries copied into the `/plugins` folder are then accessible for the operator and can be referenced as plugin along the builtin `rigdev` plugins.
+
+Assuming you have a container image `my-container-image:v1` which supplies a plugin named `myorg.simple` it can configured as
+```yaml
+config:
+  pipeline:
+    steps:
+       - plugins:
+         - name: myorg.simple
+           config: |
+             label: some-label
+             value: some-value
+    customPlugins:
+      - image: my-container-image:v1
+```
+
+To see which plugins are available to the rig-operator, you can use the `rig-ops` [CLI](/operator-manual/cli) which has plugin tooling. Running
+```bash
+rig-ops plugins list
+```
+returns a list
+```
+Type       Name                                  
+Builtin    rigdev.annotations                         
+Builtin    rigdev.datadog                             
+Builtin    rigdev.env_mapping                         
+Builtin    rigdev.google_cloud_sql_auth_proxy         
+Builtin    rigdev.ingress_routes                      
+Builtin    rigdev.init_container                      
+Builtin    rigdev.object_template                     
+Builtin    rigdev.placement                           
+Builtin    rigdev.sidecar 
+Thirdparty myorg.simple
+```
+
+
+
+## Testing a plugin
+
+Testing custom plugins during development can be done in a couple of ways. A recommended preliminary testing is simple unit tests, which are fairly straight forward to set up. See [here](https://github.com/rigdev/rig/blob/main/examples/simple-plugin/plugin_test.go) for a unit test of the `myorg.simple` plugin.
+
+To test it in a real Capsule reconcilliation, you'll need to have access to a rig-operator with your, possibly in-development, plugin mounted. This is definitely not ideal in a production Kubernetes cluster, therefore you have the option to spin up a local Rig stack in a Kind cluster. Running
+
+```bash
+rig dev kind create
+```
+sets this up. If it's the first time, it will prompt you for creating an admin user (for this local rig instance). For the rig-operator to be able to access your plugin, it must be able to pull a container image mounting it (described above). One solution is to publish the image to a publi repository. Another is to load the image into the Kind cluster. The easiest way to do this in a way that ensure the rig-operator can access it, is to use Rig's `add image` functionality. Given a local container image `my-plugin`, running
+`rig capsule image add --image my_plugin`
+This will upload the image into the cluster under a new name which will be printed, e.g.
+```
+Added new image: localhost:30000/library/my_plugin:latest@sha256:b998c9886735c030e094a191a4090cc340a6fccaaf222d7cdd92b6a0ec3f7db9
+```
+You can deploy a version of the rig-operator to your kind cluster with your own Helm values file, enabling operator configuration. The following values file adds the plugins from the `my_plugin` image.
+```yaml 
+config:
+  pipeline:
+    customPlugins:
+      - image: localhost:30000/library/my_plugin:latest@sha256:b998c9886735c030e094a191a4090cc340a6fccaaf222d7cdd92b6a0ec3f7db9
+```
+Running
+```
+rig dev kind deploy --operator-values values.yaml
+```
+deploys the rig-operator with the helm values at `values.yaml`. After it has deployed, running
+```
+rig-ops plugins list
+```
+should show the plugins supplied by the customPlugins image(s), e.g.
+```
+Type        Name                                
+Builtin     rigdev.annotations                  
+Builtin     rigdev.datadog                      
+Builtin     rigdev.env_mapping                  
+Builtin     rigdev.google_cloud_sql_auth_proxy  
+Builtin     rigdev.ingress_routes               
+Builtin     rigdev.init_container               
+Builtin     rigdev.object_template              
+Builtin     rigdev.placement                    
+Builtin     rigdev.sidecar                      
+Thirdparty  myorg.simple  
+```
+
+Now that your plugin is available to the operator, you can execute it in a few different ways.
+- Deploying a config to the operator using `rig dev kind deploy` which adds your plugin as a pipeline step and then
+	- Create a Capsule in your Kind cluster and inspect the resources the operator creates (e.g. using `kubectl`).
+	- Use `rig-ops plugins dry-run` which takes either an existing capsule as argument or a Capsule spec from file and exectutes a dry-run of the rig-operator on it
+- Use `rig-ops plugins dry-run`'s ability to execute a dry-run of a given Capsule using a local operator config file (`--config`) or replace/append/remove individual pipeline steps with the current operator config as a base. E.g.
+	```
+	rig-ops plugins dry-run --replace 1:myplugin1.yaml --append myplugin2.yaml
+	```
+	will execute a dry run of a given capsule using the current operator config, albeit with the first pipeline step replaced by the step configured in `myplugin1.yaml` and with the step configured in `myplugin2.yaml` appended.

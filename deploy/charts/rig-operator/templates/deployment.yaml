@@ -36,9 +36,9 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "rig-operator.serviceAccountName" . }}
       securityContext: {{ toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- if .Values.config.customPlugins }}
+      {{- if .Values.config.pipeline.customPlugins }}
       initContainers:
-        {{- range $i, $p := .Values.config.customPlugins }}
+        {{- range $i, $p := .Values.config.pipeline.customPlugins }}
         - name: plugin{{$i}}
           image: {{$p.image}}
           # command: ['echo', 'image: {{$p.image}}', '>', '/plugins/manifest.yaml']

@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ExternalPlugin struct {
+type pluginExecutor struct {
 	name         string
 	logger       logr.Logger
 	client       *plugin.Client
@@ -31,16 +31,16 @@ type ExternalPlugin struct {
 	tag          string
 }
 
-func NewExternalPlugin(
+func newPluginExecutor(
 	name, stepTag, pluginTag, pluginConfig, path string,
 	args []string,
 	logger logr.Logger,
-) (Plugin, error) {
+) (*pluginExecutor, error) {
 	tag := stepTag
 	if pluginTag != "" {
 		tag = pluginTag
 	}
-	p := &ExternalPlugin{
+	p := &pluginExecutor{
 		name:       name,
 		logger:     logger,
 		binaryPath: path,
@@ -63,7 +63,7 @@ func (l *loggerSink) Accept(name string, level hclog.Level, msg string, args ...
 	logger.Info(msg)
 }
 
-func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
+func (p *pluginExecutor) start(ctx context.Context, pluginConfig string) error {
 	pLogger := hclog.NewInterceptLogger(&hclog.LoggerOptions{
 		Name:       p.name,
 		Output:     io.Discard,
@@ -104,13 +104,13 @@ func (p *ExternalPlugin) start(ctx context.Context, pluginConfig string) error {
 	return p.pluginClient.Initialize(ctx, pluginConfig, p.tag)
 }
 
-func (p *ExternalPlugin) Stop(context.Context) {
+func (p *pluginExecutor) Stop(context.Context) {
 	if p.client != nil {
 		p.client.Kill()
 	}
 }
 
-func (p *ExternalPlugin) Run(ctx context.Context, req pipeline.CapsuleRequest) error {
+func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	return p.pluginClient.Run(ctx, req)
@@ -119,7 +119,7 @@ func (p *ExternalPlugin) Run(ctx context.Context, req pipeline.CapsuleRequest) e
 type rigOperatorPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	logger hclog.Logger
-	Impl   Server
+	Impl   Plugin
 }
 
 func (p *rigOperatorPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {

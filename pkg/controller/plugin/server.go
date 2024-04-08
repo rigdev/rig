@@ -18,7 +18,7 @@ import (
 type GRPCServer struct {
 	apiplugin.UnimplementedPluginServiceServer
 	logger hclog.Logger
-	Impl   Server
+	Impl   Plugin
 	broker *plugin.GRPCBroker
 	scheme *runtime.Scheme
 }
@@ -198,17 +198,26 @@ func (c *capsuleRequestClient) MarkUsedObject(r v1alpha2.UsedResource) error {
 	return nil
 }
 
-type Server interface {
+// Plugin is the interface a rig plugin must implement to be used by the rig-operator
+type Plugin interface {
+	// Run is executed once per reconciliation and throug the CapsuleRequest, has read access
+	// to the Capsule being reconciled and read/write access to all other derived resources
 	Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error
+	// Initialize is executed once when the rig-operator starts up and is used to pass the configuration
+	// of the plugin from the operator to the plugin itself.
 	Initialize(req InitializeRequest) error
 }
 
+// InitializeRequest contains information needed to initialize the plugin
+// This data is constant throughout the execution of the rig-operator.
 type InitializeRequest struct {
 	Config []byte
 	Tag    string
 }
 
-func StartPlugin(name string, rigPlugin Server) {
+// StartPlugin starts the plugin so it can listen for requests to be run on a CapsuleRequest
+// name is the name of the plugin as referenced in the rig-operator configuration.
+func StartPlugin(name string, rigPlugin Plugin) {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Level:      hclog.Info,
 		Output:     os.Stderr,

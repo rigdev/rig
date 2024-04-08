@@ -185,13 +185,13 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	headerFmt := color.New(color.FgBlue, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
-	tbl := table.New("Type", "Name", "Image")
+	tbl := table.New("Type", "Name")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 	for _, p := range result.Builtin {
-		tbl.AddRow("Builtin", p, "", "")
+		tbl.AddRow("Builtin", p, "")
 	}
 	for _, p := range result.Thirdparty {
-		tbl.AddRow("Thirdparty", p.Name, p.Image)
+		tbl.AddRow("Thirdparty", p.Name)
 	}
 	tbl.Print()
 

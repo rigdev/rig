@@ -11,15 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-type Plugin interface {
-	Run(context.Context, pipeline.CapsuleRequest) error
-	Stop(context.Context)
-}
-
 type Step struct {
 	step    v1alpha1.Step
 	logger  logr.Logger
-	plugins []Plugin
+	plugins []*pluginExecutor
 	matcher Matcher
 }
 

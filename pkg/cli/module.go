@@ -175,7 +175,7 @@ func ExecuteInvokes(cmd *cobra.Command, args []string, invokes ...any) error {
 // If the current PreRunE being executed is not the last one, we simply do nothing.
 // If the current PreRunE is the last one in the chain, we call FX to build all dependencies
 // and run all Invokes.
-// It is only this point we know exactly which dependencies are needed. It is assumed the Cobra
+// It is only at this point we know exactly which dependencies are needed. It is assumed the Cobra
 // main Run function has had its dependencies initialized by one of the Invokes registered.
 func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	if firstPreRun {
@@ -184,12 +184,13 @@ func PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	}
 	preRunsLeft--
 
-	if preRunsLeft == 0 && !SkipFX(cmd) {
-		allOpts := createOptions(cmd, args)
-		allOpts = append(allOpts, options...)
-		return fx.New(allOpts...).Err()
+	if preRunsLeft > 0 || SkipFX(cmd) {
+		return nil
 	}
-	return nil
+
+	allOpts := createOptions(cmd, args)
+	allOpts = append(allOpts, options...)
+	return fx.New(allOpts...).Err()
 }
 
 // IvokePreRunE registers FX invokes to be executed at the time a corresponding
