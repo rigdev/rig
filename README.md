@@ -26,8 +26,8 @@
   <a href="https://github.com/rigdev/rig/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-apache2-blue.svg" alt="Rig is released under the Apache2 license." />
   </a>
-  <a href="https://discord.gg/Tn5wmXMM2U">
-    <img src="https://img.shields.io/badge/join-discord-7289DA.svg?logo=discord&logoColor=ffffff" alt="Discord Chat" />
+  <a href="https://join.slack.com/t/rig-community/shared_invite/zt-26104sb0m-lzmGdbR~XvCZU3xiM0MR7g">
+    <img src="https://img.shields.io/badge/join-slack-blue.svg?logo=slack" alt="Join Slack" />
   </a>
   <a href="https://twitter.com/intent/follow?screen_name=Rig_dev">
     <img src="https://img.shields.io/badge/follow-%40Rig__dev-blue?logo=x" alt="Follow @Rig_dev" />
