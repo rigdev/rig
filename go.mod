@@ -7,7 +7,7 @@ require (
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/cert-manager/cert-manager v1.13.1
 	github.com/distribution/reference v0.5.0
-	github.com/docker/docker v24.0.2+incompatible
+	github.com/docker/docker v24.0.9+incompatible
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/fatih/color v1.16.0
 	github.com/gdamore/tcell/v2 v2.7.1
