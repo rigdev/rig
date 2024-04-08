@@ -81,7 +81,7 @@ func (r *reader) Get(_ context.Context, key client.ObjectKey, obj client.Object,
 		}
 	}
 
-	return kerrors.NewNotFound(schema.GroupResource{Group: obj.GetObjectKind().GroupVersionKind().Group}, obj.GetName())
+	return kerrors.NewNotFound(schema.GroupResource{Group: gvk.Group}, key.Name)
 }
 
 func (r *reader) List(_ context.Context, list client.ObjectList, opts ...client.ListOption) error {

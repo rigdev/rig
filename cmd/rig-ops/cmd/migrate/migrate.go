@@ -1251,6 +1251,10 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 			routePaths := []v1alpha2.HTTPPathRoute{}
 			capsuleRoutePaths := []*capsule.HTTPPathRoute{}
 
+			annotations := maps.Clone(ingress.Annotations)
+			delete(annotations, "kubernetes.io/ingress.class")
+			delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
+
 			for _, path := range ingress.Spec.Rules[0].HTTP.Paths {
 				if path.Backend.Service.Name != migration.currentResources.Service.Name {
 					continue
@@ -1316,7 +1320,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					ID:   ingress.GetName(),
 					Host: ingress.Spec.Rules[0].Host,
 					RouteOptions: v1alpha2.RouteOptions{
-						Annotations: ingress.Annotations,
+						Annotations: annotations,
 					},
 					Paths: routePaths,
 				})
@@ -1327,7 +1331,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					Id:   ingress.GetName(),
 					Host: ingress.Spec.Rules[0].Host,
 					Options: &capsule.RouteOptions{
-						Annotations: ingress.Annotations,
+						Annotations: annotations,
 					},
 					Paths: capsuleRoutePaths,
 				})
