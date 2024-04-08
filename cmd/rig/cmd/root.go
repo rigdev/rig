@@ -81,10 +81,16 @@ func Run() error {
 	rootCmd.AddCommand(license)
 
 	version := &cobra.Command{
-		Use:               "version",
-		Short:             "print version information",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
-		RunE:              cli.CtxWrap(cmd.version),
+		Use:   "version",
+		Short: "print version information",
+		RunE: func(c *cobra.Command, args []string) error {
+			if ok, _ := c.Flags().GetBool("full"); ok {
+				if err := cli.MakeInvokePreRunE(initCmd)(c, args); err != nil {
+					return err
+				}
+			}
+			return cmd.version(context.Background(), c, args)
+		},
 		Annotations: map[string]string{
 			auth_service.OmitProject:     "",
 			auth_service.OmitEnvironment: "",
