@@ -13,7 +13,7 @@ require (
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/vektra/mockery/v2 v2.39.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.33.0
 	gotest.tools/gotestsum v1.10.1
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20230911135813-482dd1a5c6b9
 	sigs.k8s.io/controller-tools v0.13.0
