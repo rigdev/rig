@@ -133,13 +133,13 @@ func ProcessOperatorOutput(
 	for _, out := range operatorOutput {
 		proposal, err := obj.DecodeAny([]byte(out.GetObject().GetContent()), scheme)
 		if err != nil {
-			return err
+			return fmt.Errorf("error decoding object from operator: %v", err)
 		}
 
 		if err := migratedResources.AddObject(proposal.GetObjectKind().GroupVersionKind().Kind,
 			proposal.GetName(),
 			proposal); err != nil {
-			return err
+			return fmt.Errorf("error adding 'migrated' object': %v", err)
 		}
 	}
 
@@ -170,8 +170,8 @@ func getWarningsView(warnings []*Warning) *tview.TextView {
 
 func showOverview(
 	currentOverview *tview.TreeView,
-	migratedOverview *tview.TreeView) error {
-
+	migratedOverview *tview.TreeView,
+) error {
 	currentOverview.Box.SetTitleColor(tcell.ColorRed).SetBorderColor(tcell.ColorRed)
 	migratedOverview.Box.SetTitleColor(tcell.ColorGreen).SetBorderColor(tcell.ColorGreen)
 

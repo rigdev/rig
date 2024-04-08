@@ -168,7 +168,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		platformResources := deployResp.Msg.GetResourceYaml()
 		migration.capsule, platformObjects, err = c.processPlatformOutput(migration.migratedResources, platformResources)
 		if err != nil {
-			return err
+			return fmt.Errorf("error performing dry-run on platform: %v", err)
 		}
 	}
 
@@ -209,7 +209,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	resp, err := c.OperatorClient.Pipeline.DryRun(ctx, connect.NewRequest(request))
 	if err != nil {
-		return err
+		return fmt.Errorf("error performing dry-run on operator: %v", err)
 	}
 
 	if err := ProcessOperatorOutput(migration.migratedResources, resp.Msg.OutputObjects, c.Scheme); err != nil {
