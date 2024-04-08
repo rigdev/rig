@@ -6,14 +6,14 @@ import DocCardList from "@theme/DocCardList";
 
 # Getting started
 
-This getting started guide is meant to get you up and running with Rig as fast as possible. It will walk you through installing the Rig CLI, 
-installing the Rig Platform for local development in either Docker or Kind.
+This getting started guide is meant to get you up and running with Rig as fast as possible. It will walk you through installing the Rig CLI and 
+installing the Rig Platform for local development in [Kind](https://kind.sigs.k8s.io).
 
 <hr class="solid" />
 
 ## Install the Rig CLI
 
-The Rig CLI is used to interact with the Rig Platform. It can be used to both setup a local Rig Platform installation, as well as interact with Rig platform.
+The Rig CLI is used to interact with the Rig Platform. It can be used to both setup a local Rig Platform installation, as well as interact with the Rig platform.
 
 <DocCardList
   items={[
@@ -34,28 +34,18 @@ The Rig CLI is used to interact with the Rig Platform. It can be used to both se
 
 ## Install Rig Platform for Local Development
 
-The Rig Platform can run locally in either Docker or Kubernetes. Install the Rig Platform using one of the two guides below:
+The Rig Platform can run locally in Kind, a tool for running local Kubernetes clusters.
 
 <DocCardList
   items={[
     {
       type: "link",
-      href: "/getting-started/platform-installation#option-1-docker",
-      label: "Run in Docker",
-      description: "Best for rapid local development",
-      customProps: {
-        icon: "BiLogoDocker",
-        col: "col--6",
-      },
-    },
-    {
-      type: "link",
-      href: "/getting-started/platform-installation#option-2-kubernetes-kind",
-      label: "Run in Kubernetes (KIND)",
-      description: "Best for imitating production environment",
+      href: "/getting-started/platform-installation",
+      label: "Run in KIND",
+      description: "Can be used to imitate production environments.",
       customProps: {
         icon: "BiLogoKubernetes",
-        col: "col--6",
+        col: "col--12",
       },
     },
   ]}
