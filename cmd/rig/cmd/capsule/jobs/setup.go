@@ -40,11 +40,11 @@ func initCmd(c Cmd) {
 	cmd.Scope = c.Scope
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	jobs := &cobra.Command{
 		Use:               "jobs",
 		Short:             "Manage jobs for the capsule",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	jobsGet := &cobra.Command{
@@ -68,7 +68,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.delete),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -82,7 +82,7 @@ func Setup(parent *cobra.Command) {
 	executions.Flags().StringVarP(&jobName, "job", "j", "", "Name of the job to fetch executions from")
 	if err := executions.RegisterFlagCompletionFunc(
 		"job",
-		cli.CtxWrapCompletion(cmd.completions),
+		cli.HackCtxWrapCompletion(cmd.completions, s),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -128,12 +128,13 @@ func (c *Cmd) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

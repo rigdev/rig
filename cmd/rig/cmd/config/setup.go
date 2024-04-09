@@ -42,11 +42,11 @@ func initCmd(c Cmd) {
 	cmd.PromptInfo = c.PromptInfo
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	config := &cobra.Command{
 		Use:               "config",
 		Short:             "Manage Rig CLI configuration",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -71,7 +71,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.ExactArgs(1),
 		RunE:  cmd.delete,
 		ValidArgsFunction: common.Complete(
-			cmd.completions,
+			cli.HackWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		Annotations: map[string]string{
@@ -89,7 +89,7 @@ func Setup(parent *cobra.Command) {
 			auth.OmitUser: "",
 		},
 		ValidArgsFunction: common.Complete(
-			cmd.completions,
+			cli.HackWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -100,7 +100,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Set the project to query for project-scoped resources",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.useProject),
-		ValidArgsFunction: common.Complete(cli.CtxWrapCompletion(cmd.useProjectCompletion),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.useProjectCompletion, s),
 			common.MaxArgsCompletionFilter(1)),
 	}
 	config.AddCommand(useProject)
@@ -110,7 +110,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Set the environment to query for environment-scoped resources",
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.useEnvironment),
-		ValidArgsFunction: common.Complete(cli.CtxWrapCompletion(cmd.useEnvironmentCompletion),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.useEnvironmentCompletion, s),
 			common.MaxArgsCompletionFilter(1)),
 	}
 	config.AddCommand(useEnvironment)
@@ -145,7 +145,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cmd.editConfig,
 		ValidArgsFunction: common.Complete(
-			cmd.completions,
+			cli.HackWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		Annotations: map[string]string{
@@ -176,10 +176,10 @@ func Setup(parent *cobra.Command) {
 	parent.AddCommand(config)
 }
 
-func (c *Cmd) completions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(cmd *cobra.Command, args []string, toComplete string, s *cli.SetupContext) ([]string, cobra.ShellCompDirective) {
 	names := []string{}
 
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
@@ -205,8 +205,9 @@ func (c *Cmd) useProjectCompletion(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
@@ -250,8 +251,9 @@ func (c *Cmd) useEnvironmentCompletion(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

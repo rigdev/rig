@@ -48,11 +48,11 @@ func initCmd(c Cmd) {
 	cmd.Auth = c.Auth
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	project := &cobra.Command{
 		Use:               "project",
 		Short:             "Manage Rig projects",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitEnvironment: "",
 			auth.OmitProject:     "",
@@ -118,7 +118,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Delete a project. If project-ID is left out, delete the current project",
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.projectCompletions),
+			cli.HackCtxWrapCompletion(cmd.projectCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		RunE: cli.CtxWrap(cmd.delete),
@@ -130,7 +130,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Update a project. If project-ID is left out, update the current project",
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.projectCompletions),
+			cli.HackCtxWrapCompletion(cmd.projectCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		RunE: cli.CtxWrap(cmd.update),
@@ -164,7 +164,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Get one or multiple projects",
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.projectCompletions),
+			cli.HackCtxWrapCompletion(cmd.projectCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		RunE: cli.CtxWrap(cmd.get),
@@ -181,12 +181,13 @@ func (c *Cmd) projectCompletions(ctx context.Context,
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
 	if current {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

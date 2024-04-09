@@ -35,12 +35,12 @@ func initCmd(c Cmd) {
 	cmd.Scope = c.Scope
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	environment := &cobra.Command{
 		Use:               "environment",
 		Aliases:           []string{"env"},
 		Short:             "Manage Rig environments",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitEnvironment: "",
 			auth.OmitProject:     "",

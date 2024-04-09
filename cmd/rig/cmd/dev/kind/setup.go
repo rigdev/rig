@@ -31,12 +31,12 @@ func initCmd(c Cmd) {
 	cmd.DockerClient = c.DockerClient
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	kind := &cobra.Command{
 		Use: "kind",
 		Short: "The kind command is used to setup and manage a development kubernetes cluster running " +
 			"Rig using Kind",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	create := &cobra.Command{

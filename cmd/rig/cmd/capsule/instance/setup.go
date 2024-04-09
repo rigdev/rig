@@ -50,11 +50,11 @@ func initCmd(c Cmd) {
 	cmd.Scope = c.Scope
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	instance := &cobra.Command{
 		Use:               "instance",
 		Short:             "Inspect and restart instances",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	getInstances := &cobra.Command{
@@ -63,7 +63,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -82,7 +82,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.restart),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -94,7 +94,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.logs),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -117,7 +117,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Open a shell to the instance",
 		RunE:  cli.CtxWrap(cmd.exec),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -174,9 +174,10 @@ func (c *Cmd) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
 
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

@@ -11,8 +11,8 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -39,11 +39,11 @@ func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	serviceAccount := &cobra.Command{
 		Use:               "service-account",
 		Short:             "Manage service accounts",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -69,7 +69,7 @@ func Setup(parent *cobra.Command) {
 		Short:             "Get one or multiple service accounts",
 		RunE:              cli.CtxWrap(cmd.list),
 		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: cli.CtxWrapCompletion(cmd.completions),
+		ValidArgsFunction: cli.HackCtxWrapCompletion(cmd.completions, s),
 	}
 	get.Flags().IntVar(&offset, "offset", 0, "offset")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
@@ -80,7 +80,7 @@ func Setup(parent *cobra.Command) {
 		Short:             "Delete a service account",
 		RunE:              cli.CtxWrap(cmd.delete),
 		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: cli.CtxWrapCompletion(cmd.completions),
+		ValidArgsFunction: cli.HackCtxWrapCompletion(cmd.completions, s),
 	}
 	serviceAccount.AddCommand(deleteCmd)
 
@@ -92,8 +92,9 @@ func (c *Cmd) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

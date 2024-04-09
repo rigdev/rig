@@ -11,8 +11,8 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -44,11 +44,11 @@ func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	user := &cobra.Command{
 		Use:               "user",
 		Short:             "Manage users in your projects",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -77,7 +77,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  cli.CtxWrap(cmd.update),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.userCompletions),
+			cli.HackCtxWrapCompletion(cmd.userCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -117,7 +117,7 @@ func Setup(parent *cobra.Command) {
 		Short: "Get one or multiple users",
 		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.userCompletions),
+			cli.HackCtxWrapCompletion(cmd.userCompletions, s),
 			common.MaxArgsCompletionFilter(1)),
 		Args: cobra.MaximumNArgs(1),
 	}
@@ -131,7 +131,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  cli.CtxWrap(cmd.delete),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.userCompletions),
+			cli.HackCtxWrapCompletion(cmd.userCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -143,7 +143,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  cli.CtxWrap(cmd.listSessions),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.userCompletions),
+			cli.HackCtxWrapCompletion(cmd.userCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -209,8 +209,9 @@ func (c *Cmd) userCompletions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

@@ -54,11 +54,11 @@ func initCmd(c Cmd) {
 	cmd = c
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	capsuleDeploy := &cobra.Command{
 		Use:               "deploy [capsule] [flags] [-- command]",
 		Short:             "Deploy changes to a capsule",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		RunE:              cli.CtxWrap(cmd.deploy),
 		Long: `Deploy a number of changes to a Capsule.
 
@@ -144,7 +144,7 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 
 	if err := capsuleDeploy.RegisterFlagCompletionFunc(
 		"image",
-		cli.CtxWrapCompletion(cmd.completions),
+		cli.HackCtxWrapCompletion(cmd.completions, s),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -161,6 +161,7 @@ func (c *Cmd) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
 	if len(args) > 0 {
 		return nil, cobra.ShellCompDirectiveError
@@ -170,7 +171,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

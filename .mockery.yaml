@@ -10,3 +10,6 @@ packages:
   k8s.io/client-go/discovery:
     interfaces: 
       DiscoveryInterface: {}
+  github.com/rigdev/rig-go-sdk:
+    interfaces:
+      Client: {}

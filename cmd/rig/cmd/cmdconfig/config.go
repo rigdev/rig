@@ -7,6 +7,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
+	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -189,7 +190,7 @@ func (cfg Config) Save() error {
 	return nil
 }
 
-func NewConfig(cfgPath string) (*Config, error) {
+func NewConfig(cfgPath string, fs afero.Fs) (*Config, error) {
 	cfg := &Config{
 		filePath: cfgPath,
 	}
@@ -221,12 +222,11 @@ func NewConfig(cfgPath string) (*Config, error) {
 		}
 	}
 
-	_, err := os.ReadFile(cfg.filePath)
-	if err != nil {
+	if _, err := fs.Open(cfg.filePath); err != nil {
 		return nil, err
 	}
-
 	viper.SetConfigFile(cfg.filePath)
+	viper.SetFs(fs)
 
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, err

@@ -38,11 +38,11 @@ func initCmd(c Cmd) {
 	cmd.Scope = c.Scope
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	rollout := &cobra.Command{
 		Use:               "rollout",
 		Short:             "Inspect the rollouts of the capsule",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	rolloutGet := &cobra.Command{
@@ -51,7 +51,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -65,7 +65,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.capsuleEvents),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -77,7 +77,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.rollback),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -95,12 +95,13 @@ func (c *Cmd) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

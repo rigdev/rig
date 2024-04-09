@@ -15,6 +15,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/roclient"
 	"github.com/rigdev/rig/pkg/scheme"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
@@ -87,8 +88,8 @@ func NewKubernetesReader(cc client.Client) (client.Reader, error) {
 	return roclient.NewReaderFromFile(Flags.KubeFile, cc.Scheme())
 }
 
-func NewRigClient(ctx context.Context) (rig.Client, error) {
-	cfg, err := cmdconfig.NewConfig(Flags.RigConfig)
+func NewRigClient(ctx context.Context, fs afero.Fs) (rig.Client, error) {
+	cfg, err := cmdconfig.NewConfig(Flags.RigConfig, fs)
 	if err != nil {
 		return nil, err
 	}

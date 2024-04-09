@@ -50,11 +50,11 @@ func initCmd(c Cmd) {
 	cmd.DockerClient = c.DockerClient
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	image := &cobra.Command{
 		Use:               "image",
 		Short:             "Manage images of the capsule",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	imageAdd := &cobra.Command{
@@ -100,7 +100,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.getImage),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		Annotations: map[string]string{
@@ -119,6 +119,7 @@ func (c *Cmd) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
 	if len(args) > 0 {
 		return nil, cobra.ShellCompDirectiveError
@@ -128,7 +129,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

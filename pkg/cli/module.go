@@ -10,6 +10,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/scheme"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,12 +35,27 @@ import (
 // We only have enough information to run FX after parsing and need to run FX before PreRuns are executed.
 // This file contains functions which circumvent this issue.
 
+type SetupContext struct {
+	BaseModule  fx.Option
+	Args        []string
+	options     []fx.Option
+	firstPreRun bool
+	preRunsLeft int
+}
+
+var StandardSetupContext = &SetupContext{
+	BaseModule:  Module,
+	firstPreRun: true,
+	Args:        nil,
+}
+
 var Module = fx.Module(
 	"rig-cli",
 	clientModule,
+	fx.Provide(afero.NewOsFs),
 	fx.Provide(scheme.New),
-	fx.Provide(func() (*cmdconfig.Config, error) {
-		return cmdconfig.NewConfig("")
+	fx.Provide(func(fs afero.Fs) (*cmdconfig.Config, error) {
+		return cmdconfig.NewConfig("", fs)
 	}),
 	fx.Provide(zap.NewDevelopment),
 	fx.Provide(getContext),
@@ -52,6 +68,8 @@ var Module = fx.Module(
 		)
 	}),
 	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
+	// provide a flag to indicate that we cannot prompt for resource creation
+	fx.Provide(func() scope.Interactive { return scope.Interactive(term.IsTerminal(int(os.Stdin.Fd()))) }),
 )
 
 func getContext(
@@ -135,14 +153,8 @@ func getContext(
 	return c, nil
 }
 
-var (
-	options     []fx.Option
-	firstPreRun = true
-	preRunsLeft = 0
-)
-
-func AddOptions(opts ...fx.Option) {
-	options = append(options, opts...)
+func (s *SetupContext) AddOptions(opts ...fx.Option) {
+	s.options = append(s.options, opts...)
 }
 
 func computeNumOfPreRuns(cmd *cobra.Command) int {
@@ -155,23 +167,21 @@ func computeNumOfPreRuns(cmd *cobra.Command) int {
 	return res
 }
 
-func createOptions(cmd *cobra.Command, args []string) []fx.Option {
+func (s *SetupContext) createOptions(cmd *cobra.Command, args []string) []fx.Option {
 	return []fx.Option{
-		Module,
+		s.BaseModule,
 		fx.NopLogger,
 		fx.Provide(func() *cobra.Command { return cmd }),
 		fx.Provide(func() []string { return args }),
-		// provide a flag to indicate that we cannot prompt for resource creation
-		fx.Provide(func() scope.Interactive { return scope.Interactive(term.IsTerminal(int(os.Stdin.Fd()))) }),
 	}
 }
 
-func ExecuteInvokes(cmd *cobra.Command, args []string, invokes ...any) error {
+func (s *SetupContext) ExecuteInvokes(cmd *cobra.Command, args []string, invokes ...any) error {
 	for _, invoke := range invokes {
-		options = append(options, fx.Invoke(invoke))
+		s.options = append(s.options, fx.Invoke(invoke))
 	}
-	allOpts := createOptions(cmd, args)
-	allOpts = append(allOpts, options...)
+	allOpts := s.createOptions(cmd, args)
+	allOpts = append(allOpts, s.options...)
 	return fx.New(allOpts...).Err()
 }
 
@@ -184,30 +194,30 @@ func ExecuteInvokes(cmd *cobra.Command, args []string, invokes ...any) error {
 // and run all Invokes.
 // It is only at this point we know exactly which dependencies are needed. It is assumed the Cobra
 // main Run function has had its dependencies initialized by one of the Invokes registered.
-func PersistentPreRunE(cmd *cobra.Command, args []string) error {
-	if firstPreRun {
-		firstPreRun = false
-		preRunsLeft = computeNumOfPreRuns(cmd)
+func (s *SetupContext) PersistentPreRunE(cmd *cobra.Command, args []string) error {
+	if s.firstPreRun {
+		s.firstPreRun = false
+		s.preRunsLeft = computeNumOfPreRuns(cmd)
 	}
-	preRunsLeft--
+	s.preRunsLeft--
 
-	if preRunsLeft > 0 || SkipFX(cmd) {
+	if s.preRunsLeft > 0 || SkipFX(cmd) {
 		return nil
 	}
 
-	allOpts := createOptions(cmd, args)
-	allOpts = append(allOpts, options...)
+	allOpts := s.createOptions(cmd, args)
+	allOpts = append(allOpts, s.options...)
 	return fx.New(allOpts...).Err()
 }
 
 // IvokePreRunE registers FX invokes to be executed at the time a corresponding
 // PreRunE would have been executed by Cobra had we not used FX.
-func InvokePreRunE(cmd *cobra.Command, args []string, invokes ...any) error {
+func (s *SetupContext) InvokePreRunE(cmd *cobra.Command, args []string, invokes ...any) error {
 	for _, invoke := range invokes {
-		options = append(options, fx.Invoke(invoke))
+		s.options = append(s.options, fx.Invoke(invoke))
 	}
 
-	if err := PersistentPreRunE(cmd, args); err != nil {
+	if err := s.PersistentPreRunE(cmd, args); err != nil {
 		return err
 	}
 	return nil
@@ -216,9 +226,9 @@ func InvokePreRunE(cmd *cobra.Command, args []string, invokes ...any) error {
 // MakeInvokePreRunE constructs a PreRunE function signature which registers the
 // supplied invokes to be executed at the time Cobra would have executed the returned PreRunE
 // if we did not use FX at all.
-func MakeInvokePreRunE(invokes ...any) func(cmd *cobra.Command, args []string) error {
+func (s *SetupContext) MakeInvokePreRunE(invokes ...any) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		return InvokePreRunE(cmd, args, invokes...)
+		return s.InvokePreRunE(cmd, args, invokes...)
 	}
 }
 
@@ -234,12 +244,26 @@ func CtxWrap(f FCtx) F {
 }
 
 type (
-	FCompleteCtx = func(context.Context, *cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
-	FComplete    = func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+	FCompleteCtx      = func(context.Context, *cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+	FComplete         = func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+	FCompleteCtxSetup = func(context.Context, *cobra.Command, []string, string, *SetupContext) ([]string, cobra.ShellCompDirective)
+	FCompleteSetup    = func(*cobra.Command, []string, string, *SetupContext) ([]string, cobra.ShellCompDirective)
 )
 
 func CtxWrapCompletion(f FCompleteCtx) FComplete {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return f(context.Background(), cmd, args, toComplete)
+	}
+}
+
+func HackCtxWrapCompletion(f FCompleteCtxSetup, s *SetupContext) FComplete {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return f(context.Background(), cmd, args, toComplete, s)
+	}
+}
+
+func HackWrapCompletion(f FCompleteSetup, s *SetupContext) FComplete {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return f(cmd, args, toComplete, s)
 	}
 }
