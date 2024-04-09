@@ -8,7 +8,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/nyaruka/phonenumbers"
 	"github.com/rigdev/rig-go-api/api/v1/user"
-	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
@@ -91,29 +90,6 @@ func (c *Cmd) userIndentifierUpdate() (*user.Update, error) {
 		return nil, err
 	}
 	return update, nil
-}
-
-func (c *Cmd) getUserIdentifier(username, email, phoneNumber string) (*model.UserIdentifier, error) {
-	if username == "" && email == "" && phoneNumber == "" {
-		identifier, err := common.UserIndentifier(c.Prompter)
-		if err != nil {
-			return nil, err
-		}
-		return identifier, nil
-	}
-
-	if username != "" {
-		return &model.UserIdentifier{Identifier: &model.UserIdentifier_Username{Username: username}}, nil
-	}
-	if email != "" {
-		return &model.UserIdentifier{Identifier: &model.UserIdentifier_Email{Email: email}}, nil
-	}
-	if phoneNumber != "" {
-		return &model.UserIdentifier{Identifier: &model.UserIdentifier_PhoneNumber{PhoneNumber: phoneNumber}}, nil
-	}
-
-	// We should not get here
-	return nil, fmt.Errorf("something went wrong")
 }
 
 func parseUserIdentifierUpdate(identifier string) (*user.Update, error) {
