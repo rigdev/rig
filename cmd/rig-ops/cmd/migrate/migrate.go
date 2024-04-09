@@ -147,10 +147,6 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 	color.Green(" ✓")
 
-	for name, r := range migration.currentResources.ConfigMaps {
-		fmt.Println(name, r.GroupVersionKind().Version)
-	}
-
 	currentTree := migration.currentResources.CreateOverview("Current Resources")
 	deployRequest := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
