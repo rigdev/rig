@@ -244,8 +244,9 @@ func CtxWrap(f FCtx) F {
 }
 
 type (
-	FCompleteCtx      = func(context.Context, *cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
-	FComplete         = func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+	FCompleteCtx = func(context.Context, *cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+	FComplete    = func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective)
+	//nolint:lll
 	FCompleteCtxSetup = func(context.Context, *cobra.Command, []string, string, *SetupContext) ([]string, cobra.ShellCompDirective)
 	FCompleteSetup    = func(*cobra.Command, []string, string, *SetupContext) ([]string, cobra.ShellCompDirective)
 )

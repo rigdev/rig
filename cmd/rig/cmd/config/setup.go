@@ -176,7 +176,12 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	parent.AddCommand(config)
 }
 
-func (c *Cmd) completions(cmd *cobra.Command, args []string, toComplete string, s *cli.SetupContext) ([]string, cobra.ShellCompDirective) {
+func (c *Cmd) completions(
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
 	names := []string{}
 
 	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {

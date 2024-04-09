@@ -1,0 +1,6 @@
+with-expecter: true
+dir: "gen/uncommittedmocks/{{.PackagePath}}"
+packages:
+  github.com/rigdev/rig-go-sdk:
+    interfaces:
+      Client: {}

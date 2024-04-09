@@ -89,10 +89,14 @@ tasks:
       - "{{ .GOMODCACHE }}/k8s.io/client-go*/discovery/*.go"
     generates:
       - gen/mocks/**/*.go
+      - gen/uncommitedmocks/**/*.go
     cmds:
       - cmd: rm -r gen/mocks
         ignore_error: true
+      - cmd: rm -r gen/mocks_not_commited
+        ignore_error: true
       - ./tools/bin/mockery
+      - ./tools/bin/mockery --config .mockery_uncommitted.yaml
 
   manifests:
     desc: "🪄 Run k8s manifests generation"

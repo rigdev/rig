@@ -7,7 +7,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
-	mockrig "github.com/rigdev/rig/gen/mocks/github.com/rigdev/rig-go-sdk"
+	mockrig "github.com/rigdev/rig/gen/uncommittedmocks/github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/spf13/afero"
