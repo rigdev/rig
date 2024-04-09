@@ -1501,7 +1501,10 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 	return nil
 }
 
-func (c *Cmd) migrateCronJob(migration *Migration, cronJob batchv1.CronJob) (*v1alpha2.CronJob, *capsule.CronJob, error) {
+func (c *Cmd) migrateCronJob(
+	migration *Migration,
+	cronJob batchv1.CronJob,
+) (*v1alpha2.CronJob, *capsule.CronJob, error) {
 	migrated := &v1alpha2.CronJob{
 		Name:     cronJob.Name,
 		Schedule: cronJob.Spec.Schedule,
