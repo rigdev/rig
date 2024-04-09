@@ -10,5 +10,5 @@ func (c *Cmd) init(_ *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	return c.Cfg.CreateContext(contextName, flags.Flags.Host, bool(c.Interactive))
+	return c.Scope.GetCfg().CreateContext(contextName, flags.Flags.Host, c.Scope.IsInteractive())
 }

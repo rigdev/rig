@@ -25,8 +25,8 @@ func (c *Cmd) useEnvironment(ctx context.Context, cmd *cobra.Command, args []str
 		}
 	}
 
-	c.Cfg.GetCurrentContext().EnvironmentID = environment
-	if err := c.Cfg.Save(); err != nil {
+	c.Scope.GetCurrentContext().EnvironmentID = environment
+	if err := c.Scope.GetCfg().Save(); err != nil {
 		return err
 	}
 

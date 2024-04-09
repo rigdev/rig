@@ -11,7 +11,7 @@ import (
 )
 
 func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	currentRollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
+	currentRollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Scope)
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		Msg: &capsule.AbortRolloutRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			RolloutId: currentRollout.GetRolloutId(),
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		},
 	}); err != nil {
 		return err

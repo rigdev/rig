@@ -66,6 +66,9 @@ func Run() error {
 		"host", "H", flags.Flags.Host,
 		"select which host to access the Rig Platform at. Should be of the form `http[s]://hostname:port/`."+
 			" Can also be set with environment variable `RIG_HOST`")
+	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Context,
+		"context", "C", flags.Flags.Context,
+		"select a context to use instead of the one currently set in the config.")
 
 	license := &cobra.Command{
 		Use:               "license",

@@ -18,7 +18,7 @@ import (
 const maxColLength = 20
 
 func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
+	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Scope)
 	if errors.IsNotFound(err) {
 		cmd.Println("No cron jobs set")
 		return nil

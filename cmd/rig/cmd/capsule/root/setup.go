@@ -12,20 +12,17 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/deploy"
-	"github.com/rigdev/rig/cmd/rig/cmd/capsule/env"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/image"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/instance"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/jobs"
-	"github.com/rigdev/rig/cmd/rig/cmd/capsule/mount"
-	"github.com/rigdev/rig/cmd/rig/cmd/capsule/network"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -39,7 +36,6 @@ var (
 	interactive        bool
 	forceDeploy        bool
 	follow             bool
-	deleteCmd          bool
 	previousContainers bool
 )
 
@@ -49,7 +45,7 @@ type Cmd struct {
 	fx.In
 
 	Rig          rig.Client
-	Cfg          *cmdconfig.Config
+	Scope        scope.Scope
 	DockerClient *client.Client
 }
 
@@ -57,7 +53,7 @@ var cmd Cmd
 
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
-	cmd.Cfg = c.Cfg
+	cmd.Scope = c.Scope
 	cmd.DockerClient = c.DockerClient
 }
 
@@ -138,25 +134,6 @@ func Setup(parent *cobra.Command) {
 	capsuleGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
 	capsuleCmd.AddCommand(capsuleGet)
 
-	capsuleCmdArgs := &cobra.Command{
-		Use:   "cmd [some-command arg1 arg2]",
-		Short: "Add command and arguments to the capsule",
-		RunE:  cli.CtxWrap(cmd.cmdArgs),
-	}
-	capsuleCmdArgs.Flags().BoolVarP(
-		&forceDeploy,
-		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
-	)
-	capsuleCmdArgs.Flags().BoolVarP(
-		&deleteCmd,
-		"delete", "d", false, "If set deletes the command and args from the capsule",
-	)
-	if err := capsuleCmdArgs.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	capsuleCmd.AddCommand(capsuleCmdArgs)
-
 	capsuleLogs := &cobra.Command{
 		Use:   "logs",
 		Short: "Get logs across all instances of the capsule",
@@ -179,10 +156,7 @@ func Setup(parent *cobra.Command) {
 	image.Setup(capsuleCmd)
 	deploy.Setup(capsuleCmd)
 	instance.Setup(capsuleCmd)
-	network.Setup(capsuleCmd)
 	rollout.Setup(capsuleCmd)
-	env.Setup(capsuleCmd)
-	mount.Setup(capsuleCmd)
 	jobs.Setup(capsuleCmd)
 }
 
@@ -198,13 +172,13 @@ func (c *Cmd) completions(
 
 	var capsuleIDs []string
 
-	if c.Cfg.GetCurrentContext() == nil || c.Cfg.GetCurrentAuth() == nil {
+	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
 	resp, err := c.Rig.Capsule().List(ctx, &connect.Request[capsule_api.ListRequest]{
 		Msg: &capsule_api.ListRequest{
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		},
 	})
 	if err != nil {
@@ -239,7 +213,7 @@ func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []str
 		return nil
 	}
 
-	name, err := capsule.SelectCapsule(ctx, c.Rig, c.Cfg)
+	name, err := capsule.SelectCapsule(ctx, c.Rig, c.Scope)
 	if err != nil {
 		return err
 	}

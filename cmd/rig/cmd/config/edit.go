@@ -13,14 +13,14 @@ func (c *Cmd) editConfig(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		ctxName = args[0]
 	} else {
-		ctxName, err = cmdconfig.PromptForContext(c.Cfg)
+		ctxName, err = cmdconfig.PromptForContext(c.Scope.GetCfg())
 		if err != nil {
 			return nil
 		}
 	}
 
 	var ctx *cmdconfig.Context
-	for _, c := range c.Cfg.Contexts {
+	for _, c := range c.Scope.GetCfg().Contexts {
 		if c.Name == ctxName {
 			ctx = c
 			break
@@ -32,11 +32,11 @@ func (c *Cmd) editConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	if field != "" && value != "" {
-		if err := applyContextChange(c.Cfg, ctx, field, value); err != nil {
+		if err := applyContextChange(c.Scope.GetCfg(), ctx, field, value); err != nil {
 			return err
 		}
 
-		if err := c.Cfg.Save(); err != nil {
+		if err := c.Scope.GetCfg().Save(); err != nil {
 			return err
 		}
 
@@ -56,7 +56,7 @@ func (c *Cmd) editConfig(cmd *cobra.Command, args []string) error {
 		defaultValue = ctx.Name
 		validateFunc = common.ValidateSystemNameOpt
 	case "server":
-		s, err := c.Cfg.GetService(ctx.Name)
+		s, err := c.Scope.GetCfg().GetService(ctx.Name)
 		if err != nil {
 			return err
 		}
@@ -69,11 +69,11 @@ func (c *Cmd) editConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := applyContextChange(c.Cfg, ctx, field, value); err != nil {
+	if err := applyContextChange(c.Scope.GetCfg(), ctx, field, value); err != nil {
 		return err
 	}
 
-	if err := c.Cfg.Save(); err != nil {
+	if err := c.Scope.GetCfg().Save(); err != nil {
 		return err
 	}
 

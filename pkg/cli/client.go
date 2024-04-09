@@ -8,9 +8,9 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -18,20 +18,18 @@ import (
 var clientModule = fx.Module("client",
 	fx.Supply(&http.Client{}),
 	fx.Provide(newRigClient),
-	fx.Provide(func(cfg *cmdconfig.Config) []connect.Interceptor {
+	fx.Provide(func() []connect.Interceptor {
 		return []connect.Interceptor{&userAgentInterceptor{}}
 	}),
 )
 
 func newRigClient(
 	cmd *cobra.Command,
-	s *cmdconfig.Service,
-	cfg *cmdconfig.Config,
-	interactive Interactive,
+	scope scope.Scope,
 ) (rig.Client, *auth.Service, error) {
 	options := []rig.Option{
 		rig.WithInterceptors(&userAgentInterceptor{}),
-		rig.WithSessionManager(&configSessionManager{cfg: cfg}),
+		rig.WithSessionManager(&configSessionManager{scope: scope}),
 	}
 
 	if flags.Flags.BasicAuth {
@@ -41,14 +39,14 @@ func newRigClient(
 	if flags.Flags.Host != "" {
 		options = append(options, rig.WithHost(flags.Flags.Host))
 	} else {
-		options = append(options, rig.WithHost(s.Server))
+		options = append(options, rig.WithHost(scope.GetCurrentContext().GetService().Server))
 	}
 
 	r := rig.NewClient(options...)
-	a := auth.NewService(r, cfg)
+	a := auth.NewService(r, scope)
 
 	if !SkipFX(cmd) {
-		if err := a.CheckAuth(context.TODO(), cmd, bool(interactive), flags.Flags.BasicAuth); err != nil {
+		if err := a.CheckAuth(context.TODO(), cmd, scope.IsInteractive(), flags.Flags.BasicAuth); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -85,21 +83,21 @@ func (i *userAgentInterceptor) setUserAgent(h http.Header) {
 }
 
 type configSessionManager struct {
-	cfg *cmdconfig.Config
+	scope scope.Scope
 }
 
 func (s *configSessionManager) GetAccessToken() string {
-	return s.cfg.GetCurrentAuth().AccessToken
+	return s.scope.GetCurrentContext().GetAuth().AccessToken
 }
 
 func (s *configSessionManager) GetRefreshToken() string {
-	return s.cfg.GetCurrentAuth().RefreshToken
+	return s.scope.GetCurrentContext().GetAuth().RefreshToken
 }
 
 func (s *configSessionManager) SetAccessToken(accessToken, refreshToken string) {
-	s.cfg.GetCurrentAuth().AccessToken = accessToken
-	s.cfg.GetCurrentAuth().RefreshToken = refreshToken
-	if err := s.cfg.Save(); err != nil {
+	s.scope.GetCurrentContext().GetAuth().AccessToken = accessToken
+	s.scope.GetCurrentContext().GetAuth().RefreshToken = refreshToken
+	if err := s.scope.GetCfg().Save(); err != nil {
 		fmt.Fprintf(os.Stderr, "error saving config: %v\n", err)
 	}
 }

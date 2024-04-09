@@ -17,7 +17,7 @@ import (
 )
 
 func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, c.Rig, c.Cfg)
+	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, c.Rig, c.Scope)
 	if err != nil {
 		return nil
 	}
@@ -44,8 +44,8 @@ func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, _ []string) erro
 				},
 			},
 		},
-		ProjectId:     flags.GetProject(c.Cfg),
-		EnvironmentId: flags.GetEnvironment(c.Cfg),
+		ProjectId:     flags.GetProject(c.Scope),
+		EnvironmentId: flags.GetEnvironment(c.Scope),
 	})
 
 	_, err = c.Rig.Capsule().Deploy(ctx, req)

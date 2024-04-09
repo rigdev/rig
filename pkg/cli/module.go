@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -42,12 +43,7 @@ var Module = fx.Module(
 	}),
 	fx.Provide(zap.NewDevelopment),
 	fx.Provide(getContext),
-	fx.Provide(func(c *cmdconfig.Context) *cmdconfig.Auth {
-		return c.GetAuth()
-	}),
-	fx.Provide(func(c *cmdconfig.Context) *cmdconfig.Service {
-		return c.GetService()
-	}),
+	fx.Provide(scope.NewScope),
 	fx.Provide(func() context.Context { return context.Background() }),
 	fx.Provide(func() (*client.Client, error) {
 		return client.NewClientWithOpts(
@@ -58,14 +54,12 @@ var Module = fx.Module(
 	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
 )
 
-type Interactive bool
-
 func getContext(
 	cfg *cmdconfig.Config,
 	promptInfo *PromptInformation,
-	interactive Interactive,
+	interactive scope.Interactive,
 ) (*cmdconfig.Context, error) {
-	if cfg.CurrentContextName == "" {
+	if cfg.CurrentContextName == "" && flags.Flags.Context == "" {
 		if interactive {
 			if len(cfg.Contexts) > 0 {
 				fmt.Println("No context selected, please select one")
@@ -81,8 +75,19 @@ func getContext(
 			}
 		}
 	}
-
 	c := cfg.GetCurrentContext()
+	if flags.Flags.Context != "" {
+		found := false
+		for _, context := range cfg.Contexts {
+			if context.Name == flags.Flags.Context {
+				found = true
+				c = context
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("context `%v` not found", flags.Flags.Context)
+		}
+	}
 	if c == nil && !interactive {
 		// No context configured. See if there is both host and auth available.
 		if flags.Flags.Host == "" {
@@ -115,15 +120,17 @@ func getContext(
 		return nil, fmt.Errorf("no current context in config, run `rig config init`")
 	}
 
-	c.SetService(cfg.GetCurrentService())
-	if c.GetService() == nil {
+	service, err := cfg.GetService(c.ServiceName)
+	if err != nil {
 		return nil, fmt.Errorf("missing service config for context `%v`", cfg.CurrentContextName)
 	}
+	c.SetService(service)
 
-	c.SetAuth(cfg.GetCurrentAuth())
-	if c.GetAuth() == nil {
-		return nil, fmt.Errorf("missing auth config for context `%v`", cfg.CurrentContextName)
+	user, err := cfg.GetUser(c.Name)
+	if err != nil {
+		return nil, fmt.Errorf("missing user config for context `%v`", cfg.CurrentContextName)
 	}
+	c.SetAuth(user.Auth)
 
 	return c, nil
 }
@@ -155,7 +162,7 @@ func createOptions(cmd *cobra.Command, args []string) []fx.Option {
 		fx.Provide(func() *cobra.Command { return cmd }),
 		fx.Provide(func() []string { return args }),
 		// provide a flag to indicate that we cannot prompt for resource creation
-		fx.Provide(func() Interactive { return Interactive(term.IsTerminal(int(os.Stdin.Fd()))) }),
+		fx.Provide(func() scope.Interactive { return scope.Interactive(term.IsTerminal(int(os.Stdin.Fd()))) }),
 	}
 }
 

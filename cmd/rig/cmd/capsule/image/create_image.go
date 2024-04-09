@@ -39,8 +39,8 @@ func (c *Cmd) addImage(ctx context.Context, cmd *cobra.Command, _ []string) erro
 					ImageId: imageID,
 				},
 			}},
-			ProjectId:     flags.GetProject(c.Cfg),
-			EnvironmentId: flags.GetEnvironment(c.Cfg),
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
 		},
 	}
 

@@ -25,7 +25,7 @@ import (
 func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 	allJobs := []*capsule.CronJob{}
 
-	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
+	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Scope)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -57,8 +57,8 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 				AddCronJob: job,
 			},
 		}},
-		ProjectId:     flags.GetProject(c.Cfg),
-		EnvironmentId: flags.GetEnvironment(c.Cfg),
+		ProjectId:     flags.GetProject(c.Scope),
+		EnvironmentId: flags.GetEnvironment(c.Scope),
 	}), false); err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func promptCommand() (*capsule.CronJob_Command, error) {
 }
 
 func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) error {
-	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Cfg)
+	rollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Scope)
 	if errors.IsNotFound(err) {
 		cmd.Println("No jobs set")
 		return nil
@@ -263,8 +263,8 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 				},
 			},
 		}},
-		ProjectId:     flags.GetProject(c.Cfg),
-		EnvironmentId: flags.GetEnvironment(c.Cfg),
+		ProjectId:     flags.GetProject(c.Scope),
+		EnvironmentId: flags.GetEnvironment(c.Scope),
 	}), false); err != nil {
 		return err
 	}

@@ -17,12 +17,12 @@ func (c *Cmd) viewConfig(cmd *cobra.Command, _ []string) error {
 	var toPrint string
 	var err error
 	if minify {
-		toPrint, err = common.Format(c.Cfg.Minify(), outputType)
+		toPrint, err = common.Format(c.Scope.GetCfg().Minify(), outputType)
 		if err != nil {
 			return err
 		}
 	} else {
-		toPrint, err = common.Format(c.Cfg, outputType)
+		toPrint, err = common.Format(c.Scope.GetCfg(), outputType)
 		if err != nil {
 			return err
 		}

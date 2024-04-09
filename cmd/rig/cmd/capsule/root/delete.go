@@ -14,7 +14,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	if _, err := c.Rig.Capsule().Delete(ctx, &connect.Request[capsule.DeleteRequest]{
 		Msg: &capsule.DeleteRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
-			ProjectId: flags.GetProject(c.Cfg),
+			ProjectId: flags.GetProject(c.Scope),
 		},
 	}); err != nil {
 		return err

@@ -10,7 +10,7 @@ func (c *Cmd) delete(cmd *cobra.Command, args []string) error {
 	var ctx string
 	var err error
 	if len(args) == 0 {
-		ctx, err = cmdconfig.PromptForContext(c.Cfg)
+		ctx, err = cmdconfig.PromptForContext(c.Scope.GetCfg())
 		if err != nil {
 			return err
 		}
@@ -18,11 +18,11 @@ func (c *Cmd) delete(cmd *cobra.Command, args []string) error {
 		ctx = args[0]
 	}
 
-	deleted := c.Cfg.DeleteContext(ctx)
+	deleted := c.Scope.GetCfg().DeleteContext(ctx)
 	if !deleted {
 		return errors.NotFoundErrorf("context %s not found", ctx)
 	}
-	err = c.Cfg.Save()
+	err = c.Scope.GetCfg().Save()
 	if err != nil {
 		return err
 	}
