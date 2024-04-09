@@ -21,6 +21,12 @@ import (
 
 var CapsuleID string
 
+const (
+	BasicGroupID           = "basic"
+	DeploymentGroupID      = "deployment"
+	TroubleshootingGroupID = "troubleshooting"
+)
+
 func GetCurrentContainerResources(
 	ctx context.Context,
 	client rig.Client,

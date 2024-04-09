@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/rigdev/rig-go-sdk"
-	common "github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -34,12 +34,13 @@ func initCmd(c Cmd) {
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	authCmd := &cobra.Command{
 		Use:               "auth",
-		Short:             "Manage authentication for the current user",
+		Short:             "Authenticate with users or service accounts",
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
 		},
+		GroupID: common.AuthGroupID,
 	}
 
 	login := &cobra.Command{

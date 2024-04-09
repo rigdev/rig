@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -57,9 +58,11 @@ func initCmd(c Cmd) {
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
-	capsuleDeploy := &cobra.Command{
-		Use:               "deploy [capsule] [flags] [-- command]",
-		Short:             "Deploy changes to a capsule",
+	baseDeploy := cobra.Command{
+		Use:   "deploy [capsule] [flags] [-- command]",
+		Short: "Deploy changes to a capsule",
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
+			common.MaxArgsCompletionFilter(1)),
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		RunE:              cli.CtxWrap(cmd.deploy),
 		Long: `Deploy a number of changes to a Capsule.
@@ -69,68 +72,68 @@ Use '--no-wait' to skip this.
 
 If --image is given, rig creates a new reference to the docker image if it doesn't already exist`,
 	}
-	capsuleDeploy.Flags().BoolVar(&noWait, "no-wait", false, "skip waiting for the changes to be applied.")
+	baseDeploy.Flags().BoolVar(&noWait, "no-wait", false, "skip waiting for the changes to be applied.")
 
-	capsuleDeploy.Flags().StringToStringVarP(
+	baseDeploy.Flags().StringToStringVarP(
 		&environmentVariables,
 		"set-env-var", "e", nil,
 		"environment variables to add to the Capsule of the format `key=value`",
 	)
-	capsuleDeploy.Flags().StringSliceVar(
+	baseDeploy.Flags().StringSliceVar(
 		&removeEnvironmentVariables,
 		"rm-env-var", nil,
 		"environment variables to remove from the Capsule",
 	)
 
-	capsuleDeploy.Flags().IntVarP(
+	baseDeploy.Flags().IntVarP(
 		&replicas,
 		"replicas", "r", 0,
 		"replicas of the Capsule to run. If Autoscaler is enabled, this will change the minimum number of replicas "+
 			"for the Capsule",
 	)
-	capsuleDeploy.Flags().StringToStringVarP(
+	baseDeploy.Flags().StringToStringVarP(
 		&annotations,
 		"set-annotation", "A", nil,
 		"annotations to add to the Capsule of the format `key=value`",
 	)
-	capsuleDeploy.Flags().StringSliceVar(
+	baseDeploy.Flags().StringSliceVar(
 		&removeAnnotations,
 		"rm-annotation", nil,
 		"annotation to remove from the Capsule",
 	)
 
-	capsuleDeploy.Flags().StringSliceVar(
+	baseDeploy.Flags().StringSliceVar(
 		&environmentSources,
 		"set-env-source", nil,
 		"environment source references to set on the Capsule. Must be of the format `[ConfigMap|Secret]/name`, "+
 			"e.g. `Secret/my-secret`",
 	)
-	capsuleDeploy.Flags().StringSliceVar(
+	baseDeploy.Flags().StringSliceVar(
 		&removeEnvironmentSources,
 		"rm-env-source", nil,
 		"environment source references to remove from the Capsule. Must be of the format `[ConfigMap|Secret]/name`, "+
 			"e.g. `Secret/my-secret`",
 	)
-	capsuleDeploy.Flags().StringVarP(
+	baseDeploy.Flags().StringVarP(
 		&imageID,
 		"image", "i", "", "container image to deploy. Will register the image in rig if it doesn't exist",
 	)
-	capsuleDeploy.Flags().BoolVar(
+	baseDeploy.Flags().BoolVar(
 		&remote, "remote", false, "if --image is also given, Rig will assume the image is from a remote "+
 			"registry. If not set, Rig will search locally and then remotely",
 	)
-	capsuleDeploy.Flags().StringArrayVar(
+	baseDeploy.Flags().StringArrayVar(
 		&configFiles, "set-config-file", nil,
 		"config files to set in the capsule, adding if not already exists. Must be a mapping from "+
 			"`path=<container-path>,src=<file-path>,[options]`, where `file-path` must be a local file and `container-path` "+
 			"is an absolute path within the container. Options can be `secret`, which "+
 			"would create the resource as a Kubernetes Secret.",
 	)
-	capsuleDeploy.Flags().StringSliceVar(
+	baseDeploy.Flags().StringSliceVar(
 		&removeConfigFiles, "rm-config-file", nil, "config files to remove from the capsule. Must be an absolute path "+
 			"of the config-file within the container",
 	)
-	capsuleDeploy.Flags().BoolVar(&forceOverride, "force-override", false,
+	baseDeploy.Flags().BoolVar(&forceOverride, "force-override", false,
 		"by default, existing objects will be kept in favor of overriding them."+
 			"To force the override of resources, set this flag to true."+
 			"An example of this use-case is a migration step, where resource created by a previous toolchain e.g."+
@@ -138,27 +141,45 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 			"While the override is irreversible, this flag is not \"sticky\" and must be set by each"+
 			"deploy that should use this behavior.",
 	)
-	capsuleDeploy.Flags().StringSliceVar(&networkInterfaces, "set-network-interface", nil,
+	baseDeploy.Flags().StringSliceVar(&networkInterfaces, "set-network-interface", nil,
 		"create or update the network interface. The argument is a file from where the network interface "+
 			"can be read. The Network Interface must have both a name and a port.")
-	capsuleDeploy.Flags().StringSliceVar(&removeNetworkInterfaces, "rm-network-interface", nil,
+	baseDeploy.Flags().StringSliceVar(&removeNetworkInterfaces, "rm-network-interface", nil,
 		"remove a network interface by name.")
 
-	if err := capsuleDeploy.RegisterFlagCompletionFunc(
+	if err := baseDeploy.RegisterFlagCompletionFunc(
 		"image",
-		cli.HackCtxWrapCompletion(cmd.completions, s),
+		cli.HackCtxWrapCompletion(cmd.imageCompletions, s),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	parent.AddCommand(capsuleDeploy)
+	capsuleDeploy := baseDeploy
+	capsuleDeploy.GroupID = capsule.DeploymentGroupID
+	parent.AddCommand(&capsuleDeploy)
 
 	// Add as top-level command as well.
-	parent.Parent().AddCommand(capsuleDeploy)
+	rootDeploy := baseDeploy
+	rootDeploy.GroupID = common.CapsuleGroupID
+	parent.Parent().AddCommand(&rootDeploy)
 }
 
-func (c *Cmd) completions(
+func (c *Cmd) capsuleCompletions(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Capsules(ctx, c.Rig, toComplete, c.Scope)
+}
+
+func (c *Cmd) imageCompletions(
 	ctx context.Context,
 	cmd *cobra.Command,
 	args []string,

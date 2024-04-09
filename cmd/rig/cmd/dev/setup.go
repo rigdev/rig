@@ -1,6 +1,7 @@
 package dev
 
 import (
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/dev/kind"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
@@ -16,6 +17,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			auth.OmitEnvironment: "",
 			auth.OmitUser:        "",
 		},
+		GroupID: common.OtherGroupID,
 	}
 
 	kind.Setup(dev, s)

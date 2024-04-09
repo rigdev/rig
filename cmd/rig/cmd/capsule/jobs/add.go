@@ -225,7 +225,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	var job string
-	if len(args) == 0 {
+	if len(args) < 2 {
 		var jobNames []string
 		for _, j := range rollout.GetConfig().GetCronJobs() {
 			jobNames = append(jobNames, j.GetJobName())
@@ -239,7 +239,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 			return err
 		}
 	} else {
-		job = args[0]
+		job = args[1]
 	}
 
 	found := false

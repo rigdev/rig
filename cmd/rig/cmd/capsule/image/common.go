@@ -15,7 +15,6 @@ import (
 	"github.com/docker/docker/api/types/registry"
 	container_name "github.com/google/go-containerregistry/pkg/name"
 	"github.com/jedib0t/go-pretty/v6/progress"
-	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig/cmd/common"
@@ -187,17 +186,6 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	}
 
 	return res.Msg.GetImageId(), nil
-}
-
-func formatImage(i *capsule_api.Image) string {
-	var age string
-	if i.GetCreatedAt().AsTime().IsZero() {
-		age = "-"
-	} else {
-		age = time.Since(i.GetCreatedAt().AsTime()).Truncate(time.Second).String()
-	}
-
-	return fmt.Sprintf("%v\t (Age: %v)", i.GetImageId(), age)
 }
 
 func (c *Cmd) pushLocalImageToDevRegistry(ctx context.Context, image string) (string, string, error) {

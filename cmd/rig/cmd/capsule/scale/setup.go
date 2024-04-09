@@ -1,8 +1,12 @@
 package scale
 
 import (
+	"context"
+
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
@@ -51,21 +55,26 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Use:               "scale",
 		Short:             "Scale and inspect the resources of the capsule",
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		GroupID:           capsule.DeploymentGroupID,
 	}
 
 	scaleGet := &cobra.Command{
-		Use:   "get",
+		Use:   "get [capsule]",
 		Short: "Displays the resources (container size) and replicas of the capsule",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.get),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.get),
 	}
 	scale.AddCommand(scaleGet)
 
 	scaleVertical := &cobra.Command{
-		Use:   "vertical",
+		Use:   "vertical [capsule]",
 		Short: "Vertically scaling the capsule (setting the container size)",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.vertical),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.vertical),
 	}
 	scaleVertical.Flags().StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
 	scaleVertical.Flags().StringVar(&requestMemory, "request-memory", "", "Minimum memory per container")
@@ -82,11 +91,14 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	scale.AddCommand(scaleVertical)
 
 	scaleHorizontal := &cobra.Command{
-		Use:   "horizontal",
+		Use:   "horizontal [capsule]",
 		Short: "Horizontally scaling the capsule (setting the number of replicas and configuring the autoscaler)",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.horizontal),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.horizontal),
 	}
+
 	scaleHorizontal.Flags().Uint32VarP(&replicas, "replicas", "r", 0, "number of replicas to scale to")
 	scaleHorizontal.Flags().BoolVarP(
 		&overwriteAutoscaler, "overwrite-autoscaler", "a", false, "if the autoscaler is enabled, this flag is "+
@@ -99,11 +111,16 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	scale.AddCommand(scaleHorizontal)
 
 	scaleHorizontalAuto := &cobra.Command{
-		Use:   "autoscale",
+		Use:   "autoscale [capsule]",
 		Short: "Configure the autoscaler for horizontal scaling",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.autoscale),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.autoscale),
 	}
+
+	scaleHorizontal.SetCompletionCommandGroupID("horizontal")
+
 	scaleHorizontalAuto.Flags().Uint32VarP(
 		&utilizationPercentage,
 		"utilization-percentage", "u", 0, "CPU utilization percentage for the autoscaler. 1 <= 100",
@@ -116,10 +133,24 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	)
 	scaleHorizontalAuto.Flags().StringVar(
 		&autoscalerPath,
-		"path", "", `If given, reads the configuration for the autoscaler from the file.Accepts json or yaml.
+		"path", "", `If given, reads the configuration for the autoscaler from the file. Accepts json or yaml.
 If other flags are given as well, they overwrite their fields in the configuration at 'path'.`,
 	)
 	scaleHorizontal.AddCommand(scaleHorizontalAuto)
 
 	parent.AddCommand(scale)
+}
+
+func (c *Cmd) completions(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Capsules(ctx, c.Rig, toComplete, c.Scope)
 }

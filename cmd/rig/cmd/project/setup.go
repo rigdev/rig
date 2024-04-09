@@ -56,6 +56,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			auth.OmitEnvironment: "",
 			auth.OmitProject:     "",
 		},
+		GroupID: common.ManagementGroupID,
 	}
 
 	getSettings := &cobra.Command{
@@ -124,51 +125,12 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	}
 	project.AddCommand(deleteProject)
 
-	updateProject := &cobra.Command{
-		Use:   "update [project-id]",
-		Short: "Update a project. If project-ID is left out, update the current project",
-		Args:  cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.projectCompletions, s),
-			common.MaxArgsCompletionFilter(1),
-		),
-		RunE: cli.CtxWrap(cmd.update),
-	}
-	updateProject.Flags().StringVarP(&field, "field", "f", "", "Field to update")
-	updateProject.Flags().StringVarP(&value, "value", "v", "", "Value to set")
-	updateProject.MarkFlagsRequiredTogether("field", "value")
-	updateProject.SetHelpFunc(
-		func(cmd *cobra.Command, args []string) {
-			cmd.Printf(
-				("Usage:\n" +
-					"  update [flags] \n\n" +
-					"Flags:\n" +
-					"  -f, --field string   Field to update\n" +
-					"  -h, --help           help for update\n" +
-					"  -v, --value string   Value to set\n" +
-
-					"Avaliable fields:\n" +
-					"  name - string \n"),
-			)
-		},
-	)
-	if err := updateProject.RegisterFlagCompletionFunc("field", projectUpdateFieldsCompletion); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	project.AddCommand(updateProject)
-
 	getProjects := &cobra.Command{
-		Use:   "get [project-id]",
+		Use:   "list",
 		Short: "Get one or multiple projects",
 		Args:  cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.projectCompletions, s),
-			common.MaxArgsCompletionFilter(1),
-		),
-		RunE: cli.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.list),
 	}
-	getProjects.Flags().BoolVarP(&current, "current", "c", false, "Get the current project")
 	getProjects.Flags().IntVar(&offset, "offset", 0, "Offset")
 	getProjects.Flags().IntVarP(&limit, "limit", "l", 10, "Limit")
 	project.AddCommand(getProjects)
@@ -217,25 +179,6 @@ func settingsUpdateFieldsCompletion(
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
 	fields := []string{"email-provider", "add-docker-registry", "delete-docker-registry", "template"}
-	var completions []string
-	for _, s := range fields {
-		if strings.HasPrefix(s, toComplete) {
-			completions = append(completions, s)
-		}
-	}
-	if len(completions) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return completions, cobra.ShellCompDirectiveNoFileComp
-}
-
-func projectUpdateFieldsCompletion(
-	_ *cobra.Command,
-	_ []string,
-	toComplete string,
-) ([]string, cobra.ShellCompDirective) {
-	fields := []string{"name"}
 	var completions []string
 	for _, s := range fields {
 		if strings.HasPrefix(s, toComplete) {

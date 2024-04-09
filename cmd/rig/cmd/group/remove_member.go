@@ -68,7 +68,8 @@ func (c *Cmd) removeMember(ctx context.Context, cmd *cobra.Command, args []strin
 		}
 	}
 
-	if groupID == "" {
+	var groupID string
+	if len(args) < 2 {
 		res, err := c.Rig.Group().ListGroupsForMember(ctx, &connect.Request[group.ListGroupsForMemberRequest]{
 			Msg: &group.ListGroupsForMemberRequest{
 				MemberId: memberID,
@@ -87,7 +88,7 @@ func (c *Cmd) removeMember(ctx context.Context, cmd *cobra.Command, args []strin
 			return err
 		}
 	} else {
-		_, id, err := common.GetGroup(ctx, groupID, c.Rig, c.Prompter)
+		_, id, err := common.GetGroup(ctx, args[1], c.Rig, c.Prompter)
 		if err != nil {
 			return err
 		}

@@ -12,8 +12,8 @@ import (
 
 func (c *Cmd) restart(ctx context.Context, cmd *cobra.Command, args []string) error {
 	arg := ""
-	if len(args) > 0 {
-		arg = args[0]
+	if len(args) > 1 {
+		arg = args[1]
 	}
 
 	instanceID, err := c.provideInstanceID(ctx, capsule_cmd.CapsuleID, arg, cmd.ArgsLenAtDash())

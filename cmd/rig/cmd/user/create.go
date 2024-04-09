@@ -13,7 +13,7 @@ import (
 )
 
 func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	updates, err := c.getUserAndPasswordUpdates(username, email, password)
+	updates, err := c.getUserAndPasswordUpdates("", email, password)
 	if err != nil {
 		return err
 	}

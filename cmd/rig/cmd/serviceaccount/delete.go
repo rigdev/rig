@@ -11,28 +11,28 @@ import (
 )
 
 func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) error {
-	var id string
+	var serviceAccountID string
 	var err error
 
 	if len(args) > 0 {
-		id = args[0]
+		serviceAccountID = args[0]
 	}
 
-	if id == "" {
-		id, err = c.Prompter.Input("ID:", common.ValidateNonEmptyOpt)
+	if serviceAccountID == "" {
+		serviceAccountID, err = c.Prompter.Input("Service Account ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = uuid.Parse(id)
+	_, err = uuid.Parse(serviceAccountID)
 	if err != nil {
 		return err
 	}
 
 	_, err = c.Rig.ServiceAccount().Delete(ctx, &connect.Request[service_account.DeleteRequest]{
 		Msg: &service_account.DeleteRequest{
-			ServiceAccountId: id,
+			ServiceAccountId: serviceAccountID,
 		},
 	})
 	if err != nil {

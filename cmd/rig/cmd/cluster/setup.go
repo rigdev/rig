@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -30,6 +31,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Annotations: map[string]string{
 			auth.OmitProject: "",
 		},
+		GroupID: common.ManagementGroupID,
 	}
 
 	getConfig := &cobra.Command{

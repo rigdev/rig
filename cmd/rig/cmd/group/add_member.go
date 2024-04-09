@@ -17,10 +17,12 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 	var groupIDs []string
 	var err error
 	if len(args) == 0 {
-		userID, serviceAccountID, _, err := common.GetMember(ctx, c.Rig, c.Prompter)
+		userID, serviceAccountID, gIds, err := common.GetMember(ctx, c.Rig, c.Prompter)
 		if err != nil {
 			return err
 		}
+		groupIDs = gIds
+
 		if userID != "" {
 			memberID = &group.MemberID{
 				Kind: &group.MemberID_UserId{
@@ -35,12 +37,13 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 			}
 		}
 	} else {
-		_, err := c.Rig.User().Get(ctx, &connect.Request[user.GetRequest]{
+		user, err := c.Rig.User().Get(ctx, &connect.Request[user.GetRequest]{
 			Msg: &user.GetRequest{
 				UserId: args[0],
 			},
 		})
 		if err == nil {
+			groupIDs = user.Msg.GetUser().GetUserInfo().GetGroupIds()
 			memberID = &group.MemberID{
 				Kind: &group.MemberID_UserId{
 					UserId: args[0],
@@ -55,6 +58,8 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 			}
 			for _, acc := range accs.Msg.GetServiceAccounts() {
 				if acc.GetServiceAccountId() == args[0] {
+					groupIDs = acc.GetGroupIds()
+
 					memberID = &group.MemberID{
 						Kind: &group.MemberID_ServiceAccountId{
 							ServiceAccountId: args[0],
@@ -69,8 +74,8 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 		}
 	}
 
-	var gname string
-	if groupID == "" {
+	var groupID string
+	if len(args) < 2 {
 		groupsRes, err := c.Rig.Group().List(ctx, connect.NewRequest(&group.ListRequest{}))
 		if err != nil {
 			return err
@@ -101,7 +106,7 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 			return err
 		}
 	} else {
-		_, groupID, err = common.GetGroup(ctx, groupID, c.Rig, c.Prompter)
+		_, groupID, err = common.GetGroup(ctx, args[1], c.Rig, c.Prompter)
 		if err != nil {
 			return err
 		}
@@ -121,6 +126,6 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 		return err
 	}
 
-	cmd.Printf("User added to group %s\n", gname)
+	cmd.Printf("User added to group %s\n", groupID)
 	return nil
 }

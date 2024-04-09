@@ -23,7 +23,6 @@ var (
 )
 
 var (
-	name string
 	role string
 )
 
@@ -50,15 +49,15 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
 		},
+		GroupID: common.AuthGroupID,
 	}
 
 	create := &cobra.Command{
-		Use:   "create",
+		Use:   "create [name]",
 		Short: "Create a new service account",
 		RunE:  cli.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
-	serviceAccount.PersistentFlags().StringVarP(&name, "name", "n", "", "name of the credential")
 	create.Flags().StringVarP(&role, "role", "r", "", "role of the user (admin, owner, developer, viewer)")
 	if err := create.RegisterFlagCompletionFunc("role", common.RoleCompletions); err != nil {
 		fmt.Println(err)
@@ -67,18 +66,17 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	serviceAccount.AddCommand(create)
 
 	get := &cobra.Command{
-		Use:               "get [id]",
-		Short:             "Get one or multiple service accounts",
-		RunE:              cli.CtxWrap(cmd.list),
-		Args:              cobra.MaximumNArgs(1),
-		ValidArgsFunction: cli.HackCtxWrapCompletion(cmd.completions, s),
+		Use:   "list",
+		Short: "List service accounts",
+		RunE:  cli.CtxWrap(cmd.list),
+		Args:  cobra.NoArgs,
 	}
 	get.Flags().IntVar(&offset, "offset", 0, "offset")
 	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit")
 	serviceAccount.AddCommand(get)
 
 	deleteCmd := &cobra.Command{
-		Use:               "delete [id]",
+		Use:               "delete [service-account-id]",
 		Short:             "Delete a service account",
 		RunE:              cli.CtxWrap(cmd.delete),
 		Args:              cobra.MaximumNArgs(1),

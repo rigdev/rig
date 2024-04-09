@@ -6,7 +6,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/model"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -15,7 +14,7 @@ import (
 )
 
 func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) error {
-	rolloutID, err := c.getRollback(ctx, args[0])
+	rollout, err := c.getRollback(ctx, args)
 	if err != nil {
 		return err
 	}
@@ -25,7 +24,7 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) e
 		Changes: []*capsule.Change{{
 			Field: &capsule.Change_Rollback_{
 				Rollback: &capsule.Change_Rollback{
-					RollbackId: rolloutID,
+					RollbackId: rollout,
 				},
 			},
 		}},
@@ -44,40 +43,54 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) e
 	if err != nil {
 		return err
 	}
-	cmd.Printf("rollback to %v initiated. New rollout has ID %v\n", rolloutID, resp.Msg.GetRolloutId())
+	cmd.Printf("rollback to %v initiated. New rollout has ID %v\n", rollout, resp.Msg.GetRolloutId())
 
 	return nil
 }
 
-func (c *Cmd) getRollback(ctx context.Context, rolloutID string) (uint64, error) {
-	if rolloutID != "" {
-		// parse rolloutID to uint64
-		rolloutID, err := strconv.ParseUint(rolloutID, 10, 64)
+func (c *Cmd) getRollback(ctx context.Context, args []string) (uint64, error) {
+	var rollout uint64
+	var err error
+	if len(args) > 1 {
+		rollout, err = strconv.ParseUint(args[1], 10, 32)
 		if err != nil {
-			return 0, errors.InvalidArgumentErrorf("invalid rollout ID: %v", rolloutID)
+			return 0, errors.InvalidArgumentErrorf("invalid rollout id - %v", err)
 		}
-		return rolloutID, nil
-	}
+	} else {
+		resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
+			Msg: &capsule.ListRolloutsRequest{
+				CapsuleId:     capsule_cmd.CapsuleID,
+				ProjectId:     flags.GetProject(c.Scope),
+				EnvironmentId: flags.GetEnvironment(c.Scope),
+				Pagination: &model.Pagination{
+					Limit:      10,
+					Descending: true,
+				},
+			},
+		})
+		if err != nil {
+			return 0, err
+		}
 
-	resp, err := c.Rig.Capsule().ListRollouts(ctx, connect.NewRequest(&capsule.ListRolloutsRequest{
-		CapsuleId: capsule_cmd.CapsuleID,
-		Pagination: &model.Pagination{
-			Offset:     1,
-			Descending: true,
-		},
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
-	}))
-	if err != nil {
-		return 0, err
-	}
+		if len(resp.Msg.GetRollouts()) == 0 {
+			return 0, errors.NotFoundErrorf("no rollouts found")
+		}
 
-	for _, r := range resp.Msg.GetRollouts() {
-		s := r.GetStatus().GetState()
-		if s == rollout.State_STATE_STOPPED {
-			return r.RolloutId, nil
+		rollouts := []string{}
+		for _, r := range resp.Msg.GetRollouts() {
+			rollouts = append(rollouts, strconv.FormatUint(r.GetRolloutId(), 10))
+		}
+
+		_, rolloutString, err := c.Prompter.Select("Select a rollout", rollouts)
+		if err != nil {
+			return 0, err
+		}
+
+		rollout, err = strconv.ParseUint(rolloutString, 10, 32)
+		if err != nil {
+			return 0, errors.InvalidArgumentErrorf("invalid rollout id - %v", err)
 		}
 	}
 
-	return 0, errors.New("no previous successful rollout")
+	return rollout, nil
 }

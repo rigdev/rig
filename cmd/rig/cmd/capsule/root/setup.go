@@ -2,14 +2,7 @@ package root
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"strings"
-	"time"
 
-	"connectrpc.com/connect"
-	"github.com/docker/docker/client"
-	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -19,12 +12,18 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/jobs"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
+)
+
+const (
+	deploymentGroupTitle      = "Deployment Commands"
+	troubleshootingGroupTitle = "Troubleshooting Commands"
+	basicGroupTitle           = "Basic Commands"
 )
 
 var (
@@ -33,8 +32,6 @@ var (
 )
 
 var (
-	interactive        bool
-	forceDeploy        bool
 	follow             bool
 	previousContainers bool
 )
@@ -44,10 +41,9 @@ var since string
 type Cmd struct {
 	fx.In
 
-	Rig          rig.Client
-	Scope        scope.Scope
-	DockerClient *client.Client
-	Prompter     common.Prompter
+	Rig      rig.Client
+	Scope    scope.Scope
+	Prompter common.Prompter
 }
 
 var cmd Cmd
@@ -66,78 +62,93 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 				return cmd.persistentPreRunE(ctx, c, args)
 			},
 		),
-	}
-	capsuleCmd.PersistentFlags().StringVarP(&capsule.CapsuleID, "capsule-id", "c", "", "Id of the capsule")
-	if err := capsuleCmd.RegisterFlagCompletionFunc(
-		"capsule-id",
-		cli.HackCtxWrapCompletion(cmd.completions, s),
-	); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		GroupID: common.CapsuleGroupID,
 	}
 
+	capsuleCmd.AddGroup(
+		&cobra.Group{
+			ID:    capsule.BasicGroupID,
+			Title: basicGroupTitle,
+		},
+		&cobra.Group{
+			ID:    capsule.DeploymentGroupID,
+			Title: deploymentGroupTitle,
+		},
+		&cobra.Group{
+			ID:    capsule.TroubleshootingGroupID,
+			Title: troubleshootingGroupTitle,
+		})
+
 	capsuleCreate := &cobra.Command{
-		Use:   "create",
+		Use:   "create [capsule]",
 		Short: "Create a new capsule",
-		Args:  cobra.NoArgs,
+		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.create),
 		Annotations: map[string]string{
 			auth.OmitCapsule: "",
 		},
-	}
-	capsuleCreate.Flags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode")
-	capsuleCreate.Flags().BoolVarP(
-		&forceDeploy,
-		"force-deploy", "f", false, "Abort the current rollout if one is in progress and deploy the changes",
-	)
-	if err := capsuleCreate.RegisterFlagCompletionFunc("interactive", common.BoolCompletions); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	if err := capsuleCreate.RegisterFlagCompletionFunc("force-deploy", common.BoolCompletions); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		GroupID: capsule.BasicGroupID,
 	}
 	capsuleCmd.AddCommand(capsuleCreate)
 
-	capsuleAbort := &cobra.Command{
-		Use:   "abort",
-		Short: "Abort the current rollout. This will leave the capsule in a undefined state",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.abort),
+	capsuleStop := &cobra.Command{
+		Use:   "stop [capsule]",
+		Short: "Stop the current rollout. This will remove all the resources related to this rollout.",
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE:    cli.CtxWrap(cmd.stop),
+		GroupID: capsule.DeploymentGroupID,
 	}
-	capsuleCmd.AddCommand(capsuleAbort)
+	capsuleCmd.AddCommand(capsuleStop)
 
 	capsuleDelete := &cobra.Command{
-		Use:   "delete",
+		Use:   "delete [capsule]",
 		Short: "Delete a capsule",
-		Args:  cobra.NoArgs,
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
 		Annotations: map[string]string{
 			auth.OmitEnvironment: "",
 		},
-		RunE: cli.CtxWrap(cmd.delete),
+		GroupID: capsule.BasicGroupID,
+		RunE:    cli.CtxWrap(cmd.delete),
 	}
 	capsuleCmd.AddCommand(capsuleDelete)
 
 	capsuleGet := &cobra.Command{
-		Use:               "get",
-		Short:             "Get one or more capsules",
-		PersistentPreRunE: s.PersistentPreRunE,
-		Args:              cobra.NoArgs,
+		Use:   "get [capsule]",
+		Short: "Get a capsule",
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE:    cli.CtxWrap(cmd.get),
+		GroupID: capsule.BasicGroupID,
+	}
+	capsuleCmd.AddCommand(capsuleGet)
+
+	capsuleList := &cobra.Command{
+		Use:   "list",
+		Short: "List capsules",
+		Args:  cobra.NoArgs,
+		RunE:  cli.CtxWrap(cmd.list),
 		Annotations: map[string]string{
 			auth.OmitCapsule: "",
 		},
-		RunE: cli.CtxWrap(cmd.get),
+		GroupID: capsule.BasicGroupID,
 	}
-	capsuleGet.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
-	capsuleGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	capsuleCmd.AddCommand(capsuleGet)
+	capsuleList.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
+	capsuleList.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
+	capsuleCmd.AddCommand(capsuleList)
 
 	capsuleLogs := &cobra.Command{
-		Use:   "logs",
+		Use:   "logs [capsule]",
 		Short: "Get logs across all instances of the capsule",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.logs),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE:    cli.CtxWrap(cmd.logs),
+		GroupID: capsule.TroubleshootingGroupID,
 	}
 	capsuleLogs.Flags().BoolVarP(
 		&follow, "follow", "f", false, "keep the connection open and read out logs as they are produced",
@@ -146,7 +157,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		&previousContainers, "previous-containers", "p", false,
 		"Return logs from previous container terminations of the instance.",
 	)
-	capsuleLogs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
+	capsuleLogs.Flags().StringVarP(&since, "since", "s", "", "do not show logs older than 'since'")
 	capsuleCmd.AddCommand(capsuleLogs)
 
 	parent.AddCommand(capsuleCmd)
@@ -170,46 +181,16 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var capsuleIDs []string
-
-	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	resp, err := c.Rig.Capsule().List(ctx, &connect.Request[capsule_api.ListRequest]{
-		Msg: &capsule_api.ListRequest{
-			ProjectId: flags.GetProject(c.Scope),
-		},
-	})
-	if err != nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	for _, c := range resp.Msg.GetCapsules() {
-		if strings.HasPrefix(c.GetCapsuleId(), toComplete) {
-			capsuleIDs = append(capsuleIDs, formatCapsule(c))
-		}
-	}
-
-	if len(capsuleIDs) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return capsuleIDs, cobra.ShellCompDirectiveDefault
+	return completions.Capsules(ctx, c.Rig, toComplete, c.Scope)
 }
 
-func formatCapsule(c *capsule_api.Capsule) string {
-	age := time.Since(c.GetUpdatedAt().AsTime()).Truncate(time.Second).String()
-
-	return fmt.Sprintf("%v\t (Updated At: %v)", c.GetCapsuleId(), age)
-}
-
-func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if _, ok := cmd.Annotations[auth.OmitCapsule]; ok {
 		return nil
 	}
 
-	if capsule.CapsuleID != "" {
+	if len(args) > 0 {
+		capsule.CapsuleID = args[0]
 		return nil
 	}
 
