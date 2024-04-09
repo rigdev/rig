@@ -39,15 +39,15 @@ var since string
 type Cmd struct {
 	fx.In
 
-	Rig   rig.Client
-	Scope scope.Scope
+	Rig      rig.Client
+	Scope    scope.Scope
+	Prompter common.Prompter
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	cmd.Rig = c.Rig
-	cmd.Scope = c.Scope
+	cmd = c
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
@@ -165,7 +165,7 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 		return items[0], nil
 	}
 
-	_, s, err := common.PromptSelect("instance", items)
+	_, s, err := c.Prompter.Select("instance", items)
 	return s, err
 }
 

@@ -12,7 +12,7 @@ import (
 func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var err error
 	if groupID == "" {
-		groupID, err = common.PromptInput("Group ID:", common.ValidateNonEmptyOpt)
+		groupID, err = c.Prompter.Input("Group ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

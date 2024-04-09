@@ -116,7 +116,7 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, args []string) error {
 			}
 			choices = append(choices, []string{strconv.Itoa(idx), strings.Join(plugins, ", ")})
 		}
-		idx, err = common.PromptTableSelect("Choose a plugin", choices, []string{"Index", "Plugins"})
+		idx, err = c.Prompter.TableSelect("Choose a plugin", choices, []string{"Index", "Plugins"})
 		if err != nil {
 			return err
 		}

@@ -50,7 +50,7 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 		}
 	}
 
-	if err := capsule_cmd.Deploy(ctx, c.Rig, connect.NewRequest(&capsule.DeployRequest{
+	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Prompter, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
 			Field: &capsule.Change_AddCronJob{
@@ -97,7 +97,7 @@ func (c *Cmd) promptCronJob(existingJobs []*capsule.CronJob) (*capsule.CronJob, 
 	for _, j := range existingJobs {
 		existingNames = append(existingNames, j.GetJobName())
 	}
-	name, err := common.PromptInput("Cronjob name:", common.ValidateAndOpt(
+	name, err := c.Prompter.Input("Cronjob name:", common.ValidateAndOpt(
 		common.ValidateSystemName,
 		common.ValidateLength(3, v1alpha2.MaxAllowedCronJobName(capsule_cmd.CapsuleID)),
 		common.ValidateUnique(existingNames),
@@ -107,32 +107,32 @@ func (c *Cmd) promptCronJob(existingJobs []*capsule.CronJob) (*capsule.CronJob, 
 	}
 	job.JobName = name
 
-	idx, _, err := common.PromptSelect("Type of job:", []string{"URL", "Command"})
+	idx, _, err := c.Prompter.Select("Type of job:", []string{"URL", "Command"})
 	if err != nil {
 		return nil, err
 	}
 	switch idx {
 	case 0:
-		url, err := promptURL()
+		url, err := c.promptURL()
 		if err != nil {
 			return nil, err
 		}
 		job.JobType = url
 	case 1:
-		cmd, err := promptCommand()
+		cmd, err := c.promptCommand()
 		if err != nil {
 			return nil, err
 		}
 		job.JobType = cmd
 	}
 
-	cronExp, err := common.PromptInput("Cron schedule:", common.ValidateCronExpressionOpt)
+	cronExp, err := c.Prompter.Input("Cron schedule:", common.ValidateCronExpressionOpt)
 	if err != nil {
 		return nil, err
 	}
 	job.Schedule = cronExp
 
-	s, err := common.PromptInput("Max Retries (defaults to 6)", common.ValidateAllowEmptyOpt(common.ValidateUInt))
+	s, err := c.Prompter.Input("Max Retries (defaults to 6)", common.ValidateAllowEmptyOpt(common.ValidateUInt))
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (c *Cmd) promptCronJob(existingJobs []*capsule.CronJob) (*capsule.CronJob, 
 		job.MaxRetries = 6 // TODO Find a better way of handling defaults
 	}
 
-	ds, err := common.PromptInput("Timeout Duration (optional)", common.ValidateAllowEmptyOpt(common.ValidateDuration))
+	ds, err := c.Prompter.Input("Timeout Duration (optional)", common.ValidateAllowEmptyOpt(common.ValidateDuration))
 	if err != nil {
 		return nil, err
 	}
@@ -161,14 +161,14 @@ func (c *Cmd) promptCronJob(existingJobs []*capsule.CronJob) (*capsule.CronJob, 
 	return job, nil
 }
 
-func promptURL() (*capsule.CronJob_Url, error) {
+func (c *Cmd) promptURL() (*capsule.CronJob_Url, error) {
 	url := &capsule.CronJob_Url{
 		Url: &capsule.JobURL{
 			QueryParameters: map[string]string{},
 		},
 	}
 
-	s, err := common.PromptInput("Port:", common.ValidatePortOpt)
+	s, err := c.Prompter.Input("Port:", common.ValidatePortOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func promptURL() (*capsule.CronJob_Url, error) {
 	}
 	url.Url.Port = uint64(port)
 
-	path, err := common.PromptInput("Path:", common.ValidateURLPathOpt)
+	path, err := c.Prompter.Input("Path:", common.ValidateURLPathOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func promptURL() (*capsule.CronJob_Url, error) {
 	return url, nil
 }
 
-func promptCommand() (*capsule.CronJob_Command, error) {
+func (c *Cmd) promptCommand() (*capsule.CronJob_Command, error) {
 	cmd := &capsule.CronJob_Command{
 		Command: &capsule.JobCommand{
 			Command: "",
@@ -197,7 +197,7 @@ func promptCommand() (*capsule.CronJob_Command, error) {
 		},
 	}
 
-	s, err := common.PromptInput("Command:")
+	s, err := c.Prompter.Input("Command:")
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 			fmt.Println("Capsule has no jobs")
 			return nil
 		}
-		_, job, err = common.PromptSelect("Job to delete:", jobNames, common.SelectEnableFilterOpt)
+		_, job, err = c.Prompter.Select("Job to delete:", jobNames, common.SelectEnableFilterOpt)
 		if err != nil {
 			return err
 		}
@@ -254,7 +254,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 		return fmt.Errorf("no job with name %s", job)
 	}
 
-	if err := capsule_cmd.Deploy(ctx, c.Rig, connect.NewRequest(&capsule.DeployRequest{
+	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Prompter, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
 			Field: &capsule.Change_RemoveCronJob_{

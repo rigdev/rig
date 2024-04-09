@@ -18,7 +18,7 @@ func (c *Cmd) listMembers(ctx context.Context, cmd *cobra.Command, args []string
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, uid, err := common.GetGroup(ctx, identifier, c.Rig)
+	_, uid, err := common.GetGroup(ctx, identifier, c.Rig, c.Prompter)
 	if err != nil {
 		return err
 	}

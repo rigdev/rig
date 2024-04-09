@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
@@ -29,6 +30,7 @@ type Cmd struct {
 	K8s            client.Client
 	K8sReader      client.Reader
 	Scheme         *runtime.Scheme
+	Prompter       common.Prompter
 }
 
 var cmd Cmd

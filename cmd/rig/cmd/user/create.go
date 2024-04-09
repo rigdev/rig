@@ -5,18 +5,17 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/user"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/spf13/cobra"
 )
 
 func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	updates, err := common.GetUserAndPasswordUpdates(username, email, password)
+	updates, err := c.Prompter.GetUserAndPasswordUpdates(username, email, password)
 	if err != nil {
 		return err
 	}
 
 	if role == "" {
-		_, role, err = common.PromptSelect("What is the role of the user?",
+		_, role, err = c.Prompter.Select("What is the role of the user?",
 			[]string{"admin", "owner", "developer", "viewer"})
 		if err != nil {
 			return err

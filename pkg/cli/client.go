@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -26,6 +27,7 @@ var clientModule = fx.Module("client",
 func newRigClient(
 	cmd *cobra.Command,
 	scope scope.Scope,
+	prompter common.Prompter,
 ) (rig.Client, *auth.Service, error) {
 	options := []rig.Option{
 		rig.WithInterceptors(&userAgentInterceptor{}),
@@ -43,7 +45,7 @@ func newRigClient(
 	}
 
 	r := rig.NewClient(options...)
-	a := auth.NewService(r, scope)
+	a := auth.NewService(r, scope, prompter)
 
 	if !SkipFX(cmd) {
 		if err := a.CheckAuth(context.TODO(), cmd, scope.IsInteractive(), flags.Flags.BasicAuth); err != nil {

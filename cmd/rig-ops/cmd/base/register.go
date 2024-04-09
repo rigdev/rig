@@ -88,8 +88,8 @@ func NewKubernetesReader(cc client.Client) (client.Reader, error) {
 	return roclient.NewReaderFromFile(Flags.KubeFile, cc.Scheme())
 }
 
-func NewRigClient(ctx context.Context, fs afero.Fs) (rig.Client, error) {
-	cfg, err := cmdconfig.NewConfig(Flags.RigConfig, fs)
+func NewRigClient(ctx context.Context, fs afero.Fs, prompter common.Prompter) (rig.Client, error) {
+	cfg, err := cmdconfig.NewConfig(Flags.RigConfig, fs, prompter)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func NewRigClient(ctx context.Context, fs afero.Fs) (rig.Client, error) {
 	// check if we need to authenticate
 	projectListResp, err := rc.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if errors.IsUnauthenticated(err) {
-		tokens, err := rigLogin(ctx, rc)
+		tokens, err := rigLogin(ctx, rc, prompter)
 		if err != nil {
 			return nil, err
 		}
@@ -146,7 +146,7 @@ func NewRigClient(ctx context.Context, fs afero.Fs) (rig.Client, error) {
 			projectChoices = append(projectChoices, p.GetProjectId())
 		}
 
-		_, Flags.Project, err = common.PromptSelect(promptStr, projectChoices)
+		_, Flags.Project, err = prompter.Select(promptStr, projectChoices)
 		if err != nil {
 			return nil, err
 		}
@@ -181,7 +181,7 @@ func NewRigClient(ctx context.Context, fs afero.Fs) (rig.Client, error) {
 			environmentChoices = append(environmentChoices, e.EnvironmentId)
 		}
 
-		_, Flags.Environment, err = common.PromptSelect(promptStr, environmentChoices)
+		_, Flags.Environment, err = prompter.Select(promptStr, environmentChoices)
 		if err != nil {
 			return nil, err
 		}
@@ -190,8 +190,8 @@ func NewRigClient(ctx context.Context, fs afero.Fs) (rig.Client, error) {
 	return rc, nil
 }
 
-func rigLogin(ctx context.Context, rc rig.Client) (*authentication.Token, error) {
-	email, err := common.PromptInput(
+func rigLogin(ctx context.Context, rc rig.Client, prompter common.Prompter) (*authentication.Token, error) {
+	email, err := prompter.Input(
 		"You are not logged in on the Rig platform. Please do so to migrate using the platform.\nEmail:",
 		common.ValidateEmailOpt,
 	)
@@ -199,7 +199,7 @@ func rigLogin(ctx context.Context, rc rig.Client) (*authentication.Token, error)
 		return nil, err
 	}
 
-	password, err := common.PromptPassword("Password: ")
+	password, err := prompter.Password("Password: ")
 	if err != nil {
 		return nil, err
 	}

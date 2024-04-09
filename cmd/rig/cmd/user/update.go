@@ -84,7 +84,7 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	u, id, err := common.GetUser(ctx, identifier, c.Rig)
+	u, id, err := common.GetUser(ctx, identifier, c.Rig, c.Prompter)
 	if err != nil {
 		return err
 	}
@@ -125,14 +125,14 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	updates := []*user.Update{}
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields)
+		i, res, err := c.Prompter.Select("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
 		if res == "Done" {
 			break
 		}
-		u, err := promptUserUpdate(userField(i+1), u)
+		u, err := c.promptUserUpdate(userField(i+1), u)
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -154,11 +154,11 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 	return nil
 }
 
-func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
+func (c *Cmd) promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 	switch f {
 	case userEmail:
 		defEmail := u.GetUserInfo().GetEmail()
-		email, err := common.PromptInput(
+		email, err := c.Prompter.Input(
 			"Email:", common.ValidateEmailOpt, common.InputDefaultOpt(defEmail),
 		)
 		if err != nil {
@@ -174,7 +174,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userUsername:
 		defUsername := u.GetUserInfo().GetUsername()
-		username, err := common.PromptInput(
+		username, err := c.Prompter.Input(
 			"Username:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defUsername),
 		)
 		if err != nil {
@@ -190,7 +190,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userPhoneNumber:
 		defPhone := u.GetUserInfo().GetPhoneNumber()
-		phone, err := common.PromptInput(
+		phone, err := c.Prompter.Input(
 			"Phone:", common.ValidatePhoneOpt, common.InputDefaultOpt(defPhone),
 		)
 		if err != nil {
@@ -205,7 +205,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 			}, nil
 		}
 	case userPassword:
-		password, err := common.PromptPassword("Password:")
+		password, err := c.Prompter.Password("Password:")
 		if err != nil {
 			return nil, nil
 		}
@@ -216,7 +216,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}, nil
 	case userIsEmailVerified:
 		defIsEmailVerified := strconv.FormatBool(u.GetIsEmailVerified())
-		isEmailVerified, err := common.PromptInput(
+		isEmailVerified, err := c.Prompter.Input(
 			"Is email verified:", common.BoolValidateOpt, common.InputDefaultOpt(defIsEmailVerified),
 		)
 		if err != nil {
@@ -231,7 +231,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 		}
 	case userIsPhoneVerified:
 		defIsPhoneVerified := strconv.FormatBool(u.GetIsPhoneVerified())
-		isPhoneVerified, err := common.PromptInput(
+		isPhoneVerified, err := c.Prompter.Input(
 			"Is phone verified:", common.BoolValidateOpt, common.InputDefaultOpt(defIsPhoneVerified),
 		)
 		if err != nil {
@@ -249,17 +249,17 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 			Field: &user.Update_ResetSessions_{},
 		}, nil
 	case userProfile:
-		u, err := getUserProfileUpdate(u.GetProfile())
+		u, err := c.getUserProfileUpdate(u.GetProfile())
 		if err != nil {
 			return nil, nil
 		}
 		return u, err
 	case userSetMetaData:
-		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
+		key, err := c.Prompter.Input("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, nil
 		}
-		value, err := common.PromptInput("Value:", common.ValidateNonEmptyOpt)
+		value, err := c.Prompter.Input("Value:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, nil
 		}
@@ -272,7 +272,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 			},
 		}, nil
 	case userDeleteMetaData:
-		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
+		key, err := c.Prompter.Input("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, nil
 		}
@@ -288,7 +288,7 @@ func promptUserUpdate(f userField, u *user.User) (*user.Update, error) {
 	return nil, nil
 }
 
-func getUserProfileUpdate(p *user.Profile) (*user.Update, error) {
+func (c *Cmd) getUserProfileUpdate(p *user.Profile) (*user.Update, error) {
 	fields := []string{
 		userProfileFirstName.String(),
 		userProfileLastName.String(),
@@ -300,14 +300,14 @@ func getUserProfileUpdate(p *user.Profile) (*user.Update, error) {
 		LastName:  p.GetLastName(),
 	}
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields)
+		i, res, err := c.Prompter.Select("Choose a field to update:", fields)
 		if err != nil {
 			return nil, nil
 		}
 		if res == "Done" {
 			break
 		}
-		err = promptUserProfileUpdate(userProfileField(i+1), pp)
+		err = c.promptUserProfileUpdate(userProfileField(i+1), pp)
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -324,11 +324,11 @@ func getUserProfileUpdate(p *user.Profile) (*user.Update, error) {
 	}, nil
 }
 
-func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
+func (c *Cmd) promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 	switch f {
 	case userProfileFirstName:
 		defFirstName := p.GetFirstName()
-		firstName, err := common.PromptInput(
+		firstName, err := c.Prompter.Input(
 			"First name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defFirstName),
 		)
 		if err != nil {
@@ -339,7 +339,7 @@ func promptUserProfileUpdate(f userProfileField, p *user.Profile) error {
 		}
 	case userProfileLastName:
 		defLastName := p.GetLastName()
-		lastName, err := common.PromptInput(
+		lastName, err := c.Prompter.Input(
 			"Last name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defLastName),
 		)
 		if err != nil {

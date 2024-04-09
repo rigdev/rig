@@ -49,7 +49,7 @@ func (c *Cmd) addImage(ctx context.Context, cmd *cobra.Command, _ []string) erro
 		if forceDeploy {
 			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
 		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, req)
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, c.Prompter, req)
 		}
 	}
 	if err != nil {

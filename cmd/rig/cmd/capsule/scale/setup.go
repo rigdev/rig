@@ -2,6 +2,7 @@ package scale
 
 import (
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
@@ -34,15 +35,15 @@ var (
 type Cmd struct {
 	fx.In
 
-	Rig   rig.Client
-	Scope scope.Scope
+	Rig      rig.Client
+	Scope    scope.Scope
+	Prompter common.Prompter
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	cmd.Rig = c.Rig
-	cmd.Scope = c.Scope
+	cmd = c
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {

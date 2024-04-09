@@ -19,7 +19,7 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 		if len(args) > 0 {
 			identifier = args[0]
 		}
-		g, uid, err := common.GetGroup(ctx, identifier, c.Rig)
+		g, uid, err := common.GetGroup(ctx, identifier, c.Rig, c.Prompter)
 		if err != nil {
 			return err
 		}

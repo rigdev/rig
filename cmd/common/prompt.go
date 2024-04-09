@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"strings"
 
 	"github.com/erikgeiser/promptkit/selection"
@@ -227,8 +228,14 @@ var templateExtensions = map[string]any{
 	"FormatValidationError": formatValidationError,
 }
 
-func PromptInput(label string, opts ...GetInputOption) (string, error) {
+type Prompter struct {
+	StdIn  io.Reader
+	StdOut io.Writer
+}
+
+func (p Prompter) Input(label string, opts ...GetInputOption) (string, error) {
 	input := textinput.New(label)
+	input.Input, input.Output = p.StdIn, p.StdOut
 	input.Template = inputTemplate
 	input.ExtendedTemplateFuncs = templateExtensions
 	for _, opt := range opts {
@@ -242,8 +249,9 @@ func PromptInput(label string, opts ...GetInputOption) (string, error) {
 	return s, nil
 }
 
-func PromptPassword(label string) (string, error) {
+func (p Prompter) Password(label string) (string, error) {
 	input := textinput.New(label)
+	input.Input, input.Output = p.StdIn, p.StdOut
 	input.Hidden = true
 	input.Validate = utils.ValidatePassword
 	input.Template = inputTemplate
@@ -256,8 +264,9 @@ func PromptPassword(label string) (string, error) {
 	return pw, nil
 }
 
-func PromptSelect(label string, choices []string, opts ...SelectInputOption) (int, string, error) {
+func (p Prompter) Select(label string, choices []string, opts ...SelectInputOption) (int, string, error) {
 	sp := selection.New(label, choices)
+	sp.Input, sp.Output = p.StdIn, p.StdOut
 	sp.Filter = nil
 	sp.PageSize = 5
 	for _, opt := range opts {
@@ -271,8 +280,9 @@ func PromptSelect(label string, choices []string, opts ...SelectInputOption) (in
 	return slices.Index(choices, choice), choice, nil
 }
 
-func PromptConfirm(label string, def bool) (bool, error) {
+func (p Prompter) Confirm(label string, def bool) (bool, error) {
 	input := textinput.New(label)
+	input.Input, input.Output = p.StdIn, p.StdOut
 	input.Validate = ValidateBool
 	input.Template = confirmTemplateY
 	if !def {
@@ -305,7 +315,7 @@ var (
 `
 )
 
-func PromptTableSelect(
+func (p Prompter) TableSelect(
 	label string,
 	choices [][]string,
 	columnHeaders []string,
@@ -340,7 +350,7 @@ func PromptTableSelect(
 		}),
 		SelectTemplateOpt(tableSelectTemplate),
 	)
-	idx, _, err := PromptSelect(label, rows, opts...)
+	idx, _, err := p.Select(label, rows, opts...)
 	return idx, err
 }
 

@@ -56,7 +56,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	var rc rig.Client
 	var err error
 	if !skipPlatform || apply {
-		rc, err = base.NewRigClient(ctx, afero.NewOsFs())
+		rc, err = base.NewRigClient(ctx, afero.NewOsFs(), c.Prompter)
 		if err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if err := setCapsulename(migration); err != nil {
+	if err := c.setCapsulename(migration); err != nil {
 		return err
 	}
 
@@ -227,7 +227,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if err := PromptDiffingChanges(reports,
 		migration.warnings,
 		currentTree,
-		migratedTree); err != nil && err.Error() != promptAborted {
+		migratedTree, c.Prompter); err != nil && err.Error() != promptAborted {
 		return err
 	}
 
@@ -235,7 +235,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	apply, err := common.PromptConfirm("Do you want to apply the capsule to the rig platform?", false)
+	apply, err := c.Prompter.Confirm("Do you want to apply the capsule to the rig platform?", false)
 	if err != nil {
 		return err
 	}
@@ -273,7 +273,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func setCapsulename(migration *Migration) error {
+func (c *Cmd) setCapsulename(migration *Migration) error {
 	migration.capsule.Name = migration.currentResources.Deployment.Name
 	switch nameOrigin {
 	case CapsuleName(""):
@@ -287,7 +287,7 @@ func setCapsulename(migration *Migration) error {
 		}
 		migration.capsule.Name = migration.currentResources.Service.Name
 	case CapsuleNameInput:
-		inputName, err := common.PromptInput("Enter the name for the capsule", common.ValidateSystemNameOpt)
+		inputName, err := c.Prompter.Input("Enter the name for the capsule", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
@@ -303,6 +303,7 @@ func PromptDiffingChanges(
 	warnings map[string][]*Warning,
 	currentOverview *tview.TreeView,
 	migratedOverview *tview.TreeView,
+	prompter common.Prompter,
 ) error {
 	choices := []string{"Overview"}
 
@@ -321,7 +322,7 @@ func PromptDiffingChanges(
 	}
 
 	for {
-		_, kind, err := common.PromptSelect("Select the resource kind to view the diff for. CTRL + C to continue",
+		_, kind, err := prompter.Select("Select the resource kind to view the diff for. CTRL + C to continue",
 			choices,
 			common.SelectDontShowResultOpt,
 			common.SelectPageSizeOpt(8))
@@ -362,7 +363,7 @@ func PromptDiffingChanges(
 		}
 
 		for {
-			_, name, err := common.PromptSelect("Select the resource to view the diff for. CTRL + C to continue", names,
+			_, name, err := prompter.Select("Select the resource to view the diff for. CTRL + C to continue", names,
 				common.SelectDontShowResultOpt,
 				common.SelectPageSizeOpt(8))
 			if err != nil && err.Error() == promptAborted {
@@ -401,7 +402,7 @@ func (c *Cmd) promptDeploymentSelect(ctx context.Context) (*appsv1.Deployment, e
 			return &deployment, nil
 		}
 	}
-	i, err := common.PromptTableSelect("Select the deployment to migrate",
+	i, err := c.Prompter.TableSelect("Select the deployment to migrate",
 		deploymentNames, headers, common.SelectEnableFilterOpt, common.SelectPageSizeOpt(10))
 	if err != nil {
 		return nil, err
@@ -417,7 +418,7 @@ func (c *Cmd) getDeployment(ctx context.Context, migration *Migration) error {
 	}
 
 	if deployment.GetObjectMeta().GetLabels()["rig.dev/owned-by-capsule"] != "" {
-		if keepGoing, err := common.PromptConfirm("This deployment is already owned by a capsule."+
+		if keepGoing, err := c.Prompter.Confirm("This deployment is already owned by a capsule."+
 			" Do you want to continue anyways?", false); !keepGoing || err != nil {
 			return err
 		}
@@ -458,7 +459,7 @@ func (c *Cmd) promptContainerSelectIndex(containers []corev1.Container) (int, er
 		containerNames = append(containerNames, container.Name)
 	}
 
-	i, _, err := common.PromptSelect("\nThe deployment has more than 1 container. Select the primary container to migrate",
+	i, _, err := c.Prompter.Select("\nThe deployment has more than 1 container. Select the primary container to migrate",
 		containerNames,
 		common.SelectDontShowResultOpt,
 	)
@@ -1466,7 +1467,7 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 	migratedCronJobs := make([]v1alpha2.CronJob, 0, len(cronJobs))
 	changes := []*capsule.Change{}
 	for {
-		i, err := common.PromptTableSelect("\nSelect a job to migrate or CTRL+C to continue",
+		i, err := c.Prompter.TableSelect("\nSelect a job to migrate or CTRL+C to continue",
 			jobTitles, headers, common.SelectEnableFilterOpt, common.SelectDontShowResultOpt)
 		if err != nil {
 			break
@@ -1474,7 +1475,7 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 
 		cronJob := cronJobs[i]
 
-		migratedCronJob, addCronjob, err := migrateCronJob(migration, cronJob)
+		migratedCronJob, addCronjob, err := c.migrateCronJob(migration, cronJob)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -1500,7 +1501,10 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 	return nil
 }
 
-func migrateCronJob(migration *Migration, cronJob batchv1.CronJob) (*v1alpha2.CronJob, *capsule.CronJob, error) {
+func (c *Cmd) migrateCronJob(
+	migration *Migration,
+	cronJob batchv1.CronJob,
+) (*v1alpha2.CronJob, *capsule.CronJob, error) {
 	migrated := &v1alpha2.CronJob{
 		Name:     cronJob.Name,
 		Schedule: cronJob.Spec.Schedule,
@@ -1547,14 +1551,14 @@ func migrateCronJob(migration *Migration, cronJob batchv1.CronJob) (*v1alpha2.Cr
 				Args:    args,
 			},
 		}
-	} else if keepGoing, err := common.PromptConfirm(`The cronjob does not fit the deployment image.
+	} else if keepGoing, err := c.Prompter.Confirm(`The cronjob does not fit the deployment image.
 		Do you want to continue with a curl based cronjob?`, false); keepGoing && err == nil {
 		fmt.Printf("Migrating cronjob %s to a curl based cronjob\n", cronJob.Name)
 		fmt.Printf("This will create a new job that will run a curl command to the service\n")
 		fmt.Printf("Current cmd and args are: %s %s\n",
 			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[migration.containerIndex].Command[0],
 			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[migration.containerIndex].Args)
-		urlString, err := common.PromptInput("Finish the path to the service",
+		urlString, err := c.Prompter.Input("Finish the path to the service",
 			common.InputDefaultOpt(fmt.Sprintf("http://%s:[PORT]/[PATH]?[PARAMS1]&[PARAM2]",
 				migration.currentResources.Deployment.Name)))
 		if err != nil {

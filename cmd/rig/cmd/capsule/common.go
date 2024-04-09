@@ -101,9 +101,10 @@ func TruncatedFixed(str string, max int) string {
 func PromptAbortAndDeploy(
 	ctx context.Context,
 	rig rig.Client,
+	prompter common.Prompter,
 	req *connect.Request[capsule.DeployRequest],
 ) (*connect.Response[capsule.DeployResponse], error) {
-	deploy, err := common.PromptConfirm("Rollout already in progress, would you like to cancel it and redeploy?", false)
+	deploy, err := prompter.Confirm("Rollout already in progress, would you like to cancel it and redeploy?", false)
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +128,7 @@ func AbortAndDeploy(
 func Deploy(
 	ctx context.Context,
 	rig rig.Client,
+	prompter common.Prompter,
 	req *connect.Request[capsule.DeployRequest],
 	forceDeploy bool,
 ) error {
@@ -135,7 +137,7 @@ func Deploy(
 		if forceDeploy {
 			_, err = AbortAndDeploy(ctx, rig, req)
 		} else {
-			_, err = PromptAbortAndDeploy(ctx, rig, req)
+			_, err = PromptAbortAndDeploy(ctx, rig, prompter, req)
 		}
 	}
 	if err != nil {
@@ -179,7 +181,7 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 	return stream.Err()
 }
 
-func SelectCapsule(ctx context.Context, rc rig.Client, scope scope.Scope) (string, error) {
+func SelectCapsule(ctx context.Context, rc rig.Client, prompter common.Prompter, scope scope.Scope) (string, error) {
 	resp, err := rc.Capsule().List(ctx, connect.NewRequest(&capsule.ListRequest{
 		Pagination: &model.Pagination{},
 		ProjectId:  flags.GetProject(scope),
@@ -197,7 +199,7 @@ func SelectCapsule(ctx context.Context, rc rig.Client, scope scope.Scope) (strin
 		return "", errors.New("This project has no capsules. Create one, to get started")
 	}
 
-	_, name, err := common.PromptSelect("Capsule: ", capsuleNames, common.SelectFuzzyFilterOpt)
+	_, name, err := prompter.Select("Capsule: ", capsuleNames, common.SelectFuzzyFilterOpt)
 	if err != nil {
 		return "", err
 	}

@@ -38,7 +38,7 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	g, uid, err := common.GetGroup(ctx, identifier, c.Rig)
+	g, uid, err := common.GetGroup(ctx, identifier, c.Rig, c.Prompter)
 	if err != nil {
 		return err
 	}
@@ -52,14 +52,14 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	updates := []*group.Update{}
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields)
+		i, res, err := c.Prompter.Select("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
 		if res == "Done" {
 			break
 		}
-		u, err := promptGroupUpdate(groupField(i+1), g)
+		u, err := c.promptGroupUpdate(groupField(i+1), g)
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -83,10 +83,10 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 	return nil
 }
 
-func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
+func (c *Cmd) promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 	switch f {
 	case groupIDField:
-		name, err := common.PromptInput("ID:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(g.GetGroupId()))
+		name, err := c.Prompter.Input("ID:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(g.GetGroupId()))
 		if err != nil {
 			return nil, err
 		}
@@ -99,11 +99,11 @@ func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 			}, nil
 		}
 	case groupSetMetaData:
-		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
+		key, err := c.Prompter.Input("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}
-		value, err := common.PromptInput("Value:", common.ValidateNonEmptyOpt)
+		value, err := c.Prompter.Input("Value:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +118,7 @@ func promptGroupUpdate(f groupField, g *group.Group) (*group.Update, error) {
 		}, nil
 
 	case groupDeleteMetaData:
-		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
+		key, err := c.Prompter.Input("Key:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, err
 		}

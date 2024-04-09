@@ -27,7 +27,7 @@ func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, _ []string) erro
 	}
 
 	if allFlagsEmpty() {
-		err = setResourcesInteractive(container.Resources)
+		err = c.setResourcesInteractive(container.Resources)
 	} else {
 		err = setResourcesFromFlags(container.Resources)
 	}
@@ -53,7 +53,7 @@ func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, _ []string) erro
 		if forceDeploy {
 			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
 		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, req)
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, c.Prompter, req)
 		}
 	}
 	if err != nil {
@@ -65,9 +65,9 @@ func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, _ []string) erro
 	return nil
 }
 
-func setResourcesInteractive(curResources *capsule.Resources) error {
+func (c *Cmd) setResourcesInteractive(curResources *capsule.Resources) error {
 	for {
-		i, _, err := common.PromptSelect("What to update", []string{"Requests", "Limits", "GPU", "Done"})
+		i, _, err := c.Prompter.Select("What to update", []string{"Requests", "Limits", "GPU", "Done"})
 		if err != nil {
 			return err
 		}
@@ -84,12 +84,12 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 			name = "limit"
 		case 2:
 			label := fmt.Sprintf("New GPU type (current is %s):", curResources.GetGpuLimits().GetType())
-			gpuType, err := common.PromptInput(label, common.ValidateNonEmptyOpt)
+			gpuType, err := c.Prompter.Input(label, common.ValidateNonEmptyOpt)
 			if err != nil {
 				return err
 			}
 			label = fmt.Sprintf("New GPU limit (current is %d):", curResources.GetGpuLimits().GetCount())
-			gpuLimitStr, err := common.PromptInput(label, common.ValidateQuantityOpt)
+			gpuLimitStr, err := c.Prompter.Input(label, common.ValidateQuantityOpt)
 			if err != nil {
 				return err
 			}
@@ -115,7 +115,7 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 		var cpu string
 		var mem string
 		for {
-			i, _, err := common.PromptSelect(fmt.Sprintf("Which resource %s to update", name), []string{"CPU", "Memory", "Done"})
+			i, _, err := c.Prompter.Select(fmt.Sprintf("Which resource %s to update", name), []string{"CPU", "Memory", "Done"})
 			if err != nil {
 				return err
 			}
@@ -148,7 +148,7 @@ func setResourcesInteractive(curResources *capsule.Resources) error {
 			}
 
 			label := fmt.Sprintf("New %s (current is %s):", name, current)
-			*resourceString, err = common.PromptInput(label, common.ValidateQuantityOpt)
+			*resourceString, err = c.Prompter.Input(label, common.ValidateQuantityOpt)
 			if err != nil {
 				return err
 			}

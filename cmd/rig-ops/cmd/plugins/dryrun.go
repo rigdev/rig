@@ -107,7 +107,7 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 		for _, c := range capsuleList.Items {
 			choices = append(choices, []string{c.Namespace, c.Name})
 		}
-		idx, err := common.PromptTableSelect("Choose a capsule", choices, []string{"Namespace", "Capsule"})
+		idx, err := c.Prompter.TableSelect("Choose a capsule", choices, []string{"Namespace", "Capsule"})
 		if err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func (c *Cmd) interactiveDiff(dryRun *pipeline.DryRunResponse) error {
 		warnings[k] = nil
 	}
 
-	return migrate.PromptDiffingChanges(reports, warnings, overview, migratedOverview)
+	return migrate.PromptDiffingChanges(reports, warnings, overview, migratedOverview, c.Prompter)
 }
 
 func readPlugin(path string) (v1alpha1.Step, error) {

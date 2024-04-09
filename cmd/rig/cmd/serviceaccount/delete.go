@@ -19,7 +19,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	if id == "" {
-		id, err = common.PromptInput("ID:", common.ValidateNonEmptyOpt)
+		id, err = c.Prompter.Input("ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}

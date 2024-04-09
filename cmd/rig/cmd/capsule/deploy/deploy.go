@@ -277,7 +277,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 			return errors.InvalidArgumentErrorf("missing capsule name argument")
 		}
 
-		name, err := capsule_cmd.SelectCapsule(ctx, c.Rig, c.Scope)
+		name, err := capsule_cmd.SelectCapsule(ctx, c.Rig, c.Prompter, c.Scope)
 		if err != nil {
 			return err
 		}
@@ -433,7 +433,7 @@ func isHexString(s string) bool {
 }
 
 func (c *Cmd) promptForDockerOrImage(ctx context.Context, capsuleID string) (string, error) {
-	i, _, err := common.PromptSelect(
+	i, _, err := c.Prompter.Select(
 		"Deploy from docker image rig-registered image?",
 		[]string{"Docker", "Rig registered"},
 	)
@@ -489,7 +489,7 @@ func (c *Cmd) promptForExistingImage(ctx context.Context, capsuleID string) (str
 		})
 	}
 
-	idx, err := common.PromptTableSelect(
+	idx, err := c.Prompter.TableSelect(
 		"Select a Rig image",
 		rows,
 		[]string{"Image name", "Digest", "Age"},
@@ -761,7 +761,7 @@ type dockerProgress struct {
 func (c *Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 	var empty imageRef
 
-	ok, err := common.PromptConfirm("Use a local image?", true)
+	ok, err := c.Prompter.Confirm("Use a local image?", true)
 	if err != nil {
 		return empty, err
 	}
@@ -777,7 +777,7 @@ func (c *Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 		}, nil
 	}
 
-	imageName, err := common.PromptInput("Enter image:", common.ValidateImageOpt)
+	imageName, err := c.Prompter.Input("Enter image:", common.ValidateImageOpt)
 	if err != nil {
 		return empty, nil
 	}
@@ -796,7 +796,7 @@ func (c *Cmd) getDaemonImage(ctx context.Context) (*imageInfo, error) {
 	if len(images) == 0 {
 		return nil, errors.New("no local docker images found")
 	}
-	idx, err := common.PromptTableSelect(
+	idx, err := c.Prompter.TableSelect(
 		"Select image:", prompts, []string{"Image name", "Age"}, common.SelectEnableFilterOpt,
 	)
 	if err != nil {

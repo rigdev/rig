@@ -24,8 +24,9 @@ var (
 type Cmd struct {
 	fx.In
 
-	Rig   rig.Client
-	Scope scope.Scope
+	Rig      rig.Client
+	Scope    scope.Scope
+	Prompter common.Prompter
 }
 
 var cmd Cmd
@@ -33,6 +34,7 @@ var cmd Cmd
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Scope = c.Scope
+	cmd.Prompter = c.Prompter
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {

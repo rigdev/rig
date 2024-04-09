@@ -20,14 +20,16 @@ import (
 )
 
 type Service struct {
-	rig   rig.Client
-	scope scope.Scope
+	rig      rig.Client
+	scope    scope.Scope
+	prompter common.Prompter
 }
 
-func NewService(rig rig.Client, scope scope.Scope) *Service {
+func NewService(rig rig.Client, scope scope.Scope, prompter common.Prompter) *Service {
 	return &Service{
-		rig:   rig,
-		scope: scope,
+		rig:      rig,
+		scope:    scope,
+		prompter: prompter,
 	}
 }
 
@@ -90,7 +92,7 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 		return false, fmt.Errorf("%s: %s", str, origErr)
 	}
 	fmt.Println(str)
-	ok, err := common.PromptConfirm("Do you wish to rebuild this context before proceeding?", true)
+	ok, err := s.prompter.Confirm("Do you wish to rebuild this context before proceeding?", true)
 	if err != nil {
 		return false, err
 	}
@@ -117,7 +119,7 @@ func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
 	}
 
 	if environmentID == "" {
-		use, err := common.PromptConfirm("You have not selected an environment. Would you like to select one now?", true)
+		use, err := s.prompter.Confirm("You have not selected an environment. Would you like to select one now?", true)
 		if err != nil {
 			return err
 		}
@@ -151,7 +153,7 @@ func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
 	}
 
 	if !found {
-		use, err := common.PromptConfirm(
+		use, err := s.prompter.Confirm(
 			"Your selected environment is not available. Would you like to select a new one?", true)
 		if err != nil {
 			return err
@@ -184,7 +186,7 @@ func (s *Service) authUser(ctx context.Context, interactive bool) error {
 		return errors.UnauthenticatedErrorf("Login to continue")
 	}
 
-	loginBool, err := common.PromptConfirm("You are not logged in. Would you like to login now?", true)
+	loginBool, err := s.prompter.Confirm("You are not logged in. Would you like to login now?", true)
 	if err != nil {
 		return err
 	}
@@ -210,7 +212,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 	}
 
 	if len(res.Msg.Projects) == 0 {
-		create, err := common.PromptConfirm("You have no projects. Would you like to create on now?", true)
+		create, err := s.prompter.Confirm("You have no projects. Would you like to create on now?", true)
 		if err != nil {
 			return err
 		}
@@ -231,7 +233,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 	}
 
 	if projectID == "" || uuid.UUID(projectID).IsNil() {
-		use, err := common.PromptConfirm("You have not selected a project. Would you like to select one now?", true)
+		use, err := s.prompter.Confirm("You have not selected a project. Would you like to select one now?", true)
 		if err != nil {
 			return err
 		}
@@ -254,7 +256,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 	}
 
 	if !found {
-		use, err := common.PromptConfirm("Your selected project is not available. Would you like to select a new one?", true)
+		use, err := s.prompter.Confirm("Your selected project is not available. Would you like to select a new one?", true)
 		if err != nil {
 			return err
 		}
@@ -276,7 +278,7 @@ func (s *Service) authProject(ctx context.Context, interactive bool) error {
 func (s *Service) CreateProject(ctx context.Context, name string, useNewProject *bool) error {
 	var err error
 	if name == "" {
-		name, err = common.PromptInput("Project ID:", common.ValidateNonEmptyOpt)
+		name, err = s.prompter.Input("Project ID:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
@@ -304,7 +306,7 @@ func (s *Service) CreateProject(ctx context.Context, name string, useNewProject 
 	fmt.Printf("Successfully created project %s with ID %s \n", name, p.GetProjectId())
 
 	if useNewProject == nil {
-		ok, err := common.PromptConfirm("Would you like to use this project now?", true)
+		ok, err := s.prompter.Confirm("Would you like to use this project now?", true)
 		if err != nil {
 			return err
 		}
@@ -324,7 +326,7 @@ func (s *Service) CreateProject(ctx context.Context, name string, useNewProject 
 }
 
 func (s *Service) login(ctx context.Context) error {
-	u, err := common.PromptInput("Enter Username or Email:", common.ValidateNonEmptyOpt)
+	u, err := s.prompter.Input("Enter Username or Email:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return err
 	}
@@ -344,7 +346,7 @@ func (s *Service) login(ctx context.Context) error {
 		}
 	}
 
-	pw, err := common.PromptPassword("Enter Password")
+	pw, err := s.prompter.Password("Enter Password")
 	if err != nil {
 		return err
 	}
@@ -392,7 +394,7 @@ func (s *Service) useProject(ctx context.Context) error {
 		ps = append(ps, p.GetName())
 	}
 
-	i, _, err := common.PromptSelect("Project: ", ps)
+	i, _, err := s.prompter.Select("Project: ", ps)
 	if err != nil {
 		return err
 	}
@@ -420,7 +422,7 @@ func (s *Service) promptForEnvironment(ctx context.Context) (string, error) {
 		es = append(es, e.GetEnvironmentId())
 	}
 
-	i, _, err := common.PromptSelect("Environment: ", es)
+	i, _, err := s.prompter.Select("Environment: ", es)
 	if err != nil {
 		return "", err
 	}

@@ -12,6 +12,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
@@ -46,6 +47,7 @@ type Cmd struct {
 	Rig          rig.Client
 	DockerClient *client.Client
 	Scope        scope.Scope
+	Prompter     common.Prompter
 }
 
 var cmd Cmd

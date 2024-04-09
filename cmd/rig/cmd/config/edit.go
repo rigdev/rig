@@ -13,7 +13,7 @@ func (c *Cmd) editConfig(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		ctxName = args[0]
 	} else {
-		ctxName, err = cmdconfig.PromptForContext(c.Scope.GetCfg())
+		ctxName, err = c.Scope.GetCfg().PromptForContext()
 		if err != nil {
 			return nil
 		}
@@ -44,7 +44,7 @@ func (c *Cmd) editConfig(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	_, field, err := common.PromptSelect("Field to edit:", []string{"name", "server"})
+	_, field, err := c.Prompter.Select("Field to edit:", []string{"name", "server"})
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (c *Cmd) editConfig(cmd *cobra.Command, args []string) error {
 		validateFunc = common.ValidateURLOpt
 	}
 
-	value, err := common.PromptInput("Value:", common.InputDefaultOpt(defaultValue), validateFunc)
+	value, err := c.Prompter.Input("Value:", common.InputDefaultOpt(defaultValue), validateFunc)
 	if err != nil {
 		return err
 	}

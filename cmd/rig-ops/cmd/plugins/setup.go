@@ -3,6 +3,7 @@ package plugins
 import (
 	"errors"
 
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
@@ -33,6 +34,7 @@ type Cmd struct {
 	OperatorClient *base.OperatorClient
 	K8s            client.Client
 	Scheme         *runtime.Scheme
+	Prompter       common.Prompter
 }
 
 var cmd Cmd

@@ -73,14 +73,14 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	updates := []*project.Update{}
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields)
+		i, res, err := c.Prompter.Select("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
 		if res == "Done" {
 			break
 		}
-		u, err := promptProjectUpdate(projectField(i+1), resp.Msg.GetProject())
+		u, err := c.promptProjectUpdate(projectField(i+1), resp.Msg.GetProject())
 		if err != nil {
 			continue
 		}
@@ -106,11 +106,11 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, args []string) err
 	return nil
 }
 
-func promptProjectUpdate(f projectField, p *project.Project) (*project.Update, error) {
+func (c *Cmd) promptProjectUpdate(f projectField, p *project.Project) (*project.Update, error) {
 	fmt.Println("f: ", f)
 	switch f {
 	case projectName:
-		name, err := common.PromptInput("Name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(p.GetName()))
+		name, err := c.Prompter.Input("Name:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(p.GetName()))
 		if err != nil {
 			return nil, err
 		}

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -10,7 +9,7 @@ func (c *Cmd) delete(cmd *cobra.Command, args []string) error {
 	var ctx string
 	var err error
 	if len(args) == 0 {
-		ctx, err = cmdconfig.PromptForContext(c.Scope.GetCfg())
+		ctx, err = c.Scope.GetCfg().PromptForContext()
 		if err != nil {
 			return err
 		}

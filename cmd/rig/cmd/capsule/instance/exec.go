@@ -51,7 +51,7 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	command, arguments := parseArgs(cmd, args)
+	command, arguments := c.parseArgs(cmd, args)
 
 	var resize *capsule.ExecuteRequest_Resize
 	var ttyStruct *Tty
@@ -207,17 +207,17 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 	}
 }
 
-func parseArgs(cmd *cobra.Command, args []string) (string, []string) {
+func (c *Cmd) parseArgs(cmd *cobra.Command, args []string) (string, []string) {
 	var command string
 	var arguments []string
 	var err error
 	if cmd.ArgsLenAtDash() == -1 || len(args) <= 1 {
-		command, err = common.PromptInput("command", common.ValidateNonEmptyOpt)
+		command, err = c.Prompter.Input("command", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return "", nil
 		}
 
-		argString, err := common.PromptInput("Arguments", common.ValidateAllOpt)
+		argString, err := c.Prompter.Input("Arguments", common.ValidateAllOpt)
 		if err != nil {
 			return "", nil
 		}

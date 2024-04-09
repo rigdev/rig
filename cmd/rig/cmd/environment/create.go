@@ -29,7 +29,7 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 		if !c.Scope.IsInteractive() {
 			return fmt.Errorf("missing environment argument")
 		}
-		name, err = common.PromptInput("Environment:", common.ValidateSystemNameOpt)
+		name, err = c.Prompter.Input("Environment:", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 		if !c.Scope.IsInteractive() {
 			return fmt.Errorf("missing cluster argument")
 		}
-		cluster, err = common.PromptInput("Cluster:", common.ValidateSystemNameOpt)
+		cluster, err = c.Prompter.Input("Cluster:", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 		if !c.Scope.IsInteractive() {
 			return nil
 		}
-		ok, err := common.PromptConfirm("Would you like to use this environment now?", true)
+		ok, err := c.Prompter.Confirm("Would you like to use this environment now?", true)
 		if err != nil {
 			return err
 		}

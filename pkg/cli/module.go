@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/docker/docker/client"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -43,19 +44,25 @@ type SetupContext struct {
 	preRunsLeft int
 }
 
-var StandardSetupContext = &SetupContext{
-	BaseModule:  Module,
-	firstPreRun: true,
-	Args:        nil,
+func NewSetupContext(baseModule fx.Option, args []string) *SetupContext {
+	return &SetupContext{
+		BaseModule:  baseModule,
+		Args:        args,
+		options:     nil,
+		firstPreRun: true,
+		preRunsLeft: 0,
+	}
 }
+
+var StandardSetupContext = NewSetupContext(Module, nil)
 
 var Module = fx.Module(
 	"rig-cli",
 	clientModule,
 	fx.Provide(afero.NewOsFs),
 	fx.Provide(scheme.New),
-	fx.Provide(func(fs afero.Fs) (*cmdconfig.Config, error) {
-		return cmdconfig.NewConfig("", fs)
+	fx.Provide(func(fs afero.Fs, prompter common.Prompter) (*cmdconfig.Config, error) {
+		return cmdconfig.NewConfig("", fs, prompter)
 	}),
 	fx.Provide(zap.NewDevelopment),
 	fx.Provide(getContext),
@@ -70,6 +77,12 @@ var Module = fx.Module(
 	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
 	// provide a flag to indicate that we cannot prompt for resource creation
 	fx.Provide(func() scope.Interactive { return scope.Interactive(term.IsTerminal(int(os.Stdin.Fd()))) }),
+	fx.Provide(func() common.Prompter {
+		return common.Prompter{
+			StdIn:  os.Stdin,
+			StdOut: os.Stdout,
+		}
+	}),
 )
 
 func getContext(

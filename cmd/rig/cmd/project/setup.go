@@ -35,17 +35,16 @@ var (
 type Cmd struct {
 	fx.In
 
-	Rig   rig.Client
-	Scope scope.Scope
-	Auth  *auth.Service
+	Rig      rig.Client
+	Scope    scope.Scope
+	Auth     *auth.Service
+	Prompter common.Prompter
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	cmd.Rig = c.Rig
-	cmd.Scope = c.Scope
-	cmd.Auth = c.Auth
+	cmd = c
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {

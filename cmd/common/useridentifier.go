@@ -9,9 +9,9 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 )
 
-func PromptUserIndentifierUpdate() (*user.Update, error) {
+func (p Prompter) UserIndentifierUpdate() (*user.Update, error) {
 	var err error
-	identifier, err := PromptInput("Username or email:", ValidateAllOpt)
+	identifier, err := p.Input("Username or email:", ValidateAllOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -22,9 +22,9 @@ func PromptUserIndentifierUpdate() (*user.Update, error) {
 	return update, nil
 }
 
-func PromptUserIndentifier() (*model.UserIdentifier, error) {
+func (p Prompter) UserIndentifier() (*model.UserIdentifier, error) {
 	var err error
-	identifierStr, err := PromptInput("Username or email:", ValidateAllOpt)
+	identifierStr, err := p.Input("Username or email:", ValidateAllOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -35,9 +35,9 @@ func PromptUserIndentifier() (*model.UserIdentifier, error) {
 	return identifier, nil
 }
 
-func GetUserIdentifierUpdates(username, email string) ([]*user.Update, error) {
+func (p Prompter) GetUserIdentifierUpdates(username, email string) ([]*user.Update, error) {
 	if username == "" && email == "" {
-		update, err := PromptUserIndentifierUpdate()
+		update, err := p.UserIndentifierUpdate()
 		if err != nil {
 			return nil, err
 		}
@@ -55,9 +55,9 @@ func GetUserIdentifierUpdates(username, email string) ([]*user.Update, error) {
 	return updates, nil
 }
 
-func GetUserIdentifier(username, email, phoneNumber string) (*model.UserIdentifier, error) {
+func (p Prompter) GetUserIdentifier(username, email, phoneNumber string) (*model.UserIdentifier, error) {
 	if username == "" && email == "" && phoneNumber == "" {
-		identifier, err := PromptUserIndentifier()
+		identifier, err := p.UserIndentifier()
 		if err != nil {
 			return nil, err
 		}
@@ -78,14 +78,14 @@ func GetUserIdentifier(username, email, phoneNumber string) (*model.UserIdentifi
 	return nil, fmt.Errorf("something went wrong")
 }
 
-func GetUserAndPasswordUpdates(username, email, password string) ([]*user.Update, error) {
-	updates, err := GetUserIdentifierUpdates(username, email)
+func (p Prompter) GetUserAndPasswordUpdates(username, email, password string) ([]*user.Update, error) {
+	updates, err := p.GetUserIdentifierUpdates(username, email)
 	if err != nil {
 		return nil, err
 	}
 
 	if password == "" {
-		password, err = PromptPassword("Password:")
+		password, err = p.Password("Password:")
 		if err != nil {
 			return nil, err
 		}
