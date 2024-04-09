@@ -66,6 +66,7 @@ type Config struct {
 
 	filePath string
 	prompter common.Prompter
+	fs       afero.Fs
 }
 
 func (cfg *Config) Minify() *Config {
@@ -185,7 +186,7 @@ func (cfg Config) Save() error {
 		return err
 	}
 
-	if err := os.WriteFile(cfg.filePath, bs, 0o600); err != nil {
+	if err := afero.WriteFile(cfg.fs, cfg.filePath, bs, 0o600); err != nil {
 		return err
 	}
 
@@ -196,24 +197,19 @@ func NewConfig(cfgPath string, fs afero.Fs, p common.Prompter) (*Config, error) 
 	cfg := &Config{
 		filePath: cfgPath,
 		prompter: p,
+		fs:       fs,
 	}
 
 	if cfg.filePath != "" {
 		viper.AddConfigPath(cfg.filePath)
 	} else {
-		configPath := os.Getenv("XDG_CONFIG_HOME")
-		if configPath == "" {
-			p, err := os.UserConfigDir()
-			if err != nil {
-				return nil, err
-			}
-			configPath = p
+		var err error
+		cfg.filePath, err = getConfigPath()
+		if err != nil {
+			return nil, err
 		}
-
-		cfg.filePath = path.Join(configPath, "rig", "config.yaml")
-
-		if _, err := os.Stat(cfg.filePath); os.IsNotExist(err) {
-			if err := os.MkdirAll(path.Dir(cfg.filePath), 0o775); err != nil {
+		if _, err := fs.Stat(cfg.filePath); os.IsNotExist(err) {
+			if err := fs.MkdirAll(path.Dir(cfg.filePath), 0o775); err != nil {
 				return nil, err
 			}
 
@@ -244,4 +240,32 @@ func NewConfig(cfgPath string, fs afero.Fs, p common.Prompter) (*Config, error) 
 	}
 
 	return cfg, nil
+}
+
+func getConfigPath() (string, error) {
+	configPath := os.Getenv("XDG_CONFIG_HOME")
+	if configPath == "" {
+		p, err := os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
+		configPath = p
+	}
+
+	return path.Join(configPath, "rig", "config.yaml"), nil
+}
+
+func NewEmptyConfig(fs afero.Fs, p common.Prompter) (*Config, error) {
+	filePath, err := getConfigPath()
+	if err != nil {
+		return nil, err
+	}
+	return &Config{
+		Contexts: []*Context{},
+		Services: []*Service{},
+		Users:    []*User{},
+		prompter: p,
+		fs:       fs,
+		filePath: filePath,
+	}, nil
 }
