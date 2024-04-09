@@ -4,3 +4,15 @@ packages:
   github.com/rigdev/rig-go-sdk:
     interfaces:
       Client: {}
+  github.com/rigdev/rig/cmd/common:
+    interfaces:
+      Prompter: {}
+  github.com/rigdev/rig-go-api/api/v1/authentication/authenticationconnect:
+    interfaces:
+      ServiceClient: {}
+  github.com/rigdev/rig-go-api/api/v1/project/projectconnect:
+    interfaces:
+      ServiceClient: {}
+  github.com/rigdev/rig-go-api/api/v1/environment/environmentconnect:
+    interfaces:
+      ServiceClient: {}
