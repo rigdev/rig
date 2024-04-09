@@ -22,11 +22,11 @@ func initCmd(c Cmd) {
 	cmd.Scope = c.Scope
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	cluster := &cobra.Command{
 		Use:               "cluster",
 		Short:             "Manage Rig clusters",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject: "",
 		},

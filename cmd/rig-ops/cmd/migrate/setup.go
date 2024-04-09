@@ -37,11 +37,11 @@ func initCmd(c Cmd) {
 	cmd = c
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	migrate := &cobra.Command{
 		Use:               "migrate",
 		Short:             "Migrate you kubernetes deployments to Rig Capsules",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		RunE:              cli.CtxWrap(cmd.migrate),
 	}
 

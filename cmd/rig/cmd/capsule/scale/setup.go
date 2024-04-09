@@ -45,11 +45,11 @@ func initCmd(c Cmd) {
 	cmd.Scope = c.Scope
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	scale := &cobra.Command{
 		Use:               "scale",
 		Short:             "Scale and inspect the resources of the capsule",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	scaleGet := &cobra.Command{

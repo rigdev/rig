@@ -13,8 +13,8 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
+	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -38,11 +38,11 @@ func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	group := &cobra.Command{
 		Use:               "group",
 		Short:             "Manage groups",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -64,7 +64,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  cli.CtxWrap(cmd.delete),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -76,7 +76,7 @@ func Setup(parent *cobra.Command) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.update),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -89,7 +89,7 @@ func Setup(parent *cobra.Command) {
 		Aliases: []string{"ls"},
 		RunE:    cli.CtxWrap(cmd.get),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -103,7 +103,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  cli.CtxWrap(cmd.listMembers),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.completions),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -117,7 +117,7 @@ func Setup(parent *cobra.Command) {
 		RunE:  cli.CtxWrap(cmd.listGroupsForUser),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.memberCompletions),
+			cli.HackCtxWrapCompletion(cmd.memberCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
@@ -131,14 +131,14 @@ func Setup(parent *cobra.Command) {
 		RunE:  cli.CtxWrap(cmd.addMember),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.memberCompletions),
+			cli.HackCtxWrapCompletion(cmd.memberCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
 	addUser.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
 	if err := addUser.RegisterFlagCompletionFunc(
 		"group-id",
-		cli.CtxWrapCompletion(cmd.completions),
+		cli.HackCtxWrapCompletion(cmd.completions, s),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -151,14 +151,14 @@ func Setup(parent *cobra.Command) {
 		RunE:  cli.CtxWrap(cmd.removeMember),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
-			cli.CtxWrapCompletion(cmd.memberCompletions),
+			cli.HackCtxWrapCompletion(cmd.memberCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
 	removeUser.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
 	if err := removeUser.RegisterFlagCompletionFunc(
 		"group-id",
-		cli.CtxWrapCompletion(cmd.completions),
+		cli.HackCtxWrapCompletion(cmd.completions, s),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -173,8 +173,9 @@ func (c *Cmd) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
@@ -208,8 +209,9 @@ func (c *Cmd) memberCompletions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 

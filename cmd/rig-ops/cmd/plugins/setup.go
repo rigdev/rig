@@ -41,11 +41,11 @@ func initCmd(c Cmd) {
 	cmd = c
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	pluginsCmd := &cobra.Command{
 		Use:               "plugins",
 		Short:             "Migrate you kubernetes deployments to Rig Capsules",
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	check := &cobra.Command{

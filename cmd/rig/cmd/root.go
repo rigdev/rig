@@ -48,7 +48,7 @@ func initCmd(c Cmd) {
 	cmd.Logger = c.Logger
 }
 
-func Run() error {
+func Run(s *cli.SetupContext) error {
 	rootCmd := &cobra.Command{
 		Use:           "rig",
 		Short:         "CLI tool for managing your Rig projects",
@@ -74,7 +74,7 @@ func Run() error {
 		Use:               "license",
 		Short:             "Get License Information for the current project",
 		Args:              cobra.NoArgs,
-		PersistentPreRunE: cli.MakeInvokePreRunE(initCmd),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		RunE:              cli.CtxWrap(cmd.getLicenseInfo),
 		Annotations: map[string]string{
 			auth_service.OmitProject:     "",
@@ -88,7 +88,7 @@ func Run() error {
 		Short: "print version information",
 		RunE: func(c *cobra.Command, args []string) error {
 			if ok, _ := c.Flags().GetBool("full"); ok {
-				if err := cli.MakeInvokePreRunE(initCmd)(c, args); err != nil {
+				if err := s.MakeInvokePreRunE(initCmd)(c, args); err != nil {
 					return err
 				}
 			}
@@ -102,18 +102,22 @@ func Run() error {
 	version.Flags().BoolP("full", "v", false, "print full version")
 	rootCmd.AddCommand(version)
 
-	dev.Setup(rootCmd)
-	capsule_root.Setup(rootCmd)
-	auth.Setup(rootCmd)
-	user.Setup(rootCmd)
-	serviceaccount.Setup(rootCmd)
-	group.Setup(rootCmd)
-	cluster.Setup(rootCmd)
-	config.Setup(rootCmd)
-	project.Setup(rootCmd)
-	environment.Setup(rootCmd)
+	dev.Setup(rootCmd, s)
+	capsule_root.Setup(rootCmd, s)
+	auth.Setup(rootCmd, s)
+	user.Setup(rootCmd, s)
+	serviceaccount.Setup(rootCmd, s)
+	group.Setup(rootCmd, s)
+	cluster.Setup(rootCmd, s)
+	config.Setup(rootCmd, s)
+	project.Setup(rootCmd, s)
+	environment.Setup(rootCmd, s)
 
 	cobra.EnableTraverseRunHooks = true
+
+	if len(s.Args) > 0 {
+		rootCmd.SetArgs(s.Args)
+	}
 	return rootCmd.Execute()
 }
 

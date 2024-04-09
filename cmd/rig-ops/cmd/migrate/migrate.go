@@ -24,6 +24,7 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	envmapping "github.com/rigdev/rig/plugins/env_mapping"
 	"github.com/rivo/tview"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -55,7 +56,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	var rc rig.Client
 	var err error
 	if !skipPlatform || apply {
-		rc, err = base.NewRigClient(ctx)
+		rc, err = base.NewRigClient(ctx, afero.NewOsFs())
 		if err != nil {
 			return err
 		}

@@ -12,8 +12,8 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-func Run() error {
-	cli.AddOptions(
+func Run(s *cli.SetupContext) error {
+	s.AddOptions(
 		fx.Provide(base.NewKubernetesClient),
 		fx.Provide(base.NewKubernetesReader),
 		fx.Provide(base.NewOperatorClient),
@@ -39,8 +39,11 @@ func Run() error {
 			"If empty, will use the operator config of the running operator.")
 	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 
-	migrate.Setup(rootCmd)
-	plugins.Setup(rootCmd)
+	migrate.Setup(rootCmd, s)
+	plugins.Setup(rootCmd, s)
+	if s.Args != nil {
+		rootCmd.SetArgs(s.Args)
+	}
 
 	return rootCmd.Execute()
 }

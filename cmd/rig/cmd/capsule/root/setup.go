@@ -57,11 +57,11 @@ func initCmd(c Cmd) {
 	cmd.DockerClient = c.DockerClient
 }
 
-func Setup(parent *cobra.Command) {
+func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	capsuleCmd := &cobra.Command{
 		Use:   "capsule",
 		Short: "Manage capsules",
-		PersistentPreRunE: cli.MakeInvokePreRunE(
+		PersistentPreRunE: s.MakeInvokePreRunE(
 			initCmd,
 			func(ctx context.Context, cmd Cmd, c *cobra.Command, args []string) error {
 				return cmd.persistentPreRunE(ctx, c, args)
@@ -71,7 +71,7 @@ func Setup(parent *cobra.Command) {
 	capsuleCmd.PersistentFlags().StringVarP(&capsule.CapsuleID, "capsule-id", "c", "", "Id of the capsule")
 	if err := capsuleCmd.RegisterFlagCompletionFunc(
 		"capsule-id",
-		cli.CtxWrapCompletion(cmd.completions),
+		cli.HackCtxWrapCompletion(cmd.completions, s),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -123,7 +123,7 @@ func Setup(parent *cobra.Command) {
 	capsuleGet := &cobra.Command{
 		Use:               "get",
 		Short:             "Get one or more capsules",
-		PersistentPreRunE: cli.PersistentPreRunE,
+		PersistentPreRunE: s.PersistentPreRunE,
 		Args:              cobra.NoArgs,
 		Annotations: map[string]string{
 			auth.OmitCapsule: "",
@@ -152,12 +152,12 @@ func Setup(parent *cobra.Command) {
 
 	parent.AddCommand(capsuleCmd)
 
-	scale.Setup(capsuleCmd)
-	image.Setup(capsuleCmd)
-	deploy.Setup(capsuleCmd)
-	instance.Setup(capsuleCmd)
-	rollout.Setup(capsuleCmd)
-	jobs.Setup(capsuleCmd)
+	scale.Setup(capsuleCmd, s)
+	image.Setup(capsuleCmd, s)
+	deploy.Setup(capsuleCmd, s)
+	instance.Setup(capsuleCmd, s)
+	rollout.Setup(capsuleCmd, s)
+	jobs.Setup(capsuleCmd, s)
 }
 
 func (c *Cmd) completions(
@@ -165,8 +165,9 @@ func (c *Cmd) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
+	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := cli.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
