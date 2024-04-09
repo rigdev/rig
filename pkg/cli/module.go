@@ -127,11 +127,7 @@ func getContext(
 			return nil, err
 		}
 
-		c = &cmdconfig.Context{}
-		c.SetService(&cmdconfig.Service{
-			Server: flags.Flags.Host,
-		})
-		c.SetAuth(&cmdconfig.Auth{})
+		c = cfg.GetCurrentContext()
 	}
 	if c == nil {
 		// This shouldn't happen as we prompt for a config if one is missing above
