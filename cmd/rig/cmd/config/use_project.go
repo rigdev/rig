@@ -5,7 +5,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +45,7 @@ func (c *Cmd) promptForProjectID(ctx context.Context) (string, error) {
 		ps = append(ps, p.GetName())
 	}
 
-	i, _, err := common.PromptSelect("Project: ", ps)
+	i, _, err := c.Prompter.Select("Project: ", ps)
 	if err != nil {
 		return "", err
 	}

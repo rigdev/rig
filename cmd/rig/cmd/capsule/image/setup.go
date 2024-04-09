@@ -40,14 +40,13 @@ type Cmd struct {
 	Rig          rig.Client
 	Scope        scope.Scope
 	DockerClient *client.Client
+	Prompter     common.Prompter
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	cmd.Rig = c.Rig
-	cmd.Scope = c.Scope
-	cmd.DockerClient = c.DockerClient
+	cmd = c
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {

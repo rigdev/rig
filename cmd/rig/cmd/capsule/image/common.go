@@ -47,7 +47,7 @@ func imageRefFromFlags() imageRef {
 func (c *Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 	var empty imageRef
 
-	ok, err := common.PromptConfirm("Use a local image?", true)
+	ok, err := c.Prompter.Confirm("Use a local image?", true)
 	if err != nil {
 		return empty, err
 	}
@@ -63,7 +63,7 @@ func (c *Cmd) promptForImage(ctx context.Context) (imageRef, error) {
 		}, nil
 	}
 
-	imageName, err := common.PromptInput("Enter image:", common.ValidateImageOpt)
+	imageName, err := c.Prompter.Input("Enter image:", common.ValidateImageOpt)
 	if err != nil {
 		return empty, nil
 	}
@@ -82,7 +82,7 @@ func (c *Cmd) getDaemonImage(ctx context.Context) (*imageInfo, error) {
 	if len(images) == 0 {
 		return nil, errors.New("no local docker images found")
 	}
-	idx, err := common.PromptTableSelect(
+	idx, err := c.Prompter.TableSelect(
 		"Select image:", prompts, []string{"Image name", "Age"}, common.SelectEnableFilterOpt,
 	)
 	if err != nil {

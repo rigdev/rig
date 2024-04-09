@@ -221,13 +221,13 @@ func parseBool(s string) (bool, error) {
 	return false, errors.InvalidArgumentErrorf("invalid bool format")
 }
 
-func GetMember(ctx context.Context, rc rig.Client) (string, string, []string, error) {
-	i, _, err := PromptSelect("Select Member Type", []string{"User", "Service Account"})
+func GetMember(ctx context.Context, rc rig.Client, p Prompter) (string, string, []string, error) {
+	i, _, err := p.Select("Select Member Type", []string{"User", "Service Account"})
 	if err != nil {
 		return "", "", nil, err
 	}
 	if i == 0 {
-		u, userID, err := GetUser(ctx, "", rc)
+		u, userID, err := GetUser(ctx, "", rc, p)
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -249,7 +249,7 @@ func GetMember(ctx context.Context, rc rig.Client) (string, string, []string, er
 			sas = append(sas, sa.GetName())
 		}
 
-		i, _, err := PromptSelect("Select Service Account", sas)
+		i, _, err := p.Select("Select Service Account", sas)
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -265,10 +265,10 @@ func GetMember(ctx context.Context, rc rig.Client) (string, string, []string, er
 	return "", "", nil, nil
 }
 
-func GetUser(ctx context.Context, identifier string, rc rig.Client) (*user.User, string, error) {
+func GetUser(ctx context.Context, identifier string, rc rig.Client, p Prompter) (*user.User, string, error) {
 	var err error
 	if identifier == "" {
-		identifier, err = PromptInput("User Identifier:", ValidateNonEmptyOpt)
+		identifier, err = p.Input("User Identifier:", ValidateNonEmptyOpt)
 		if err != nil {
 			return nil, "", err
 		}
@@ -304,10 +304,10 @@ func GetUser(ctx context.Context, identifier string, rc rig.Client) (*user.User,
 	return u, resID, nil
 }
 
-func GetGroup(ctx context.Context, id string, nc rig.Client) (*group.Group, string, error) {
+func GetGroup(ctx context.Context, id string, nc rig.Client, p Prompter) (*group.Group, string, error) {
 	var err error
 	if id == "" {
-		id, err = PromptInput("Group Id:", ValidateSystemNameOpt)
+		id, err = p.Input("Group Id:", ValidateSystemNameOpt)
 		if err != nil {
 			return nil, "", err
 		}

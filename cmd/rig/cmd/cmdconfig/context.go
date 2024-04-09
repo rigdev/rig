@@ -19,7 +19,7 @@ func (cfg *Config) UseContext(name string) error {
 }
 
 func (cfg *Config) SelectContext() error {
-	contextName, err := PromptForContext(cfg)
+	contextName, err := cfg.PromptForContext()
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func (cfg *Config) SelectContext() error {
 	return cfg.Save()
 }
 
-func PromptForContext(cfg *Config) (string, error) {
+func (cfg *Config) PromptForContext() (string, error) {
 	var labels []string
 	for _, c := range cfg.Contexts {
 		if c.Name == cfg.CurrentContextName {
@@ -38,7 +38,7 @@ func PromptForContext(cfg *Config) (string, error) {
 		}
 	}
 
-	n, _, err := common.PromptSelect("Rig context:", labels)
+	n, _, err := cfg.prompter.Select("Rig context:", labels)
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +59,7 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 			names = append(names, c.Name)
 		}
 
-		name, err = common.PromptInput("Name:",
+		name, err = cfg.prompter.Input("Name:",
 			common.ValidateSystemNameOpt,
 			common.InputDefaultOpt(name),
 			common.ValidateUniqueOpt(names),
@@ -76,7 +76,7 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 	}
 
 	if host == "" {
-		host, err = common.PromptInput("Host:", common.ValidateURLOpt, common.InputDefaultOpt(host))
+		host, err = cfg.prompter.Input("Host:", common.ValidateURLOpt, common.InputDefaultOpt(host))
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 	})
 
 	if interactive {
-		if ok, err := common.PromptConfirm("Do you want activate this Rig context now?", true); err != nil {
+		if ok, err := cfg.prompter.Confirm("Do you want activate this Rig context now?", true); err != nil {
 			return err
 		} else if ok {
 			cfg.CurrentContextName = name

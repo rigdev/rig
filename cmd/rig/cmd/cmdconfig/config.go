@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 	"github.com/spf13/afero"
@@ -64,6 +65,7 @@ type Config struct {
 	CurrentContextName string `yaml:"current_context"`
 
 	filePath string
+	prompter common.Prompter
 }
 
 func (cfg *Config) Minify() *Config {
@@ -190,9 +192,10 @@ func (cfg Config) Save() error {
 	return nil
 }
 
-func NewConfig(cfgPath string, fs afero.Fs) (*Config, error) {
+func NewConfig(cfgPath string, fs afero.Fs, p common.Prompter) (*Config, error) {
 	cfg := &Config{
 		filePath: cfgPath,
+		prompter: p,
 	}
 
 	if cfg.filePath != "" {

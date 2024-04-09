@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/rigdev/rig-go-sdk"
+	common "github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -17,8 +18,9 @@ var (
 type Cmd struct {
 	fx.In
 
-	Rig   rig.Client
-	Scope scope.Scope
+	Rig      rig.Client
+	Scope    scope.Scope
+	Prompter common.Prompter
 }
 
 var cmd Cmd
@@ -26,6 +28,7 @@ var cmd Cmd
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Scope = c.Scope
+	cmd.Prompter = c.Prompter
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {

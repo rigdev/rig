@@ -18,7 +18,7 @@ import (
 func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var err error
 	if capsule_cmd.CapsuleID == "" {
-		capsule_cmd.CapsuleID, err = common.PromptInput("Capsule name:", common.ValidateSystemNameOpt)
+		capsule_cmd.CapsuleID, err = c.Prompter.Input("Capsule name:", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
@@ -28,20 +28,20 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	var imageID string
 	var replicas int
 	if interactive {
-		if ok, err := common.PromptConfirm("Do you want to add an initial image?", true); err != nil {
+		if ok, err := c.Prompter.Confirm("Do you want to add an initial image?", true); err != nil {
 			return err
 		} else if ok {
-			if imageID, err = common.PromptInput("Image:", common.ValidateImageOpt); err != nil {
+			if imageID, err = c.Prompter.Input("Image:", common.ValidateImageOpt); err != nil {
 				return err
 			}
 
-			if ok, err := common.PromptConfirm("Does the image listen to a port?", true); err != nil {
+			if ok, err := c.Prompter.Confirm("Does the image listen to a port?", true); err != nil {
 				return err
 			} else if ok {
 				ifc := &capsule.Interface{
 					Name: "default",
 				}
-				portStr, err := common.PromptInput("Which port:", common.ValidateIntOpt)
+				portStr, err := c.Prompter.Input("Which port:", common.ValidateIntOpt)
 				if err != nil {
 					return err
 				}
@@ -53,7 +53,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 
 				ifc.Port = uint32(port)
 
-				if ok, err := common.PromptConfirm("Do you want to make the port public available?", false); err != nil {
+				if ok, err := c.Prompter.Confirm("Do you want to make the port public available?", false); err != nil {
 					return err
 				} else if ok {
 					ifc.Public = &capsule.PublicInterface{
@@ -61,14 +61,14 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 						Method:  &capsule.RoutingMethod{},
 					}
 					options := []string{"Load balancer (raw traffic routing)", "Ingress (HTTP/HTTPS routing)"}
-					i, _, err := common.PromptSelect("Which method?", options)
+					i, _, err := c.Prompter.Select("Which method?", options)
 					if err != nil {
 						return err
 					}
 
 					switch i {
 					case 0:
-						portStr, err := common.PromptInput("What public port to use:", common.ValidateIntOpt)
+						portStr, err := c.Prompter.Input("What public port to use:", common.ValidateIntOpt)
 						if err != nil {
 							return err
 						}
@@ -100,11 +100,11 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 				EnvironmentVariables: map[string]string{},
 			}
 
-			if ok, err := common.PromptConfirm("Do you want to add a command", false); err != nil {
+			if ok, err := c.Prompter.Confirm("Do you want to add a command", false); err != nil {
 				return err
 			} else if ok {
 
-				cmdStr, err := common.PromptInput("Command:", common.ValidateNonEmptyOpt)
+				cmdStr, err := c.Prompter.Input("Command:", common.ValidateNonEmptyOpt)
 				if err != nil {
 					return err
 				}
@@ -112,7 +112,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 				cSettings.Command = cmdStr
 
 				for {
-					ok, err := common.PromptConfirm("Do you want to add an argument", false)
+					ok, err := c.Prompter.Confirm("Do you want to add an argument", false)
 					if err != nil {
 						return err
 					}
@@ -121,7 +121,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 						break
 					}
 
-					argStr, err := common.PromptInput("Argument:", common.ValidateNonEmptyOpt)
+					argStr, err := c.Prompter.Input("Argument:", common.ValidateNonEmptyOpt)
 					if err != nil {
 						return err
 					}
@@ -131,7 +131,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 			}
 
 			for {
-				ok, err := common.PromptConfirm("Do you want to add an environment variable", false)
+				ok, err := c.Prompter.Confirm("Do you want to add an environment variable", false)
 				if err != nil {
 					return err
 				}
@@ -140,12 +140,12 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 					break
 				}
 
-				keyStr, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt)
+				keyStr, err := c.Prompter.Input("Key:", common.ValidateNonEmptyOpt)
 				if err != nil {
 					return err
 				}
 
-				valueStr, err := common.PromptInput("Value:", common.ValidateNonEmptyOpt)
+				valueStr, err := c.Prompter.Input("Value:", common.ValidateNonEmptyOpt)
 				if err != nil {
 					return err
 				}
@@ -159,20 +159,20 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 				},
 			})
 
-			if ok, err := common.PromptConfirm("Do you want add config files", false); err != nil {
+			if ok, err := c.Prompter.Confirm("Do you want add config files", false); err != nil {
 				return err
 			} else if ok {
 				for {
 					cf := &capsule.Change_ConfigFile{}
 
-					mountPath, err := common.PromptInput("Mount path: ", common.ValidateAbsPathOpt)
+					mountPath, err := c.Prompter.Input("Mount path: ", common.ValidateAbsPathOpt)
 					if err != nil {
 						return err
 					}
 
 					cf.Path = mountPath
 
-					filepath, err := common.PromptInput("File path: ", common.ValidateNonEmptyOpt)
+					filepath, err := c.Prompter.Input("File path: ", common.ValidateNonEmptyOpt)
 					if err != nil {
 						return err
 					}
@@ -198,7 +198,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 						},
 					})
 
-					if ok, err := common.PromptConfirm("Do you want to add another file", false); err != nil {
+					if ok, err := c.Prompter.Confirm("Do you want to add another file", false); err != nil {
 						return err
 					} else if !ok {
 						break
@@ -206,7 +206,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 				}
 			}
 		}
-		replicasStr, err := common.PromptInput("Replicas:", common.ValidateIntOpt, common.InputDefaultOpt("1"))
+		replicasStr, err := c.Prompter.Input("Replicas:", common.ValidateIntOpt, common.InputDefaultOpt("1"))
 		if err != nil {
 			return err
 		}
@@ -269,7 +269,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 			if forceDeploy {
 				_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
 			} else {
-				_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, req)
+				_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, c.Prompter, req)
 			}
 		}
 		if err != nil {

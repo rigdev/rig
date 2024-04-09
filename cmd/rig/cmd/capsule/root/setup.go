@@ -47,14 +47,13 @@ type Cmd struct {
 	Rig          rig.Client
 	Scope        scope.Scope
 	DockerClient *client.Client
+	Prompter     common.Prompter
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	cmd.Rig = c.Rig
-	cmd.Scope = c.Scope
-	cmd.DockerClient = c.DockerClient
+	cmd = c
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
@@ -214,7 +213,7 @@ func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, _ []str
 		return nil
 	}
 
-	name, err := capsule.SelectCapsule(ctx, c.Rig, c.Scope)
+	name, err := capsule.SelectCapsule(ctx, c.Rig, c.Prompter, c.Scope)
 	if err != nil {
 		return err
 	}

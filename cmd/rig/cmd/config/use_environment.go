@@ -5,7 +5,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +45,7 @@ func (c *Cmd) promptForEnvironment(ctx context.Context) (string, error) {
 		es = append(es, e.GetEnvironmentId())
 	}
 
-	i, _, err := common.PromptSelect("Environment: ", es)
+	i, _, err := c.Prompter.Select("Environment: ", es)
 	if err != nil {
 		return "", err
 	}

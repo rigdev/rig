@@ -14,14 +14,14 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	var err error
 
 	if name == "" {
-		name, err = common.PromptInput("Name:", common.ValidateNonEmptyOpt)
+		name, err = c.Prompter.Input("Name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
 	}
 
 	if role == "" {
-		_, role, err = common.PromptSelect("What is the role of the user?",
+		_, role, err = c.Prompter.Select("What is the role of the user?",
 			[]string{"admin", "owner", "developer", "viewer"})
 		if err != nil {
 			return err

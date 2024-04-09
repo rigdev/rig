@@ -16,7 +16,7 @@ func (c *Cmd) removeMember(ctx context.Context, cmd *cobra.Command, args []strin
 	var memberID *group.MemberID
 	var err error
 	if len(args) == 0 {
-		userID, serviceAccountID, _, err := common.GetMember(ctx, c.Rig)
+		userID, serviceAccountID, _, err := common.GetMember(ctx, c.Rig, c.Prompter)
 		if err != nil {
 			return err
 		}
@@ -82,12 +82,12 @@ func (c *Cmd) removeMember(ctx context.Context, cmd *cobra.Command, args []strin
 			fields[i] = g.GetGroupId()
 		}
 
-		_, groupID, err = common.PromptSelect("Select group", fields)
+		_, groupID, err = c.Prompter.Select("Select group", fields)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, id, err := common.GetGroup(ctx, groupID, c.Rig)
+		_, id, err := common.GetGroup(ctx, groupID, c.Rig, c.Prompter)
 		if err != nil {
 			return err
 		}

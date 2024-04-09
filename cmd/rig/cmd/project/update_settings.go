@@ -67,14 +67,14 @@ func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, _ []string
 	}
 
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields)
+		i, res, err := c.Prompter.Select("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
 		if res == "Done" {
 			break
 		}
-		u, err := promptSettingsUpdate(settingsField(i+1), s)
+		u, err := c.promptSettingsUpdate(settingsField(i+1), s)
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -103,18 +103,18 @@ func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, _ []string
 	return nil
 }
 
-func promptSettingsUpdate(f settingsField, s *settings.Settings) (*settings.Update, error) {
+func (c *Cmd) promptSettingsUpdate(f settingsField, s *settings.Settings) (*settings.Update, error) {
 	switch f {
 	case settingsAddDockerRegistry:
-		return promptAddDockerRegistry()
+		return c.promptAddDockerRegistry()
 	case settingsDeleteDockerRegistry:
-		return promptDeleteDockerRegistry(s)
+		return c.promptDeleteDockerRegistry(s)
 	default:
 		return nil, nil
 	}
 }
 
-func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) {
+func (c *Cmd) promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) {
 	if len(s.GetDockerRegistries()) == 0 {
 		return nil, nil
 	}
@@ -124,7 +124,7 @@ func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) 
 		hosts = append(hosts, r.GetHost())
 	}
 
-	_, res, err := common.PromptSelect("Choose a registry to delete:", hosts)
+	_, res, err := c.Prompter.Select("Choose a registry to delete:", hosts)
 	if err != nil {
 		return nil, err
 	}
@@ -136,23 +136,23 @@ func promptDeleteDockerRegistry(s *settings.Settings) (*settings.Update, error) 
 	}, nil
 }
 
-func promptAddDockerRegistry() (*settings.Update, error) {
-	host, err := common.PromptInput("Enter host:", common.ValidateNonEmptyOpt)
+func (c *Cmd) promptAddDockerRegistry() (*settings.Update, error) {
+	host, err := c.Prompter.Input("Enter host:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	username, err := common.PromptInput("Enter username:", common.ValidateNonEmptyOpt)
+	username, err := c.Prompter.Input("Enter username:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := common.PromptInput("Enter password:", common.ValidateNonEmptyOpt)
+	password, err := c.Prompter.Input("Enter password:", common.ValidateNonEmptyOpt)
 	if err != nil {
 		return nil, err
 	}
 
-	email, err := common.PromptInput("Enter email:", common.ValidateEmailOpt)
+	email, err := c.Prompter.Input("Enter email:", common.ValidateEmailOpt)
 	if err != nil {
 		return nil, err
 	}

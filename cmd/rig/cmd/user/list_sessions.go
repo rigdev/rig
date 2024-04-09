@@ -18,7 +18,7 @@ func (c *Cmd) listSessions(ctx context.Context, cmd *cobra.Command, args []strin
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := common.GetUser(ctx, identifier, c.Rig)
+	_, id, err := common.GetUser(ctx, identifier, c.Rig, c.Prompter)
 	if err != nil {
 		return err
 	}

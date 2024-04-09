@@ -29,13 +29,14 @@ var groupID string
 type Cmd struct {
 	fx.In
 
-	Rig rig.Client
+	Rig      rig.Client
+	Prompter common.Prompter
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	cmd.Rig = c.Rig
+	cmd = c
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {

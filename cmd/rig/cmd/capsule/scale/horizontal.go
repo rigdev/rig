@@ -68,7 +68,7 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 		if forceDeploy {
 			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
 		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, req)
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, c.Prompter, req)
 		}
 	}
 	if err != nil {
@@ -160,7 +160,7 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 		if forceDeploy {
 			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
 		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, req)
+			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, c.Prompter, req)
 		}
 	}
 	if err != nil {
@@ -182,7 +182,7 @@ func hasAutoscalerFlagsSet(cmd *cobra.Command) bool {
 
 func (c *Cmd) promptAutoscale(ctx context.Context, horizontal *capsule.HorizontalScale) error {
 	for {
-		idx, _, err := common.PromptSelect("Choose action", []string{
+		idx, _, err := c.Prompter.Select("Choose action", []string{
 			"See configuration",
 			"Save and finish",
 			"Set min instances",
@@ -210,7 +210,7 @@ func (c *Cmd) promptAutoscale(ctx context.Context, horizontal *capsule.Horizonta
 			}
 			return nil
 		case 2:
-			s, err := common.PromptInput("Min instances:", common.ValidateIntOpt)
+			s, err := c.Prompter.Input("Min instances:", common.ValidateIntOpt)
 			if err != nil {
 				return err
 			}
@@ -220,7 +220,7 @@ func (c *Cmd) promptAutoscale(ctx context.Context, horizontal *capsule.Horizonta
 			}
 			horizontal.MinReplicas = uint32(m)
 		case 3:
-			s, err := common.PromptInput("Max instances:", common.ValidateIntOpt)
+			s, err := c.Prompter.Input("Max instances:", common.ValidateIntOpt)
 			if err != nil {
 				return err
 			}
@@ -230,7 +230,7 @@ func (c *Cmd) promptAutoscale(ctx context.Context, horizontal *capsule.Horizonta
 			}
 			horizontal.MaxReplicas = uint32(m)
 		case 4:
-			s, err := common.PromptInput("Utilization percentage:", common.ValidateIntInRangeOpt(0, 100))
+			s, err := c.Prompter.Input("Utilization percentage:", common.ValidateIntInRangeOpt(0, 100))
 			if err != nil {
 				return err
 			}
@@ -269,7 +269,7 @@ func (c *Cmd) promptAutoscale(ctx context.Context, horizontal *capsule.Horizonta
 				}
 				choices = append(choices, []string{kind, name})
 			}
-			idx, err := common.PromptTableSelect("Select Metric", choices, []string{"Type", "Name"})
+			idx, err := c.Prompter.TableSelect("Select Metric", choices, []string{"Type", "Name"})
 			if err != nil {
 				return err
 			}
@@ -290,7 +290,7 @@ func validateAutoscaler(horizontal *capsule.HorizontalScale) error {
 }
 
 func (c *Cmd) promptCustomMetric(ctx context.Context) (*capsule.CustomMetric, error) {
-	idx, _, err := common.PromptSelect("Metric type:", []string{
+	idx, _, err := c.Prompter.Select("Metric type:", []string{
 		"Instance Metric",
 		"Object Metric",
 	})
@@ -331,17 +331,17 @@ func (c *Cmd) promptInstanceMetric(ctx context.Context) (*capsule.CustomMetric_I
 		return nil, err
 	}
 
-	metricName, err := prompMetricName(metrics.Msg.GetMetrics())
+	metricName, err := c.prompMetricName(metrics.Msg.GetMetrics())
 	if err != nil {
 		return nil, err
 	}
 
-	labelSelectors, err := promptLabelSelector()
+	labelSelectors, err := c.promptLabelSelector()
 	if err != nil {
 		return nil, err
 	}
 
-	value, err := common.PromptInput("Average Value:", common.ValidateQuantityOpt)
+	value, err := c.Prompter.Input("Average Value:", common.ValidateQuantityOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +356,7 @@ func (c *Cmd) promptInstanceMetric(ctx context.Context) (*capsule.CustomMetric_I
 }
 
 func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Object, error) {
-	kind, err := common.PromptInput("Described object, kind:", common.ValidateKubernetesNameOpt)
+	kind, err := c.Prompter.Input("Described object, kind:", common.ValidateKubernetesNameOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +369,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 
 	var objName string
 	if err != nil {
-		objName, err = common.PromptInput("Object name:")
+		objName, err = c.Prompter.Input("Object name:")
 		if err != nil {
 			return nil, err
 		}
@@ -378,13 +378,13 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 		for _, obj := range resp.Msg.GetObjects() {
 			names = append(names, obj.GetName())
 		}
-		_, objName, err = common.PromptSelect("Object by name:", names, common.SelectEnableFilterOpt)
+		_, objName, err = c.Prompter.Select("Object by name:", names, common.SelectEnableFilterOpt)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	api, err := common.PromptInput("Described object, api version (optional):", func(inp *textinput.TextInput) {
+	api, err := c.Prompter.Input("Described object, api version (optional):", func(inp *textinput.TextInput) {
 		inp.Validate = func(s string) error {
 			if s == "" {
 				return nil
@@ -412,22 +412,22 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 		return nil, err
 	}
 
-	metricName, err := prompMetricName(metricResp.Msg.GetMetrics())
+	metricName, err := c.prompMetricName(metricResp.Msg.GetMetrics())
 	if err != nil {
 		return nil, err
 	}
 
-	labelSelectors, err := promptLabelSelector()
+	labelSelectors, err := c.promptLabelSelector()
 	if err != nil {
 		return nil, err
 	}
 
-	idx, s, err := common.PromptSelect("Type:", []string{"Value", "Average Value"})
+	idx, s, err := c.Prompter.Select("Type:", []string{"Value", "Average Value"})
 	if err != nil {
 		return nil, err
 	}
 
-	value, err := common.PromptInput(s+":", common.ValidateQuantityOpt)
+	value, err := c.Prompter.Input(s+":", common.ValidateQuantityOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +453,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 	return metric, nil
 }
 
-func prompMetricName(metrics []*capsule.Metric) (string, error) {
+func (c *Cmd) prompMetricName(metrics []*capsule.Metric) (string, error) {
 	slices.SortFunc(metrics, func(m1, m2 *capsule.Metric) int {
 		return strings.Compare(m1.Name, m2.Name)
 	})
@@ -469,9 +469,9 @@ func prompMetricName(metrics []*capsule.Metric) (string, error) {
 	}
 
 	if len(choices) == 0 {
-		return common.PromptInput("Metric Name:", common.ValidateKubernetesNameOpt)
+		return c.Prompter.Input("Metric Name:", common.ValidateKubernetesNameOpt)
 	}
-	idx, err := common.PromptTableSelect(
+	idx, err := c.Prompter.TableSelect(
 		"Select metric:",
 		choices,
 		[]string{"Metric", "Latest value", "Age of latest value"},
@@ -483,8 +483,8 @@ func prompMetricName(metrics []*capsule.Metric) (string, error) {
 	return metrics[idx].Name, nil
 }
 
-func promptLabelSelector() (map[string]string, error) {
-	s, err := common.PromptInput("Label Selectors", func(inp *textinput.TextInput) {
+func (c *Cmd) promptLabelSelector() (map[string]string, error) {
+	s, err := c.Prompter.Input("Label Selectors", func(inp *textinput.TextInput) {
 		inp.Validate = func(s string) error {
 			_, err := parseLabelSelectors(s)
 			return err

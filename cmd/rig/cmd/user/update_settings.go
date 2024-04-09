@@ -184,14 +184,14 @@ func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, _ []string
 	}
 
 	for {
-		i, res, err := common.PromptSelect("Choose a field to update:", fields)
+		i, res, err := c.Prompter.Select("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
 		if res == "Done" {
 			break
 		}
-		u, err := promptSettingsUpdate(settingsField(i+1), s)
+		u, err := c.promptSettingsUpdate(settingsField(i+1), s)
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -220,11 +220,11 @@ func (c *Cmd) updateSettings(ctx context.Context, cmd *cobra.Command, _ []string
 	return nil
 }
 
-func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Update, error) {
+func (c *Cmd) promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Update, error) {
 	switch f {
 	case settingsAllowRegister:
 		defAllowRegister := strconv.FormatBool(s.GetAllowRegister())
-		allowRegister, err := common.PromptInput(
+		allowRegister, err := c.Prompter.Input(
 			"Allow Register:", common.BoolValidateOpt, common.InputDefaultOpt(defAllowRegister),
 		)
 		if err != nil {
@@ -239,7 +239,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsIsVerifiedEmailRequired:
 		defIsVerifiedEmailRequired := strconv.FormatBool(s.GetIsVerifiedEmailRequired())
-		isVerifiedEmailRequired, err := common.PromptInput(
+		isVerifiedEmailRequired, err := c.Prompter.Input(
 			"Verify Email Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedEmailRequired),
 		)
 		if err != nil {
@@ -254,7 +254,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsIsVerifiedPhoneRequired:
 		defIsVerifiedPhoneRequired := strconv.FormatBool(s.GetIsVerifiedPhoneRequired())
-		isVerifiedPhoneRequired, err := common.PromptInput(
+		isVerifiedPhoneRequired, err := c.Prompter.Input(
 			"Verify Phone Required:", common.BoolValidateOpt, common.InputDefaultOpt(defIsVerifiedPhoneRequired),
 		)
 		if err != nil {
@@ -269,7 +269,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsAccessTokenTTL:
 		defAccessTokenTTL := strconv.Itoa(int(s.GetAccessTokenTtl().AsDuration().Minutes()))
-		accessTokenTTL, err := common.PromptInput(
+		accessTokenTTL, err := c.Prompter.Input(
 			"Access Token TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defAccessTokenTTL),
 		)
 		if err != nil {
@@ -288,7 +288,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, err
 	case settingsRefreshTokenTTL:
 		defRefreshTokenTTL := strconv.Itoa(int(s.GetRefreshTokenTtl().AsDuration().Hours()))
-		refreshTokenTTL, err := common.PromptInput(
+		refreshTokenTTL, err := c.Prompter.Input(
 			"Refresh Token TTL (hours):", common.ValidateIntOpt, common.InputDefaultOpt(defRefreshTokenTTL),
 		)
 		if err != nil {
@@ -307,7 +307,7 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 		}, nil
 	case settingsVerificationCodeTTL:
 		defVerificationCodeTTL := strconv.Itoa(int(s.GetVerificationCodeTtl().AsDuration().Minutes()))
-		verificationCodeTTL, err := common.PromptInput(
+		verificationCodeTTL, err := c.Prompter.Input(
 			"Verification Code TTL (minutes):", common.ValidateIntOpt, common.InputDefaultOpt(defVerificationCodeTTL),
 		)
 		if err != nil {
@@ -324,39 +324,39 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 			},
 		}, nil
 	case settingsPasswordHashing:
-		u, err := getPasswordHashingUpdate(s.GetPasswordHashing())
+		u, err := c.getPasswordHashingUpdate(s.GetPasswordHashing())
 		if err != nil {
 			return nil, nil
 		}
 		return []*settings.Update{u}, err
 	case settingsLoginMechanisms:
-		u, err := getLoginMechanismsUpdate(s.GetLoginMechanisms())
+		u, err := c.getLoginMechanismsUpdate(s.GetLoginMechanisms())
 		if err != nil {
 			return nil, nil
 		}
 		return []*settings.Update{u}, nil
 	case settingsEmailProvider:
-		u, err := promptEmailProvider(s)
+		u, err := c.promptEmailProvider(s)
 		if err != nil {
 			return nil, nil
 		}
 		return []*settings.Update{u}, nil
 	case templateEmailWelcome:
-		u, err := promptTemplate(s.GetTemplates().GetWelcomeEmail())
+		u, err := c.promptTemplate(s.GetTemplates().GetWelcomeEmail())
 		if err != nil {
 			return nil, nil
 		}
 
 		return []*settings.Update{u}, nil
 	case templateResetPasswordEmail:
-		u, err := promptTemplate(s.GetTemplates().GetResetPasswordEmail())
+		u, err := c.promptTemplate(s.GetTemplates().GetResetPasswordEmail())
 		if err != nil {
 			return nil, nil
 		}
 
 		return []*settings.Update{u}, nil
 	case templateVerifyEmail:
-		u, err := promptTemplate(s.GetTemplates().GetVerifyEmail())
+		u, err := c.promptTemplate(s.GetTemplates().GetVerifyEmail())
 		if err != nil {
 			return nil, nil
 		}
@@ -367,13 +367,13 @@ func promptSettingsUpdate(f settingsField, s *settings.Settings) ([]*settings.Up
 	}
 }
 
-func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error) {
+func (c *Cmd) getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error) {
 	fmt.Println("Currend password Hashing: " + psh.String())
 	fields := []string{
 		"Bcrypt",
 		"Scrypt",
 	}
-	_, res, err := common.PromptSelect("Choose hashing algorithm", fields)
+	_, res, err := c.Prompter.Select("Choose hashing algorithm", fields)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +384,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		}
 
 		bcrypt := &model.BcryptHashingConfig{}
-		cost, err := common.PromptInput("Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defCost))
+		cost, err := c.Prompter.Input("Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defCost))
 		if err != nil {
 			return nil, err
 		}
@@ -416,13 +416,13 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		}
 
 		scrypt := &model.ScryptHashingConfig{}
-		key, err := common.PromptInput("Key:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defKey))
+		key, err := c.Prompter.Input("Key:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defKey))
 		if err != nil {
 			return nil, err
 		}
 		scrypt.SignerKey = key
 
-		saltSeparator, err := common.PromptInput(
+		saltSeparator, err := c.Prompter.Input(
 			"Salt Separator:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(defSaltSeparator),
 		)
 		if err != nil {
@@ -430,7 +430,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		}
 		scrypt.SaltSeparator = saltSeparator
 
-		rounds, err := common.PromptInput(
+		rounds, err := c.Prompter.Input(
 			"Rounds:", common.ValidateIntOpt, common.InputDefaultOpt(defRounds),
 		)
 		if err != nil {
@@ -439,7 +439,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		roundsInt, _ := strconv.Atoi(rounds)
 		scrypt.Rounds = int32(roundsInt)
 
-		memCost, err := common.PromptInput(
+		memCost, err := c.Prompter.Input(
 			"Memory Cost:", common.ValidateIntOpt, common.InputDefaultOpt(defMemCost),
 		)
 		if err != nil {
@@ -448,7 +448,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		memCostInt, _ := strconv.Atoi(memCost)
 		scrypt.MemCost = int32(memCostInt)
 
-		parallelism, err := common.PromptInput(
+		parallelism, err := c.Prompter.Input(
 			"Parallelism:", common.ValidateIntOpt, common.InputDefaultOpt(defParallelism),
 		)
 		if err != nil {
@@ -457,7 +457,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 		parallelismInt, _ := strconv.Atoi(parallelism)
 		scrypt.P = int32(parallelismInt)
 
-		keyLength, err := common.PromptInput(
+		keyLength, err := c.Prompter.Input(
 			"Key Length:", common.ValidateIntOpt, common.InputDefaultOpt(defKeyLength),
 		)
 		if err != nil {
@@ -480,7 +480,7 @@ func getPasswordHashingUpdate(psh *model.HashingConfig) (*settings.Update, error
 	return nil, nil
 }
 
-func getLoginMechanismsUpdate(current []model.LoginType) (*settings.Update, error) {
+func (c *Cmd) getLoginMechanismsUpdate(current []model.LoginType) (*settings.Update, error) {
 	currentString := []string{}
 	for _, l := range current {
 		currentString = append(currentString, loginTypeToString(l))
@@ -495,7 +495,7 @@ func getLoginMechanismsUpdate(current []model.LoginType) (*settings.Update, erro
 
 	selected := []model.LoginType{}
 	for {
-		i, res, err := common.PromptSelect("Choose login types", fields)
+		i, res, err := c.Prompter.Select("Choose login types", fields)
 		if err != nil {
 			fmt.Println(err.Error())
 			break
@@ -644,8 +644,8 @@ func parseSettingsUpdate() (*settings.Update, error) {
 	}
 }
 
-func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
-	_, field, err := common.PromptSelect("Choose a type:", []string{
+func (c *Cmd) promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
+	_, field, err := c.Prompter.Select("Choose a type:", []string{
 		"MailJet",
 		"Smtp",
 		"Default",
@@ -679,7 +679,7 @@ func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
 				Mailjet: &settings.MailjetInstance{},
 			}
 		}
-		if err := promptEmailProviderFields(prov, field); err != nil {
+		if err := c.promptEmailProviderFields(prov, field); err != nil {
 			return nil, err
 		}
 		return &settings.Update{
@@ -699,7 +699,7 @@ func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
 				Smtp: &settings.SmtpInstance{},
 			}
 		}
-		if err := promptEmailProviderFields(prov, field); err != nil {
+		if err := c.promptEmailProviderFields(prov, field); err != nil {
 			return nil, err
 		}
 		return &settings.Update{
@@ -712,7 +712,7 @@ func promptEmailProvider(s *settings.Settings) (*settings.Update, error) {
 	}
 }
 
-func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
+func (c *Cmd) promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 	var fields []string
 	if prov == "MailJet" {
 		fields = []string{
@@ -733,7 +733,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 	}
 
 	for {
-		_, res, err := common.PromptSelect("Choose a field to update:", fields)
+		_, res, err := c.Prompter.Select("Choose a field to update:", fields)
 		if err != nil {
 			return err
 		}
@@ -743,7 +743,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 
 		switch res {
 		case emailProviderPublicKey.String():
-			key, err := common.PromptInput(
+			key, err := c.Prompter.Input(
 				"Enter public key:", common.ValidateNonEmptyOpt,
 			)
 			if err != nil {
@@ -751,7 +751,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 			}
 			p.Credentials.PublicKey = key
 		case emailProviderPrivateKey.String():
-			key, err := common.PromptInput(
+			key, err := c.Prompter.Input(
 				"Enter private key:", common.ValidateNonEmptyOpt,
 			)
 			if err != nil {
@@ -759,7 +759,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 			}
 			p.Credentials.PrivateKey = key
 		case emailProviderFromEmail.String():
-			email, err := common.PromptInput(
+			email, err := c.Prompter.Input(
 				"Enter from email:",
 				common.ValidateEmailOpt,
 				common.InputDefaultOpt(p.GetFrom()),
@@ -769,7 +769,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 			}
 			p.From = email
 		case emailProviderHost.String():
-			host, err := common.PromptInput(
+			host, err := c.Prompter.Input(
 				"Enter host:",
 				common.ValidateNonEmptyOpt,
 				common.InputDefaultOpt(p.GetInstance().GetSmtp().GetHost()),
@@ -779,7 +779,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 			}
 			p.GetInstance().GetSmtp().Host = host
 		case emailProviderPort.String():
-			port, err := common.PromptInput(
+			port, err := c.Prompter.Input(
 				"Enter port:",
 				common.ValidateNonEmptyOpt,
 				common.InputDefaultOpt(strconv.Itoa(int(p.GetInstance().GetSmtp().GetPort()))),
@@ -800,7 +800,7 @@ func promptEmailProviderFields(p *settings.EmailProvider, prov string) error {
 	return nil
 }
 
-func promptTemplate(t *settings.Template) (*settings.Update, error) {
+func (c *Cmd) promptTemplate(t *settings.Template) (*settings.Update, error) {
 	fields := []string{
 		tempalteFieldSubject.String(),
 		templateFieldBody.String(),
@@ -808,7 +808,7 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 	}
 
 	for {
-		_, res, err := common.PromptSelect("Choose a field to update:", fields)
+		_, res, err := c.Prompter.Select("Choose a field to update:", fields)
 		if err != nil {
 			return nil, err
 		}
@@ -818,7 +818,7 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 
 		switch res {
 		case tempalteFieldSubject.String():
-			subject, err := common.PromptInput(
+			subject, err := c.Prompter.Input(
 				"Enter subject:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetSubject()),
 			)
 			if err != nil {
@@ -826,7 +826,7 @@ func promptTemplate(t *settings.Template) (*settings.Update, error) {
 			}
 			t.Subject = subject
 		case templateFieldBody.String():
-			body, err := common.PromptInput(
+			body, err := c.Prompter.Input(
 				"Enter body:", common.ValidateNonEmptyOpt, common.InputDefaultOpt(t.GetBody()),
 			)
 			if err != nil {

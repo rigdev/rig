@@ -5,6 +5,7 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/scheme"
@@ -16,6 +17,7 @@ import (
 type TestModuleInput struct {
 	RigClient     rig.Client
 	IsInteractive bool
+	Prompter      common.Prompter
 }
 
 func MakeTestModule(i TestModuleInput) fx.Option {
@@ -24,9 +26,10 @@ func MakeTestModule(i TestModuleInput) fx.Option {
 		fx.Provide(func() rig.Client {
 			return i.RigClient
 		}),
+		fx.Provide(func() common.Prompter { return i.Prompter }),
 		fx.Provide(scheme.New),
-		fx.Provide(func(fs afero.Fs) (*cmdconfig.Config, error) {
-			return cmdconfig.NewConfig("", fs)
+		fx.Provide(func(fs afero.Fs, p common.Prompter) (*cmdconfig.Config, error) {
+			return cmdconfig.NewConfig("", fs, p)
 		}),
 		fx.Provide(zap.NewDevelopment),
 		fx.Provide(getContext),

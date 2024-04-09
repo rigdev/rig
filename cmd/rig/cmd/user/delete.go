@@ -14,7 +14,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 	if len(args) > 0 {
 		identifier = args[0]
 	}
-	_, id, err := common.GetUser(ctx, identifier, c.Rig)
+	_, id, err := common.GetUser(ctx, identifier, c.Rig, c.Prompter)
 	if err != nil {
 		return err
 	}

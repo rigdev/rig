@@ -20,7 +20,7 @@ func (c *Cmd) listGroupsForUser(ctx context.Context, cmd *cobra.Command, args []
 	var memberID *group.MemberID
 	var err error
 	if len(args) == 0 {
-		userID, serviceAccountID, _, err := common.GetMember(ctx, c.Rig)
+		userID, serviceAccountID, _, err := common.GetMember(ctx, c.Rig, c.Prompter)
 		if err != nil {
 			return err
 		}

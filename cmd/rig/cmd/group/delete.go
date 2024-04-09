@@ -15,7 +15,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 		identifier = args[0]
 	}
 
-	g, uid, err := common.GetGroup(ctx, identifier, c.Rig)
+	g, uid, err := common.GetGroup(ctx, identifier, c.Rig, c.Prompter)
 	if err != nil {
 		return err
 	}
