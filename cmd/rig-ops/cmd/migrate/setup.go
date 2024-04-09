@@ -75,8 +75,8 @@ resources created from a capsulespec
 	)
 	migrate.Flags().BoolVar(&keepEnvConfigMaps, "keep-env-config-maps", false,
 		"Keep envFrom to ConfigMaps after migration. "+
-			"By default, ConfigMaps are read and added to the Capsule. This option is useful if an external "+
-			"tool is generating the COnfigMaps.",
+			"By default, ConfigMaps are read and added to the Capsule. Changing this behavior is useful "+
+			"if an external tool is generating the ConfigMaps.",
 	)
 
 	parent.AddCommand(migrate)
