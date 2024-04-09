@@ -147,6 +147,10 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 	color.Green(" ✓")
 
+	for name, r := range migration.currentResources.ConfigMaps {
+		fmt.Println(name, r.GroupVersionKind().Version)
+	}
+
 	currentTree := migration.currentResources.CreateOverview("Current Resources")
 	deployRequest := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
@@ -781,129 +785,106 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) error {
 	changes := []*capsule.Change{}
 
-	configMap := &corev1.ConfigMap{}
-	err := c.K8sReader.Get(ctx, client.ObjectKey{
-		Namespace: migration.currentResources.Deployment.Namespace,
-		Name:      migration.capsule.Name,
-	}, configMap)
-	if err == nil {
-		for key, value := range configMap.Data {
-			changes = append(changes, &capsule.Change{Field: &capsule.Change_SetEnvironmentVariable{
-				SetEnvironmentVariable: &capsule.Change_KeyValue{
-					Name:  key,
-					Value: value,
-				},
-			}})
-		}
-	} else if !kerrors.IsNotFound(err) {
-		return onCCGetError(err, "ConfigMap",
-			migration.currentResources.Deployment.Name,
-			migration.currentResources.Deployment.Namespace,
-		)
-	}
-
 	configMapMappings := map[string]map[string]string{}
 	secretMappings := map[string]map[string]string{}
 
-	if env := migration.currentResources.Deployment.Spec.
-		Template.Spec.Containers[migration.containerIndex].Env; len(env) > 0 {
-		for _, envVar := range env {
-			if envVar.Value != "" {
-				changes = append(changes, &capsule.Change{
+	env := migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex].Env
+
+	if len(env) == 0 {
+		return nil
+	}
+
+	for _, envVar := range env {
+		switch {
+		case envVar.Value != "":
+			changes = append(changes, &capsule.Change{
+				Field: &capsule.Change_SetEnvironmentVariable{
+					SetEnvironmentVariable: &capsule.Change_KeyValue{
+						Name:  envVar.Name,
+						Value: envVar.Value,
+					},
+				},
+			})
+
+		case envVar.ValueFrom != nil:
+			from := envVar.ValueFrom
+			switch {
+			case from.ConfigMapKeyRef != nil:
+				cfgMap := from.ConfigMapKeyRef
+
+				configMap := &corev1.ConfigMap{}
+				err := c.K8sReader.Get(ctx, client.ObjectKey{
+					Name:      cfgMap.Name,
+					Namespace: migration.currentResources.Deployment.Namespace,
+				}, configMap)
+				if err != nil {
+					return onCCGetError(err, "ConfigMap",
+						cfgMap.Name,
+						migration.currentResources.Deployment.Namespace,
+					)
+				}
+
+				if err := migration.currentResources.AddObject("ConfigMap",
+					cfgMap.Name, configMap); err != nil && !rerrors.IsAlreadyExists(err) {
+					return err
+				}
+
+				migration.changes = append(migration.changes, &capsule.Change{
 					Field: &capsule.Change_SetEnvironmentVariable{
 						SetEnvironmentVariable: &capsule.Change_KeyValue{
 							Name:  envVar.Name,
-							Value: envVar.Value,
+							Value: configMap.Data[cfgMap.Key],
 						},
 					},
 				})
-			} else if envVar.ValueFrom != nil {
-				if cfgMap := envVar.ValueFrom.ConfigMapKeyRef; cfgMap != nil {
-					configMap := &corev1.ConfigMap{}
-					err := c.K8sReader.Get(ctx, client.ObjectKey{
-						Name:      cfgMap.Name,
-						Namespace: migration.currentResources.Deployment.Namespace,
-					}, configMap)
-					if err != nil {
-						return onCCGetError(err, "ConfigMap",
-							cfgMap.Name,
-							migration.currentResources.Deployment.Namespace,
-						)
-					}
 
-					name := fmt.Sprintf("env-source--%s", cfgMap.Name)
-					if err := migration.currentResources.AddObject("ConfigMap",
-						name, configMap); err != nil && !rerrors.IsAlreadyExists(err) {
-						return err
-					}
+				// TODO(anders): Add under flag?
+				// if !slices.Contains(migration.plugins, "rigdev.env_mapping") {
+				// 	migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+				// 		Kind: "Deployment",
+				// 		Name: migration.currentResources.Deployment.Name,
+				// 		Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom.configMapKeyRef",
+				// 			migration.currentResources.Deployment.Spec.
+				// 				Template.Spec.Containers[migration.containerIndex].Name, envVar.Name),
+				// 		Warning:    "valueFrom configMap field is not natively supported.",
+				// 		Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from configMaps",
+				// 	})
+				// } else {
+				// 	if _, ok := configMapMappings[cfgMap.Name]; !ok {
+				// 		configMapMappings[cfgMap.Name] = map[string]string{}
+				// 	}
 
-					if !slices.Contains(migration.plugins, "rigdev.env_mapping") {
-						migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
-							Kind: "Deployment",
-							Name: migration.currentResources.Deployment.Name,
-							Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom.configMapKeyRef",
-								migration.currentResources.Deployment.Spec.
-									Template.Spec.Containers[migration.containerIndex].Name, envVar.Name),
-							Warning:    "valueFrom configMap field is not natively supported.",
-							Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from configMaps",
-						})
-					} else {
-						if _, ok := configMapMappings[cfgMap.Name]; !ok {
-							configMapMappings[cfgMap.Name] = map[string]string{}
-						}
+				// 	configMapMappings[cfgMap.Name][envVar.Name] = cfgMap.Key
+				// }
 
-						configMapMappings[cfgMap.Name][envVar.Name] = cfgMap.Key
-						if err := migration.migratedResources.
-							AddObject("ConfigMap", name, configMap); err != nil && !rerrors.IsAlreadyExists(err) {
-							return err
-						}
-					}
+			case from.SecretKeyRef != nil:
+				secretRef := from.SecretKeyRef
 
-				} else if secretRef := envVar.ValueFrom.SecretKeyRef; secretRef != nil {
-					// secret := &corev1.Secret{}
-					// err := cr.Get(ctx, client.ObjectKey{
-					// 	Name:      secretRef.Name,
-					// 	Namespace: migration.currentResources.Deployment.Namespace,
-					// }, secret)
-					// if err != nil {
-					// 	return onCCGetError(err, "Secret", secretRef.Name, migration.currentResources.Deployment.Namespace)
-					// }
-
-					// name := fmt.Sprintf("env-source--%s", secretRef.Name)
-					// if err := migration.currentResources.AddResource("Secret", name secret); err != nil {
-					// return nil, err
-					// }
-
-					if !slices.Contains(migration.plugins, "rigdev.env_mapping") {
-						migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
-							Kind: "Deployment",
-							Name: migration.currentResources.Deployment.Name,
-							Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom.secretKeyRef",
-								migration.currentResources.Deployment.Spec.
-									Template.Spec.Containers[migration.containerIndex].Name, envVar.Name),
-							Warning:    "valueFrom secret field is not natively supported.",
-							Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from secrets",
-						})
-					} else {
-						if _, ok := secretMappings[secretRef.Name]; !ok {
-							secretMappings[secretRef.Name] = map[string]string{}
-						}
-						secretMappings[secretRef.Name][envVar.Name] = secretRef.Key
-						// if err := migration.migratedResources.AddObject("Secret", name,
-						//	secret); err != nil && !rerrors.IsAlreadyExists(err) {
-						// 	return nil, err
-						// }
-					}
-				} else {
+				if !slices.Contains(migration.plugins, "rigdev.env_mapping") {
 					migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
 						Kind: "Deployment",
 						Name: migration.currentResources.Deployment.Name,
-						Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom",
+						Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom.secretKeyRef",
 							migration.currentResources.Deployment.Spec.
 								Template.Spec.Containers[migration.containerIndex].Name, envVar.Name),
-						Warning: "ValueFrom field is not supported",
+						Warning:    "valueFrom secret field is not natively supported.",
+						Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from secrets",
 					})
+				} else {
+					if _, ok := secretMappings[secretRef.Name]; !ok {
+						secretMappings[secretRef.Name] = map[string]string{}
+					}
+					secretMappings[secretRef.Name][envVar.Name] = secretRef.Key
 				}
+			default:
+				migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+					Kind: "Deployment",
+					Name: migration.currentResources.Deployment.Name,
+					Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom",
+						migration.currentResources.Deployment.Spec.
+							Template.Spec.Containers[migration.containerIndex].Name, envVar.Name),
+					Warning: "ValueFrom field is not supported",
+				})
 			}
 		}
 	}
@@ -952,17 +933,8 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 	var envReferences []v1alpha2.EnvReference
 	for _, source := range container.EnvFrom {
 		var environmentSource *capsule.EnvironmentSource
-		if source.ConfigMapRef != nil {
-			envReferences = append(envReferences, v1alpha2.EnvReference{
-				Kind: "ConfigMap",
-				Name: source.ConfigMapRef.Name,
-			})
-
-			environmentSource = &capsule.EnvironmentSource{
-				Kind: capsule.EnvironmentSource_KIND_CONFIG_MAP,
-				Name: source.ConfigMapRef.Name,
-			}
-
+		switch {
+		case source.ConfigMapRef != nil:
 			configMap := &corev1.ConfigMap{}
 			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      source.ConfigMapRef.Name,
@@ -974,15 +946,37 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 					migration.currentResources.Deployment.Namespace)
 			}
 
-			name := fmt.Sprintf("env-source--%s", source.ConfigMapRef.Name)
-			if err := migration.currentResources.AddObject("ConfigMap", name, configMap); err != nil {
-				return err
-			}
-			if err := migration.migratedResources.AddObject("ConfigMap", name, configMap); err != nil {
+			if err := migration.currentResources.AddObject("ConfigMap", source.ConfigMapRef.Name, configMap); err != nil {
 				return err
 			}
 
-		} else if source.SecretRef != nil {
+			if keepEnvConfigMaps {
+				envReferences = append(envReferences, v1alpha2.EnvReference{
+					Kind: "ConfigMap",
+					Name: source.ConfigMapRef.Name,
+				})
+
+				environmentSource = &capsule.EnvironmentSource{
+					Kind: capsule.EnvironmentSource_KIND_CONFIG_MAP,
+					Name: source.ConfigMapRef.Name,
+				}
+
+				if err := migration.migratedResources.AddObject("ConfigMap", source.ConfigMapRef.Name, configMap); err != nil {
+					return err
+				}
+			} else {
+				for key, value := range configMap.Data {
+					changes = append(changes, &capsule.Change{
+						Field: &capsule.Change_SetEnvironmentVariable{
+							SetEnvironmentVariable: &capsule.Change_KeyValue{
+								Name:  key,
+								Value: value,
+							},
+						},
+					})
+				}
+			}
+		case source.SecretRef != nil:
 			envReferences = append(envReferences, v1alpha2.EnvReference{
 				Kind: "Secret",
 				Name: source.SecretRef.Name,
@@ -991,23 +985,6 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 			environmentSource = &capsule.EnvironmentSource{
 				Kind: capsule.EnvironmentSource_KIND_SECRET,
 				Name: source.SecretRef.Name,
-			}
-
-			secret := &corev1.Secret{}
-			err := c.K8sReader.Get(ctx, client.ObjectKey{
-				Name:      source.SecretRef.Name,
-				Namespace: migration.currentResources.Deployment.Namespace,
-			}, secret)
-			if err != nil {
-				return onCCGetError(err, "Secret", source.SecretRef.Name, migration.currentResources.Deployment.Namespace)
-			}
-
-			name := fmt.Sprintf("env-source--%s", source.SecretRef.Name)
-			if err := migration.currentResources.AddObject("Secret", name, secret); err != nil {
-				return err
-			}
-			if err := migration.migratedResources.AddObject("Secret", name, secret); err != nil {
-				return err
 			}
 		}
 
