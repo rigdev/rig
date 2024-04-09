@@ -15,10 +15,11 @@ const (
 )
 
 var (
-	skipPlatform   bool
-	apply          bool
-	deploymentName string
-	annotations    map[string]string
+	skipPlatform      bool
+	apply             bool
+	deploymentName    string
+	annotations       map[string]string
+	keepEnvConfigMaps bool
 )
 
 var nameOrigin CapsuleName
@@ -71,6 +72,11 @@ resources created from a capsulespec
 		"annotation", "A", nil,
 		"annotations to add to the Capsule of the format `key=value`."+
 			" Can for example be used to target migration with a specific plugin",
+	)
+	migrate.Flags().BoolVar(&keepEnvConfigMaps, "keep-env-config-maps", false,
+		"Keep envFrom to ConfigMaps after migration. "+
+			"By default, ConfigMaps are read and added to the Capsule. Changing this behavior is useful "+
+			"if an external tool is generating the ConfigMaps.",
 	)
 
 	parent.AddCommand(migrate)
