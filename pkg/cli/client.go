@@ -8,7 +8,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -17,18 +16,19 @@ import (
 )
 
 var clientModule = fx.Module("client",
-	fx.Supply(&http.Client{}),
 	fx.Provide(newRigClient),
-	fx.Provide(func() []connect.Interceptor {
-		return []connect.Interceptor{&userAgentInterceptor{}}
-	}),
+	fx.Provide(auth.NewService),
+	fx.Invoke(authRigClient),
 )
 
-func newRigClient(
-	cmd *cobra.Command,
-	scope scope.Scope,
-	prompter common.Prompter,
-) (rig.Client, *auth.Service, error) {
+func authRigClient(cmd *cobra.Command, scope scope.Scope, auth *auth.Service) error {
+	if SkipFX(cmd) {
+		return nil
+	}
+	return auth.CheckAuth(context.TODO(), cmd, scope.IsInteractive(), flags.Flags.BasicAuth)
+}
+
+func newRigClient(scope scope.Scope) rig.Client {
 	options := []rig.Option{
 		rig.WithInterceptors(&userAgentInterceptor{}),
 		rig.WithSessionManager(&configSessionManager{scope: scope}),
@@ -43,17 +43,7 @@ func newRigClient(
 	} else {
 		options = append(options, rig.WithHost(scope.GetCurrentContext().GetService().Server))
 	}
-
-	r := rig.NewClient(options...)
-	a := auth.NewService(r, scope, prompter)
-
-	if !SkipFX(cmd) {
-		if err := a.CheckAuth(context.TODO(), cmd, scope.IsInteractive(), flags.Flags.BasicAuth); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	return r, a, nil
+	return rig.NewClient(options...)
 }
 
 type userAgentInterceptor struct{}

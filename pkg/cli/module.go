@@ -37,11 +37,12 @@ import (
 // This file contains functions which circumvent this issue.
 
 type SetupContext struct {
-	BaseModule  fx.Option
-	Args        []string
-	options     []fx.Option
-	firstPreRun bool
-	preRunsLeft int
+	BaseModule     fx.Option
+	Args           []string
+	AddTestCommand bool
+	options        []fx.Option
+	firstPreRun    bool
+	preRunsLeft    int
 }
 
 func NewSetupContext(baseModule fx.Option, args []string) *SetupContext {
@@ -95,7 +96,7 @@ func getContext(
 			} else {
 				promptInfo.ContextCreation = true
 				fmt.Println("No context available, please create one")
-				if err := cfg.CreateDefaultContext(bool(interactive)); err != nil {
+				if err := cfg.CreateContext("", "", bool(interactive)); err != nil {
 					return nil, err
 				}
 			}

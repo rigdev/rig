@@ -76,7 +76,7 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 	}
 
 	if host == "" {
-		host, err = cfg.prompter.Input("Host:", common.ValidateURLOpt, common.InputDefaultOpt(host))
+		host, err = cfg.prompter.Input("Host (Platform URL):", common.ValidateURLOpt, common.InputDefaultOpt(host))
 		if err != nil {
 			return err
 		}
