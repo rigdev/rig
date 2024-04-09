@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io"
 	"strings"
 
 	"github.com/erikgeiser/promptkit/selection"
@@ -228,14 +227,23 @@ var templateExtensions = map[string]any{
 	"FormatValidationError": formatValidationError,
 }
 
-type Prompter struct {
-	StdIn  io.Reader
-	StdOut io.Writer
+type Prompter interface {
+	Input(label string, opts ...GetInputOption) (string, error)
+	Password(label string) (string, error)
+	Select(label string, choices []string, opts ...SelectInputOption) (int, string, error)
+	Confirm(label string, def bool) (bool, error)
+	TableSelect(
+		label string,
+		choices [][]string,
+		columnHeaders []string,
+		opts ...SelectInputOption,
+	) (int, error)
 }
 
-func (p Prompter) Input(label string, opts ...GetInputOption) (string, error) {
+type StandardPrompter struct{}
+
+func (StandardPrompter) Input(label string, opts ...GetInputOption) (string, error) {
 	input := textinput.New(label)
-	input.Input, input.Output = p.StdIn, p.StdOut
 	input.Template = inputTemplate
 	input.ExtendedTemplateFuncs = templateExtensions
 	for _, opt := range opts {
@@ -249,9 +257,8 @@ func (p Prompter) Input(label string, opts ...GetInputOption) (string, error) {
 	return s, nil
 }
 
-func (p Prompter) Password(label string) (string, error) {
+func (StandardPrompter) Password(label string) (string, error) {
 	input := textinput.New(label)
-	input.Input, input.Output = p.StdIn, p.StdOut
 	input.Hidden = true
 	input.Validate = utils.ValidatePassword
 	input.Template = inputTemplate
@@ -264,9 +271,8 @@ func (p Prompter) Password(label string) (string, error) {
 	return pw, nil
 }
 
-func (p Prompter) Select(label string, choices []string, opts ...SelectInputOption) (int, string, error) {
+func (StandardPrompter) Select(label string, choices []string, opts ...SelectInputOption) (int, string, error) {
 	sp := selection.New(label, choices)
-	sp.Input, sp.Output = p.StdIn, p.StdOut
 	sp.Filter = nil
 	sp.PageSize = 5
 	for _, opt := range opts {
@@ -280,9 +286,8 @@ func (p Prompter) Select(label string, choices []string, opts ...SelectInputOpti
 	return slices.Index(choices, choice), choice, nil
 }
 
-func (p Prompter) Confirm(label string, def bool) (bool, error) {
+func (StandardPrompter) Confirm(label string, def bool) (bool, error) {
 	input := textinput.New(label)
-	input.Input, input.Output = p.StdIn, p.StdOut
 	input.Validate = ValidateBool
 	input.Template = confirmTemplateY
 	if !def {
@@ -315,7 +320,7 @@ var (
 `
 )
 
-func (p Prompter) TableSelect(
+func (p StandardPrompter) TableSelect(
 	label string,
 	choices [][]string,
 	columnHeaders []string,

@@ -46,7 +46,7 @@ func (c *Cmd) loginWithRetry(
 	for {
 		var err error
 		if shouldPromptIdentifier {
-			identifier, err = c.Prompter.UserIndentifier()
+			identifier, err = common.UserIndentifier(c.Prompter)
 		} else if identifier == nil {
 			identifier, err = common.ParseUserIdentifier(authUserIdentifier)
 		}
