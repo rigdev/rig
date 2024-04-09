@@ -77,12 +77,7 @@ var Module = fx.Module(
 	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
 	// provide a flag to indicate that we cannot prompt for resource creation
 	fx.Provide(func() scope.Interactive { return scope.Interactive(term.IsTerminal(int(os.Stdin.Fd()))) }),
-	fx.Provide(func() common.Prompter {
-		return common.Prompter{
-			StdIn:  os.Stdin,
-			StdOut: os.Stdout,
-		}
-	}),
+	fx.Provide(func() common.Prompter { return common.StandardPrompter{} }),
 )
 
 func getContext(
