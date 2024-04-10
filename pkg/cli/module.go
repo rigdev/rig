@@ -226,7 +226,6 @@ func (s *SetupContext) addRigClientInvokes(cmd *cobra.Command) {
 		return
 	}
 	annotations := common.GetAllAnnotations(cmd)
-	fmt.Println("annotations", annotations)
 	if _, ok := annotations[auth.OmitUser]; !ok && !flags.Flags.BasicAuth {
 		s.AddOptions(fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
 			return s.CheckAuth(ctx, bool(interactive), s.AuthUser)
