@@ -34,7 +34,7 @@ loadBalancer:
   nodePort: 30047
 
 ingress:
-  enabled: true
+  enabled: false
   host: ""
   annotations: {}
 
