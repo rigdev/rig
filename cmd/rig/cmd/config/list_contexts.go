@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *CmdNoScope) listContexts(cmd *cobra.Command, _ []string) error {
+func (c *CmdNoScope) listContexts(_ *cobra.Command, _ []string) error {
 	if flags.Flags.OutputType != common.OutputTypePretty {
 		return common.FormatPrint(c.Cfg.Contexts, flags.Flags.OutputType)
 	}
@@ -62,9 +62,9 @@ func (c *CmdNoScope) listContexts(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func def(s string, default_ string) string {
+func def(s string, def string) string {
 	if s == "" {
-		return default_
+		return def
 	}
 	return s
 }
