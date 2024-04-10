@@ -6,6 +6,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/migrate"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/plugins"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -20,8 +21,13 @@ func Run(s *cli.SetupContext) error {
 	)
 
 	rootCmd := &cobra.Command{
-		Use:           "rig-ops",
-		Short:         "CLI tool for managing your Rig Clusters",
+		Use:   "rig-ops",
+		Short: "CLI tool for managing your Rig Clusters",
+		Annotations: map[string]string{
+			auth.OmitEnvironment: "",
+			auth.OmitProject:     "",
+			auth.OmitUser:        "",
+		},
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
