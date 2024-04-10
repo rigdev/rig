@@ -1,4 +1,6 @@
 // +groupName=plugins.rig.dev -- Only used for config doc generation
+//
+//nolint:revive
 package ingress_routes
 
 import (
