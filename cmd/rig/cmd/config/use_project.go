@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) useProject(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *CmdWScope) useProject(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var projectID string
 	var err error
 	if len(args) == 0 {
@@ -34,7 +34,7 @@ func (c *Cmd) useProject(ctx context.Context, cmd *cobra.Command, args []string)
 	return nil
 }
 
-func (c *Cmd) promptForProjectID(ctx context.Context) (string, error) {
+func (c *CmdWScope) promptForProjectID(ctx context.Context) (string, error) {
 	res, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 	if err != nil {
 		return "", err
@@ -54,7 +54,7 @@ func (c *Cmd) promptForProjectID(ctx context.Context) (string, error) {
 	return projectID, nil
 }
 
-func (c *Cmd) projectIDFromArg(ctx context.Context, projectArg string) (string, error) {
+func (c *CmdWScope) projectIDFromArg(ctx context.Context, projectArg string) (string, error) {
 	if projectArg != "" {
 		return projectArg, nil
 	}

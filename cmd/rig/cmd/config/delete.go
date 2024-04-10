@@ -5,11 +5,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) delete(cmd *cobra.Command, args []string) error {
+func (c *CmdNoScope) delete(cmd *cobra.Command, args []string) error {
 	var ctx string
 	var err error
 	if len(args) == 0 {
-		ctx, err = c.Scope.GetCfg().PromptForContext()
+		ctx, err = c.Cfg.PromptForContext()
 		if err != nil {
 			return err
 		}
@@ -17,11 +17,11 @@ func (c *Cmd) delete(cmd *cobra.Command, args []string) error {
 		ctx = args[0]
 	}
 
-	deleted := c.Scope.GetCfg().DeleteContext(ctx)
+	deleted := c.Cfg.DeleteContext(ctx)
 	if !deleted {
 		return errors.NotFoundErrorf("context %s not found", ctx)
 	}
-	err = c.Scope.GetCfg().Save()
+	err = c.Cfg.Save()
 	if err != nil {
 		return err
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) useEnvironment(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *CmdWScope) useEnvironment(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var environment string
 	var err error
 	if len(args) == 0 {
@@ -34,7 +34,7 @@ func (c *Cmd) useEnvironment(ctx context.Context, cmd *cobra.Command, args []str
 	return nil
 }
 
-func (c *Cmd) promptForEnvironment(ctx context.Context) (string, error) {
+func (c *CmdWScope) promptForEnvironment(ctx context.Context) (string, error) {
 	res, err := c.Rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
 	if err != nil {
 		return "", err
@@ -54,7 +54,7 @@ func (c *Cmd) promptForEnvironment(ctx context.Context) (string, error) {
 	return environment, nil
 }
 
-func (c *Cmd) environmentFromArg(ctx context.Context, environmentArg string) (string, error) {
+func (c *CmdWScope) environmentFromArg(ctx context.Context, environmentArg string) (string, error) {
 	if environmentArg != "" {
 		return environmentArg, nil
 	}

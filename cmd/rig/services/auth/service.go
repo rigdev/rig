@@ -16,7 +16,6 @@ import (
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
-	"github.com/spf13/cobra"
 )
 
 type Service struct {
@@ -40,31 +39,11 @@ var (
 	OmitCapsule     = "OMIT_CAPSULE"
 )
 
-func (s *Service) CheckAuth(ctx context.Context, cmd *cobra.Command, interactive, basicAuth bool) error {
-	annotations := common.GetAllAnnotations(cmd)
-
-	var funcs []func(context.Context, bool) error
-	if _, ok := annotations[OmitUser]; !ok && !basicAuth {
-		funcs = append(funcs, s.authUser)
-	}
-	if _, ok := annotations[OmitProject]; !ok {
-		funcs = append(funcs, s.authProject)
-	}
-	if _, ok := annotations[OmitEnvironment]; !ok {
-		funcs = append(funcs, s.authEnvironment)
-	}
-
+func (s *Service) CheckAuth(ctx context.Context, interactive bool, f func(context.Context, bool) error) error {
 	for {
-		var retry bool
-		var err error
-		for _, f := range funcs {
-			retry, err = s.handleAuthError(f(ctx, interactive), interactive)
-			if err != nil {
-				return err
-			}
-			if retry {
-				break
-			}
+		retry, err := s.handleAuthError(f(ctx, interactive), interactive)
+		if err != nil {
+			return err
 		}
 		if retry {
 			continue
@@ -108,7 +87,7 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 	return true, nil
 }
 
-func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
+func (s *Service) AuthEnvironment(ctx context.Context, interactive bool) error {
 	environmentID := flags.GetEnvironment(s.scope)
 	if !interactive {
 		if environmentID == "" {
@@ -177,7 +156,7 @@ func (s *Service) authEnvironment(ctx context.Context, interactive bool) error {
 	return nil
 }
 
-func (s *Service) authUser(ctx context.Context, interactive bool) error {
+func (s *Service) AuthUser(ctx context.Context, interactive bool) error {
 	user := s.scope.GetCurrentContext().GetAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
 		return nil
@@ -196,7 +175,7 @@ func (s *Service) authUser(ctx context.Context, interactive bool) error {
 	return s.login(ctx)
 }
 
-func (s *Service) authProject(ctx context.Context, interactive bool) error {
+func (s *Service) AuthProject(ctx context.Context, interactive bool) error {
 	projectID := flags.GetProject(s.scope)
 	if !interactive {
 		if projectID == "" {

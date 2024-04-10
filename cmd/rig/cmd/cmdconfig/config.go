@@ -14,16 +14,16 @@ import (
 )
 
 type Auth struct {
-	UserID       string `yaml:"user_id,omitempty"`
-	AccessToken  string `yaml:"access_token,omitempty"`
-	RefreshToken string `yaml:"refresh_token,omitempty"`
+	UserID       string `json:"user_id,omitempty" yaml:"user_id,omitempty"`
+	AccessToken  string `json:"access_token,omitempty" yaml:"access_token,omitempty"`
+	RefreshToken string `json:"refresh_token,omitempty" yaml:"refresh_token,omitempty"`
 }
 
 type Context struct {
-	Name          string `yaml:"name"`
-	ServiceName   string `yaml:"service"`
-	ProjectID     string `yaml:"project_id"`
-	EnvironmentID string `yaml:"environment_id"`
+	Name          string `json:"name" yaml:"name"`
+	ServiceName   string `json:"service" yaml:"service"`
+	ProjectID     string `json:"project_id" yaml:"project_id"`
+	EnvironmentID string `json:"environment_id" yaml:"environment_id"`
 
 	service *Service
 	auth    *Auth
@@ -46,23 +46,23 @@ func (c *Context) SetAuth(a *Auth) {
 }
 
 type Service struct {
-	Name   string `yaml:"name,omitempty"`
-	Server string `yaml:"server,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Server string `json:"server,omitempty"`
 }
 
 type User struct {
-	Name string `yaml:"name,omitempty"`
-	Auth *Auth  `yaml:"auth,omitempty"`
+	Name string `json:"name,omitempty"`
+	Auth *Auth  `json:"auth,omitempty"`
 }
 
 type Config struct {
-	Contexts []*Context `yaml:"contexts"`
+	Contexts []*Context `json:"contexts" yaml:"contexts"`
 
-	Services []*Service `yaml:"services"`
+	Services []*Service `json:"services" yaml:"services"`
 
-	Users []*User `yaml:"users"`
+	Users []*User `json:"users" yaml:"users"`
 
-	CurrentContextName string `yaml:"current_context"`
+	CurrentContextName string `json:"current_context" yaml:"current_context"`
 
 	filePath string
 	prompter common.Prompter
