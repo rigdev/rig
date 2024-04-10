@@ -201,13 +201,13 @@ tasks:
 
   lint:
     desc: "🚨 Run linting"
-    deps: [tools:golangci-lint, proto]
+    deps: [tools:golangci-lint, proto, mocks]
     cmds:
       - ./tools/bin/golangci-lint run --timeout 3m
 
   test:
     desc: "✅ Run unit tests"
-    deps: [tools:gotestsum, proto]
+    deps: [tools:gotestsum, proto, mocks]
     cmds:
       - |
         ./tools/bin/gotestsum \

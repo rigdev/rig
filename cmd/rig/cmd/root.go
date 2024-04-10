@@ -20,6 +20,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/environment"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/cmd/group"
+	"github.com/rigdev/rig/cmd/rig/cmd/noop"
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
 	"github.com/rigdev/rig/cmd/rig/cmd/serviceaccount"
 	"github.com/rigdev/rig/cmd/rig/cmd/user"
@@ -112,6 +113,10 @@ func Run(s *cli.SetupContext) error {
 	config.Setup(rootCmd, s)
 	project.Setup(rootCmd, s)
 	environment.Setup(rootCmd, s)
+
+	if s.AddTestCommand {
+		noop.Setup(rootCmd, s)
+	}
 
 	cobra.EnableTraverseRunHooks = true
 
