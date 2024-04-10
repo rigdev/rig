@@ -36,6 +36,9 @@ spec:
       routes:
       - host: {{ .Values.ingress.host }}
         id: rig-platform
+        {{- with .Values.ingress.annotations }}
+        annotations: {{ toYaml . | nindent 10 }}
+        {{- end }}
       {{- end}}
   files:
     - path: /etc/rig/config.yaml

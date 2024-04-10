@@ -34,8 +34,9 @@ loadBalancer:
   nodePort: 30047
 
 ingress:
-  enabled: false
+  enabled: true
   host: ""
+  annotations: {}
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious

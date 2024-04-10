@@ -101,7 +101,7 @@ rbac:
   platform:
     # If true, a rig-platform service-account and secret will be created,
     # with a service-account token for external communication from a Rig Platform.
-    create_token: true
+    create_token: false
     service_account: "rig-platform-token"
 
 # install rig CRDs, disable if you prefer having CRDs installed separately from

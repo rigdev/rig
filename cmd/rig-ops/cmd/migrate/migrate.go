@@ -23,6 +23,7 @@ import (
 	rerrors "github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	envmapping "github.com/rigdev/rig/plugins/env_mapping"
+	"github.com/rigdev/rig/plugins/ingress_routes"
 	"github.com/rivo/tview"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -1248,14 +1249,8 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 				var capsulePathType capsule.PathMatchType
 				switch *path.PathType {
 				case netv1.PathTypeImplementationSpecific:
-					migration.warnings["Ingress"] = append(migration.warnings["Ingress"], &Warning{
-						Kind:  "Ingress",
-						Name:  ingress.GetName(),
-						Field: fmt.Sprintf("spec.rules.http.paths.%s.pathType", path.Path),
-						Warning: fmt.Sprintf("PathType %s is not supported. Path %s is ignored",
-							*path.PathType, path.Path),
-					})
-					continue
+					// TODO(ajohnsen): This is actually per path.
+					annotations[ingress_routes.AnnotationImplementationSpecificPathType] = "true"
 				case netv1.PathTypePrefix:
 					pathType = v1alpha2.PathPrefix
 					capsulePathType = capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX
