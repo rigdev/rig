@@ -29,7 +29,6 @@ func MakeTestModule(i TestModuleInput) fx.Option {
 		fx.Provide(func() common.Prompter { return i.Prompter }),
 		fx.Provide(func() rig.Client { return i.RigClient }),
 		fx.Provide(auth.NewService),
-		fx.Invoke(authRigClient),
 		fx.Provide(scheme.New),
 		fx.Provide(func(fs afero.Fs, p common.Prompter) (*cmdconfig.Config, error) {
 			return cmdconfig.NewConfig("", fs, p)
@@ -37,7 +36,7 @@ func MakeTestModule(i TestModuleInput) fx.Option {
 		fx.Provide(zap.NewDevelopment),
 		fx.Provide(getContext),
 		fx.Provide(scope.NewScope),
-		fx.Supply(context.Background()),
+		fx.Provide(func() context.Context { return context.Background() }),
 		fx.Provide(func() (*client.Client, error) {
 			return nil, nil // TODO
 		}),

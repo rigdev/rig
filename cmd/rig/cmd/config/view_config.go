@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) viewConfig(cmd *cobra.Command, _ []string) error {
+func (c *CmdNoScope) viewConfig(cmd *cobra.Command, _ []string) error {
 	var outputType common.OutputType
 	if flags.Flags.OutputType == common.OutputTypePretty {
 		outputType = common.OutputTypeYAML
@@ -17,12 +17,12 @@ func (c *Cmd) viewConfig(cmd *cobra.Command, _ []string) error {
 	var toPrint string
 	var err error
 	if minify {
-		toPrint, err = common.Format(c.Scope.GetCfg().Minify(), outputType)
+		toPrint, err = common.Format(c.Cfg.Minify(), outputType)
 		if err != nil {
 			return err
 		}
 	} else {
-		toPrint, err = common.Format(c.Scope.GetCfg(), outputType)
+		toPrint, err = common.Format(c.Cfg, outputType)
 		if err != nil {
 			return err
 		}

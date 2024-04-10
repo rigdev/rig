@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/spf13/afero"
@@ -59,7 +60,8 @@ var StandardSetupContext = NewSetupContext(Module, nil)
 
 var Module = fx.Module(
 	"rig-cli",
-	clientModule,
+	fx.Provide(newRigClient),
+	fx.Provide(auth.NewService),
 	fx.Provide(afero.NewOsFs),
 	fx.Provide(scheme.New),
 	fx.Provide(func(fs afero.Fs, prompter common.Prompter) (*cmdconfig.Config, error) {
@@ -201,6 +203,10 @@ func (s *SetupContext) ExecuteInvokes(cmd *cobra.Command, args []string, invokes
 // main Run function has had its dependencies initialized by one of the Invokes registered.
 func (s *SetupContext) PersistentPreRunE(cmd *cobra.Command, args []string) error {
 	if s.firstPreRun {
+		// This is a hack...
+		// We don't want to construct the auth.Server if not strictly necessary as it contains prompting
+		// So if all auth chekcs are omitted, we don't want to construct it. This takes care of that.
+		s.addRigClientInvokes(cmd)
 		s.firstPreRun = false
 		s.preRunsLeft = computeNumOfPreRuns(cmd)
 	}
@@ -213,6 +219,28 @@ func (s *SetupContext) PersistentPreRunE(cmd *cobra.Command, args []string) erro
 	allOpts := s.createOptions(cmd, args)
 	allOpts = append(allOpts, s.options...)
 	return fx.New(allOpts...).Err()
+}
+
+func (s *SetupContext) addRigClientInvokes(cmd *cobra.Command) {
+	if SkipFX(cmd) {
+		return
+	}
+	annotations := common.GetAllAnnotations(cmd)
+	if _, ok := annotations[auth.OmitUser]; !ok && !flags.Flags.BasicAuth {
+		s.AddOptions(fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
+			return s.CheckAuth(ctx, bool(interactive), s.AuthUser)
+		}))
+	}
+	if _, ok := annotations[auth.OmitProject]; !ok {
+		s.AddOptions(fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
+			return s.CheckAuth(ctx, bool(interactive), s.AuthProject)
+		}))
+	}
+	if _, ok := annotations[auth.OmitEnvironment]; !ok {
+		s.AddOptions(fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
+			return s.CheckAuth(ctx, bool(interactive), s.AuthEnvironment)
+		}))
+	}
 }
 
 // IvokePreRunE registers FX invokes to be executed at the time a corresponding

@@ -1,6 +1,8 @@
 package noop
 
 import (
+	"fmt"
+
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
@@ -51,5 +53,6 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 }
 
 func (c *Cmd) noop(_ *cobra.Command, _ []string) error {
+	fmt.Println("noop")
 	return nil
 }

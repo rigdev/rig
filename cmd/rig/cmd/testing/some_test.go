@@ -16,6 +16,7 @@ import (
 	rigmock "github.com/rigdev/rig/gen/uncommittedmocks/github.com/rigdev/rig-go-sdk"
 	commonmock "github.com/rigdev/rig/gen/uncommittedmocks/github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -134,6 +135,62 @@ func (s *testSuite) expectEnvList(envs ...*environment.Environment) {
 	}), nil)
 }
 
+func (s *testSuite) expectLoginMail(email, password string, success bool) {
+	var resp *connect.Response[authentication.LoginResponse]
+	var err error
+	if success {
+		resp = connect.NewResponse(&authentication.LoginResponse{
+			Token: &authentication.Token{
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+			UserId:   uuid,
+			UserInfo: &model.UserInfo{},
+		})
+	} else {
+		err = errors.UnauthenticatedErrorf("oof bad login")
+	}
+
+	s.rig.Auth().EXPECT().Login(mock.Anything, connect.NewRequest(&authentication.LoginRequest{
+		Method: &authentication.LoginRequest_UserPassword{
+			UserPassword: &authentication.UserPassword{
+				Identifier: &model.UserIdentifier{
+					Identifier: &model.UserIdentifier_Email{
+						Email: email,
+					},
+				},
+				Password: password,
+			},
+		},
+	})).Return(resp, err)
+}
+
+func (s *testSuite) expectLoginCredentials(clientID, clientSecret string, success bool) {
+	var resp *connect.Response[authentication.LoginResponse]
+	var err error
+	if success {
+		resp = connect.NewResponse(&authentication.LoginResponse{
+			Token: &authentication.Token{
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+			UserId:   uuid,
+			UserInfo: &model.UserInfo{},
+		})
+	} else {
+		err = errors.UnauthenticatedErrorf("oof bad login")
+	}
+
+	s.rig.Auth().EXPECT().Login(mock.Anything, connect.NewRequest(&authentication.LoginRequest{
+		Method: &authentication.LoginRequest_ClientCredentials{
+			ClientCredentials: &authentication.ClientCredentials{
+				ClientId:     clientID,
+				ClientSecret: clientSecret,
+			},
+		},
+	})).Return(resp, err)
+}
+
 func (s *testSuite) saveConfig(cfg *cmdconfig.Config) {
 	cfg2, err := cmdconfig.NewEmptyConfig(s.fs, s.prompt.p)
 	s.Require().NoError(err)
@@ -144,11 +201,20 @@ func (s *testSuite) saveConfig(cfg *cmdconfig.Config) {
 	s.Require().NoError(cfg2.Save())
 }
 
-func (s *testSuite) Test_empty_config_omit_all() {
-	s.prompt.input("name", 3)
-	s.prompt.input("http://example.com:4747", 2)
-	s.prompt.confirm(true) // activate context
-	s.Require().NoError(s.run(true, []string{"noop", "cmd1"}))
+func (s *testSuite) getConfig() *cmdconfig.Config {
+	cfg, err := cmdconfig.NewConfig("", s.fs, s.prompt.p)
+	s.Require().NoError(err)
+	return cfg
+}
+
+func (s *testSuite) cfgEqual(cfg *cmdconfig.Config) {
+	cfg2, err := cmdconfig.NewEmptyConfig(s.fs, s.prompt.p)
+	s.Require().NoError(err)
+	cfg2.Contexts = cfg.Contexts
+	cfg2.CurrentContextName = cfg.CurrentContextName
+	cfg2.Services = cfg.Services
+	cfg2.Users = cfg.Users
+	s.Assert().Equal(cfg2, s.getConfig())
 }
 
 func newProject(name string) *project.Project {
@@ -164,27 +230,12 @@ func newEnv(name string) *environment.Environment {
 	}
 }
 
-func (s *testSuite) Test_empty_config_omit_none() {
-	s.rig.Auth().EXPECT().Login(mock.Anything, connect.NewRequest(&authentication.LoginRequest{
-		Method: &authentication.LoginRequest_UserPassword{
-			UserPassword: &authentication.UserPassword{
-				Identifier: &model.UserIdentifier{
-					Identifier: &model.UserIdentifier_Email{
-						Email: "mail@example.com",
-					},
-				},
-				Password: "test123!",
-			},
-		},
-	})).Return(connect.NewResponse(&authentication.LoginResponse{
-		Token: &authentication.Token{
-			AccessToken:  "access_token",
-			RefreshToken: "refresh_token",
-		},
-		UserId:   uuid,
-		UserInfo: &model.UserInfo{},
-	}), nil)
+func (s *testSuite) Test_empty_config_omit_all() {
+	s.Require().NoError(s.run(true, []string{"noop", "cmd1"}))
+}
 
+func (s *testSuite) Test_empty_config_omit_none() {
+	s.expectLoginMail("mail@example.com", "test123!", true)
 	s.expectProjList(newProject("hej"))
 	s.expectEnvList(newEnv("prod"))
 
@@ -206,7 +257,8 @@ func (s *testSuite) Test_empty_config_omit_none() {
 }
 
 func (s *testSuite) Test_empty_config_non_interactive() {
-	s.Require().Error(s.run(false, []string{"noop", "cmd1"}))
+	s.Require().NoError(s.run(false, []string{"noop", "cmd1"}))
+	s.Require().Error(s.run(false, []string{"noop", "cmd2"}))
 }
 
 func (s *testSuite) Test_has_context_but_none_chosen() {
@@ -223,10 +275,17 @@ func (s *testSuite) Test_has_context_but_none_chosen() {
 		}},
 		Users: []*cmdconfig.User{{
 			Name: "ctx",
+			Auth: &cmdconfig.Auth{
+				UserID:       "user_id",
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
 		}},
 	})
 	s.prompt.selectt(0, "ctx") // Select config
-	s.Require().NoError(s.run(true, []string{"noop", "cmd1"}))
+	s.expectEnvList(newEnv("prod"))
+	s.expectProjList(newProject("project"))
+	s.Require().NoError(s.run(true, []string{"noop", "cmd2"}))
 }
 
 func (s *testSuite) Test_has_full_context() {
@@ -254,4 +313,87 @@ func (s *testSuite) Test_has_full_context() {
 	s.expectProjList(newProject("project"))
 	s.expectEnvList(newEnv("prod"))
 	s.Require().NoError(s.run(true, []string{"noop", "cmd2"}))
+}
+
+func (s *testSuite) Test_help_completion_dont_prompt() {
+	s.Require().NoError(s.run(true, []string{"help"}))
+	s.Require().NoError(s.run(true, []string{"completion", "bash"}))
+}
+
+func (s *testSuite) Test_auth_activateServiceAccount_no_config() {
+	s.T().Setenv("RIG_CLIENT_ID", "client_id")
+	s.T().Setenv("RIG_CLIENT_SECRET", "client_secret")
+	s.expectLoginCredentials("client_id", "client_secret", true)
+
+	// Prompting for context creation
+	s.prompt.input("context_name", 3)
+	s.prompt.input("http://example.com:4747", 2)
+	s.prompt.confirm(true) // select context
+
+	s.Require().NoError(s.run(true, []string{"auth", "activate-service-account"}))
+
+	s.cfgEqual(&cmdconfig.Config{
+		Contexts: []*cmdconfig.Context{{
+			Name:        "context_name",
+			ServiceName: "context_name",
+		}},
+		Services: []*cmdconfig.Service{{
+			Name:   "context_name",
+			Server: "http://example.com:4747",
+		}},
+		Users: []*cmdconfig.User{{
+			Name: "context_name",
+			Auth: &cmdconfig.Auth{
+				UserID:       "client_id",
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+		}},
+		CurrentContextName: "context_name",
+	})
+}
+
+func (s *testSuite) Test_no_prompting_with_context_flag() {
+	s.saveConfig(&cmdconfig.Config{
+		Contexts: []*cmdconfig.Context{{
+			Name:          "context_name",
+			ServiceName:   "context_name",
+			ProjectID:     "project",
+			EnvironmentID: "env",
+		}},
+		Services: []*cmdconfig.Service{{
+			Name:   "context_name",
+			Server: "http://example.com:4747",
+		}},
+		Users: []*cmdconfig.User{{
+			Name: "context_name",
+			Auth: &cmdconfig.Auth{
+				UserID:       "client_id",
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+		}},
+	})
+	s.expectProjList(newProject("project"))
+	s.expectEnvList(newEnv("env"))
+	s.Require().NoError(s.run(true, []string{"noop", "cmd2", "--context", "context_name"}))
+}
+
+func (s *testSuite) Test_no_prompting_config_commands() {
+	s.Require().NoError(s.run(true, []string{"config", "view"}))
+	s.Require().NoError(s.run(true, []string{"config", "list-contexts"}))
+}
+
+func (s *testSuite) Test_config_init() {
+	// Create context 1
+	s.prompt.input("context1", 3)
+	s.prompt.input("http://example.com:4747", 2)
+	s.prompt.confirm(true)
+	s.Require().NoError(s.run(true, []string{"config", "init"}))
+
+	// Create context 2
+	s.prompt.input("context2", 3)
+	s.prompt.input("http://example.com:4748", 2)
+	s.prompt.confirm(true)
+	s.Require().NoError(s.run(true, []string{"config", "init"}))
 }

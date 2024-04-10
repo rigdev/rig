@@ -11,6 +11,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -18,7 +19,7 @@ import (
 	"go.uber.org/fx"
 )
 
-type Cmd struct {
+type CmdWScope struct {
 	fx.In
 
 	Rig        rig.Client
@@ -35,17 +36,31 @@ var (
 	contextName string
 )
 
-var cmd Cmd
+var cmdWScope CmdWScope
 
-func initCmd(c Cmd) {
-	cmd = c
+func initCmdWScope(c CmdWScope) {
+	cmdWScope = c
+}
+
+type CmdNoScope struct {
+	fx.In
+
+	PromptInfo  *cli.PromptInformation
+	Cfg         *cmdconfig.Config
+	Prompter    common.Prompter
+	Interactive scope.Interactive
+}
+
+var cmdNoScope CmdNoScope
+
+func initCmdNoScope(c CmdNoScope) {
+	cmdNoScope = c
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	config := &cobra.Command{
-		Use:               "config",
-		Short:             "Manage Rig CLI configuration",
-		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		Use:   "config",
+		Short: "Manage Rig CLI configuration",
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -53,10 +68,11 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	}
 
 	init := &cobra.Command{
-		Use:   "init",
-		Short: "Initialize a new context",
-		Args:  cobra.NoArgs,
-		RunE:  cmd.init,
+		Use:               "init",
+		Short:             "Initialize a new context",
+		Args:              cobra.NoArgs,
+		RunE:              cmdNoScope.init,
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoScope),
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
@@ -65,12 +81,13 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	config.AddCommand(init)
 
 	deleteContext := &cobra.Command{
-		Use:   "delete [context]",
-		Short: "Delete a context",
-		Args:  cobra.ExactArgs(1),
-		RunE:  cmd.delete,
+		Use:               "delete [context]",
+		Short:             "Delete a context",
+		Args:              cobra.ExactArgs(1),
+		RunE:              cmdNoScope.delete,
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoScope),
 		ValidArgsFunction: common.Complete(
-			cli.HackWrapCompletion(cmd.completions, s),
+			cli.HackWrapCompletion(cmdNoScope.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		Annotations: map[string]string{
@@ -80,45 +97,49 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	config.AddCommand(deleteContext)
 
 	useContext := &cobra.Command{
-		Use:   "use-context [context]",
-		Short: "Change the current context to use",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  cmd.useContext,
+		Use:               "use-context [context]",
+		Short:             "Change the current context to use",
+		Args:              cobra.MaximumNArgs(1),
+		RunE:              cmdNoScope.useContext,
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoScope),
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
 		ValidArgsFunction: common.Complete(
-			cli.HackWrapCompletion(cmd.completions, s),
+			cli.HackWrapCompletion(cmdNoScope.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
 	config.AddCommand(useContext)
 
 	useProject := &cobra.Command{
-		Use:   "use-project [project-id]",
-		Short: "Set the project to query for project-scoped resources",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  cli.CtxWrap(cmd.useProject),
-		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.useProjectCompletion, s),
+		Use:               "use-project [project-id]",
+		Short:             "Set the project to query for project-scoped resources",
+		Args:              cobra.MaximumNArgs(1),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdWScope),
+		RunE:              cli.CtxWrap(cmdWScope.useProject),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmdWScope.useProjectCompletion, s),
 			common.MaxArgsCompletionFilter(1)),
 	}
 	config.AddCommand(useProject)
 
 	useEnvironment := &cobra.Command{
-		Use:   "use-environment [environment-id]",
-		Short: "Set the environment to query for environment-scoped resources",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  cli.CtxWrap(cmd.useEnvironment),
-		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.useEnvironmentCompletion, s),
+		Use:               "use-environment [environment-id]",
+		Short:             "Set the environment to query for environment-scoped resources",
+		Args:              cobra.MaximumNArgs(1),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdWScope),
+		RunE:              cli.CtxWrap(cmdWScope.useEnvironment),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmdWScope.useEnvironmentCompletion, s),
 			common.MaxArgsCompletionFilter(1)),
 	}
 	config.AddCommand(useEnvironment)
 
 	currentContext := &cobra.Command{
-		Use:   "current-context",
-		Short: "Display the current context",
-		Args:  cobra.NoArgs,
-		RunE:  cmd.currentContext,
+		Use:               "current-context",
+		Short:             "Display the current context",
+		Args:              cobra.NoArgs,
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdWScope),
+		RunE:              cmdWScope.currentContext,
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
@@ -126,10 +147,11 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	config.AddCommand(currentContext)
 
 	viewConfig := &cobra.Command{
-		Use:   "view",
-		Short: "View Config",
-		Args:  cobra.NoArgs,
-		RunE:  cmd.viewConfig,
+		Use:               "view",
+		Short:             "View Config",
+		Args:              cobra.NoArgs,
+		RunE:              cmdNoScope.viewConfig,
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoScope),
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
@@ -138,13 +160,26 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		"Remove all information not used by current-context from the output")
 	config.AddCommand(viewConfig)
 
+	listConfig := &cobra.Command{
+		Use:               "list-contexts",
+		Short:             "list contexts",
+		Args:              cobra.NoArgs,
+		RunE:              cmdNoScope.listContexts,
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoScope),
+		Annotations: map[string]string{
+			auth.OmitUser: "",
+		},
+	}
+	config.AddCommand(listConfig)
+
 	editConfig := &cobra.Command{
-		Use:   "edit [context]",
-		Short: "Edit a context",
-		Args:  cobra.MaximumNArgs(1),
-		RunE:  cmd.editConfig,
+		Use:               "edit [context]",
+		Short:             "Edit a context",
+		Args:              cobra.MaximumNArgs(1),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoScope),
+		RunE:              cmdNoScope.editConfig,
 		ValidArgsFunction: common.Complete(
-			cli.HackWrapCompletion(cmd.completions, s),
+			cli.HackWrapCompletion(cmdNoScope.completions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		Annotations: map[string]string{
@@ -175,7 +210,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	parent.AddCommand(config)
 }
 
-func (c *Cmd) completions(
+func (c *CmdNoScope) completions(
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
@@ -183,14 +218,14 @@ func (c *Cmd) completions(
 ) ([]string, cobra.ShellCompDirective) {
 	names := []string{}
 
-	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmdWScope); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	for _, ctx := range c.Scope.GetCfg().Contexts {
+	for _, ctx := range c.Cfg.Contexts {
 		if strings.HasPrefix(ctx.Name, toComplete) {
 			var isCurrent string
-			if ctx.Name == c.Scope.GetCfg().CurrentContextName {
+			if ctx.Name == c.Cfg.CurrentContextName {
 				isCurrent = "*"
 			}
 			names = append(names, ctx.Name+isCurrent)
@@ -204,14 +239,14 @@ func (c *Cmd) completions(
 	return names, cobra.ShellCompDirectiveNoFileComp
 }
 
-func (c *Cmd) useProjectCompletion(
+func (c *CmdWScope) useProjectCompletion(
 	ctx context.Context,
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
 	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmdWScope); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
@@ -250,14 +285,14 @@ func formatProject(p *project.Project) string {
 	return fmt.Sprintf("%v\t (ID: %v, Created At: %v)", p.GetName(), p.GetProjectId(), age)
 }
 
-func (c *Cmd) useEnvironmentCompletion(
+func (c *CmdWScope) useEnvironmentCompletion(
 	ctx context.Context,
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
 	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmdWScope); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
