@@ -7,8 +7,8 @@ import (
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
-	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
@@ -24,10 +24,10 @@ type Service interface {
 		opts ...pipeline.CapsuleRequestOption) (*pipeline.Result, error)
 }
 
-type PluginUsed struct {
+type ModUsed struct {
 	Namespace string
 	Capsule   string
-	Plugin    string
+	Mod       string
 }
 
 func NewService(
@@ -35,23 +35,23 @@ func NewService(
 	client client.Client,
 	capSvc capabilities.Service,
 	logger logr.Logger,
-	pluginManager *plugin.Manager,
+	modManager *mod.Manager,
 ) Service {
 	return &service{
-		cfg:           cfg,
-		client:        client,
-		capSvc:        capSvc,
-		logger:        logger,
-		pluginManager: pluginManager,
+		cfg:        cfg,
+		client:     client,
+		capSvc:     capSvc,
+		logger:     logger,
+		modManager: modManager,
 	}
 }
 
 type service struct {
-	cfg           config.Service
-	client        client.Client
-	capSvc        capabilities.Service
-	logger        logr.Logger
-	pluginManager *plugin.Manager
+	cfg        config.Service
+	client     client.Client
+	capSvc     capabilities.Service
+	logger     logr.Logger
+	modManager *mod.Manager
 }
 
 // DryRun implements Service.
@@ -79,7 +79,7 @@ func (s *service) DryRun(
 		spec.SetUID(types.UID("dry-run-spec"))
 	}
 
-	steps, err := controller.GetDefaultPipelineSteps(ctx, s.capSvc, cfg, s.pluginManager, s.logger)
+	steps, err := controller.GetDefaultPipelineSteps(ctx, s.capSvc, cfg, s.modManager, s.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (s *service) DryRun(
 	}
 
 	for _, step := range cfg.Pipeline.Steps {
-		ps, err := s.pluginManager.NewStep(step, s.logger)
+		ps, err := s.modManager.NewStep(step, s.logger)
 		if err != nil {
 			return nil, err
 		}

@@ -26,8 +26,8 @@ import (
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
-	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -55,7 +55,7 @@ type CapsuleReconciler struct {
 	ClientSet           clientset.Interface
 	CapabilitiesService capabilities.Service
 	Pipeline            *pipeline.CapsulePipeline
-	PluginManager       *plugin.Manager
+	ModManager          *mod.Manager
 }
 
 const (
@@ -158,7 +158,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 		return err
 	}
 
-	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService, r.Config, r.PluginManager, logger)
+	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService, r.Config, r.ModManager, logger)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 	}
 
 	for _, step := range r.Config.Pipeline.Steps {
-		ps, err := r.PluginManager.NewStep(step, logger)
+		ps, err := r.ModManager.NewStep(step, logger)
 		if err != nil {
 			return err
 		}
@@ -350,7 +350,7 @@ func GetDefaultPipelineSteps(
 	ctx context.Context,
 	capSvc capabilities.Service,
 	cfg *configv1alpha1.OperatorConfig,
-	pluginManager *plugin.Manager,
+	modManager *mod.Manager,
 	logger logr.Logger,
 ) ([]pipeline.Step[pipeline.CapsuleRequest], error) {
 	capabilities, err := capSvc.Get(ctx)
@@ -368,7 +368,7 @@ func GetDefaultPipelineSteps(
 	)
 
 	if cfg.Pipeline.RoutesStep.Plugin != "" {
-		routesStep, err := NewRoutesStep(cfg, pluginManager, logger)
+		routesStep, err := NewRoutesStep(cfg, modManager, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -388,10 +388,10 @@ func GetDefaultPipelineSteps(
 }
 
 func NewRoutesStep(cfg *configv1alpha1.OperatorConfig,
-	pluginManager *plugin.Manager,
+	modManager *mod.Manager,
 	logger logr.Logger,
 ) (pipeline.Step[pipeline.CapsuleRequest], error) {
-	routesStep, err := pluginManager.NewStep(configv1alpha1.Step{
+	routesStep, err := modManager.NewStep(configv1alpha1.Step{
 		EnableForPlatform: true,
 		Plugins: []configv1alpha1.Plugin{
 			{

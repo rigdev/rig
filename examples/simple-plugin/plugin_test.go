@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Test_Plugin(t *testing.T) {
+func TestMod(t *testing.T) {
 	name, namespace := "capsulename", "namespace"
 	tests := []struct {
 		name     string
@@ -63,19 +63,19 @@ value: {{ .capsule.metadata.name }}`,
 					Namespace: namespace,
 				},
 			})
-			// Add the deployment resource to the capsule request before we execute the plugin
-			// At the time plugins are executed, a Deployment resource will always be available.
+			// Add the deployment resource to the capsule request before we execute the mod
+			// At the time mods are executed, a Deployment resource will always be available.
 			assert.NoError(t, req.Set(&appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 				},
 			}))
 
-			plugin := Plugin{
+			mod := Mod{
 				configBytes: []byte(tt.config),
 			}
-			// Run the plugin
-			assert.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))
+			// Run the mod
+			assert.NoError(t, mod.Run(context.Background(), req, hclog.Default()))
 
 			// Extract the deployment from the CapsuleRequest
 			deploy := &appsv1.Deployment{}

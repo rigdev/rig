@@ -19,7 +19,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig-operator/certgen"
 	"github.com/rigdev/rig/cmd/rig-operator/log"
 	"github.com/rigdev/rig/pkg/build"
-	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
 	"github.com/rigdev/rig/pkg/handler/api/pipeline"
 	"github.com/rigdev/rig/pkg/manager"
@@ -58,7 +58,7 @@ func main() {
 		os.Exit(1)
 	}
 	apichecker.Setup(cmd)
-	pluginSetup(cmd)
+	modSetup(cmd)
 
 	ctx := context.Background()
 	if err := cmd.ExecuteContext(ctx); err != nil {
@@ -110,19 +110,19 @@ func run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	pluginManager, err := plugin.NewManager()
-	capabilitiesSvc := svccapabilities.NewService(cc, clientSet.DiscoveryClient, pluginManager)
+	modManager, err := mod.NewManager()
+	capabilitiesSvc := svccapabilities.NewService(cc, clientSet.DiscoveryClient, modManager)
 	capabilitiesH := capabilities.NewHandler(capabilitiesSvc, cfg, scheme)
 	if err != nil {
 		return err
 	}
 
-	mgr, err := manager.New(cfg, scheme, capabilitiesSvc, pluginManager)
+	mgr, err := manager.New(cfg, scheme, capabilitiesSvc, modManager)
 	if err != nil {
 		return err
 	}
 
-	pipelineSvc := svcpipeline.NewService(cfg, cc, capabilitiesSvc, log, pluginManager)
+	pipelineSvc := svcpipeline.NewService(cfg, cc, capabilitiesSvc, log, modManager)
 	pipelineH := pipeline.NewHandler(pipelineSvc)
 
 	mux := http.NewServeMux()

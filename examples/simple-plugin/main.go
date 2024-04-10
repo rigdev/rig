@@ -4,32 +4,32 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
-	"github.com/rigdev/rig/pkg/controller/plugin"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-// This is an example of a minimal plugin with some configuration.
-// The plugin adds a single label to the Deployment of the capsule.
+// This is an example of a minimal mod with some configuration.
+// The mod adds a single label to the Deployment of the capsule.
 
-// Config defines the configuration for the plugin
+// Config defines the configuration for the mod
 type Config struct {
 	Label string `json:"label"`
 	Value string `json:"value"`
 }
 
-// Plugin implements the functionality
-type Plugin struct {
+// Mod implements the functionality
+type Mod struct {
 	configBytes []byte
 }
 
-func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
-	p.configBytes = req.Config
+func (m *Mod) Initialize(req mod.InitializeRequest) error {
+	m.configBytes = req.Config
 	return nil
 }
 
-func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
-	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep)
+func (m *Mod) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
+	config, err := mod.ParseTemplatedConfig[Config](m.configBytes, req, mod.CapsuleStep)
 	if err != nil {
 		return err
 	}
@@ -49,5 +49,5 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 }
 
 func main() {
-	plugin.StartPlugin("myorg.simple", &Plugin{})
+	mod.StartMod("myorg.simple", &Mod{})
 }

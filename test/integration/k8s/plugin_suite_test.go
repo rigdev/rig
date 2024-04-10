@@ -12,7 +12,7 @@ import (
 	"github.com/go-logr/logr/testr"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/stretchr/testify/require"
@@ -25,14 +25,14 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
-type PluginTestSuite struct {
+type ModTestSuite struct {
 	Suite
 
 	cancel  context.CancelFunc
 	TestEnv *envtest.Environment
 }
 
-func (s *PluginTestSuite) SetupSuite() {
+func (s *ModTestSuite) SetupSuite() {
 	setupDone := false
 	defer func() {
 		if !setupDone {
@@ -126,7 +126,7 @@ container:
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 	builtinBinPath := path.Join(path.Dir(path.Dir(path.Dir(wd))), "bin", "rig-operator")
-	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
+	pmanager, err := mod.NewManager(mod.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
@@ -134,7 +134,7 @@ container:
 		Config:              opConfig,
 		ClientSet:           clientSet,
 		CapabilitiesService: capabilities.NewService(cc, clientSet.Discovery(), nil),
-		PluginManager:       pmanager,
+		ModManager:          pmanager,
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))
@@ -148,7 +148,7 @@ container:
 	setupDone = true
 }
 
-func (s *PluginTestSuite) TearDownSuite() {
+func (s *ModTestSuite) TearDownSuite() {
 	if s.cancel != nil {
 		s.cancel()
 	}
@@ -159,10 +159,10 @@ func (s *PluginTestSuite) TearDownSuite() {
 	}
 }
 
-func TestIntegrationPlugin(t *testing.T) {
+func TestIntegrationMod(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
 	t.Parallel()
-	suite.Run(t, &PluginTestSuite{})
+	suite.Run(t, &ModTestSuite{})
 }

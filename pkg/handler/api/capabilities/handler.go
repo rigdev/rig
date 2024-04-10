@@ -60,5 +60,5 @@ func (h *handler) GetPlugins(
 	_ context.Context,
 	_ *connect.Request[capabilities.GetPluginsRequest],
 ) (*connect.Response[capabilities.GetPluginsResponse], error) {
-	return connect.NewResponse(h.capabilities.GetPlugins()), nil
+	return connect.NewResponse(h.capabilities.GetMods()), nil
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
-	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/discovery"
@@ -13,25 +13,25 @@ import (
 
 type Service interface {
 	Get(ctx context.Context) (*capabilities.GetResponse, error)
-	GetPlugins() *capabilities.GetPluginsResponse
+	GetMods() *capabilities.GetPluginsResponse
 }
 
 func NewService(
 	client client.Client,
 	discoveryClient discovery.DiscoveryInterface,
-	pluginManager *plugin.Manager,
+	modManager *mod.Manager,
 ) Service {
 	return &service{
 		client:          client,
 		discoveryClient: discoveryClient,
-		pluginManager:   pluginManager,
+		modManager:      modManager,
 	}
 }
 
 type service struct {
 	client          client.Client
 	discoveryClient discovery.DiscoveryInterface
-	pluginManager   *plugin.Manager
+	modManager      *mod.Manager
 }
 
 // Get implements Service.
@@ -114,10 +114,10 @@ func (s *service) hasCustomMetricsAPI() (bool, error) {
 	return false, nil
 }
 
-func (s *service) GetPlugins() *capabilities.GetPluginsResponse {
+func (s *service) GetMods() *capabilities.GetPluginsResponse {
 	var plugins []*capabilities.GetPluginsResponse_Plugin
 
-	for _, p := range s.pluginManager.GetPlugins() {
+	for _, p := range s.modManager.GetMods() {
 		if p.IsBuiltin {
 			plugins = append(plugins, &capabilities.GetPluginsResponse_Plugin{
 				Plugin: &capabilities.GetPluginsResponse_Plugin_Builtin{

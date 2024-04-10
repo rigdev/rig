@@ -5,7 +5,7 @@ import (
 
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/migrate"
-	"github.com/rigdev/rig/cmd/rig-ops/cmd/plugins"
+	"github.com/rigdev/rig/cmd/rig-ops/cmd/mods"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/spf13/cobra"
@@ -46,7 +46,7 @@ func Run(s *cli.SetupContext) error {
 	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 
 	migrate.Setup(rootCmd, s)
-	plugins.Setup(rootCmd, s)
+	mods.Setup(rootCmd, s)
 	if s.Args != nil {
 		rootCmd.SetArgs(s.Args)
 	}

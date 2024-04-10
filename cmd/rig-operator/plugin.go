@@ -3,27 +3,28 @@ package main
 import (
 	"fmt"
 
-	"github.com/rigdev/rig/pkg/controller/plugin"
-	"github.com/rigdev/rig/plugins/allplugins"
+	"github.com/rigdev/rig/mods/allmods"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	"github.com/spf13/cobra"
 )
 
-func pluginSetup(parent *cobra.Command) {
-	pluginCmd := &cobra.Command{
-		Use:   "plugin",
-		Short: "Execute a builtin plugin",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runPlugin,
+func modSetup(parent *cobra.Command) {
+	modCmd := &cobra.Command{
+		Use:     "mod",
+		Aliases: []string{"plugin"},
+		Short:   "Execute a builtin mod",
+		Args:    cobra.ExactArgs(1),
+		RunE:    runMod,
 	}
-	parent.AddCommand(pluginCmd)
+	parent.AddCommand(modCmd)
 }
 
-func runPlugin(_ *cobra.Command, args []string) error {
-	pluginName := args[0]
-	p, ok := allplugins.Plugins[pluginName]
+func runMod(_ *cobra.Command, args []string) error {
+	modName := args[0]
+	p, ok := allmods.Mods[modName]
 	if !ok {
-		return fmt.Errorf("unknown plugin name %s", pluginName)
+		return fmt.Errorf("unknown mod name %s", modName)
 	}
-	plugin.StartPlugin(pluginName, p)
+	mod.StartMod(modName, p)
 	return nil
 }

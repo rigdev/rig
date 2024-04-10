@@ -7,7 +7,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -31,7 +31,7 @@ func New(
 	cfgS config.Service,
 	scheme *runtime.Scheme,
 	capabilitiesService capabilities.Service,
-	pluginManager *plugin.Manager,
+	modManager *mod.Manager,
 ) (manager.Manager, error) {
 	cfg := cfgS.Operator()
 
@@ -63,7 +63,7 @@ func New(
 		Config:              cfg,
 		ClientSet:           clientSet,
 		CapabilitiesService: capabilitiesService,
-		PluginManager:       pluginManager,
+		ModManager:          modManager,
 	}
 
 	if err := cr.SetupWithManager(mgr, logger); err != nil {

@@ -18,12 +18,12 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
+	envmapping "github.com/rigdev/rig/mods/env_mapping"
+	"github.com/rigdev/rig/mods/ingress_routes"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	rerrors "github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
-	envmapping "github.com/rigdev/rig/plugins/env_mapping"
-	"github.com/rigdev/rig/plugins/ingress_routes"
 	"github.com/rivo/tview"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -49,7 +49,7 @@ type Migration struct {
 	warnings          map[string][]*Warning
 	containerIndex    int
 	operatorConfig    *v1alpha1.OperatorConfig
-	plugins           []string
+	mods              []string
 }
 
 func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
@@ -99,10 +99,10 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if err = c.getPlugins(ctx, migration); err != nil {
+	if err = c.getMods(ctx, migration); err != nil {
 		return nil
 	}
-	fmt.Println("Enabled Plugins:", strings.Join(migration.plugins, ", "))
+	fmt.Println("Enabled Mods:", strings.Join(migration.mods, ", "))
 
 	fmt.Print("Migrating Deployment...")
 	if err := c.migrateDeployment(ctx, migration); err != nil {
@@ -496,7 +496,7 @@ func (c *Cmd) migrateDeployment(
 			Warning: fmt.Sprintf("Multiple containers: %s in a deployment are not supported by capsule. "+
 				"Only container: %s will be migrated",
 				strings.Join(allContainerNames, ", "), containers[migration.containerIndex].Name),
-			Suggestion: "Use the rigdev.init_container plugin or the rigdev.sidecar plugin to migrate the other containers",
+			Suggestion: "Use the rigdev.init_container mod or the rigdev.sidecar mod to migrate the other containers",
 		})
 
 		fmt.Print("Migrating Deployment...")
@@ -836,7 +836,7 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 				})
 
 				// TODO(anders): Add under flag?
-				// if !slices.Contains(migration.plugins, "rigdev.env_mapping") {
+				// if !slices.Contains(migration.mods, "rigdev.env_mapping") {
 				// 	migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
 				// 		Kind: "Deployment",
 				// 		Name: migration.currentResources.Deployment.Name,
@@ -844,20 +844,17 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 				// 			migration.currentResources.Deployment.Spec.
 				// 				Template.Spec.Containers[migration.containerIndex].Name, envVar.Name),
 				// 		Warning:    "valueFrom configMap field is not natively supported.",
-				// 		Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from configMaps",
+				// 		Suggestion: "Enable the rigdev.env_mapping mod to migrate envVars from configMaps",
 				// 	})
 				// } else {
 				// 	if _, ok := configMapMappings[cfgMap.Name]; !ok {
 				// 		configMapMappings[cfgMap.Name] = map[string]string{}
 				// 	}
 
-				// 	configMapMappings[cfgMap.Name][envVar.Name] = cfgMap.Key
-				// }
-
 			case from.SecretKeyRef != nil:
 				secretRef := from.SecretKeyRef
 
-				if !slices.Contains(migration.plugins, "rigdev.env_mapping") {
+				if !slices.Contains(migration.mods, "rigdev.env_mapping") {
 					migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
 						Kind: "Deployment",
 						Name: migration.currentResources.Deployment.Name,
@@ -865,7 +862,7 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 							migration.currentResources.Deployment.Spec.
 								Template.Spec.Containers[migration.containerIndex].Name, envVar.Name),
 						Warning:    "valueFrom secret field is not natively supported.",
-						Suggestion: "Enable the rigdev.env_mapping plugin to migrate envVars from secrets",
+						Suggestion: "Enable the rigdev.env_mapping mod to migrate envVars from secrets",
 					})
 				} else {
 					if _, ok := secretMappings[secretRef.Name]; !ok {
@@ -1022,7 +1019,7 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 					volume.Name),
 				Warning: "Volume is not mounted in the container. It is removed from the capsule",
 				Suggestion: "If the volume is mounted in another container (init or sidecar)," +
-					"use the rigdev.object_template plugin to add the volume",
+					"use the rigdev.object_template mod to add the volume",
 			})
 			continue
 		}
@@ -1279,7 +1276,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 							Field:   "",
 							Warning: "Routes are not configured in the operator config, and thus the ingresses cannot be migrated.",
 							Suggestion: "Enable routes in the operator pipeline. If you want to create ingresses" +
-								" use the rigdev.ingress_routes plugin",
+								" use the rigdev.ingress_routes mod",
 						},
 					)
 

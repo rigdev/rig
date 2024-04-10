@@ -14,7 +14,7 @@ import (
 	"github.com/nsf/jsondiff"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/controller/mod"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/stretchr/testify/require"
@@ -109,7 +109,7 @@ disableTLS: false
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 	builtinBinPath := path.Join(path.Dir(path.Dir(path.Dir(wd))), "bin", "rig-operator")
-	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
+	pmanager, err := mod.NewManager(mod.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
 
 	capsuleReconciler := &controller.CapsuleReconciler{
@@ -118,7 +118,7 @@ disableTLS: false
 		Config:              opConfig,
 		ClientSet:           clientSet,
 		CapabilitiesService: capabilities.NewService(cc, clientSet.Discovery(), nil),
-		PluginManager:       pmanager,
+		ModManager:       pmanager,
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))

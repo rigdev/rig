@@ -71,7 +71,7 @@ resources created from a capsulespec
 		&annotations,
 		"annotation", "A", nil,
 		"annotations to add to the Capsule of the format `key=value`."+
-			" Can for example be used to target migration with a specific plugin",
+			" Can for example be used to target migration with a specific mod",
 	)
 	migrate.Flags().BoolVar(&keepEnvConfigMaps, "keep-env-config-maps", false,
 		"Keep envFrom to ConfigMaps after migration. "+

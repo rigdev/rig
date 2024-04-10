@@ -14,7 +14,7 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
-func (s *PluginTestSuite) TestObjectPluginDeploymentReplicas() {
+func (s *ModTestSuite) TestObjectModDeploymentReplicas() {
 	ctx := context.Background()
 	nsName := types.NamespacedName{
 		Name:      uuid.NewString(),
@@ -56,14 +56,14 @@ func (s *PluginTestSuite) TestObjectPluginDeploymentReplicas() {
 						}},
 					},
 				},
-				// The 2 comes from the plugin.
+				// The 2 comes from the mod.
 				Replicas: ptr.New[int32](2),
 			},
 		},
 	})
 }
 
-func (s *PluginTestSuite) TestSidecarPluginNginxContainer() {
+func (s *ModTestSuite) TestSidecarModNginxContainer() {
 	ctx := context.Background()
 	nsName := types.NamespacedName{
 		Name:      uuid.NewString(),
@@ -102,7 +102,7 @@ func (s *PluginTestSuite) TestSidecarPluginNginxContainer() {
 					Spec: v1.PodSpec{
 						Containers: []v1.Container{},
 						InitContainers: []v1.Container{
-							// This sidecar container is added by the plugin.
+							// This sidecar container is added by the mod.
 							{
 								Name:          "nginx",
 								Image:         "nginx",
@@ -116,7 +116,7 @@ func (s *PluginTestSuite) TestSidecarPluginNginxContainer() {
 	})
 }
 
-func (s *PluginTestSuite) TestInitContainerPluginStartupEcho() {
+func (s *ModTestSuite) TestInitContainerModStartupEcho() {
 	ctx := context.Background()
 	nsName := types.NamespacedName{
 		Name:      uuid.NewString(),
@@ -156,7 +156,7 @@ func (s *PluginTestSuite) TestInitContainerPluginStartupEcho() {
 						Containers: []v1.Container{},
 						InitContainers: []v1.Container{
 							{Name: "nginx"},
-							// This init container is added by the plugin, after the other sidecar.
+							// This init container is added by the mod, after the other sidecar.
 							{
 								Image:         "alpine",
 								Name:          "startup",
@@ -171,6 +171,6 @@ func (s *PluginTestSuite) TestInitContainerPluginStartupEcho() {
 	})
 }
 
-func (s *PluginTestSuite) by(msg string) {
+func (s *ModTestSuite) by(msg string) {
 	s.T().Log("STEP: ", msg)
 }
