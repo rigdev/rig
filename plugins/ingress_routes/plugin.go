@@ -1,10 +1,13 @@
 // +groupName=plugins.rig.dev -- Only used for config doc generation
-package ingressroutes
+//
+//nolint:revive
+package ingress_routes
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	cmmetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
@@ -18,6 +21,8 @@ import (
 )
 
 const Name = "rigdev.ingress_routes"
+
+const AnnotationImplementationSpecificPathType = "plugin.rig.dev/implementation-specific-path-type"
 
 // Configuration for the ingress_routes plugin
 // +kubebuilder:object:root=true
@@ -173,10 +178,16 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 				ing.Annotations[key] = value
 			}
 
+			useImplementationSpecific, _ := strconv.ParseBool(route.Annotations[AnnotationImplementationSpecificPathType])
+
 			if len(route.Paths) == 0 {
+				pathType := netv1.PathTypePrefix
+				if useImplementationSpecific {
+					pathType = netv1.PathTypeImplementationSpecific
+				}
 				rule.IngressRuleValue.HTTP.Paths = []netv1.HTTPIngressPath{
 					{
-						PathType: ptr.New(netv1.PathTypePrefix),
+						PathType: ptr.New(pathType),
 						Path:     "/",
 						Backend: netv1.IngressBackend{
 							Service: &netv1.IngressServiceBackend{
@@ -196,6 +207,9 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 						pt = ptr.New(netv1.PathTypeExact)
 					default:
 						pt = ptr.New(netv1.PathTypePrefix)
+					}
+					if useImplementationSpecific {
+						pt = ptr.New(netv1.PathTypeImplementationSpecific)
 					}
 
 					rule.IngressRuleValue.HTTP.Paths = append(
