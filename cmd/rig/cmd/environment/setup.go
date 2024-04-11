@@ -1,13 +1,14 @@
 package environment
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
-
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
@@ -47,6 +48,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			auth.OmitEnvironment: "",
 			auth.OmitProject:     "",
 		},
+		GroupID: common.ManagementGroupID,
 	}
 
 	listEnvironments := &cobra.Command{
@@ -79,11 +81,28 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Use:   "delete environment",
 		Short: "Delete an environment",
 		Args:  cobra.ExactArgs(1),
-		RunE:  cli.CtxWrap(cmd.delete),
+		ValidArgsFunction: common.Complete(
+			cli.HackCtxWrapCompletion(cmd.completeEnvironment, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.delete),
 	}
 	deleteEnvironment.Flags().BoolVarP(&force, "force", "f", false,
 		"Force deletion of all running capsules in the environment")
 	environment.AddCommand(deleteEnvironment)
 
 	parent.AddCommand(environment)
+}
+
+func (c *Cmd) completeEnvironment(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Environments(ctx, c.Rig, toComplete, c.Scope)
 }

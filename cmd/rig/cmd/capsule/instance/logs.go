@@ -14,8 +14,8 @@ import (
 
 func (c *Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error {
 	arg := ""
-	if len(args) > 0 {
-		arg = args[0]
+	if len(args) > 1 {
+		arg = args[1]
 	}
 
 	instanceID, err := c.provideInstanceID(ctx, capsule_cmd.CapsuleID, arg, cmd.ArgsLenAtDash())
@@ -23,22 +23,27 @@ func (c *Cmd) logs(ctx context.Context, cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	duration, err := time.ParseDuration(since)
-	if err != nil {
-		return err
-	}
-
-	s, err := c.Rig.Capsule().Logs(ctx, &connect.Request[capsule.LogsRequest]{
+	request := &connect.Request[capsule.LogsRequest]{
 		Msg: &capsule.LogsRequest{
 			CapsuleId:          capsule_cmd.CapsuleID,
 			InstanceId:         instanceID,
 			Follow:             follow,
-			Since:              durationpb.New(duration),
 			ProjectId:          flags.GetProject(c.Scope),
 			EnvironmentId:      flags.GetEnvironment(c.Scope),
 			PreviousContainers: previousContainers,
 		},
-	})
+	}
+
+	if since != "" {
+		duration, err := time.ParseDuration(since)
+		if err != nil {
+			return err
+		}
+
+		request.Msg.Since = durationpb.New(duration)
+	}
+
+	s, err := c.Rig.Capsule().Logs(ctx, request)
 	if err != nil {
 		return err
 	}

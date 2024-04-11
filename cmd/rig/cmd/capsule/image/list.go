@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) getImage(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(
 		&image.ListRequest{
 			CapsuleId: capsule_cmd.CapsuleID,

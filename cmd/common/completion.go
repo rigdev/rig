@@ -26,6 +26,24 @@ func MaxArgsCompletionFilter(max int) CompletionFilter {
 	}
 }
 
+func AddValidArgsCompletionFilter(validArgs ...string) CompletionFilter {
+	return func(
+		cmd *cobra.Command,
+		args []string,
+		toComplete string,
+		current []string,
+		directive cobra.ShellCompDirective,
+	) ([]string, cobra.ShellCompDirective) {
+		for _, a := range validArgs {
+			if strings.HasPrefix(a, toComplete) {
+				current = append(current, a)
+			}
+		}
+
+		return current, directive
+	}
+}
+
 var ArgsCompletionFilter = func(
 	cmd *cobra.Command,
 	args []string,
@@ -70,6 +88,28 @@ func Complete(
 			}
 		}
 		return completions, directive
+	}
+
+	return complete
+}
+
+// ChainCompletions is a helper function to chain multiple completion functions.
+// i.e. provide a number of arguments from each completion function.
+// numArgs is a running sum of the number of arguments each completion function provides.
+// i.e. [1, 2, 4] means first function provides argument 1, second function provides argument 2,
+// and third function provides arguments 3 and 4.
+// The length of numArgs must match the length of the completion chain.
+func ChainCompletions(
+	numArgs []int,
+	chain ...CompletionBase,
+) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	complete := func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		for i, numArgs := range numArgs {
+			for len(args) < numArgs {
+				return chain[i](cmd, args, toComplete)
+			}
+		}
+		return []string{}, cobra.ShellCompDirectiveError
 	}
 
 	return complete

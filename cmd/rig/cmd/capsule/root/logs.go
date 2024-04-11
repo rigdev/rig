@@ -13,19 +13,23 @@ import (
 )
 
 func (c *Cmd) logs(ctx context.Context, _ *cobra.Command, _ []string) error {
-	duration, err := time.ParseDuration(since)
-	if err != nil {
-		return err
-	}
-
-	stream, err := c.Rig.Capsule().Logs(ctx, connect.NewRequest(&capsule.LogsRequest{
+	request := &capsule.LogsRequest{
 		CapsuleId:          capsule_cmd.CapsuleID,
 		Follow:             follow,
-		Since:              durationpb.New(duration),
 		ProjectId:          flags.GetProject(c.Scope),
 		EnvironmentId:      flags.GetEnvironment(c.Scope),
 		PreviousContainers: previousContainers,
-	}))
+	}
+
+	if since != "" {
+		duration, err := time.ParseDuration(since)
+		if err != nil {
+			return err
+		}
+		request.Since = durationpb.New(duration)
+	}
+
+	stream, err := c.Rig.Capsule().Logs(ctx, connect.NewRequest(request))
 	if err != nil {
 		return err
 	}

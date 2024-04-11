@@ -3,7 +3,6 @@ package group
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -23,8 +22,6 @@ var (
 	offset int
 	limit  int
 )
-
-var groupID string
 
 type Cmd struct {
 	fx.In
@@ -48,15 +45,15 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
 		},
+		GroupID: common.AuthGroupID,
 	}
 
 	create := &cobra.Command{
-		Use:   "create",
+		Use:   "create [group-id]",
 		Short: "Create a new group",
 		RunE:  cli.CtxWrap(cmd.create),
 		Args:  cobra.NoArgs,
 	}
-	create.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
 	group.AddCommand(create)
 
 	deleteCmd := &cobra.Command{
@@ -83,24 +80,19 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	}
 	group.AddCommand(update)
 
-	get := &cobra.Command{
-		Use:     "get [group-id]",
-		Short:   "Get one or multiple groups",
-		Args:    cobra.MaximumNArgs(1),
+	list := &cobra.Command{
+		Use:     "list",
+		Short:   "list groups",
 		Aliases: []string{"ls"},
 		RunE:    cli.CtxWrap(cmd.get),
-		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.completions, s),
-			common.MaxArgsCompletionFilter(1),
-		),
 	}
-	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
-	get.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
-	group.AddCommand(get)
+	list.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
+	list.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
+	group.AddCommand(list)
 
-	getMembers := &cobra.Command{
-		Use:   "get-members [group-id]",
-		Short: "Get members of a group",
+	listMembers := &cobra.Command{
+		Use:   "list-members [group-id]",
+		Short: "list members of a group",
 		RunE:  cli.CtxWrap(cmd.listMembers),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
@@ -108,13 +100,13 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	getMembers.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of members to return")
-	getMembers.Flags().IntVar(&offset, "offset", 0, "offset the number of members to return")
-	group.AddCommand(getMembers)
+	listMembers.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of members to return")
+	listMembers.Flags().IntVar(&offset, "offset", 0, "offset the number of members to return")
+	group.AddCommand(listMembers)
 
-	getGroupsForMember := &cobra.Command{
-		Use:   "get-groups-for-member [member-id]",
-		Short: "Get groups that a user or service account is a member of",
+	listGroupsForMember := &cobra.Command{
+		Use:   "list-groups-for-member [member-id]",
+		Short: "List groups that a user or service account is a member of",
 		RunE:  cli.CtxWrap(cmd.listGroupsForUser),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
@@ -122,47 +114,33 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	getGroupsForMember.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
-	getGroupsForMember.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
-	group.AddCommand(getGroupsForMember)
+	listGroupsForMember.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
+	listGroupsForMember.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
+	group.AddCommand(listGroupsForMember)
 
 	addUser := &cobra.Command{
-		Use:   "add-member [member-id]",
+		Use:   "add-member [member-id] [group-id]",
 		Short: "Add a member to a group",
 		RunE:  cli.CtxWrap(cmd.addMember),
-		Args:  cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(
+		Args:  cobra.MaximumNArgs(2),
+		ValidArgsFunction: common.ChainCompletions(
+			[]int{1, 2},
 			cli.HackCtxWrapCompletion(cmd.memberCompletions, s),
-			common.MaxArgsCompletionFilter(1),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 		),
-	}
-	addUser.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
-	if err := addUser.RegisterFlagCompletionFunc(
-		"group-id",
-		cli.HackCtxWrapCompletion(cmd.completions, s),
-	); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
 	}
 	group.AddCommand(addUser)
 
 	removeUser := &cobra.Command{
-		Use:   "remove-member [member-id]",
+		Use:   "remove-member [member-id] [group-id]",
 		Short: "Remove a member from a group",
 		RunE:  cli.CtxWrap(cmd.removeMember),
-		Args:  cobra.MaximumNArgs(1),
-		ValidArgsFunction: common.Complete(
+		Args:  cobra.MaximumNArgs(2),
+		ValidArgsFunction: common.ChainCompletions(
+			[]int{1, 2},
 			cli.HackCtxWrapCompletion(cmd.memberCompletions, s),
-			common.MaxArgsCompletionFilter(1),
+			cli.HackCtxWrapCompletion(cmd.completions, s),
 		),
-	}
-	removeUser.Flags().StringVarP(&groupID, "group-id", "g", "", "id of the group")
-	if err := removeUser.RegisterFlagCompletionFunc(
-		"group-id",
-		cli.HackCtxWrapCompletion(cmd.completions, s),
-	); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
 	}
 	group.AddCommand(removeUser)
 

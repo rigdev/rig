@@ -24,7 +24,6 @@ var (
 
 var (
 	email    string
-	username string
 	password string
 	role     string
 
@@ -48,12 +47,13 @@ func initCmd(c Cmd) {
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	user := &cobra.Command{
 		Use:               "user",
-		Short:             "Manage users in your projects",
+		Short:             "Manage users",
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
 		},
+		GroupID: common.AuthGroupID,
 	}
 
 	create := &cobra.Command{
@@ -63,7 +63,6 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Args:  cobra.NoArgs,
 	}
 	create.Flags().StringVarP(&email, "email", "e", "", "email of the user")
-	create.Flags().StringVarP(&username, "username", "u", "", "username of the user")
 	create.Flags().StringVarP(&password, "password", "p", "", "password of the user")
 	create.Flags().StringVarP(&role, "role", "r", "", "role of the user (admin, owner, developer, viewer)")
 	if err := create.RegisterFlagCompletionFunc("role", common.RoleCompletions); err != nil {
@@ -73,7 +72,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	user.AddCommand(create)
 
 	update := &cobra.Command{
-		Use:   "update [user-id | {email|username|phone}]",
+		Use:   "update [user-id | email]",
 		Short: "Update a user",
 		RunE:  cli.CtxWrap(cmd.update),
 		Args:  cobra.MaximumNArgs(1),
@@ -89,7 +88,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		func(cmd *cobra.Command, args []string) {
 			cmd.Printf(
 				("Usage:\n" +
-					"  rig user update [user-id | {email|username|phone}] [flags] \n\n" +
+					"  rig user update [user-id | email] [flags] \n\n" +
 					"Flags: \n" +
 					"  -f, --field string   field to update \n" +
 					"  -v, --value string   value to update the field with \n" +
@@ -113,21 +112,30 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	}
 	user.AddCommand(update)
 
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "List users",
+		RunE:  cli.CtxWrap(cmd.list),
+		Args:  cobra.NoArgs,
+	}
+	list.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
+	list.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
+	user.AddCommand(list)
+
 	get := &cobra.Command{
-		Use:   "get [user-id | {email|username|phone}]",
-		Short: "Get one or multiple users",
+		Use:   "get [user-id | email]",
+		Short: "Get a user",
 		RunE:  cli.CtxWrap(cmd.get),
+		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
 			cli.HackCtxWrapCompletion(cmd.userCompletions, s),
-			common.MaxArgsCompletionFilter(1)),
-		Args: cobra.MaximumNArgs(1),
+			common.MaxArgsCompletionFilter(1),
+		),
 	}
-	get.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
-	get.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
 	user.AddCommand(get)
 
 	deleteCmd := &cobra.Command{
-		Use:   "delete [user-id | {email|username|phone}]",
+		Use:   "delete [user-id | email]",
 		Short: "Delete a user",
 		RunE:  cli.CtxWrap(cmd.delete),
 		Args:  cobra.MaximumNArgs(1),
@@ -138,9 +146,9 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	}
 	user.AddCommand(deleteCmd)
 
-	getSessions := &cobra.Command{
-		Use:   "get-sessions [user-id | {email|username|phone}]",
-		Short: "Get sessions of a user",
+	listSessions := &cobra.Command{
+		Use:   "list-sessions [user-id | email]",
+		Short: "List sessions of a user",
 		RunE:  cli.CtxWrap(cmd.listSessions),
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
@@ -148,9 +156,9 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	getSessions.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
-	getSessions.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	user.AddCommand(getSessions)
+	listSessions.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
+	listSessions.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
+	user.AddCommand(listSessions)
 
 	getSettings := &cobra.Command{
 		Use:   "get-settings",

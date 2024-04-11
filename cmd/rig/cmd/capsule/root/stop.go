@@ -10,14 +10,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) stop(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	currentRollout, err := capsule_cmd.GetCurrentRollout(ctx, c.Rig, c.Scope)
 	if err != nil {
 		return err
 	}
 
-	if _, err := c.Rig.Capsule().AbortRollout(ctx, &connect.Request[capsule.AbortRolloutRequest]{
-		Msg: &capsule.AbortRolloutRequest{
+	if _, err := c.Rig.Capsule().StopRollout(ctx, &connect.Request[capsule.StopRolloutRequest]{
+		Msg: &capsule.StopRolloutRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			RolloutId: currentRollout.GetRolloutId(),
 			ProjectId: flags.GetProject(c.Scope),
@@ -26,7 +26,7 @@ func (c *Cmd) abort(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	cmd.Println("Current rollout aborted")
+	cmd.Println("rollout stopped")
 
 	return nil
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -55,47 +56,63 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Use:               "instance",
 		Short:             "Inspect and restart instances",
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		GroupID:           capsule_cmd.TroubleshootingGroupID,
 	}
 
-	getInstances := &cobra.Command{
-		Use:   "get [instance-id]",
-		Short: "Get one or more instances",
+	listInstances := &cobra.Command{
+		Use:   "list [capsule]",
+		Short: "list instances",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  cli.CtxWrap(cmd.get),
+		RunE:  cli.CtxWrap(cmd.list),
 		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.completions, s),
+			cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	getInstances.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
-	getInstances.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	getInstances.Flags().BoolVar(
+	listInstances.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
+	listInstances.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
+	listInstances.Flags().BoolVar(
 		&includeDeleted, "include-deleted", false,
 		"includes instances which have been deleted in the past 7 days",
 	)
-	getInstances.Flags().BoolVar(&excludeExisting, "exclude-existing", false, "only return instances which are deleted")
+	listInstances.Flags().BoolVar(&excludeExisting, "exclude-existing", false, "only return instances which are deleted")
+	instance.AddCommand(listInstances)
+
+	getInstances := &cobra.Command{
+		Use:   "get [capsule] [instance-id]",
+		Short: "get instance details",
+		Args:  cobra.MaximumNArgs(2),
+		ValidArgsFunction: common.ChainCompletions(
+			[]int{1, 2},
+			cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
+			cli.HackCtxWrapCompletion(cmd.instanceCompletions, s),
+		),
+		RunE: cli.CtxWrap(cmd.get),
+	}
 	instance.AddCommand(getInstances)
 
 	restartInstance := &cobra.Command{
-		Use:   "restart [instance-id]",
+		Use:   "restart [capsule] [instance-id]",
 		Short: "Restart a single instance",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  cobra.MaximumNArgs(2),
 		RunE:  cli.CtxWrap(cmd.restart),
-		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.completions, s),
-			common.MaxArgsCompletionFilter(1),
+		ValidArgsFunction: common.ChainCompletions(
+			[]int{1, 2},
+			cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
+			cli.HackCtxWrapCompletion(cmd.instanceCompletions, s),
 		),
 	}
 	instance.AddCommand(restartInstance)
 
 	logs := &cobra.Command{
-		Use:   "logs [instance-id]",
+		Use:   "logs [capsule] [instance-id]",
 		Short: "Read instance logs from the capsule ",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  cobra.MaximumNArgs(2),
 		RunE:  cli.CtxWrap(cmd.logs),
-		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.completions, s),
-			common.MaxArgsCompletionFilter(1),
+		ValidArgsFunction: common.ChainCompletions(
+			[]int{1, 2},
+			cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
+			cli.HackCtxWrapCompletion(cmd.instanceCompletions, s),
 		),
 	}
 	logs.Flags().BoolVarP(
@@ -105,7 +122,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		&previousContainers, "previous-containers", "p", false,
 		"Return logs from previous container terminations of the instance.",
 	)
-	logs.Flags().StringVarP(&since, "since", "s", "1s", "do not show logs older than 'since'")
+	logs.Flags().StringVarP(&since, "since", "s", "", "do not show logs older than 'since'")
 	if err := logs.RegisterFlagCompletionFunc("follow", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -113,12 +130,13 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	instance.AddCommand(logs)
 
 	exec := &cobra.Command{
-		Use:   "exec [instance-id] -- [command] [args...]",
+		Use:   "exec [capsule] [instance-id] -- [command] [args...]",
 		Short: "Open a shell to the instance",
 		RunE:  cli.CtxWrap(cmd.exec),
-		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.completions, s),
-			common.MaxArgsCompletionFilter(1),
+		ValidArgsFunction: common.ChainCompletions(
+			[]int{1, 2},
+			cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
+			cli.HackCtxWrapCompletion(cmd.instanceCompletions, s),
 		),
 	}
 	exec.Flags().BoolVarP(&tty, "tty", "t", false, "allocate a TTY")
@@ -169,13 +187,18 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 	return s, err
 }
 
-func (c *Cmd) completions(
+func (c *Cmd) instanceCompletions(
 	ctx context.Context,
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
 	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
+	if len(args) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	capsule_cmd.CapsuleID = args[0]
 
 	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
@@ -224,4 +247,18 @@ func formatInstance(i *capsule.Instance) string {
 	}
 
 	return fmt.Sprintf("%v\t (State: %v, Started At: %v)", i.GetInstanceId(), i.GetState(), startedAt)
+}
+
+func (c *Cmd) capsuleCompletions(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Capsules(ctx, c.Rig, toComplete, c.Scope)
 }

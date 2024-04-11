@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
@@ -45,44 +46,53 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Use:               "jobs",
 		Short:             "Manage jobs for the capsule",
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		GroupID:           capsule.DeploymentGroupID,
 	}
 
-	jobsGet := &cobra.Command{
-		Use:   "get",
-		Short: "Get cronjobs defined for the capsule",
-		RunE:  cli.CtxWrap(cmd.get),
+	jobsList := &cobra.Command{
+		Use:               "list [capsule]",
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s)),
+		Short:             "List cronjobs defined for the capsule",
+		RunE:              cli.CtxWrap(cmd.list),
 	}
-	jobs.AddCommand(jobsGet)
+	jobs.AddCommand(jobsList)
 
 	jobsAdd := &cobra.Command{
-		Use:   "add",
-		Short: "Add a cronjob to the capsule",
-		RunE:  cli.CtxWrap(cmd.add),
+		Use:               "add [capsule]",
+		Short:             "Add a cronjob to the capsule",
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s)),
+		RunE:              cli.CtxWrap(cmd.add),
 	}
 	jobsAdd.Flags().StringVarP(&path, "path", "p", "", "Path to a json or yaml file containing a cronjob specification")
 	jobs.AddCommand(jobsAdd)
 
 	jobsDelete := &cobra.Command{
-		Use:   "delete [job-name]",
+		Use:   "delete [capsule] [job-name]",
 		Short: "Delete one or more cronjobs to the capsule",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  cobra.MaximumNArgs(2),
 		RunE:  cli.CtxWrap(cmd.delete),
-		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.completions, s),
-			common.MaxArgsCompletionFilter(1),
+		ValidArgsFunction: common.ChainCompletions(
+			[]int{1, 2},
+			cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
+			cli.HackCtxWrapCompletion(cmd.jobCompletions, s),
 		),
 	}
 	jobs.AddCommand(jobsDelete)
 
 	executions := &cobra.Command{
-		Use:   "executions",
+		Use:   "executions [capsule]",
 		Short: "See executions of jobs",
-		RunE:  cli.CtxWrap(cmd.executions),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.executions),
 	}
 	executions.Flags().StringVarP(&jobName, "job", "j", "", "Name of the job to fetch executions from")
 	if err := executions.RegisterFlagCompletionFunc(
 		"job",
-		cli.HackCtxWrapCompletion(cmd.completions, s),
+		cli.HackCtxWrapCompletion(cmd.jobCompletions, s),
 	); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -123,13 +133,19 @@ Possible states are ongoing, completed, failed, terminated.`,
 	parent.AddCommand(jobs)
 }
 
-func (c *Cmd) completions(
+func (c *Cmd) jobCompletions(
 	ctx context.Context,
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
 	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
+	if len(args) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	capsule.CapsuleID = args[0]
+
 	if capsule.CapsuleID == "" {
 		return nil, cobra.ShellCompDirectiveError
 	}
@@ -160,4 +176,18 @@ func (c *Cmd) completions(
 	}
 
 	return jobnames, cobra.ShellCompDirectiveDefault
+}
+
+func (c *Cmd) capsuleCompletions(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Capsules(ctx, c.Rig, toComplete, c.Scope)
 }

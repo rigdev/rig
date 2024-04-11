@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	"connectrpc.com/connect"
@@ -14,7 +16,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
 	capsule_root "github.com/rigdev/rig/cmd/rig/cmd/capsule/root"
 	"github.com/rigdev/rig/cmd/rig/cmd/cluster"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/cmd/config"
 	"github.com/rigdev/rig/cmd/rig/cmd/dev"
 	"github.com/rigdev/rig/cmd/rig/cmd/environment"
@@ -27,6 +29,7 @@ import (
 	auth_service "github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -37,7 +40,7 @@ type Cmd struct {
 	fx.In
 
 	Rig    rig.Client
-	Cfg    *cmdconfig.Config
+	Scope  scope.Scope
 	Logger *zap.Logger
 }
 
@@ -45,35 +48,77 @@ var cmd Cmd
 
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
-	cmd.Cfg = c.Cfg
+	cmd.Scope = c.Scope
 	cmd.Logger = c.Logger
 }
 
 func Run(s *cli.SetupContext) error {
 	rootCmd := &cobra.Command{
 		Use:           "rig",
-		Short:         "CLI tool for managing your Rig projects",
+		Short:         "CLI tool for managing Rig",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
-	rootCmd.PersistentFlags().VarP(&flags.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
+	rootCmd.PersistentFlags().VarP(&flags.Flags.OutputType, "output", "o", "Output type. One of json,yaml,pretty.")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Environment,
 		"environment", "E", flags.Flags.Environment,
-		"select which environment to use. Can also be set with environment variable `RIG_ENVIRONMENT`")
+		"Select which environment to use. Can also be set with environment variable `RIG_ENVIRONMENT`")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Project,
 		"project", "P", flags.Flags.Project,
-		"select which project to use. Can also be set with environment variable `RIG_PROJECT`")
+		"Select which project to use. Can also be set with environment variable `RIG_PROJECT`")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Host,
 		"host", "H", flags.Flags.Host,
-		"select which host to access the Rig Platform at. Should be of the form `http[s]://hostname:port/`."+
+		"Select which host to access the Rig Platform at. Should be of the form `http[s]://hostname:port/`."+
 			" Can also be set with environment variable `RIG_HOST`")
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Context,
 		"context", "C", flags.Flags.Context,
-		"select a context to use instead of the one currently set in the config.")
+		"Select a context to use instead of the one currently set in the config.")
+
+	if err := rootCmd.RegisterFlagCompletionFunc("project",
+		cli.HackCtxWrapCompletion(cmd.completeProject, s)); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := rootCmd.RegisterFlagCompletionFunc("environment",
+		cli.HackCtxWrapCompletion(cmd.completeEnvironment, s)); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := rootCmd.RegisterFlagCompletionFunc("context",
+		cli.HackWrapCompletion(cmd.completeContext, s)); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if err := rootCmd.RegisterFlagCompletionFunc("output",
+		completions.OutputType); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	rootCmd.AddGroup(
+		&cobra.Group{
+			ID:    common.CapsuleGroupID,
+			Title: common.CapsuleGroupTitle,
+		},
+		&cobra.Group{
+			ID:    common.ManagementGroupID,
+			Title: common.ManagementGroupTitle,
+		},
+		&cobra.Group{
+			ID:    common.AuthGroupID,
+			Title: common.AuthGroupTitle,
+		},
+		&cobra.Group{
+			ID:    common.OtherGroupID,
+			Title: common.OtherGroupTitle,
+		},
+	)
+	rootCmd.SetHelpCommandGroupID(common.OtherGroupID)
+	rootCmd.SetCompletionCommandGroupID(common.OtherGroupID)
 
 	license := &cobra.Command{
 		Use:               "license",
-		Short:             "Get License Information for the current project",
+		Short:             "Get license information",
 		Args:              cobra.NoArgs,
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		RunE:              cli.CtxWrap(cmd.getLicenseInfo),
@@ -81,12 +126,13 @@ func Run(s *cli.SetupContext) error {
 			auth_service.OmitProject:     "",
 			auth_service.OmitEnvironment: "",
 		},
+		GroupID: common.AuthGroupID,
 	}
 	rootCmd.AddCommand(license)
 
 	version := &cobra.Command{
 		Use:   "version",
-		Short: "print version information",
+		Short: "Print version information",
 		RunE: func(c *cobra.Command, args []string) error {
 			if ok, _ := c.Flags().GetBool("full"); ok {
 				if err := s.MakeInvokePreRunE(initCmd)(c, args); err != nil {
@@ -99,8 +145,9 @@ func Run(s *cli.SetupContext) error {
 			auth_service.OmitProject:     "",
 			auth_service.OmitEnvironment: "",
 		},
+		GroupID: common.OtherGroupID,
 	}
-	version.Flags().BoolP("full", "v", false, "print full version")
+	version.Flags().BoolP("full", "v", false, "Print full version")
 	rootCmd.AddCommand(version)
 
 	dev.Setup(rootCmd, s)
@@ -184,4 +231,45 @@ func (c *Cmd) version(ctx context.Context, cmd *cobra.Command, _ []string) error
 	}
 
 	return nil
+}
+
+func (c *Cmd) completeProject(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Projects(ctx, c.Rig, toComplete, c.Scope)
+}
+
+func (c *Cmd) completeEnvironment(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Environments(ctx, c.Rig, toComplete, c.Scope)
+}
+
+func (c *Cmd) completeContext(
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Contexts(toComplete, c.Scope.GetCfg())
 }

@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
-	"connectrpc.com/connect"
 	"github.com/docker/docker/client"
-	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -54,13 +51,16 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Use:               "image",
 		Short:             "Manage images of the capsule",
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		GroupID:           capsule.DeploymentGroupID,
 	}
 
 	imageAdd := &cobra.Command{
-		Use:   "add",
+		Use:   "add [capsule]",
 		Short: "Add a new container image",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.addImage),
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.addImage),
 	}
 	imageAdd.Flags().StringVarP(&imageID, "image", "i", "", "image to use for the image")
 	imageAdd.Flags().BoolVarP(&deploy, "deploy", "d", false, "deploy image after successful creation")
@@ -94,12 +94,12 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	image.AddCommand(imageAdd)
 
 	imageGet := &cobra.Command{
-		Use:   "get [image-id]",
+		Use:   "list [capsule]",
 		Short: "Get one or multiple images",
 		Args:  cobra.MaximumNArgs(1),
-		RunE:  cli.CtxWrap(cmd.getImage),
+		RunE:  cli.CtxWrap(cmd.list),
 		ValidArgsFunction: common.Complete(
-			cli.HackCtxWrapCompletion(cmd.completions, s),
+			cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 		Annotations: map[string]string{
@@ -113,50 +113,16 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	parent.AddCommand(image)
 }
 
-func (c *Cmd) completions(
+func (c *Cmd) capsuleCompletions(
 	ctx context.Context,
 	cmd *cobra.Command,
 	args []string,
 	toComplete string,
 	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	if len(args) > 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	if capsule.CapsuleID == "" {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
 	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var imageIDs []string
-
-	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(
-		&image.ListRequest{
-			CapsuleId: capsule.CapsuleID,
-			ProjectId: flags.GetProject(c.Scope),
-		}),
-	)
-	if err != nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	for _, b := range resp.Msg.GetImages() {
-		if strings.HasPrefix(b.GetImageId(), toComplete) {
-			imageIDs = append(imageIDs, formatImage(b))
-		}
-	}
-
-	if len(imageIDs) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return imageIDs, cobra.ShellCompDirectiveDefault
+	return completions.Capsules(ctx, c.Rig, toComplete, c.Scope)
 }

@@ -6,12 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"connectrpc.com/connect"
-	"github.com/rigdev/rig-go-api/api/v1/environment"
-	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -65,6 +63,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
 		},
+		GroupID: common.OtherGroupID,
 	}
 
 	init := &cobra.Command{
@@ -216,27 +215,12 @@ func (c *CmdNoScope) completions(
 	toComplete string,
 	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
-	names := []string{}
 
 	if err := s.ExecuteInvokes(cmd, args, initCmdWScope); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	for _, ctx := range c.Cfg.Contexts {
-		if strings.HasPrefix(ctx.Name, toComplete) {
-			var isCurrent string
-			if ctx.Name == c.Cfg.CurrentContextName {
-				isCurrent = "*"
-			}
-			names = append(names, ctx.Name+isCurrent)
-		}
-	}
-
-	if len(names) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return names, cobra.ShellCompDirectiveNoFileComp
+	return completions.Contexts(toComplete, c.Cfg)
 }
 
 func (c *CmdWScope) useProjectCompletion(
@@ -250,39 +234,7 @@ func (c *CmdWScope) useProjectCompletion(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var projectIDs []string
-
-	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	resp, err := c.Rig.Project().List(ctx, &connect.Request[project.ListRequest]{
-		Msg: &project.ListRequest{},
-	})
-	if err != nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	for _, p := range resp.Msg.GetProjects() {
-		if strings.HasPrefix(p.GetProjectId(), toComplete) {
-			projectIDs = append(projectIDs, formatProject(p))
-		}
-	}
-
-	if len(projectIDs) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return projectIDs, cobra.ShellCompDirectiveNoFileComp
-}
-
-func formatProject(p *project.Project) string {
-	age := "-"
-	if p.GetCreatedAt().IsValid() {
-		age = p.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")
-	}
-
-	return fmt.Sprintf("%v\t (ID: %v, Created At: %v)", p.GetName(), p.GetProjectId(), age)
+	return completions.Projects(ctx, c.Rig, toComplete, c.Scope)
 }
 
 func (c *CmdWScope) useEnvironmentCompletion(
@@ -296,37 +248,5 @@ func (c *CmdWScope) useEnvironmentCompletion(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var environmentIDs []string
-
-	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	resp, err := c.Rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{
-		Msg: &environment.ListRequest{},
-	})
-	if err != nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	for _, p := range resp.Msg.GetEnvironments() {
-		if strings.HasPrefix(p.GetEnvironmentId(), toComplete) {
-			environmentIDs = append(environmentIDs, formatEnvironment(p))
-		}
-	}
-
-	if len(environmentIDs) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return environmentIDs, cobra.ShellCompDirectiveNoFileComp
-}
-
-func formatEnvironment(e *environment.Environment) string {
-	operatorVersion := "-"
-	if e.GetOperatorVersion() != "" {
-		operatorVersion = e.GetOperatorVersion()
-	}
-
-	return fmt.Sprintf("%v\t (Operator Version: %v)", e.GetEnvironmentId(), operatorVersion)
+	return completions.Environments(ctx, c.Rig, toComplete, c.Scope)
 }

@@ -9,15 +9,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) error {
 	var name string
 	var err error
-
-	if name == "" {
+	if len(args) < 1 {
 		name, err = c.Prompter.Input("Name:", common.ValidateNonEmptyOpt)
 		if err != nil {
 			return err
 		}
+	} else {
+		name = args[0]
 	}
 
 	if role == "" {
