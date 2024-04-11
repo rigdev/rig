@@ -25,21 +25,22 @@ func getClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
 	}
 
 	host := flags.Flags.Host
-
 	if host == "" {
-		host = cfg.GetCurrentContext().GetService().Server
+		if rCtx := cfg.GetCurrentContext(); rCtx != nil {
+			host = rCtx.GetService().Server
+		}
 	}
 	url, err := url.Parse(host)
 	if err != nil {
 		return nil, errors.InvalidArgumentErrorf("invalid host, must be a fully qualified URL: %v", err)
 	}
 
-	if url.Scheme != "http" && url.Scheme != "https" {
-		return nil, errors.InvalidArgumentErrorf("invalid host, must start with `https://` or `http://`")
-	}
-
 	if url.Host == "" {
 		return nil, errors.InvalidArgumentErrorf("invalid host, must be a fully qualified URL: missing hostname")
+	}
+
+	if url.Scheme != "http" && url.Scheme != "https" {
+		return nil, errors.InvalidArgumentErrorf("invalid host, must start with `https://` or `http://`")
 	}
 
 	options = append(options, rig.WithHost(host))

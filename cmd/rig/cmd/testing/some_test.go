@@ -332,13 +332,13 @@ func (s *testSuite) Test_auth_activateServiceAccount_no_config_no_host() {
 	s.T().Setenv("RIG_CLIENT_SECRET", "client_secret")
 
 	s.Require().EqualError(s.run(false, []string{"auth", "activate-service-account"}),
-		"no host provided, use `--host` or `RIG_HOST` to specify the host of the Rig platform")
+		"invalid_argument: invalid host, must be a fully qualified URL: missing hostname")
 
 	s.cfgEqual(_emptyConfig)
 }
 
 func (s *testSuite) Test_auth_activateServiceAccount_no_config_invalid_host() {
-	s.T().Setenv("RIG_HOST", "example.com")
+	s.T().Setenv("RIG_HOST", "//example.com")
 	s.T().Setenv("RIG_CLIENT_ID", "client_id")
 	s.T().Setenv("RIG_CLIENT_SECRET", "client_secret")
 
