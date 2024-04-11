@@ -19,12 +19,12 @@ Deploying the rig-operator with this configuration creates a secret `rig-platfor
 
 Token:
 ```bash 
-kubectl get secret/rig-platform-token -n rig-system -oyaml | yq '.data.token' | base64 -d
+kubectl get secret/rig-platform-token -n rig-system -ojson | jq '.data.token' -r | base64 -d
 ```
 
 Certificate:
 ```bash 
-kubectl get secret/rig-platform-token -n rig-system -oyaml | yq '.data."ca.crt"' | base64 -d
+kubectl get secret/rig-platform-token -n rig-system -ojson | jq '.data."ca.crt"' -r | base64 -d
 ```
 
 Then in the `clusters` section of the rig-platform Helm values you can configure these values for the cluster
