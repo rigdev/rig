@@ -70,7 +70,7 @@ func New(
 		return nil, err
 	}
 
-	pr := controller.NewProjectController(mgr.GetClient(), mgr.GetScheme(), cfg, clientSet, logger)
+	pr := controller.NewProjectEnvironmentController(mgr.GetClient(), mgr.GetScheme(), cfg, clientSet, logger)
 	if err := pr.SetupWithManager(mgr); err != nil {
 		return nil, err
 	}

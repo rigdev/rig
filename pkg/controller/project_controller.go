@@ -17,8 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ProjectController reconciles a Project object
-type ProjectController struct {
+// ProjectEnvironmentController reconciles a Project object
+type ProjectEnvironmentController struct {
 	client.Client
 	Scheme    *runtime.Scheme
 	Config    *configv1alpha1.OperatorConfig
@@ -26,15 +26,15 @@ type ProjectController struct {
 	Logger    logr.Logger
 }
 
-func NewProjectController(
+func NewProjectEnvironmentController(
 	c client.Client,
 	scheme *runtime.Scheme,
 	config *configv1alpha1.OperatorConfig,
 	clientSet clientset.Interface,
 	logger logr.Logger,
-) *ProjectController {
-	logger = logger.WithValues("crd", "project")
-	return &ProjectController{
+) *ProjectEnvironmentController {
+	logger = logger.WithValues("crd", "projectenvironment")
+	return &ProjectEnvironmentController{
 		Client:    c,
 		Scheme:    scheme,
 		Config:    config,
@@ -43,9 +43,9 @@ func NewProjectController(
 	}
 }
 
-func (p *ProjectController) SetupWithManager(mgr ctrl.Manager) error {
+func (p *ProjectEnvironmentController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha2.Project{}).
+		For(&v1alpha2.ProjectEnvironment{}).
 		Owns(&corev1.Namespace{}).
 		Complete(p)
 }
@@ -54,16 +54,16 @@ func (p *ProjectController) SetupWithManager(mgr ctrl.Manager) error {
 //+kubebuilder:rbac:groups=rig.dev,resources=projects/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups="core",resources=namespaces,verbs=get;list;watch;create;update;patch;delete
 
-func (p *ProjectController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	project := &v1alpha2.Project{}
-	if err := p.Get(ctx, req.NamespacedName, project); err != nil {
+func (p *ProjectEnvironmentController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	projectEnv := &v1alpha2.ProjectEnvironment{}
+	if err := p.Get(ctx, req.NamespacedName, projectEnv); err != nil {
 		if kerrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{}, fmt.Errorf("could not fetch Project: %w", err)
+		return ctrl.Result{}, fmt.Errorf("could not fetch ProjectEnvironment: %w", err)
 	}
 
-	request := pipeline.NewProjectRequest(p.Client, p, p.Config, p.Scheme, p.Logger, project)
+	request := pipeline.NewProjectEnvironmentRequest(p.Client, p, p.Config, p.Scheme, p.Logger, projectEnv)
 
 	if _, err := pipeline.ExecuteRequest(ctx, request, projectSteps, true); err != nil {
 		p.Logger.Error(err, "reconciliation ended with error")
@@ -75,23 +75,20 @@ func (p *ProjectController) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-var projectSteps = []pipeline.Step[pipeline.ProjectRequest]{
+var projectSteps = []pipeline.Step[pipeline.ProjectEnvironmentRequest]{
 	namespaceStep{},
 }
 
 type namespaceStep struct{}
 
-func (n namespaceStep) Apply(_ context.Context, req pipeline.ProjectRequest) error {
-	project := req.Project()
-
-	for _, ns := range project.Spec.Namespaces {
-		if err := req.Set(&corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: ns,
-			},
-		}); err != nil {
-			return err
-		}
+func (n namespaceStep) Apply(_ context.Context, req pipeline.ProjectEnvironmentRequest) error {
+	projectEnv := req.ProjectEnvironment()
+	if err := req.Set(&corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: projectEnv.Name,
+		},
+	}); err != nil {
+		return err
 	}
 
 	return nil

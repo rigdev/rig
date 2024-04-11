@@ -977,14 +977,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: projects.rig.dev
+  name: projectenvironments.rig.dev
 spec:
   group: rig.dev
   names:
-    kind: Project
-    listKind: ProjectList
-    plural: projects
-    singular: project
+    kind: ProjectEnvironment
+    listKind: ProjectEnvironmentList
+    plural: projectenvironments
+    singular: projectenvironment
   scope: Cluster
   versions:
   - name: v1alpha2
@@ -1006,14 +1006,19 @@ spec:
           spec:
             description: Spec holds the specification of the Project.
             properties:
-              namespaces:
-                items:
-                  type: string
-                type: array
+              environment:
+                type: string
+              project:
+                type: string
+            required:
+            - environment
+            - project
             type: object
           status:
             description: Status holds the status of the Project
             properties:
+              createdNamespace:
+                type: boolean
               errors:
                 items:
                   type: string
@@ -1067,6 +1072,8 @@ spec:
                   - ref
                   type: object
                 type: array
+            required:
+            - createdNamespace
             type: object
         type: object
     served: true

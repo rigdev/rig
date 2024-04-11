@@ -19,44 +19,44 @@ const (
 	LabelOwnedByProject = "rig.dev/owned-by-project"
 )
 
-type ProjectRequest interface {
+type ProjectEnvironmentRequest interface {
 	Request
-	// Project returns a deepcopy of the capsule object being reconciled.
-	Project() *v1alpha2.Project
+	// ProjectEnvironment returns a deepcopy of the capsule object being reconciled.
+	ProjectEnvironment() *v1alpha2.ProjectEnvironment
 }
 
-type projectRequest struct {
+type projectEnvRequest struct {
 	RequestBase
-	project *v1alpha2.Project
+	projectEnv *v1alpha2.ProjectEnvironment
 }
 
-func NewProjectRequest(
+func NewProjectEnvironmentRequest(
 	c client.Client,
 	reader client.Reader,
 	config *configv1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
 	logger logr.Logger,
-	project *v1alpha2.Project,
-) ExecutableRequest[ProjectRequest] {
-	p := &projectRequest{
-		RequestBase: NewRequestBase(c, reader, config, scheme, logger, nil, project),
-		project:     project,
+	projectEnv *v1alpha2.ProjectEnvironment,
+) ExecutableRequest[ProjectEnvironmentRequest] {
+	p := &projectEnvRequest{
+		RequestBase: NewRequestBase(c, reader, config, scheme, logger, nil, projectEnv),
+		projectEnv:  projectEnv,
 	}
 	// TODO Fix this hack
 	p.Strategies = p
 
-	if project.Status != nil {
-		p.observedGeneration = project.Status.ObservedGeneration
+	if projectEnv.Status != nil {
+		p.observedGeneration = projectEnv.Status.ObservedGeneration
 	}
 
 	return p
 }
 
-func (p *projectRequest) Project() *v1alpha2.Project {
-	return p.project.DeepCopy()
+func (p *projectEnvRequest) ProjectEnvironment() *v1alpha2.ProjectEnvironment {
+	return p.projectEnv.DeepCopy()
 }
 
-func (p *projectRequest) GetKey(obj client.Object) (ObjectKey, error) {
+func (p *projectEnvRequest) GetKey(obj client.Object) (ObjectKey, error) {
 	gvk, err := getGVK(obj, p.scheme)
 	if err != nil {
 		p.logger.Error(err, "invalid object type")
@@ -79,8 +79,8 @@ func (p *projectRequest) GetKey(obj client.Object) (ObjectKey, error) {
 	}, nil
 }
 
-func (p *projectRequest) LoadExistingObjects(ctx context.Context) error {
-	s := p.project.Status
+func (p *projectEnvRequest) LoadExistingObjects(ctx context.Context) error {
+	s := p.projectEnv.Status
 	if s == nil {
 		return nil
 	}
@@ -139,14 +139,14 @@ func (p *projectRequest) LoadExistingObjects(ctx context.Context) error {
 	return nil
 }
 
-func (p *projectRequest) UpdateStatusWithChanges(
+func (p *projectEnvRequest) UpdateStatusWithChanges(
 	ctx context.Context,
 	changes map[ObjectKey]*Change,
 	generation int64,
 ) error {
-	projectCopy := p.project.DeepCopy()
+	projectCopy := p.projectEnv.DeepCopy()
 
-	status := &v1alpha2.ProjectStatus{
+	status := &v1alpha2.ProjectEnvironmentStatus{
 		ObservedGeneration: generation,
 	}
 
@@ -167,28 +167,34 @@ func (p *projectRequest) UpdateStatusWithChanges(
 			if !change.applied {
 				or.State = string(ResourceStateChangePending)
 			}
+			if change.state == ResourceStateCreated {
+				if key.Kind == "Namespace" && key.Name == p.requestObject.GetName() {
+					status.CreatedNamespace = true
+				}
+			}
 		}
 		if change.err != nil {
 			or.Message = change.err.Error()
 		}
 		status.OwnedResources = append(status.OwnedResources, or)
 	}
+	status.CreatedNamespace = status.CreatedNamespace || projectCopy.Status.CreatedNamespace
 	projectCopy.Status = status
 	if err := p.client.Status().Update(ctx, projectCopy); err != nil {
 		return err
 	}
 
 	p.observedGeneration = generation
-	p.project.Status = status
-	p.project.SetResourceVersion(p.project.GetResourceVersion())
+	p.projectEnv.Status = status
+	p.projectEnv.SetResourceVersion(p.projectEnv.GetResourceVersion())
 
 	return nil
 }
 
-func (p *projectRequest) UpdateStatusWithError(ctx context.Context, err error) error {
-	projectCopy := p.project.DeepCopy()
+func (p *projectEnvRequest) UpdateStatusWithError(ctx context.Context, err error) error {
+	projectCopy := p.projectEnv.DeepCopy()
 
-	status := &v1alpha2.ProjectStatus{
+	status := &v1alpha2.ProjectEnvironmentStatus{
 		ObservedGeneration: p.observedGeneration,
 		Errors:             []string{err.Error()},
 	}
@@ -202,22 +208,22 @@ func (p *projectRequest) UpdateStatusWithError(ctx context.Context, err error) e
 		return err
 	}
 
-	p.project.Status = status
-	p.project.SetResourceVersion(projectCopy.GetResourceVersion())
+	p.projectEnv.Status = status
+	p.projectEnv.SetResourceVersion(projectCopy.GetResourceVersion())
 
 	return nil
 }
 
-func (*projectRequest) Prepare() {}
+func (*projectEnvRequest) Prepare() {}
 
-func (*projectRequest) OwnedLabel() string {
+func (*projectEnvRequest) OwnedLabel() string {
 	return LabelOwnedByProject
 }
 
-func (p *projectRequest) GetBase() *RequestBase {
+func (p *projectEnvRequest) GetBase() *RequestBase {
 	return &p.RequestBase
 }
 
-func (p *projectRequest) GetRequest() ProjectRequest {
+func (p *projectEnvRequest) GetRequest() ProjectEnvironmentRequest {
 	return p
 }
