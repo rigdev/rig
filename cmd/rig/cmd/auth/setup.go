@@ -3,6 +3,7 @@ package auth
 import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -31,11 +32,24 @@ func initCmd(c Cmd) {
 	cmd.Prompter = c.Prompter
 }
 
+type CmdNoScope struct {
+	fx.In
+
+	Rig      rig.Client
+	Prompter common.Prompter
+	Cfg      *cmdconfig.Config
+}
+
+var cmdNoScope CmdNoScope
+
+func initCmdNoScope(c CmdNoScope) {
+	cmdNoScope = c
+}
+
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	authCmd := &cobra.Command{
-		Use:               "auth",
-		Short:             "Authenticate with users or service accounts",
-		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		Use:   "auth",
+		Short: "Authenticate with users or service accounts",
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
 			auth.OmitEnvironment: "",
@@ -50,7 +64,8 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
-		RunE: cli.CtxWrap(cmd.login),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		RunE:              cli.CtxWrap(cmd.login),
 	}
 	login.Flags().StringVarP(&authUserIdentifier, "user", "u", "", "useridentifier [username | email | phone number]")
 	login.Flags().StringVarP(&authPassword, "password", "p", "", "password of the user")
@@ -71,15 +86,17 @@ invalidated by the server.`,
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
-		RunE: cli.CtxWrap(cmd.activateServiceAccount),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoScope),
+		RunE:              cli.CtxWrap(cmdNoScope.activateServiceAccount),
 	}
 	authCmd.AddCommand(activateServiceAccount)
 
 	get := &cobra.Command{
-		Use:   "get",
-		Short: "Get user information associated with the current user",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.get),
+		Use:               "get",
+		Short:             "Get user information associated with the current user",
+		Args:              cobra.NoArgs,
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		RunE:              cli.CtxWrap(cmd.get),
 	}
 	authCmd.AddCommand(get)
 

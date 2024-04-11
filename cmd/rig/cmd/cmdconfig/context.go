@@ -46,14 +46,22 @@ func (cfg *Config) PromptForContext() (string, error) {
 	return cfg.Contexts[n].Name, nil
 }
 
-func (cfg *Config) CreateDefaultContext(interactive bool) error {
-	return cfg.CreateContext("local", "http://localhost:4747/", interactive)
+func (cfg *Config) CreateContextAndSave(name, host string, interactive bool) error {
+	if err := cfg.CreateContext(name, host, interactive); err != nil {
+		return err
+	}
+
+	return cfg.Save()
 }
 
 func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 	var err error
 
 	if name == "" {
+		if !interactive {
+			return fmt.Errorf("no context provided, use `--context` to specify")
+		}
+
 		var names []string
 		for _, c := range cfg.Contexts {
 			names = append(names, c.Name)
@@ -76,29 +84,36 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 	}
 
 	if host == "" {
+		if !interactive {
+			return fmt.Errorf("no host provided, use `--host` or `RIG_HOST` to specify the host of the Rig platform")
+		}
+
 		host, err = cfg.prompter.Input("Host (Platform URL):", common.ValidateURLOpt, common.InputDefaultOpt(host))
 		if err != nil {
 			return err
 		}
 	}
-
+	svc := &Service{
+		Name:   name,
+		Server: host,
+	}
+	auth := &Auth{
+		UserID: uuid.Nil.String(),
+	}
 	cfg.Contexts = append(cfg.Contexts, &Context{
 		Name:          name,
 		ServiceName:   name,
 		ProjectID:     "",
 		EnvironmentID: "",
+		service:       svc,
+		auth:          auth,
 	})
 
-	cfg.Services = append(cfg.Services, &Service{
-		Name:   name,
-		Server: host,
-	})
+	cfg.Services = append(cfg.Services, svc)
 
 	cfg.Users = append(cfg.Users, &User{
 		Name: name,
-		Auth: &Auth{
-			UserID: uuid.Nil.String(),
-		},
+		Auth: auth,
 	})
 
 	if interactive {
@@ -112,37 +127,6 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 			cfg.CurrentContextName = name
 		}
 	}
-
-	return cfg.Save()
-}
-
-func (cfg *Config) CreateContextNoPrompt(name, url string) error {
-	for _, c := range cfg.Contexts {
-		if c.Name == name {
-			return fmt.Errorf("context '%v' already exists", name)
-		}
-	}
-
-	cfg.Contexts = append(cfg.Contexts, &Context{
-		Name:          name,
-		ServiceName:   name,
-		ProjectID:     "",
-		EnvironmentID: "",
-	})
-
-	cfg.Services = append(cfg.Services, &Service{
-		Name:   name,
-		Server: url,
-	})
-
-	cfg.Users = append(cfg.Users, &User{
-		Name: name,
-		Auth: &Auth{
-			UserID: uuid.Nil.String(),
-		},
-	})
-
-	cfg.CurrentContextName = name
 
 	return nil
 }

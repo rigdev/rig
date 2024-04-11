@@ -80,7 +80,7 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 	}
 
 	s.scope.GetCfg().DeleteContext(cmdContext.Name)
-	if err := s.scope.GetCfg().CreateContext(cmdContext.Name, cmdContext.GetService().Server, interactive); err != nil {
+	if err := s.scope.GetCfg().CreateContextAndSave(cmdContext.Name, cmdContext.GetService().Server, interactive); err != nil {
 		return false, err
 	}
 

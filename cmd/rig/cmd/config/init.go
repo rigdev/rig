@@ -9,5 +9,6 @@ func (c *CmdNoScope) init(_ *cobra.Command, _ []string) error {
 	if c.PromptInfo.ContextCreation {
 		return nil
 	}
-	return c.Cfg.CreateContext(contextName, flags.Flags.Host, bool(c.Interactive))
+
+	return c.Cfg.CreateContextAndSave(contextName, flags.Flags.Host, bool(c.Interactive))
 }

@@ -105,6 +105,16 @@ func (cfg *Config) GetCurrentContext() *Context {
 	return nil
 }
 
+func (cfg *Config) GetContext(name string) *Context {
+	for _, c := range cfg.Contexts {
+		if c.Name == name {
+			return c
+		}
+	}
+
+	return nil
+}
+
 func (cfg *Config) GetCurrentAuth() *Auth {
 	c := cfg.GetCurrentContext()
 	if c == nil {
