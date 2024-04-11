@@ -98,7 +98,11 @@ func getContext(
 			} else {
 				promptInfo.ContextCreation = true
 				fmt.Println("No context available, please create one")
-				if err := cfg.CreateContext("", "", bool(interactive)); err != nil {
+				if err := cfg.CreateContextAndSave("", "", bool(interactive)); err != nil {
+					return nil, err
+				}
+
+				if err := cfg.Save(); err != nil {
 					return nil, err
 				}
 			}
@@ -117,29 +121,7 @@ func getContext(
 			return nil, fmt.Errorf("context `%v` not found", flags.Flags.Context)
 		}
 	}
-	if c == nil && !interactive {
-		// No context configured. See if there is both host and auth available.
-		if flags.Flags.Host == "" {
-			return nil, fmt.Errorf("no host configured, use `--host` or `RIG_HOST` to specify the host of the Rig platform`")
-		}
 
-		if _, ok := os.LookupEnv("RIG_CLIENT_ID"); !ok {
-			return nil, fmt.Errorf("missing RIG_CLIENT_ID environment variable")
-		}
-
-		if _, ok := os.LookupEnv("RIG_CLIENT_SECRET"); !ok {
-			return nil, fmt.Errorf("missing RIG_CLIENT_SECRET environment variable")
-		}
-
-		flags.Flags.BasicAuth = true
-
-		err := cfg.CreateContextNoPrompt("service-account", flags.Flags.Host)
-		if err != nil {
-			return nil, err
-		}
-
-		c = cfg.GetCurrentContext()
-	}
 	if c == nil {
 		// This shouldn't happen as we prompt for a config if one is missing above
 		return nil, fmt.Errorf("no current context in config, run `rig config init`")

@@ -53,6 +53,8 @@ func initCmd(c Cmd) {
 }
 
 func Run(s *cli.SetupContext) error {
+	flags.InitFlags()
+
 	rootCmd := &cobra.Command{
 		Use:           "rig",
 		Short:         "CLI tool for managing Rig",

@@ -18,14 +18,18 @@ type FlagsStruct struct {
 	Context        string
 }
 
-var Flags = FlagsStruct{
-	OutputType:     common.OutputTypePretty,
-	NonInteractive: false,
-	Environment:    os.Getenv("RIG_ENVIRONMENT"),
-	Project:        os.Getenv("RIG_PROJECT"),
-	BasicAuth:      false,
-	Host:           os.Getenv("RIG_HOST"),
-	Context:        "",
+var Flags FlagsStruct
+
+func InitFlags() {
+	Flags = FlagsStruct{
+		OutputType:     common.OutputTypePretty,
+		NonInteractive: false,
+		Environment:    os.Getenv("RIG_ENVIRONMENT"),
+		Project:        os.Getenv("RIG_PROJECT"),
+		BasicAuth:      false,
+		Host:           os.Getenv("RIG_HOST"),
+		Context:        "",
+	}
 }
 
 func GetEnvironment(scope scope.Scope) string {

@@ -6,10 +6,27 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) activateServiceAccount(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *CmdNoScope) activateServiceAccount(ctx context.Context, cmd *cobra.Command, _ []string) error {
+	contextName := flags.Flags.Context
+	if contextName == "" {
+		contextName = "service-account"
+	}
+
+	rCtx := c.Cfg.GetContext(contextName)
+	if rCtx == nil {
+		if err := c.Cfg.CreateContext(contextName, flags.Flags.Host, false); err != nil {
+			return err
+		}
+
+		c.Cfg.CurrentContextName = contextName
+
+		rCtx = c.Cfg.GetContext(contextName)
+	}
+
 	res, err := c.Rig.Authentication().Login(ctx, &connect.Request[authentication.LoginRequest]{
 		Msg: &authentication.LoginRequest{
 			Method: &authentication.LoginRequest_ClientCredentials{
@@ -24,10 +41,10 @@ func (c *Cmd) activateServiceAccount(ctx context.Context, cmd *cobra.Command, _ 
 		return err
 	}
 
-	c.Scope.GetCurrentContext().GetAuth().UserID = os.Getenv("RIG_CLIENT_ID")
-	c.Scope.GetCurrentContext().GetAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
-	c.Scope.GetCurrentContext().GetAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
-	if err := c.Scope.GetCfg().Save(); err != nil {
+	rCtx.GetAuth().UserID = os.Getenv("RIG_CLIENT_ID")
+	rCtx.GetAuth().AccessToken = res.Msg.GetToken().GetAccessToken()
+	rCtx.GetAuth().RefreshToken = res.Msg.GetToken().GetRefreshToken()
+	if err := c.Cfg.Save(); err != nil {
 		return err
 	}
 

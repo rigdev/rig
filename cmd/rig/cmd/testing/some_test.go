@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/dig"
 )
 
 var uuid = "7ee202cb-d4be-4bd1-bc8b-a6cd60576567"
@@ -120,7 +121,7 @@ func (s *testSuite) run(isInteractive bool, args []string) error {
 	})
 	c := cli.NewSetupContext(module, args)
 	c.AddTestCommand = true
-	return cmd.Run(c)
+	return dig.RootCause(cmd.Run(c))
 }
 
 func (s *testSuite) expectProjList(projs ...*project.Project) {
@@ -320,36 +321,59 @@ func (s *testSuite) Test_help_completion_dont_prompt() {
 	s.Require().NoError(s.run(true, []string{"completion", "bash"}))
 }
 
+var _emptyConfig = &cmdconfig.Config{
+	Contexts: []*cmdconfig.Context{},
+	Services: []*cmdconfig.Service{},
+	Users:    []*cmdconfig.User{},
+}
+
+func (s *testSuite) Test_auth_activateServiceAccount_no_config_no_host() {
+	s.T().Setenv("RIG_CLIENT_ID", "client_id")
+	s.T().Setenv("RIG_CLIENT_SECRET", "client_secret")
+
+	s.Require().EqualError(s.run(false, []string{"auth", "activate-service-account"}),
+		"no host provided, use `--host` or `RIG_HOST` to specify the host of the Rig platform")
+
+	s.cfgEqual(_emptyConfig)
+}
+
+func (s *testSuite) Test_auth_activateServiceAccount_no_config_invalid_host() {
+	s.T().Setenv("RIG_HOST", "//example.com")
+	s.T().Setenv("RIG_CLIENT_ID", "client_id")
+	s.T().Setenv("RIG_CLIENT_SECRET", "client_secret")
+
+	s.Require().EqualError(s.run(false, []string{"auth", "activate-service-account"}),
+		"invalid_argument: invalid host, must start with `https://` or `http://`")
+
+	s.cfgEqual(_emptyConfig)
+}
+
 func (s *testSuite) Test_auth_activateServiceAccount_no_config() {
+	s.T().Setenv("RIG_HOST", "http://example.com:4747")
 	s.T().Setenv("RIG_CLIENT_ID", "client_id")
 	s.T().Setenv("RIG_CLIENT_SECRET", "client_secret")
 	s.expectLoginCredentials("client_id", "client_secret", true)
 
-	// Prompting for context creation
-	s.prompt.input("context_name", 3)
-	s.prompt.input("http://example.com:4747", 2)
-	s.prompt.confirm(true) // select context
-
-	s.Require().NoError(s.run(true, []string{"auth", "activate-service-account"}))
+	s.Require().NoError(s.run(false, []string{"auth", "activate-service-account"}))
 
 	s.cfgEqual(&cmdconfig.Config{
 		Contexts: []*cmdconfig.Context{{
-			Name:        "context_name",
-			ServiceName: "context_name",
+			Name:        "service-account",
+			ServiceName: "service-account",
 		}},
 		Services: []*cmdconfig.Service{{
-			Name:   "context_name",
+			Name:   "service-account",
 			Server: "http://example.com:4747",
 		}},
 		Users: []*cmdconfig.User{{
-			Name: "context_name",
+			Name: "service-account",
 			Auth: &cmdconfig.Auth{
 				UserID:       "client_id",
 				AccessToken:  "access_token",
 				RefreshToken: "refresh_token",
 			},
 		}},
-		CurrentContextName: "context_name",
+		CurrentContextName: "service-account",
 	})
 }
 
