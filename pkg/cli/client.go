@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
-	"github.com/rigdev/rig/pkg/errors"
 )
 
 func getClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
@@ -27,20 +25,10 @@ func getClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
 	host := flags.Flags.Host
 	if host == "" {
 		if rCtx := cfg.GetCurrentContext(); rCtx != nil {
-			host = rCtx.GetService().Server
+			if svc := rCtx.GetService(); svc != nil {
+				host = svc.Server
+			}
 		}
-	}
-	url, err := url.Parse(host)
-	if err != nil {
-		return nil, errors.InvalidArgumentErrorf("invalid host, must be a fully qualified URL: %v", err)
-	}
-
-	if url.Host == "" {
-		return nil, errors.InvalidArgumentErrorf("invalid host, must be a fully qualified URL: missing hostname")
-	}
-
-	if url.Scheme != "http" && url.Scheme != "https" {
-		return nil, errors.InvalidArgumentErrorf("invalid host, must start with `https://` or `http://`")
 	}
 
 	options = append(options, rig.WithHost(host))

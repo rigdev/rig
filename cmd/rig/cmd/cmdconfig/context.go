@@ -2,8 +2,10 @@ package cmdconfig
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
 )
 
@@ -93,6 +95,20 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 			return err
 		}
 	}
+
+	url, err := url.Parse(host)
+	if err != nil {
+		return errors.InvalidArgumentErrorf("invalid host, must be a fully qualified URL: %v", err)
+	}
+
+	if url.Host == "" {
+		return errors.InvalidArgumentErrorf("invalid host, must be a fully qualified URL: missing hostname")
+	}
+
+	if url.Scheme != "http" && url.Scheme != "https" {
+		return errors.InvalidArgumentErrorf("invalid host, must start with `https://` or `http://`")
+	}
+
 	svc := &Service{
 		Name:   name,
 		Server: host,
