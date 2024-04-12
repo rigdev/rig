@@ -342,7 +342,7 @@ func (s *Service) login(ctx context.Context) error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("could not login: %q", err)
+		return err
 	}
 
 	uid, err := uuid.Parse(res.Msg.GetUserId())

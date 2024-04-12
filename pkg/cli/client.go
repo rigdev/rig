@@ -24,7 +24,6 @@ func GetClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
 	}
 
 	host := flags.Flags.Host
-	// fmt.Printf("getClientOptions %s, %+v\n", host, cfg.GetCurrentCotext())
 	if host == "" {
 		if rCtx := cfg.GetCurrentContext(); rCtx != nil {
 			if svc := rCtx.GetService(); svc != nil {
