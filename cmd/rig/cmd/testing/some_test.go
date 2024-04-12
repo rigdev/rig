@@ -5,12 +5,14 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
+	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/rig/cmd"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	authmock "github.com/rigdev/rig/gen/uncommittedmocks/github.com/rigdev/rig-go-api/api/v1/authentication/authenticationconnect"
+	capsulemock "github.com/rigdev/rig/gen/uncommittedmocks/github.com/rigdev/rig-go-api/api/v1/capsule/capsuleconnect"
 	environmentmock "github.com/rigdev/rig/gen/uncommittedmocks/github.com/rigdev/rig-go-api/api/v1/environment/environmentconnect"
 	projectmock "github.com/rigdev/rig/gen/uncommittedmocks/github.com/rigdev/rig-go-api/api/v1/project/projectconnect"
 	rigmock "github.com/rigdev/rig/gen/uncommittedmocks/github.com/rigdev/rig-go-sdk"
@@ -56,11 +58,12 @@ func (p promptMock) selectt(idx int, value string) {
 }
 
 type rigMock struct {
-	r    *rigmock.MockClient
-	auth *authmock.MockServiceClient
-	proj *projectmock.MockServiceClient
-	env  *environmentmock.MockServiceClient
-	t    *testing.T
+	r       *rigmock.MockClient
+	auth    *authmock.MockServiceClient
+	proj    *projectmock.MockServiceClient
+	env     *environmentmock.MockServiceClient
+	capsule *capsulemock.MockServiceClient
+	t       *testing.T
 }
 
 func newRigMock(t *testing.T) *rigMock {
@@ -92,6 +95,14 @@ func (r *rigMock) Env() *environmentmock.MockServiceClient {
 		r.r.EXPECT().Environment().Return(r.env)
 	}
 	return r.env
+}
+
+func (r *rigMock) Capsule() *capsulemock.MockServiceClient {
+	if r.capsule == nil {
+		r.capsule = capsulemock.NewMockServiceClient(r.t)
+		r.r.EXPECT().Capsule().Return(r.capsule)
+	}
+	return r.capsule
 }
 
 type testSuite struct {
@@ -420,4 +431,63 @@ func (s *testSuite) Test_config_init() {
 	s.prompt.input("http://example.com:4748", 2)
 	s.prompt.confirm(true)
 	s.Require().NoError(s.run(true, []string{"config", "init"}))
+}
+
+func (s *testSuite) Test_capsule_create_no_config() {
+	// Create context 1
+	s.prompt.input("context1", 3)
+	s.prompt.input("http://example.com:4747", 2)
+	s.prompt.confirm(true)
+
+	// Login
+	s.prompt.confirm(true)
+	s.prompt.input("mail@example.com", 1)
+	s.prompt.password("test123!")
+	s.expectLoginMail("mail@example.com", "test123!", true)
+
+	// Select project
+	s.prompt.confirm(true)
+	s.prompt.selectt(0, "project")
+	s.expectProjList(newProject("project"))
+
+	s.rig.Capsule().EXPECT().Create(mock.Anything, connect.NewRequest(&capsule.CreateRequest{
+		Name:      "my-capsule",
+		ProjectId: "project",
+	})).Return(connect.NewResponse(&capsule.CreateResponse{
+		CapsuleId: "my-capsule",
+	}), nil)
+
+	s.Require().NoError(s.run(true, []string{"capsule", "create", "my-capsule"}))
+}
+
+func (s *testSuite) Test_capsule_create_config_no_env() {
+	s.saveConfig(&cmdconfig.Config{
+		Contexts: []*cmdconfig.Context{{
+			Name:        "context",
+			ServiceName: "context",
+			ProjectID:   "project",
+		}},
+		Services: []*cmdconfig.Service{{
+			Server: "http://example.com:4747",
+			Name:   "context",
+		}},
+		Users: []*cmdconfig.User{{
+			Name: "context",
+			Auth: &cmdconfig.Auth{
+				UserID:       uuid,
+				AccessToken:  "access_token",
+				RefreshToken: "refresh_token",
+			},
+		}},
+		CurrentContextName: "context",
+	})
+	s.expectProjList(newProject("project"))
+	s.rig.Capsule().EXPECT().Create(mock.Anything, connect.NewRequest(&capsule.CreateRequest{
+		Name:      "my-capsule",
+		ProjectId: "project",
+	})).Return(connect.NewResponse(&capsule.CreateResponse{
+		CapsuleId: "my-capsule",
+	}), nil)
+
+	s.Require().NoError(s.run(true, []string{"capsule", "create", "my-capsule"}))
 }

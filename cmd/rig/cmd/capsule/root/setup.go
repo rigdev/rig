@@ -85,7 +85,8 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.create),
 		Annotations: map[string]string{
-			auth.OmitCapsule: "",
+			auth.OmitCapsule:     "",
+			auth.OmitEnvironment: "",
 		},
 		GroupID: capsule.BasicGroupID,
 	}

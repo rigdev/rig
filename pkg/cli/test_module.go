@@ -28,7 +28,7 @@ func MakeTestModule(i TestModuleInput) fx.Option {
 		fx.Provide(func() afero.Fs { return i.FS }),
 		fx.Provide(func() common.Prompter { return i.Prompter }),
 		fx.Provide(func(cfg *cmdconfig.Config) (rig.Client, error) {
-			_, err := getClientOptions(cfg)
+			_, err := GetClientOptions(cfg)
 			if err != nil {
 				return nil, err
 			}

@@ -16,3 +16,6 @@ packages:
   github.com/rigdev/rig-go-api/api/v1/environment/environmentconnect:
     interfaces:
       ServiceClient: {}
+  github.com/rigdev/rig-go-api/api/v1/capsule/capsuleconnect:
+    interfaces:
+      ServiceClient: {}

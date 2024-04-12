@@ -83,35 +83,42 @@ var Module = fx.Module(
 	fx.Provide(func() common.Prompter { return common.StandardPrompter{} }),
 )
 
-func getContext(
-	cfg *cmdconfig.Config,
-	promptInfo *PromptInformation,
-	interactive scope.Interactive,
-) (*cmdconfig.Context, error) {
-	if cfg.CurrentContextName == "" && flags.Flags.Context == "" {
-		if interactive {
-			if len(cfg.Contexts) > 0 {
+type ContextDependency interface{}
+
+type contextParams struct {
+	fx.In
+
+	Cfg          *cmdconfig.Config
+	PromptInfo   *PromptInformation
+	Interactive  scope.Interactive
+	Dependencies []ContextDependency `group:"context_dependencies"`
+}
+
+func getContext(p contextParams) (*cmdconfig.Context, error) {
+	if p.Cfg.CurrentContextName == "" && flags.Flags.Context == "" {
+		if p.Interactive {
+			if len(p.Cfg.Contexts) > 0 {
 				fmt.Println("No context selected, please select one")
-				if err := cfg.SelectContext(); err != nil {
+				if err := p.Cfg.SelectContext(); err != nil {
 					return nil, err
 				}
 			} else {
-				promptInfo.ContextCreation = true
+				p.PromptInfo.ContextCreation = true
 				fmt.Println("No context available, please create one")
-				if err := cfg.CreateContextAndSave("", "", bool(interactive)); err != nil {
+				if err := p.Cfg.CreateContextAndSave("", "", bool(p.Interactive)); err != nil {
 					return nil, err
 				}
 
-				if err := cfg.Save(); err != nil {
+				if err := p.Cfg.Save(); err != nil {
 					return nil, err
 				}
 			}
 		}
 	}
-	c := cfg.GetCurrentContext()
+	c := p.Cfg.GetCurrentContext()
 	if flags.Flags.Context != "" {
 		found := false
-		for _, context := range cfg.Contexts {
+		for _, context := range p.Cfg.Contexts {
 			if context.Name == flags.Flags.Context {
 				found = true
 				c = context
@@ -127,15 +134,15 @@ func getContext(
 		return nil, fmt.Errorf("no current context in config, run `rig config init`")
 	}
 
-	service, err := cfg.GetService(c.ServiceName)
+	service, err := p.Cfg.GetService(c.ServiceName)
 	if err != nil {
-		return nil, fmt.Errorf("missing service config for context `%v`", cfg.CurrentContextName)
+		return nil, fmt.Errorf("missing service config for context `%v`", p.Cfg.CurrentContextName)
 	}
 	c.SetService(service)
 
-	user, err := cfg.GetUser(c.Name)
+	user, err := p.Cfg.GetUser(c.Name)
 	if err != nil {
-		return nil, fmt.Errorf("missing user config for context `%v`", cfg.CurrentContextName)
+		return nil, fmt.Errorf("missing user config for context `%v`", p.Cfg.CurrentContextName)
 	}
 	c.SetAuth(user.Auth)
 

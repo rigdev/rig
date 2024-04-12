@@ -3,7 +3,6 @@ package auth
 import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -30,20 +29,6 @@ func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Scope = c.Scope
 	cmd.Prompter = c.Prompter
-}
-
-type CmdNoScope struct {
-	fx.In
-
-	Rig      rig.Client
-	Prompter common.Prompter
-	Cfg      *cmdconfig.Config
-}
-
-var cmdNoScope CmdNoScope
-
-func initCmdNoScope(c CmdNoScope) {
-	cmdNoScope = c
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
@@ -86,8 +71,13 @@ invalidated by the server.`,
 		Annotations: map[string]string{
 			auth.OmitUser: "",
 		},
-		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoScope),
-		RunE:              cli.CtxWrap(cmdNoScope.activateServiceAccount),
+		PersistentPreRunE: s.MakeInvokePreRunE(
+			fx.Annotate(
+				initServiceAccountContext,
+				fx.As(new(cli.ContextDependency)),
+				fx.ResultTags(`group:"context_dependencies"`),
+			), initCmd),
+		RunE: cli.CtxWrap(cmd.activateServiceAccount),
 	}
 	authCmd.AddCommand(activateServiceAccount)
 
