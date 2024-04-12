@@ -9,8 +9,8 @@ Package v1alpha2 contains API Schema definitions for the v1alpha2 API group
 
 ## Resource Types
 - [Capsule](#capsule)
-- [Project](#project)
-- [ProjectList](#projectlist)
+- [ProjectEnvironment](#projectenvironment)
+- [ProjectEnvironmentList](#projectenvironmentlist)
 
 
 
@@ -362,7 +362,7 @@ _Appears in:_
 
 
 _Appears in:_
-- [ProjectStatus](#projectstatus)
+- [ProjectEnvironmentStatus](#projectenvironmentstatus)
 
 | Field | Description |
 | --- | --- |
@@ -373,51 +373,52 @@ _Appears in:_
 
 
 
-### Project
+### ProjectEnvironment
 
 
 
 
 
 _Appears in:_
-- [ProjectList](#projectlist)
+- [ProjectEnvironmentList](#projectenvironmentlist)
 
 | Field | Description |
 | --- | --- |
 | `apiVersion` _string_ | `rig.dev/v1alpha2`
-| `kind` _string_ | `Project`
+| `kind` _string_ | `ProjectEnvironment`
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `spec` _[ProjectSpec](#projectspec)_ | Spec holds the specification of the Project. |
+| `spec` _[ProjectEnvironmentSpec](#projectenvironmentspec)_ | Spec holds the specification of the Project. |
 
 
-### ProjectList
+### ProjectEnvironmentList
 
 
 
-ProjectList contains a list of Projects
+ProjectEnvironmentList contains a list of Projects
 
 
 
 | Field | Description |
 | --- | --- |
 | `apiVersion` _string_ | `rig.dev/v1alpha2`
-| `kind` _string_ | `ProjectList`
+| `kind` _string_ | `ProjectEnvironmentList`
 | `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `items` _[Project](#project) array_ |  |
+| `items` _[ProjectEnvironment](#projectenvironment) array_ |  |
 
 
-### ProjectSpec
+### ProjectEnvironmentSpec
 
 
 
 
 
 _Appears in:_
-- [Project](#project)
+- [ProjectEnvironment](#projectenvironment)
 
 | Field | Description |
 | --- | --- |
-| `namespaces` _string array_ |  |
+| `project` _string_ |  |
+| `environment` _string_ |  |
 
 
 

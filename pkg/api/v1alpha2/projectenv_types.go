@@ -5,8 +5,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ProjectSpec struct {
-	Namespaces []string `json:"namespaces,omitempty"`
+type ProjectEnvironmentSpec struct {
+	Project     string `json:"project"`
+	Environment string `json:"environment"`
 }
 
 type OwnedGlobalResource struct {
@@ -16,39 +17,40 @@ type OwnedGlobalResource struct {
 	Message string `json:"message,omitempty"`
 }
 
-type ProjectStatus struct {
+type ProjectEnvironmentStatus struct {
 	ObservedGeneration int64                 `json:"observedGeneration,omitempty"`
 	OwnedResources     []OwnedGlobalResource `json:"ownedResources,omitempty"`
 	Errors             []string              `json:"errors,omitempty"`
+	CreatedNamespace   bool                  `json:"createdNamespace"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:storageversion
-//+kubebuilder:resource:path=projects,scope=Cluster
+//+kubebuilder:resource:path=projectenvironments,scope=Cluster
 
-type Project struct {
+type ProjectEnvironment struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// Spec holds the specification of the Project.
-	Spec ProjectSpec `json:"spec,omitempty"`
+	Spec ProjectEnvironmentSpec `json:"spec,omitempty"`
 
 	// Status holds the status of the Project
-	Status *ProjectStatus `json:"status,omitempty"`
+	Status *ProjectEnvironmentStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:storageversion
 
-// ProjectList contains a list of Projects
-type ProjectList struct {
+// ProjectEnvironmentList contains a list of Projects
+type ProjectEnvironmentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Project `json:"items"`
+	Items []ProjectEnvironment `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Project{}, &ProjectList{})
+	SchemeBuilder.Register(&ProjectEnvironment{}, &ProjectEnvironmentList{})
 }

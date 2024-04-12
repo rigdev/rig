@@ -81,7 +81,7 @@ rules:
   - rig.dev
   resources:
   - capsules
-  - projects
+  - projectenvironments
   verbs:
   - create
   - delete
@@ -100,7 +100,7 @@ rules:
   - rig.dev
   resources:
   - capsules/status
-  - projects/status
+  - projectenvironments/status
   verbs:
   - get
   - patch
