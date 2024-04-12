@@ -504,6 +504,15 @@ const sidebars = {
             sidebar_icon: "BiPencil",
           },
         },
+        {
+          type: "doc",
+          id: "operator-manual/plugins/examples",
+          label: "Examples",
+          className: "homepage-sidebar-item",
+          customProps: {
+            sidebar_icon: "BiBookmarks",
+          },
+        }
       ],
     },
     {
