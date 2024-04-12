@@ -1,0 +1,108 @@
+# Examples
+
+This is a bundle of example usages of the built-in Plugins. Look at [custom plugins](/operator-manual/plugins/thirdparty)
+for how to build your own resources and customizing your setup even further.
+
+## Services as `NodePort`
+
+Some load-balancers needs to address Services of type `NodePort`, e.g. the AWS Load Balancer.
+
+The `rigdev.object_template` plugin is an easy way to change this behavior:
+
+```yaml
+config:
+  pipeline:
+    steps:
+      - plugins:
+          - name: rigdev.object_template
+            config: |
+              kind: Service  # Match services
+              object: |
+                spec:
+                  # Set the type to NodePort.
+                  type: NodePort
+        # Include this if needed for the Rig Platform as well.
+        enableForPlatform: true
+```
+
+## Conditional injection through Annotations
+
+Adding Annotations to a Capsule is an easy way to customize for which Capsules a given operation should be performed.
+
+In this example, we're going to inject an `terminationGracePeriodSeconds: 100` if, and only if,
+the annotation `example.com/long-grace-period` is set to `true` on the Capsule.
+
+```yaml
+config:
+  pipeline:
+    steps:
+      - match:
+          annotations:
+            example.com/long-grace-period: "true"
+        plugins:
+          - name: rigdev.object_template
+            config: |
+              kind: Deployment
+              object: |
+                spec:
+                  template:
+                    spec:
+                      terminationGracePeriodSeconds: 100
+```
+
+## Secrets from Init Container
+
+Injecting secrets from an init container is a 3 step process:
+
+1. First, a volume to be shared between the containers must be created.
+2. Then, the init container must be added. This is where we can copy secrets into the newly created shared volume.
+3. Finally, a the volume is added to the main container and the secrets are available at startup.
+
+```yaml
+config:
+  pipeline:
+    steps:
+      - plugins:
+            # Set up the secret volume.
+          - name: rigdev.object_template
+            config: |
+              kind: Deployment
+              object: |
+                spec:
+                  template:
+                    spec:
+                      volumes:
+                      - name: secrets-volume
+                        emptyDir: { }
+
+            # Start and copy secrets into the volume.
+          - name: rigdev.init_container
+            config: |
+              # The container to inject.
+              container:
+                name: secrets-init
+                # Replace this with your docker image.
+                image: my-secrets-container:latest
+                command:
+                  - sh
+                args:
+                  - -c
+                  - "cp /my/secrets/file /secrets/"
+                volumeMounts:
+                  - mountPath: /secrets/
+                    name: secrets-volume
+
+            # Add the volume to the main container
+          - name: rigdev.object_template
+            config: |
+              kind: Deployment
+              object: |
+                spec:
+                  template:
+                    spec:
+                      containers:
+                      - name: {{ .capsule.metadata.name }}
+                        volumeMounts:
+                        - mountPath: /secrets/
+                          name: secrets-volume
+```

@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -122,6 +123,133 @@ object: |
 						},
 					},
 				},
+			},
+		},
+		{
+			name: "change container",
+			capsule: &v1alpha2.Capsule{
+				Spec: v1alpha2.CapsuleSpec{
+					Image: "image",
+				},
+			},
+			current: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: v1.PodTemplateSpec{
+						Spec: v1.PodSpec{
+							Containers: []v1.Container{
+								{
+									Name: "name",
+								},
+							},
+						},
+					},
+				},
+			},
+			config: `
+object: |
+  spec:
+    template:
+      spec:
+        containers:
+        - name: {{ .capsule.metadata.name }}
+          image: {{ .capsule.metadata.name }}:latest`,
+			expected: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: v1.PodTemplateSpec{
+						Spec: v1.PodSpec{
+							Containers: []v1.Container{
+								{
+									Name:  "name",
+									Image: "name:latest",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "conditional match",
+			capsule: &v1alpha2.Capsule{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"foo/bar": "true",
+					},
+				},
+				Spec: v1alpha2.CapsuleSpec{
+					Image: "image",
+				},
+			},
+			current: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{},
+			},
+			config: `
+object: |
+{{ with .capsule.metadata.annotations }}
+{{ if eq (index . "foo/bar") "true" }}
+  spec:
+    replicas: 1
+{{ end }}
+{{ end }}`,
+
+			expected: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Replicas: ptr.New(int32(1)),
+				},
+			},
+		},
+		{
+			name: "conditional no match",
+			capsule: &v1alpha2.Capsule{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"foo/bar": "false",
+					},
+				},
+				Spec: v1alpha2.CapsuleSpec{
+					Image: "image",
+				},
+			},
+			current: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{},
+			},
+			config: `
+object: |
+{{ with .capsule.metadata.annotations }}
+{{ if eq (index . "foo/bar") "true" }}
+  spec:
+    replicas: 1
+{{ end }}
+{{ end }}`,
+
+			expected: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{},
+			},
+		},
+		{
+			name: "conditional missing",
+			capsule: &v1alpha2.Capsule{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
+				Spec: v1alpha2.CapsuleSpec{
+					Image: "image",
+				},
+			},
+			current: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{},
+			},
+			config: `
+object: |
+{{ with .capsule.metadata.annotations }}
+{{ if eq (index . "foo/bar") "true" }}
+  spec:
+    replicas: 1
+{{ end }}
+{{ end }}`,
+
+			expected: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{},
 			},
 		},
 	}

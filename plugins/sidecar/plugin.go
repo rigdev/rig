@@ -3,6 +3,7 @@ package sidecar
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
@@ -35,6 +36,10 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 	config, err := plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
 	if err != nil {
 		return err
+	}
+
+	if config.Container == nil {
+		return fmt.Errorf("invalid configuration, no `container` was specified")
 	}
 
 	deployment := &appsv1.Deployment{}

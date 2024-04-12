@@ -3,6 +3,7 @@ package initcontainer
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/controller/pipeline"
@@ -36,6 +37,11 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 	if err != nil {
 		return err
 	}
+
+	if config.Container == nil {
+		return fmt.Errorf("invalid configuration, no `container` was specified")
+	}
+
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
 		return nil

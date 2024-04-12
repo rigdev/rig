@@ -65,17 +65,19 @@ type Matcher struct {
 	enableForPlatform bool
 }
 
-func NewMatcher(namespaces, capsules []string, selector metav1.LabelSelector, enableForPlatform bool) (Matcher, error) {
-	s, err := metav1.LabelSelectorAsSelector(&selector)
+func NewMatcher(match v1alpha1.CapsuleMatch) (Matcher, error) {
+	s, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{
+		MatchLabels: match.Annotations,
+	})
 	if err != nil {
 		return Matcher{}, err
 	}
 
-	nsGlobs, err := makeGlobs(namespaces)
+	nsGlobs, err := makeGlobs(match.Namespaces)
 	if err != nil {
 		return Matcher{}, err
 	}
-	cGlobs, err := makeGlobs(capsules)
+	cGlobs, err := makeGlobs(match.Names)
 	if err != nil {
 		return Matcher{}, err
 	}
@@ -83,12 +85,12 @@ func NewMatcher(namespaces, capsules []string, selector metav1.LabelSelector, en
 		namespaces:        nsGlobs,
 		capsules:          cGlobs,
 		selector:          s,
-		enableForPlatform: enableForPlatform,
+		enableForPlatform: match.EnableForPlatform,
 	}, nil
 }
 
-func (m Matcher) Match(namespace, capsule string, capsuleLabels map[string]string) bool {
-	if !m.selector.Matches(labels.Set(capsuleLabels)) {
+func (m Matcher) Match(namespace, capsule string, capsuleAnnotations map[string]string) bool {
+	if !m.selector.Matches(labels.Set(capsuleAnnotations)) {
 		return false
 	}
 	if !match(m.namespaces, namespace) {
