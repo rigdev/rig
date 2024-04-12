@@ -11,7 +11,7 @@ Rig supplies a list of builtin plugins you can see [here](/operator-manual/plugi
 
 ## Configuring Plugins
 Plugin executions are defined as a fixed sequence of plugins and their configuration to be executed. They are grouped in to steps (also a fixed sequence). Each step can define Glob patterns which capsules and/or namespaces should match for the step to be executed. As an example:
-```
+```yaml
 pipeline:
   steps:
     - plugins:
@@ -19,18 +19,24 @@ pipeline:
           config: ...
         - name: rigdev.datadog
           config: ...
-    - namespaces: some-namespace
+    - match:
+        namespaces:
+          - some-namespace
       plugins:
         - name: rigdev.placement
           config: ...
-    - namespaces: some-prefix*
+    - match:
+        namespaces:
+          - some-prefix*
       plugins:
         - name: rigdev.placement
           config: ...
-    - namespaces: some-prefix*
-      capsules:
-        - my-capsule1
-        - my-capsule2
+    - match:
+        namespaces:
+          - some-prefix*
+        names:
+          - my-capsule1
+          - my-capsule2
       plugins:
         - name: rigdev.init_container
           config: ...
@@ -39,7 +45,7 @@ In this case, in instance of the rigdev.sidecar and rigdev.datadog plugin is exe
 
 Then an instance of the rigdev.placement plugin is executed for all capsules specifically in the some-namespace namespace.
 
-The next step also contains an instance of the rigdev.placement (possibly with a different configuration), but this is executed for all capsules in a namespace prefixed by `some-prefix`. 
+The next step also contains an instance of the rigdev.placement (possibly with a different configuration), but this is executed for all capsules in a namespace prefixed by `some-prefix`.
 
 The last step contains a rigdev.init_container plugin which is only executed for capsules named my-capsule1 or my-capsule2 in namespaces prefixed by `some-prefix`.
 
@@ -48,7 +54,7 @@ The `config` of a plugin is a single string passed to the plugin which it will i
 ## Tooling
 
 The `rig-ops` CLI contains tooling for working with plugins. To install it, see [here](/operator-manual/cli). The plugin tooling includes
-- `rig-ops plugins list`: Shows a list of available plugins in the operator. 
+- `rig-ops plugins list`: Shows a list of available plugins in the operator.
 - `rig-ops plugins list-steps`: Shows the steps the operator is configured to run.
 - `rig-ops plugins check`: Shows which steps are run for which namespace/capsules. This cam be nice if you have globbing logic in your pipeline config.
 - `rig-ops plugins dry-run`: Executes a dry-run of the plugin-pipeline on a given capsule, showing the output Kubernetes resources. It can use the operator configuration as is or you can supply modifications to the pipeline through flags to the command. This is nice for quick iteration on plugin configuration.

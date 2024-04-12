@@ -252,7 +252,7 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 		ps = append(ps, p)
 	}
 
-	matcher, err := NewMatcher(step.Namespaces, step.Capsules, step.Selector, step.EnableForPlatform)
+	matcher, err := NewMatcher(MatchFromStep(step))
 	if err != nil {
 		return nil, err
 	}
@@ -263,4 +263,12 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 		plugins: ps,
 		matcher: matcher,
 	}, nil
+}
+
+func MatchFromStep(step v1alpha1.Step) v1alpha1.CapsuleMatch {
+	match := step.Match
+	match.Namespaces = append(match.Namespaces, step.Namespaces...)
+	match.Names = append(match.Names, step.Capsules...)
+	match.EnableForPlatform = match.EnableForPlatform || step.EnableForPlatform
+	return match
 }
