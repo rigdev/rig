@@ -31,6 +31,23 @@ _Appears in:_
 | `sso` _[SSO](#sso)_ | SSO specifies single sign on configuration. |
 
 
+### CapsuleMatch
+
+
+
+
+
+_Appears in:_
+- [Step](#step)
+
+| Field | Description |
+| --- | --- |
+| `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. |
+| `names` _string array_ | If set, only execute the plugin on the capsules specified. |
+| `annotations` _object (keys:string, values:string)_ | If set, only execute the plugin on the capsules matching the annotations. |
+| `enableForPlatform` _boolean_ | If set, will enable the step for the Rig platform which is a Capsule as well |
+
+
 ### Client
 
 
@@ -538,11 +555,11 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `tag` _string_ | Optional tag which is readable by plugins when executed |
-| `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. |
-| `capsules` _string array_ | If set, only execute the plugin on the capsules specified. |
-| `enableForPlatform` _boolean_ | If set, will enable the step for the Rig platform which is a Capsule as well |
-| `selector` _[LabelSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#labelselector-v1-meta)_ | If set, only execute the plugin on the matching capsules. |
+| `match` _[CapsuleMatch](#capsulematch)_ | Match requirements for running the Step on a given Capsule. |
 | `plugins` _[Plugin](#plugin) array_ | Plugins to run as part of this step. |
+| `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. Deprecated, use Match.Namespaces. |
+| `capsules` _string array_ | If set, only execute the plugin on the capsules specified. Deprecated, use Match.CapsuleNames. |
+| `enableForPlatform` _boolean_ | If set, will enable the step for the Rig platform which is a Capsule as well Deprecated, use Match.EnableForPlatform. |
 
 
 ### VerticalPodAutoscaler

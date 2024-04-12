@@ -29,26 +29,25 @@ config:
 
 Adding Annotations to a Capsule is an easy way to customize for which Capsules a given operation should be performed.
 
-In this example, we're going to inject an `terminationGracePeriodSeconds: 30` if, and only if,
+In this example, we're going to inject an `terminationGracePeriodSeconds: 100` if, and only if,
 the annotation `example.com/long-grace-period` is set to `true` on the Capsule.
 
 ```yaml
 config:
   pipeline:
     steps:
-      - plugins:
+      - match:
+          annotations:
+            example.com/long-grace-period: "true"
+        plugins:
           - name: rigdev.object_template
             config: |
               kind: Deployment
               object: |
-                {{ with .capsule.metadata.annotations }}
-                {{ if eq (index . "example.com/long-grace-period") "true" }}
                 spec:
                   template:
                     spec:
                       terminationGracePeriodSeconds: 100
-                {{ end }}
-                {{ end }}
 ```
 
 ## Secrets from Init Container
