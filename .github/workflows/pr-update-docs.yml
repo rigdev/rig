@@ -31,7 +31,7 @@ jobs:
             ghcr.io/rigdev/docs:${{ github.sha }}
 
       - name: Setup rig
-        uses: rigdev/setup-rig@v1
+        uses: rigdev/setup-rig@main
         with:
           host: ${{ vars.RIG_HOST }}
           client-id: ${{ vars.RIG_CLIENT_ID }}
