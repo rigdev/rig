@@ -136,7 +136,7 @@ tasks:
 
   docs-gen:
     desc: "📚 Generate api references"
-    deps: [tools:crd-ref-docs, proto, docs-gen-plugins]
+    deps: [tools:crd-ref-docs, proto, docs-gen-mods]
     sources:
       - docs/crd-ref-docs/**/*
       - pkg/api/config/v1alpha1/**/*
@@ -166,38 +166,38 @@ tasks:
           --source-path ./pkg/api/v1alpha2 \
           --output-path ./docs/docs/api/v1alpha2.md
 
-  docs-gen-plugins:
-    desc: "📚 Generate plugin docs"
+  docs-gen-mods:
+    desc: "📚 Generate mod docs"
     sources:
-      - "plugins/**/*"
+      - "mods/**/*"
     vars:
-      PLUGINS:
-        sh: find ./plugins/ -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
+      MODS:
+        sh: find ./mods/ -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
     cmds:
-      - for: { var: PLUGINS }
-        task: docs-gen-plugin
+      - for: { var: MODS }
+        task: docs-gen-mod
         vars:
-          PLUGIN: "{{ .ITEM }}"
+          MOD: "{{ .ITEM }}"
 
-  docs-gen-plugin:
+  docs-gen-mod:
     run: when_changed
     deps: [tools:crd-ref-docs, proto]
     sources:
       - docs/crd-ref-docs/**/*
-      - plugins/{{ .PLUGIN }}/*
+      - mods/{{ .MOD }}/*
     generates:
-      - docs/docs/plugins/builtin/{{ .PLUGIN }}.md
+      - docs/docs/plugins/builtin/{{ .MOD }}.md
     cmds:
       - |
         ./tools/bin/crd-ref-docs --renderer markdown \
           --config ./docs/plugin-ref-docs/config.yaml \
           --templates-dir ./docs/plugin-ref-docs/templates \
-          --source-path ./plugins/{{ .PLUGIN }} \
-          --output-path ./plugins/{{ .PLUGIN }}/temp.md
-      - python3 ./tools/readme_truncate.py plugins/{{ .PLUGIN }}/README.md
-      - cat ./plugins/{{ .PLUGIN }}/temp.md >> ./plugins/{{ .PLUGIN }}/README.md
-      - rm ./plugins/{{ .PLUGIN }}/temp.md
-      - cp plugins/{{ .PLUGIN }}/README.md docs/docs/operator-manual/plugins/builtin/{{ .PLUGIN }}.mdx
+          --source-path ./mods/{{ .MOD }} \
+          --output-path ./mods/{{ .MOD }}/temp.md
+      - python3 ./tools/readme_truncate.py mods/{{ .MOD }}/README.md
+      - cat ./mods/{{ .MOD }}/temp.md >> ./mods/{{ .MOD }}/README.md
+      - rm ./mods/{{ .MOD }}/temp.md
+      - cp mods/{{ .MOD }}/README.md docs/docs/operator-manual/plugins/builtin/{{ .MOD }}.mdx
 
   lint:
     desc: "🚨 Run linting"
