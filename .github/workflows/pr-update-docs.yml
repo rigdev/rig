@@ -36,7 +36,6 @@ jobs:
           host: ${{ vars.RIG_HOST }}
           client-id: ${{ vars.RIG_CLIENT_ID }}
           client-secret: ${{ secrets.RIG_CLIENT_SECRET }}
-          version: 1.8.0-rc.2
 
       - name: Create Environment
         run: |
