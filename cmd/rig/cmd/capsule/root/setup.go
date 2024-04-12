@@ -123,7 +123,10 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1)),
-		RunE:    cli.CtxWrap(cmd.get),
+		RunE: cli.CtxWrap(cmd.get),
+		Annotations: map[string]string{
+			auth.OmitEnvironment: "",
+		},
 		GroupID: capsule.BasicGroupID,
 	}
 	capsuleCmd.AddCommand(capsuleGet)
