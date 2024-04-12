@@ -10,9 +10,10 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/pkg/cli/scope"
 )
 
-func getClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
+func GetClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
 	options := []rig.Option{
 		rig.WithInterceptors(&userAgentInterceptor{}),
 		rig.WithSessionManager(&configSessionManager{cfg: cfg}),
@@ -35,8 +36,8 @@ func getClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
 	return options, nil
 }
 
-func newRigClient(cfg *cmdconfig.Config) (rig.Client, error) {
-	opts, err := getClientOptions(cfg)
+func newRigClient(scope scope.Scope) (rig.Client, error) {
+	opts, err := GetClientOptions(scope.GetCfg())
 	if err != nil {
 		return nil, err
 	}
