@@ -5,7 +5,7 @@ for how to build your own resources and customizing your setup even further.
 
 ## Services as `NodePort`
 
-Some load-balancers needs to address Services as LoadBalancers, e.g. the AWS Load Balancer.
+Some load-balancers needs to address Services of type `NodePort`, e.g. the AWS Load Balancer.
 
 The `rigdev.object_template` plugin is an easy way to change this behavior:
 
@@ -52,7 +52,7 @@ config:
 
 ## Secrets from Init Container
 
-Injecting secrets from a init container is a 3 step process:
+Injecting secrets from an init container is a 3 step process:
 
 1. First, a volume to be shared between the containers must be created.
 2. Then, the init container must be added. This is where we can copy secrets into the newly created shared volume.
@@ -78,21 +78,19 @@ config:
             # Start and copy secrets into the volume.
           - name: rigdev.init_container
             config: |
-              kind: Service  # Match services
-              config: |
-                # The container to inject.
-                container:
-                  name: secrets-init
-                  # Replace this with your docker image.
-                  image: my-secrets-container:latest
-                  command:
-                    - sh
-                  args:
-                    - -c
-                    - "cp /usr/local/bin/secrets-init /secrets/"
-                  volumeMounts:
-                    - mountPath: /secrets/
-                      name: secrets-volume
+              # The container to inject.
+              container:
+                name: secrets-init
+                # Replace this with your docker image.
+                image: my-secrets-container:latest
+                command:
+                  - sh
+                args:
+                  - -c
+                  - "cp /my/secrets/file /secrets/"
+                volumeMounts:
+                  - mountPath: /secrets/
+                    name: secrets-volume
 
             # Add the volume to the main container
           - name: rigdev.object_template
