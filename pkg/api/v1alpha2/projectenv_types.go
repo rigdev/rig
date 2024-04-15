@@ -51,6 +51,6 @@ type ProjectEnvironmentList struct {
 	Items []ProjectEnvironment `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&ProjectEnvironment{}, &ProjectEnvironmentList{})
-}
+// func init() {
+// 	SchemeBuilder.Register(&ProjectEnvironment{}, &ProjectEnvironmentList{})
+// }
