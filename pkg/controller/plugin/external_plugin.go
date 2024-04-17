@@ -158,7 +158,6 @@ func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, tag string)
 
 func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest) error {
 	reqServer := &requestServer{req: req}
-
 	capsuleBytes, err := obj.Encode(req.Capsule(), req.Scheme())
 	if err != nil {
 		return err
@@ -295,4 +294,40 @@ func (s requestServer) MarkUsedObject(
 		return nil, err
 	}
 	return &apiplugin.MarkUsedObjectResponse{}, nil
+}
+
+func (s requestServer) ListObjects(
+	_ context.Context,
+	req *apiplugin.ListObjectsRequest,
+) (*apiplugin.ListObjectsResponse, error) {
+	gvk := toGVK(req.GetGvk())
+	ro, err := s.req.Scheme().New(gvk)
+	if err != nil {
+		return nil, err
+	}
+
+	co := ro.(client.Object)
+	var objects []client.Object
+	if req.GetCurrent() {
+		objects, err = s.req.ListExisting(co)
+	} else {
+		objects, err = s.req.ListNew(co)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var bytes [][]byte
+	for _, o := range objects {
+		bs, err := obj.Encode(o, s.req.Scheme())
+		if err != nil {
+			return nil, err
+		}
+		bytes = append(bytes, bs)
+
+	}
+
+	return &apiplugin.ListObjectsResponse{
+		Objects: bytes,
+	}, nil
 }

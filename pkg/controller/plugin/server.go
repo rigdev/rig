@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/hashicorp/go-hclog"
@@ -127,12 +128,50 @@ func (c *capsuleRequestClient) get(o client.Object, current bool) error {
 	return obj.DecodeInto(res.GetObject(), o, c.scheme)
 }
 
+func (c *capsuleRequestClient) list(o client.Object, current bool) ([]client.Object, error) {
+	gvk, err := c.getGVK(o)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.client.ListObjects(c.ctx, &apiplugin.ListObjectsRequest{
+		Gvk:     fromGVK(gvk),
+		Current: current,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	oo, ok := o.DeepCopyObject().(client.Object)
+	if !ok {
+		return nil, fmt.Errorf("object had no client.Object type: %T", o)
+	}
+	var res []client.Object
+	for _, bytes := range response.GetObjects() {
+		obj, err := obj.DecodeIntoT(bytes, oo, c.scheme)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, obj)
+	}
+
+	return res, nil
+}
+
 func (c *capsuleRequestClient) GetExisting(obj client.Object) error {
 	return c.get(obj, true)
 }
 
 func (c *capsuleRequestClient) GetNew(obj client.Object) error {
 	return c.get(obj, false)
+}
+
+func (c *capsuleRequestClient) ListExisting(obj client.Object) ([]client.Object, error) {
+	return c.list(obj, true)
+}
+
+func (c *capsuleRequestClient) ListNew(obj client.Object) ([]client.Object, error) {
+	return c.list(obj, false)
 }
 
 func (c *capsuleRequestClient) Set(co client.Object) error {

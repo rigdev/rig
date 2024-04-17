@@ -38,6 +38,41 @@ type Request interface {
 	// as calls to Delete (or Set) will only be applied to the cluster at the very end of the reconcilliation.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
 	Delete(obj client.Object) error
+	// ListExisting returns a list with a copy of the objects of the corresponding type owned by the capsule and currently present in the cluster.
+	// If you want a slice of typed objects, use the generic free-standing ListExisting function.
+	ListExisting(obj client.Object) ([]client.Object, error)
+	// ListNew returns a list with a copy of the objects of the corresponding type owned by the capsule and about to be applied.
+	// If you want a slice of typed objects, use the generic free-standing ListNew function.
+	ListNew(obj client.Object) ([]client.Object, error)
+}
+
+func ListExisting[T client.Object](r Request, obj T) ([]T, error) {
+	objects, err := r.ListExisting(obj)
+	if err != nil {
+		return nil, err
+	}
+	return listConvert[T](objects)
+}
+
+func ListNew[T client.Object](r Request, obj T) ([]T, error) {
+	objects, err := r.ListNew(obj)
+	if err != nil {
+		return nil, err
+	}
+	return listConvert[T](objects)
+}
+
+func listConvert[T client.Object](objects []client.Object) ([]T, error) {
+	var res []T
+	for _, obj := range objects {
+		o, ok := obj.(T)
+		if !ok {
+			return nil, fmt.Errorf("object had wrong type %T", obj)
+		}
+		res = append(res, o)
+	}
+
+	return res, nil
 }
 
 type RequestDeps struct {
@@ -174,6 +209,72 @@ func (r *RequestBase) Delete(obj client.Object) error {
 	}
 
 	return nil
+}
+
+func (r *RequestBase) list(obj client.Object, objects map[ObjectKey]client.Object) ([]client.Object, error) {
+	gvk, err := getGVK(obj, r.scheme)
+	if err != nil {
+		r.logger.Error(err, "invalid object list type")
+		return nil, err
+	}
+
+	var res []client.Object
+	for key, obj := range objects {
+		if key.GroupVersionKind == gvk {
+			o, ok := obj.(client.Object)
+			if !ok {
+				return nil, fmt.Errorf("invalid object type: %T", obj)
+			}
+			res = append(res, o)
+		}
+	}
+
+	return res, nil
+}
+
+func (r *RequestBase) ListExisting(obj client.Object) ([]client.Object, error) {
+	gvk, err := getGVK(obj, r.scheme)
+	if err != nil {
+		r.logger.Error(err, "invalid object list type")
+		return nil, err
+	}
+
+	var res []client.Object
+
+	for _, key := range sortedKeys(maps.Keys(r.existingObjects)) {
+		if key.GroupVersionKind != gvk {
+			continue
+		}
+		o, ok := r.existingObjects[key].DeepCopyObject().(client.Object)
+		if !ok {
+			return nil, fmt.Errorf("invalid object type: %T", obj)
+		}
+		res = append(res, o)
+	}
+
+	return res, nil
+}
+
+func (r *RequestBase) ListNew(obj client.Object) ([]client.Object, error) {
+	gvk, err := getGVK(obj, r.scheme)
+	if err != nil {
+		r.logger.Error(err, "invalid object list type")
+		return nil, err
+	}
+
+	var res []client.Object
+	for _, key := range sortedKeys(maps.Keys(r.newObjects)) {
+		if key.GroupVersionKind != gvk {
+			continue
+		}
+		o, ok := r.newObjects[key].New.DeepCopyObject().(client.Object)
+		if !ok {
+			return nil, fmt.Errorf("invalid object type: %T", obj)
+		}
+		res = append(res, o)
+	}
+
+	return res, nil
 }
 
 func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error) {
@@ -401,7 +502,7 @@ func (r *RequestBase) PrepareRequest() *Result {
 	return result
 }
 
-func getGVK(obj client.Object, scheme *runtime.Scheme) (schema.GroupVersionKind, error) {
+func getGVK(obj runtime.Object, scheme *runtime.Scheme) (schema.GroupVersionKind, error) {
 	gvks, _, err := scheme.ObjectKinds(obj)
 	if err != nil {
 		return schema.GroupVersionKind{}, err
