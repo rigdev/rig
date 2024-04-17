@@ -12,6 +12,7 @@ service RequestService {
   rpc SetObject(SetObjectRequest) returns (SetObjectResponse) {}
   rpc DeleteObject(DeleteObjectRequest) returns (DeleteObjectResponse) {}
   rpc MarkUsedObject(MarkUsedObjectRequest) returns (MarkUsedObjectResponse) {}
+  rpc ListObjects(ListObjectsRequest) returns (ListObjectsResponse) {}
 }
 
 message InitializeRequest {
@@ -63,3 +64,12 @@ message MarkUsedObjectRequest {
 }
 
 message MarkUsedObjectResponse {}
+
+message ListObjectsRequest {
+  GVK gvk = 1;
+  bool current = 2;
+}
+
+message ListObjectsResponse {
+  repeated bytes objects = 1;
+}
