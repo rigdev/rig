@@ -211,27 +211,6 @@ func (r *RequestBase) Delete(obj client.Object) error {
 	return nil
 }
 
-func (r *RequestBase) list(obj client.Object, objects map[ObjectKey]client.Object) ([]client.Object, error) {
-	gvk, err := getGVK(obj, r.scheme)
-	if err != nil {
-		r.logger.Error(err, "invalid object list type")
-		return nil, err
-	}
-
-	var res []client.Object
-	for key, obj := range objects {
-		if key.GroupVersionKind == gvk {
-			o, ok := obj.(client.Object)
-			if !ok {
-				return nil, fmt.Errorf("invalid object type: %T", obj)
-			}
-			res = append(res, o)
-		}
-	}
-
-	return res, nil
-}
-
 func (r *RequestBase) ListExisting(obj client.Object) ([]client.Object, error) {
 	gvk, err := getGVK(obj, r.scheme)
 	if err != nil {
