@@ -21,6 +21,18 @@ service Service {
   rpc Assign(AssignRequest) returns (AssignResponse) {}
   // Revoke a role.
   rpc Revoke(RevokeRequest) returns (RevokeResponse) {}
+  // List roles for an entity.
+  rpc ListForEntity(ListForEntityRequest) returns (ListForEntityResponse) {}
+}
+
+message ListForEntityRequest {
+  // The entity to list roles for.
+  api.v1.role.EntityID entity_id = 1;
+}
+
+message ListForEntityResponse {
+  // The roles assigned to the entity.
+  repeated api.v1.role.Role roles = 1;
 }
 
 // Request to create a role.
