@@ -197,13 +197,14 @@ var ImageActionMap = map[string]string{
 }
 
 var RoleActionMap = map[string]string{
-	roleconnect.ServiceCreateProcedure: ActionRoleEdit,
-	roleconnect.ServiceDeleteProcedure: ActionRoleEdit,
-	roleconnect.ServiceUpdateProcedure: ActionRoleEdit,
-	roleconnect.ServiceRevokeProcedure: ActionRoleRevoke,
-	roleconnect.ServiceAssignProcedure: ActionRoleAssign,
-	roleconnect.ServiceGetProcedure:    ActionRoleView,
-	roleconnect.ServiceListProcedure:   ActionRoleView,
+	roleconnect.ServiceCreateProcedure:        ActionRoleEdit,
+	roleconnect.ServiceDeleteProcedure:        ActionRoleEdit,
+	roleconnect.ServiceUpdateProcedure:        ActionRoleEdit,
+	roleconnect.ServiceRevokeProcedure:        ActionRoleRevoke,
+	roleconnect.ServiceAssignProcedure:        ActionRoleAssign,
+	roleconnect.ServiceGetProcedure:           ActionRoleView,
+	roleconnect.ServiceListProcedure:          ActionRoleView,
+	roleconnect.ServiceListForEntityProcedure: ActionRoleView,
 }
 
 var SettingsActionMap = map[string]string{
