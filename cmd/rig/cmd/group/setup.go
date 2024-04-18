@@ -6,14 +6,15 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/api/v1/service_account"
 	"github.com/rigdev/rig-go-api/api/v1/user"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -28,18 +29,23 @@ type Cmd struct {
 
 	Rig      rig.Client
 	Prompter common.Prompter
+	Scope    scope.Scope
 }
 
 var cmd Cmd
 
 func initCmd(c Cmd) {
-	cmd = c
+	cmd.Rig = c.Rig
+	cmd.Scope = c.Scope
+	cmd.Prompter = c.Prompter
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	group := &cobra.Command{
-		Use:               "group",
-		Short:             "Manage groups",
+		Use:   "group",
+		Short: "Manage role groups",
+		Long: "Groups are a way to organize users and service accounts into groups with certain roles, where " +
+			"the roles assigned to a group are inherited by all members of the group.",
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		Annotations: map[string]string{
 			auth.OmitProject:     "",
@@ -52,7 +58,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Use:   "create [group-id]",
 		Short: "Create a new group",
 		RunE:  cli.CtxWrap(cmd.create),
-		Args:  cobra.NoArgs,
+		Args:  cobra.MaximumNArgs(1),
 	}
 	group.AddCommand(create)
 
@@ -84,7 +90,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Use:     "list",
 		Short:   "list groups",
 		Aliases: []string{"ls"},
-		RunE:    cli.CtxWrap(cmd.get),
+		RunE:    cli.CtxWrap(cmd.list),
 	}
 	list.Flags().IntVarP(&limit, "limit", "l", 10, "limit the number of groups to return")
 	list.Flags().IntVar(&offset, "offset", 0, "offset the number of groups to return")
@@ -158,29 +164,7 @@ func (c *Cmd) completions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	completions := []string{}
-	resp, err := c.Rig.Group().List(ctx, &connect.Request[group.ListRequest]{
-		Msg: &group.ListRequest{},
-	})
-	if err != nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	for _, g := range resp.Msg.GetGroups() {
-		if strings.HasPrefix(g.GetGroupId(), toComplete) {
-			completions = append(completions, formatGroup(g))
-		}
-	}
-
-	if len(completions) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return completions, cobra.ShellCompDirectiveNoFileComp
-}
-
-func formatGroup(g *group.Group) string {
-	return fmt.Sprintf("%s\t (#Members: %v)", g.GetGroupId(), g.GetNumMembers())
+	return completions.Groups(ctx, c.Rig, toComplete)
 }
 
 func (c *Cmd) memberCompletions(

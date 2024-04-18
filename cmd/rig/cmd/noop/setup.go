@@ -24,10 +24,21 @@ func initCmd(c Cmd) {
 	cc = c
 }
 
+type CmdNoRig struct {
+	fx.In
+
+	Prompter common.Prompter
+}
+
+var ccNoRig CmdNoRig
+
+func initCmdNoRig(c CmdNoRig) {
+	ccNoRig = c
+}
+
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	cmd := &cobra.Command{
-		Use:               "noop",
-		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		Use: "noop",
 	}
 	cmd1 := &cobra.Command{
 		Use:               "cmd1",
@@ -49,10 +60,28 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	}
 	cmd.AddCommand(cmd2)
 
+	cmd3 := &cobra.Command{
+		Use:               "cmd3",
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmdNoRig),
+		Annotations: map[string]string{
+			auth.OmitUser:        "",
+			auth.OmitEnvironment: "",
+			auth.OmitCapsule:     "",
+			auth.OmitProject:     "",
+		},
+		RunE: ccNoRig.noop,
+	}
+	cmd.AddCommand(cmd3)
+
 	parent.AddCommand(cmd)
 }
 
 func (c *Cmd) noop(_ *cobra.Command, _ []string) error {
+	fmt.Println("noop")
+	return nil
+}
+
+func (c *CmdNoRig) noop(_ *cobra.Command, _ []string) error {
 	fmt.Println("noop")
 	return nil
 }

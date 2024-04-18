@@ -206,6 +206,14 @@ func GetDeveloperPermissions(projectID, environmentID string) []*role.Permission
 			},
 		},
 		{
+			Action: ActionCapsuleDeployAnnotations,
+			Scope: &role.Scope{
+				Resource:    WithWildcard(ResourceCapsule),
+				Environment: environmentID,
+				Project:     projectID,
+			},
+		},
+		{
 			Action: ActionCapsuleDeployEnvironmentVariables,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
@@ -257,12 +265,28 @@ func GetDeveloperPermissions(projectID, environmentID string) []*role.Permission
 }
 
 // Owners can do everything a developer can do, plus:
-// - Capsule Edit. This means Create, Delete and Update capsules
+// - Capsule Create, Delete and Edit.
 // - Image Delete. This means Delete images
 // - Capsule Stop Rollout. This means Stop rollouts
 func GetOwnerPermissions(projectID, environmentID string) []*role.Permission {
 	permissions := GetDeveloperPermissions(projectID, environmentID)
 	return append(permissions, []*role.Permission{
+		{
+			Action: ActionCapsuleCreate,
+			Scope: &role.Scope{
+				Resource:    WithWildcard(ResourceCapsule),
+				Environment: environmentID,
+				Project:     projectID,
+			},
+		},
+		{
+			Action: ActionCapsuleDelete,
+			Scope: &role.Scope{
+				Resource:    WithWildcard(ResourceCapsule),
+				Environment: environmentID,
+				Project:     projectID,
+			},
+		},
 		{
 			Action: ActionCapsuleEdit,
 			Scope: &role.Scope{

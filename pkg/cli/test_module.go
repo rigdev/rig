@@ -27,8 +27,8 @@ func MakeTestModule(i TestModuleInput) fx.Option {
 		"test-rig-cli",
 		fx.Provide(func() afero.Fs { return i.FS }),
 		fx.Provide(func() common.Prompter { return i.Prompter }),
-		fx.Provide(func(cfg *cmdconfig.Config) (rig.Client, error) {
-			_, err := GetClientOptions(cfg)
+		fx.Provide(func(scope scope.Scope) (rig.Client, error) {
+			_, err := GetClientOptions(scope)
 			if err != nil {
 				return nil, err
 			}

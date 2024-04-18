@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		identifier := ""
 		if len(args) > 0 {
