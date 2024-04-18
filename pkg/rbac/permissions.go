@@ -121,136 +121,136 @@ func GetDeveloperPermissions(projectID, environmentID string) []*role.Permission
 			Action: ActionCapsuleRestartInstance,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeploy,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployAutoscale,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployImage,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployConfigFiles,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployContainer,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployNetwork,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployReplica,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployRollback,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployChron,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployEnvironmentSources,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployEnvironmentVariables,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleDeployServiceAccount,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceServiceAccount),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleAbortRollout,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleExecute,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionImageAdd,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionImageAdd,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceImage),
-				Project:     "*",
-				Environment: "*",
+				Project:     projectID,
+				Environment: environmentID,
 			},
 		},
 	}...)
@@ -267,32 +267,32 @@ func GetOwnerPermissions(projectID, environmentID string) []*role.Permission {
 			Action: ActionCapsuleEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionImageDelete,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionImageDelete,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceImage),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionCapsuleStopRollout,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceCapsule),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 	}...)
@@ -315,88 +315,88 @@ func GetAdminPermissions(projectID, environmentID string) []*role.Permission {
 			Action: ActionProjectEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceProject),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionSettingsEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceSettings),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionEnvironmentEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceEnvironment),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionRoleEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceRole),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionRoleAssign,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceRole),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionRoleRevoke,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceRole),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionUserEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceUser),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionGroupEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceGroup),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionGroupEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceUser),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionGroupEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceServiceAccount),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 		{
 			Action: ActionServiceAccountEdit,
 			Scope: &role.Scope{
 				Resource:    WithWildcard(ResourceServiceAccount),
-				Environment: "*",
-				Project:     "*",
+				Environment: environmentID,
+				Project:     projectID,
 			},
 		},
 	}...)
