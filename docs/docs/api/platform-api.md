@@ -6210,7 +6210,7 @@ Response to getting a role.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| roles | [Role](#api-v1-role-Role) | repeated | The roles assigned to the entity. |
+| role_ids | [string](#string) | repeated | The roles assigned to the entity. |
 
 
 
