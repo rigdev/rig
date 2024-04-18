@@ -34,7 +34,7 @@ message ListForEntityRequest {
 
 message ListForEntityResponse {
   // The roles assigned to the entity.
-  repeated api.v1.role.Role roles = 1;
+  repeated string role_ids = 1;
 }
 
 // Request to create a role.
