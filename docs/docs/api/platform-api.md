@@ -6195,6 +6195,7 @@ Response to getting a role.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | entity_id | [EntityID](#api-v1-role-EntityID) |  | The entity to list roles for. |
+| pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
 
 
 

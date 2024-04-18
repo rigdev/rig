@@ -28,6 +28,8 @@ service Service {
 message ListForEntityRequest {
   // The entity to list roles for.
   api.v1.role.EntityID entity_id = 1;
+  // Pagination options.
+  model.Pagination pagination = 2;
 }
 
 message ListForEntityResponse {
