@@ -346,8 +346,28 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 			// TODO: If just force, we probably need to delete and re-create. Let's explore workarounds.
 			materializedObj.SetOwnerReferences(cObj.Current.GetOwnerReferences())
 		}
-		r.logger.Info("generating materialized version", "object", key)
+		r.logger.Info("generating materialized version", "object", key, "resource_version", cObj.Current.GetResourceVersion())
 		if err := r.client.Update(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
+			// TODO(anders): This is duplicated, make a helper.
+			o, newErr := r.scheme.New(key.GroupVersionKind)
+			if newErr != nil {
+				return nil, err
+			}
+
+			co := o.(client.Object)
+			if getErr := r.client.Get(ctx, key.ObjectKey, co); kerrors.IsNotFound(getErr) {
+				r.logger.Info("configuration is invalid", "object", key, "error", err)
+				return nil, err
+			} else if getErr != nil {
+				return nil, fmt.Errorf("could not get existing object: %w", getErr)
+			}
+
+			if IsOwnedBy(r.requestObject, co) {
+				r.logger.Info("current version changed, retrying", "object", key)
+				r.existingObjects[key] = normalizeObject(key, co)
+				return nil, errors.AbortedErrorf("object reload")
+			}
+
 			return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
 		} else if err != nil {
 			return nil, fmt.Errorf("could not render update to %s: %w", key, err)
