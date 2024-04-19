@@ -1,5 +1,6 @@
 import sys
 
+
 def truncate(path: str):
     try:
         with open(path) as f:

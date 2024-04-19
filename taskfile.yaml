@@ -350,3 +350,7 @@ tasks:
           -f ./build/package/goreleaser/goreleaser.yml \
           --snapshot \
           --clean
+  crd-proto:
+    desc: "crd proto"
+    cmds:
+      - python3 ./tools/crdproto.py
