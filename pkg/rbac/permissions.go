@@ -56,7 +56,7 @@ func GetViewerPermissions(projectID, environmentID string) []*role.Permission {
 		{
 			Action: ActionProjectView,
 			Scope: &role.Scope{
-				Resource:    WithWildcard(ResourceProject),
+				Resource:    WithID(ResourceProject, projectID),
 				Environment: environmentID,
 				Project:     projectID,
 			},
@@ -104,7 +104,7 @@ func GetViewerPermissions(projectID, environmentID string) []*role.Permission {
 		{
 			Action: ActionEnvironmentView,
 			Scope: &role.Scope{
-				Resource:    WithWildcard(ResourceEnvironment),
+				Resource:    WithID(ResourceEnvironment, environmentID),
 				Environment: environmentID,
 				Project:     projectID,
 			},
@@ -314,7 +314,7 @@ func GetAdminPermissions(projectID, environmentID string) []*role.Permission {
 		{
 			Action: ActionProjectEdit,
 			Scope: &role.Scope{
-				Resource:    WithWildcard(ResourceProject),
+				Resource:    WithID(ResourceProject, projectID),
 				Environment: environmentID,
 				Project:     projectID,
 			},
@@ -330,7 +330,7 @@ func GetAdminPermissions(projectID, environmentID string) []*role.Permission {
 		{
 			Action: ActionEnvironmentEdit,
 			Scope: &role.Scope{
-				Resource:    WithWildcard(ResourceEnvironment),
+				Resource:    WithID(ResourceEnvironment, environmentID),
 				Environment: environmentID,
 				Project:     projectID,
 			},
