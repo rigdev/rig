@@ -1,25 +1,10 @@
+// +kubebuilder:object:generate=true
+// +groupName=rig.platform
 package v1
 
 import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-type ProjEnvCapsuleBase struct {
-	ConfigFiles          []ConfigFile      `json:"configFiles,omitempty"`
-	EnvironmentVariables map[string]string `json:"environmentVariables,omitempty"`
-}
-
-type EnvironmentSource struct {
-	Name string                `json:"name"`
-	Kind EnvironmentSourceKind `json:"kind"`
-}
-
-type EnvironmentSourceKind string
-
-var (
-	EnvironmentSourceKindConfigMap EnvironmentSourceKind = "config_map"
-	EnvironmentSourceKindSecret    EnvironmentSourceKind = "secret"
 )
 
 // +kubebuilder:object:root=true
@@ -48,6 +33,25 @@ type Project struct {
 	// Project level defaults
 	CapsuleBase ProjEnvCapsuleBase `json:"capsuleBase"`
 }
+
+//+kubebuilder:object:=true
+
+type ProjEnvCapsuleBase struct {
+	ConfigFiles          []ConfigFile      `json:"configFiles,omitempty"`
+	EnvironmentVariables map[string]string `json:"environmentVariables,omitempty"`
+}
+
+type EnvironmentSource struct {
+	Name string                `json:"name"`
+	Kind EnvironmentSourceKind `json:"kind"`
+}
+
+type EnvironmentSourceKind string
+
+var (
+	EnvironmentSourceKindConfigMap EnvironmentSourceKind = "config_map"
+	EnvironmentSourceKindSecret    EnvironmentSourceKind = "secret"
+)
 
 // +kubebuilder:object:root=true
 // +kubebuilder:storageversion
