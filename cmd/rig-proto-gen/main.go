@@ -8,6 +8,7 @@ import (
 	"path"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 
 	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
@@ -24,6 +25,7 @@ var (
 			fields: []protoField{{
 				t:    protoType{builtIn: &builtintType{t: "string"}},
 				name: "string",
+				idx:  1,
 			}},
 		},
 	}
@@ -52,7 +54,6 @@ func main() {
 	}
 }
 
-// TODO Fix proto indexes
 func run(_ *cobra.Command, args []string) error {
 	outputDir := args[0]
 	p := &parser{
@@ -61,6 +62,12 @@ func run(_ *cobra.Command, args []string) error {
 
 	if err := p.parse(compiledTypes...); err != nil {
 		return err
+	}
+
+	for _, pkg := range p.packages {
+		if err := pkg.validate(); err != nil {
+			return fmt.Errorf("package %s had errors: %s", pkg.name, err)
+		}
 	}
 
 	for _, pkg := range p.packages {
@@ -74,18 +81,7 @@ func run(_ *cobra.Command, args []string) error {
 		if err := os.MkdirAll(path.Dir(filePath), 0777); err != nil {
 			return err
 		}
-		if err := func() error {
-			var data []byte = []byte(b.String())
-			f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(0777))
-			if err != nil {
-				return err
-			}
-			_, err = f.Write(data)
-			if err1 := f.Close(); err1 != nil && err == nil {
-				err = err1
-			}
-			return err
-		}(); err != nil {
+		if err := os.WriteFile(filePath, []byte(b.String()), 0777); err != nil {
 			return err
 		}
 	}
@@ -97,10 +93,6 @@ func formatPkg(pkg string) string {
 	pkg = strings.Replace(pkg, "-", "_", -1)
 	pkg = strings.Replace(pkg, "/", ".", -1)
 	return pkg
-}
-
-func formatName(str string) string {
-	return strings.ToLower(string(str[0])) + str[1:]
 }
 
 func rewritePackage(pkg string) string {
@@ -139,10 +131,10 @@ func (p *parser) parseMessage(t reflect.Type) error {
 		return nil
 	}
 
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		if !field.IsExported() {
-			continue
+	for _, field := range extractFields(t) {
+		protoIdx, err := getProtoIndex(field)
+		if err != nil {
+			return fmt.Errorf("field %s on type %s had no wellformed proto index tag: %s", field.Name, t.Name(), err)
 		}
 		types, protoType, err := unravelType(field.Type)
 		if err != nil {
@@ -155,16 +147,74 @@ func (p *parser) parseMessage(t reflect.Type) error {
 					return err
 				}
 			}
-			// fmt.Println("add type", tt.PkgPath(), tt.Name(), tt.Kind())
 			pkg.addImport(pkgName)
 		}
 		msg.fields = append(msg.fields, protoField{
 			t:    protoType,
-			name: formatName(field.Name),
+			name: jsonName(field),
+			idx:  protoIdx,
 		})
 	}
 
 	return nil
+}
+
+func getProtoIndex(f reflect.StructField) (int, error) {
+	tag, ok := f.Tag.Lookup("protobuf")
+	if !ok {
+		return 0, errors.New("no protobuf tag")
+	}
+	splits := strings.Split(tag, ",")
+	var ints []int
+	for _, s := range splits {
+		if i, err := strconv.Atoi(s); err == nil {
+			ints = append(ints, i)
+		}
+	}
+	if len(ints) != 1 {
+		return 0, fmt.Errorf("expected exactly one integer element of the protobuf tag, got %v", len(ints))
+	}
+
+	return ints[0], nil
+}
+
+func extractFields(t reflect.Type) []reflect.StructField {
+	var res []reflect.StructField
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+		jsonTag := field.Tag.Get("json")
+		if isJSONInline(jsonTag) {
+			tt := field.Type
+			for tt.Kind() == reflect.Pointer {
+				tt = tt.Elem()
+			}
+			if tt.Kind() != reflect.Struct {
+				continue
+			}
+			res = append(res, extractFields(field.Type)...)
+		} else {
+			res = append(res, field)
+		}
+	}
+
+	return res
+}
+
+func isJSONInline(s string) bool {
+	// TODO More robust
+	return s == ",inline"
+}
+
+func jsonName(field reflect.StructField) string {
+	tag := field.Tag.Get("json")
+	if tag == "" {
+		return field.Name
+	}
+	name, _, _ := strings.Cut(tag, ",")
+	return name
 }
 
 func unravelType(t reflect.Type) ([]reflect.Type, protoType, error) {
@@ -301,6 +351,16 @@ type protoPackage struct {
 	messageOrder []string
 }
 
+func (p *protoPackage) validate() error {
+	for _, m := range p.messages {
+		if err := m.validate(); err != nil {
+			return fmt.Errorf("message %s has errors: %q", m.name, err)
+		}
+	}
+
+	return nil
+}
+
 func (p *protoPackage) compile(b *strings.Builder) {
 	b.WriteString("syntax = \"proto3\";\n")
 	b.WriteString("\n")
@@ -353,10 +413,24 @@ type protoMessage struct {
 	fields []protoField
 }
 
+func (p protoMessage) validate() error {
+	indexes := map[int]struct{}{}
+	for _, field := range p.fields {
+		if _, ok := indexes[field.idx]; ok {
+			return fmt.Errorf("multiple fields with the same proto index %v", field.idx)
+		}
+		if field.idx < 1 {
+			return fmt.Errorf("invalid proto index %v", field.idx)
+		}
+		indexes[field.idx] = struct{}{}
+	}
+	return nil
+}
+
 func (p protoMessage) compile(b *strings.Builder) {
 	b.WriteString(fmt.Sprintf("message %s {\n", p.name))
-	for idx, field := range p.fields {
-		field.compile(b, idx+1, p.pkg)
+	for _, field := range p.fields {
+		field.compile(b, p.pkg)
 	}
 	b.WriteString("}\n")
 }
@@ -364,12 +438,13 @@ func (p protoMessage) compile(b *strings.Builder) {
 type protoField struct {
 	t    protoType
 	name string
+	idx  int
 }
 
-func (p protoField) compile(b *strings.Builder, idx int, curPkg string) {
+func (p protoField) compile(b *strings.Builder, curPkg string) {
 	b.WriteString("  ")
 	p.t.compile(b, curPkg)
-	b.WriteString(fmt.Sprintf(" %s = %v;\n", p.name, idx))
+	b.WriteString(fmt.Sprintf(" %s = %v;\n", p.name, p.idx))
 }
 
 type protoType struct {
