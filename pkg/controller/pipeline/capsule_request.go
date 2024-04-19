@@ -207,6 +207,7 @@ func (r *capsuleRequest) UpdateStatusWithChanges(
 	generation int64,
 ) error {
 	capsuleCopy := r.capsule.DeepCopy()
+	r.logger.Info("update status with changes", "resource_version", capsuleCopy.GetResourceVersion())
 
 	status := &v1alpha2.CapsuleStatus{
 		ObservedGeneration: generation,
@@ -245,13 +246,15 @@ func (r *capsuleRequest) UpdateStatusWithChanges(
 
 	r.observedGeneration = generation
 	r.capsule.Status = status
-	r.capsule.SetResourceVersion(r.capsule.GetResourceVersion())
+	r.capsule.SetResourceVersion(capsuleCopy.GetResourceVersion())
+	r.logger.Info("updated status with changes", "resource_version", capsuleCopy.GetResourceVersion())
 
 	return nil
 }
 
 func (r *capsuleRequest) UpdateStatusWithError(ctx context.Context, err error) error {
 	capsuleCopy := r.capsule.DeepCopy()
+	r.logger.Info("update status with error", "resource_version", capsuleCopy.GetResourceVersion())
 
 	status := &v1alpha2.CapsuleStatus{
 		ObservedGeneration: r.observedGeneration,
@@ -271,6 +274,7 @@ func (r *capsuleRequest) UpdateStatusWithError(ctx context.Context, err error) e
 
 	r.capsule.Status = status
 	r.capsule.SetResourceVersion(capsuleCopy.GetResourceVersion())
+	r.logger.Info("updated status with error", "resource_version", capsuleCopy.GetResourceVersion())
 
 	return nil
 }

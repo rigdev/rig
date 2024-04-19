@@ -136,7 +136,8 @@ func ExecuteRequest[T Request](
 func executeRequestInner[T Request](
 	ctx context.Context,
 	req ExecutableRequest[T], steps []Step[T],
-	commit bool) (*Result, error) {
+	commit bool,
+) (*Result, error) {
 	if err := req.GetBase().Strategies.LoadExistingObjects(ctx); err != nil {
 		return nil, err
 	}
@@ -157,7 +158,7 @@ func executeRequestInner[T Request](
 
 		changes, err := req.GetBase().Commit(ctx)
 		if errors.IsAborted(err) {
-			req.GetBase().logger.Error(err, "retry running steps")
+			req.GetBase().logger.Info("retry running steps", "error", errors.MessageOf(err))
 			continue
 		} else if err != nil {
 			req.GetBase().logger.Error(err, "error committing changes")
