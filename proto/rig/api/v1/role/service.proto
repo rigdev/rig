@@ -23,6 +23,20 @@ service Service {
   rpc Revoke(RevokeRequest) returns (RevokeResponse) {}
   // List roles for an entity.
   rpc ListForEntity(ListForEntityRequest) returns (ListForEntityResponse) {}
+  // List Assignees.
+  rpc ListAssignees(ListAssigneesRequest) returns (ListAssigneesResponse) {}
+}
+
+message ListAssigneesRequest {
+  // The role to list assignees for.
+  string role_id = 1;
+  // Pagination options.
+  model.Pagination pagination = 2;
+}
+
+message ListAssigneesResponse {
+  // The assignees of the role.
+  repeated string entity_ids = 1;
 }
 
 message ListForEntityRequest {

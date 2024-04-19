@@ -211,6 +211,7 @@
 | /api.v1.role.Service/Assign | [AssignRequest](#api-v1-role-AssignRequest) | [AssignResponse](#api-v1-role-AssignResponse) | Assign a role. |
 | /api.v1.role.Service/Revoke | [RevokeRequest](#api-v1-role-RevokeRequest) | [RevokeResponse](#api-v1-role-RevokeResponse) | Revoke a role. |
 | /api.v1.role.Service/ListForEntity | [ListForEntityRequest](#api-v1-role-ListForEntityRequest) | [ListForEntityResponse](#api-v1-role-ListForEntityResponse) | List roles for an entity. |
+| /api.v1.role.Service/ListAssignees | [ListAssigneesRequest](#api-v1-role-ListAssigneesRequest) | [ListAssigneesResponse](#api-v1-role-ListAssigneesResponse) | List Assignees. |
 
 
 
@@ -6180,6 +6181,37 @@ Response to getting a role.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | role | [Role](#api-v1-role-Role) |  | The retrieved role. |
+
+
+
+
+
+
+<a name="api-v1-role-ListAssigneesRequest"></a>
+
+### ListAssigneesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_id | [string](#string) |  | The role to list assignees for. |
+| pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
+
+
+
+
+
+
+<a name="api-v1-role-ListAssigneesResponse"></a>
+
+### ListAssigneesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity_ids | [string](#string) | repeated | The assignees of the role. |
 
 
 
