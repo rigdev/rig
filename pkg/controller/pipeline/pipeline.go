@@ -158,7 +158,7 @@ func executeRequestInner[T Request](
 
 		changes, err := req.GetBase().Commit(ctx)
 		if errors.IsAborted(err) {
-			req.GetBase().logger.Info("retry running steps", "error", errors.MessageOf(err))
+			req.GetBase().logger.Info("retry running steps", "reason", errors.MessageOf(err))
 			continue
 		} else if err != nil {
 			req.GetBase().logger.Error(err, "error committing changes")
