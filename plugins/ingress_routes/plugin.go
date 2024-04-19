@@ -16,6 +16,7 @@ import (
 	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/ptr"
+	"golang.org/x/exp/maps"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -42,6 +43,9 @@ type Config struct {
 	// DisableTLS for ingress resources generated. This is useful if a 3rd-party component
 	// is handling the HTTPS TLS termination and certificates.
 	DisableTLS bool `json:"disableTLS,omitempty"`
+
+	// Annotations to be added to all ingress resources created.
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type Plugin struct {
@@ -263,11 +267,12 @@ func createBasicIngress(req pipeline.CapsuleRequest, cfg Config, name string) *n
 			Namespace:   req.Capsule().Namespace,
 			Annotations: map[string]string{},
 		},
+		Spec: netv1.IngressSpec{
+			IngressClassName: ingressClassName,
+		},
 	}
 
-	if ingressClassName != nil {
-		i.Spec.IngressClassName = ingressClassName
-	}
+	maps.Copy(i.Annotations, cfg.Annotations)
 
 	if ingressIsSupported(cfg) && !cfg.DisableTLS && !shouldCreateCertificateResource(cfg) {
 		i.Annotations["cert-manager.io/cluster-issuer"] = cfg.ClusterIssuer
