@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package v1alpha2;
+
+import "k8s.io/api/autoscaling/v2/generated.proto";
+import "k8s.io/apimachinery/pkg/api/resource/generated.proto";
+
+message CapsuleInterface {
+  string name = 1;
+  int32 port = 2;
+  InterfaceProbe liveness = 3;
+  InterfaceProbe readiness = 4;
+  CapsulePublicInterface public = 5;
+  repeated HostRoute routes = 6;
+}
+
+message InterfaceProbe {
+  string path = 1;
+  bool tCP = 2;
+  InterfaceGRPCProbe gRPC = 3;
+}
+
+message InterfaceGRPCProbe {
+  string service = 1;
+}
+
+message CapsulePublicInterface {
+  CapsuleInterfaceIngress ingress = 1;
+  CapsuleInterfaceLoadBalancer loadBalancer = 2;
+}
+
+message CapsuleInterfaceIngress {
+  string host = 1;
+  repeated string paths = 2;
+}
+
+message CapsuleInterfaceLoadBalancer {
+  int32 port = 1;
+}
+
+message HostRoute {
+  string iD = 1;
+  string host = 2;
+  repeated HTTPPathRoute paths = 3;
+  RouteOptions routeOptions = 4;
+}
+
+message HTTPPathRoute {
+  string path = 1;
+  string match = 2;
+}
+
+message RouteOptions {
+  map<string, string> annotations = 1;
+}
+
+message CapsuleScale {
+  HorizontalScale horizontal = 1;
+  VerticalScale vertical = 2;
+}
+
+message HorizontalScale {
+  Instances instances = 1;
+  CPUTarget cPUTarget = 2;
+  repeated CustomMetric customMetrics = 3;
+}
+
+message Instances {
+  uint32 min = 1;
+  uint32 max = 2;
+}
+
+message CPUTarget {
+  uint32 utilization = 1;
+}
+
+message CustomMetric {
+  InstanceMetric instanceMetric = 1;
+  ObjectMetric objectMetric = 2;
+}
+
+message InstanceMetric {
+  string metricName = 1;
+  map<string, string> matchLabels = 2;
+  string averageValue = 3;
+}
+
+message ObjectMetric {
+  string metricName = 1;
+  map<string, string> matchLabels = 2;
+  string averageValue = 3;
+  string value = 4;
+  k8s.io.api.autoscaling.v2.CrossVersionObjectReference describedObject = 5;
+}
+
+message VerticalScale {
+  ResourceLimits cPU = 1;
+  ResourceLimits memory = 2;
+  ResourceRequest gPU = 3;
+}
+
+message ResourceLimits {
+  k8s.io.apimachinery.pkg.api.resource.Quantity request = 1;
+  k8s.io.apimachinery.pkg.api.resource.Quantity limit = 2;
+}
+
+message ResourceRequest {
+  k8s.io.apimachinery.pkg.api.resource.Quantity request = 1;
+}
+
+message CronJob {
+  string name = 1;
+  string schedule = 2;
+  URL uRL = 3;
+  JobCommand command = 4;
+  uint64 maxRetries = 5;
+  uint64 timeoutSeconds = 6;
+}
+
+message URL {
+  uint32 port = 1;
+  string path = 2;
+  map<string, string> queryParameters = 3;
+}
+
+message JobCommand {
+  string command = 1;
+  repeated string args = 2;
+}

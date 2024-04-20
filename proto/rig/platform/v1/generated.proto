@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package platform.v1;
+
+import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
+import "v1alpha2/generated.proto";
+
+message CapsuleStar {
+  k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+  string name = 2;
+  string project = 3;
+  CapsuleSpecExtension capsuleBase = 4;
+  map<string, CapsuleSpecExtension> environments = 5;
+}
+
+message CapsuleSpecExtension {
+  k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+  string image = 2;
+  string command = 3;
+  repeated string args = 4;
+  repeated v1alpha2.CapsuleInterface interfaces = 5;
+  repeated ConfigFile configFiles = 6;
+  v1alpha2.CapsuleScale scale = 7;
+  map<string, string> nodeSelector = 8;
+  repeated v1alpha2.CronJob cronJobs = 9;
+  map<string, string> annotations = 10;
+}
+
+message ConfigFile {
+  string path = 1;
+  bytes content = 2;
+  bool isSecret = 3;
+}
+
+message Environment {
+  k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+  string name = 2;
+  string namespaceTemplate = 3;
+  string operatorVersion = 4;
+  string clusterID = 5;
+  ProjEnvCapsuleBase capsuleBase = 6;
+}
+
+message ProjEnvCapsuleBase {
+  repeated ConfigFile configFiles = 1;
+  map<string, string> environmentVariables = 2;
+}
+
+message Project {
+  k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
+  string name = 2;
+  repeated string environments = 3;
+  ProjEnvCapsuleBase capsuleBase = 4;
+}
