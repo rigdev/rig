@@ -55,4 +55,3 @@ message Project {
   repeated string environments = 4;
   ProjEnvCapsuleBase capsuleBase = 5;
 }
-

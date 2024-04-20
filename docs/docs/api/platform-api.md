@@ -7330,7 +7330,7 @@ Empty response for updating users settings for the Rig project.
 | ----- | ---- | ----- | ----------- |
 | kind | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| aPIVersion | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
 
 
 
@@ -7515,7 +7515,7 @@ Empty response for updating users settings for the Rig project.
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | schedule | [string](#string) |  |  |
-| uRL | [URL](#v1alpha2-URL) |  |  |
+| url | [URL](#v1alpha2-URL) |  |  |
 | command | [JobCommand](#v1alpha2-JobCommand) |  |  |
 | maxRetries | [uint64](#uint64) |  |  |
 | timeoutSeconds | [uint64](#uint64) |  |  |
@@ -7566,7 +7566,7 @@ Empty response for updating users settings for the Rig project.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | instances | [Instances](#v1alpha2-Instances) |  |  |
-| cPUTarget | [CPUTarget](#v1alpha2-CPUTarget) |  |  |
+| cpuTarget | [CPUTarget](#v1alpha2-CPUTarget) |  |  |
 | customMetrics | [CustomMetric](#v1alpha2-CustomMetric) | repeated |  |
 
 
@@ -7582,10 +7582,26 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| iD | [string](#string) |  |  |
+| id | [string](#string) |  |  |
 | host | [string](#string) |  |  |
 | paths | [HTTPPathRoute](#v1alpha2-HTTPPathRoute) | repeated |  |
-| routeOptions | [RouteOptions](#v1alpha2-RouteOptions) |  |  |
+| annotations | [HostRoute.AnnotationsEntry](#v1alpha2-HostRoute-AnnotationsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="v1alpha2-HostRoute-AnnotationsEntry"></a>
+
+### HostRoute.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 
@@ -7665,8 +7681,8 @@ Empty response for updating users settings for the Rig project.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | path | [string](#string) |  |  |
-| tCP | [bool](#bool) |  |  |
-| gRPC | [InterfaceGRPCProbe](#v1alpha2-InterfaceGRPCProbe) |  |  |
+| tcp | [bool](#bool) |  |  |
+| grpc | [InterfaceGRPCProbe](#v1alpha2-InterfaceGRPCProbe) |  |  |
 
 
 
@@ -7701,7 +7717,7 @@ Empty response for updating users settings for the Rig project.
 | matchLabels | [ObjectMetric.MatchLabelsEntry](#v1alpha2-ObjectMetric-MatchLabelsEntry) | repeated |  |
 | averageValue | [string](#string) |  |  |
 | value | [string](#string) |  |  |
-| describedObject | [k8s.io.api.autoscaling.v2.CrossVersionObjectReference](#k8s-io-api-autoscaling-v2-CrossVersionObjectReference) |  |  |
+| objectReference | [k8s.io.api.autoscaling.v2.CrossVersionObjectReference](#k8s-io-api-autoscaling-v2-CrossVersionObjectReference) |  |  |
 
 
 
@@ -7755,37 +7771,6 @@ Empty response for updating users settings for the Rig project.
 
 
 
-<a name="v1alpha2-RouteOptions"></a>
-
-### RouteOptions
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| annotations | [RouteOptions.AnnotationsEntry](#v1alpha2-RouteOptions-AnnotationsEntry) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-RouteOptions-AnnotationsEntry"></a>
-
-### RouteOptions.AnnotationsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
 <a name="v1alpha2-URL"></a>
 
 ### URL
@@ -7827,9 +7812,9 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| cPU | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
+| cpu | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
 | memory | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
-| gPU | [ResourceRequest](#v1alpha2-ResourceRequest) |  |  |
+| gpu | [ResourceRequest](#v1alpha2-ResourceRequest) |  |  |
 
 
 
@@ -7857,7 +7842,8 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| typeMeta | [k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta](#k8s-io-apimachinery-pkg-apis-meta-v1-TypeMeta) |  |  |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
 | image | [string](#string) |  |  |
 | command | [string](#string) |  |  |
 | args | [string](#string) | repeated |  |
@@ -7913,7 +7899,8 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| typeMeta | [k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta](#k8s-io-apimachinery-pkg-apis-meta-v1-TypeMeta) |  |  |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | project | [string](#string) |  |  |
 | capsuleBase | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
@@ -7965,7 +7952,8 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| typeMeta | [k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta](#k8s-io-apimachinery-pkg-apis-meta-v1-TypeMeta) |  |  |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | namespaceTemplate | [string](#string) |  |  |
 | operatorVersion | [string](#string) |  |  |
@@ -8017,7 +8005,8 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| typeMeta | [k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta](#k8s-io-apimachinery-pkg-apis-meta-v1-TypeMeta) |  |  |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | environments | [string](#string) | repeated |  |
 | capsuleBase | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
