@@ -2,28 +2,29 @@ syntax = "proto3";
 
 package platform.v1;
 
-import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "v1alpha2/generated.proto";
 
 message CapsuleStar {
-  k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
-  string name = 2;
-  string project = 3;
-  CapsuleSpecExtension capsuleBase = 4;
-  map<string, CapsuleSpecExtension> environments = 5;
+  string kind = 1;
+  string apiVersion = 2;
+  string name = 3;
+  string project = 4;
+  CapsuleSpecExtension capsuleBase = 5;
+  map<string, CapsuleSpecExtension> environments = 6;
 }
 
 message CapsuleSpecExtension {
-  k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
-  string image = 2;
-  string command = 3;
-  repeated string args = 4;
-  repeated v1alpha2.CapsuleInterface interfaces = 5;
-  repeated ConfigFile configFiles = 6;
-  v1alpha2.CapsuleScale scale = 7;
-  map<string, string> nodeSelector = 8;
-  repeated v1alpha2.CronJob cronJobs = 9;
-  map<string, string> annotations = 10;
+  string kind = 1;
+  string apiVersion = 2;
+  string image = 3;
+  string command = 4;
+  repeated string args = 5;
+  repeated v1alpha2.CapsuleInterface interfaces = 6;
+  repeated ConfigFile configFiles = 7;
+  v1alpha2.CapsuleScale scale = 8;
+  map<string, string> nodeSelector = 9;
+  repeated v1alpha2.CronJob cronJobs = 10;
+  map<string, string> annotations = 11;
 }
 
 message ConfigFile {
@@ -33,12 +34,13 @@ message ConfigFile {
 }
 
 message Environment {
-  k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
-  string name = 2;
-  string namespaceTemplate = 3;
-  string operatorVersion = 4;
-  string clusterID = 5;
-  ProjEnvCapsuleBase capsuleBase = 6;
+  string kind = 1;
+  string apiVersion = 2;
+  string name = 3;
+  string namespaceTemplate = 4;
+  string operatorVersion = 5;
+  string clusterID = 6;
+  ProjEnvCapsuleBase capsuleBase = 7;
 }
 
 message ProjEnvCapsuleBase {
@@ -47,8 +49,10 @@ message ProjEnvCapsuleBase {
 }
 
 message Project {
-  k8s.io.apimachinery.pkg.apis.meta.v1.TypeMeta typeMeta = 1;
-  string name = 2;
-  repeated string environments = 3;
-  ProjEnvCapsuleBase capsuleBase = 4;
+  string kind = 1;
+  string apiVersion = 2;
+  string name = 3;
+  repeated string environments = 4;
+  ProjEnvCapsuleBase capsuleBase = 5;
 }
+

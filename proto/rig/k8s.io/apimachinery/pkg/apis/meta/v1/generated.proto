@@ -6,3 +6,4 @@ message TypeMeta {
   string kind = 1;
   string aPIVersion = 2;
 }
+

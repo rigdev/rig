@@ -76,7 +76,7 @@ tasks:
     generates:
       - proto/rig/**/*
     cmds:
-      - ./tools/bin/proto-gen proto/rig
+      - ./tools/bin/rig-proto-gen proto/rig
   
   proto:
     desc: "🪄 Run protobuf generation"
