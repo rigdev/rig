@@ -104,5 +104,5 @@ func (c *Cmd) completeEnvironment(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return completions.Environments(ctx, c.Rig, toComplete, c.Scope)
+	return completions.Environments(ctx, c.Rig, toComplete)
 }

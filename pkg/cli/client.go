@@ -8,15 +8,14 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
-	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli/scope"
 )
 
-func GetClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
+func GetClientOptions(scope scope.Scope) ([]rig.Option, error) {
 	options := []rig.Option{
 		rig.WithInterceptors(&userAgentInterceptor{}),
-		rig.WithSessionManager(&configSessionManager{cfg: cfg}),
+		rig.WithSessionManager(&configSessionManager{scope: scope}),
 	}
 
 	if flags.Flags.BasicAuth {
@@ -25,7 +24,7 @@ func GetClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
 
 	host := flags.Flags.Host
 	if host == "" {
-		if rCtx := cfg.GetCurrentContext(); rCtx != nil {
+		if rCtx := scope.GetCurrentContext(); rCtx != nil {
 			if svc := rCtx.GetService(); svc != nil {
 				host = svc.Server
 			}
@@ -37,7 +36,7 @@ func GetClientOptions(cfg *cmdconfig.Config) ([]rig.Option, error) {
 }
 
 func newRigClient(scope scope.Scope) (rig.Client, error) {
-	opts, err := GetClientOptions(scope.GetCfg())
+	opts, err := GetClientOptions(scope)
 	if err != nil {
 		return nil, err
 	}
@@ -74,21 +73,21 @@ func (i *userAgentInterceptor) setUserAgent(h http.Header) {
 }
 
 type configSessionManager struct {
-	cfg *cmdconfig.Config
+	scope scope.Scope
 }
 
 func (s *configSessionManager) GetAccessToken() string {
-	return s.cfg.GetCurrentContext().GetAuth().AccessToken
+	return s.scope.GetCurrentContext().GetAuth().AccessToken
 }
 
 func (s *configSessionManager) GetRefreshToken() string {
-	return s.cfg.GetCurrentContext().GetAuth().RefreshToken
+	return s.scope.GetCurrentContext().GetAuth().RefreshToken
 }
 
 func (s *configSessionManager) SetAccessToken(accessToken, refreshToken string) {
-	s.cfg.GetCurrentContext().GetAuth().AccessToken = accessToken
-	s.cfg.GetCurrentContext().GetAuth().RefreshToken = refreshToken
-	if err := s.cfg.Save(); err != nil {
+	s.scope.GetCurrentContext().GetAuth().AccessToken = accessToken
+	s.scope.GetCurrentContext().GetAuth().RefreshToken = refreshToken
+	if err := s.scope.GetCfg().Save(); err != nil {
 		fmt.Fprintf(os.Stderr, "error saving config: %v\n", err)
 	}
 }

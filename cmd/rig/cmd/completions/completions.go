@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
+	"github.com/rigdev/rig-go-api/api/v1/group"
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
@@ -41,6 +42,10 @@ func formatEnvironment(e *environment.Environment) string {
 	return fmt.Sprintf("%v\t (Operator Version: %v)", e.GetEnvironmentId(), operatorVersion)
 }
 
+func formatGroup(g *group.Group) string {
+	return fmt.Sprintf("%s\t (#Members: %v)", g.GetGroupId(), g.GetNumMembers())
+}
+
 func Contexts(
 	toComplete string,
 	config *cmdconfig.Config,
@@ -64,13 +69,8 @@ func Environments(
 	ctx context.Context,
 	rig rig.Client,
 	toComplete string,
-	scope scope.Scope,
 ) ([]string, cobra.ShellCompDirective) {
 	var environmentIDs []string
-
-	if scope.GetCurrentContext() == nil || scope.GetCurrentContext().GetAuth() == nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
 
 	resp, err := rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{
 		Msg: &environment.ListRequest{},
@@ -96,13 +96,8 @@ func Projects(
 	ctx context.Context,
 	rig rig.Client,
 	toComplete string,
-	scope scope.Scope,
 ) ([]string, cobra.ShellCompDirective) {
 	var projectIDs []string
-
-	if scope.GetCurrentContext() == nil || scope.GetCurrentContext().GetAuth() == nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
 
 	resp, err := rig.Project().List(ctx, &connect.Request[project.ListRequest]{
 		Msg: &project.ListRequest{},
@@ -152,6 +147,27 @@ func Capsules(
 	}
 
 	return capsuleIDs, cobra.ShellCompDirectiveDefault
+}
+
+func Groups(ctx context.Context,
+	rig rig.Client,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
+	completions := []string{}
+	resp, err := rig.Group().List(ctx, &connect.Request[group.ListRequest]{
+		Msg: &group.ListRequest{},
+	})
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	for _, g := range resp.Msg.GetGroups() {
+		if strings.HasPrefix(g.GetGroupId(), toComplete) {
+			completions = append(completions, formatGroup(g))
+		}
+	}
+
+	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
 func OutputType(_ *cobra.Command,

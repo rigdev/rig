@@ -38,6 +38,6 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 		return err
 	}
 
-	cmd.Println("Created group:", groupID, res.Msg.GetGroup().GetGroupId())
+	cmd.Println("Created group", res.Msg.GetGroup().GetGroupId())
 	return nil
 }

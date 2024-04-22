@@ -1,5 +1,5 @@
-connectrpc.com/connect v1.16.0 h1:rdtfQjZ0OyFkWPTegBNcH7cwquGAN1WzyJy80oFNibg=
-connectrpc.com/connect v1.16.0/go.mod h1:XpZAduBQUySsb4/KO5JffORVkDI4B6/EYPi7N8xpNZw=
+connectrpc.com/connect v1.16.1 h1:rOdrK/RTI/7TVnn3JsVxt3n028MlTRwmK5Q4heSpjis=
+connectrpc.com/connect v1.16.1/go.mod h1:XpZAduBQUySsb4/KO5JffORVkDI4B6/EYPi7N8xpNZw=
 connectrpc.com/grpcreflect v1.2.0 h1:Q6og1S7HinmtbEuBvARLNwYmTbhEGRpHDhqrPNlmK+U=
 connectrpc.com/grpcreflect v1.2.0/go.mod h1:nwSOKmE8nU5u/CidgHtPYk1PFI3U9ignz7iDMxOYkSY=
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 h1:UQHMgLO+TxOElx5B5HZ4hJQsoJ/PvUvKRhJHDQXO8P8=
@@ -274,10 +274,10 @@ github.com/prometheus/common v0.45.0 h1:2BGz0eBc2hdMDLnO/8n0jeB3oPrt2D08CekT0lne
 github.com/prometheus/common v0.45.0/go.mod h1:YJmSTw9BoKxJplESWWxlbyttQR4uaEcGyv9MZjVOJsY=
 github.com/prometheus/procfs v0.12.0 h1:jluTpSng7V9hY0O2R9DzzJHYb2xULk9VTR1V1R/k6Bo=
 github.com/prometheus/procfs v0.12.0/go.mod h1:pcuDEFsWDnvcgNzo4EEweacyhjeA9Zk3cnaOZAZEfOo=
-github.com/rigdev/rig-go-api v0.0.0-20240408063258-c8aa58407458 h1:Skep/WB6fuccnQLTm6LeFnsbiQAqfZApqf1CEhq6UZ8=
-github.com/rigdev/rig-go-api v0.0.0-20240408063258-c8aa58407458/go.mod h1:Awa9vLi0xnEloFj2tYpMBe3VCCerm0Fdh6tT5NC60UM=
-github.com/rigdev/rig-go-sdk v0.0.0-20240306122601-f36342e359ef h1:g2VRoPd/fZWmuLZ8c+Nqo1QkpHd6ohMfcKf+1JzpoeQ=
-github.com/rigdev/rig-go-sdk v0.0.0-20240306122601-f36342e359ef/go.mod h1:RSzrgNlAsBiUgcSORU0YKw3e97G7GFfQCcM3Sj1pznc=
+github.com/rigdev/rig-go-api v0.0.0-20240419130241-0d1e7be1236b h1:PGy7QXThVTINJaDLdS9yzgeIIxOmDCN/xATkOFHNzug=
+github.com/rigdev/rig-go-api v0.0.0-20240419130241-0d1e7be1236b/go.mod h1:0GWZXcPZXpGDoB7FhQAj1CWizEIUjELZenmeGpCnuU4=
+github.com/rigdev/rig-go-sdk v0.0.0-20240417114812-ecae62a90e9b h1:owpf6cgWMmO31ReecaGvqlmtgj8ozyhxIK1lhTCDUCw=
+github.com/rigdev/rig-go-sdk v0.0.0-20240417114812-ecae62a90e9b/go.mod h1:RSzrgNlAsBiUgcSORU0YKw3e97G7GFfQCcM3Sj1pznc=
 github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e h1:7ubTieBkl4KCz5ABZzh0zPkBYWPguSOHUundUsorIzQ=
 github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e/go.mod h1:02iFIz7K/A9jGCvrizLPvoqr4cEIx7q54RH5Qudkrss=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
@@ -441,10 +441,10 @@ gomodules.xyz/jsonpatch/v2 v2.4.0 h1:Ci3iUJyx9UeRx7CeFN8ARgGbkESwJK+KB9lLcWxY/Zw
 gomodules.xyz/jsonpatch/v2 v2.4.0/go.mod h1:AH3dM2RI6uoBZxn3LVrfvJ3E0/9dG4cSrbuBJT4moAY=
 google.golang.org/appengine v1.6.8 h1:IhEN5q69dyKagZPYMSdIjS2HqprW324FRQZJcGqPAsM=
 google.golang.org/appengine v1.6.8/go.mod h1:1jJ3jBArFh5pcgW8gCtRJnepW8FzD1V44FJffLiz/Ds=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda h1:LI5DOvAxUPMv/50agcLLoo+AdWc1irS9Rzz4vPuD1V4=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
-google.golang.org/grpc v1.63.0 h1:WjKe+dnvABXyPJMD7KDNLxtoGk5tgk+YFWN6cBWjZE8=
-google.golang.org/grpc v1.63.0/go.mod h1:WAX/8DgncnokcFUldAxq7GeB5DXHDbMF+lLvDomNkRA=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be h1:LG9vZxsWGOmUKieR8wPAUR3u3MpnYFQZROPIMaXh7/A=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
+google.golang.org/grpc v1.63.2 h1:MUeiw1B2maTVZthpU5xvASfTh3LDbxHd6IJ6QQVU+xM=
+google.golang.org/grpc v1.63.2/go.mod h1:WAX/8DgncnokcFUldAxq7GeB5DXHDbMF+lLvDomNkRA=
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
 google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
 google.golang.org/protobuf v1.33.0 h1:uNO2rsAINq/JlFpSdYEKIZ0uKD/R9cpdv0T+yoGwGmI=

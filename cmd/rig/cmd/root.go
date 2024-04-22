@@ -24,6 +24,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/group"
 	"github.com/rigdev/rig/cmd/rig/cmd/noop"
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
+	"github.com/rigdev/rig/cmd/rig/cmd/role"
 	"github.com/rigdev/rig/cmd/rig/cmd/serviceaccount"
 	"github.com/rigdev/rig/cmd/rig/cmd/user"
 	auth_service "github.com/rigdev/rig/cmd/rig/services/auth"
@@ -162,10 +163,11 @@ func Run(s *cli.SetupContext) error {
 	config.Setup(rootCmd, s)
 	project.Setup(rootCmd, s)
 	environment.Setup(rootCmd, s)
+	role.Setup(rootCmd, s)
 
-	if s.AddTestCommand {
-		noop.Setup(rootCmd, s)
-	}
+	// if s.AddTestCommand {
+	noop.Setup(rootCmd, s)
+	// }
 
 	cobra.EnableTraverseRunHooks = true
 
@@ -246,7 +248,7 @@ func (c *Cmd) completeProject(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return completions.Projects(ctx, c.Rig, toComplete, c.Scope)
+	return completions.Projects(ctx, c.Rig, toComplete)
 }
 
 func (c *Cmd) completeEnvironment(
@@ -260,7 +262,7 @@ func (c *Cmd) completeEnvironment(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return completions.Environments(ctx, c.Rig, toComplete, c.Scope)
+	return completions.Environments(ctx, c.Rig, toComplete)
 }
 
 func (c *Cmd) completeContext(

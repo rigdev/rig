@@ -243,7 +243,7 @@ func newEnv(name string) *environment.Environment {
 }
 
 func (s *testSuite) Test_empty_config_omit_all() {
-	s.Require().NoError(s.run(true, []string{"noop", "cmd1"}))
+	s.Require().NoError(s.run(true, []string{"noop", "cmd3"}))
 }
 
 func (s *testSuite) Test_empty_config_omit_none() {
@@ -269,8 +269,12 @@ func (s *testSuite) Test_empty_config_omit_none() {
 }
 
 func (s *testSuite) Test_empty_config_non_interactive() {
-	s.Require().NoError(s.run(false, []string{"noop", "cmd1"}))
+	s.Require().Error(s.run(false, []string{"noop", "cmd1"}))
 	s.Require().Error(s.run(false, []string{"noop", "cmd2"}))
+}
+
+func (s *testSuite) Test_empty_config_non_interactive_no_rig() {
+	s.Require().NoError(s.run(false, []string{"noop", "cmd3"}))
 }
 
 func (s *testSuite) Test_has_context_but_none_chosen() {

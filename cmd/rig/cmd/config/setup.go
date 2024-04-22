@@ -17,6 +17,14 @@ import (
 	"go.uber.org/fx"
 )
 
+var minify bool
+
+var (
+	field       string
+	value       string
+	contextName string
+)
+
 type CmdWScope struct {
 	fx.In
 
@@ -25,14 +33,6 @@ type CmdWScope struct {
 	Scope      scope.Scope
 	Prompter   common.Prompter
 }
-
-var minify bool
-
-var (
-	field       string
-	value       string
-	contextName string
-)
 
 var cmdWScope CmdWScope
 
@@ -216,7 +216,7 @@ func (c *CmdNoScope) completions(
 	s *cli.SetupContext,
 ) ([]string, cobra.ShellCompDirective) {
 
-	if err := s.ExecuteInvokes(cmd, args, initCmdWScope); err != nil {
+	if err := s.ExecuteInvokes(cmd, args, initCmdNoScope); err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
@@ -234,7 +234,7 @@ func (c *CmdWScope) useProjectCompletion(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return completions.Projects(ctx, c.Rig, toComplete, c.Scope)
+	return completions.Projects(ctx, c.Rig, toComplete)
 }
 
 func (c *CmdWScope) useEnvironmentCompletion(
@@ -248,5 +248,5 @@ func (c *CmdWScope) useEnvironmentCompletion(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return completions.Environments(ctx, c.Rig, toComplete, c.Scope)
+	return completions.Environments(ctx, c.Rig, toComplete)
 }

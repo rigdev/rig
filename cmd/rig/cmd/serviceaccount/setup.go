@@ -13,6 +13,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 )
@@ -31,6 +32,7 @@ type Cmd struct {
 
 	Rig      rig.Client
 	Prompter common.Prompter
+	Scope    scope.Scope
 }
 
 var cmd Cmd
@@ -38,6 +40,7 @@ var cmd Cmd
 func initCmd(c Cmd) {
 	cmd.Rig = c.Rig
 	cmd.Prompter = c.Prompter
+	cmd.Scope = c.Scope
 }
 
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
