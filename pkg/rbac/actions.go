@@ -205,6 +205,7 @@ var RoleActionMap = map[string]string{
 	roleconnect.ServiceGetProcedure:           ActionRoleView,
 	roleconnect.ServiceListProcedure:          ActionRoleView,
 	roleconnect.ServiceListForEntityProcedure: ActionRoleView,
+	roleconnect.ServiceListAssigneesProcedure: ActionRoleView,
 }
 
 var SettingsActionMap = map[string]string{

@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package k8s.io.apimachinery.pkg.apis.meta.v1;
+
+message TypeMeta {
+  string kind = 1;
+  string aPIVersion = 2;
+}

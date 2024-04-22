@@ -65,7 +65,7 @@ _Appears in:_
 
 ### CapsuleInterfaceIngress
 
-_Underlying type:_ _[struct{Host string "json:\"host\""; Paths []string "json:\"paths,omitempty\""}](#struct{host-string-"json:\"host\"";-paths-[]string-"json:\"paths,omitempty\""})_
+_Underlying type:_ _[struct{Host string "json:\"host\" protobuf:\"1\""; Paths []string "json:\"paths,omitempty\" protobuf:\"2\""}](#struct{host-string-"json:\"host\"-protobuf:\"1\"";-paths-[]string-"json:\"paths,omitempty\"-protobuf:\"2\""})_
 
 CapsuleInterfaceIngress defines that the interface should be exposed as http ingress
 
@@ -76,7 +76,7 @@ _Appears in:_
 
 ### CapsuleInterfaceLoadBalancer
 
-_Underlying type:_ _[struct{Port int32 "json:\"port\""}](#struct{port-int32-"json:\"port\""})_
+_Underlying type:_ _[struct{Port int32 "json:\"port\" protobuf:\"1\""}](#struct{port-int32-"json:\"port\"-protobuf:\"1\""})_
 
 CapsuleInterfaceLoadBalancer defines that the interface should be exposed as a L4 loadbalancer
 
@@ -234,7 +234,7 @@ _Appears in:_
 
 ### HTTPPathRoute
 
-_Underlying type:_ _[struct{Path string "json:\"path\""; Match PathMatchType "json:\"match,omitempty\""}](#struct{path-string-"json:\"path\"";-match-pathmatchtype-"json:\"match,omitempty\""})_
+_Underlying type:_ _[struct{Path string "json:\"path\" protobuf:\"1\""; Match PathMatchType "json:\"match,omitempty\" protobuf:\"2\""}](#struct{path-string-"json:\"path\"-protobuf:\"1\"";-match-pathmatchtype-"json:\"match,omitempty\"-protobuf:\"2\""})_
 
 A HTTP path routing.
 
@@ -278,7 +278,7 @@ _Appears in:_
 
 ### InstanceMetric
 
-_Underlying type:_ _[struct{MetricName string "json:\"metricName\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\""; AverageValue string "json:\"averageValue\""}](#struct{metricname-string-"json:\"metricname\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"";-averagevalue-string-"json:\"averagevalue\""})_
+_Underlying type:_ _[struct{MetricName string "json:\"metricName\" protobuf:\"1\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\" protobuf:\"2\""; AverageValue string "json:\"averageValue\" protobuf:\"3\""}](#struct{metricname-string-"json:\"metricname\"-protobuf:\"1\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"-protobuf:\"2\"";-averagevalue-string-"json:\"averagevalue\"-protobuf:\"3\""})_
 
 InstanceMetric defines a custom instance-based metric (pod-metric in Kubernetes lingo)
 
@@ -304,7 +304,7 @@ _Appears in:_
 
 ### InterfaceGRPCProbe
 
-_Underlying type:_ _[struct{Service string "json:\"service\""}](#struct{service-string-"json:\"service\""})_
+_Underlying type:_ _[struct{Service string "json:\"service\" protobuf:\"1\""}](#struct{service-string-"json:\"service\"-protobuf:\"1\""})_
 
 InterfaceGRPCProbe specifies a GRPC probe.
 
@@ -346,7 +346,7 @@ _Appears in:_
 
 ### ObjectMetric
 
-_Underlying type:_ _[struct{MetricName string "json:\"metricName\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\""; AverageValue string "json:\"averageValue,omitempty\""; Value string "json:\"value,omitempty\""; DescribedObject k8s.io/api/autoscaling/v2.CrossVersionObjectReference "json:\"objectReference\""}](#struct{metricname-string-"json:\"metricname\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"";-averagevalue-string-"json:\"averagevalue,omitempty\"";-value-string-"json:\"value,omitempty\"";-describedobject-k8sioapiautoscalingv2crossversionobjectreference-"json:\"objectreference\""})_
+_Underlying type:_ _[struct{MetricName string "json:\"metricName\" protobuf:\"1\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\" protobuf:\"2\""; AverageValue string "json:\"averageValue,omitempty\" protobuf:\"3\""; Value string "json:\"value,omitempty\" protobuf:\"4\""; DescribedObject k8s.io/api/autoscaling/v2.CrossVersionObjectReference "json:\"objectReference\" protobuf:\"5\""}](#struct{metricname-string-"json:\"metricname\"-protobuf:\"1\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"-protobuf:\"2\"";-averagevalue-string-"json:\"averagevalue,omitempty\"-protobuf:\"3\"";-value-string-"json:\"value,omitempty\"-protobuf:\"4\"";-describedobject-k8sioapiautoscalingv2crossversionobjectreference-"json:\"objectreference\"-protobuf:\"5\""})_
 
 ObjectMetric defines a custom object metric for the autoscaler
 
