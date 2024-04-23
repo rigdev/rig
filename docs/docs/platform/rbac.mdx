@@ -4,10 +4,10 @@ For granular access control, Rig offers Role Based Access Control (RBAC), with f
 where a role has a set of permissions that define what actions a user can perform, and on what resources they can perform those actions.
 
 The roles and their permissions are rougly as follows:
-- Admin: Can perform all actions on all resources
-- Owner: Can do everything a Developer can do, but can also create and delete capsules, delete images, and manage users and their roles.
-- Developer: Can do everything a Viewer can do, and can also perform deployments and create new images.
 - Viewer: Can view all resources, but cannot perform any actions.
+- Developer: Can do everything a Viewer can do, and can also perform deployments and create new images.
+- Owner: Can do everything a Developer can do, but can also create and delete capsules, delete images.
+- Admin: Can perform all actions on all resources
 
 For a more detailed view of the permissions for each role, see the [Role Permissions](#role-permissions) section.
 
@@ -61,6 +61,35 @@ The following table shows the permissions for each role:
 :::info
 This table is not exhaustive, and is subject to change.
 It does however cover the most important permissions.
+
+## Create New Roles
+Using the Rig CLI, you can create new roles with access to specific projects and/or environments. This is done by performing the following sequence of commands:
+
+```bash
+# Create a new role
+rig role create nginx-staging-role --type developer --project nginx-project --environment staging
+rig role create nginx-production-role --type developer --project nginx-project --environment production
+
+# Create a group
+rig group create nginx-developer
+
+# Add the roles to the group
+rig role assign nginx-staging-role nginx-developer
+rig role assign nginx-production-role nginx-developer
+
+# Add a user to the group
+rig group add-member aee9c0f3-98ed-4c31-88c5-3a07d5cb8152 nginx-developer
+```
+
+In this example, the user will inherit the roles of the group `nginx-developer`, and will have permissions from the `nginx-staging-role` and 
+`nginx-production-role` roles. The user will thus be able to perform the developer actions on the `nginx-project` project in both the `staging` and `production` environments.
+
+Additionally, once the group is created it is also possible to assign users through the dashboad as shown in the [Assign role](#assign-role) section.
+
+:::info
+Please note that the the resulting permission set is the union of the permissions of the roles assigned to the group. This means 
+that if a group has a role with project scope `*` and a role with project scope `nginx-project`, the user will have access to all 
+projects according to the first role, and access to the `nginx-project` according to the first and second role.
 
 
 
