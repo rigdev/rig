@@ -7834,6 +7834,26 @@ Empty response for updating users settings for the Rig project.
 
 
 
+<a name="platform-v1-CapsuleEnvironment"></a>
+
+### CapsuleEnvironment
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| spec | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-CapsuleSpecExtension"></a>
 
 ### CapsuleSpecExtension
