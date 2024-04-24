@@ -54,6 +54,7 @@ func (s *K8sTestSuite) SetupSuite() {
 
 	t := s.Suite.T()
 
+	scheme := scheme.New()
 	s.TestEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases"),
@@ -66,10 +67,10 @@ func (s *K8sTestSuite) SetupSuite() {
 
 	var err error
 	cfg, err := s.TestEnv.Start()
+
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	scheme := scheme.New()
 	manager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:  scheme,
 		Metrics: server.Options{BindAddress: "0"},
@@ -87,7 +88,7 @@ func (s *K8sTestSuite) SetupSuite() {
 
 	opConfig := &configv1alpha1.OperatorConfig{
 		Pipeline: configv1alpha1.Pipeline{
-			RoutesStep: configv1alpha1.RoutesStep{
+			RoutesStep: configv1alpha1.CapsuleStep{
 				Plugin: "rigdev.ingress_routes",
 				Config: `
 clusterIssuer: "test"
@@ -96,10 +97,12 @@ ingressClassName: ""
 disableTLS: false
 `,
 			},
-		},
-		PrometheusServiceMonitor: &configv1alpha1.PrometheusServiceMonitor{
-			Path:     "metrics",
-			PortName: "metricsport",
+			ServiceMonitorStep: configv1alpha1.CapsuleStep{
+				Plugin: "rigdev.service_monitor",
+				Config: `
+path: "metrics"
+portName: "metricsport"`,
+			},
 		},
 	}
 
@@ -111,7 +114,7 @@ disableTLS: false
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 	builtinBinPath := path.Join(path.Dir(path.Dir(path.Dir(wd))), "bin", "rig-operator")
-	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
+	pmanager, err := plugin.NewManager(cfg, plugin.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
 
 	cs := capabilities.NewService(cc, clientSet.Discovery(), nil)

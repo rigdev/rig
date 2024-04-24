@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/rigdev/rig/pkg/pipeline"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -28,9 +30,35 @@ func (m *GRPCServer) Initialize(
 	_ context.Context,
 	req *apiplugin.InitializeRequest,
 ) (*apiplugin.InitializeResponse, error) {
+	var restConfig *rest.Config
+	var err error
+	if req.RestConfig == nil {
+		restConfig, err = rest.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		TLSClientConfig := rest.TLSClientConfig{}
+		if err = json.Unmarshal(req.RestConfig.TlsConfig, &TLSClientConfig); err != nil {
+			return nil, err
+		}
+
+		restConfig = &rest.Config{
+			Host:            req.RestConfig.Host,
+			TLSClientConfig: TLSClientConfig,
+			BearerToken:     req.RestConfig.BearerToken,
+		}
+	}
+
+	client, err := client.New(restConfig, client.Options{Scheme: m.scheme})
+	if err != nil {
+		return nil, err
+	}
+
 	if err := m.Impl.Initialize(InitializeRequest{
 		Config: []byte(req.GetPluginConfig()),
 		Tag:    req.GetTag(),
+		Reader: client,
 	}); err != nil {
 		return nil, err
 	}
@@ -252,6 +280,7 @@ type Plugin interface {
 type InitializeRequest struct {
 	Config []byte
 	Tag    string
+	Reader client.Reader
 }
 
 // StartPlugin starts the plugin so it can listen for requests to be run on a CapsuleRequest

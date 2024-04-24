@@ -5,10 +5,11 @@ config:
   webhooksEnabled: true
   devModeEnabled: false
   leaderElectionEnabled: true
-  prometheusServiceMonitor:
-    path: ""
-    portName: ""
   pipeline:
+    serviceAccountStep:
+      plugin: "rigdev.service_account"
+    deploymentStep:
+      plugin: "rigdev.deployment"
     routesStep:
       plugin: "rigdev.ingress_routes"
       config: |
@@ -16,6 +17,13 @@ config:
         createCertificateResources: false
         ingressClassName: ""
         disableTLS: false
+    cronJobsStep:
+      plugin: "rigdev.cron_jobs"
+    # serviceMonitorStep:
+    #   plugin: "rigdev.service_monitor"
+    #   config: |
+    #     portName: "system"
+    #     path: "metrics"
     steps:
       []
       # - plugins:

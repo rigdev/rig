@@ -1,0 +1,30 @@
+# Service Monitor Plugin
+The `rigdev.service_monitor` plugin spawns a Prometheus ServiceMonitor per capsule
+for use with a Prometheus Operator stack. The service monitor will monitor services with the same name as the capsule and will use the endpoint specified by the `path` and `portName` fields in the configuration.
+
+## Example
+
+Config (in the context of the rig-operator Helm values):
+```
+config:
+  pipeline:
+    serviceMonitorStep:
+      plugin: "rigdev.service_monitor"
+      config: |
+        path: metrics
+        portName: metricsport
+```
+
+## Config
+
+
+
+Configuration for the deployment plugin
+
+| Field | Description |
+| --- | --- |
+| `Path` _string_ |  |
+| `PortName` _string_ |  |
+
+
+

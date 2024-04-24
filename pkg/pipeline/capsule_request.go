@@ -17,6 +17,20 @@ import (
 
 const (
 	LabelOwnedByCapsule = "rig.dev/owned-by-capsule"
+
+	AnnotationOverrideOwnership = "rig.dev/override-ownership"
+	AnnotationPullSecret        = "rig.dev/pull-secret"
+
+	LabelSharedConfig = "rig.dev/shared-config"
+	LabelCapsule      = "rig.dev/capsule"
+	LabelCron         = "batch.kubernets.io/cronjob"
+
+	RigDevRolloutLabel = "rig.dev/rollout"
+
+	AnnotationChecksumFiles     = "rig.dev/config-checksum-files"
+	AnnotationChecksumAutoEnv   = "rig.dev/config-checksum-auto-env"
+	AnnotationChecksumEnv       = "rig.dev/config-checksum-env"
+	AnnotationChecksumSharedEnv = "rig.dev/config-checksum-shared-env"
 )
 
 // CapsuleRequest contains a single reconcile request for a given capsule.

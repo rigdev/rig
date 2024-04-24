@@ -1,14 +1,17 @@
-package pipeline
+// +groupName=plugins.rig.dev -- Only used for config doc generation
+//
+//nolint:revive
+package deployment
 
 import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"path"
 	"slices"
-	"strings"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/hash"
 	"github.com/rigdev/rig/pkg/pipeline"
@@ -23,28 +26,48 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	RigDevRolloutLabel = "rig.dev/rollout"
+	Name = "rigdev.deployment"
 )
 
-var _defaultPodLabels = []string{RigDevRolloutLabel}
-
-type DeploymentStep struct{}
-
-func NewDeploymentStep() *DeploymentStep {
-	return &DeploymentStep{}
+// Configuration for the deployment plugin
+// +kubebuilder:object:root=true
+type Config struct {
 }
 
-func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.CapsuleRequest) error {
-	cfgs, err := s.getConfigs(ctx, req)
+type Plugin struct {
+	reader      client.Reader
+	configBytes []byte
+}
+
+func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
+	p.reader = req.Reader
+	p.configBytes = req.Config
+	return nil
+}
+
+func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+	// We do not have any configuration for this step?
+
+	// var config Config
+	var err error
+	if len(p.configBytes) > 0 {
+		_, err = plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
+		if err != nil {
+			return err
+		}
+	}
+
+	cfgs, err := p.getConfigs(ctx, req)
 	if err != nil {
 		return err
 	}
 
-	checksums, err := s.getConfigChecksums(req, *cfgs)
+	checksums, err := p.getConfigChecksums(req, *cfgs)
 	if err != nil {
 		return err
 	}
@@ -56,19 +79,29 @@ func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.CapsuleRequest)
 		return err
 	}
 
-	deployment, err := s.createDeployment(current, req, cfgs, checksums)
+	deployment, err := p.createDeployment(current, req, cfgs, checksums)
 	if err != nil {
 		return err
+	}
+
+	if len(req.Capsule().Spec.Interfaces) > 0 {
+		if err := p.handleInterfaces(req, deployment); err != nil {
+			return err
+		}
+
+		if err := req.Set(p.createService(req)); err != nil {
+			return err
+		}
 	}
 
 	if err := req.Set(deployment); err != nil {
 		return err
 	}
 
-	if ok, err := s.shouldCreateHPA(req); err != nil {
+	if ok, err := p.shouldCreateHPA(req); err != nil {
 		return err
 	} else if ok {
-		hpa, _, err := s.createHPA(req)
+		hpa, _, err := p.createHPA(req)
 		if err != nil {
 			return err
 		}
@@ -81,113 +114,30 @@ func (s *DeploymentStep) Apply(ctx context.Context, req pipeline.CapsuleRequest)
 	return nil
 }
 
-func FileToVolume(f v1alpha2.File) (v1.Volume, v1.VolumeMount) {
-	var volume v1.Volume
-	var mount v1.VolumeMount
-	var name string
-	switch f.Ref.Kind {
-	case "ConfigMap":
-		name = "configmap-" + strings.ReplaceAll(f.Ref.Name, ".", "-")
-		volume = v1.Volume{
-			Name: name,
-			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: f.Ref.Name,
-					},
-					Items: []v1.KeyToPath{
-						{
-							Key:  f.Ref.Key,
-							Path: path.Base(f.Path),
-						},
-					},
-				},
-			},
-		}
-	case "Secret":
-		name = "secret-" + strings.ReplaceAll(f.Ref.Name, ".", "-")
-		volume = v1.Volume{
-			Name: name,
-			VolumeSource: v1.VolumeSource{
-				Secret: &v1.SecretVolumeSource{
-					SecretName: f.Ref.Name,
-					Items: []v1.KeyToPath{
-						{
-							Key:  f.Ref.Key,
-							Path: path.Base(f.Path),
-						},
-					},
-				},
-			},
-		}
-	}
-	if name != "" {
-		mount = v1.VolumeMount{
-			Name:      name,
-			MountPath: f.Path,
-			SubPath:   path.Base(f.Path),
-		}
-	}
-
-	return volume, mount
-}
-
-func FilesToVolumes(files []v1alpha2.File) ([]v1.Volume, []v1.VolumeMount) {
-	var volumes []v1.Volume
-	var mounts []v1.VolumeMount
-	for _, f := range files {
-		volume, mount := FileToVolume(f)
-		volumes = append(volumes, volume)
-		mounts = append(mounts, mount)
-	}
-	return volumes, mounts
-}
-
-func EnvSources(refs []v1alpha2.EnvReference) []v1.EnvFromSource {
-	var res []v1.EnvFromSource
-	for _, e := range refs {
-		switch e.Kind {
-		case "ConfigMap":
-			res = append(res, v1.EnvFromSource{
-				ConfigMapRef: &v1.ConfigMapEnvSource{
-					LocalObjectReference: v1.LocalObjectReference{Name: e.Name},
-				},
-			})
-		case "Secret":
-			res = append(res, v1.EnvFromSource{
-				SecretRef: &v1.SecretEnvSource{
-					LocalObjectReference: v1.LocalObjectReference{Name: e.Name},
-				},
-			})
-		}
-	}
-	return res
-}
-
-func (s *DeploymentStep) createDeployment(
+func (p *Plugin) createDeployment(
 	current *appsv1.Deployment,
 	req pipeline.CapsuleRequest,
 	cfgs *configs,
 	checksums checksums,
 ) (*appsv1.Deployment, error) {
-	volumes, volumeMounts := FilesToVolumes(req.Capsule().Spec.Files)
+	volumes, volumeMounts := pipeline.FilesToVolumes(req.Capsule().Spec.Files)
 
-	podAnnotations := createPodAnnotations(req)
+	podAnnotations := pipeline.CreatePodAnnotations(req)
 	if checksums.files != "" {
-		podAnnotations[AnnotationChecksumFiles] = checksums.files
+		podAnnotations[pipeline.AnnotationChecksumFiles] = checksums.files
 	}
 	if checksums.autoEnv != "" {
-		podAnnotations[AnnotationChecksumAutoEnv] = checksums.autoEnv
+		podAnnotations[pipeline.AnnotationChecksumAutoEnv] = checksums.autoEnv
 	}
 	if checksums.env != "" {
-		podAnnotations[AnnotationChecksumEnv] = checksums.env
+		podAnnotations[pipeline.AnnotationChecksumEnv] = checksums.env
 	}
 	if checksums.sharedEnv != "" {
-		podAnnotations[AnnotationChecksumSharedEnv] = checksums.sharedEnv
+		podAnnotations[pipeline.AnnotationChecksumSharedEnv] = checksums.sharedEnv
 	}
 
 	env := req.Capsule().Spec.Env
-	envFrom := EnvSources(env.From)
+	envFrom := pipeline.EnvSources(env.From)
 	if !env.DisableAutomatic {
 		if _, ok := cfgs.configMaps[req.Capsule().GetName()]; ok {
 			envFrom = append(envFrom, v1.EnvFromSource{
@@ -240,7 +190,7 @@ func (s *DeploymentStep) createDeployment(
 	}
 
 	replicas := ptr.New(int32(req.Capsule().Spec.Scale.Horizontal.Instances.Min))
-	hasHPA, err := s.shouldCreateHPA(req)
+	hasHPA, err := p.shouldCreateHPA(req)
 	if err != nil {
 		return nil, err
 	}
@@ -261,13 +211,13 @@ func (s *DeploymentStep) createDeployment(
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: s.getPodsSelector(current, req),
+				MatchLabels: p.getPodsSelector(current, req),
 			},
 			Replicas: replicas,
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: podAnnotations,
-					Labels:      s.getPodLabels(current, req),
+					Labels:      p.getPodLabels(current, req),
 				},
 				Spec: v1.PodSpec{
 					Containers:         []v1.Container{c},
@@ -288,24 +238,83 @@ func (s *DeploymentStep) createDeployment(
 	return d, nil
 }
 
-func createPodAnnotations(req pipeline.CapsuleRequest) map[string]string {
-	podAnnotations := map[string]string{}
-	for _, l := range _defaultPodLabels {
-		if v, ok := req.Capsule().Annotations[l]; ok {
-			podAnnotations[l] = v
+func (p *Plugin) handleInterfaces(req pipeline.CapsuleRequest, deployment *appsv1.Deployment) error {
+	for i, container := range deployment.Spec.Template.Spec.Containers {
+		if container.Name != req.Capsule().Name {
+			continue
 		}
+
+		var ports []v1.ContainerPort
+		for _, ni := range req.Capsule().Spec.Interfaces {
+			ports = append(ports, v1.ContainerPort{
+				Name:          ni.Name,
+				ContainerPort: ni.Port,
+			})
+
+			if ni.Liveness != nil {
+				container.LivenessProbe = &v1.Probe{
+					ProbeHandler: v1.ProbeHandler{
+						HTTPGet: &v1.HTTPGetAction{
+							Path: ni.Liveness.Path,
+							Port: intstr.FromInt32(ni.Port),
+						},
+					},
+				}
+			}
+
+			if ni.Readiness != nil {
+				container.ReadinessProbe = &v1.Probe{
+					ProbeHandler: v1.ProbeHandler{
+						HTTPGet: &v1.HTTPGetAction{
+							Path: ni.Readiness.Path,
+							Port: intstr.FromInt32(ni.Port),
+						},
+					},
+				}
+			}
+		}
+		container.Ports = ports
+		deployment.Spec.Template.Spec.Containers[i] = container
 	}
-	return podAnnotations
+
+	return nil
 }
 
-func (s *DeploymentStep) getPodLabels(current *appsv1.Deployment, req pipeline.CapsuleRequest) map[string]string {
+func (p *Plugin) createService(req pipeline.CapsuleRequest) *v1.Service {
+	svc := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Capsule().Name,
+			Namespace: req.Capsule().Namespace,
+			Labels: map[string]string{
+				pipeline.LabelCapsule: req.Capsule().Name,
+			},
+		},
+		Spec: v1.ServiceSpec{
+			Selector: map[string]string{
+				pipeline.LabelCapsule: req.Capsule().Name,
+			},
+		},
+	}
+
+	for _, inf := range req.Capsule().Spec.Interfaces {
+		svc.Spec.Ports = append(svc.Spec.Ports, v1.ServicePort{
+			Name:       inf.Name,
+			Port:       inf.Port,
+			TargetPort: intstr.FromString(inf.Name),
+		})
+	}
+
+	return svc
+}
+
+func (p *Plugin) getPodLabels(current *appsv1.Deployment, req pipeline.CapsuleRequest) map[string]string {
 	labels := map[string]string{}
-	maps.Copy(labels, s.getPodsSelector(current, req))
-	labels[LabelCapsule] = req.Capsule().Name
+	maps.Copy(labels, p.getPodsSelector(current, req))
+	labels[pipeline.LabelCapsule] = req.Capsule().Name
 	return labels
 }
 
-func (s *DeploymentStep) getPodsSelector(current *appsv1.Deployment, req pipeline.CapsuleRequest) map[string]string {
+func (p *Plugin) getPodsSelector(current *appsv1.Deployment, req pipeline.CapsuleRequest) map[string]string {
 	if current != nil {
 		if s := current.Spec.Selector; s != nil {
 			if len(s.MatchLabels) > 0 && len(s.MatchExpressions) == 0 {
@@ -315,11 +324,11 @@ func (s *DeploymentStep) getPodsSelector(current *appsv1.Deployment, req pipelin
 	}
 
 	return map[string]string{
-		LabelCapsule: req.Capsule().Name,
+		pipeline.LabelCapsule: req.Capsule().Name,
 	}
 }
 
-func (s *DeploymentStep) getConfigChecksums(req pipeline.CapsuleRequest, cfgs configs) (checksums, error) {
+func (p *Plugin) getConfigChecksums(req pipeline.CapsuleRequest, cfgs configs) (checksums, error) {
 	sharedEnv, err := configSharedEnvChecksum(cfgs)
 	if err != nil {
 		return checksums{}, err
@@ -478,7 +487,7 @@ func configFilesChecksum(req pipeline.CapsuleRequest, cfgs configs) (string, err
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleRequest) (*configs, error) {
+func (p *Plugin) getConfigs(ctx context.Context, req pipeline.CapsuleRequest) (*configs, error) {
 	configs := &configs{
 		configMaps: map[string]*v1.ConfigMap{},
 		secrets:    map[string]*v1.Secret{},
@@ -486,10 +495,10 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 
 	// Get shared env
 	var configMapList v1.ConfigMapList
-	if err := req.Reader().List(ctx, &configMapList, &client.ListOptions{
+	if err := p.reader.List(ctx, &configMapList, &client.ListOptions{
 		Namespace: req.Capsule().Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
-			LabelSharedConfig: "true",
+			pipeline.LabelSharedConfig: "true",
 		}),
 	}); err != nil {
 		return nil, fmt.Errorf("could not list shared env configmaps: %w", err)
@@ -500,10 +509,10 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 		configs.configMaps[cm.Name] = &cm
 	}
 	var secretList v1.SecretList
-	if err := req.Reader().List(ctx, &secretList, &client.ListOptions{
+	if err := p.reader.List(ctx, &secretList, &client.ListOptions{
 		Namespace: req.Capsule().Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
-			LabelSharedConfig: "true",
+			pipeline.LabelSharedConfig: "true",
 		}),
 	}); err != nil {
 		return nil, fmt.Errorf("could not list shared env secrets: %w", err)
@@ -518,32 +527,32 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 
 	// Get automatic env
 	if !env.DisableAutomatic {
-		if err := s.setUsedSource(ctx, req, configs, "ConfigMap", req.Capsule().Name, false); err != nil {
+		if err := p.setUsedSource(ctx, req, configs, "ConfigMap", req.Capsule().Name, false); err != nil {
 			return nil, err
 		}
 
-		if err := s.setUsedSource(ctx, req, configs, "Secret", req.Capsule().Name, false); err != nil {
+		if err := p.setUsedSource(ctx, req, configs, "Secret", req.Capsule().Name, false); err != nil {
 			return nil, err
 		}
 	}
 
 	// Get envs
 	for _, e := range env.From {
-		if err := s.setUsedSource(ctx, req, configs, e.Kind, e.Name, true); err != nil {
+		if err := p.setUsedSource(ctx, req, configs, e.Kind, e.Name, true); err != nil {
 			return nil, err
 		}
 	}
 
 	// Get files
 	for _, f := range req.Capsule().Spec.Files {
-		if err := s.setUsedSource(ctx, req, configs, f.Ref.Kind, f.Ref.Name, true); err != nil {
+		if err := p.setUsedSource(ctx, req, configs, f.Ref.Kind, f.Ref.Name, true); err != nil {
 			return nil, err
 		}
 	}
 
-	if secret := req.Capsule().Annotations[AnnotationPullSecret]; secret != "" {
+	if secret := req.Capsule().Annotations[pipeline.AnnotationPullSecret]; secret != "" {
 		configs.imagePullSecret = secret
-		if err := s.setUsedSource(ctx, req, configs, "Secret", secret, true); err != nil {
+		if err := p.setUsedSource(ctx, req, configs, "Secret", secret, true); err != nil {
 			return nil, err
 		}
 	}
@@ -551,7 +560,7 @@ func (s *DeploymentStep) getConfigs(ctx context.Context, req pipeline.CapsuleReq
 	return configs, nil
 }
 
-func (s *DeploymentStep) setUsedSource(
+func (p *Plugin) setUsedSource(
 	ctx context.Context,
 	req pipeline.CapsuleRequest,
 	cfgs *configs,
@@ -586,7 +595,7 @@ func (s *DeploymentStep) setUsedSource(
 			return nil
 		}
 		var cm v1.ConfigMap
-		if err := req.Reader().Get(ctx, types.NamespacedName{
+		if err := p.reader.Get(ctx, types.NamespacedName{
 			Name:      name,
 			Namespace: req.Capsule().Namespace,
 		}, &cm); err != nil {
@@ -599,7 +608,7 @@ func (s *DeploymentStep) setUsedSource(
 			return nil
 		}
 		var s v1.Secret
-		if err := req.Reader().Get(ctx, types.NamespacedName{
+		if err := p.reader.Get(ctx, types.NamespacedName{
 			Name:      name,
 			Namespace: req.Capsule().Namespace,
 		}, &s); err != nil {
@@ -611,15 +620,15 @@ func (s *DeploymentStep) setUsedSource(
 	return nil
 }
 
-func (s *DeploymentStep) shouldCreateHPA(req pipeline.CapsuleRequest) (bool, error) {
-	_, res, err := s.createHPA(req)
+func (p *Plugin) shouldCreateHPA(req pipeline.CapsuleRequest) (bool, error) {
+	_, res, err := p.createHPA(req)
 	if err != nil {
 		return false, err
 	}
 	return res, nil
 }
 
-func (s *DeploymentStep) createHPA(req pipeline.CapsuleRequest) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
+func (p *Plugin) createHPA(req pipeline.CapsuleRequest) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,

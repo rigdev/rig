@@ -2,6 +2,8 @@ package plugin
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -18,6 +20,7 @@ import (
 	"google.golang.org/grpc"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -35,6 +38,7 @@ func newPluginExecutor(
 	name, stepTag, pluginTag, pluginConfig, path string,
 	args []string,
 	logger logr.Logger,
+	restConfig *rest.Config,
 ) (*pluginExecutor, error) {
 	tag := stepTag
 	if pluginTag != "" {
@@ -48,7 +52,7 @@ func newPluginExecutor(
 		tag:        tag,
 	}
 
-	return p, p.start(context.Background(), pluginConfig)
+	return p, p.start(context.Background(), pluginConfig, restConfig)
 }
 
 type loggerSink struct {
@@ -63,7 +67,7 @@ func (l *loggerSink) Accept(name string, level hclog.Level, msg string, args ...
 	logger.Info(msg)
 }
 
-func (p *pluginExecutor) start(ctx context.Context, pluginConfig string) error {
+func (p *pluginExecutor) start(ctx context.Context, pluginConfig string, restConfig *rest.Config) error {
 	pLogger := hclog.NewInterceptLogger(&hclog.LoggerOptions{
 		Name:       p.name,
 		Output:     io.Discard,
@@ -101,7 +105,7 @@ func (p *pluginExecutor) start(ctx context.Context, pluginConfig string) error {
 
 	p.pluginClient = raw.(*pluginClient)
 
-	return p.pluginClient.Initialize(ctx, pluginConfig, p.tag)
+	return p.pluginClient.Initialize(ctx, pluginConfig, p.tag, restConfig)
 }
 
 func (p *pluginExecutor) Stop(context.Context) {
@@ -148,10 +152,22 @@ type pluginClient struct {
 	client apiplugin.PluginServiceClient
 }
 
-func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, tag string) error {
-	_, err := m.client.Initialize(ctx, &apiplugin.InitializeRequest{
+func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, tag string, restConfig *rest.Config) error {
+	tlsConfigBytes, err := json.Marshal(restConfig.TLSClientConfig)
+	if err != nil {
+		return err
+	}
+
+	restCfg := &apiplugin.RestConfig{
+		Host:        restConfig.Host,
+		BearerToken: restConfig.BearerToken,
+		TlsConfig:   tlsConfigBytes,
+	}
+
+	_, err = m.client.Initialize(ctx, &apiplugin.InitializeRequest{
 		PluginConfig: pluginConfig,
 		Tag:          tag,
+		RestConfig:   restCfg,
 	})
 	return err
 }
@@ -212,6 +228,7 @@ func (s requestServer) GetObject(
 	co.SetName(req.GetName())
 	if req.GetCurrent() {
 		if err := s.req.GetExisting(co); err != nil {
+			fmt.Println("error getting existing object", err)
 			return nil, err
 		}
 	} else {

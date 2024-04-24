@@ -1,10 +1,15 @@
-package pipeline
+// +groupName=plugins.rig.dev -- Only used for config doc generation
+//
+//nolint:revive
+package cron_jobs
 
 import (
 	"context"
 	"fmt"
 	"net/url"
 
+	"github.com/hashicorp/go-hclog"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
@@ -14,14 +19,36 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type CronJobStep struct{}
+const (
+	Name = "rigdev.cron_jobs"
+)
 
-func NewCronJobStep() *CronJobStep {
-	return &CronJobStep{}
+// Configuration for the deployment plugin
+// +kubebuilder:object:root=true
+type Config struct {
 }
 
-func (s *CronJobStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
-	jobs, err := s.createCronJobs(req)
+type Plugin struct {
+	configBytes []byte
+}
+
+func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
+	p.configBytes = req.Config
+	return nil
+}
+
+func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+	// We do not have any configuration for this step?
+	// var config Config
+	var err error
+	if len(p.configBytes) > 0 {
+		_, err = plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
+		if err != nil {
+			return err
+		}
+	}
+
+	jobs, err := p.createCronJobs(req)
 	if err != nil {
 		return err
 	}
@@ -35,7 +62,7 @@ func (s *CronJobStep) Apply(_ context.Context, req pipeline.CapsuleRequest) erro
 	return nil
 }
 
-func (s *CronJobStep) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.CronJob, error) {
+func (p *Plugin) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.CronJob, error) {
 	var res []*batchv1.CronJob
 	deployment := &appsv1.Deployment{}
 	if err := req.GetNew(deployment); errors.IsNotFound(err) {
@@ -77,19 +104,15 @@ func (s *CronJobStep) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.Cr
 			return nil, fmt.Errorf("neither Command nor URL was set on job %s", job.Name)
 		}
 
-		annotations := createPodAnnotations(req)
+		annotations := pipeline.CreatePodAnnotations(req)
 
 		j := &batchv1.CronJob{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "batch/v1",
-				APIVersion: "CronJob",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-%s", req.Capsule().Name, job.Name),
 				Namespace: req.Capsule().Namespace,
 				Labels: map[string]string{
-					LabelCapsule: req.Capsule().Name,
-					LabelCron:    job.Name,
+					pipeline.LabelCapsule: req.Capsule().Name,
+					pipeline.LabelCron:    job.Name,
 				},
 				Annotations: annotations,
 			},
@@ -99,8 +122,8 @@ func (s *CronJobStep) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.Cr
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: annotations,
 						Labels: map[string]string{
-							LabelCapsule: req.Capsule().Name,
-							LabelCron:    job.Name,
+							pipeline.LabelCapsule: req.Capsule().Name,
+							pipeline.LabelCron:    job.Name,
 						},
 					},
 					Spec: batchv1.JobSpec{

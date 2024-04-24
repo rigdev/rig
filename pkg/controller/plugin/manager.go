@@ -14,9 +14,11 @@ import (
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
+	"k8s.io/client-go/rest"
 )
 
 type Manager struct {
+	restConfig        *rest.Config
 	plugins           map[string]Info
 	builtinBinaryPath string
 }
@@ -74,6 +76,13 @@ func validatePluginName(s string) error {
 // TODO Find a way to import the names of all plugins here using the map from  github.com/rigdev/rig/plugins/allplugins
 // This creates a dependency cycle
 var allPlugins = []string{
+	"rigdev.service_account",
+	"rigdev.deployment",
+	"rigdev.ingress_routes",
+	"rigdev.cron_jobs",
+	"rigdev.vpa",
+	"rigdev.service_monitor",
+
 	"rigdev.annotations",
 	"rigdev.datadog",
 	"rigdev.env_mapping",
@@ -82,12 +91,12 @@ var allPlugins = []string{
 	"rigdev.object_template",
 	"rigdev.placement",
 	"rigdev.sidecar",
-	"rigdev.ingress_routes",
 }
 
-func NewManager(opts ...ManagerOption) (*Manager, error) {
+func NewManager(restCfg *rest.Config, opts ...ManagerOption) (*Manager, error) {
 	manager := &Manager{
-		plugins: map[string]Info{},
+		restConfig: restCfg,
+		plugins:    map[string]Info{},
 	}
 
 	for _, o := range opts {
@@ -244,6 +253,7 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 			plugin.Name, step.Tag, plugin.Tag, plugin.Config, info.BinaryPath,
 			info.Args,
 			logger,
+			m.restConfig,
 		)
 		if err != nil {
 			return nil, err

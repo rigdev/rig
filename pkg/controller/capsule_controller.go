@@ -60,18 +60,6 @@ type CapsuleReconciler struct {
 }
 
 const (
-	AnnotationChecksumFiles     = "rig.dev/config-checksum-files"
-	AnnotationChecksumAutoEnv   = "rig.dev/config-checksum-auto-env"
-	AnnotationChecksumEnv       = "rig.dev/config-checksum-env"
-	AnnotationChecksumSharedEnv = "rig.dev/config-checksum-shared-env"
-
-	AnnotationOverrideOwnership = "rig.dev/override-ownership"
-	AnnotationPullSecret        = "rig.dev/pull-secret"
-
-	LabelSharedConfig = "rig.dev/shared-config"
-	LabelCapsule      = "rig.dev/capsule"
-	LabelCron         = "batch.kubernets.io/cronjob"
-
 	fieldFilesConfigMapName = ".spec.files.configMap.name"
 	fieldFilesSecretName    = ".spec.files.secret.name"
 	fieldEnvConfigMapName   = ".spec.env.from.configMapName"
@@ -166,7 +154,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		b = b.Owns(&monitorv1.ServiceMonitor{})
 	}
 
-	if r.Config.VerticalPodAutoscaler.Enabled {
+	if r.Config.Pipeline.VPAStep.Plugin != "" {
 		b = b.Owns(&vpav1.VerticalPodAutoscaler{})
 	}
 
@@ -202,7 +190,7 @@ func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []ctrl.Request {
 		var capsulesWithReference v1alpha2.CapsuleList
 		// Queue reconcile for all capsules in namespace if this is a shared config
-		if sharedConfig := o.GetLabels()[LabelSharedConfig]; sharedConfig == "true" {
+		if sharedConfig := o.GetLabels()[pipeline.LabelSharedConfig]; sharedConfig == "true" {
 			if err := c.List(ctx, &capsulesWithReference, client.InNamespace(o.GetNamespace())); err != nil {
 				log.Error(err, "could not get capsules")
 			}
@@ -348,7 +336,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	var options []pipeline.CapsuleRequestOption
-	if v, _ := strconv.ParseBool(capsule.Annotations[AnnotationOverrideOwnership]); v {
+	if v, _ := strconv.ParseBool(capsule.Annotations[pipeline.AnnotationOverrideOwnership]); v {
 		options = append(options, pipeline.WithForce())
 	}
 

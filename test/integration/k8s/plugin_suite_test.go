@@ -44,7 +44,9 @@ func (s *PluginTestSuite) SetupSuite() {
 
 	t := s.Suite.T()
 
+	scheme := scheme.New()
 	s.TestEnv = &envtest.Environment{
+
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases"),
 			filepath.Join("."),
@@ -62,7 +64,6 @@ func (s *PluginTestSuite) SetupSuite() {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	scheme := scheme.New()
 	manager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:  scheme,
 		Metrics: server.Options{BindAddress: "0"},
@@ -79,11 +80,13 @@ func (s *PluginTestSuite) SetupSuite() {
 	s.Client = k8sClient
 
 	opConfig := &configv1alpha1.OperatorConfig{
-		PrometheusServiceMonitor: &configv1alpha1.PrometheusServiceMonitor{
-			Path:     "metrics",
-			PortName: "metricsport",
-		},
 		Pipeline: configv1alpha1.Pipeline{
+			ServiceMonitorStep: configv1alpha1.CapsuleStep{
+				Plugin: "rigdev.service_monitor",
+				Config: `
+path: "metrics"
+portName: "metricsport"`,
+			},
 			Steps: []configv1alpha1.Step{
 				{
 					Plugins: []configv1alpha1.Plugin{
@@ -130,7 +133,7 @@ container:
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 	builtinBinPath := path.Join(path.Dir(path.Dir(path.Dir(wd))), "bin", "rig-operator")
-	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
+	pmanager, err := plugin.NewManager(cfg, plugin.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
 	lc := fxtest.NewLifecycle(t)
 	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc)
