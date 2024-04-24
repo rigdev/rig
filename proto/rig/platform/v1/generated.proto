@@ -10,7 +10,7 @@ message CapsuleStar {
   string name = 3;
   string project = 4;
   CapsuleSpecExtension capsuleBase = 5;
-  map<string, CapsuleSpecExtension> environments = 6;
+  repeated string environments = 6;
 }
 
 message CapsuleSpecExtension {
@@ -31,6 +31,15 @@ message ConfigFile {
   string path = 1;
   bytes content = 2;
   bool isSecret = 3;
+}
+
+message CapsuleEnvironment {
+  string kind = 1;
+  string apiVersion = 2;
+  string name = 3;
+  string project = 4;
+  string environment = 5;
+  CapsuleSpecExtension spec = 6;
 }
 
 message Environment {

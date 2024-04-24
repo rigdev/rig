@@ -35,6 +35,7 @@ var (
 	}
 	compiledTypes = []any{
 		v1.CapsuleStar{},
+		v1.CapsuleEnvironment{},
 		v1.Environment{},
 		v1.Project{},
 	}
