@@ -7904,23 +7904,7 @@ Empty response for updating users settings for the Rig project.
 | name | [string](#string) |  |  |
 | project | [string](#string) |  |  |
 | capsuleBase | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
-| environments | [CapsuleStar.EnvironmentsEntry](#platform-v1-CapsuleStar-EnvironmentsEntry) | repeated |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleStar-EnvironmentsEntry"></a>
-
-### CapsuleStar.EnvironmentsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
+| environments | [string](#string) | repeated |  |
 
 
 

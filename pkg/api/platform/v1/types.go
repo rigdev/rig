@@ -60,12 +60,30 @@ type CapsuleStar struct {
 	metav1.TypeMeta `json:",inline"`
 	// Name,Project is unique
 	Name string `json:"name" protobuf:"3"`
-	// Project references an existing Project2 type with the given name
-	// Will throw an error (in the platform) if the project does not exist
+	// Project references an existing Project type with the given name
+	// Will throw an error (in the platform) if the Project does not exist
 	Project string `json:"project" protobuf:"4"`
 	// Capsule-level defaults
-	CapsuleBase  CapsuleSpecExtension            `json:"capsuleBase" protobuf:"5"`
-	Environments map[string]CapsuleSpecExtension `json:"environments" protobuf:"6"`
+	CapsuleBase  CapsuleSpecExtension `json:"capsuleBase" protobuf:"5"`
+	Environments []string             `json:"environments" protobuf:"6"`
+}
+
+// +kubebuilder:object:root=true
+
+type CapsuleEnvironment struct {
+	metav1.TypeMeta `json:",inline"`
+	// Name,Project,Environment is unique
+	// Project,Name referes to an existing CapsuleStar type with the given name and project
+	// Will throw an error (in the platform) if the CapsuleStar does not exist
+	Name string `json:"name" protobuf:"3"`
+	// Project references an existing Project type with the given name
+	// Will throw an error (in the platform) if the Project does not exist
+	Project string `json:"project" protobuf:"4"`
+	// Environment references an existing Environment type with the given name
+	// Will throw an error (in the platform) if the Environment does not exist
+	// The environment also needs to be present in the parent CapsuleStar
+	Environment string               `json:"environment" protobuf:"5"`
+	Spec        CapsuleSpecExtension `json:"spec" protobuf:"6"`
 }
 
 type CapsuleSpecExtension struct {

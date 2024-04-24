@@ -5,3 +5,4 @@ package k8s.io.apimachinery.pkg.api.resource;
 message Quantity {
   string string = 1;
 }
+
