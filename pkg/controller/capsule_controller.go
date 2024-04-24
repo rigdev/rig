@@ -27,6 +27,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/service/capabilities"
+	"github.com/rigdev/rig/pkg/service/objectstatus"
 	svc_pipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
@@ -46,10 +47,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-const (
-	CleanupFinalizer = "rig.dev/capsule-cleanup"
-)
-
 // CapsuleReconciler reconciles a Capsule object
 type CapsuleReconciler struct {
 	client.Client
@@ -57,9 +54,12 @@ type CapsuleReconciler struct {
 	Config              *configv1alpha1.OperatorConfig
 	CapabilitiesService capabilities.Service
 	PipelineService     svc_pipeline.Service
+	ObjectStatusService objectstatus.Service
 }
 
 const (
+	CleanupFinalizer = "rig.dev/capsule-cleanup"
+
 	fieldFilesConfigMapName = ".spec.files.configMap.name"
 	fieldFilesSecretName    = ".spec.files.secret.name"
 	fieldEnvConfigMapName   = ".spec.env.from.configMapName"
@@ -320,7 +320,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return ctrl.Result{}, err
 		}
 
-		// TODO: only continue if changes was made.
+		r.ObjectStatusService.UnregisterCapsule(capsule.GetNamespace(), capsule.GetName())
 
 		// Remove finalizer if present.
 		if controllerutil.RemoveFinalizer(capsule, CleanupFinalizer) {
@@ -332,8 +332,9 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 		log.Info("capsule is deleted")
 		return ctrl.Result{}, nil
-
 	}
+
+	r.ObjectStatusService.RegisterCapsule(capsule.GetNamespace(), capsule.GetName())
 
 	var options []pipeline.CapsuleRequestOption
 	if v, _ := strconv.ParseBool(capsule.Annotations[pipeline.AnnotationOverrideOwnership]); v {

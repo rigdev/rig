@@ -78,6 +78,10 @@ func (p *CapsulePipeline) AddStep(step Step[CapsuleRequest]) {
 	p.steps = append(p.steps, step)
 }
 
+func (p *CapsulePipeline) Steps() []Step[CapsuleRequest] {
+	return p.steps
+}
+
 func (p *CapsulePipeline) RunCapsule(
 	ctx context.Context,
 	capsule *v1alpha2.Capsule,

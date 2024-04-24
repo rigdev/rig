@@ -93,3 +93,7 @@ func (n namespaceStep) Apply(_ context.Context, req pipeline.ProjectEnvironmentR
 
 	return nil
 }
+
+func (s namespaceStep) WatchObjectStatus(ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback) error {
+	return nil
+}

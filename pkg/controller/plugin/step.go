@@ -2,10 +2,12 @@ package plugin
 
 import (
 	"context"
+	"sync"
 
 	"github.com/go-logr/logr"
 	"github.com/gobwas/glob"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -56,6 +58,30 @@ func (s *Step) Stop(ctx context.Context) {
 		p.Stop(ctx)
 	}
 	s.plugins = nil
+}
+
+func (s *Step) WatchObjectStatus(ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback) error {
+	wg := sync.WaitGroup{}
+
+	// TODO: We need annotations here.
+	if !s.matcher.Match(namespace, capsule, nil) {
+		return nil
+	}
+
+	for _, p := range s.plugins {
+		wg.Add(1)
+		go func(p *pluginExecutor) {
+			err := p.WatchObjectStatus(ctx, namespace, capsule, callback)
+			if !errors.IsUnimplemented(err) {
+				s.logger.Error(err, "error getting status")
+			}
+			wg.Done()
+		}(p)
+	}
+
+	wg.Wait()
+	// TODO:
+	return nil
 }
 
 type Matcher struct {

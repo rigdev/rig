@@ -2,9 +2,13 @@ syntax = "proto3";
 
 package api.v1.plugin;
 
+import "operator/api/v1/pipeline/service.proto";
+
 service PluginService {
   rpc Initialize(InitializeRequest) returns (InitializeResponse) {}
   rpc RunCapsule(RunCapsuleRequest) returns (RunCapsuleResponse) {}
+  rpc WatchObjectStatus(WatchObjectStatusRequest)
+      returns (stream WatchObjectStatusResponse) {}
 }
 
 service RequestService {
@@ -13,6 +17,27 @@ service RequestService {
   rpc DeleteObject(DeleteObjectRequest) returns (DeleteObjectResponse) {}
   rpc MarkUsedObject(MarkUsedObjectRequest) returns (MarkUsedObjectResponse) {}
   rpc ListObjects(ListObjectsRequest) returns (ListObjectsResponse) {}
+}
+
+message WatchObjectStatusRequest {
+  string namespace = 1;
+  string capsule = 2;
+}
+
+message WatchObjectStatusResponse {
+  ObjectStatusChange change = 1;
+}
+
+message ObjectStatusChange {
+  message AllObjects {
+    repeated api.v1.pipeline.ObjectStatus objects = 1;
+  }
+
+  oneof change {
+    AllObjects all_objects = 1;
+    api.v1.pipeline.ObjectStatus updated = 2;
+    api.v1.pipeline.ObjectRef deleted = 3;
+  }
 }
 
 message InitializeRequest {
