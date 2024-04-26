@@ -7869,6 +7869,7 @@ Empty response for updating users settings for the Rig project.
 | args | [string](#string) | repeated |  |
 | interfaces | [v1alpha2.CapsuleInterface](#v1alpha2-CapsuleInterface) | repeated |  |
 | configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
+| environmentVariables | [CapsuleSpecExtension.EnvironmentVariablesEntry](#platform-v1-CapsuleSpecExtension-EnvironmentVariablesEntry) | repeated |  |
 | scale | [v1alpha2.CapsuleScale](#v1alpha2-CapsuleScale) |  |  |
 | nodeSelector | [CapsuleSpecExtension.NodeSelectorEntry](#platform-v1-CapsuleSpecExtension-NodeSelectorEntry) | repeated |  |
 | cronJobs | [v1alpha2.CronJob](#v1alpha2-CronJob) | repeated |  |
@@ -7882,6 +7883,22 @@ Empty response for updating users settings for the Rig project.
 <a name="platform-v1-CapsuleSpecExtension-AnnotationsEntry"></a>
 
 ### CapsuleSpecExtension.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CapsuleSpecExtension-EnvironmentVariablesEntry"></a>
+
+### CapsuleSpecExtension.EnvironmentVariablesEntry
 
 
 

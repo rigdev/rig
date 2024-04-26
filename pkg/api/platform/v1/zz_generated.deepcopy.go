@@ -57,6 +57,13 @@ func (in *CapsuleSpecExtension) DeepCopyInto(out *CapsuleSpecExtension) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.EnvironmentVariables != nil {
+		in, out := &in.EnvironmentVariables, &out.EnvironmentVariables
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	in.Scale.DeepCopyInto(&out.Scale)
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
