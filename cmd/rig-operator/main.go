@@ -28,11 +28,15 @@ import (
 	"github.com/rigdev/rig/pkg/service/config"
 	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	k8smanager "sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 const (
@@ -98,86 +102,97 @@ func run(cmd *cobra.Command, _ []string) error {
 
 	restConfig := ctrl.GetConfigOrDie()
 
-	clientSet, err := clientset.NewForConfig(restConfig)
-	if err != nil {
-		return err
-	}
+	app := fx.New(
+		fx.Supply(scheme, log),
+		fx.Provide(
+			func() config.Service {
+				return cfg
+			},
+			func() context.Context {
+				return ctx
+			},
+			func(scheme *runtime.Scheme) (client.Client, error) {
+				return client.New(restConfig, client.Options{
+					Scheme: scheme,
+				})
+			},
+			func() (clientset.Interface, error) {
+				return clientset.NewForConfig(restConfig)
+			},
+			func(cc clientset.Interface) discovery.DiscoveryInterface {
+				return cc.Discovery()
+			},
+			plugin.NewManager,
+			svccapabilities.NewService,
+			capabilities.NewHandler,
+			svcpipeline.NewService,
+			pipeline.NewHandler,
+			manager.New,
+		),
+		fx.Invoke(func(
+			mgr k8smanager.Manager,
+			lc fx.Lifecycle,
+			sh fx.Shutdowner,
+			cap capabilitiesconnect.ServiceHandler,
+			pip pipelineconnect.ServiceHandler,
+		) {
+			mux := http.NewServeMux()
+			mux.Handle(capabilitiesconnect.NewServiceHandler(cap))
+			mux.Handle(pipelineconnect.NewServiceHandler(pip))
+			mux.Handle(grpcreflect.NewHandlerV1(grpcreflect.NewStaticReflector(
+				capabilitiesconnect.ServiceName,
+				pipelineconnect.ServiceName,
+			)))
+			mux.Handle(grpcreflect.NewHandlerV1Alpha(grpcreflect.NewStaticReflector(
+				capabilitiesconnect.ServiceName,
+				pipelineconnect.ServiceName,
+			)))
 
-	cc, err := client.New(restConfig, client.Options{
-		Scheme: scheme,
-	})
-	if err != nil {
-		return err
-	}
+			mux.HandleFunc("/debug/pprof/", pprof.Index)
+			mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+			mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+			mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+			mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
-	pluginManager, err := plugin.NewManager()
-	capabilitiesSvc := svccapabilities.NewService(cc, clientSet.DiscoveryClient, pluginManager)
-	capabilitiesH := capabilities.NewHandler(capabilitiesSvc, cfg, scheme)
-	if err != nil {
-		return err
-	}
+			srv := &http.Server{
+				BaseContext: func(l net.Listener) context.Context {
+					return ctx
+				},
+				Addr:              ":9000",
+				Handler:           h2c.NewHandler(mux, &http2.Server{}),
+				ReadHeaderTimeout: time.Second,
+				ReadTimeout:       5 * time.Minute,
+				WriteTimeout:      5 * time.Minute,
+				MaxHeaderBytes:    8 * 1024, // 8KiB
+			}
 
-	mgr, err := manager.New(cfg, scheme, capabilitiesSvc, pluginManager)
-	if err != nil {
-		return err
-	}
+			lc.Append(fx.StopHook(srv.Shutdown))
 
-	pipelineSvc := svcpipeline.NewService(cfg, cc, capabilitiesSvc, log, pluginManager)
-	pipelineH := pipeline.NewHandler(pipelineSvc)
+			go func() {
+				log.Info("starting GRPC server")
+				if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					log.Error(err, "could not start GRPC server")
+					sh.Shutdown(fx.ExitCode(1))
+				}
+			}()
 
-	mux := http.NewServeMux()
-	mux.Handle(capabilitiesconnect.NewServiceHandler(capabilitiesH))
-	mux.Handle(pipelineconnect.NewServiceHandler(pipelineH))
-	mux.Handle(grpcreflect.NewHandlerV1(grpcreflect.NewStaticReflector(
-		capabilitiesconnect.ServiceName,
-		pipelineconnect.ServiceName,
-	)))
-	mux.Handle(grpcreflect.NewHandlerV1Alpha(grpcreflect.NewStaticReflector(
-		capabilitiesconnect.ServiceName,
-		pipelineconnect.ServiceName,
-	)))
+			go func() {
+				log.Info("starting manager server")
+				if err := mgr.Start(ctx); err != nil {
+					log.Error(err, "failed starting manager")
+					sh.Shutdown(fx.ExitCode(1))
+					return
+				}
 
-	mux.HandleFunc("/debug/pprof/", pprof.Index)
-	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+				sh.Shutdown(fx.ExitCode(1))
 
-	srv := &http.Server{
-		BaseContext: func(l net.Listener) context.Context {
-			return ctx
-		},
-		Addr:              ":9000",
-		Handler:           h2c.NewHandler(mux, &http2.Server{}),
-		ReadHeaderTimeout: time.Second,
-		ReadTimeout:       5 * time.Minute,
-		WriteTimeout:      5 * time.Minute,
-		MaxHeaderBytes:    8 * 1024, // 8KiB
-	}
+				log.Info("manager stopped")
+			}()
+		}),
+	)
 
-	go func() {
-		log.Info("starting GRPC server")
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Error(err, "could not start GRPC server")
-			os.Exit(1)
-		}
-	}()
-
-	log.Info("starting manager server")
-	if err := mgr.Start(ctx); err != nil {
-		log.Error(err, "failed starting manager")
-		return err
-	}
-
-	log.Info("manager stopped")
-
-	log.Info("stopping GRPC server...")
-	grpcCTX, grpcCancel := context.WithTimeout(cmd.Context(), time.Second)
-	defer grpcCancel()
-	if err := srv.Shutdown(grpcCTX); err != nil {
-		return err
-	}
+	app.Run()
 
 	log.Info("stopping manager...")
-	return nil
+	return app.Err()
 }
