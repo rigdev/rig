@@ -172,7 +172,7 @@ func run(cmd *cobra.Command, _ []string) error {
 				log.Info("starting GRPC server")
 				if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 					log.Error(err, "could not start GRPC server")
-					sh.Shutdown(fx.ExitCode(1))
+					_ = sh.Shutdown(fx.ExitCode(1))
 				}
 			}()
 
@@ -180,11 +180,11 @@ func run(cmd *cobra.Command, _ []string) error {
 				log.Info("starting manager server")
 				if err := mgr.Start(ctx); err != nil {
 					log.Error(err, "failed starting manager")
-					sh.Shutdown(fx.ExitCode(1))
+					_ = sh.Shutdown(fx.ExitCode(1))
 					return
 				}
 
-				sh.Shutdown(fx.ExitCode(1))
+				_ = sh.Shutdown(fx.ExitCode(1))
 
 				log.Info("manager stopped")
 			}()
