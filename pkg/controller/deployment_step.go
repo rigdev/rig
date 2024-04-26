@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/hash"
+	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
 	"golang.org/x/exp/maps"

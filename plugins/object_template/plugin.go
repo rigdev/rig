@@ -6,10 +6,10 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
+	"github.com/rigdev/rig/pkg/pipeline"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"sigs.k8s.io/yaml"
 )

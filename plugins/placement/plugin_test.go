@@ -7,7 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,7 +77,7 @@ requireTag: true`,
 			config: `
 tolerations:
   - key: tol
-    value: val		
+    value: val
 requireTag: true
 requireTag: true`,
 			annotations: map[string]string{
