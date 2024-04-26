@@ -26,15 +26,14 @@ import (
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/service/capabilities"
+	svc_pipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -52,10 +51,8 @@ type CapsuleReconciler struct {
 	client.Client
 	Scheme              *runtime.Scheme
 	Config              *configv1alpha1.OperatorConfig
-	ClientSet           clientset.Interface
 	CapabilitiesService capabilities.Service
-	Pipeline            *pipeline.CapsulePipeline
-	PluginManager       *plugin.Manager
+	PipelineService     svc_pipeline.Service
 }
 
 const (
@@ -156,25 +153,6 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logge
 	capabilities, err := r.CapabilitiesService.Get(ctx)
 	if err != nil {
 		return err
-	}
-
-	steps, err := GetDefaultPipelineSteps(ctx, r.CapabilitiesService, r.Config, r.PluginManager, logger)
-	if err != nil {
-		return err
-	}
-
-	r.Pipeline = pipeline.NewCapsulePipeline(r.Client, r.Client, r.Config, r.Scheme, logger)
-	for _, step := range steps {
-		r.Pipeline.AddStep(step)
-	}
-
-	for _, step := range r.Config.Pipeline.Steps {
-		ps, err := r.PluginManager.NewStep(step, logger)
-		if err != nil {
-			return err
-		}
-
-		r.Pipeline.AddStep(ps)
 	}
 
 	configEventHandler := handler.EnqueueRequestsFromMapFunc(findCapsulesForConfig(mgr))
@@ -336,7 +314,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		options = append(options, pipeline.WithForce())
 	}
 
-	if _, err := r.Pipeline.RunCapsule(ctx, capsule, options...); err != nil {
+	if _, err := r.PipelineService.GetDefaultPipeline().RunCapsule(ctx, capsule, r.Client, options...); err != nil {
 		log.Error(err, "reconciliation ended with error")
 		return ctrl.Result{}, err
 	}
@@ -344,65 +322,4 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log.Info("reconciliation completed successfully")
 
 	return ctrl.Result{}, nil
-}
-
-func GetDefaultPipelineSteps(
-	ctx context.Context,
-	capSvc capabilities.Service,
-	cfg *configv1alpha1.OperatorConfig,
-	pluginManager *plugin.Manager,
-	logger logr.Logger,
-) ([]pipeline.Step[pipeline.CapsuleRequest], error) {
-	capabilities, err := capSvc.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var steps []pipeline.Step[pipeline.CapsuleRequest]
-
-	steps = append(steps,
-		NewServiceAccountStep(),
-		NewDeploymentStep(),
-		NewVPAStep(cfg),
-		NewNetworkStep(cfg),
-	)
-
-	if cfg.Pipeline.RoutesStep.Plugin != "" {
-		routesStep, err := NewRoutesStep(cfg, pluginManager, logger)
-		if err != nil {
-			return nil, err
-		}
-
-		steps = append(steps, routesStep)
-	}
-
-	steps = append(steps,
-		NewCronJobStep(),
-	)
-
-	if capabilities.GetHasPrometheusServiceMonitor() {
-		steps = append(steps, NewServiceMonitorStep(cfg))
-	}
-
-	return steps, nil
-}
-
-func NewRoutesStep(cfg *configv1alpha1.OperatorConfig,
-	pluginManager *plugin.Manager,
-	logger logr.Logger,
-) (pipeline.Step[pipeline.CapsuleRequest], error) {
-	routesStep, err := pluginManager.NewStep(configv1alpha1.Step{
-		EnableForPlatform: true,
-		Plugins: []configv1alpha1.Plugin{
-			{
-				Name:   cfg.Pipeline.RoutesStep.Plugin,
-				Config: cfg.Pipeline.RoutesStep.Config,
-			},
-		},
-	}, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	return routesStep, nil
 }

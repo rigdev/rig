@@ -1,4 +1,4 @@
-package controller
+package pipeline
 
 import (
 	"context"
@@ -15,6 +15,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestReusePodSelectors(t *testing.T) {
@@ -39,7 +41,7 @@ func TestReusePodSelectors(t *testing.T) {
 	r := roclient.NewReader(scheme.New())
 	require.NoError(t, r.AddObject(current))
 
-	p := pipeline.NewCapsulePipeline(nil, r, &v1alpha1.OperatorConfig{}, scheme.New(), logr.Discard())
+	p := pipeline.NewCapsulePipeline(&v1alpha1.OperatorConfig{}, scheme.New(), logr.Discard())
 	p.AddStep(NewDeploymentStep())
 	c := &v1alpha2.Capsule{ObjectMeta: v1.ObjectMeta{
 		Name:      "foobar",
@@ -55,7 +57,7 @@ func TestReusePodSelectors(t *testing.T) {
 			},
 		},
 	}}
-	res, err := p.RunCapsule(context.Background(), c)
+	res, err := p.RunCapsule(context.Background(), c, testClient{r: r})
 	require.NoError(t, err)
 	for _, o := range res.OutputObjects {
 		if dep, ok := o.Object.(*appsv1.Deployment); ok {
@@ -64,4 +66,17 @@ func TestReusePodSelectors(t *testing.T) {
 			}, dep.Spec.Selector.MatchLabels)
 		}
 	}
+}
+
+type testClient struct {
+	r client.Reader
+	client.Client
+}
+
+func (c testClient) Get(ctx context.Context, key types.NamespacedName, obj client.Object, opts ...client.GetOption) error {
+	return c.r.Get(ctx, key, obj, opts...)
+}
+
+func (c testClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	return c.r.List(ctx, list, opts...)
 }

@@ -53,8 +53,6 @@ func (ok ObjectKey) MarshalLog() interface{} {
 }
 
 type CapsulePipeline struct {
-	client client.Client
-	reader client.Reader
 	config *configv1alpha1.OperatorConfig
 	scheme *runtime.Scheme
 	// TODO Use zap instead
@@ -63,15 +61,11 @@ type CapsulePipeline struct {
 }
 
 func NewCapsulePipeline(
-	cc client.Client,
-	cr client.Reader,
 	config *configv1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
 	logger logr.Logger,
 ) *CapsulePipeline {
 	p := &CapsulePipeline{
-		client: cc,
-		reader: cr,
 		config: config,
 		scheme: scheme,
 		logger: logger,
@@ -87,9 +81,10 @@ func (p *CapsulePipeline) AddStep(step Step[CapsuleRequest]) {
 func (p *CapsulePipeline) RunCapsule(
 	ctx context.Context,
 	capsule *v1alpha2.Capsule,
+	client client.Client,
 	opts ...CapsuleRequestOption,
 ) (*Result, error) {
-	req := newCapsuleRequest(p, capsule, opts...)
+	req := newCapsuleRequest(p, capsule, client, opts...)
 	return ExecuteRequest(ctx, req, p.steps, true)
 }
 
