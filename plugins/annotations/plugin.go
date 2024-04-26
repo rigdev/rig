@@ -5,8 +5,8 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/pipeline"
 )
 
 const Name = "rigdev.annotations"

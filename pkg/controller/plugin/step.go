@@ -6,7 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/gobwas/glob"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/pipeline"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )

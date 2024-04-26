@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"

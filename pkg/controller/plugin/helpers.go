@@ -5,8 +5,8 @@ import (
 	"html/template"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/obj"
+	"github.com/rigdev/rig/pkg/pipeline"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

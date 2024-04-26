@@ -7,7 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
+	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/stretchr/testify/assert"

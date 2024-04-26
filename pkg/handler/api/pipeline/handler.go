@@ -8,8 +8,8 @@ import (
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller/pipeline"
 	"github.com/rigdev/rig/pkg/obj"
+	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/scheme"
 	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,7 +45,6 @@ func (h *handler) DryRun(
 	ctx context.Context,
 	req *connect.Request[apipipeline.DryRunRequest],
 ) (*connect.Response[apipipeline.DryRunResponse], error) {
-
 	cfg, err := h.decodeOperatorConfig(req.Msg.GetOperatorConfig())
 	if err != nil {
 		return nil, err
