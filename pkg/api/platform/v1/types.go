@@ -110,6 +110,8 @@ type CapsuleSpecExtension struct {
 	// based on ConfigMaps or Secrets.
 	ConfigFiles []ConfigFile `json:"configFiles" protobuf:"7"`
 
+	EnvironmentVariables map[string]string `json:"environmentVariables,omitempty" protobuf:"12"`
+
 	// Scale specifies the scaling of the Capsule.
 	Scale v1alpha2.CapsuleScale `json:"scale,omitempty" protobuf:"8"`
 
