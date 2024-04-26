@@ -99,16 +99,16 @@ type CapsuleSpecExtension struct {
 	// Args is a list of arguments either passed to the Command or if Command
 	// is left empty the arguments will be passed to the ENTRYPOINT of the
 	// docker image.
-	Args []string `json:"args,omitempty" protobuf:"5"`
+	Args []string `json:"args,omitempty" protobuf:"5"patchStrategy:"replace"`
 
 	// Interfaces specifies the list of interfaces the the container should
 	// have. Specifying interfaces will create the corresponding kubernetes
 	// Services and Ingresses depending on how the interface is configured.
-	Interfaces []v1alpha2.CapsuleInterface `json:"interfaces,omitempty" protobuf:"6"`
+	Interfaces []v1alpha2.CapsuleInterface `json:"interfaces,omitempty" protobuf:"6" patchMergeKey:"port" patchStrategy:"merge"`
 
 	// Files is a list of files to mount in the container. These can either be
 	// based on ConfigMaps or Secrets.
-	ConfigFiles []ConfigFile `json:"configFiles" protobuf:"7"`
+	ConfigFiles []ConfigFile `json:"configFiles" protobuf:"7" patchMergeKey:"path" patchStrategy:"merge"`
 
 	EnvironmentVariables map[string]string `json:"environmentVariables,omitempty" protobuf:"12"`
 
@@ -118,7 +118,7 @@ type CapsuleSpecExtension struct {
 	// NodeSelector is a selector for what nodes the Capsule should live on.
 	NodeSelector map[string]string `json:"nodeSelector,omitempty" protobuf:"9"`
 
-	CronJobs []v1alpha2.CronJob `json:"cronJobs,omitempty" protobuf:"10"`
+	CronJobs []v1alpha2.CronJob `json:"cronJobs,omitempty" protobuf:"10" patchMergeKey:"name" patchStrategy:"replace"`
 
 	Annotations map[string]string `json:"annotations" protobuf:"11"`
 }
