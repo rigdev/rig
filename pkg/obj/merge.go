@@ -101,12 +101,14 @@ func convert[T any](obj any) (T, error) {
 	return objT, nil
 }
 
+// nolint:lll
 // MergeProjectEnv merges a ProjEnvCapsuleBase into a CapsuleSpecExtension and returns a new object with the merged result
 // It uses StrategicMergePatch (https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
 func MergeProjectEnv(patch *platformv1.ProjEnvCapsuleBase, into *platformv1.CapsuleSpecExtension) (*platformv1.CapsuleSpecExtension, error) {
 	return mergeCapsuleSpec(patch, into)
 }
 
+// nolint:lll
 // MergeCapsuleSpecExtension merges a CapsuleSpecExtension into another CapsuleSpecExtension and returns a new object with the merged result
 // It uses StrategicMergePatch (https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
 func MergeCapsuleSpecExtensions(patch, into *platformv1.CapsuleSpecExtension) (*platformv1.CapsuleSpecExtension, error) {

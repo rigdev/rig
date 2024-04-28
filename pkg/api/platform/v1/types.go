@@ -99,11 +99,12 @@ type CapsuleSpecExtension struct {
 	// Args is a list of arguments either passed to the Command or if Command
 	// is left empty the arguments will be passed to the ENTRYPOINT of the
 	// docker image.
-	Args []string `json:"args,omitempty" protobuf:"5"patchStrategy:"replace"`
+	Args []string `json:"args,omitempty" protobuf:"5" patchStrategy:"replace"`
 
 	// Interfaces specifies the list of interfaces the the container should
 	// have. Specifying interfaces will create the corresponding kubernetes
 	// Services and Ingresses depending on how the interface is configured.
+	// nolint:lll
 	Interfaces []v1alpha2.CapsuleInterface `json:"interfaces,omitempty" protobuf:"6" patchMergeKey:"port" patchStrategy:"merge"`
 
 	// Files is a list of files to mount in the container. These can either be
