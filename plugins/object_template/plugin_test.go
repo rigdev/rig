@@ -259,8 +259,8 @@ object: |
 		t.Run(tt.name, func(t *testing.T) {
 			tt.capsule.Namespace = namespace
 			tt.capsule.Name = name
-			p := pipeline.NewCapsulePipeline(nil, nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
-			req := pipeline.NewCapsuleRequest(p, tt.capsule)
+			p := pipeline.NewCapsulePipeline(nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
+			req := pipeline.NewCapsuleRequest(p, tt.capsule, nil)
 			assert.NoError(t, req.Set(tt.current))
 
 			c := tt.config + `

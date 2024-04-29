@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-logr/logr"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
-	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"github.com/rigdev/rig/pkg/service/pipeline"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
@@ -31,13 +31,12 @@ func New(
 	cfgS config.Service,
 	scheme *runtime.Scheme,
 	capabilitiesService capabilities.Service,
-	pluginManager *plugin.Manager,
+	pipeline pipeline.Service,
+	restConfig *rest.Config,
+	logger logr.Logger,
 ) (manager.Manager, error) {
 	cfg := cfgS.Operator()
 
-	logger := zap.New(zap.UseDevMode(cfg.DevModeEnabled))
-
-	restConfig := ctrl.GetConfigOrDie()
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme,
 		Metrics:                       metricsserver.Options{BindAddress: ":8080"},
@@ -52,21 +51,15 @@ func New(
 		return nil, err
 	}
 
-	clientSet, err := clientset.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	cr := &controller.CapsuleReconciler{
 		Client:              mgr.GetClient(),
-		Scheme:              mgr.GetScheme(),
+		Scheme:              scheme,
 		Config:              cfg,
-		ClientSet:           clientSet,
 		CapabilitiesService: capabilitiesService,
-		PluginManager:       pluginManager,
+		PipelineService:     pipeline,
 	}
 
-	if err := cr.SetupWithManager(mgr, logger); err != nil {
+	if err := cr.SetupWithManager(mgr); err != nil {
 		return nil, err
 	}
 
