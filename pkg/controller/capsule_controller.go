@@ -40,9 +40,14 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+)
+
+const (
+	CleanupFinalizer = "rig.dev/capsule-cleanup"
 )
 
 // CapsuleReconciler reconciles a Capsule object
@@ -303,9 +308,43 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	capsule := &v1alpha2.Capsule{}
 	if err := r.Get(ctx, req.NamespacedName, capsule); err != nil {
 		if kerrors.IsNotFound(err) {
+			log.Info("capsule not found, aborting")
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, fmt.Errorf("could not fetch Capsule: %w", err)
+	}
+
+	// Test for deletion marker.
+	if capsule.ObjectMeta.DeletionTimestamp.IsZero() {
+		// Not for deletion. Add finalizer if missing.
+		if controllerutil.AddFinalizer(capsule, CleanupFinalizer) {
+			if err := r.Update(ctx, capsule); err != nil {
+				log.Error(err, "error adding finalizer")
+				return ctrl.Result{}, nil
+			}
+
+			return ctrl.Result{Requeue: true}, nil
+		}
+	} else {
+		log.Info("capsule should be deleted")
+		if _, err := r.PipelineService.GetDefaultPipeline().DeleteCapsule(ctx, capsule, r.Client); err != nil {
+			log.Error(err, "delete ended with error")
+			return ctrl.Result{}, err
+		}
+
+		// TODO: only continue if changes was made.
+
+		// Remove finalizer if present.
+		if controllerutil.RemoveFinalizer(capsule, CleanupFinalizer) {
+			if err := r.Update(ctx, capsule); err != nil {
+				log.Error(err, "error removing finalizer")
+				return ctrl.Result{}, err
+			}
+		}
+
+		log.Info("capsule is deleted")
+		return ctrl.Result{}, nil
+
 	}
 
 	var options []pipeline.CapsuleRequestOption
