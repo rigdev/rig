@@ -22,7 +22,6 @@ import (
 	"strconv"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
-	"github.com/go-logr/logr"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -75,7 +74,7 @@ const (
 )
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, logger logr.Logger) error {
+func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	ctx := context.TODO()
 
 	if err := mgr.GetFieldIndexer().IndexField(

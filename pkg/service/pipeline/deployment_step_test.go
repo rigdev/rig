@@ -73,7 +73,12 @@ type testClient struct {
 	client.Client
 }
 
-func (c testClient) Get(ctx context.Context, key types.NamespacedName, obj client.Object, opts ...client.GetOption) error {
+func (c testClient) Get(
+	ctx context.Context,
+	key types.NamespacedName,
+	obj client.Object,
+	opts ...client.GetOption,
+) error {
 	return c.r.Get(ctx, key, obj, opts...)
 }
 

@@ -21,11 +21,6 @@ const (
 	LabelSharedConfig = "rig.dev/shared-config"
 	LabelCapsule      = "rig.dev/capsule"
 	LabelCron         = "batch.kubernets.io/cronjob"
-
-	fieldFilesConfigMapName = ".spec.files.configMap.name"
-	fieldFilesSecretName    = ".spec.files.secret.name"
-	fieldEnvConfigMapName   = ".spec.env.from.configMapName"
-	fieldEnvSecretName      = ".spec.env.from.secretName"
 )
 
 type ServiceMonitorStep struct {

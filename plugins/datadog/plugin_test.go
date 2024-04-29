@@ -90,13 +90,13 @@ unifiedServiceTags:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := pipeline.NewCapsulePipeline(nil, nil, nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
+			p := pipeline.NewCapsulePipeline(nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
 			req := pipeline.NewCapsuleRequest(p, &v1alpha2.Capsule{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
 					Namespace: namespace,
 				},
-			})
+			}, nil)
 			assert.NoError(t, req.Set(&appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,

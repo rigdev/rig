@@ -12,7 +12,7 @@ import (
 )
 
 func (s *service) initializePipeline(ctx context.Context) error {
-	p, err := CreateDefaultPipeline(ctx, s.client.Scheme(), s.capSvc, s.cfg.Operator(), s.pluginManager, s.logger)
+	p, err := CreateDefaultPipeline(ctx, s.client.Scheme(), s.capSvc, s.cfg, s.pluginManager, s.logger)
 	if err != nil {
 		return err
 	}

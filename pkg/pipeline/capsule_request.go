@@ -82,11 +82,21 @@ func WithForce() CapsuleRequestOption {
 	return withForce{}
 }
 
-func NewCapsuleRequest(p *CapsulePipeline, capsule *v1alpha2.Capsule, client client.Client, opts ...CapsuleRequestOption) CapsuleRequest {
+func NewCapsuleRequest(
+	p *CapsulePipeline,
+	capsule *v1alpha2.Capsule,
+	client client.Client,
+	opts ...CapsuleRequestOption,
+) CapsuleRequest {
 	return newCapsuleRequest(p, capsule, client, opts...)
 }
 
-func newCapsuleRequest(p *CapsulePipeline, capsule *v1alpha2.Capsule, client client.Client, opts ...CapsuleRequestOption) *capsuleRequest {
+func newCapsuleRequest(
+	p *CapsulePipeline,
+	capsule *v1alpha2.Capsule,
+	client client.Client,
+	opts ...CapsuleRequestOption,
+) *capsuleRequest {
 	r := &capsuleRequest{
 		RequestBase: NewRequestBase(client, client, p.config, p.scheme, p.logger, nil, capsule),
 		capsule:     capsule,

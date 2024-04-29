@@ -10,7 +10,6 @@ import (
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
-	"github.com/rigdev/rig/pkg/service/config"
 	"go.uber.org/fx"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,8 +31,7 @@ type PluginUsed struct {
 }
 
 func NewService(
-	ctx context.Context,
-	cfg config.Service,
+	cfg *v1alpha1.OperatorConfig,
 	client client.Client,
 	capSvc capabilities.Service,
 	logger logr.Logger,
@@ -52,7 +50,7 @@ func NewService(
 }
 
 type service struct {
-	cfg           config.Service
+	cfg           *v1alpha1.OperatorConfig
 	client        client.Client
 	capSvc        capabilities.Service
 	logger        logr.Logger
@@ -73,7 +71,7 @@ func (s *service) DryRun(
 	opts ...pipeline.CapsuleRequestOption,
 ) (*pipeline.Result, error) {
 	if cfg == nil {
-		cfg = s.cfg.Operator()
+		cfg = s.cfg
 	}
 	if spec == nil {
 		spec = &v1alpha2.Capsule{}

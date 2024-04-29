@@ -17,8 +17,10 @@ import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
+	"github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/fx/fxtest"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -112,16 +114,19 @@ disableTLS: false
 	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
 
+	cs := capabilities.NewService(cc, clientSet.Discovery(), nil)
+
+	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, fxtest.NewLifecycle(t))
+
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
 		Scheme:              scheme,
 		Config:              opConfig,
-		ClientSet:           clientSet,
-		CapabilitiesService: capabilities.NewService(cc, clientSet.Discovery(), nil),
-		PluginManager:       pmanager,
+		CapabilitiesService: cs,
+		PipelineService:     ps,
 	}
 
-	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))
+	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {

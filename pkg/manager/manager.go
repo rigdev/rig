@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-logr/logr"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
-	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/rigdev/rig/pkg/service/pipeline"
@@ -15,7 +15,6 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
@@ -32,13 +31,11 @@ func New(
 	cfgS config.Service,
 	scheme *runtime.Scheme,
 	capabilitiesService capabilities.Service,
-	pluginManager *plugin.Manager,
 	pipeline pipeline.Service,
 	restConfig *rest.Config,
+	logger logr.Logger,
 ) (manager.Manager, error) {
 	cfg := cfgS.Operator()
-
-	logger := zap.New(zap.UseDevMode(cfg.DevModeEnabled))
 
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme,
@@ -62,7 +59,7 @@ func New(
 		PipelineService:     pipeline,
 	}
 
-	if err := cr.SetupWithManager(mgr, logger); err != nil {
+	if err := cr.SetupWithManager(mgr); err != nil {
 		return nil, err
 	}
 

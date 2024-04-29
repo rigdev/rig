@@ -15,8 +15,10 @@ import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
+	"github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/fx/fxtest"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -123,21 +125,23 @@ container:
 	})
 	require.NoError(t, err)
 
+	cs := capabilities.NewService(cc, clientSet.Discovery(), nil)
+
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 	builtinBinPath := path.Join(path.Dir(path.Dir(path.Dir(wd))), "bin", "rig-operator")
 	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
+	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, fxtest.NewLifecycle(t))
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
 		Scheme:              scheme,
 		Config:              opConfig,
-		ClientSet:           clientSet,
-		CapabilitiesService: capabilities.NewService(cc, clientSet.Discovery(), nil),
-		PluginManager:       pmanager,
+		CapabilitiesService: cs,
+		PipelineService:     ps,
 	}
 
-	require.NoError(t, capsuleReconciler.SetupWithManager(manager, ctrl.Log))
+	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {

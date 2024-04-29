@@ -19,6 +19,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig-operator/apichecker"
 	"github.com/rigdev/rig/cmd/rig-operator/certgen"
 	"github.com/rigdev/rig/cmd/rig-operator/log"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
@@ -83,13 +84,18 @@ func run(cmd *cobra.Command, _ []string) error {
 				ctrl.SetLogger(log)
 				return log
 			},
-			func(scheme *runtime.Scheme) (config.Service, error) {
+			func(scheme *runtime.Scheme) (config.Service, *v1alpha1.OperatorConfig, error) {
 				cfgFile, err := cmd.Flags().GetString(flagConfigFile)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 
-				return config.NewService(scheme, cfgFile)
+				cfg, err := config.NewService(scheme, cfgFile)
+				if err != nil {
+					return nil, nil, err
+				}
+
+				return cfg, cfg.Operator(), nil
 			},
 			func(lc fx.Lifecycle, log logr.Logger) context.Context {
 				ctx, cancel := context.WithCancel(cmd.Context())
