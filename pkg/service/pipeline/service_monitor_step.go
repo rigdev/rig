@@ -1,4 +1,4 @@
-package controller
+package pipeline
 
 import (
 	"context"
@@ -7,6 +7,20 @@ import (
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/pipeline"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	AnnotationChecksumFiles     = "rig.dev/config-checksum-files"
+	AnnotationChecksumAutoEnv   = "rig.dev/config-checksum-auto-env"
+	AnnotationChecksumEnv       = "rig.dev/config-checksum-env"
+	AnnotationChecksumSharedEnv = "rig.dev/config-checksum-shared-env"
+
+	AnnotationOverrideOwnership = "rig.dev/override-ownership"
+	AnnotationPullSecret        = "rig.dev/pull-secret"
+
+	LabelSharedConfig = "rig.dev/shared-config"
+	LabelCapsule      = "rig.dev/capsule"
+	LabelCron         = "batch.kubernets.io/cronjob"
 )
 
 type ServiceMonitorStep struct {

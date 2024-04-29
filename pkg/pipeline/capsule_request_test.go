@@ -30,8 +30,8 @@ func preparePipelineTest(t *testing.T, options pipelineTestOpts) (
 	cc := mockclient.NewMockClient(t)
 	ctx := context.Background()
 
-	p := NewCapsulePipeline(cc, cc, &v1alpha1.OperatorConfig{}, scheme, logr.Discard())
-	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, options.options...)
+	p := NewCapsulePipeline(&v1alpha1.OperatorConfig{}, scheme, logr.Discard())
+	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, cc, options.options...)
 	for _, obj := range options.existingObjects {
 		key, err := c.GetKey(obj)
 		require.NoError(t, err)

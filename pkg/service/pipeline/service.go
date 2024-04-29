@@ -6,17 +6,17 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
-	"github.com/rigdev/rig/pkg/service/config"
+	"go.uber.org/fx"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Service interface {
+	GetDefaultPipeline() *pipeline.CapsulePipeline
 	DryRun(ctx context.Context,
 		cfg *v1alpha1.OperatorConfig,
 		namespace, capsuleName string,
@@ -31,27 +31,35 @@ type PluginUsed struct {
 }
 
 func NewService(
-	cfg config.Service,
+	cfg *v1alpha1.OperatorConfig,
 	client client.Client,
 	capSvc capabilities.Service,
 	logger logr.Logger,
 	pluginManager *plugin.Manager,
+	lc fx.Lifecycle,
 ) Service {
-	return &service{
+	s := &service{
 		cfg:           cfg,
 		client:        client,
 		capSvc:        capSvc,
 		logger:        logger,
 		pluginManager: pluginManager,
 	}
+	lc.Append(fx.StartHook(s.initializePipeline))
+	return s
 }
 
 type service struct {
-	cfg           config.Service
+	cfg           *v1alpha1.OperatorConfig
 	client        client.Client
 	capSvc        capabilities.Service
 	logger        logr.Logger
 	pluginManager *plugin.Manager
+	pipeline      *pipeline.CapsulePipeline
+}
+
+func (s *service) GetDefaultPipeline() *pipeline.CapsulePipeline {
+	return s.pipeline
 }
 
 // DryRun implements Service.
@@ -63,7 +71,7 @@ func (s *service) DryRun(
 	opts ...pipeline.CapsuleRequestOption,
 ) (*pipeline.Result, error) {
 	if cfg == nil {
-		cfg = s.cfg.Operator()
+		cfg = s.cfg
 	}
 	if spec == nil {
 		spec = &v1alpha2.Capsule{}
@@ -79,12 +87,12 @@ func (s *service) DryRun(
 		spec.SetUID(types.UID("dry-run-spec"))
 	}
 
-	steps, err := controller.GetDefaultPipelineSteps(ctx, s.capSvc, cfg, s.pluginManager, s.logger)
+	steps, err := GetDefaultPipelineSteps(ctx, s.capSvc, cfg, s.pluginManager, s.logger)
 	if err != nil {
 		return nil, err
 	}
 
-	p := pipeline.NewCapsulePipeline(s.client, s.client, cfg, scheme.New(), s.logger)
+	p := pipeline.NewCapsulePipeline(cfg, scheme.New(), s.logger)
 	for _, step := range steps {
 		p.AddStep(step)
 	}
@@ -99,5 +107,5 @@ func (s *service) DryRun(
 		defer ps.Stop(ctx)
 	}
 
-	return p.RunCapsule(ctx, spec, append(opts, pipeline.WithDryRun())...)
+	return p.RunCapsule(ctx, spec, s.client, append(opts, pipeline.WithDryRun())...)
 }
