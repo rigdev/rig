@@ -114,7 +114,7 @@ type HorizontalScale struct {
 	CPUTarget *CPUTarget `json:"cpuTarget,omitempty" protobuf:"2"`
 	// CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API
 	// which the autoscaler should scale on
-	CustomMetrics []CustomMetric `json:"customMetrics,omitempty" protobuf:"3"`
+	CustomMetrics []CustomMetric `json:"customMetrics,omitempty" protobuf:"3" patchStrategy:"replace"`
 }
 
 // Instances specifies the minimum and maximum amount of capsule
