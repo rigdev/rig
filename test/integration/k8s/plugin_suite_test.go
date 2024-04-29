@@ -132,7 +132,9 @@ container:
 	builtinBinPath := path.Join(path.Dir(path.Dir(path.Dir(wd))), "bin", "rig-operator")
 	pmanager, err := plugin.NewManager(plugin.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
-	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, fxtest.NewLifecycle(t))
+	lc := fxtest.NewLifecycle(t)
+	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc)
+	require.NoError(t, lc.Start(context.Background()))
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
 		Scheme:              scheme,

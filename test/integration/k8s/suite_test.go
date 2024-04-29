@@ -116,7 +116,9 @@ disableTLS: false
 
 	cs := capabilities.NewService(cc, clientSet.Discovery(), nil)
 
-	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, fxtest.NewLifecycle(t))
+	lc := fxtest.NewLifecycle(t)
+	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc)
+	require.NoError(t, lc.Start(context.Background()))
 
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
