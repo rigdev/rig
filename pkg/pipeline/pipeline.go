@@ -88,6 +88,17 @@ func (p *CapsulePipeline) RunCapsule(
 	return ExecuteRequest(ctx, req, p.steps, true)
 }
 
+func (p *CapsulePipeline) DeleteCapsule(
+	ctx context.Context,
+	capsule *v1alpha2.Capsule,
+	client client.Client,
+	opts ...CapsuleRequestOption,
+) (*Result, error) {
+	req := newCapsuleRequest(p, capsule, client, opts...)
+	// Delete capsule by running without steps.
+	return ExecuteRequest(ctx, req, nil, true)
+}
+
 type OutputObject struct {
 	ObjectKey ObjectKey
 	Object    client.Object
