@@ -21,17 +21,28 @@ message CapsuleSpecExtension {
   repeated string args = 5;
   repeated v1alpha2.CapsuleInterface interfaces = 6;
   repeated ConfigFile configFiles = 7;
-  map<string, string> environmentVariables = 12;
+  EnvironmentVariables environmentVariables = 12;
   v1alpha2.CapsuleScale scale = 8;
   map<string, string> nodeSelector = 9;
   repeated v1alpha2.CronJob cronJobs = 10;
   map<string, string> annotations = 11;
+  bool autoAddRigServiceAccounts = 13;
 }
 
 message ConfigFile {
   string path = 1;
   bytes content = 2;
   bool isSecret = 3;
+}
+
+message EnvironmentVariables {
+  map<string, string> direct = 1;
+  repeated EnvironmentSource sources = 2;
+}
+
+message EnvironmentSource {
+  string name = 1;
+  string kind = 2;
 }
 
 message CapsuleEnvironment {
@@ -55,7 +66,7 @@ message Environment {
 
 message ProjEnvCapsuleBase {
   repeated ConfigFile configFiles = 1;
-  map<string, string> environmentVariables = 2;
+  EnvironmentVariables environmentVariables = 2;
 }
 
 message Project {

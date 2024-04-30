@@ -7869,11 +7869,12 @@ Empty response for updating users settings for the Rig project.
 | args | [string](#string) | repeated |  |
 | interfaces | [v1alpha2.CapsuleInterface](#v1alpha2-CapsuleInterface) | repeated |  |
 | configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
-| environmentVariables | [CapsuleSpecExtension.EnvironmentVariablesEntry](#platform-v1-CapsuleSpecExtension-EnvironmentVariablesEntry) | repeated |  |
+| environmentVariables | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
 | scale | [v1alpha2.CapsuleScale](#v1alpha2-CapsuleScale) |  |  |
 | nodeSelector | [CapsuleSpecExtension.NodeSelectorEntry](#platform-v1-CapsuleSpecExtension-NodeSelectorEntry) | repeated |  |
 | cronJobs | [v1alpha2.CronJob](#v1alpha2-CronJob) | repeated |  |
 | annotations | [CapsuleSpecExtension.AnnotationsEntry](#platform-v1-CapsuleSpecExtension-AnnotationsEntry) | repeated |  |
+| autoAddRigServiceAccounts | [bool](#bool) |  |  |
 
 
 
@@ -7883,22 +7884,6 @@ Empty response for updating users settings for the Rig project.
 <a name="platform-v1-CapsuleSpecExtension-AnnotationsEntry"></a>
 
 ### CapsuleSpecExtension.AnnotationsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleSpecExtension-EnvironmentVariablesEntry"></a>
-
-### CapsuleSpecExtension.EnvironmentVariablesEntry
 
 
 
@@ -7986,6 +7971,54 @@ Empty response for updating users settings for the Rig project.
 
 
 
+<a name="platform-v1-EnvironmentSource"></a>
+
+### EnvironmentSource
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| kind | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-EnvironmentVariables"></a>
+
+### EnvironmentVariables
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| direct | [EnvironmentVariables.DirectEntry](#platform-v1-EnvironmentVariables-DirectEntry) | repeated |  |
+| sources | [EnvironmentSource](#platform-v1-EnvironmentSource) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-EnvironmentVariables-DirectEntry"></a>
+
+### EnvironmentVariables.DirectEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-ProjEnvCapsuleBase"></a>
 
 ### ProjEnvCapsuleBase
@@ -7995,23 +8028,7 @@ Empty response for updating users settings for the Rig project.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
-| environmentVariables | [ProjEnvCapsuleBase.EnvironmentVariablesEntry](#platform-v1-ProjEnvCapsuleBase-EnvironmentVariablesEntry) | repeated |  |
-
-
-
-
-
-
-<a name="platform-v1-ProjEnvCapsuleBase-EnvironmentVariablesEntry"></a>
-
-### ProjEnvCapsuleBase.EnvironmentVariablesEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| environmentVariables | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
 
 
 
