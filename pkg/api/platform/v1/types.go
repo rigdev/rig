@@ -37,8 +37,8 @@ type Project struct {
 //+kubebuilder:object:=true
 
 type ProjEnvCapsuleBase struct {
-	ConfigFiles          []ConfigFile      `json:"configFiles,omitempty" protobuf:"1"`
-	EnvironmentVariables map[string]string `json:"environmentVariables,omitempty" protobuf:"2"`
+	ConfigFiles          []ConfigFile         `json:"configFiles,omitempty" protobuf:"1"`
+	EnvironmentVariables EnvironmentVariables `json:"environmentVariables,omitempty" protobuf:"2"`
 }
 
 type EnvironmentSource struct {
@@ -49,8 +49,8 @@ type EnvironmentSource struct {
 type EnvironmentSourceKind string
 
 var (
-	EnvironmentSourceKindConfigMap EnvironmentSourceKind = "config_map"
-	EnvironmentSourceKindSecret    EnvironmentSourceKind = "secret"
+	EnvironmentSourceKindConfigMap EnvironmentSourceKind = "ConfigMap"
+	EnvironmentSourceKindSecret    EnvironmentSourceKind = "Secret"
 )
 
 // +kubebuilder:object:root=true
@@ -111,7 +111,7 @@ type CapsuleSpecExtension struct {
 	// based on ConfigMaps or Secrets.
 	ConfigFiles []ConfigFile `json:"configFiles" protobuf:"7" patchMergeKey:"path" patchStrategy:"merge"`
 
-	EnvironmentVariables map[string]string `json:"environmentVariables,omitempty" protobuf:"12"`
+	EnvironmentVariables EnvironmentVariables `json:"environmentVariables" protobuf:"12"`
 
 	// Scale specifies the scaling of the Capsule.
 	Scale v1alpha2.CapsuleScale `json:"scale,omitempty" protobuf:"8"`
@@ -122,6 +122,13 @@ type CapsuleSpecExtension struct {
 	CronJobs []v1alpha2.CronJob `json:"cronJobs,omitempty" protobuf:"10" patchMergeKey:"name" patchStrategy:"replace"`
 
 	Annotations map[string]string `json:"annotations" protobuf:"11"`
+
+	AutoAddRigServiceAccounts bool `json:"autoAddRigServiceAccounts" protobuf:"13"`
+}
+
+type EnvironmentVariables struct {
+	Direct  map[string]string   `json:"direct" protobuf:"1"`
+	Sources []EnvironmentSource `json:"sources" protobuf:"2"`
 }
 
 type ConfigFile struct {
