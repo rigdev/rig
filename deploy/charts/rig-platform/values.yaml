@@ -129,6 +129,13 @@ rig:
       password: ""
     operator:
       baseUrl: http://rig-operator:9000
+    slack:
+      token: ""
+      channel: ""
+      projects:
+        {}
+      environments:
+        {}
 
   repository:
     store: postgres
