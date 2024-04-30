@@ -1,10 +1,14 @@
-package pipeline
+// +groupName=plugins.rig.dev -- Only used for config doc generation
+//
+//nolint:revive
+package vpa
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/hashicorp/go-hclog"
+	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
 	appsv1 "k8s.io/api/apps/v1"
@@ -15,26 +19,40 @@ import (
 	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 )
 
-type VPAStep struct {
-	cfg *v1alpha1.OperatorConfig
+const (
+	Name = "rigdev.vpa"
+)
+
+// Configuration for the deployment plugin
+// +kubebuilder:object:root=true
+type Config struct {
 }
 
-func NewVPAStep(cfg *v1alpha1.OperatorConfig) *VPAStep {
-	return &VPAStep{
-		cfg: cfg,
-	}
+type Plugin struct {
+	configBytes []byte
 }
 
-func (s *VPAStep) Apply(_ context.Context, req pipeline.CapsuleRequest) error {
-	if !s.cfg.VerticalPodAutoscaler.Enabled {
-		return nil
+func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
+	p.configBytes = req.Config
+	return nil
+}
+
+func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) error {
+	// We do not have any configuration for this step?
+	// var cfg Config
+	var err error
+	if len(p.configBytes) > 0 {
+		_, err = plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
+		if err != nil {
+			return err
+		}
 	}
 
-	vpa := s.createVPA(req)
+	vpa := p.createVPA(req)
 	return req.Set(vpa)
 }
 
-func (s *VPAStep) createVPA(req pipeline.CapsuleRequest) *vpav1.VerticalPodAutoscaler {
+func (p *Plugin) createVPA(req pipeline.CapsuleRequest) *vpav1.VerticalPodAutoscaler {
 	vpa := &vpav1.VerticalPodAutoscaler{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "VerticalPodAutoscaler",
@@ -66,7 +84,7 @@ func (s *VPAStep) createVPA(req pipeline.CapsuleRequest) *vpav1.VerticalPodAutos
 }
 
 // This should be used once we create a VPA per namespace
-func (s *VPAStep) createVPARecommender(req pipeline.CapsuleRequest) *appsv1.Deployment { //nolint:unused
+func (p *Plugin) createVPARecommender(req pipeline.CapsuleRequest) *appsv1.Deployment { //nolint:unused
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-vpa", req.Capsule().Namespace),

@@ -10,14 +10,13 @@ Config (in context of the rig-operator Helm values):
 ```
 config:
   pipeline:
-    steps:
-      - plugins:
-        - name: rigdev.ingress_routes
-          config: |
-            clusterIssuer: letsencrypt-prod
-            createCertificateResources: true
-            ingressClassName: nginx
-            disableTLS: false
+    routesStep:
+      plugin: "rigdev.ingress_routes"
+      config: |
+        clusterIssuer: letsencrypt-prod
+        createCertificateResources: true
+        ingressClassName: nginx
+        disableTLS: false
 ```
 
 ## Config

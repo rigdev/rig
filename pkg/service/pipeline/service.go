@@ -87,7 +87,7 @@ func (s *service) DryRun(
 		spec.SetUID(types.UID("dry-run-spec"))
 	}
 
-	steps, err := GetDefaultPipelineSteps(ctx, s.capSvc, cfg, s.pluginManager, s.logger)
+	steps, err := GetDefaultPipelineSteps(ctx, cfg, s.pluginManager, s.logger)
 	if err != nil {
 		return nil, err
 	}

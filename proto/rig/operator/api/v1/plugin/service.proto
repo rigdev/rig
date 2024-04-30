@@ -19,6 +19,8 @@ message InitializeRequest {
   string plugin_config = 1;
   bytes operator_config = 2;
   string tag = 3;
+  // If not given the plugin will try to initialize using the in-cluster-config.
+  RestConfig rest_config = 4;
 }
 message InitializeResponse {}
 
@@ -72,4 +74,10 @@ message ListObjectsRequest {
 
 message ListObjectsResponse {
   repeated bytes objects = 1;
+}
+
+message RestConfig {
+  string host = 1;
+  string bearer_token = 2;
+  bytes tls_config = 3;
 }

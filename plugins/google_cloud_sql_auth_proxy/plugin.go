@@ -11,7 +11,6 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
-	svc_pipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -116,7 +115,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 		resources[corev1.ResourceMemory] = memory
 	}
 
-	volume, mounts := svc_pipeline.FilesToVolumes(config.Files)
+	volume, mounts := pipeline.FilesToVolumes(config.Files)
 	for _, v := range volume {
 		for _, vv := range deployment.Spec.Template.Spec.Volumes {
 			found := false
@@ -134,7 +133,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 		Name:    "google-cloud-sql-proxy",
 		Image:   image,
 		Args:    args,
-		EnvFrom: svc_pipeline.EnvSources(config.EnvFromSource),
+		EnvFrom: pipeline.EnvSources(config.EnvFromSource),
 		Env:     config.EnvVars,
 		Resources: corev1.ResourceRequirements{
 			Requests: resources,

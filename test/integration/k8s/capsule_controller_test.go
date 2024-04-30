@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
-	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/hash"
+	"github.com/rigdev/rig/pkg/pipeline"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
@@ -85,7 +85,7 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 			Name:      uuid.NewString(),
 			Namespace: nsName.Namespace,
 			Labels: map[string]string{
-				controller.LabelSharedConfig: "true",
+				pipeline.LabelSharedConfig: "true",
 			},
 		},
 		Data: map[string][]byte{
@@ -133,7 +133,7 @@ func (s *K8sTestSuite) TestControllerSharedSecrets() {
 	}, waitFor, tick)
 
 	secret.Name = uuid.NewString()
-	delete(secret.Labels, controller.LabelSharedConfig)
+	delete(secret.Labels, pipeline.LabelSharedConfig)
 	secret.ResourceVersion = ""
 	s.Require().NoError(s.Client.Create(ctx, &secret))
 
@@ -262,7 +262,6 @@ func (s *K8sTestSuite) TestController() {
 	s.testCreateCapsule(ctx)
 	s.testInterface(ctx)
 	s.testIngress(ctx)
-	s.testLoadbalancer(ctx)
 	s.testIngressRoutes(ctx)
 	s.testEnvVar(ctx)
 	s.testConfigMap(ctx)
@@ -565,46 +564,6 @@ func (s *K8sTestSuite) testIngress(ctx context.Context) {
 	})
 }
 
-func (s *K8sTestSuite) testLoadbalancer(ctx context.Context) {
-	s.by("Changing ingress to loadbalancer")
-	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
-		c.Spec.Interfaces[0].Public = &v1alpha2.CapsulePublicInterface{
-			LoadBalancer: &v1alpha2.CapsuleInterfaceLoadBalancer{
-				Port: 1,
-			},
-		}
-	})
-
-	s.Assert().Eventually(func() bool {
-		if err := s.Client.Get(ctx, nsName, &netv1.Ingress{}); err != nil {
-			if kerrors.IsNotFound(err) {
-				return true
-			}
-		}
-		return false
-	}, waitFor, tick)
-
-	s.expectResources(ctx, []client.Object{
-		&v1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-lb", nsName.Name),
-				Namespace: nsName.Namespace,
-				OwnerReferences: []metav1.OwnerReference{
-					capsuleOwnerRef,
-				},
-			},
-			Spec: v1.ServiceSpec{
-				Ports: []v1.ServicePort{{
-					Name:       "http",
-					Port:       1,
-					TargetPort: intstr.FromString("http"),
-				}},
-				Type: v1.ServiceTypeLoadBalancer,
-			},
-		},
-	})
-}
-
 func (s *K8sTestSuite) testIngressRoutes(ctx context.Context) {
 	s.by("Adding ingress routes")
 	capsuleOwnerRef := s.updateCapsule(ctx, func(c *v1alpha2.Capsule) {
@@ -719,7 +678,7 @@ func (s *K8sTestSuite) testEnvVar(ctx context.Context) {
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							controller.AnnotationChecksumAutoEnv: fmt.Sprintf("%x", h.Sum(nil)),
+							pipeline.AnnotationChecksumAutoEnv: fmt.Sprintf("%x", h.Sum(nil)),
 						},
 					},
 					Spec: v1.PodSpec{
@@ -782,7 +741,7 @@ func (s *K8sTestSuite) testConfigMap(ctx context.Context) {
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							controller.AnnotationChecksumFiles: fmt.Sprintf("%x", h.Sum(nil)),
+							pipeline.AnnotationChecksumFiles: fmt.Sprintf("%x", h.Sum(nil)),
 						},
 					},
 					Spec: v1.PodSpec{
@@ -818,7 +777,7 @@ func (s *K8sTestSuite) testConfigMap(ctx context.Context) {
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							controller.AnnotationChecksumFiles: fmt.Sprintf("%x", h.Sum(nil)),
+							pipeline.AnnotationChecksumFiles: fmt.Sprintf("%x", h.Sum(nil)),
 						},
 					},
 					Spec: v1.PodSpec{
@@ -983,8 +942,8 @@ func (s *K8sTestSuite) testCronJob(ctx context.Context) {
 			Name:      "test-job1",
 			Namespace: nsName.Namespace,
 			Labels: map[string]string{
-				controller.LabelCapsule: nsName.Name,
-				controller.LabelCron:    "job1",
+				pipeline.LabelCapsule: nsName.Name,
+				pipeline.LabelCron:    "job1",
 			},
 			OwnerReferences: []metav1.OwnerReference{capsuleOwnerRef},
 		},
@@ -993,8 +952,8 @@ func (s *K8sTestSuite) testCronJob(ctx context.Context) {
 			JobTemplate: batchv1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						controller.LabelCapsule: nsName.Name,
-						controller.LabelCron:    "job1",
+						pipeline.LabelCapsule: nsName.Name,
+						pipeline.LabelCron:    "job1",
 					},
 					// Annotations:                map[string]string{},
 				},
@@ -1021,8 +980,8 @@ func (s *K8sTestSuite) testCronJob(ctx context.Context) {
 			Name:      "test-job2",
 			Namespace: nsName.Namespace,
 			Labels: map[string]string{
-				controller.LabelCapsule: nsName.Name,
-				controller.LabelCron:    "job2",
+				pipeline.LabelCapsule: nsName.Name,
+				pipeline.LabelCron:    "job2",
 			},
 			OwnerReferences: []metav1.OwnerReference{capsuleOwnerRef},
 		},
@@ -1031,8 +990,8 @@ func (s *K8sTestSuite) testCronJob(ctx context.Context) {
 			JobTemplate: batchv1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						controller.LabelCapsule: nsName.Name,
-						controller.LabelCron:    "job2",
+						pipeline.LabelCapsule: nsName.Name,
+						pipeline.LabelCron:    "job2",
 					},
 				},
 				Spec: batchv1.JobSpec{
@@ -1062,14 +1021,14 @@ func (s *K8sTestSuite) testPrometheusServiceMonitor(ctx context.Context) {
 				Name:      nsName.Name,
 				Namespace: nsName.Namespace,
 				Labels: map[string]string{
-					controller.LabelCapsule: nsName.Name,
+					pipeline.LabelCapsule: nsName.Name,
 				},
 				OwnerReferences: []metav1.OwnerReference{capsuleOwnerRef},
 			},
 			Spec: monitorv1.ServiceMonitorSpec{
 				Selector: metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						controller.LabelCapsule: nsName.Name,
+						pipeline.LabelCapsule: nsName.Name,
 					},
 				},
 				Endpoints: []monitorv1.Endpoint{{
