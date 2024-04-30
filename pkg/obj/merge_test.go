@@ -405,33 +405,39 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				},
 			},
 		},
-		// {
-		// 	name: "projEnv has env vars",
-		// 	patch: &platformv1.ProjEnvCapsuleBase{
-		// 		ConfigFiles: []*platformv1.ConfigFile{},
-		// 		EnvironmentVariables: map[string]string{
-		// 			"key1": "value1",
-		// 			"key2": "value2",
-		// 		},
-		// 	},
-		// 	into: &platformv1.CapsuleSpecExtension{
-		// 		Kind:       "CapsuleSpecExtension",
-		// 		ApiVersion: "v1",
-		// 		EnvironmentVariables: map[string]string{
-		// 			"key1": "other-value",
-		// 			"key3": "value3",
-		// 		},
-		// 	},
-		// 	expected: &platformv1.CapsuleSpecExtension{
-		// 		Kind:       "CapsuleSpecExtension",
-		// 		ApiVersion: "v1",
-		// 		EnvironmentVariables: map[string]string{
-		// 			"key1": "value1",
-		// 			"key2": "value2",
-		// 			"key3": "value3",
-		// 		},
-		// 	},
-		// },
+		{
+			name: "projEnv has env vars",
+			patch: &platformv1.ProjEnvCapsuleBase{
+				ConfigFiles: []*platformv1.ConfigFile{},
+				EnvironmentVariables: &platformv1.EnvironmentVariables{
+					Direct: map[string]string{
+						"key1": "value1",
+						"key2": "value2",
+					},
+				},
+			},
+			into: &platformv1.CapsuleSpecExtension{
+				Kind:       "CapsuleSpecExtension",
+				ApiVersion: "v1",
+				EnvironmentVariables: &platformv1.EnvironmentVariables{
+					Direct: map[string]string{
+						"key1": "other-value",
+						"key3": "value3",
+					},
+				},
+			},
+			expected: &platformv1.CapsuleSpecExtension{
+				Kind:       "CapsuleSpecExtension",
+				ApiVersion: "v1",
+				EnvironmentVariables: &platformv1.EnvironmentVariables{
+					Direct: map[string]string{
+						"key1": "value1",
+						"key2": "value2",
+						"key3": "value3",
+					},
+				},
+			},
+		},
 		{
 			name:  "empty capsule patch",
 			patch: &platformv1.CapsuleSpecExtension{},
