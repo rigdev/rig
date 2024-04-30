@@ -7,6 +7,7 @@ import "model/author.proto";
 import "api/v1/capsule/rollout/status.proto";
 import "api/v1/capsule/job.proto";
 import "api/v1/capsule/change.proto";
+import "platform/v1/generated.proto";
 
 // The rollout model.
 message Rollout {
@@ -39,6 +40,9 @@ message RolloutConfig {
   string environment_id = 12;
   string message = 13;
   map<string, string> annotations = 14;
+
+  // Either this or the previous fields are set
+  platform.v1.CapsuleSpecExtension spec = 15;
 }
 
 message ConfigFile {

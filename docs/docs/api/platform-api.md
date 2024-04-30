@@ -43,6 +43,10 @@
 
 
 
+
+
+
+
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -267,10 +271,6 @@
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.user.settings.Service/GetSettings | [GetSettingsRequest](#api-v1-user-settings-GetSettingsRequest) | [GetSettingsResponse](#api-v1-user-settings-GetSettingsResponse) | Gets the users settings for the current project. |
 | /api.v1.user.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-user-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-user-settings-UpdateSettingsResponse) | Sets the users settings for the current project. |
-
-
-
-
 
 
 
@@ -3376,6 +3376,724 @@ Different states a step can be in.
 
 
 
+<a name="k8s-io_api_autoscaling_v2_generated-proto"></a>
+
+## k8s.io/api/autoscaling/v2/generated.proto
+
+
+
+<a name="k8s-io-api-autoscaling-v2-CrossVersionObjectReference"></a>
+
+### CrossVersionObjectReference
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="k8s-io_apimachinery_pkg_api_resource_generated-proto"></a>
+
+## k8s.io/apimachinery/pkg/api/resource/generated.proto
+
+
+
+<a name="k8s-io-apimachinery-pkg-api-resource-Quantity"></a>
+
+### Quantity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| string | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="v1alpha2_generated-proto"></a>
+
+## v1alpha2/generated.proto
+
+
+
+<a name="v1alpha2-CPUTarget"></a>
+
+### CPUTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| utilization | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-CapsuleInterface"></a>
+
+### CapsuleInterface
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| port | [int32](#int32) |  |  |
+| liveness | [InterfaceProbe](#v1alpha2-InterfaceProbe) |  |  |
+| readiness | [InterfaceProbe](#v1alpha2-InterfaceProbe) |  |  |
+| public | [CapsulePublicInterface](#v1alpha2-CapsulePublicInterface) |  |  |
+| routes | [HostRoute](#v1alpha2-HostRoute) | repeated |  |
+
+
+
+
+
+
+<a name="v1alpha2-CapsuleInterfaceIngress"></a>
+
+### CapsuleInterfaceIngress
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| paths | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="v1alpha2-CapsuleInterfaceLoadBalancer"></a>
+
+### CapsuleInterfaceLoadBalancer
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| port | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-CapsulePublicInterface"></a>
+
+### CapsulePublicInterface
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ingress | [CapsuleInterfaceIngress](#v1alpha2-CapsuleInterfaceIngress) |  |  |
+| loadBalancer | [CapsuleInterfaceLoadBalancer](#v1alpha2-CapsuleInterfaceLoadBalancer) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-CapsuleScale"></a>
+
+### CapsuleScale
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| horizontal | [HorizontalScale](#v1alpha2-HorizontalScale) |  |  |
+| vertical | [VerticalScale](#v1alpha2-VerticalScale) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-CronJob"></a>
+
+### CronJob
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| schedule | [string](#string) |  |  |
+| url | [URL](#v1alpha2-URL) |  |  |
+| command | [JobCommand](#v1alpha2-JobCommand) |  |  |
+| maxRetries | [uint64](#uint64) |  |  |
+| timeoutSeconds | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-CustomMetric"></a>
+
+### CustomMetric
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| instanceMetric | [InstanceMetric](#v1alpha2-InstanceMetric) |  |  |
+| objectMetric | [ObjectMetric](#v1alpha2-ObjectMetric) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-HTTPPathRoute"></a>
+
+### HTTPPathRoute
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| match | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-HorizontalScale"></a>
+
+### HorizontalScale
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| instances | [Instances](#v1alpha2-Instances) |  |  |
+| cpuTarget | [CPUTarget](#v1alpha2-CPUTarget) |  |  |
+| customMetrics | [CustomMetric](#v1alpha2-CustomMetric) | repeated |  |
+
+
+
+
+
+
+<a name="v1alpha2-HostRoute"></a>
+
+### HostRoute
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| host | [string](#string) |  |  |
+| paths | [HTTPPathRoute](#v1alpha2-HTTPPathRoute) | repeated |  |
+| annotations | [HostRoute.AnnotationsEntry](#v1alpha2-HostRoute-AnnotationsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="v1alpha2-HostRoute-AnnotationsEntry"></a>
+
+### HostRoute.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-InstanceMetric"></a>
+
+### InstanceMetric
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metricName | [string](#string) |  |  |
+| matchLabels | [InstanceMetric.MatchLabelsEntry](#v1alpha2-InstanceMetric-MatchLabelsEntry) | repeated |  |
+| averageValue | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-InstanceMetric-MatchLabelsEntry"></a>
+
+### InstanceMetric.MatchLabelsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-Instances"></a>
+
+### Instances
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| min | [uint32](#uint32) |  |  |
+| max | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-InterfaceGRPCProbe"></a>
+
+### InterfaceGRPCProbe
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| service | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-InterfaceProbe"></a>
+
+### InterfaceProbe
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| tcp | [bool](#bool) |  |  |
+| grpc | [InterfaceGRPCProbe](#v1alpha2-InterfaceGRPCProbe) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-JobCommand"></a>
+
+### JobCommand
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| command | [string](#string) |  |  |
+| args | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="v1alpha2-ObjectMetric"></a>
+
+### ObjectMetric
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metricName | [string](#string) |  |  |
+| matchLabels | [ObjectMetric.MatchLabelsEntry](#v1alpha2-ObjectMetric-MatchLabelsEntry) | repeated |  |
+| averageValue | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+| objectReference | [k8s.io.api.autoscaling.v2.CrossVersionObjectReference](#k8s-io-api-autoscaling-v2-CrossVersionObjectReference) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-ObjectMetric-MatchLabelsEntry"></a>
+
+### ObjectMetric.MatchLabelsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-ResourceLimits"></a>
+
+### ResourceLimits
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
+| limit | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-ResourceRequest"></a>
+
+### ResourceRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-URL"></a>
+
+### URL
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| port | [uint32](#uint32) |  |  |
+| path | [string](#string) |  |  |
+| queryParameters | [URL.QueryParametersEntry](#v1alpha2-URL-QueryParametersEntry) | repeated |  |
+
+
+
+
+
+
+<a name="v1alpha2-URL-QueryParametersEntry"></a>
+
+### URL.QueryParametersEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="v1alpha2-VerticalScale"></a>
+
+### VerticalScale
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cpu | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
+| memory | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
+| gpu | [ResourceRequest](#v1alpha2-ResourceRequest) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="platform_v1_generated-proto"></a>
+
+## platform/v1/generated.proto
+
+
+
+<a name="platform-v1-CapsuleEnvironment"></a>
+
+### CapsuleEnvironment
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| spec | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CapsuleSpecExtension"></a>
+
+### CapsuleSpecExtension
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| image | [string](#string) |  |  |
+| command | [string](#string) |  |  |
+| args | [string](#string) | repeated |  |
+| interfaces | [v1alpha2.CapsuleInterface](#v1alpha2-CapsuleInterface) | repeated |  |
+| configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
+| environmentVariables | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
+| scale | [v1alpha2.CapsuleScale](#v1alpha2-CapsuleScale) |  |  |
+| nodeSelector | [CapsuleSpecExtension.NodeSelectorEntry](#platform-v1-CapsuleSpecExtension-NodeSelectorEntry) | repeated |  |
+| cronJobs | [v1alpha2.CronJob](#v1alpha2-CronJob) | repeated |  |
+| annotations | [CapsuleSpecExtension.AnnotationsEntry](#platform-v1-CapsuleSpecExtension-AnnotationsEntry) | repeated |  |
+| autoAddRigServiceAccounts | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CapsuleSpecExtension-AnnotationsEntry"></a>
+
+### CapsuleSpecExtension.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CapsuleSpecExtension-NodeSelectorEntry"></a>
+
+### CapsuleSpecExtension.NodeSelectorEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CapsuleStar"></a>
+
+### CapsuleStar
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| project | [string](#string) |  |  |
+| capsuleBase | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
+| environments | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-ConfigFile"></a>
+
+### ConfigFile
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| content | [bytes](#bytes) |  |  |
+| isSecret | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-Environment"></a>
+
+### Environment
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| namespaceTemplate | [string](#string) |  |  |
+| operatorVersion | [string](#string) |  |  |
+| clusterID | [string](#string) |  |  |
+| capsuleBase | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-EnvironmentSource"></a>
+
+### EnvironmentSource
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| kind | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-EnvironmentVariables"></a>
+
+### EnvironmentVariables
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| direct | [EnvironmentVariables.DirectEntry](#platform-v1-EnvironmentVariables-DirectEntry) | repeated |  |
+| sources | [EnvironmentSource](#platform-v1-EnvironmentSource) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-EnvironmentVariables-DirectEntry"></a>
+
+### EnvironmentVariables.DirectEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-ProjEnvCapsuleBase"></a>
+
+### ProjEnvCapsuleBase
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
+| environmentVariables | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-Project"></a>
+
+### Project
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| environments | [string](#string) | repeated |  |
+| capsuleBase | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_rollout-proto"></a>
 
 ## api/v1/capsule/rollout.proto
@@ -3440,6 +4158,7 @@ The rollout model.
 | environment_id | [string](#string) |  |  |
 | message | [string](#string) |  |  |
 | annotations | [RolloutConfig.AnnotationsEntry](#api-v1-capsule-RolloutConfig-AnnotationsEntry) | repeated |  |
+| spec | [platform.v1.CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  | Either this or the previous fields are set |
 
 
 
@@ -7314,64 +8033,6 @@ Empty response for updating users settings for the Rig project.
 
 
 
-<a name="k8s-io_api_autoscaling_v2_generated-proto"></a>
-
-## k8s.io/api/autoscaling/v2/generated.proto
-
-
-
-<a name="k8s-io-api-autoscaling-v2-CrossVersionObjectReference"></a>
-
-### CrossVersionObjectReference
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="k8s-io_apimachinery_pkg_api_resource_generated-proto"></a>
-
-## k8s.io/apimachinery/pkg/api/resource/generated.proto
-
-
-
-<a name="k8s-io-apimachinery-pkg-api-resource-Quantity"></a>
-
-### Quantity
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| string | [string](#string) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="k8s-io_apimachinery_pkg_apis_meta_v1_generated-proto"></a>
 
 ## k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto
@@ -7388,666 +8049,6 @@ Empty response for updating users settings for the Rig project.
 | ----- | ---- | ----- | ----------- |
 | kind | [string](#string) |  |  |
 | aPIVersion | [string](#string) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="v1alpha2_generated-proto"></a>
-
-## v1alpha2/generated.proto
-
-
-
-<a name="v1alpha2-CPUTarget"></a>
-
-### CPUTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| utilization | [uint32](#uint32) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsuleInterface"></a>
-
-### CapsuleInterface
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| port | [int32](#int32) |  |  |
-| liveness | [InterfaceProbe](#v1alpha2-InterfaceProbe) |  |  |
-| readiness | [InterfaceProbe](#v1alpha2-InterfaceProbe) |  |  |
-| public | [CapsulePublicInterface](#v1alpha2-CapsulePublicInterface) |  |  |
-| routes | [HostRoute](#v1alpha2-HostRoute) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsuleInterfaceIngress"></a>
-
-### CapsuleInterfaceIngress
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| host | [string](#string) |  |  |
-| paths | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsuleInterfaceLoadBalancer"></a>
-
-### CapsuleInterfaceLoadBalancer
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| port | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsulePublicInterface"></a>
-
-### CapsulePublicInterface
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| ingress | [CapsuleInterfaceIngress](#v1alpha2-CapsuleInterfaceIngress) |  |  |
-| loadBalancer | [CapsuleInterfaceLoadBalancer](#v1alpha2-CapsuleInterfaceLoadBalancer) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsuleScale"></a>
-
-### CapsuleScale
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| horizontal | [HorizontalScale](#v1alpha2-HorizontalScale) |  |  |
-| vertical | [VerticalScale](#v1alpha2-VerticalScale) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CronJob"></a>
-
-### CronJob
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| schedule | [string](#string) |  |  |
-| url | [URL](#v1alpha2-URL) |  |  |
-| command | [JobCommand](#v1alpha2-JobCommand) |  |  |
-| maxRetries | [uint64](#uint64) |  |  |
-| timeoutSeconds | [uint64](#uint64) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CustomMetric"></a>
-
-### CustomMetric
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| instanceMetric | [InstanceMetric](#v1alpha2-InstanceMetric) |  |  |
-| objectMetric | [ObjectMetric](#v1alpha2-ObjectMetric) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-HTTPPathRoute"></a>
-
-### HTTPPathRoute
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  |  |
-| match | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-HorizontalScale"></a>
-
-### HorizontalScale
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| instances | [Instances](#v1alpha2-Instances) |  |  |
-| cpuTarget | [CPUTarget](#v1alpha2-CPUTarget) |  |  |
-| customMetrics | [CustomMetric](#v1alpha2-CustomMetric) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-HostRoute"></a>
-
-### HostRoute
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| host | [string](#string) |  |  |
-| paths | [HTTPPathRoute](#v1alpha2-HTTPPathRoute) | repeated |  |
-| annotations | [HostRoute.AnnotationsEntry](#v1alpha2-HostRoute-AnnotationsEntry) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-HostRoute-AnnotationsEntry"></a>
-
-### HostRoute.AnnotationsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-InstanceMetric"></a>
-
-### InstanceMetric
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metricName | [string](#string) |  |  |
-| matchLabels | [InstanceMetric.MatchLabelsEntry](#v1alpha2-InstanceMetric-MatchLabelsEntry) | repeated |  |
-| averageValue | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-InstanceMetric-MatchLabelsEntry"></a>
-
-### InstanceMetric.MatchLabelsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-Instances"></a>
-
-### Instances
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| min | [uint32](#uint32) |  |  |
-| max | [uint32](#uint32) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-InterfaceGRPCProbe"></a>
-
-### InterfaceGRPCProbe
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| service | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-InterfaceProbe"></a>
-
-### InterfaceProbe
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  |  |
-| tcp | [bool](#bool) |  |  |
-| grpc | [InterfaceGRPCProbe](#v1alpha2-InterfaceGRPCProbe) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-JobCommand"></a>
-
-### JobCommand
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| command | [string](#string) |  |  |
-| args | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-ObjectMetric"></a>
-
-### ObjectMetric
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metricName | [string](#string) |  |  |
-| matchLabels | [ObjectMetric.MatchLabelsEntry](#v1alpha2-ObjectMetric-MatchLabelsEntry) | repeated |  |
-| averageValue | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-| objectReference | [k8s.io.api.autoscaling.v2.CrossVersionObjectReference](#k8s-io-api-autoscaling-v2-CrossVersionObjectReference) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-ObjectMetric-MatchLabelsEntry"></a>
-
-### ObjectMetric.MatchLabelsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-ResourceLimits"></a>
-
-### ResourceLimits
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| request | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
-| limit | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-ResourceRequest"></a>
-
-### ResourceRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| request | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-URL"></a>
-
-### URL
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| port | [uint32](#uint32) |  |  |
-| path | [string](#string) |  |  |
-| queryParameters | [URL.QueryParametersEntry](#v1alpha2-URL-QueryParametersEntry) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-URL-QueryParametersEntry"></a>
-
-### URL.QueryParametersEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-VerticalScale"></a>
-
-### VerticalScale
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| cpu | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
-| memory | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
-| gpu | [ResourceRequest](#v1alpha2-ResourceRequest) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="platform_v1_generated-proto"></a>
-
-## platform/v1/generated.proto
-
-
-
-<a name="platform-v1-CapsuleEnvironment"></a>
-
-### CapsuleEnvironment
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| project | [string](#string) |  |  |
-| environment | [string](#string) |  |  |
-| spec | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleSpecExtension"></a>
-
-### CapsuleSpecExtension
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
-| image | [string](#string) |  |  |
-| command | [string](#string) |  |  |
-| args | [string](#string) | repeated |  |
-| interfaces | [v1alpha2.CapsuleInterface](#v1alpha2-CapsuleInterface) | repeated |  |
-| configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
-| environmentVariables | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
-| scale | [v1alpha2.CapsuleScale](#v1alpha2-CapsuleScale) |  |  |
-| nodeSelector | [CapsuleSpecExtension.NodeSelectorEntry](#platform-v1-CapsuleSpecExtension-NodeSelectorEntry) | repeated |  |
-| cronJobs | [v1alpha2.CronJob](#v1alpha2-CronJob) | repeated |  |
-| annotations | [CapsuleSpecExtension.AnnotationsEntry](#platform-v1-CapsuleSpecExtension-AnnotationsEntry) | repeated |  |
-| autoAddRigServiceAccounts | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleSpecExtension-AnnotationsEntry"></a>
-
-### CapsuleSpecExtension.AnnotationsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleSpecExtension-NodeSelectorEntry"></a>
-
-### CapsuleSpecExtension.NodeSelectorEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleStar"></a>
-
-### CapsuleStar
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| project | [string](#string) |  |  |
-| capsuleBase | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
-| environments | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="platform-v1-ConfigFile"></a>
-
-### ConfigFile
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  |  |
-| content | [bytes](#bytes) |  |  |
-| isSecret | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-Environment"></a>
-
-### Environment
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| namespaceTemplate | [string](#string) |  |  |
-| operatorVersion | [string](#string) |  |  |
-| clusterID | [string](#string) |  |  |
-| capsuleBase | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-EnvironmentSource"></a>
-
-### EnvironmentSource
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| kind | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-EnvironmentVariables"></a>
-
-### EnvironmentVariables
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| direct | [EnvironmentVariables.DirectEntry](#platform-v1-EnvironmentVariables-DirectEntry) | repeated |  |
-| sources | [EnvironmentSource](#platform-v1-EnvironmentSource) | repeated |  |
-
-
-
-
-
-
-<a name="platform-v1-EnvironmentVariables-DirectEntry"></a>
-
-### EnvironmentVariables.DirectEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-ProjEnvCapsuleBase"></a>
-
-### ProjEnvCapsuleBase
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
-| environmentVariables | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-Project"></a>
-
-### Project
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| environments | [string](#string) | repeated |  |
-| capsuleBase | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
 
 
 
