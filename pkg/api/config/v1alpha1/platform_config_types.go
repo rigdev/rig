@@ -157,6 +157,9 @@ type Client struct {
 
 	// Operator sets the base url for the Operator client.
 	Operator ClientOperator `json:"operator,omitempty"`
+
+	// Slack holds configuration for sending slack messages.
+	Slack ClientSlack `json:"slack,omitempty"`
 }
 
 // Logging specifies logging configuration.
@@ -203,6 +206,17 @@ type ClientMailjet struct {
 
 	// SecretKey is the mailjet secret key
 	SecretKey string `json:"secretKey,omitempty"`
+}
+
+type ClientSlack struct {
+	// Slack authentication token.
+	Token string `json:"token,omitempty"`
+	// ID of the slack channel to send messages to.
+	ChannelID string `json:"channel_id,omitempty"`
+	// Projects to send messages for. If empty, all projects are included.
+	Projects []string `json:"projects,omitempty"`
+	// Environments to send messages for. If empty, all environments are included.
+	Environments []string `json:"environments,omitempty"`
 }
 
 // ClientSMTP specifies the configuration for the SMTP client.

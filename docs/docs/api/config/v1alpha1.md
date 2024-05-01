@@ -79,6 +79,7 @@ _Appears in:_
 | `mailjet` _[ClientMailjet](#clientmailjet)_ | Mailjet sets the API key and secret for the Mailjet client. |
 | `smtp` _[ClientSMTP](#clientsmtp)_ | SMTP sets the host, port, username and password for the SMTP client. |
 | `operator` _[ClientOperator](#clientoperator)_ | Operator sets the base url for the Operator client. |
+| `slack` _[ClientSlack](#clientslack)_ | Slack holds configuration for sending slack messages. |
 
 
 ### ClientDocker
@@ -158,6 +159,23 @@ _Appears in:_
 | `port` _integer_ | Port is the SMTP server port to use. |
 | `username` _string_ | Username used when connecting to the SMTP server. |
 | `password` _string_ | Password used when connecting to the SMTP server. |
+
+
+### ClientSlack
+
+
+
+
+
+_Appears in:_
+- [Client](#client)
+
+| Field | Description |
+| --- | --- |
+| `token` _string_ | Slack authentication token. |
+| `channel_id` _string_ | ID of the slack channel to send messages to. |
+| `projects` _string array_ | Projects to send messages for. If empty, all projects are included. |
+| `environments` _string array_ | Environments to send messages for. If empty, all environments are included. |
 
 
 ### Cluster
