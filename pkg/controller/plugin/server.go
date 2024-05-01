@@ -104,7 +104,10 @@ func (m *GRPCServer) RunCapsule(
 	return &apiplugin.RunCapsuleResponse{}, nil
 }
 
-func (m *GRPCServer) WatchObjectStatus(req *apiplugin.WatchObjectStatusRequest, stream apiplugin.PluginService_WatchObjectStatusServer) error {
+func (m *GRPCServer) WatchObjectStatus(
+	req *apiplugin.WatchObjectStatusRequest,
+	stream apiplugin.PluginService_WatchObjectStatusServer,
+) error {
 	changeChannel := make(chan *apiplugin.ObjectStatusChange, 32)
 	ctx, cancel := context.WithCancel(stream.Context())
 
@@ -307,7 +310,7 @@ type Plugin interface {
 
 type NoWatchObjectStatus struct{}
 
-func (NoWatchObjectStatus) WatchObjectStatus(ctx context.Context, watcher CapsuleWatcher) error {
+func (NoWatchObjectStatus) WatchObjectStatus(context.Context, CapsuleWatcher) error {
 	return errors.UnimplementedErrorf("watch object status not available in plugin")
 }
 

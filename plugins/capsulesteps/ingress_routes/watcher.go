@@ -12,7 +12,7 @@ import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	netv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
@@ -49,7 +49,7 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
 	return status
 }
 
-func onCertificateUpdated(obj runtime.Object, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
+func onCertificateUpdated(obj client.Object, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
 	cert := obj.(*cmv1.Certificate)
 
 	status := &apipipeline.ObjectStatus{
@@ -91,7 +91,7 @@ func onCertificateUpdated(obj runtime.Object, objectWatcher plugin.ObjectWatcher
 	return status
 }
 
-func onIngressUpdated(obj runtime.Object, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
+func onIngressUpdated(obj client.Object, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
 	ingress := obj.(*netv1.Ingress)
 
 	objectWatcher.WatchSecondaryByName(ingress.GetName(), &cmv1.Certificate{}, onCertificateUpdated)

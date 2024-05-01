@@ -17,6 +17,7 @@ import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
+	"github.com/rigdev/rig/pkg/service/objectstatus"
 	"github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -129,6 +130,7 @@ portName: "metricsport"`,
 		Config:              opConfig,
 		CapabilitiesService: cs,
 		PipelineService:     ps,
+		ObjectStatusService: objectstatus.NewService(ps, ctrl.Log),
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager))

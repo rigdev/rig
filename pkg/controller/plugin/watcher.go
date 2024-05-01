@@ -22,7 +22,7 @@ import (
 )
 
 type ObjectWatcher interface {
-	WatchSecondaryByName(objectName string, objType runtime.Object, cb WatchCallback)
+	WatchSecondaryByName(objectName string, objType client.Object, cb WatchCallback)
 }
 
 type CapsuleWatcher interface {
@@ -30,7 +30,7 @@ type CapsuleWatcher interface {
 	// the type of the object to watch for.
 	// All objects which type matches `objType` and that belongs to the capsule
 	// will be processed.
-	WatchPrimary(ctx context.Context, objType runtime.Object, cb WatchCallback) error
+	WatchPrimary(ctx context.Context, objType client.Object, cb WatchCallback) error
 }
 
 type capsuleWatcher struct {
@@ -98,19 +98,23 @@ func (w *capsuleWatcher) deleted(or *apipipeline.ObjectRef) {
 	}
 }
 
-func (w *capsuleWatcher) WatchPrimary(ctx context.Context, objType runtime.Object, cb WatchCallback) error {
+func (w *capsuleWatcher) WatchPrimary(ctx context.Context, objType client.Object, cb WatchCallback) error {
 	return w.w.watchPrimary(ctx, w.namespace, w.capsule, objType, w, cb)
 }
 
-type WatchCallback func(obj runtime.Object, objectWatcher ObjectWatcher) *apipipeline.ObjectStatus
+type WatchCallback func(obj client.Object, objectWatcher ObjectWatcher) *apipipeline.ObjectStatus
 
 type Watcher interface {
-	NewCapsuleWatcher(ctx context.Context, namespace, capsule string, c chan<- *apiplugin.ObjectStatusChange) CapsuleWatcher
+	NewCapsuleWatcher(
+		ctx context.Context,
+		namespace string,
+		capsule string,
+		c chan<- *apiplugin.ObjectStatusChange) CapsuleWatcher
 }
 
 func NewWatcher(logger hclog.Logger, cc client.WithWatch) Watcher {
 	return &watcher{
-		objectWatchers: map[watcherKey]*objectWatcher[runtime.Object]{},
+		objectWatchers: map[watcherKey]*objectWatcher{},
 		cc:             cc,
 		logger:         logger,
 	}
@@ -122,14 +126,19 @@ type watcherKey struct {
 }
 
 type watcher struct {
-	objectWatchers map[watcherKey]*objectWatcher[runtime.Object]
+	objectWatchers map[watcherKey]*objectWatcher
 	cc             client.WithWatch
 	objectSyncing  sync.WaitGroup
 	logger         hclog.Logger
 	lock           sync.Mutex
 }
 
-func (w *watcher) NewCapsuleWatcher(ctx context.Context, namespace, capsule string, c chan<- *apiplugin.ObjectStatusChange) CapsuleWatcher {
+func (w *watcher) NewCapsuleWatcher(
+	ctx context.Context,
+	namespace string,
+	capsule string,
+	c chan<- *apiplugin.ObjectStatusChange,
+) CapsuleWatcher {
 	return &capsuleWatcher{
 		ctx:       ctx,
 		w:         w,
@@ -139,7 +148,14 @@ func (w *watcher) NewCapsuleWatcher(ctx context.Context, namespace, capsule stri
 	}
 }
 
-func (w *watcher) watchPrimary(ctx context.Context, namespace, capsule string, objType runtime.Object, cw *capsuleWatcher, cb WatchCallback) error {
+func (w *watcher) watchPrimary(
+	ctx context.Context,
+	namespace string,
+	capsule string,
+	objType client.Object,
+	cw *capsuleWatcher,
+	cb WatchCallback,
+) error {
 	gvks, _, err := w.cc.Scheme().ObjectKinds(objType)
 	if err != nil {
 		return err
@@ -176,12 +192,12 @@ func (w *watcher) watchPrimary(ctx context.Context, namespace, capsule string, o
 	return nil
 }
 
-func (w *watcher) startWatch(f *objectWatch, objType runtime.Object) {
+func (w *watcher) startWatch(f *objectWatch, objType client.Object) {
 	w.lock.Lock()
 
 	ow, ok := w.objectWatchers[f.key.watcherKey]
 	if !ok {
-		ow = NewObjectWatcher(w, f.key.watcherKey.namespace, objType, w.cc, w.logger)
+		ow = newObjectWatcher(w, f.key.watcherKey.namespace, objType, w.cc, w.logger)
 		w.objectWatchers[f.key.watcherKey] = ow
 	}
 
@@ -220,6 +236,19 @@ func (k objectWatchKey) id() string {
 	return fmt.Sprint(k.watcherKey, strings.Join(k.names, ","), k.labels)
 }
 
+func (k objectWatchKey) matches(obj client.Object) bool {
+	ls := obj.GetLabels()
+	if !k.labels.AsSelector().Matches(labels.Set(ls)) {
+		return false
+	}
+
+	if len(k.names) != 0 && !slices.Contains(k.names, obj.GetName()) {
+		return false
+	}
+
+	return true
+}
+
 type objectWatch struct {
 	key         objectWatchKey
 	cb          WatchCallback
@@ -227,20 +256,7 @@ type objectWatch struct {
 	subWatchers map[string]*objectWatch
 }
 
-func (f *objectWatchKey) matches(obj client.Object) bool {
-	ls := obj.GetLabels()
-	if !f.labels.AsSelector().Matches(labels.Set(ls)) {
-		return false
-	}
-
-	if len(f.names) != 0 && !slices.Contains(f.names, obj.GetName()) {
-		return false
-	}
-
-	return true
-}
-
-type objectWatcher[T runtime.Object] struct {
+type objectWatcher struct {
 	w       *watcher
 	ctx     context.Context
 	cancel  context.CancelFunc
@@ -257,9 +273,13 @@ type objectWatcher[T runtime.Object] struct {
 	filters map[*objectWatch]struct{}
 }
 
-type ToObjectStatus[T runtime.Object] func(obj T) *apipipeline.ObjectStatus
-
-func NewObjectWatcher[T runtime.Object](w *watcher, namespace string, obj T, cc client.WithWatch, logger hclog.Logger) *objectWatcher[T] {
+func newObjectWatcher(
+	w *watcher,
+	namespace string,
+	obj client.Object,
+	cc client.WithWatch,
+	logger hclog.Logger,
+) *objectWatcher {
 	gvks, _, err := cc.Scheme().ObjectKinds(obj)
 	if err != nil {
 		log.Fatal(err)
@@ -270,7 +290,7 @@ func NewObjectWatcher[T runtime.Object](w *watcher, namespace string, obj T, cc 
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	ow := &objectWatcher[T]{
+	ow := &objectWatcher{
 		w:         w,
 		ctx:       ctx,
 		cancel:    cancel,
@@ -294,12 +314,12 @@ func NewObjectWatcher[T runtime.Object](w *watcher, namespace string, obj T, cc 
 	return ow
 }
 
-func (ow *objectWatcher[T]) stop() {
+func (ow *objectWatcher) stop() {
 	ow.logger.Info("stopping watcher", "gvk", ow.gvkList)
 	ow.cancel()
 }
 
-func (ow *objectWatcher[T]) addFilter(f *objectWatch) {
+func (ow *objectWatcher) addFilter(f *objectWatch) {
 	ow.lock.Lock()
 	defer ow.lock.Unlock()
 
@@ -321,34 +341,34 @@ func (ow *objectWatcher[T]) addFilter(f *objectWatch) {
 	}
 }
 
-func (w *objectWatcher[T]) removeFilter(f *objectWatch) bool {
-	w.lock.Lock()
-	defer w.lock.Unlock()
+func (ow *objectWatcher) removeFilter(f *objectWatch) bool {
+	ow.lock.Lock()
+	defer ow.lock.Unlock()
 
-	w.logger.Info("removing filter")
+	ow.logger.Info("removing filter")
 
-	delete(w.filters, f)
-	return len(w.filters) == 0
+	delete(ow.filters, f)
+	return len(ow.filters) == 0
 }
 
-func (w *objectWatcher[T]) run(ctx context.Context) {
-	go w.ctrl.Run(ctx.Done())
+func (ow *objectWatcher) run(ctx context.Context) {
+	go ow.ctrl.Run(ctx.Done())
 
-	cache.WaitForCacheSync(ctx.Done(), w.ctrl.HasSynced)
+	cache.WaitForCacheSync(ctx.Done(), ow.ctrl.HasSynced)
 
-	w.w.objectSyncing.Done()
+	ow.w.objectSyncing.Done()
 
 	<-ctx.Done()
 }
 
-func (w *objectWatcher[T]) List(options metav1.ListOptions) (runtime.Object, error) {
-	list, err := w.cc.Scheme().New(w.gvkList)
+func (ow *objectWatcher) List(options metav1.ListOptions) (runtime.Object, error) {
+	list, err := ow.cc.Scheme().New(ow.gvkList)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := w.cc.List(w.ctx, list.(client.ObjectList), &client.ListOptions{
-		Namespace: w.namespace,
+	if err := ow.cc.List(ow.ctx, list.(client.ObjectList), &client.ListOptions{
+		Namespace: ow.namespace,
 		Raw:       &options,
 	}); err != nil {
 		return nil, err
@@ -357,19 +377,19 @@ func (w *objectWatcher[T]) List(options metav1.ListOptions) (runtime.Object, err
 	return list, nil
 }
 
-func (w *objectWatcher[T]) Watch(options metav1.ListOptions) (watch.Interface, error) {
-	list, err := w.cc.Scheme().New(w.gvkList)
+func (ow *objectWatcher) Watch(options metav1.ListOptions) (watch.Interface, error) {
+	list, err := ow.cc.Scheme().New(ow.gvkList)
 	if err != nil {
 		return nil, err
 	}
 
-	return w.cc.Watch(w.ctx, list.(client.ObjectList), &client.ListOptions{
-		Namespace: w.namespace,
+	return ow.cc.Watch(ow.ctx, list.(client.ObjectList), &client.ListOptions{
+		Namespace: ow.namespace,
 		Raw:       &options,
 	})
 }
 
-func (ow *objectWatcher[T]) OnAdd(obj interface{}, isInInitialList bool) {
+func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
 	co, ok := obj.(client.Object)
 	if !ok {
 		ow.logger.Info("invalid object type")
@@ -385,11 +405,11 @@ func (ow *objectWatcher[T]) OnAdd(obj interface{}, isInInitialList bool) {
 	}
 }
 
-func (w *objectWatcher[T]) OnUpdate(oldObj, newObj interface{}) {
-	w.OnAdd(newObj, false)
+func (ow *objectWatcher) OnUpdate(_, newObj interface{}) {
+	ow.OnAdd(newObj, false)
 }
 
-func (ow *objectWatcher[T]) OnDelete(obj interface{}) {
+func (ow *objectWatcher) OnDelete(obj interface{}) {
 	co, ok := obj.(client.Object)
 	if !ok {
 		ow.logger.Info("invalid object type")
@@ -405,7 +425,7 @@ func (ow *objectWatcher[T]) OnDelete(obj interface{}) {
 	}
 }
 
-func (ow *objectWatcher[T]) handleForFilter(co client.Object, f *objectWatch, remove bool) {
+func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remove bool) {
 	if !f.key.matches(co) {
 		return
 	}
@@ -468,7 +488,7 @@ type objectWatcherResult struct {
 	watchers  map[string]objectWatchCandidate
 }
 
-func (r *objectWatcherResult) WatchSecondaryByName(objectName string, objType runtime.Object, cb WatchCallback) {
+func (r *objectWatcherResult) WatchSecondaryByName(objectName string, objType client.Object, cb WatchCallback) {
 	gvks, _, err := r.cc.Scheme().ObjectKinds(objType)
 	if err != nil {
 		// TODO!
@@ -492,6 +512,6 @@ func (r *objectWatcherResult) WatchSecondaryByName(objectName string, objType ru
 
 type objectWatchCandidate struct {
 	key     objectWatchKey
-	objType runtime.Object
+	objType client.Object
 	cb      WatchCallback
 }

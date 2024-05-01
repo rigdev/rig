@@ -29,7 +29,7 @@ type Service interface {
 	UpdateStatus(namespace string, capsule string, pluginID uuid.UUID, change *apiplugin.ObjectStatusChange)
 }
 
-func NewService(ctx context.Context, pipeline svc_pipeline.Service, logger logr.Logger) Service {
+func NewService(pipeline svc_pipeline.Service, logger logr.Logger) Service {
 	s := &service{
 		logger:   logger,
 		capsules: map[string]map[string]*capsuleCache{},
@@ -55,7 +55,12 @@ func (s *service) runForCapsule(ctx context.Context, namespace, capsule string) 
 	}
 }
 
-func (s *service) runStepForCapsule(ctx context.Context, namespace, capsule string, step pipeline.Step[pipeline.CapsuleRequest]) {
+func (s *service) runStepForCapsule(
+	ctx context.Context,
+	namespace string,
+	capsule string,
+	step pipeline.Step[pipeline.CapsuleRequest],
+) {
 	for {
 		if err := step.WatchObjectStatus(ctx, namespace, capsule, s); err == context.Canceled {
 			return
@@ -153,7 +158,12 @@ func (s *service) UnregisterCapsule(namespace string, capsule string) {
 	}
 }
 
-func (s *service) UpdateStatus(namespace string, capsule string, pluginID uuid.UUID, change *apiplugin.ObjectStatusChange) {
+func (s *service) UpdateStatus(
+	namespace string,
+	capsule string,
+	pluginID uuid.UUID,
+	change *apiplugin.ObjectStatusChange,
+) {
 	c := s.getCapsule(namespace, capsule)
 	if c == nil {
 		return

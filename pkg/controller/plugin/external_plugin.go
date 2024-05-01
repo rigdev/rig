@@ -121,7 +121,12 @@ func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest) e
 	return p.pluginClient.Run(ctx, req)
 }
 
-func (p *pluginExecutor) WatchObjectStatus(ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback) error {
+func (p *pluginExecutor) WatchObjectStatus(
+	ctx context.Context,
+	namespace string,
+	capsule string,
+	callback pipeline.ObjectStatusCallback,
+) error {
 	return p.pluginClient.WatchObjectStatus(ctx, namespace, capsule, callback)
 }
 
@@ -205,7 +210,12 @@ func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest) err
 	return err
 }
 
-func (m *pluginClient) WatchObjectStatus(ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback) error {
+func (m *pluginClient) WatchObjectStatus(
+	ctx context.Context,
+	namespace string,
+	capsule string,
+	callback pipeline.ObjectStatusCallback,
+) error {
 	c, err := m.client.WatchObjectStatus(ctx, &apiplugin.WatchObjectStatusRequest{
 		Namespace: namespace,
 		Capsule:   capsule,

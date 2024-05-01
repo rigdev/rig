@@ -60,7 +60,12 @@ func (s *Step) Stop(ctx context.Context) {
 	s.plugins = nil
 }
 
-func (s *Step) WatchObjectStatus(ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback) error {
+func (s *Step) WatchObjectStatus(
+	ctx context.Context,
+	namespace string,
+	capsule string,
+	callback pipeline.ObjectStatusCallback,
+) error {
 	wg := sync.WaitGroup{}
 
 	// TODO: We need annotations here.
