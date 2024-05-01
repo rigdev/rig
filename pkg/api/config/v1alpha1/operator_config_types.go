@@ -30,6 +30,11 @@ type OperatorConfig struct {
 
 	// Pipeline defines the capsule controller pipeline
 	Pipeline Pipeline `json:"pipeline,omitempty"`
+
+	// Alpha features:
+
+	// Enable object-status cache generation from plugins.
+	EnableObjectStatusCache *bool `json:"enable_object_status_cache"`
 }
 
 type Pipeline struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/pipeline"
 	svc_pipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -29,8 +30,13 @@ type Service interface {
 	UpdateStatus(namespace string, capsule string, pluginID uuid.UUID, change *apiplugin.ObjectStatusChange)
 }
 
-func NewService(pipeline svc_pipeline.Service, logger logr.Logger) Service {
+func NewService(
+	cfg *v1alpha1.OperatorConfig,
+	pipeline svc_pipeline.Service,
+	logger logr.Logger,
+) Service {
 	s := &service{
+		cfg:      cfg,
 		logger:   logger,
 		capsules: map[string]map[string]*capsuleCache{},
 		pipeline: pipeline,
@@ -40,6 +46,7 @@ func NewService(pipeline svc_pipeline.Service, logger logr.Logger) Service {
 }
 
 type service struct {
+	cfg      *v1alpha1.OperatorConfig
 	logger   logr.Logger
 	pipeline svc_pipeline.Service
 	lock     sync.RWMutex
@@ -110,6 +117,10 @@ func (s *service) readStatusForNamespace(namespace string, w *watcher) []*apipip
 }
 
 func (s *service) RegisterCapsule(namespace string, capsule string) {
+	if s.cfg.EnableObjectStatusCache == nil || !*s.cfg.EnableObjectStatusCache {
+		return
+	}
+
 	s.lock.Lock()
 	defer s.lock.Unlock()
 

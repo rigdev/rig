@@ -144,7 +144,7 @@ container:
 		Config:              opConfig,
 		CapabilitiesService: cs,
 		PipelineService:     ps,
-		ObjectStatusService: objectstatus.NewService(ps, ctrl.Log),
+		ObjectStatusService: objectstatus.NewService(opConfig, ps, ctrl.Log),
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
