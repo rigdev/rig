@@ -290,7 +290,6 @@ _Appears in:_
 | --- | --- |
 | `username` _string_ | Username for the docker registry. |
 | `password` _string_ | Password for the docker registry. |
-| `email` _string_ | Email for the docker registry. |
 
 
 ### Email

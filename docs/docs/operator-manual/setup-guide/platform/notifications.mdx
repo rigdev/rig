@@ -1,0 +1,136 @@
+import ThemedImage from "@theme/ThemedImage";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# Notifications
+The platform supports sending notifications to various channels such as slack, email, and more. This can be used to notify users about important events such as deployments, issues, and more.
+
+## Slack
+
+Integrating slack with the platform allows you to receive notifications on slack channels. To do this, you need to create a slack app and configure it with the platform.
+
+### Create a Slack App
+
+Go to [Slack API](https://api.slack.com/apps) and click on `Create New App`. Which will open the following modal:
+<img style={{
+    width: '600px',
+    height: 'auto',
+}} src={require('../../../../static/img/platform/slack-create-app.png').default} alt="Screenshot of slack app creation" />
+
+Then click `From an app manifest`, select your workspace , and enter the manifest below. This manifest will name the app Rig, and give it the permission to send messages to channels.
+
+<Tabs>
+<TabItem value="json" label="json">
+```json
+{
+    "display_information": {
+        "name": "Rig",
+        "description": "Rig will send notifications on important events in the Rig Platform",
+        "background_color": "#000000"
+    },
+    "features": {
+        "bot_user": {
+            "display_name": "Rig",
+            "always_online": false
+        }
+    },
+    "oauth_config": {
+        "scopes": {
+            "bot": [
+                "chat:write"
+            ]
+        }
+    },
+    "settings": {
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": false,
+        "token_rotation_enabled": false
+    }
+}
+```
+</TabItem>
+<TabItem value="yaml" label="yaml">
+```yaml
+display_information:
+  name: Rig
+  description: Rig will send notifications on important events in the Rig Platform
+  background_color: "#000000"
+features:
+  bot_user:
+    display_name: Rig
+    always_online: false
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
+```
+</TabItem>
+</Tabs>
+
+After you have entered the manifest, click `Next` and then `Create`. In the bottom of the `Basic Information` page, you can add icon for the app. You can find a Rig icon [here](https://go.rig.dev/hubfs/Linkedin.png). 
+Next, you will need to install the app to your workspace by clicking `Install to Workspace` in the top of the same page and then `Allow`.
+As the last step, you will need to add the app to the channel you want to receive notifications on. This is done in the slack app:
+1. Select the channel you want add the app to.
+2. Click the channel name in the top of the screen.
+3. Click `Integrations` in the top menu and click `Add an App`
+4. You should see the Rig app in the list `In your workspace`. Click `Add` to add the app to the channel.
+
+### Configure the Platform
+To allow the platform to send notifications using the Slack App, you need the `Bot User Oauth Token` from the slack app. This can be found in the slack app under `OAuth & Permissions`. 
+
+Add the following to the platform configuration in the context of helm values:
+```yaml
+rig:
+  publicURL: "https://<your-domain>"
+  client:
+    slack:
+      workspace:
+        token: "<Bot User Oauth Token>"
+```
+
+## Email
+You can also choose to receive notifications via email. To do this, you similarly need to configure either a mailjet or smpt credentials in the platform configuration.
+```yaml
+rig:
+  publicURL: "https://<your-domain>"
+  client:
+    mailjets:
+      mailjet1:
+        apiKey: "<Mailjet API Key>"
+        secretKey: "<Mailjet Secret Key>"
+    smtps:
+      smtp1:
+        host: "<SMTP Host>"
+        port: "<SMTP Port>"
+        username: "<SMTP Username>"
+        password: "<SMTP Password>"
+```
+
+## Setting the Notifiers
+To set the notifiers for the platform, you need to update the platform settings with the slack and/or email configurations. This is done interactively using the Rig CLI:
+```bash
+rig settings update
+```
+
+This will open an interactive prompt, where you can set the desired notifiers.
+If you choose slack, you will need to enter a channel-id for the channel you want to receive notifications in, and if you choose email, you will need to enter the email you want to send and receive notifications on.
+Additionally you can choose what topics you want to receive notifications from, what environments you want to receive notifications from.
+  <ThemedImage
+    alt="Update notifier settings"
+    customProps={{
+      zoom: true,
+    }}
+    sources={{
+      light: "/img/platform/update-global-notifiers.png",
+      dark: "/img/platform/update-global-notifiers.png",
+    }}
+  />
+### Project Specific Notifiers
+You can set notifiers for specific projects that will overwrite the global notifiers or alternatively just disable the global notifiers for a given project. This is done by updating the projects:
+```bash
+rig project update <project-name>
+```

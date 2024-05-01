@@ -4,18 +4,16 @@ import TabItem from "@theme/TabItem";
 
 # Container Registries
 
-**THIS INFORMATION IS OBSOLETE**
-
-By default, the Rig Platform can use Container Images any public Container Repositories.
+By default, the Rig Platform can use Container Images from any public Container Repositories.
 For example, when creating a new Build using the repository `nginx`, the Rig Platform will be able to resolve this at registry `index.docker.io`.
 
 ## Private Repositories
 
-Then a Container Repository is private, Authentication for the Container Registry needs to be added to the Rig Platform.
+When a Container Repository is private, authentication for the Container Registry needs to be added to the Rig Platform.
 
-This is done through the `Container Registry` tab within the Project Settings.
+This is done by adding the credentials of the registry to the platform configuration.
 
-For Container Registries registered in the Rig Platform, image-pull-secrets will automatically be generated for the Capsules that uses images from these registries.
+For Container Registries registered in the Rig Platform, if configured in the cluster-info, image-pull-secrets will automatically be generated for the Capsules that uses images from these registries.
 
 ### Example
 
@@ -25,22 +23,21 @@ First, we need the _registry_ section of the repository, which is the `host` par
 
 Then, using the guide for _this_ registry, available [here](https://docs.docker.com/security/for-developers/access-tokens/), we can see that we can create a new token for our account.
 
-When created, the username and token can be used to register the registry in the Rig Platform:
+When created, the username and token can be used to register the registry in the Rig Platform configuration:
 
-<Tabs>
-  <TabItem value="dashboard" label="Dashboard">
-    <ThemedImage
-      alt="Stages of a Rollout"
-      customProps={{
-        zoom: true,
-      }}
-      sources={{
-        light: "/img/dashboard/platform/container-registries/add-registry.png",
-        dark: "/img/dashboard/platform/container-registries/add-registry.png",
-      }}
-    />
-  </TabItem>
-</Tabs>
+```yaml
+rig:
+  dockerRegistries:
+    index.docker.io:
+      username: <registry-username>
+      password: <registry-password>
+
+  clusters:
+    prod:
+      type: k8s
+      createPullSecrets: true
+
+```
 
 With this change, the Rig Platform can now generate the image-pull-secrets needed to pull the container.
 

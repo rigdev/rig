@@ -455,8 +455,6 @@ type DockerRegistryCredentials struct {
 	Username string `json:"username,omitempty"`
 	// Password for the docker registry.
 	Password string `json:"password,omitempty"`
-	// Email for the docker registry.
-	Email string `json:"email,omitempty"`
 }
 
 // ClusterType is a cluster type.
