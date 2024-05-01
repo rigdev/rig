@@ -3,7 +3,7 @@
 Part of the Capsule spec is `Routes` which configures how an interface of a Capsule can be mapped to outside the cluster using e.g. Ingress. You can see the `HostRoute` spec [here](/api/v1alpha2#hostroute).
 The mapping between Routes and Ingress resources can be quite custom, as it depends on, among other things, the specific Ingress controller installed in the Kubernetes cluster.
 
-Therefore, the Routes step of the rig operator is configurable as a plugin. We supply a builtin plugin [`rigdev.ingress_routes`](/operator-manual/plugins/builtin/ingress_routes) which creates an Ingress resource for each Route and has some configuration for handling certificates, TLS and ingress class name.
+Therefore, the Routes step of the rig operator is configurable as a plugin. We supply a builtin plugin [`rigdev.ingress_routes`](/operator-manual/plugins/capsulesteps/ingress_routes) which creates an Ingress resource for each Route and has some configuration for handling certificates, TLS and ingress class name.
 
 See [here](plugins) for a general introduction to plugins and how to configure them. The Routes step in the operator is configurable in the operator config under the [`RoutesStep`](/api/config/v1alpha1#routesstep) in the Operator Config. You can see an example here
 ```yaml
