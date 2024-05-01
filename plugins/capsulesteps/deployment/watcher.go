@@ -11,7 +11,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func onPodUpdated(obj client.Object, events []*corev1.Event, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
+func onPodUpdated(
+	obj client.Object,
+	events []*corev1.Event,
+	_ plugin.ObjectWatcher,
+) *apipipeline.ObjectStatus {
 	pod := obj.(*corev1.Pod)
 
 	status := &apipipeline.ObjectStatus{
@@ -40,7 +44,11 @@ func onPodUpdated(obj client.Object, events []*corev1.Event, objectWatcher plugi
 	return status
 }
 
-func onDeploymentUpdated(obj client.Object, events []*corev1.Event, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
+func onDeploymentUpdated(
+	obj client.Object,
+	_ []*corev1.Event,
+	objectWatcher plugin.ObjectWatcher,
+) *apipipeline.ObjectStatus {
 	dep := obj.(*appsv1.Deployment)
 
 	objectWatcher.WatchSecondaryByLabels(labels.Set(dep.Spec.Template.GetLabels()), &corev1.Pod{}, onPodUpdated)

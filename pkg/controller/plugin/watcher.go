@@ -105,7 +105,11 @@ func (w *capsuleWatcher) WatchPrimary(ctx context.Context, objType client.Object
 	return w.w.watchPrimary(ctx, w.namespace, w.capsule, objType, w, cb)
 }
 
-type WatchCallback func(obj client.Object, events []*corev1.Event, objectWatcher ObjectWatcher) *apipipeline.ObjectStatus
+type WatchCallback func(
+	obj client.Object,
+	events []*corev1.Event,
+	objectWatcher ObjectWatcher,
+) *apipipeline.ObjectStatus
 
 type Watcher interface {
 	NewCapsuleWatcher(

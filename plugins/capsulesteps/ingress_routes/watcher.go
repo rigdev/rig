@@ -47,7 +47,11 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
 	return status
 }
 
-func onCertificateUpdated(obj client.Object, events []*corev1.Event, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
+func onCertificateUpdated(
+	obj client.Object,
+	events []*corev1.Event,
+	objectWatcher plugin.ObjectWatcher,
+) *apipipeline.ObjectStatus {
 	cert := obj.(*cmv1.Certificate)
 
 	status := &apipipeline.ObjectStatus{
@@ -87,7 +91,11 @@ func onCertificateUpdated(obj client.Object, events []*corev1.Event, objectWatch
 	return status
 }
 
-func onIngressUpdated(obj client.Object, events []*corev1.Event, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
+func onIngressUpdated(
+	obj client.Object,
+	events []*corev1.Event,
+	objectWatcher plugin.ObjectWatcher,
+) *apipipeline.ObjectStatus {
 	ingress := obj.(*netv1.Ingress)
 
 	objectWatcher.WatchSecondaryByName(ingress.GetName(), &cmv1.Certificate{}, onCertificateUpdated)
