@@ -39,10 +39,8 @@ enum ObjectType {
 message ObjectStatus {
   ObjectRef object_ref = 1;
   ObjectType type = 2;
-  google.protobuf.Timestamp updated_at = 3;
-  ObjectState state = 4;
-  repeated ObjectCondition conditions = 5;
-  map<string, string> properties = 6;
+  repeated ObjectCondition conditions = 3;
+  map<string, string> properties = 4;
 }
 
 enum ObjectState {
@@ -57,7 +55,6 @@ message ObjectCondition {
   google.protobuf.Timestamp updated_at = 2;
   ObjectState state = 3;
   string message = 4;
-  string last_error = 5;
 }
 
 message DryRunRequest {

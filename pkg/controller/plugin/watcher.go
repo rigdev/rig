@@ -12,7 +12,9 @@ import (
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
 	"github.com/rigdev/rig/pkg/pipeline"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,6 +25,7 @@ import (
 
 type ObjectWatcher interface {
 	WatchSecondaryByName(objectName string, objType client.Object, cb WatchCallback)
+	WatchSecondaryByLabels(objectLabels labels.Set, objType client.Object, cb WatchCallback)
 }
 
 type CapsuleWatcher interface {
@@ -102,7 +105,7 @@ func (w *capsuleWatcher) WatchPrimary(ctx context.Context, objType client.Object
 	return w.w.watchPrimary(ctx, w.namespace, w.capsule, objType, w, cb)
 }
 
-type WatchCallback func(obj client.Object, objectWatcher ObjectWatcher) *apipipeline.ObjectStatus
+type WatchCallback func(obj client.Object, events []*corev1.Event, objectWatcher ObjectWatcher) *apipipeline.ObjectStatus
 
 type Watcher interface {
 	NewCapsuleWatcher(
@@ -256,6 +259,41 @@ type objectWatch struct {
 	subWatchers map[string]*objectWatch
 }
 
+type eventListWatcher struct {
+	ctx       context.Context
+	cc        client.WithWatch
+	namespace string
+	fields    fields.Set
+	logger    hclog.Logger
+}
+
+func (w *eventListWatcher) List(options metav1.ListOptions) (runtime.Object, error) {
+	list := &corev1.EventList{}
+	if err := w.cc.List(w.ctx, list, &client.ListOptions{
+		Namespace:     w.namespace,
+		FieldSelector: fields.SelectorFromSet(w.fields),
+		Raw:           &options,
+	}); err != nil {
+		w.logger.Error("error getting events", "fields", w.fields, "error", err)
+		return nil, err
+	}
+
+	return list, nil
+}
+
+func (w *eventListWatcher) Watch(options metav1.ListOptions) (watch.Interface, error) {
+	list := &corev1.EventList{}
+	wi, err := w.cc.Watch(w.ctx, list, &client.ListOptions{
+		Namespace:     w.namespace,
+		FieldSelector: fields.SelectorFromSet(w.fields),
+		Raw:           &options,
+	})
+	if err != nil {
+		w.logger.Error("error watching events", "fields", w.fields, "error", err)
+	}
+	return wi, err
+}
+
 type objectWatcher struct {
 	w       *watcher
 	ctx     context.Context
@@ -265,6 +303,9 @@ type objectWatcher struct {
 	logger  hclog.Logger
 	store   cache.Store
 	ctrl    cache.Controller
+
+	eventStore cache.Store
+	eventCtrl  cache.Controller
 
 	namespace string
 
@@ -284,6 +325,8 @@ func newObjectWatcher(
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	gvk := gvks[0]
 
 	gvkList := gvks[0]
 	gvkList.Kind += "List"
@@ -306,6 +349,22 @@ func newObjectWatcher(
 	store, ctrl := cache.NewInformer(ow, obj, 0, ow)
 	ow.store = store
 	ow.ctrl = ctrl
+
+	apiVersion, kind := gvk.ToAPIVersionAndKind()
+	elw := &eventListWatcher{
+		ctx:       ctx,
+		cc:        cc,
+		namespace: namespace,
+		fields: fields.Set{
+			"involvedObject.apiVersion": apiVersion,
+			"involvedObject.kind":       kind,
+		},
+		logger: logger,
+	}
+
+	eventStore, eventCtrl := cache.NewInformer(elw, &corev1.Event{}, 0, ow)
+	ow.eventStore = eventStore
+	ow.eventCtrl = eventCtrl
 
 	w.objectSyncing.Add(1)
 
@@ -353,8 +412,11 @@ func (ow *objectWatcher) removeFilter(f *objectWatch) bool {
 
 func (ow *objectWatcher) run(ctx context.Context) {
 	go ow.ctrl.Run(ctx.Done())
+	go ow.eventCtrl.Run(ctx.Done())
 
-	cache.WaitForCacheSync(ctx.Done(), ow.ctrl.HasSynced)
+	ow.logger.Info("waiting for sync", "namespace", ow.namespace, "gvk", ow.gvkList)
+	success := cache.WaitForCacheSync(ctx.Done(), ow.ctrl.HasSynced, ow.eventCtrl.HasSynced)
+	ow.logger.Info("sync is done", "namespace", ow.namespace, "gvk", ow.gvkList, "success", success)
 
 	ow.w.objectSyncing.Done()
 
@@ -371,6 +433,7 @@ func (ow *objectWatcher) List(options metav1.ListOptions) (runtime.Object, error
 		Namespace: ow.namespace,
 		Raw:       &options,
 	}); err != nil {
+		ow.logger.Error("error getting object list", "gvk", ow.gvkList, "error", err)
 		return nil, err
 	}
 
@@ -383,13 +446,30 @@ func (ow *objectWatcher) Watch(options metav1.ListOptions) (watch.Interface, err
 		return nil, err
 	}
 
-	return ow.cc.Watch(ow.ctx, list.(client.ObjectList), &client.ListOptions{
+	wi, err := ow.cc.Watch(ow.ctx, list.(client.ObjectList), &client.ListOptions{
 		Namespace: ow.namespace,
 		Raw:       &options,
 	})
+	if err != nil {
+		ow.logger.Error("error watching objects", "gvk", ow.gvkList, "error", err)
+	}
+	return wi, err
 }
 
 func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
+	if e, ok := obj.(*corev1.Event); ok {
+		key := cache.NewObjectName(e.InvolvedObject.Namespace, e.InvolvedObject.Name)
+		item, exists, err := ow.store.GetByKey(key.String())
+		if err != nil {
+			ow.logger.Error("error getting object from event", "gvk", ow.gvkList, "error", err)
+		}
+		if !exists {
+			return
+		}
+
+		obj = item
+	}
+
 	co, ok := obj.(client.Object)
 	if !ok {
 		ow.logger.Info("invalid object type")
@@ -410,6 +490,19 @@ func (ow *objectWatcher) OnUpdate(_, newObj interface{}) {
 }
 
 func (ow *objectWatcher) OnDelete(obj interface{}) {
+	if e, ok := obj.(*corev1.Event); ok {
+		key := cache.NewObjectName(e.InvolvedObject.Namespace, e.InvolvedObject.Name)
+		item, exists, err := ow.store.GetByKey(key.String())
+		if err != nil {
+			ow.logger.Error("error getting object from event", "gvk", ow.gvkList, "error", err)
+		}
+		if !exists {
+			return
+		}
+
+		obj = item
+	}
+
 	co, ok := obj.(client.Object)
 	if !ok {
 		ow.logger.Info("invalid object type")
@@ -454,7 +547,14 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 	if remove {
 		f.cw.deleted(ref)
 	} else {
-		os := f.cb(co, &res)
+		var events []*corev1.Event
+		for _, e := range ow.eventStore.List() {
+			event := e.(*corev1.Event)
+			if event.InvolvedObject.Name == co.GetName() {
+				events = append(events, event)
+			}
+		}
+		os := f.cb(co, events, &res)
 		os.ObjectRef = ref
 		f.cw.updated(os)
 	}
@@ -488,19 +588,16 @@ type objectWatcherResult struct {
 	watchers  map[string]objectWatchCandidate
 }
 
-func (r *objectWatcherResult) WatchSecondaryByName(objectName string, objType client.Object, cb WatchCallback) {
+func (r *objectWatcherResult) watchObject(key objectWatchKey, objType client.Object, cb WatchCallback) {
 	gvks, _, err := r.cc.Scheme().ObjectKinds(objType)
 	if err != nil {
 		// TODO!
 		log.Fatal(err)
 	}
 
-	key := objectWatchKey{
-		watcherKey: watcherKey{
-			namespace: r.namespace,
-			gvk:       gvks[0],
-		},
-		names: []string{objectName},
+	key.watcherKey = watcherKey{
+		namespace: r.namespace,
+		gvk:       gvks[0],
 	}
 
 	r.watchers[key.id()] = objectWatchCandidate{
@@ -508,6 +605,26 @@ func (r *objectWatcherResult) WatchSecondaryByName(objectName string, objType cl
 		objType: objType,
 		cb:      cb,
 	}
+}
+
+func (r *objectWatcherResult) WatchSecondaryByName(objectName string, objType client.Object, cb WatchCallback) {
+	r.watchObject(
+		objectWatchKey{
+			names: []string{objectName},
+		},
+		objType,
+		cb,
+	)
+}
+
+func (r *objectWatcherResult) WatchSecondaryByLabels(objectLabels labels.Set, objType client.Object, cb WatchCallback) {
+	r.watchObject(
+		objectWatchKey{
+			labels: objectLabels,
+		},
+		objType,
+		cb,
+	)
 }
 
 type objectWatchCandidate struct {

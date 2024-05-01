@@ -39,8 +39,6 @@ const (
 type Config struct{}
 
 type Plugin struct {
-	plugin.NoWatchObjectStatus
-
 	reader      client.Reader
 	configBytes []byte
 }
