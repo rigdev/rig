@@ -158,7 +158,7 @@ tasks:
 
   docs-gen:
     desc: "📚 Generate api references"
-    deps: [tools:crd-ref-docs, proto, docs-gen-plugins]
+    deps: [tools:crd-ref-docs, proto, docs-gen-builtin-plugins, docs-gen-capsule-step-plugins]
     sources:
       - docs/crd-ref-docs/**/*
       - pkg/api/config/v1alpha1/**/*
@@ -188,38 +188,53 @@ tasks:
           --source-path ./pkg/api/v1alpha2 \
           --output-path ./docs/docs/api/v1alpha2.md
 
-  docs-gen-plugins:
-    desc: "📚 Generate plugin docs"
+  docs-gen-builtin-plugins:
+    desc: "📚 Generate builtin plugin docs"
     sources:
-      - "plugins/**/*"
+      - "plugins/builtin/**/*"
     vars:
       PLUGINS:
-        sh: find ./plugins/ -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
+        sh: find ./plugins/builtin -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
     cmds:
       - for: { var: PLUGINS }
         task: docs-gen-plugin
         vars:
           PLUGIN: "{{ .ITEM }}"
+          DIR: "builtin"
+
+  docs-gen-capsule-step-plugins:
+    desc: "📚 Generate capsule step plugin docs"
+    sources:
+      - "plugins/capsulesteps/**/*"
+    vars:
+      PLUGINS:
+        sh: find ./plugins/capsulesteps -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {}
+    cmds:
+      - for: { var: PLUGINS }
+        task: docs-gen-plugin
+        vars:
+          PLUGIN: "{{ .ITEM }}"
+          DIR: "capsulesteps"
 
   docs-gen-plugin:
     run: when_changed
     deps: [tools:crd-ref-docs, proto]
     sources:
       - docs/crd-ref-docs/**/*
-      - plugins/{{ .PLUGIN }}/*
+      - plugins/{{ .DIR }}/{{ .PLUGIN }}/*
     generates:
-      - docs/docs/plugins/builtin/{{ .PLUGIN }}.md
+      - docs/docs/plugins/{{ .DIR }}/{{ .PLUGIN }}.md
     cmds:
       - |
         ./tools/bin/crd-ref-docs --renderer markdown \
           --config ./docs/plugin-ref-docs/config.yaml \
           --templates-dir ./docs/plugin-ref-docs/templates \
-          --source-path ./plugins/{{ .PLUGIN }} \
-          --output-path ./plugins/{{ .PLUGIN }}/temp.md
-      - python3 ./tools/readme_truncate.py plugins/{{ .PLUGIN }}/README.md
-      - cat ./plugins/{{ .PLUGIN }}/temp.md >> ./plugins/{{ .PLUGIN }}/README.md
-      - rm ./plugins/{{ .PLUGIN }}/temp.md
-      - cp plugins/{{ .PLUGIN }}/README.md docs/docs/operator-manual/plugins/builtin/{{ .PLUGIN }}.mdx
+          --source-path ./plugins/{{ .DIR }}/{{ .PLUGIN }} \
+          --output-path ./plugins/{{ .DIR }}/{{ .PLUGIN }}/temp.md
+      - python3 ./tools/readme_truncate.py plugins/{{ .DIR }}/{{ .PLUGIN }}/README.md
+      - cat ./plugins/{{ .DIR }}/{{ .PLUGIN }}/temp.md >> ./plugins/{{ .DIR }}/{{ .PLUGIN }}/README.md
+      - rm ./plugins/{{ .DIR }}/{{ .PLUGIN }}/temp.md
+      - cp plugins/{{ .DIR }}/{{ .PLUGIN }}/README.md docs/docs/operator-manual/plugins/{{ .DIR }}/{{ .PLUGIN }}.mdx
 
   lint:
     desc: "🚨 Run linting"

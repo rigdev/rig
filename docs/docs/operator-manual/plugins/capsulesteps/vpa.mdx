@@ -1,5 +1,5 @@
 ## Vertical Pod Autoscaler Plugin
-
+BETA
 
 ## Config
 

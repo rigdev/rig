@@ -1,0 +1,35 @@
+# Capsule Step Plugins
+The way the operator handles the different steps in the reconcilliation pipeline is interchangable. 
+This means, that the operator can be configured to handle the steps in different ways by 
+using different plugins. This is specified in the steps fields in the pipeline in the operator config.
+
+## Reconcilliation pipeline and default steps
+The reconcilliation pipeline is a list of steps that the operator will go through when reconciling a `capsule` resource.
+The default steps if nothing is specified are:
+- Service Account Step - `rigdev.service_account`
+- Deployment Step - `rigdev.deployment`
+- CronJob Step - `rigdev.cronjob`
+
+Additionally, if provided the pipeline will also consist of the:
+- Routes Step - `rigdev.ingress_routes`
+- Service Monitor Step - `rigdev.service_monitor`
+
+## Example
+```yaml
+config:
+  pipeline:
+    routesStep:
+      plugin: "rigdev.ingress_routes"
+      config: |
+        clusterIssuer: letsencrypt-prod
+        createCertificateResources: true
+        ingressClassName: nginx
+        disableTLS: false
+    serviceMonitorStep
+      plugin: "rigdev.service_monitor"
+      config: |
+       portName: "system"
+       path: "metrics"
+```
+
+This pipeline will use the default steps for Service Account, Deployment and CronJob, but will also include the Routes and Service Monitor steps.

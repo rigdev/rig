@@ -431,6 +431,48 @@ const sidebars = {
         // },
         {
           type: "category",
+          label: "Capsule Steps",
+          link: {type: "doc", id: "operator-manual/plugins/capsulesteps"},
+          className: "homepage-sidebar-item",
+          collapsed: true,
+          customProps: {
+            sidebar_icon: "BiCapsule",
+          },
+          items: [
+            {
+              type: "doc",
+              id: "operator-manual/plugins/capsulesteps/service_account",
+              label: "Service Account",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/capsulesteps/deployment",
+              label: "Deployment",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/capsulesteps/ingress_routes",
+              label: "Ingress Routes",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/capsulesteps/cron_jobs",
+              label: "Cron Jobs",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
+              id: "operator-manual/plugins/capsulesteps/service_monitor",
+              label: "Service Monitor",
+              className: "homepage-sidebar-item",
+            },
+          ],
+        },
+        {
+          type: "category",
           label: "Builtin",
           link: { type: "doc", id: "operator-manual/plugins/builtin" },
           className: "homepage-sidebar-item",
@@ -485,12 +527,6 @@ const sidebars = {
               type: "doc",
               id: "operator-manual/plugins/builtin/sidecar",
               label: "Sidecar",
-              className: "homepage-sidebar-item",
-            },
-            {
-              type: "doc",
-              id: "operator-manual/plugins/builtin/ingress_routes",
-              label: "Ingress Routes",
               className: "homepage-sidebar-item",
             },
           ],

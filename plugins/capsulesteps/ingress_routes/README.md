@@ -1,7 +1,5 @@
 # Ingress Routes Plugin
 
-The way the operator handles routes in the reconcilliation pipeline is interchangable. This means, that the operator can be configured to handle routes in different ways by using different plugins. This is specified in the `routesStep` in the pipeline in the operator config.
-
 The `rigdev.ingress_routes` plugin handles the routes by creating an Ingress resource for each route. The Ingress resource is created with the annotations specified in the `RouteOptions`, with the class specified in the `ingressClassName` field in the config, and has tls specified if the `disableTLS` field is not set to true. Furthermore, the plugin will create a Certificate resource for the route hosts if the `createCertificateResources` field is set to true and a clusterIssuer is specified in the `clusterIssuer` field.
 
 ## Example

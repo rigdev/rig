@@ -7,9 +7,9 @@ import (
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/pipeline"
-	"github.com/rigdev/rig/plugins/cron_jobs"
-	"github.com/rigdev/rig/plugins/deployment"
-	"github.com/rigdev/rig/plugins/service_account"
+	"github.com/rigdev/rig/plugins/capsulesteps/cron_jobs"
+	"github.com/rigdev/rig/plugins/capsulesteps/deployment"
+	"github.com/rigdev/rig/plugins/capsulesteps/service_account"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
