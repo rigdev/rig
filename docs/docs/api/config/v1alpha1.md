@@ -426,6 +426,7 @@ OperatorConfig is the Schema for the operator config API
 | `devModeEnabled` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be more human readable. |
 | `leaderElectionEnabled` _boolean_ | LeaderElectionEnabled enables leader election when running multiple instances of the operator. |
 | `pipeline` _[Pipeline](#pipeline)_ | Pipeline defines the capsule controller pipeline |
+| `enable_object_status_cache` _boolean_ | Enable object-status cache generation from plugins. |
 
 
 ### PathPrefixes

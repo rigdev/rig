@@ -10,6 +10,7 @@ import (
 	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
+	"github.com/rigdev/rig/pkg/service/objectstatus"
 	"github.com/rigdev/rig/pkg/service/pipeline"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -32,6 +33,7 @@ func New(
 	scheme *runtime.Scheme,
 	capabilitiesService capabilities.Service,
 	pipeline pipeline.Service,
+	objectstatus objectstatus.Service,
 	restConfig *rest.Config,
 	logger logr.Logger,
 ) (manager.Manager, error) {
@@ -57,6 +59,7 @@ func New(
 		Config:              cfg,
 		CapabilitiesService: capabilitiesService,
 		PipelineService:     pipeline,
+		ObjectStatusService: objectstatus,
 	}
 
 	if err := cr.SetupWithManager(mgr); err != nil {

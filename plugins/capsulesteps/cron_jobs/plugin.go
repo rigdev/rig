@@ -25,10 +25,11 @@ const (
 
 // Configuration for the deployment plugin
 // +kubebuilder:object:root=true
-type Config struct {
-}
+type Config struct{}
 
 type Plugin struct {
+	plugin.NoWatchObjectStatus
+
 	configBytes []byte
 }
 

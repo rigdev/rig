@@ -15,6 +15,7 @@ import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
+	"github.com/rigdev/rig/pkg/service/objectstatus"
 	"github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -46,7 +47,6 @@ func (s *PluginTestSuite) SetupSuite() {
 
 	scheme := scheme.New()
 	s.TestEnv = &envtest.Environment{
-
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases"),
 			filepath.Join("."),
@@ -144,6 +144,7 @@ container:
 		Config:              opConfig,
 		CapabilitiesService: cs,
 		PipelineService:     ps,
+		ObjectStatusService: objectstatus.NewService(opConfig, ps, ctrl.Log),
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager))

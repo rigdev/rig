@@ -17,6 +17,7 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/scheme"
+	"github.com/rigdev/rig/pkg/uuid"
 	"google.golang.org/grpc"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -120,6 +121,15 @@ func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest) e
 	return p.pluginClient.Run(ctx, req)
 }
 
+func (p *pluginExecutor) WatchObjectStatus(
+	ctx context.Context,
+	namespace string,
+	capsule string,
+	callback pipeline.ObjectStatusCallback,
+) error {
+	return p.pluginClient.WatchObjectStatus(ctx, namespace, capsule, callback)
+}
+
 type rigOperatorPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	logger hclog.Logger
@@ -198,6 +208,32 @@ func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest) err
 	})
 
 	return err
+}
+
+func (m *pluginClient) WatchObjectStatus(
+	ctx context.Context,
+	namespace string,
+	capsule string,
+	callback pipeline.ObjectStatusCallback,
+) error {
+	c, err := m.client.WatchObjectStatus(ctx, &apiplugin.WatchObjectStatusRequest{
+		Namespace: namespace,
+		Capsule:   capsule,
+	})
+	if err != nil {
+		return err
+	}
+
+	id := uuid.New()
+
+	for {
+		res, err := c.Recv()
+		if err != nil {
+			return err
+		}
+
+		callback.UpdateStatus(namespace, capsule, id, res.GetChange())
+	}
 }
 
 type requestServer struct {

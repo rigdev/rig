@@ -81,7 +81,7 @@ var projectSteps = []pipeline.Step[pipeline.ProjectEnvironmentRequest]{
 
 type namespaceStep struct{}
 
-func (n namespaceStep) Apply(_ context.Context, req pipeline.ProjectEnvironmentRequest) error {
+func (s namespaceStep) Apply(_ context.Context, req pipeline.ProjectEnvironmentRequest) error {
 	projectEnv := req.ProjectEnvironment()
 	if err := req.Set(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -91,5 +91,14 @@ func (n namespaceStep) Apply(_ context.Context, req pipeline.ProjectEnvironmentR
 		return err
 	}
 
+	return nil
+}
+
+func (s namespaceStep) WatchObjectStatus(
+	_ context.Context,
+	_ string,
+	_ string,
+	_ pipeline.ObjectStatusCallback,
+) error {
 	return nil
 }

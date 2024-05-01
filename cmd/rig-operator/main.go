@@ -28,6 +28,7 @@ import (
 	"github.com/rigdev/rig/pkg/scheme"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/config"
+	"github.com/rigdev/rig/pkg/service/objectstatus"
 	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -130,6 +131,7 @@ func run(cmd *cobra.Command, _ []string) error {
 			svccapabilities.NewService,
 			capabilities.NewHandler,
 			svcpipeline.NewService,
+			objectstatus.NewService,
 			pipeline.NewHandler,
 			manager.New,
 		),

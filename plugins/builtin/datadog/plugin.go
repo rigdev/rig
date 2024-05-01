@@ -51,6 +51,8 @@ type UnifiedServiceTags struct {
 }
 
 type Plugin struct {
+	plugin.NoWatchObjectStatus
+
 	configBytes []byte
 }
 

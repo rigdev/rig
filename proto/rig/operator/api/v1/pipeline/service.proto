@@ -2,9 +2,62 @@ syntax = "proto3";
 
 package api.v1.pipeline;
 
+import "google/protobuf/timestamp.proto";
+
 // The service for interacting with the operator pipeline
 service Service {
+  rpc WatchObjectStatus(WatchObjectStatusRequest)
+      returns (stream WatchObjectStatusResponse) {}
+
   rpc DryRun(DryRunRequest) returns (DryRunResponse) {}
+}
+
+message WatchObjectStatusRequest {
+  string namespace = 1;
+}
+
+message WatchObjectStatusResponse {
+  ObjectStatusChange change = 1;
+}
+
+message ObjectStatusChange {
+  string capsule = 1;
+
+  oneof change {
+    ObjectStatus updated = 2;
+    ObjectRef deleted = 3;
+  }
+}
+
+enum ObjectType {
+  OBJECT_TYPE_UNSPECIFIED = 0;
+  OBJECT_TYPE_PRIMARY = 1;
+  OBJECT_TYPE_SECONDARY = 2;
+  OBJECT_TYPE_POD = 3;
+}
+
+message ObjectStatus {
+  ObjectRef object_ref = 1;
+  ObjectType type = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  ObjectState state = 4;
+  repeated ObjectCondition conditions = 5;
+  map<string, string> properties = 6;
+}
+
+enum ObjectState {
+  OBJECT_STATE_UNSPECIFIED = 0;
+  OBJECT_STATE_HEALTHY = 1;
+  OBJECT_STATE_PENDING = 2;
+  OBJECT_STATE_ERROR = 3;
+}
+
+message ObjectCondition {
+  string name = 1;
+  google.protobuf.Timestamp updated_at = 2;
+  ObjectState state = 3;
+  string message = 4;
+  string last_error = 5;
 }
 
 message DryRunRequest {
@@ -27,18 +80,18 @@ message DryRunResponse {
   repeated ObjectChange output_objects = 2;
 }
 
-enum ObjectState {
-  OBJECT_STATE_UNSPECIFIED = 0;
-  OBJECT_STATE_CREATE = 1;
-  OBJECT_STATE_UPDATE = 2;
-  OBJECT_STATE_DELETE = 3;
-  OBJECT_STATE_UNCHANGED = 4;
-  OBJECT_STATE_ALREADY_EXISTS = 5;
+enum ObjectOutcome {
+  OBJECT_OUTCOME_UNSPECIFIED = 0;
+  OBJECT_OUTCOME_CREATE = 1;
+  OBJECT_OUTCOME_UPDATE = 2;
+  OBJECT_OUTCOME_DELETE = 3;
+  OBJECT_OUTCOME_UNCHANGED = 4;
+  OBJECT_OUTCOME_ALREADY_EXISTS = 5;
 }
 
 message ObjectChange {
   Object object = 1;
-  ObjectState state = 2;
+  ObjectOutcome outcome = 2;
 }
 
 message Object {
@@ -51,4 +104,10 @@ message GVK {
   string group = 1;
   string version = 2;
   string kind = 3;
+}
+
+message ObjectRef {
+  GVK gvk = 1;
+  string namespace = 2;
+  string name = 3;
 }

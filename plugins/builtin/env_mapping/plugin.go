@@ -37,7 +37,9 @@ type AnnotationSource struct {
 	Mappings map[string]string `json:"mappings"`
 }
 
-type Plugin struct{}
+type Plugin struct {
+	plugin.NoWatchObjectStatus
+}
 
 func (p *Plugin) Initialize(_ plugin.InitializeRequest) error {
 	return nil

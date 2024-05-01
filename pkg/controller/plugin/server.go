@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,10 +21,11 @@ import (
 
 type GRPCServer struct {
 	apiplugin.UnimplementedPluginServiceServer
-	logger hclog.Logger
-	Impl   Plugin
-	broker *plugin.GRPCBroker
-	scheme *runtime.Scheme
+	logger  hclog.Logger
+	Impl    Plugin
+	broker  *plugin.GRPCBroker
+	scheme  *runtime.Scheme
+	watcher Watcher
 }
 
 func (m *GRPCServer) Initialize(
@@ -50,15 +52,17 @@ func (m *GRPCServer) Initialize(
 		}
 	}
 
-	client, err := client.New(restConfig, client.Options{Scheme: m.scheme})
+	cc, err := client.NewWithWatch(restConfig, client.Options{Scheme: m.scheme})
 	if err != nil {
 		return nil, err
 	}
 
+	m.watcher = NewWatcher(m.logger, cc)
+
 	if err := m.Impl.Initialize(InitializeRequest{
 		Config: []byte(req.GetPluginConfig()),
 		Tag:    req.GetTag(),
-		Reader: client,
+		Reader: cc,
 	}); err != nil {
 		return nil, err
 	}
@@ -98,6 +102,34 @@ func (m *GRPCServer) RunCapsule(
 	}
 
 	return &apiplugin.RunCapsuleResponse{}, nil
+}
+
+func (m *GRPCServer) WatchObjectStatus(
+	req *apiplugin.WatchObjectStatusRequest,
+	stream apiplugin.PluginService_WatchObjectStatusServer,
+) error {
+	changeChannel := make(chan *apiplugin.ObjectStatusChange, 32)
+	ctx, cancel := context.WithCancel(stream.Context())
+
+	go func() {
+		defer cancel()
+		for change := range changeChannel {
+			if err := stream.Send(&apiplugin.WatchObjectStatusResponse{
+				Change: change,
+			}); err != nil {
+				m.logger.Debug("error sending status", "error", err)
+				return
+			}
+		}
+	}()
+
+	cw := m.watcher.NewCapsuleWatcher(ctx, req.GetNamespace(), req.GetCapsule(), changeChannel)
+
+	if err := m.Impl.WatchObjectStatus(ctx, cw); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type capsuleRequestClient struct {
@@ -273,6 +305,13 @@ type Plugin interface {
 	// Initialize is executed once when the rig-operator starts up and is used to pass the configuration
 	// of the plugin from the operator to the plugin itself.
 	Initialize(req InitializeRequest) error
+	WatchObjectStatus(ctx context.Context, watcher CapsuleWatcher) error
+}
+
+type NoWatchObjectStatus struct{}
+
+func (NoWatchObjectStatus) WatchObjectStatus(context.Context, CapsuleWatcher) error {
+	return errors.UnimplementedErrorf("watch object status not available in plugin")
 }
 
 // InitializeRequest contains information needed to initialize the plugin
