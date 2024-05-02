@@ -86,6 +86,8 @@ type CapsuleEnvironment struct {
 	Spec        CapsuleSpecExtension `json:"spec" protobuf:"6"`
 }
 
+// +kubebuilder:object:root=true
+
 type CapsuleSpecExtension struct {
 	metav1.TypeMeta `json:",inline"`
 	// Image specifies what image the Capsule should run.

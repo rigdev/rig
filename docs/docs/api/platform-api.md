@@ -7748,8 +7748,8 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| request | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
-| limit | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
+| request | [string](#string) |  |  |
+| limit | [string](#string) |  |  |
 
 
 
@@ -7764,7 +7764,7 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| request | [k8s.io.apimachinery.pkg.api.resource.Quantity](#k8s-io-apimachinery-pkg-api-resource-Quantity) |  |  |
+| request | [string](#string) |  |  |
 
 
 

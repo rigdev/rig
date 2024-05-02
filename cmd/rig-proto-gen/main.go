@@ -16,17 +16,18 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+type knownType struct {
+	builtIn *builtintType
+	message *protoMessage
+}
+
 var (
 	GENERATED_FILE_NAME = "generated.proto"
-	knownMessages       = map[messageType]protoMessage{
+	knownMessages       = map[messageType]knownType{
 		{pkg: "k8s.io/apimachinery/pkg/api/resource", name: "Quantity"}: {
-			pkg:  "k8s.io/apimachinery/pkg/api/resource",
-			name: "Quantity",
-			fields: []protoField{{
-				t:    protoType{builtIn: &builtintType{t: "string"}},
-				name: "string",
-				idx:  1,
-			}},
+			builtIn: &builtintType{
+				t: "string",
+			},
 		},
 	}
 	packageRewrites = map[string]string{
@@ -122,15 +123,23 @@ func (p *parser) parseMessage(t reflect.Type) error {
 	}
 
 	pkgName := rewritePackage(t.PkgPath())
-	pkg := p.getPackage(pkgName)
-	msg := pkg.getMessage(t.Name())
 	if known, ok := knownMessages[messageType{
 		pkg:  pkgName,
 		name: t.Name(),
 	}]; ok {
-		msg.fields = known.fields
+		if known.builtIn != nil {
+			return nil
+		} else if known.message != nil {
+			pkg := p.getPackage(pkgName)
+			msg := pkg.getMessage(t.Name())
+			msg.fields = known.message.fields
+		}
+
 		return nil
 	}
+
+	pkg := p.getPackage(pkgName)
+	msg := pkg.getMessage(t.Name())
 
 	for _, field := range extractFields(t) {
 		protoIdx, err := getProtoIndex(field)
@@ -284,11 +293,24 @@ func unravelType(t reflect.Type) ([]reflect.Type, protoType, error) {
 			}
 			done = true
 		case reflect.Struct:
-			message = &messageType{
+			msg := messageType{
 				pkg:  rewritePackage(t.PkgPath()),
 				name: t.Name(),
 			}
-			types = append(types, t)
+			if known, ok := knownMessages[msg]; ok {
+				if known.builtIn != nil {
+					builtIn = known.builtIn
+				} else if known.message != nil {
+					message = &messageType{
+						pkg:  known.message.pkg,
+						name: known.message.name,
+					}
+				}
+				done = true
+			} else {
+				message = &msg
+				types = append(types, t)
+			}
 			done = true
 		default:
 			builtIn = &builtintType{t: t.Kind().String()}

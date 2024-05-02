@@ -3,7 +3,6 @@ package obj
 import (
 	"testing"
 
-	"github.com/rigdev/rig-go-api/k8s.io/apimachinery/pkg/api/resource"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	v1alpha2 "github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -560,9 +559,7 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					},
 					Vertical: &v1alpha2.VerticalScale{
 						Cpu: &v1alpha2.ResourceLimits{
-							Request: &resource.Quantity{
-								String_: "1",
-							},
+							Request: "1",
 						},
 					},
 				},
@@ -585,9 +582,7 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					},
 					Vertical: &v1alpha2.VerticalScale{
 						Memory: &v1alpha2.ResourceLimits{
-							Request: &resource.Quantity{
-								String_: "100M",
-							},
+							Request: "100M",
 						},
 					},
 				},
@@ -610,14 +605,10 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					},
 					Vertical: &v1alpha2.VerticalScale{
 						Cpu: &v1alpha2.ResourceLimits{
-							Request: &resource.Quantity{
-								String_: "1",
-							},
+							Request: "1",
 						},
 						Memory: &v1alpha2.ResourceLimits{
-							Request: &resource.Quantity{
-								String_: "100M",
-							},
+							Request: "100M",
 						},
 					},
 				},
