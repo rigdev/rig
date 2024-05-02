@@ -66,6 +66,14 @@ func (w *capsuleWatcher) flush() {
 	}:
 	case <-w.ctx.Done():
 	}
+	select {
+	case w.c <- &apiplugin.ObjectStatusChange{
+		Change: &apiplugin.ObjectStatusChange_Checkpoint_{
+			Checkpoint: &apiplugin.ObjectStatusChange_Checkpoint{},
+		},
+	}:
+	case <-w.ctx.Done():
+	}
 
 	w.initialized = true
 }
@@ -90,6 +98,7 @@ func (w *capsuleWatcher) updated(os *apipipeline.ObjectStatus) {
 }
 
 func (w *capsuleWatcher) deleted(or *apipipeline.ObjectRef) {
+	// TODO: This is probably not a good idea - delay instead?.
 	w.flush()
 	select {
 	case w.c <- &apiplugin.ObjectStatusChange{

@@ -131,6 +131,7 @@ portName: "metricsport"`,
 		CapabilitiesService: cs,
 		PipelineService:     ps,
 		ObjectStatusService: objectstatus.NewService(opConfig, ps, ctrl.Log),
+		Lifecycle:           lc,
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager))

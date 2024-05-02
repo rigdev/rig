@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
+	"time"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -29,6 +31,7 @@ import (
 	"github.com/rigdev/rig/pkg/service/capabilities"
 	"github.com/rigdev/rig/pkg/service/objectstatus"
 	svc_pipeline "github.com/rigdev/rig/pkg/service/pipeline"
+	"go.uber.org/fx"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
@@ -55,6 +58,9 @@ type CapsuleReconciler struct {
 	CapabilitiesService capabilities.Service
 	PipelineService     svc_pipeline.Service
 	ObjectStatusService objectstatus.Service
+	Lifecycle           fx.Lifecycle
+	initialize          sync.WaitGroup
+	mgr                 ctrl.Manager
 }
 
 const (
@@ -69,6 +75,11 @@ const (
 // SetupWithManager sets up the controller with the Manager.
 func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	ctx := context.TODO()
+
+	r.initialize.Add(1)
+	r.mgr = mgr
+
+	r.Lifecycle.Append(fx.StartHook(r.initializeReconciler))
 
 	if err := mgr.GetFieldIndexer().IndexField(
 		context.Background(),
@@ -275,6 +286,28 @@ func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {
 	}
 }
 
+func (r *CapsuleReconciler) initializeReconciler(ctx context.Context) {
+	r.mgr.GetCache().WaitForCacheSync(ctx)
+
+	for {
+		var capsules v1alpha2.CapsuleList
+		if err := r.mgr.GetCache().List(ctx, &capsules); err != nil {
+			r.mgr.GetLogger().Error(err, "error getting initial capsule list")
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		for _, capsule := range capsules.Items {
+			r.ObjectStatusService.RegisterCapsule(capsule.GetNamespace(), capsule.GetName())
+		}
+
+		break
+	}
+
+	r.ObjectStatusService.CapsulesInitialized()
+	r.initialize.Done()
+}
+
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=rig.dev,resources=capsules/finalizers,verbs=update
@@ -289,6 +322,8 @@ func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {
 // actual cluster state, and then performs operations to make the cluster state
 // reflect the state specified by the Capsule.
 func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	r.initialize.Wait()
+
 	// TODO: use rig logger
 	log := log.FromContext(ctx)
 	log.Info("reconciliation started")

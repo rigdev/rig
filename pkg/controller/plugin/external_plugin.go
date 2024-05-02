@@ -32,6 +32,7 @@ type pluginExecutor struct {
 	binaryPath   string
 	args         []string
 	tag          string
+	id           uuid.UUID
 }
 
 func newPluginExecutor(
@@ -50,6 +51,7 @@ func newPluginExecutor(
 		binaryPath: path,
 		args:       args,
 		tag:        tag,
+		id:         uuid.New(),
 	}
 
 	return p, p.start(context.Background(), pluginConfig, restConfig)
@@ -126,7 +128,7 @@ func (p *pluginExecutor) WatchObjectStatus(
 	capsule string,
 	callback pipeline.ObjectStatusCallback,
 ) error {
-	return p.pluginClient.WatchObjectStatus(ctx, namespace, capsule, callback)
+	return p.pluginClient.WatchObjectStatus(ctx, namespace, capsule, callback, p.id)
 }
 
 type rigOperatorPlugin struct {
@@ -214,6 +216,7 @@ func (m *pluginClient) WatchObjectStatus(
 	namespace string,
 	capsule string,
 	callback pipeline.ObjectStatusCallback,
+	pluginID uuid.UUID,
 ) error {
 	c, err := m.client.WatchObjectStatus(ctx, &apiplugin.WatchObjectStatusRequest{
 		Namespace: namespace,
@@ -223,15 +226,13 @@ func (m *pluginClient) WatchObjectStatus(
 		return err
 	}
 
-	id := uuid.New()
-
 	for {
 		res, err := c.Recv()
 		if err != nil {
 			return err
 		}
 
-		callback.UpdateStatus(namespace, capsule, id, res.GetChange())
+		callback.UpdateStatus(namespace, capsule, pluginID, res.GetChange())
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/rigdev/rig/pkg/service/objectstatus"
 	"github.com/rigdev/rig/pkg/service/pipeline"
+	"go.uber.org/fx"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -36,6 +37,7 @@ func New(
 	objectstatus objectstatus.Service,
 	restConfig *rest.Config,
 	logger logr.Logger,
+	lc fx.Lifecycle,
 ) (manager.Manager, error) {
 	cfg := cfgS.Operator()
 
@@ -60,6 +62,7 @@ func New(
 		CapabilitiesService: capabilitiesService,
 		PipelineService:     pipeline,
 		ObjectStatusService: objectstatus,
+		Lifecycle:           lc,
 	}
 
 	if err := cr.SetupWithManager(mgr); err != nil {
