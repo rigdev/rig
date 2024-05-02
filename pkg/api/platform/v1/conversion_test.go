@@ -6,7 +6,6 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	v2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
-	"github.com/rigdev/rig-go-api/k8s.io/apimachinery/pkg/api/resource"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/stretchr/testify/require"
@@ -76,8 +75,7 @@ var (
 					MemoryBytes: 1_000_000,
 				},
 				Limits: &capsule.ResourceList{
-					CpuMillis:   200,
-					MemoryBytes: 2_000_000,
+					CpuMillis: 200,
 				},
 				GpuLimits: &capsule.GpuLimits{
 					// Type:  "gpu", TODO
@@ -220,15 +218,14 @@ var (
 			},
 			Vertical: &v1alpha2.VerticalScale{
 				Cpu: &v1alpha2.ResourceLimits{
-					Request: &resource.Quantity{String_: "0.1"},
-					Limit:   &resource.Quantity{String_: "0.2"},
+					Request: "0.1",
+					Limit:   "0.2",
 				},
 				Memory: &v1alpha2.ResourceLimits{
-					Request: &resource.Quantity{String_: "1000000"},
-					Limit:   &resource.Quantity{String_: "2000000"},
+					Request: "1000000",
 				},
 				Gpu: &v1alpha2.ResourceRequest{
-					Request: &resource.Quantity{String_: "2"},
+					Request: "2",
 				},
 			},
 		},

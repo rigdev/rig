@@ -8,9 +8,9 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	v2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
-	"github.com/rigdev/rig-go-api/k8s.io/apimachinery/pkg/api/resource"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig-go-api/v1alpha2"
+	"github.com/rigdev/rig/cmd/common"
 	types_v1alpha2 "github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -18,32 +18,80 @@ import (
 )
 
 func RolloutConfigToCapsuleSpecExtension(rc *capsule.RolloutConfig) (*platformv1.CapsuleSpecExtension, error) {
-	replicas := rc.GetReplicas()
 	spec := &platformv1.CapsuleSpecExtension{
 		Kind:       "CapsuleSpecExtension",
 		ApiVersion: "v1", // TODO
 		Image:      rc.GetImageId(),
-		Command:    rc.GetContainerSettings().GetCommand(),
-		Args:       rc.GetContainerSettings().GetArgs(),
 		Scale: &v1alpha2.CapsuleScale{
-			Vertical: makeVerticalScale(
-				rc.GetContainerSettings().GetResources().GetRequests(),
-				rc.GetContainerSettings().GetResources().GetLimits(),
-				rc.GetContainerSettings().GetResources().GetGpuLimits(),
-			),
-			Horizontal: &v1alpha2.HorizontalScale{
-				Instances: &v1alpha2.Instances{
-					Min: rc.GetReplicas(),
-				},
-			},
+			Horizontal: HorizontalScaleConversion(rc.GetHorizontalScale(), rc.GetReplicas()),
 		},
 		Annotations:               maps.Clone(rc.GetAnnotations()),
 		AutoAddRigServiceAccounts: rc.GetAutoAddRigServiceAccounts(),
 	}
 
-	horizontal := rc.GetHorizontalScale()
+	if err := FeedContainerSettings(spec, rc.GetContainerSettings()); err != nil {
+		return nil, err
+	}
+
+	for _, cf := range rc.GetConfigFiles() {
+		spec.ConfigFiles = append(spec.ConfigFiles, &platformv1.ConfigFile{
+			Path:     cf.GetPath(),
+			Content:  cf.GetContent(),
+			IsSecret: cf.GetIsSecret(),
+		})
+	}
+
+	for _, i := range rc.GetNetwork().GetInterfaces() {
+		capI, err := InterfaceConversion(i)
+		if err != nil {
+			return nil, err
+		}
+		spec.Interfaces = append(spec.Interfaces, capI)
+	}
+
+	for _, j := range rc.GetCronJobs() {
+		spec.CronJobs = append(spec.CronJobs, CronJobConversion(j))
+	}
+
+	return spec, nil
+}
+
+func CronJobConversion(j *capsule.CronJob) *v1alpha2.CronJob {
+	var timeoutSeconds uint64
+	if t := j.GetTimeout(); t != nil {
+		timeoutSeconds = uint64(t.AsDuration().Seconds())
+	}
+	job := &v1alpha2.CronJob{
+		Name:           j.GetJobName(),
+		Schedule:       j.GetSchedule(),
+		MaxRetries:     uint64(j.GetMaxRetries()),
+		TimeoutSeconds: timeoutSeconds,
+	}
+	switch v := j.GetJobType().(type) {
+	case *capsule.CronJob_Command:
+		job.Command = &v1alpha2.JobCommand{
+			Command: v.Command.GetCommand(),
+			Args:    v.Command.GetArgs(),
+		}
+	case *capsule.CronJob_Url:
+		job.Url = &v1alpha2.URL{
+			Port:            uint32(v.Url.GetPort()),
+			Path:            v.Url.GetPath(),
+			QueryParameters: v.Url.GetQueryParameters(),
+		}
+	}
+	return job
+}
+
+func HorizontalScaleConversion(horizontal *capsule.HorizontalScale, replicas uint32) *v1alpha2.HorizontalScale {
+	res := &v1alpha2.HorizontalScale{
+		Instances: &v1alpha2.Instances{
+			Min: max(replicas, horizontal.GetMinReplicas()),
+		},
+	}
+
 	if horizontal.GetCpuTarget().GetAverageUtilizationPercentage() > 0 {
-		spec.Scale.Horizontal.CpuTarget = &v1alpha2.CPUTarget{
+		res.CpuTarget = &v1alpha2.CPUTarget{
 			Utilization: horizontal.GetCpuTarget().GetAverageUtilizationPercentage(),
 		}
 	}
@@ -69,135 +117,123 @@ func RolloutConfigToCapsuleSpecExtension(rc *capsule.RolloutConfig) (*platformv1
 				AverageValue: instance.AverageValue,
 			}
 		}
-		spec.Scale.Horizontal.CustomMetrics = append(spec.Scale.Horizontal.CustomMetrics, &metric)
+		res.CustomMetrics = append(res.CustomMetrics, &metric)
 	}
 
-	if len(spec.Scale.Horizontal.CustomMetrics) > 0 || spec.Scale.Horizontal.CpuTarget != nil {
-		if horizontal.GetMinReplicas() > replicas {
-			spec.Scale.Horizontal.Instances.Min = horizontal.GetMinReplicas()
-		}
-		spec.Scale.Horizontal.Instances.Max = horizontal.GetMaxReplicas()
+	if len(res.CustomMetrics) > 0 || res.CpuTarget != nil {
+		res.Instances.Max = horizontal.GetMaxReplicas()
 	}
 
+	return res
+}
+
+func FeedContainerSettings(spec *platformv1.CapsuleSpecExtension, containerSettings *capsule.ContainerSettings) error {
+	if spec.Scale == nil {
+		spec.Scale = &v1alpha2.CapsuleScale{}
+	}
+	spec.Scale.Vertical = makeVerticalScale(
+		containerSettings.GetResources().GetRequests(),
+		containerSettings.GetResources().GetLimits(),
+		containerSettings.GetResources().GetGpuLimits(),
+	)
 	spec.EnvironmentVariables = &platformv1.EnvironmentVariables{
-		Direct: maps.Clone(rc.GetContainerSettings().GetEnvironmentVariables()),
+		Direct: maps.Clone(containerSettings.GetEnvironmentVariables()),
 	}
 
-	for _, es := range rc.GetContainerSettings().GetEnvironmentSources() {
-		ref := &platformv1.EnvironmentSource{
-			Name: es.GetName(),
-		}
-		switch es.GetKind() {
-		case capsule.EnvironmentSource_KIND_CONFIG_MAP:
-			ref.Kind = string(EnvironmentSourceKindConfigMap)
-		case capsule.EnvironmentSource_KIND_SECRET:
-			ref.Kind = string(EnvironmentSourceKindSecret)
-		default:
-			return nil, errors.InvalidArgumentErrorf("invalid environment source kind '%s'", es.GetKind())
+	for _, es := range containerSettings.GetEnvironmentSources() {
+		ref, err := EnvironmentSourceConversion(es)
+		if err != nil {
+			return err
 		}
 		spec.EnvironmentVariables.Sources = append(spec.EnvironmentVariables.Sources, ref)
 	}
+	spec.Command = containerSettings.GetCommand()
+	spec.Args = containerSettings.GetArgs()
+	return nil
+}
 
-	for _, cf := range rc.GetConfigFiles() {
-		spec.ConfigFiles = append(spec.ConfigFiles, &platformv1.ConfigFile{
-			Path:     cf.GetPath(),
-			Content:  cf.GetContent(),
-			IsSecret: cf.GetIsSecret(),
-		})
+func EnvironmentSourceConversion(source *capsule.EnvironmentSource) (*platformv1.EnvironmentSource, error) {
+	if err := common.ValidateSystemName(source.Name); err != nil {
+		return nil, errors.InvalidArgumentErrorf("invalid environment source name; %v", err)
 	}
 
-	for _, i := range rc.GetNetwork().GetInterfaces() {
-		capIf := &v1alpha2.CapsuleInterface{
-			Name: i.GetName(),
-			Port: int32(i.GetPort()),
-		}
+	ref := &platformv1.EnvironmentSource{
+		Name: source.GetName(),
+	}
+	switch source.GetKind() {
+	case capsule.EnvironmentSource_KIND_CONFIG_MAP:
+		ref.Kind = string(EnvironmentSourceKindConfigMap)
+	case capsule.EnvironmentSource_KIND_SECRET:
+		ref.Kind = string(EnvironmentSourceKindSecret)
+	default:
+		return nil, errors.InvalidArgumentErrorf("invalid environment source kind '%s'", source.GetKind())
+	}
 
-		// Deprecate Public interface by porting the ingress to a route.
-		if i.GetPublic().GetEnabled() {
-			switch v := i.GetPublic().GetMethod().GetKind().(type) {
-			case *capsule.RoutingMethod_Ingress_:
-				route := &v1alpha2.HostRoute{
-					Host: v.Ingress.GetHost(),
-				}
-				for _, p := range v.Ingress.GetPaths() {
-					route.Paths = append(route.Paths, &v1alpha2.HTTPPathRoute{
-						Path:  p,
-						Match: string(types_v1alpha2.PathPrefix),
-					})
-				}
+	return ref, nil
+}
 
-				capIf.Routes = append(capIf.Routes, route)
-			}
-		}
+func InterfaceConversion(i *capsule.Interface) (*v1alpha2.CapsuleInterface, error) {
+	capIf := &v1alpha2.CapsuleInterface{
+		Name: i.GetName(),
+		Port: int32(i.GetPort()),
+	}
 
-		for _, r := range i.GetRoutes() {
+	// Deprecate Public interface by porting the ingress to a route.
+	if i.GetPublic().GetEnabled() {
+		switch v := i.GetPublic().GetMethod().GetKind().(type) {
+		case *capsule.RoutingMethod_Ingress_:
 			route := &v1alpha2.HostRoute{
-				Id:          r.GetId(),
-				Host:        r.GetHost(),
-				Annotations: r.GetOptions().GetAnnotations(),
+				Host: v.Ingress.GetHost(),
 			}
-
-			for _, p := range r.GetPaths() {
-				path := &v1alpha2.HTTPPathRoute{
-					Path: p.GetPath(),
-				}
-
-				switch p.Match {
-				case capsule.PathMatchType_PATH_MATCH_TYPE_EXACT:
-					path.Match = string(types_v1alpha2.Exact)
-				case capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX,
-					capsule.PathMatchType_PATH_MATCH_TYPE_UNSPECIFIED:
-					path.Match = string(types_v1alpha2.PathPrefix)
-				default:
-					return nil, errors.InvalidArgumentErrorf("invalid path match type '%v'", p.Match)
-				}
-
-				route.Paths = append(route.Paths, path)
+			for _, p := range v.Ingress.GetPaths() {
+				route.Paths = append(route.Paths, &v1alpha2.HTTPPathRoute{
+					Path:  p,
+					Match: string(types_v1alpha2.PathPrefix),
+				})
 			}
 
 			capIf.Routes = append(capIf.Routes, route)
 		}
-
-		var err error
-		if capIf.Liveness, err = getInterfaceProbe(i.GetLiveness()); err != nil {
-			return nil, err
-		}
-
-		if capIf.Readiness, err = getInterfaceProbe(i.GetReadiness()); err != nil {
-			return nil, err
-		}
-
-		spec.Interfaces = append(spec.Interfaces, capIf)
 	}
 
-	for _, j := range rc.GetCronJobs() {
-		var timeoutSeconds uint64
-		if t := j.GetTimeout(); t != nil {
-			timeoutSeconds = uint64(t.AsDuration().Seconds())
+	for _, r := range i.GetRoutes() {
+		route := &v1alpha2.HostRoute{
+			Id:          r.GetId(),
+			Host:        r.GetHost(),
+			Annotations: r.GetOptions().GetAnnotations(),
 		}
-		job := &v1alpha2.CronJob{
-			Name:           j.GetJobName(),
-			Schedule:       j.GetSchedule(),
-			MaxRetries:     uint64(j.GetMaxRetries()),
-			TimeoutSeconds: timeoutSeconds,
-		}
-		switch v := j.GetJobType().(type) {
-		case *capsule.CronJob_Command:
-			job.Command = &v1alpha2.JobCommand{
-				Command: v.Command.GetCommand(),
-				Args:    v.Command.GetArgs(),
+
+		for _, p := range r.GetPaths() {
+			path := &v1alpha2.HTTPPathRoute{
+				Path: p.GetPath(),
 			}
-		case *capsule.CronJob_Url:
-			job.Url = &v1alpha2.URL{
-				Port:            uint32(v.Url.GetPort()),
-				Path:            v.Url.GetPath(),
-				QueryParameters: v.Url.GetQueryParameters(),
+
+			switch p.Match {
+			case capsule.PathMatchType_PATH_MATCH_TYPE_EXACT:
+				path.Match = string(types_v1alpha2.Exact)
+			case capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX,
+				capsule.PathMatchType_PATH_MATCH_TYPE_UNSPECIFIED:
+				path.Match = string(types_v1alpha2.PathPrefix)
+			default:
+				return nil, errors.InvalidArgumentErrorf("invalid path match type '%v'", p.Match)
 			}
+
+			route.Paths = append(route.Paths, path)
 		}
-		spec.CronJobs = append(spec.CronJobs, job)
+
+		capIf.Routes = append(capIf.Routes, route)
 	}
 
-	return spec, nil
+	var err error
+	if capIf.Liveness, err = getInterfaceProbe(i.GetLiveness()); err != nil {
+		return nil, err
+	}
+
+	if capIf.Readiness, err = getInterfaceProbe(i.GetReadiness()); err != nil {
+		return nil, err
+	}
+
+	return capIf, nil
 }
 
 func getInterfaceProbe(p *capsule.InterfaceProbe) (*v1alpha2.InterfaceProbe, error) {
@@ -234,31 +270,31 @@ func makeVerticalScale(
 	}
 
 	if cpu := limits.GetCpuMillis(); cpu > 0 {
-		vs.Cpu.Limit = &resource.Quantity{String_: fmt.Sprintf("%v", float64(cpu)/1000.)}
+		vs.Cpu.Limit = fmt.Sprintf("%v", float64(cpu)/1000.)
 	}
 	if memory := limits.GetMemoryBytes(); memory > 0 {
-		vs.Memory.Limit = &resource.Quantity{String_: fmt.Sprintf("%v", memory)}
+		vs.Memory.Limit = fmt.Sprintf("%v", memory)
 	}
 
 	if cpu := requests.GetCpuMillis(); cpu > 0 {
-		vs.Cpu.Request = &resource.Quantity{String_: fmt.Sprintf("%v", float64(cpu)/1000.)}
+		vs.Cpu.Request = fmt.Sprintf("%v", float64(cpu)/1000.)
 	}
 	if memory := requests.GetMemoryBytes(); memory > 0 {
-		vs.Memory.Request = &resource.Quantity{String_: fmt.Sprintf("%v", memory)}
+		vs.Memory.Request = fmt.Sprintf("%v", memory)
 	}
 
 	if gpuLimits != nil {
 		if gpu := gpuLimits.GetCount(); gpu > 0 {
 			vs.Gpu = &v1alpha2.ResourceRequest{
-				Request: &resource.Quantity{String_: fmt.Sprintf("%v", gpu)},
+				Request: fmt.Sprintf("%v", gpu),
 			}
 		}
 	}
 
-	if vs.Cpu.Limit == nil && vs.Cpu.Request == nil {
+	if vs.Cpu.Limit == "" && vs.Cpu.Request == "" {
 		vs.Cpu = nil
 	}
-	if vs.Memory.Limit == nil && vs.Memory.Request == nil {
+	if vs.Memory.Limit == "" && vs.Memory.Request == "" {
 		vs.Memory = nil
 	}
 
@@ -321,37 +357,47 @@ func makeResources(vertical *v1alpha2.VerticalScale) (*capsule.Resources, error)
 	if err != nil {
 		return nil, err
 	}
-	res.Limits.CpuMillis = uint32(cpuLimit.MilliValue())
-	res.Requests.CpuMillis = uint32(cpuReq.MilliValue())
+	res.Requests.CpuMillis = uint32(cpuReq * 1000)
+	res.Limits.CpuMillis = uint32(cpuLimit * 1000)
 
 	memReq, memLim, err := parseLimits(vertical.GetMemory())
 	if err != nil {
 		return nil, err
 	}
-	res.Requests.MemoryBytes = uint64(memReq.Value())
-	res.Limits.MemoryBytes = uint64(memLim.Value())
+	res.Requests.MemoryBytes = uint64(memReq)
+	res.Limits.MemoryBytes = uint64(memLim)
 
-	gpu, err := k8sresource.ParseQuantity(vertical.GetGpu().GetRequest().String_)
-	if err != nil {
-		return nil, err
+	if gpu := vertical.GetGpu().GetRequest(); gpu != "" {
+		gpu, err := k8sresource.ParseQuantity(gpu)
+		if err != nil {
+			return nil, err
+		}
+		// TODO Type
+		res.GpuLimits.Count = uint32(gpu.Value())
 	}
-	// TODO Type
-	res.GpuLimits.Count = uint32(gpu.Value())
 
 	return res, nil
 }
 
-func parseLimits(r *v1alpha2.ResourceLimits) (k8sresource.Quantity, k8sresource.Quantity, error) {
-	var empty k8sresource.Quantity
-	req, err := k8sresource.ParseQuantity(r.GetRequest().String_)
-	if err != nil {
-		return empty, empty, err
+func parseLimits(r *v1alpha2.ResourceLimits) (float64, float64, error) {
+	var req, limit float64
+	if s := r.GetRequest(); s != "" {
+		qq, err := k8sresource.ParseQuantity(s)
+		if err != nil {
+			return 0, 0, err
+		}
+		req = qq.AsApproximateFloat64()
 	}
-	limit, err := k8sresource.ParseQuantity(r.GetLimit().String_)
-	if err != nil {
-		return empty, empty, err
+
+	if s := r.GetLimit(); s != "" {
+		qq, err := k8sresource.ParseQuantity(s)
+		if err != nil {
+			return 0, 0, err
+		}
+		limit = qq.AsApproximateFloat64()
 	}
-	return req, limit, err
+
+	return req, limit, nil
 }
 
 func makeHorizontalScale(spec *v1alpha2.HorizontalScale) *capsule.HorizontalScale {

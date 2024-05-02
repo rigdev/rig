@@ -3,7 +3,6 @@ syntax = "proto3";
 package v1alpha2;
 
 import "k8s.io/api/autoscaling/v2/generated.proto";
-import "k8s.io/apimachinery/pkg/api/resource/generated.proto";
 
 message CapsuleInterface {
   string name = 1;
@@ -96,12 +95,12 @@ message VerticalScale {
 }
 
 message ResourceLimits {
-  k8s.io.apimachinery.pkg.api.resource.Quantity request = 1;
-  k8s.io.apimachinery.pkg.api.resource.Quantity limit = 2;
+  string request = 1;
+  string limit = 2;
 }
 
 message ResourceRequest {
-  k8s.io.apimachinery.pkg.api.resource.Quantity request = 1;
+  string request = 1;
 }
 
 message CronJob {
