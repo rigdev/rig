@@ -10,7 +10,7 @@ import (
 	v1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -18,8 +18,6 @@ import (
 func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
 	status := &apipipeline.ObjectStatus{
 		Type:       apipipeline.ObjectType_OBJECT_TYPE_PRIMARY,
-		State:      apipipeline.ObjectState_OBJECT_STATE_HEALTHY,
-		UpdatedAt:  timestamppb.Now(),
 		Properties: map[string]string{},
 	}
 
@@ -49,13 +47,15 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
 	return status
 }
 
-func onCertificateUpdated(obj client.Object, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
+func onCertificateUpdated(
+	obj client.Object,
+	events []*corev1.Event,
+	objectWatcher plugin.ObjectWatcher,
+) *apipipeline.ObjectStatus {
 	cert := obj.(*cmv1.Certificate)
 
 	status := &apipipeline.ObjectStatus{
 		Type:       apipipeline.ObjectType_OBJECT_TYPE_SECONDARY,
-		State:      apipipeline.ObjectState_OBJECT_STATE_HEALTHY,
-		UpdatedAt:  timestamppb.Now(),
 		Properties: map[string]string{},
 	}
 
@@ -91,7 +91,11 @@ func onCertificateUpdated(obj client.Object, objectWatcher plugin.ObjectWatcher)
 	return status
 }
 
-func onIngressUpdated(obj client.Object, objectWatcher plugin.ObjectWatcher) *apipipeline.ObjectStatus {
+func onIngressUpdated(
+	obj client.Object,
+	events []*corev1.Event,
+	objectWatcher plugin.ObjectWatcher,
+) *apipipeline.ObjectStatus {
 	ingress := obj.(*netv1.Ingress)
 
 	objectWatcher.WatchSecondaryByName(ingress.GetName(), &cmv1.Certificate{}, onCertificateUpdated)

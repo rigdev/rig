@@ -3,7 +3,6 @@ package plugin
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -264,7 +263,6 @@ func (s requestServer) GetObject(
 	co.SetName(req.GetName())
 	if req.GetCurrent() {
 		if err := s.req.GetExisting(co); err != nil {
-			fmt.Println("error getting existing object", err)
 			return nil, err
 		}
 	} else {
