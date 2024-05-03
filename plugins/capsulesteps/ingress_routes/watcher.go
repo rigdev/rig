@@ -22,9 +22,11 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
 	}
 
 	var hosts []string
+	host := ""
 	for _, r := range ingress.Spec.Rules {
 		if r.Host != "" {
 			hosts = append(hosts, r.Host)
+			host = r.Host
 		}
 	}
 
@@ -42,8 +44,19 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
 			status.Properties["IP"] = lb.IP
 		}
 	}
-	status.Conditions = append(status.Conditions, ipCondition)
 
+	parts := strings.Split(ingress.GetName(), "-")
+	routeID := parts[len(parts)-1]
+	status.Conditions = append(status.Conditions, ipCondition)
+	status.PlatformStatus = append(status.PlatformStatus, &apipipeline.PlatformObjectStatus{
+		Name: routeID,
+		Kind: &apipipeline.PlatformObjectStatus_Route{
+			Route: &apipipeline.RouteStatus{
+				Id:   routeID,
+				Host: host,
+			},
+		},
+	})
 	return status
 }
 

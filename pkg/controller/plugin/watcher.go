@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/go-hclog"
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
@@ -24,6 +25,7 @@ import (
 )
 
 type ObjectWatcher interface {
+	Reschedule(deadline time.Time)
 	WatchSecondaryByName(objectName string, objType client.Object, cb WatchCallback)
 	WatchSecondaryByLabels(objectLabels labels.Set, objType client.Object, cb WatchCallback)
 }
@@ -307,6 +309,12 @@ func (w *eventListWatcher) Watch(options metav1.ListOptions) (watch.Interface, e
 	return wi, err
 }
 
+type queueObj struct {
+	deadline time.Time
+	obj      client.Object
+	index    int
+}
+
 type objectWatcher struct {
 	w       *watcher
 	ctx     context.Context
@@ -323,6 +331,11 @@ type objectWatcher struct {
 	namespace string
 
 	lock sync.Mutex
+
+	objects map[string]*queueObj
+	queue   *priorityHeap[*queueObj]
+
+	lastProcess map[string]time.Duration
 
 	filters map[*objectWatch]struct{}
 }
@@ -355,7 +368,13 @@ func newObjectWatcher(
 		logger:    logger,
 		namespace: namespace,
 		filters:   map[*objectWatch]struct{}{},
+		objects:   map[string]*queueObj{},
+		queue:     newPriorityHeap(func(a, b *queueObj) bool { return a.deadline.Before(b.deadline) }),
 	}
+
+	ow.queue.SetIndex(func(qo *queueObj, i int) {
+		qo.index = i
+	})
 
 	w.logger.Info("starting watcher", "gvk", ow.gvkList)
 
@@ -433,7 +452,27 @@ func (ow *objectWatcher) run(ctx context.Context) {
 
 	ow.w.objectSyncing.Done()
 
-	<-ctx.Done()
+	timer := time.NewTicker(250 * time.Millisecond)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+		}
+
+		ow.lock.Lock()
+
+		for ow.queue.Len() > 0 && ow.queue.Peek().deadline.Before(time.Now()) {
+			p := ow.queue.Pop()
+			for f := range ow.filters {
+				ow.handleForFilter(p.obj, f, false)
+			}
+		}
+
+		ow.lock.Unlock()
+	}
 }
 
 func (ow *objectWatcher) List(options metav1.ListOptions) (runtime.Object, error) {
@@ -493,6 +532,36 @@ func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
 
 	ow.lock.Lock()
 	defer ow.lock.Unlock()
+
+	if o, ok := ow.objects[co.GetName()]; ok {
+		if o.index >= 0 {
+			// Already scheduled to run in the future.
+			deadline := time.Now().Add(time.Second)
+			if o.deadline.After(deadline) {
+				o.deadline = deadline
+				ow.queue.Fix(o.index)
+			}
+			o.obj = co
+			return
+		}
+
+		// Deadline is when we can process the next event for this object.
+		deadline := o.deadline.Add(1 * time.Second)
+		if deadline.After(time.Now()) {
+			o.deadline = deadline
+			ow.queue.Push(o)
+			return
+		} else {
+			o.deadline = time.Now()
+		}
+	} else {
+		ow.objects[co.GetName()] = &queueObj{
+			deadline: time.Now(),
+			obj:      co,
+			index:    -1,
+		}
+	}
+
 	for f := range ow.filters {
 		ow.handleForFilter(co, f, false)
 	}
@@ -526,6 +595,15 @@ func (ow *objectWatcher) OnDelete(obj interface{}) {
 
 	ow.lock.Lock()
 	defer ow.lock.Unlock()
+
+	if q, ok := ow.objects[co.GetName()]; ok {
+		if q.index >= 0 {
+			// Already scheduled to run in the future, stop it.
+			ow.queue.Remove(q.index)
+		}
+		delete(ow.objects, co.GetName())
+	}
+
 	for f := range ow.filters {
 		ow.handleForFilter(co, f, true)
 	}
@@ -570,6 +648,21 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 		os := f.cb(co, events, &res)
 		os.ObjectRef = ref
 		f.cw.updated(os)
+
+		if !res.deadline.IsZero() {
+			// Must exist in map!
+			o := ow.objects[co.GetName()]
+			if o.index >= 0 {
+				if res.deadline.Before(o.deadline) {
+					o.deadline = res.deadline
+					ow.queue.Fix(o.index)
+				}
+			} else {
+				o.deadline = res.deadline
+				ow.queue.Push(o)
+			}
+		}
+
 	}
 
 	for key, w := range res.watchers {
@@ -599,6 +692,7 @@ type objectWatcherResult struct {
 	cc        client.WithWatch
 	namespace string
 	watchers  map[string]objectWatchCandidate
+	deadline  time.Time
 }
 
 func (r *objectWatcherResult) watchObject(key objectWatchKey, objType client.Object, cb WatchCallback) {
@@ -638,6 +732,12 @@ func (r *objectWatcherResult) WatchSecondaryByLabels(objectLabels labels.Set, ob
 		objType,
 		cb,
 	)
+}
+
+func (r *objectWatcherResult) Reschedule(deadline time.Time) {
+	if r.deadline.IsZero() || deadline.Before(r.deadline) {
+		r.deadline = deadline
+	}
 }
 
 type objectWatchCandidate struct {
