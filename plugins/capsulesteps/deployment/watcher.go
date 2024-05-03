@@ -171,7 +171,9 @@ func makeExecutingCondition(container containerInfo) {
 	}}
 }
 
-func containerStateTerminatedFromK8s(state *v1.ContainerStateTerminated) *apipipeline.ContainerStatus_ContainerTermination {
+func containerStateTerminatedFromK8s(
+	state *v1.ContainerStateTerminated,
+) *apipipeline.ContainerStatus_ContainerTermination {
 	if state == nil {
 		return nil
 	}

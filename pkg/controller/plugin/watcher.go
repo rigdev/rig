@@ -335,8 +335,6 @@ type objectWatcher struct {
 	objects map[string]*queueObj
 	queue   *priorityHeap[*queueObj]
 
-	lastProcess map[string]time.Duration
-
 	filters map[*objectWatch]struct{}
 }
 
@@ -551,9 +549,9 @@ func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
 			o.deadline = deadline
 			ow.queue.Push(o)
 			return
-		} else {
-			o.deadline = time.Now()
 		}
+
+		o.deadline = time.Now()
 	} else {
 		ow.objects[co.GetName()] = &queueObj{
 			deadline: time.Now(),
