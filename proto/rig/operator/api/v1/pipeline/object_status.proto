@@ -18,18 +18,66 @@ message ObjectStatusChange {
   }
 }
 
-enum ObjectType {
-  OBJECT_TYPE_UNSPECIFIED = 0;
-  OBJECT_TYPE_PRIMARY = 1;
-  OBJECT_TYPE_SECONDARY = 2;
-  OBJECT_TYPE_POD = 3;
-}
-
 message ObjectStatus {
   ObjectRef object_ref = 1;
-  ObjectType type = 2;
+  ObjectStatusInfo info = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  ObjectRef parent = 4;
+}
+
+message ObjectStatusInfo {
+  repeated ObjectCondition conditions = 1;
+  map<string, string> properties = 2;
+  repeated SubObjectStatus sub_objects = 3;
+  repeated PlatformObjectStatus platform_status = 4;
+}
+
+message RouteStatus {
+  string id = 1;
+  string host = 2;
+}
+
+message InstanceStatus {}
+
+message ContainerStatus {
+  // Information about the last container termination.
+  message ContainerTermination {
+    // Exit status from the last termination of the container
+    int32 exit_code = 1;
+    // Signal from the last termination of the container
+    int32 signal = 2;
+    // (brief) reason from the last termination of the container
+    string reason = 3;
+    // Message regarding the last termination of the container
+    string message = 4;
+    // Time at which previous execution of the container started
+    google.protobuf.Timestamp started_at = 5;
+    // Time at which the container last terminated
+    google.protobuf.Timestamp finished_at = 6;
+    // Container's ID in the format 'type://container_id'
+    string container_id = 7;
+  }
+
+  uint32 restart_count = 1;
+  ContainerTermination last_termination = 2;
+  google.protobuf.Timestamp started_at = 3;
+}
+
+message PlatformObjectStatus {
+  string name = 1;
+
+  oneof kind {
+    RouteStatus route = 2;
+    InstanceStatus instance = 3;
+    ContainerStatus container = 4;
+  }
+}
+
+message SubObjectStatus {
+  string name = 1;
   repeated ObjectCondition conditions = 3;
   map<string, string> properties = 4;
+  repeated PlatformObjectStatus platform_status = 5;
 }
 
 enum ObjectState {

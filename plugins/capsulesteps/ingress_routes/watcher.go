@@ -15,16 +15,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
-	status := &apipipeline.ObjectStatus{
-		Type:       apipipeline.ObjectType_OBJECT_TYPE_PRIMARY,
+func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatusInfo {
+	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
 	}
 
 	var hosts []string
+	host := ""
 	for _, r := range ingress.Spec.Rules {
 		if r.Host != "" {
 			hosts = append(hosts, r.Host)
+			host = r.Host
 		}
 	}
 
@@ -42,8 +43,19 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
 			status.Properties["IP"] = lb.IP
 		}
 	}
-	status.Conditions = append(status.Conditions, ipCondition)
 
+	parts := strings.Split(ingress.GetName(), "-")
+	routeID := parts[len(parts)-1]
+	status.Conditions = append(status.Conditions, ipCondition)
+	status.PlatformStatus = append(status.PlatformStatus, &apipipeline.PlatformObjectStatus{
+		Name: routeID,
+		Kind: &apipipeline.PlatformObjectStatus_Route{
+			Route: &apipipeline.RouteStatus{
+				Id:   routeID,
+				Host: host,
+			},
+		},
+	})
 	return status
 }
 
@@ -51,11 +63,10 @@ func onCertificateUpdated(
 	obj client.Object,
 	events []*corev1.Event,
 	objectWatcher plugin.ObjectWatcher,
-) *apipipeline.ObjectStatus {
+) *apipipeline.ObjectStatusInfo {
 	cert := obj.(*cmv1.Certificate)
 
-	status := &apipipeline.ObjectStatus{
-		Type:       apipipeline.ObjectType_OBJECT_TYPE_SECONDARY,
+	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
 	}
 
@@ -95,7 +106,7 @@ func onIngressUpdated(
 	obj client.Object,
 	events []*corev1.Event,
 	objectWatcher plugin.ObjectWatcher,
-) *apipipeline.ObjectStatus {
+) *apipipeline.ObjectStatusInfo {
 	ingress := obj.(*netv1.Ingress)
 
 	objectWatcher.WatchSecondaryByName(ingress.GetName(), &cmv1.Certificate{}, onCertificateUpdated)

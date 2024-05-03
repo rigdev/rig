@@ -92,6 +92,8 @@ func (p *pluginExecutor) start(ctx context.Context, pluginConfig string, restCon
 		Cmd:              exec.CommandContext(ctx, p.binaryPath, p.args...),
 		Logger:           pLogger,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
+		SyncStdout:       os.Stderr,
+		SyncStderr:       os.Stderr,
 		Stderr:           os.Stderr,
 	})
 
