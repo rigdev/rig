@@ -8,10 +8,11 @@ import (
 )
 
 type watcher struct {
-	namespace string
-	c         chan<- *apipipeline.ObjectStatusChange
-	queue     []*apipipeline.ObjectStatusChange
-	cond      *sync.Cond
+	namespace      string
+	c              chan<- *apipipeline.ObjectStatusChange
+	queue          []*apipipeline.ObjectStatusChange
+	cond           *sync.Cond
+	sentCheckpoint bool
 }
 
 func newWatcher(namespace string, c chan<- *apipipeline.ObjectStatusChange) *watcher {
@@ -63,4 +64,19 @@ func (w *watcher) pushChange(change *apipipeline.ObjectStatusChange) {
 	w.queue = append(w.queue, change)
 	w.cond.Signal()
 	w.cond.L.Unlock()
+}
+
+func (w *watcher) checkpoint() {
+	w.cond.L.Lock()
+	defer w.cond.L.Unlock()
+	if w.sentCheckpoint {
+		return
+	}
+	w.sentCheckpoint = true
+	w.queue = append(w.queue, &apipipeline.ObjectStatusChange{
+		Change: &apipipeline.ObjectStatusChange_Checkpoint_{
+			Checkpoint: &apipipeline.ObjectStatusChange_Checkpoint{},
+		},
+	})
+	w.cond.Signal()
 }

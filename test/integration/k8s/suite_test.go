@@ -122,7 +122,6 @@ portName: "metricsport"`,
 
 	lc := fxtest.NewLifecycle(t)
 	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc)
-	require.NoError(t, lc.Start(context.Background()))
 
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
@@ -131,6 +130,7 @@ portName: "metricsport"`,
 		CapabilitiesService: cs,
 		PipelineService:     ps,
 		ObjectStatusService: objectstatus.NewService(opConfig, ps, ctrl.Log),
+		Lifecycle:           lc,
 	}
 
 	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
@@ -139,6 +139,8 @@ portName: "metricsport"`,
 	go func() {
 		require.NoError(t, manager.Start(ctx))
 	}()
+
+	require.NoError(t, lc.Start(context.Background()))
 
 	s.cancel = cancel
 	setupDone = true

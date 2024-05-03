@@ -8,6 +8,7 @@ import (
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"github.com/rigdev/rig/pkg/uuid"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -100,5 +101,9 @@ func (s namespaceStep) WatchObjectStatus(
 	_ string,
 	_ pipeline.ObjectStatusCallback,
 ) error {
+	return nil
+}
+
+func (s namespaceStep) PluginIDs() []uuid.UUID {
 	return nil
 }

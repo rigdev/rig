@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.v1.plugin;
 
-import "operator/api/v1/pipeline/service.proto";
+import "operator/api/v1/pipeline/object_status.proto";
 
 service PluginService {
   rpc Initialize(InitializeRequest) returns (InitializeResponse) {}
@@ -33,10 +33,13 @@ message ObjectStatusChange {
     repeated api.v1.pipeline.ObjectStatus objects = 1;
   }
 
+  message Checkpoint {}
+
   oneof change {
     AllObjects all_objects = 1;
     api.v1.pipeline.ObjectStatus updated = 2;
     api.v1.pipeline.ObjectRef deleted = 3;
+    Checkpoint checkpoint = 4;
   }
 }
 

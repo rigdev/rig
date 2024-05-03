@@ -14,4 +14,5 @@ type ObjectStatusCallback interface {
 type Step[T Request] interface {
 	Apply(ctx context.Context, req T) error
 	WatchObjectStatus(ctx context.Context, namespace, capsule string, callback ObjectStatusCallback) error
+	PluginIDs() []uuid.UUID
 }

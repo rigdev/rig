@@ -2,7 +2,6 @@ package objectstatus
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"sync"
 	"time"
@@ -24,6 +23,7 @@ type Service interface {
 	// TODO: Adopt iterators.
 	Watch(ctx context.Context, namespace string, c chan<- *apipipeline.ObjectStatusChange) error
 
+	CapsulesInitialized()
 	RegisterCapsule(namespace string, capsule string)
 	UnregisterCapsule(namespace string, capsule string)
 
@@ -46,19 +46,23 @@ func NewService(
 }
 
 type service struct {
-	cfg      *v1alpha1.OperatorConfig
-	logger   logr.Logger
-	pipeline svc_pipeline.Service
-	lock     sync.RWMutex
-	capsules map[string]map[string]*capsuleCache
-	watchers []*watcher
+	cfg         *v1alpha1.OperatorConfig
+	logger      logr.Logger
+	pipeline    svc_pipeline.Service
+	lock        sync.RWMutex
+	capsules    map[string]map[string]*capsuleCache
+	watchers    []*watcher
+	initialized bool
 }
 
-func (s *service) runForCapsule(ctx context.Context, namespace, capsule string) {
+func (s *service) runForCapsule(ctx context.Context, namespace string, c *capsuleCache) {
 	p := s.pipeline.GetDefaultPipeline()
 
 	for _, step := range p.Steps() {
-		go s.runStepForCapsule(ctx, namespace, capsule, step)
+		for _, pluginID := range step.PluginIDs() {
+			c.plugins[pluginID] = false
+		}
+		go s.runStepForCapsule(ctx, namespace, c.capsule, step)
 	}
 }
 
@@ -95,7 +99,8 @@ func (s *service) Watch(ctx context.Context, namespace string, c chan<- *apipipe
 
 	// Keep lock (and unlock in go-routine) when all statuses are read.
 	go func() {
-		s.readStatusForNamespace(w.namespace, w)
+		s.readStatusForNamespace(namespace, w)
+		s.sendCheckpoint(namespace, []*watcher{w})
 		s.lock.Unlock()
 	}()
 
@@ -116,6 +121,16 @@ func (s *service) readStatusForNamespace(namespace string, w *watcher) []*apipip
 	return res
 }
 
+func (s *service) CapsulesInitialized() {
+	// Initialized!
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.initialized = true
+	for namespace := range s.capsules {
+		s.sendCheckpoint(namespace, s.watchers)
+	}
+}
+
 func (s *service) RegisterCapsule(namespace string, capsule string) {
 	if s.cfg.EnableObjectStatusCache == nil || !*s.cfg.EnableObjectStatusCache {
 		return
@@ -132,14 +147,15 @@ func (s *service) RegisterCapsule(namespace string, capsule string) {
 
 	if _, ok := cs[capsule]; !ok {
 		ctx, cancel := context.WithCancel(context.Background())
-		cs[capsule] = &capsuleCache{
+		c := &capsuleCache{
+			plugins: map[uuid.UUID]bool{},
 			capsule: capsule,
 			cancel:  cancel,
 			objects: map[pipeline.ObjectKey]*objectCache{},
 		}
+		cs[capsule] = c
 
-		fmt.Println("RUN FOR CAPSULE", namespace, capsule)
-		s.runForCapsule(ctx, namespace, capsule)
+		s.runForCapsule(ctx, namespace, c)
 	}
 }
 
@@ -202,7 +218,32 @@ func (s *service) UpdateStatus(
 			}
 		}
 	}
+
+	if change.GetCheckpoint() != nil {
+		s.sendCheckpoint(namespace, s.watchers)
+	}
+
 	s.lock.RUnlock()
+}
+
+func (s *service) sendCheckpoint(namespace string, watchers []*watcher) {
+	if !s.initialized {
+		return
+	}
+
+	for _, c := range s.capsules[namespace] {
+		for _, initialized := range c.plugins {
+			if !initialized {
+				return
+			}
+		}
+	}
+
+	for _, w := range watchers {
+		if w.namespace == namespace {
+			w.checkpoint()
+		}
+	}
 }
 
 func (s *service) getCapsule(namespace string, capsule string) *capsuleCache {
@@ -223,8 +264,10 @@ func (s *service) getCapsule(namespace string, capsule string) *capsuleCache {
 }
 
 type capsuleCache struct {
-	lock sync.RWMutex
+	// This property is owned by the service.
+	plugins map[uuid.UUID]bool
 
+	lock    sync.RWMutex
 	capsule string
 	objects map[pipeline.ObjectKey]*objectCache
 	cancel  context.CancelFunc
@@ -311,6 +354,9 @@ func (c *capsuleCache) update(pluginID uuid.UUID, change *apiplugin.ObjectStatus
 				delete(c.objects, key)
 			}
 		}
+
+	case *apiplugin.ObjectStatusChange_Checkpoint_:
+		c.plugins[pluginID] = true
 	}
 
 	return keys

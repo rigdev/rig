@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.v1.pipeline;
 
-import "google/protobuf/timestamp.proto";
+import "operator/api/v1/pipeline/object_status.proto";
 
 // The service for interacting with the operator pipeline
 service Service {
@@ -18,43 +18,6 @@ message WatchObjectStatusRequest {
 
 message WatchObjectStatusResponse {
   ObjectStatusChange change = 1;
-}
-
-message ObjectStatusChange {
-  string capsule = 1;
-
-  oneof change {
-    ObjectStatus updated = 2;
-    ObjectRef deleted = 3;
-  }
-}
-
-enum ObjectType {
-  OBJECT_TYPE_UNSPECIFIED = 0;
-  OBJECT_TYPE_PRIMARY = 1;
-  OBJECT_TYPE_SECONDARY = 2;
-  OBJECT_TYPE_POD = 3;
-}
-
-message ObjectStatus {
-  ObjectRef object_ref = 1;
-  ObjectType type = 2;
-  repeated ObjectCondition conditions = 3;
-  map<string, string> properties = 4;
-}
-
-enum ObjectState {
-  OBJECT_STATE_UNSPECIFIED = 0;
-  OBJECT_STATE_HEALTHY = 1;
-  OBJECT_STATE_PENDING = 2;
-  OBJECT_STATE_ERROR = 3;
-}
-
-message ObjectCondition {
-  string name = 1;
-  google.protobuf.Timestamp updated_at = 2;
-  ObjectState state = 3;
-  string message = 4;
 }
 
 message DryRunRequest {
@@ -95,16 +58,4 @@ message Object {
   GVK gvk = 1;
   string name = 2;
   string content = 3;
-}
-
-message GVK {
-  string group = 1;
-  string version = 2;
-  string kind = 3;
-}
-
-message ObjectRef {
-  GVK gvk = 1;
-  string namespace = 2;
-  string name = 3;
 }

@@ -6,9 +6,11 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/gobwas/glob"
+	"github.com/rigdev/rig-go-api/operator/api/v1/plugin"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"github.com/rigdev/rig/pkg/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -70,15 +72,25 @@ func (s *Step) WatchObjectStatus(
 
 	// TODO: We need annotations here.
 	if !s.matcher.Match(namespace, capsule, nil) {
+		for _, p := range s.plugins {
+			callback.UpdateStatus(namespace, capsule, p.id, &plugin.ObjectStatusChange{
+				Change: &plugin.ObjectStatusChange_Checkpoint_{},
+			})
+		}
 		return nil
 	}
 
 	for _, p := range s.plugins {
 		wg.Add(1)
+
 		go func(p *pluginExecutor) {
 			err := p.WatchObjectStatus(ctx, namespace, capsule, callback)
 			if !errors.IsUnimplemented(err) {
 				s.logger.Error(err, "error getting status")
+			} else {
+				callback.UpdateStatus(namespace, capsule, p.id, &plugin.ObjectStatusChange{
+					Change: &plugin.ObjectStatusChange_Checkpoint_{},
+				})
 			}
 			wg.Done()
 		}(p)
@@ -87,6 +99,14 @@ func (s *Step) WatchObjectStatus(
 	wg.Wait()
 	// TODO:
 	return nil
+}
+
+func (s *Step) PluginIDs() []uuid.UUID {
+	var plugins []uuid.UUID
+	for _, p := range s.plugins {
+		plugins = append(plugins, p.id)
+	}
+	return plugins
 }
 
 type Matcher struct {
