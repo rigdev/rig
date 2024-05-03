@@ -22,12 +22,17 @@ func onPodUpdated(
 	obj client.Object,
 	events []*corev1.Event,
 	watcher plugin.ObjectWatcher,
-) *apipipeline.ObjectStatus {
+) *apipipeline.ObjectStatusInfo {
 	pod := obj.(*corev1.Pod)
 
-	status := &apipipeline.ObjectStatus{
-		Type:       apipipeline.ObjectType_OBJECT_TYPE_POD,
+	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
+		PlatformStatus: []*apipipeline.PlatformObjectStatus{{
+			Name: pod.GetName(),
+			Kind: &apipipeline.PlatformObjectStatus_Instance{
+				Instance: &apipipeline.InstanceStatus{},
+			},
+		}},
 	}
 
 	makePlacementCondition(status, pod, events)
@@ -245,7 +250,7 @@ func makeImagePullingCondition(container containerInfo) {
 	container.subObj.Conditions = append(container.subObj.Conditions, cond)
 }
 
-func makePlacementCondition(status *apipipeline.ObjectStatus, pod *corev1.Pod, events []*corev1.Event) {
+func makePlacementCondition(status *apipipeline.ObjectStatusInfo, pod *corev1.Pod, events []*corev1.Event) {
 	cond := &apipipeline.ObjectCondition{
 		Name:  "Node placement",
 		State: apipipeline.ObjectState_OBJECT_STATE_PENDING,
@@ -294,7 +299,7 @@ type containerInfo struct {
 	sidecar       bool
 }
 
-func splitByContainers(status *apipipeline.ObjectStatus, pod *v1.Pod, events []*v1.Event) []containerInfo {
+func splitByContainers(status *apipipeline.ObjectStatusInfo, pod *v1.Pod, events []*v1.Event) []containerInfo {
 	containers := map[string]containerInfo{}
 
 	for _, c := range pod.Spec.Containers {
@@ -341,7 +346,6 @@ func splitByContainers(status *apipipeline.ObjectStatus, pod *v1.Pod, events []*
 	for name, c := range containers {
 		c.subObj = &apipipeline.SubObjectStatus{
 			Name:       name,
-			Type:       "container",
 			Properties: map[string]string{},
 		}
 		containers[name] = c
@@ -404,13 +408,12 @@ func onDeploymentUpdated(
 	obj client.Object,
 	_ []*corev1.Event,
 	objectWatcher plugin.ObjectWatcher,
-) *apipipeline.ObjectStatus {
+) *apipipeline.ObjectStatusInfo {
 	dep := obj.(*appsv1.Deployment)
 
 	objectWatcher.WatchSecondaryByLabels(labels.Set(dep.Spec.Template.GetLabels()), &corev1.Pod{}, onPodUpdated)
 
-	status := &apipipeline.ObjectStatus{
-		Type:       apipipeline.ObjectType_OBJECT_TYPE_PRIMARY,
+	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
 	}
 

@@ -15,9 +15,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatus {
-	status := &apipipeline.ObjectStatus{
-		Type:       apipipeline.ObjectType_OBJECT_TYPE_PRIMARY,
+func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatusInfo {
+	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
 	}
 
@@ -64,11 +63,10 @@ func onCertificateUpdated(
 	obj client.Object,
 	events []*corev1.Event,
 	objectWatcher plugin.ObjectWatcher,
-) *apipipeline.ObjectStatus {
+) *apipipeline.ObjectStatusInfo {
 	cert := obj.(*cmv1.Certificate)
 
-	status := &apipipeline.ObjectStatus{
-		Type:       apipipeline.ObjectType_OBJECT_TYPE_SECONDARY,
+	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
 	}
 
@@ -108,7 +106,7 @@ func onIngressUpdated(
 	obj client.Object,
 	events []*corev1.Event,
 	objectWatcher plugin.ObjectWatcher,
-) *apipipeline.ObjectStatus {
+) *apipipeline.ObjectStatusInfo {
 	ingress := obj.(*netv1.Ingress)
 
 	objectWatcher.WatchSecondaryByName(ingress.GetName(), &cmv1.Certificate{}, onCertificateUpdated)

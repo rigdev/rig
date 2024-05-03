@@ -13,6 +13,7 @@ import (
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -120,7 +121,7 @@ type WatchCallback func(
 	obj client.Object,
 	events []*corev1.Event,
 	objectWatcher ObjectWatcher,
-) *apipipeline.ObjectStatus
+) *apipipeline.ObjectStatusInfo
 
 type Watcher interface {
 	NewCapsuleWatcher(
@@ -196,7 +197,7 @@ func (w *watcher) watchPrimary(
 		subWatchers: map[string]*objectWatch{},
 	}
 
-	w.startWatch(f, objType)
+	w.startWatch(f, objType, nil)
 
 	go func() {
 		w.objectSyncing.Wait()
@@ -210,12 +211,12 @@ func (w *watcher) watchPrimary(
 	return nil
 }
 
-func (w *watcher) startWatch(f *objectWatch, objType client.Object) {
+func (w *watcher) startWatch(f *objectWatch, objType client.Object, parent *apipipeline.ObjectRef) {
 	w.lock.Lock()
 
 	ow, ok := w.objectWatchers[f.key.watcherKey]
 	if !ok {
-		ow = newObjectWatcher(w, f.key.watcherKey.namespace, objType, w.cc, w.logger)
+		ow = newObjectWatcher(w, f.key.watcherKey.namespace, objType, w.cc, parent, w.logger)
 		w.objectWatchers[f.key.watcherKey] = ow
 	}
 
@@ -329,6 +330,7 @@ type objectWatcher struct {
 	eventCtrl  cache.Controller
 
 	namespace string
+	parent    *apipipeline.ObjectRef
 
 	lock sync.Mutex
 
@@ -343,6 +345,7 @@ func newObjectWatcher(
 	namespace string,
 	obj client.Object,
 	cc client.WithWatch,
+	parent *apipipeline.ObjectRef,
 	logger hclog.Logger,
 ) *objectWatcher {
 	gvks, _, err := cc.Scheme().ObjectKinds(obj)
@@ -365,6 +368,7 @@ func newObjectWatcher(
 		gvkList:   gvkList,
 		logger:    logger,
 		namespace: namespace,
+		parent:    parent,
 		filters:   map[*objectWatch]struct{}{},
 		objects:   map[string]*queueObj{},
 		queue:     newPriorityHeap(func(a, b *queueObj) bool { return a.deadline.Before(b.deadline) }),
@@ -643,9 +647,14 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 				events = append(events, event)
 			}
 		}
-		os := f.cb(co, events, &res)
-		os.ObjectRef = ref
-		f.cw.updated(os)
+		info := f.cb(co, events, &res)
+		status := &apipipeline.ObjectStatus{
+			ObjectRef: ref,
+			Info:      info,
+			UpdatedAt: timestamppb.Now(),
+			Parent:    ow.parent,
+		}
+		f.cw.updated(status)
 
 		if !res.deadline.IsZero() {
 			// Must exist in map!
@@ -673,7 +682,7 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 			}
 
 			f.subWatchers[key] = sf
-			go ow.w.startWatch(sf, w.objType)
+			go ow.w.startWatch(sf, w.objType, ref)
 		}
 	}
 

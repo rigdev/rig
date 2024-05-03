@@ -18,20 +18,18 @@ message ObjectStatusChange {
   }
 }
 
-enum ObjectType {
-  OBJECT_TYPE_UNSPECIFIED = 0;
-  OBJECT_TYPE_PRIMARY = 1;
-  OBJECT_TYPE_SECONDARY = 2;
-  OBJECT_TYPE_POD = 3;
-}
-
 message ObjectStatus {
   ObjectRef object_ref = 1;
-  ObjectType type = 2;
-  repeated ObjectCondition conditions = 3;
-  map<string, string> properties = 4;
-  repeated SubObjectStatus sub_objects = 5;
-  repeated PlatformObjectStatus platform_status = 6;
+  ObjectStatusInfo info = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  ObjectRef parent = 4;
+}
+
+message ObjectStatusInfo {
+  repeated ObjectCondition conditions = 1;
+  map<string, string> properties = 2;
+  repeated SubObjectStatus sub_objects = 3;
+  repeated PlatformObjectStatus platform_status = 4;
 }
 
 message RouteStatus {
@@ -77,7 +75,6 @@ message PlatformObjectStatus {
 
 message SubObjectStatus {
   string name = 1;
-  string type = 2;
   repeated ObjectCondition conditions = 3;
   map<string, string> properties = 4;
   repeated PlatformObjectStatus platform_status = 5;
