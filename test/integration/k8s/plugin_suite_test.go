@@ -137,7 +137,6 @@ container:
 	require.NoError(t, err)
 	lc := fxtest.NewLifecycle(t)
 	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc)
-	require.NoError(t, lc.Start(context.Background()))
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
 		Scheme:              scheme,
@@ -154,6 +153,8 @@ container:
 	go func() {
 		require.NoError(t, manager.Start(ctx))
 	}()
+
+	require.NoError(t, lc.Start(context.Background()))
 
 	s.cancel = cancel
 	setupDone = true
