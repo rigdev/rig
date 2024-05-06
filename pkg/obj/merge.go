@@ -102,20 +102,20 @@ func convert[T any](obj any) (T, error) {
 }
 
 // nolint:lll
-// MergeProjectEnv merges a ProjEnvCapsuleBase into a CapsuleSpecExtension and returns a new object with the merged result
+// MergeProjectEnv merges a ProjEnvCapsuleBase into a CapsuleSpec and returns a new object with the merged result
 // It uses StrategicMergePatch (https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
-func MergeProjectEnv(patch *platformv1.ProjEnvCapsuleBase, into *platformv1.CapsuleSpecExtension) (*platformv1.CapsuleSpecExtension, error) {
+func MergeProjectEnv(patch *platformv1.ProjEnvCapsuleBase, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
 	return mergeCapsuleSpec(patch, into)
 }
 
 // nolint:lll
-// MergeCapsuleSpecExtension merges a CapsuleSpecExtension into another CapsuleSpecExtension and returns a new object with the merged result
+// MergeCapsuleSpec merges a CapsuleSpec into another CapsuleSpec and returns a new object with the merged result
 // It uses StrategicMergePatch (https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
-func MergeCapsuleSpecExtensions(patch, into *platformv1.CapsuleSpecExtension) (*platformv1.CapsuleSpecExtension, error) {
+func MergeCapsuleSpecs(patch, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
 	return mergeCapsuleSpec(patch, into)
 }
 
-func mergeCapsuleSpec(patch any, into *platformv1.CapsuleSpecExtension) (*platformv1.CapsuleSpecExtension, error) {
+func mergeCapsuleSpec(patch any, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
 	// It would be possible to do much faster merging by manualling overwriting protobuf fields.
 	// This is tedius to maintain so until it becomes an issue, we use json marshalling to leverage StrategicMergePatch
 	patchBytes, err := json.Marshal(patch)
@@ -128,12 +128,12 @@ func mergeCapsuleSpec(patch any, into *platformv1.CapsuleSpecExtension) (*platfo
 		return nil, err
 	}
 
-	outBytes, err := strategicpatch.StrategicMergePatch(intoBytes, patchBytes, &v1.CapsuleSpecExtension{})
+	outBytes, err := strategicpatch.StrategicMergePatch(intoBytes, patchBytes, &v1.CapsuleSpec{})
 	if err != nil {
 		return nil, err
 	}
 
-	out := &platformv1.CapsuleSpecExtension{}
+	out := &platformv1.CapsuleSpec{}
 	if err := json.Unmarshal(outBytes, out); err != nil {
 		return nil, err
 	}

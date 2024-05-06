@@ -142,8 +142,8 @@ var (
 		}},
 		Annotations: map[string]string{"annotation": "value"},
 	}
-	spec = &platformv1.CapsuleSpecExtension{
-		Kind:       "CapsuleSpecExtension",
+	spec = &platformv1.CapsuleSpec{
+		Kind:       "CapsuleSpec",
 		ApiVersion: "v1",
 		Image:      "image",
 		Command:    "cmd",
@@ -229,18 +229,18 @@ var (
 				},
 			},
 		},
-		EnvironmentVariables: &platformv1.EnvironmentVariables{
+		Env: &platformv1.EnvironmentVariables{
 			Direct: map[string]string{"key1": "value1"},
 			Sources: []*platformv1.EnvironmentSource{{
 				Name: "some-map",
 				Kind: "ConfigMap",
 			}},
 		},
-		ConfigFiles: []*platformv1.ConfigFile{
+		Files: []*platformv1.File{
 			{
 				Path:     "/etc/file1.yaml",
-				Content:  []byte("hej"),
-				IsSecret: false,
+				Bytes:    []byte("hej"),
+				AsSecret: false,
 			},
 		},
 		CronJobs: []*v1alpha2.CronJob{
@@ -260,28 +260,28 @@ var (
 	}
 )
 
-func Test_RolloutConfigToCapsuleSpecExtension(t *testing.T) {
-	spec2, err := RolloutConfigToCapsuleSpecExtension(rolloutConfig)
+func Test_RolloutConfigToCapsuleSpec(t *testing.T) {
+	spec2, err := RolloutConfigToCapsuleSpec(rolloutConfig)
 	require.NoError(t, err)
 	require.Equal(t, spec, spec2)
 }
 
-func Test_CapsuleSpecExtensionToRolloutConfig(t *testing.T) {
-	config, err := CapsuleSpecExtensionToRolloutConfig(spec)
+func Test_CapsuleSpecToRolloutConfig(t *testing.T) {
+	config, err := CapsuleSpecToRolloutConfig(spec)
 	require.NoError(t, err)
 	require.Equal(t, rolloutConfig, config)
 }
 
 func Test_conversion_both_ways(t *testing.T) {
-	config, err := CapsuleSpecExtensionToRolloutConfig(spec)
+	config, err := CapsuleSpecToRolloutConfig(spec)
 	require.NoError(t, err)
-	spec2, err := RolloutConfigToCapsuleSpecExtension(config)
+	spec2, err := RolloutConfigToCapsuleSpec(config)
 	require.NoError(t, err)
 	require.Equal(t, spec, spec2)
 
-	spec2, err = RolloutConfigToCapsuleSpecExtension(rolloutConfig)
+	spec2, err = RolloutConfigToCapsuleSpec(rolloutConfig)
 	require.NoError(t, err)
-	config, err = CapsuleSpecExtensionToRolloutConfig(spec2)
+	config, err = CapsuleSpecToRolloutConfig(spec2)
 	require.NoError(t, err)
 	require.Equal(t, rolloutConfig, config)
 

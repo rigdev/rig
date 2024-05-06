@@ -4,35 +4,36 @@ package platform.v1;
 
 import "v1alpha2/generated.proto";
 
-message CapsuleStar {
+message Capsule {
   string kind = 1;
   string apiVersion = 2;
   string name = 3;
   string project = 4;
-  CapsuleSpecExtension capsuleBase = 5;
-  repeated string environments = 6;
+  CapsuleSpec spec = 5;
+  map<string, CapsuleSpec> environments = 6;
+  repeated string environmentRefs = 7;
 }
 
-message CapsuleSpecExtension {
+message CapsuleSpec {
   string kind = 1;
   string apiVersion = 2;
+  map<string, string> annotations = 11;
   string image = 3;
   string command = 4;
   repeated string args = 5;
   repeated v1alpha2.CapsuleInterface interfaces = 6;
-  repeated ConfigFile configFiles = 7;
-  EnvironmentVariables environmentVariables = 12;
+  repeated File files = 7;
+  EnvironmentVariables env = 12;
   v1alpha2.CapsuleScale scale = 8;
-  map<string, string> nodeSelector = 9;
   repeated v1alpha2.CronJob cronJobs = 10;
-  map<string, string> annotations = 11;
   bool autoAddRigServiceAccounts = 13;
 }
 
-message ConfigFile {
+message File {
   string path = 1;
-  bytes content = 2;
-  bool isSecret = 3;
+  bool asSecret = 3;
+  bytes bytes = 4;
+  string string = 5;
 }
 
 message EnvironmentVariables {
@@ -51,7 +52,7 @@ message CapsuleEnvironment {
   string name = 3;
   string project = 4;
   string environment = 5;
-  CapsuleSpecExtension spec = 6;
+  CapsuleSpec spec = 6;
 }
 
 message Environment {
@@ -60,13 +61,13 @@ message Environment {
   string name = 3;
   string namespaceTemplate = 4;
   string operatorVersion = 5;
-  string clusterID = 6;
-  ProjEnvCapsuleBase capsuleBase = 7;
+  string cluster = 6;
+  ProjEnvCapsuleBase spec = 7;
 }
 
 message ProjEnvCapsuleBase {
-  repeated ConfigFile configFiles = 1;
-  EnvironmentVariables environmentVariables = 2;
+  repeated File files = 1;
+  EnvironmentVariables env = 2;
 }
 
 message Project {
@@ -74,5 +75,5 @@ message Project {
   string apiVersion = 2;
   string name = 3;
   repeated string environments = 4;
-  ProjEnvCapsuleBase capsuleBase = 5;
+  ProjEnvCapsuleBase spec = 5;
 }
