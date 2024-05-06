@@ -36,9 +36,9 @@
 
 ## 🌟 What is Rig?
 
-Rig.dev is a complete service-lifecycle platform for Kubernetes. The Platform empower developers with a developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging, and scaling applications.
+Rig.dev is a complete service-lifecycle platform for Kubernetes. The Platform empowers developers with a developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging, and scaling applications.
 
-The Rig platform is self-hosted can be installed in any Kubernetes cluster and will immediately simplify maintaining services in the cluster.
+The Rig platform is self-hosted, can be installed in any Kubernetes cluster and will immediately simplify maintaining services in the cluster.
 
 ## 📦 Features
 
@@ -54,7 +54,7 @@ The complete stack offers:
 
 ## ⚙️ Plugins
 
-The Rig platform comes with a open Plugin framework, for easy customization.
+The Rig platform comes with an open Plugin framework, for easy customization.
 
 The default configuration will run with the basic plugins:
 
