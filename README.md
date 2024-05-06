@@ -10,7 +10,7 @@
 <p align="center"><b><a href="https://docs.rig.dev/">Documentation</a> | <a href="https://rig.dev/">Website</a></b></p>
 
 <p align="center">
-  The application platform for Kubernetes
+  The DevEx & Application-layer for your Internal Developer Platform
 </p>
 
 <p align="center">
@@ -36,24 +36,47 @@
 
 ## 🌟 What is Rig?
 
-Rig.dev offers an application platform for Kubernetes. We empower developers with our developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging, and scaling applications.
+Rig.dev is a complete service-lifecycle platform for Kubernetes. The Platform empower developers with a developer-friendly deployment engine that simplifies the process of rolling out, managing, debugging, and scaling applications.
+
+The Rig platform is self-hosted can be installed in any Kubernetes cluster and will immediately simplify maintaining services in the cluster.
 
 ## 📦 Features
-Our core is open-source and features:
-- rig-operator - Our abstraction on top of Kubernetes
+
+The complete stack offers:
+
 - rig - The CLI for interacting with the rig-platform and its resources
+- rig-operator - Our open-core abstraction implementation running in Kubernetes
+- rig-platform - Our developer-friendly rollout engine and dashboard
 - Helm charts for installing rig-operator and rig-platform
 - The platform protobuf interfaces (allows for easy API-client generation)
+- Plugin framework for easy integrations of the Platform with _any_ infrastructure
+- Simple CLI commands for integrating with any CI/CD pipeline
+
+## ⚙️ Plugins
+
+The Rig platform comes with a open Plugin framework, for easy customization.
+
+The default configuration will run with the basic plugins:
+
+- Deployment Plugin - [`rigdev.deployment`](https://github.com/rigdev/rig/tree/main/plugins/capsulesteps/deployment)
+- CronJob Plugin - [`rigdev.cronjob`](https://github.com/rigdev/rig/tree/main/plugins/capsulesteps/cron_jobs)
+- Service Account Plugin - [`rigdev.service_account`](https://github.com/rigdev/rig/tree/main/plugins/capsulesteps/service_account)
+- Ingress Rources Plugin - [`rigdev.ingress_routes`](https://github.com/rigdev/rig/tree/main/plugins/capsulesteps/ingress_routes) (must be configured, see [here](https://docs.rig.dev/operator-manual/setup-guide/networking))
+
+More helper-plugins are available [here](https://docs.rig.dev/operator-manual/plugins/builtin) and used in a few examples described
+[here](https://docs.rig.dev/operator-manual/plugins/examples).
+
+To write your own plugins, see our [Custom Plugin guide](https://docs.prod.rig.dev/operator-manual/plugins/thirdparty/).
 
 ## 🧑‍💻 Getting Started
 
-Our Getting Started Guide is available [here](https://docs.rig.dev/getting-started/).
+Our Setup Guide is available [here](https://docs.rig.dev/operator-manual/setup-guide).
 
 The guide allows you to set up either your local machine or a Kubernetes cluster in production.
 
 ## 👯 Community
 
-For support, development, and community questions, we recommend checking out our [Discord server](https://discord.gg/Tn5wmXMM2U).
+For support, development, and community questions, we recommend checking out our [Slack channel](https://join.slack.com/t/rig-community/shared_invite/zt-26104sb0m-lzmGdbR~XvCZU3xiM0MR7g).
 
 Furthermore, be sure to check out our [Code of Conduct](https://github.com/rigdev/rig/blob/main/CODE_OF_CONDUCT.md).
 
