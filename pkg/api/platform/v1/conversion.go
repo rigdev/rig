@@ -17,9 +17,9 @@ import (
 	k8sresource "k8s.io/apimachinery/pkg/api/resource"
 )
 
-func RolloutConfigToCapsuleSpecExtension(rc *capsule.RolloutConfig) (*platformv1.CapsuleSpecExtension, error) {
-	spec := &platformv1.CapsuleSpecExtension{
-		Kind:       "CapsuleSpecExtension",
+func RolloutConfigToCapsuleSpec(rc *capsule.RolloutConfig) (*platformv1.CapsuleSpec, error) {
+	spec := &platformv1.CapsuleSpec{
+		Kind:       "CapsuleSpec",
 		ApiVersion: "v1", // TODO
 		Image:      rc.GetImageId(),
 		Scale: &v1alpha2.CapsuleScale{
@@ -34,10 +34,10 @@ func RolloutConfigToCapsuleSpecExtension(rc *capsule.RolloutConfig) (*platformv1
 	}
 
 	for _, cf := range rc.GetConfigFiles() {
-		spec.ConfigFiles = append(spec.ConfigFiles, &platformv1.ConfigFile{
+		spec.Files = append(spec.Files, &platformv1.File{
 			Path:     cf.GetPath(),
-			Content:  cf.GetContent(),
-			IsSecret: cf.GetIsSecret(),
+			Bytes:    cf.GetContent(),
+			AsSecret: cf.GetIsSecret(),
 		})
 	}
 
@@ -127,7 +127,7 @@ func HorizontalScaleConversion(horizontal *capsule.HorizontalScale, replicas uin
 	return res
 }
 
-func FeedContainerSettings(spec *platformv1.CapsuleSpecExtension, containerSettings *capsule.ContainerSettings) error {
+func FeedContainerSettings(spec *platformv1.CapsuleSpec, containerSettings *capsule.ContainerSettings) error {
 	if spec.Scale == nil {
 		spec.Scale = &v1alpha2.CapsuleScale{}
 	}
@@ -136,7 +136,7 @@ func FeedContainerSettings(spec *platformv1.CapsuleSpecExtension, containerSetti
 		containerSettings.GetResources().GetLimits(),
 		containerSettings.GetResources().GetGpuLimits(),
 	)
-	spec.EnvironmentVariables = &platformv1.EnvironmentVariables{
+	spec.Env = &platformv1.EnvironmentVariables{
 		Direct: maps.Clone(containerSettings.GetEnvironmentVariables()),
 	}
 
@@ -145,7 +145,7 @@ func FeedContainerSettings(spec *platformv1.CapsuleSpecExtension, containerSetti
 		if err != nil {
 			return err
 		}
-		spec.EnvironmentVariables.Sources = append(spec.EnvironmentVariables.Sources, ref)
+		spec.Env.Sources = append(spec.Env.Sources, ref)
 	}
 	spec.Command = containerSettings.GetCommand()
 	spec.Args = containerSettings.GetArgs()
@@ -301,18 +301,18 @@ func makeVerticalScale(
 	return vs
 }
 
-func CapsuleSpecExtensionToRolloutConfig(spec *platformv1.CapsuleSpecExtension) (*capsule.RolloutConfig, error) {
+func CapsuleSpecToRolloutConfig(spec *platformv1.CapsuleSpec) (*capsule.RolloutConfig, error) {
 	config := &capsule.RolloutConfig{
 		ImageId: spec.GetImage(),
 		Network: makeNetworks(spec.GetInterfaces()),
 		ContainerSettings: &capsule.ContainerSettings{
-			EnvironmentVariables: maps.Clone(spec.GetEnvironmentVariables().GetDirect()),
+			EnvironmentVariables: maps.Clone(spec.GetEnv().GetDirect()),
 			Command:              spec.GetCommand(),
 			Args:                 spec.GetArgs(),
-			EnvironmentSources:   makeEnvironmentSources(spec.GetEnvironmentVariables().GetSources()),
+			EnvironmentSources:   makeEnvironmentSources(spec.GetEnv().GetSources()),
 		},
 		AutoAddRigServiceAccounts: spec.GetAutoAddRigServiceAccounts(),
-		ConfigFiles:               makeConfigFiles(spec.GetConfigFiles()),
+		ConfigFiles:               makeConfigFiles(spec.GetFiles()),
 		HorizontalScale:           makeHorizontalScale(spec.GetScale().GetHorizontal()),
 		CronJobs:                  makeCronJobs(spec.GetCronJobs()),
 		Annotations:               maps.Clone(spec.GetAnnotations()),
@@ -444,14 +444,14 @@ func makeHorizontalScale(spec *v1alpha2.HorizontalScale) *capsule.HorizontalScal
 	return res
 }
 
-func makeConfigFiles(configFiles []*platformv1.ConfigFile) []*capsule.ConfigFile {
+func makeConfigFiles(configFiles []*platformv1.File) []*capsule.ConfigFile {
 	var res []*capsule.ConfigFile
 
 	for _, c := range configFiles {
 		res = append(res, &capsule.ConfigFile{
 			Path:     c.GetPath(),
-			Content:  c.GetContent(),
-			IsSecret: c.GetIsSecret(),
+			Content:  c.GetBytes(),
+			IsSecret: c.GetAsSecret(),
 		})
 	}
 

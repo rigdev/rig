@@ -7834,6 +7834,43 @@ Empty response for updating users settings for the Rig project.
 
 
 
+<a name="platform-v1-Capsule"></a>
+
+### Capsule
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| project | [string](#string) |  |  |
+| spec | [CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
+| environments | [Capsule.EnvironmentsEntry](#platform-v1-Capsule-EnvironmentsEntry) | repeated |  |
+| environmentRefs | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-Capsule-EnvironmentsEntry"></a>
+
+### Capsule.EnvironmentsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-CapsuleEnvironment"></a>
 
 ### CapsuleEnvironment
@@ -7847,16 +7884,16 @@ Empty response for updating users settings for the Rig project.
 | name | [string](#string) |  |  |
 | project | [string](#string) |  |  |
 | environment | [string](#string) |  |  |
-| spec | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
+| spec | [CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
 
 
 
 
 
 
-<a name="platform-v1-CapsuleSpecExtension"></a>
+<a name="platform-v1-CapsuleSpec"></a>
 
-### CapsuleSpecExtension
+### CapsuleSpec
 
 
 
@@ -7864,16 +7901,15 @@ Empty response for updating users settings for the Rig project.
 | ----- | ---- | ----- | ----------- |
 | kind | [string](#string) |  |  |
 | apiVersion | [string](#string) |  |  |
+| annotations | [CapsuleSpec.AnnotationsEntry](#platform-v1-CapsuleSpec-AnnotationsEntry) | repeated |  |
 | image | [string](#string) |  |  |
 | command | [string](#string) |  |  |
 | args | [string](#string) | repeated |  |
 | interfaces | [v1alpha2.CapsuleInterface](#v1alpha2-CapsuleInterface) | repeated |  |
-| configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
-| environmentVariables | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
+| files | [File](#platform-v1-File) | repeated |  |
+| env | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
 | scale | [v1alpha2.CapsuleScale](#v1alpha2-CapsuleScale) |  |  |
-| nodeSelector | [CapsuleSpecExtension.NodeSelectorEntry](#platform-v1-CapsuleSpecExtension-NodeSelectorEntry) | repeated |  |
 | cronJobs | [v1alpha2.CronJob](#v1alpha2-CronJob) | repeated |  |
-| annotations | [CapsuleSpecExtension.AnnotationsEntry](#platform-v1-CapsuleSpecExtension-AnnotationsEntry) | repeated |  |
 | autoAddRigServiceAccounts | [bool](#bool) |  |  |
 
 
@@ -7881,25 +7917,9 @@ Empty response for updating users settings for the Rig project.
 
 
 
-<a name="platform-v1-CapsuleSpecExtension-AnnotationsEntry"></a>
+<a name="platform-v1-CapsuleSpec-AnnotationsEntry"></a>
 
-### CapsuleSpecExtension.AnnotationsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleSpecExtension-NodeSelectorEntry"></a>
-
-### CapsuleSpecExtension.NodeSelectorEntry
+### CapsuleSpec.AnnotationsEntry
 
 
 
@@ -7907,43 +7927,6 @@ Empty response for updating users settings for the Rig project.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleStar"></a>
-
-### CapsuleStar
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| project | [string](#string) |  |  |
-| capsuleBase | [CapsuleSpecExtension](#platform-v1-CapsuleSpecExtension) |  |  |
-| environments | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="platform-v1-ConfigFile"></a>
-
-### ConfigFile
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  |  |
-| content | [bytes](#bytes) |  |  |
-| isSecret | [bool](#bool) |  |  |
 
 
 
@@ -7963,8 +7946,8 @@ Empty response for updating users settings for the Rig project.
 | name | [string](#string) |  |  |
 | namespaceTemplate | [string](#string) |  |  |
 | operatorVersion | [string](#string) |  |  |
-| clusterID | [string](#string) |  |  |
-| capsuleBase | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
+| cluster | [string](#string) |  |  |
+| spec | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
 
 
 
@@ -8019,6 +8002,24 @@ Empty response for updating users settings for the Rig project.
 
 
 
+<a name="platform-v1-File"></a>
+
+### File
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| asSecret | [bool](#bool) |  |  |
+| bytes | [bytes](#bytes) |  |  |
+| string | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-ProjEnvCapsuleBase"></a>
 
 ### ProjEnvCapsuleBase
@@ -8027,8 +8028,8 @@ Empty response for updating users settings for the Rig project.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| configFiles | [ConfigFile](#platform-v1-ConfigFile) | repeated |  |
-| environmentVariables | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
+| files | [File](#platform-v1-File) | repeated |  |
+| env | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
 
 
 
@@ -8047,7 +8048,7 @@ Empty response for updating users settings for the Rig project.
 | apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | environments | [string](#string) | repeated |  |
-| capsuleBase | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
+| spec | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
 
 
 
