@@ -651,6 +651,7 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 		status := &apipipeline.ObjectStatus{
 			ObjectRef: ref,
 			Info:      info,
+			CreatedAt: timestamppb.New(co.GetCreationTimestamp().Time),
 			UpdatedAt: timestamppb.Now(),
 			Parent:    ow.parent,
 		}
