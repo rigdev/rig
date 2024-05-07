@@ -8,11 +8,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-var _defaultPodLabels = []string{RigDevRolloutLabel}
+var _defaultPodAnnotations = []string{RigDevRolloutLabel}
 
 func CreatePodAnnotations(req CapsuleRequest) map[string]string {
 	podAnnotations := map[string]string{}
-	for _, l := range _defaultPodLabels {
+	for _, l := range _defaultPodAnnotations {
 		if v, ok := req.Capsule().Annotations[l]; ok {
 			podAnnotations[l] = v
 		}
