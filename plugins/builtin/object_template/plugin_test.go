@@ -11,6 +11,7 @@ import (
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -278,4 +279,96 @@ name: name`
 			assert.Equal(t, tt.expected, deploy)
 		})
 	}
+}
+
+func Test_ObjectPlugin_with_list(t *testing.T) {
+	p := pipeline.NewCapsulePipeline(nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
+	req := pipeline.NewCapsuleRequest(p, &v1alpha2.Capsule{}, nil)
+
+	objects := []*appsv1.Deployment{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj1"},
+			Spec: appsv1.DeploymentSpec{
+				Replicas:        ptr.New(int32(1)),
+				MinReadySeconds: 1,
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj2"},
+			Spec: appsv1.DeploymentSpec{
+				Replicas:        ptr.New(int32(3)),
+				MinReadySeconds: 2,
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj3"},
+			Spec: appsv1.DeploymentSpec{
+				Replicas:        ptr.New(int32(2)),
+				MinReadySeconds: 3,
+			},
+		},
+	}
+	for _, obj := range objects {
+		require.NoError(t, req.Set(obj))
+	}
+
+	config := `
+group: apps
+kind: Deployment
+name: '*'
+object: |
+  spec:
+    replicas: 10
+    selector:
+      matchLabels:
+        name-{{ .current.metadata.name }}: '{{ .current.spec.minReadySeconds }}'
+`
+	plugin := Plugin{
+		configBytes: []byte(config),
+	}
+	require.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))
+
+	objs, err := req.ListNew(&appsv1.Deployment{})
+	require.NoError(t, err)
+	deployments, err := pipeline.ListConvert[*appsv1.Deployment](objs)
+	require.NoError(t, err)
+
+	require.Equal(t, []*appsv1.Deployment{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj1"},
+			Spec: appsv1.DeploymentSpec{
+				Replicas:        ptr.New(int32(10)),
+				MinReadySeconds: 1,
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"name-obj1": "1",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj2"},
+			Spec: appsv1.DeploymentSpec{
+				Replicas:        ptr.New(int32(10)),
+				MinReadySeconds: 2,
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"name-obj2": "2",
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj3"},
+			Spec: appsv1.DeploymentSpec{
+				Replicas:        ptr.New(int32(10)),
+				MinReadySeconds: 3,
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"name-obj3": "3",
+					},
+				},
+			},
+		},
+	}, deployments)
 }

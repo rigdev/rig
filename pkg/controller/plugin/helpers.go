@@ -12,17 +12,10 @@ import (
 )
 
 func GetNew(group, kind, name string, req pipeline.CapsuleRequest) (client.Object, error) {
-	gvk, err := pipeline.LookupGVK(schema.GroupKind{Group: group, Kind: kind})
+	currentObject, err := createEmptyObject(group, kind, req)
 	if err != nil {
 		return nil, err
 	}
-
-	co, err := req.Scheme().New(gvk)
-	if err != nil {
-		return nil, err
-	}
-
-	currentObject := co.(client.Object)
 	currentObject.SetName(name)
 
 	if err := req.GetNew(currentObject); err != nil {
@@ -30,6 +23,27 @@ func GetNew(group, kind, name string, req pipeline.CapsuleRequest) (client.Objec
 	}
 
 	return currentObject, nil
+}
+
+func ListNew(group, kind string, req pipeline.CapsuleRequest) ([]client.Object, error) {
+	currentObject, err := createEmptyObject(group, kind, req)
+	if err != nil {
+		return nil, err
+	}
+	return req.ListNew(currentObject)
+}
+
+func createEmptyObject(group, kind string, req pipeline.CapsuleRequest) (client.Object, error) {
+	gvk, err := pipeline.LookupGVK(schema.GroupKind{Group: group, Kind: kind})
+	if err != nil {
+		return nil, err
+	}
+
+	object, err := req.Scheme().New(gvk)
+	if err != nil {
+		return nil, err
+	}
+	return object.(client.Object), nil
 }
 
 type ParseStep[T any] func(config T, req pipeline.CapsuleRequest) (string, any, error)
@@ -71,8 +85,7 @@ func ParseTemplatedConfig[T any](data []byte, req pipeline.CapsuleRequest, steps
 		if err := t.Execute(&b, values); err != nil {
 			return empty, err
 		}
-		data = b.Bytes()
-		if err := LoadYAMLConfig(data, &config); err != nil {
+		if err := LoadYAMLConfig(b.Bytes(), &config); err != nil {
 			return empty, err
 		}
 	}

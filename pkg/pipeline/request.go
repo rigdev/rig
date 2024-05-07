@@ -51,7 +51,7 @@ func ListExisting[T client.Object](r Request, obj T) ([]T, error) {
 	if err != nil {
 		return nil, err
 	}
-	return listConvert[T](objects)
+	return ListConvert[T](objects)
 }
 
 func ListNew[T client.Object](r Request, obj T) ([]T, error) {
@@ -59,10 +59,10 @@ func ListNew[T client.Object](r Request, obj T) ([]T, error) {
 	if err != nil {
 		return nil, err
 	}
-	return listConvert[T](objects)
+	return ListConvert[T](objects)
 }
 
-func listConvert[T client.Object](objects []client.Object) ([]T, error) {
+func ListConvert[T client.Object](objects []client.Object) ([]T, error) {
 	var res []T
 	for _, obj := range objects {
 		o, ok := obj.(T)
