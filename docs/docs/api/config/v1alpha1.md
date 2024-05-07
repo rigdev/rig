@@ -174,8 +174,6 @@ _Appears in:_
 | --- | --- |
 | `token` _string_ | Slack authentication token. |
 | `channel_id` _string_ | ID of the slack channel to send messages to. |
-| `projects` _string array_ | Projects to send messages for. If empty, all projects are included. |
-| `environments` _string array_ | Environments to send messages for. If empty, all environments are included. |
 
 
 ### Cluster
@@ -375,6 +373,21 @@ _Appears in:_
 | `level` _[Level](#level)_ | Level sets the granularity of logging. |
 
 
+### Notification
+
+
+
+Notification configuration
+
+_Appears in:_
+- [PlatformConfig](#platformconfig)
+
+| Field | Description |
+| --- | --- |
+| `projects` _string array_ | Projects to send notifications for. If empty, all projects are included. |
+| `environments` _string array_ | Environments to send notifications for. If empty, all environments are included. |
+
+
 ### OIDCProvider
 
 
@@ -488,6 +501,7 @@ PlatformConfig is the Schema for the platform config API
 | `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
 | `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
 | `environments` _object (keys:string, values:[Environment](#environment))_ | Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups). |
+| `notification` _[Notification](#notification)_ | Notification configuration of the platform. This is backed by notification clients in the client configuratino. Currently supported clients: Slack |
 
 
 ### Plugin
