@@ -53,6 +53,18 @@ type PlatformConfig struct {
 
 	// Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups).
 	Environments map[string]Environment `json:"environments,omitempty"`
+
+	// Notification configuration of the platform. This is backed by notification clients in the client configuratino.
+	// Currently supported clients: Slack
+	Notification Notification `json:"notification,omitempty"`
+}
+
+// Notification configuration
+type Notification struct {
+	// Projects to send notifications for. If empty, all projects are included.
+	Projects []string `json:"projects,omitempty"`
+	// Environments to send notifications for. If empty, all environments are included.
+	Environments []string `json:"environments,omitempty"`
 }
 
 // Auth specifies authentication configuration.
@@ -213,10 +225,6 @@ type ClientSlack struct {
 	Token string `json:"token,omitempty"`
 	// ID of the slack channel to send messages to.
 	ChannelID string `json:"channel_id,omitempty"`
-	// Projects to send messages for. If empty, all projects are included.
-	Projects []string `json:"projects,omitempty"`
-	// Environments to send messages for. If empty, all environments are included.
-	Environments []string `json:"environments,omitempty"`
 }
 
 // ClientSMTP specifies the configuration for the SMTP client.
