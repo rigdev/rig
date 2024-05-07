@@ -21,6 +21,8 @@ message ObjectStatusChange {
 message ObjectStatus {
   ObjectRef object_ref = 1;
   ObjectStatusInfo info = 2;
+  // The createdTimestamp from the kubernetes object.
+  google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp updated_at = 3;
   ObjectRef parent = 4;
 }
@@ -37,7 +39,10 @@ message RouteStatus {
   string host = 2;
 }
 
-message InstanceStatus {}
+message InstanceStatus {
+  uint64 rollout_id = 1;
+  string node = 2;
+}
 
 message ContainerStatus {
   // Information about the last container termination.
@@ -61,6 +66,7 @@ message ContainerStatus {
   uint32 restart_count = 1;
   ContainerTermination last_termination = 2;
   google.protobuf.Timestamp started_at = 3;
+  string image = 4;
 }
 
 message PlatformObjectStatus {
