@@ -27,14 +27,14 @@ func onPodUpdated(
 ) *apipipeline.ObjectStatusInfo {
 	pod := obj.(*corev1.Pod)
 
-	rolloutID, _ := strconv.ParseUint(pod.Annotations[pipeline.RigDevRolloutLabel], 10, 32)
+	rolloutID, _ := strconv.ParseUint(pod.Annotations[pipeline.RigDevRolloutLabel], 10, 64)
 	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
 		PlatformStatus: []*apipipeline.PlatformObjectStatus{{
 			Name: pod.GetName(),
 			Kind: &apipipeline.PlatformObjectStatus_Instance{
 				Instance: &apipipeline.InstanceStatus{
-					RolloutId: uint32(rolloutID),
+					RolloutId: rolloutID,
 					Node:      pod.Spec.NodeName,
 				},
 			},

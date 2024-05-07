@@ -40,7 +40,7 @@ message RouteStatus {
 }
 
 message InstanceStatus {
-  uint32 rollout_id = 1;
+  uint64 rollout_id = 1;
   string node = 2;
 }
 
