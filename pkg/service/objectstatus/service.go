@@ -347,12 +347,14 @@ func (c *capsuleCache) update(pluginID uuid.UUID, change *apiplugin.ObjectStatus
 	case *apiplugin.ObjectStatusChange_Deleted:
 		key := objectKeyFromObjectRef(v.Deleted)
 
-		if _, ok := c.objects[key].statuses[pluginID]; ok {
-			delete(c.objects[key].statuses, pluginID)
-			keys = append(keys, key)
+		if o, ok := c.objects[key]; ok {
+			if _, ok := o.statuses[pluginID]; ok {
+				delete(o.statuses, pluginID)
+				keys = append(keys, key)
 
-			if len(c.objects[key].statuses) == 0 {
-				delete(c.objects, key)
+				if len(o.statuses) == 0 {
+					delete(c.objects, key)
+				}
 			}
 		}
 
