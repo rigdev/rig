@@ -536,6 +536,8 @@ func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
 	defer ow.lock.Unlock()
 
 	if o, ok := ow.objects[co.GetName()]; ok {
+		o.obj = co
+
 		if o.index >= 0 {
 			// Already scheduled to run in the future.
 			deadline := time.Now().Add(time.Second)
@@ -543,7 +545,6 @@ func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
 				o.deadline = deadline
 				ow.queue.Fix(o.index)
 			}
-			o.obj = co
 			return
 		}
 
@@ -555,6 +556,7 @@ func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
 			return
 		}
 
+		// All good, ready to run it.
 		o.deadline = time.Now()
 	} else {
 		ow.objects[co.GetName()] = &queueObj{
@@ -655,6 +657,7 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 			UpdatedAt: timestamppb.Now(),
 			Parent:    ow.parent,
 		}
+
 		f.cw.updated(status)
 
 		if !res.deadline.IsZero() {
@@ -670,7 +673,6 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 				ow.queue.Push(o)
 			}
 		}
-
 	}
 
 	for key, w := range res.watchers {

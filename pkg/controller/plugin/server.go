@@ -110,15 +110,21 @@ func (m *GRPCServer) WatchObjectStatus(
 ) error {
 	changeChannel := make(chan *apiplugin.ObjectStatusChange, 32)
 	ctx, cancel := context.WithCancel(stream.Context())
+	defer cancel()
 
 	go func() {
 		defer cancel()
-		for change := range changeChannel {
-			if err := stream.Send(&apiplugin.WatchObjectStatusResponse{
-				Change: change,
-			}); err != nil {
-				m.logger.Debug("error sending status", "error", err)
+		for {
+			select {
+			case <-ctx.Done():
 				return
+			case change := <-changeChannel:
+				if err := stream.Send(&apiplugin.WatchObjectStatusResponse{
+					Change: change,
+				}); err != nil {
+					m.logger.Info("error sending status", "error", err)
+					return
+				}
 			}
 		}
 	}()

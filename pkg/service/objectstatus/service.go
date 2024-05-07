@@ -79,7 +79,7 @@ func (s *service) runStepForCapsule(
 			s.logger.Error(err, "error getting object status")
 		}
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 }
 
