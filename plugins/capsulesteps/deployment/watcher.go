@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/pipeline"
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,12 +27,16 @@ func onPodUpdated(
 ) *apipipeline.ObjectStatusInfo {
 	pod := obj.(*corev1.Pod)
 
+	rolloutID, _ := strconv.ParseUint(pod.Annotations[pipeline.RigDevRolloutLabel], 10, 32)
 	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
 		PlatformStatus: []*apipipeline.PlatformObjectStatus{{
 			Name: pod.GetName(),
 			Kind: &apipipeline.PlatformObjectStatus_Instance{
-				Instance: &apipipeline.InstanceStatus{},
+				Instance: &apipipeline.InstanceStatus{
+					RolloutId: uint32(rolloutID),
+					Node:      pod.Spec.NodeName,
+				},
 			},
 		}},
 	}
@@ -87,7 +93,7 @@ func makeRunningCondition(pod *corev1.Pod, container containerInfo, watcher plug
 				watcher.Reschedule(container.status.State.Running.StartedAt.Time.Add(probePeriod))
 			} else {
 				liveness.Message = "Instance is alive"
-				liveness.State = apipipeline.ObjectState_OBJECT_STATE_PENDING
+				liveness.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
 			}
 		}
 
@@ -148,18 +154,16 @@ func makeExecutingCondition(container containerInfo) {
 		State:   apipipeline.ObjectState_OBJECT_STATE_PENDING,
 	}
 
-	containerStatus := &apipipeline.ContainerStatus{
-		RestartCount: uint32(container.status.RestartCount),
-	}
+	container.platformStatus.RestartCount = uint32(container.status.RestartCount)
 
 	if container.status.LastTerminationState.Terminated != nil {
-		containerStatus.LastTermination = containerStateTerminatedFromK8s(container.status.LastTerminationState.Terminated)
+		container.platformStatus.LastTermination = containerStateTerminatedFromK8s(container.status.LastTerminationState.Terminated)
 		// If this isn't overwritten, it's because the instance is 'Waiting to start' after it had crashed
 		cond.State = apipipeline.ObjectState_OBJECT_STATE_ERROR
 	}
 
 	if container.status.State.Running != nil {
-		containerStatus.StartedAt = timestamppb.New(container.status.State.Running.StartedAt.Time)
+		container.platformStatus.StartedAt = timestamppb.New(container.status.State.Running.StartedAt.Time)
 		cond.Message = "Container is running"
 		cond.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
 	} else if container.status.State.Waiting != nil {
@@ -168,12 +172,6 @@ func makeExecutingCondition(container containerInfo) {
 	}
 
 	container.subObj.Conditions = append(container.subObj.Conditions, cond)
-	container.subObj.PlatformStatus = []*apipipeline.PlatformObjectStatus{{
-		Name: container.name,
-		Kind: &apipipeline.PlatformObjectStatus_Container{
-			Container: containerStatus,
-		},
-	}}
 }
 
 func containerStateTerminatedFromK8s(
@@ -246,6 +244,7 @@ func makeImagePullingCondition(container containerInfo) {
 		}
 	}
 
+	container.platformStatus.Image = container.status.Image
 	container.subObj.Properties["Image"] = container.status.Image
 	container.subObj.Conditions = append(container.subObj.Conditions, cond)
 }
@@ -290,13 +289,14 @@ func makePlacementCondition(status *apipipeline.ObjectStatusInfo, pod *corev1.Po
 }
 
 type containerInfo struct {
-	name          string
-	status        v1.ContainerStatus
-	spec          v1.Container
-	events        []*v1.Event
-	subObj        *apipipeline.SubObjectStatus
-	initContainer bool
-	sidecar       bool
+	name           string
+	status         v1.ContainerStatus
+	spec           v1.Container
+	events         []*v1.Event
+	subObj         *apipipeline.SubObjectStatus
+	platformStatus *apipipeline.ContainerStatus
+	initContainer  bool
+	sidecar        bool
 }
 
 func splitByContainers(status *apipipeline.ObjectStatusInfo, pod *v1.Pod, events []*v1.Event) []containerInfo {
@@ -344,9 +344,16 @@ func splitByContainers(status *apipipeline.ObjectStatusInfo, pod *v1.Pod, events
 	}
 
 	for name, c := range containers {
+		c.platformStatus = &apipipeline.ContainerStatus{}
 		c.subObj = &apipipeline.SubObjectStatus{
 			Name:       name,
 			Properties: map[string]string{},
+			PlatformStatus: []*apipipeline.PlatformObjectStatus{{
+				Name: name,
+				Kind: &apipipeline.PlatformObjectStatus_Container{
+					Container: c.platformStatus,
+				},
+			}},
 		}
 		containers[name] = c
 		status.SubObjects = append(status.SubObjects, c.subObj)
