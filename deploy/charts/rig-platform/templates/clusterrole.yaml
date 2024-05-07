@@ -15,7 +15,6 @@ rules:
     - namespaces
     - pods/log
     - pods/exec
-    - pods/portforward
     - events
     - jobs
     - cronjobs
