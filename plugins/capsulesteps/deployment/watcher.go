@@ -157,7 +157,8 @@ func makeExecutingCondition(container containerInfo) {
 	container.platformStatus.RestartCount = uint32(container.status.RestartCount)
 
 	if container.status.LastTerminationState.Terminated != nil {
-		container.platformStatus.LastTermination = containerStateTerminatedFromK8s(container.status.LastTerminationState.Terminated)
+		container.platformStatus.LastTermination = containerStateTerminatedFromK8s(
+			container.status.LastTerminationState.Terminated)
 		// If this isn't overwritten, it's because the instance is 'Waiting to start' after it had crashed
 		cond.State = apipipeline.ObjectState_OBJECT_STATE_ERROR
 	}
