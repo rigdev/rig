@@ -8,7 +8,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
-	environment_api "github.com/rigdev/rig-go-api/api/v1/environment"
 	project_api "github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-api/api/v1/project/settings"
 	"github.com/rigdev/rig-go-sdk"
@@ -28,9 +27,9 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/serviceaccount"
 	"github.com/rigdev/rig/cmd/rig/cmd/user"
 	auth_service "github.com/rigdev/rig/cmd/rig/services/auth"
-	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
+	"github.com/rigdev/rig/pkg/cli/version"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -133,26 +132,7 @@ func Run(s *cli.SetupContext) error {
 	}
 	rootCmd.AddCommand(license)
 
-	version := &cobra.Command{
-		Use:   "version",
-		Short: "Print version information",
-		RunE: func(c *cobra.Command, args []string) error {
-			if ok, _ := c.Flags().GetBool("full"); ok {
-				if err := s.MakeInvokePreRunE(initCmd)(c, args); err != nil {
-					return err
-				}
-			}
-			return cmd.version(context.Background(), c, args)
-		},
-		Annotations: map[string]string{
-			auth_service.OmitProject:     "",
-			auth_service.OmitEnvironment: "",
-		},
-		GroupID: common.OtherGroupID,
-	}
-	version.Flags().BoolP("full", "v", false, "Print full version")
-	rootCmd.AddCommand(version)
-
+	version.Setup(rootCmd, s, common.OtherGroupID)
 	dev.Setup(rootCmd, s)
 	capsule_root.Setup(rootCmd, s)
 	auth.Setup(rootCmd, s)
@@ -209,30 +189,6 @@ func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, _ []string
 	})
 
 	cmd.Println(t.Render())
-
-	return nil
-}
-
-func (c *Cmd) version(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	full, err := cmd.Flags().GetBool("full")
-	if err != nil {
-		return err
-	}
-
-	if full {
-		cmd.Println(build.VersionStringFull())
-	} else {
-		cmd.Println(build.VersionString())
-	}
-
-	if full {
-		resp, err := c.Rig.Environment().List(ctx, &connect.Request[environment_api.ListRequest]{})
-		if err != nil {
-			cmd.Println("Unable to get platform version", err)
-		} else {
-			cmd.Println("Platform version:", resp.Msg.GetPlatformVersion())
-		}
-	}
 
 	return nil
 }
