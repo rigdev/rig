@@ -195,6 +195,7 @@ func (s *service) UpdateStatus(
 	keys := c.update(pluginID, change)
 
 	s.lock.RLock()
+	c.lock.RLock()
 	for _, key := range keys {
 		change := &apipipeline.ObjectStatusChange{
 			Capsule: capsule,
@@ -214,6 +215,7 @@ func (s *service) UpdateStatus(
 			}
 		}
 	}
+	c.lock.RUnlock()
 
 	if change.GetCheckpoint() != nil {
 		s.sendCheckpoint(namespace, s.watchers)
