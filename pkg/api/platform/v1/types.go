@@ -56,7 +56,7 @@ var (
 // +kubebuilder:object:root=true
 // +kubebuilder:storageversion
 
-type Capsule struct {
+type CapsuleSet struct {
 	metav1.TypeMeta `json:",inline"`
 	// Name,Project is unique
 	Name string `json:"name" protobuf:"3"`
@@ -70,8 +70,7 @@ type Capsule struct {
 }
 
 // +kubebuilder:object:root=true
-// TODO Different name
-type CapsuleEnvironment struct {
+type Capsule struct {
 	metav1.TypeMeta `json:",inline"`
 	// Name,Project,Environment is unique
 	// Project,Name referes to an existing Capsule type with the given name and project
