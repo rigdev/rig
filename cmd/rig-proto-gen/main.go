@@ -35,8 +35,8 @@ var (
 		"github.com/rigdev/rig/pkg/api/platform/v1": "platform/v1",
 	}
 	compiledTypes = []any{
+		v1.CapsuleSet{},
 		v1.Capsule{},
-		v1.CapsuleEnvironment{},
 		v1.Environment{},
 		v1.Project{},
 	}

@@ -4,7 +4,7 @@ package platform.v1;
 
 import "v1alpha2/generated.proto";
 
-message Capsule {
+message CapsuleSet {
   string kind = 1;
   string apiVersion = 2;
   string name = 3;
@@ -46,7 +46,7 @@ message EnvironmentSource {
   string kind = 2;
 }
 
-message CapsuleEnvironment {
+message Capsule {
   string kind = 1;
   string apiVersion = 2;
   string name = 3;

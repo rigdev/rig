@@ -7846,34 +7846,17 @@ Empty response for updating users settings for the Rig project.
 | apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
 | spec | [CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
-| environments | [Capsule.EnvironmentsEntry](#platform-v1-Capsule-EnvironmentsEntry) | repeated |  |
-| environmentRefs | [string](#string) | repeated |  |
 
 
 
 
 
 
-<a name="platform-v1-Capsule-EnvironmentsEntry"></a>
+<a name="platform-v1-CapsuleSet"></a>
 
-### Capsule.EnvironmentsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
-
-
-
-
-
-
-<a name="platform-v1-CapsuleEnvironment"></a>
-
-### CapsuleEnvironment
+### CapsuleSet
 
 
 
@@ -7883,8 +7866,25 @@ Empty response for updating users settings for the Rig project.
 | apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | project | [string](#string) |  |  |
-| environment | [string](#string) |  |  |
 | spec | [CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
+| environments | [CapsuleSet.EnvironmentsEntry](#platform-v1-CapsuleSet-EnvironmentsEntry) | repeated |  |
+| environmentRefs | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-CapsuleSet-EnvironmentsEntry"></a>
+
+### CapsuleSet.EnvironmentsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
 
 
 
