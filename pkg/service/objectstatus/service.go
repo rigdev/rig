@@ -132,10 +132,6 @@ func (s *service) CapsulesInitialized() {
 }
 
 func (s *service) RegisterCapsule(namespace string, capsule string) {
-	if s.cfg.EnableObjectStatusCache == nil || !*s.cfg.EnableObjectStatusCache {
-		return
-	}
-
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -199,6 +195,7 @@ func (s *service) UpdateStatus(
 	keys := c.update(pluginID, change)
 
 	s.lock.RLock()
+	c.lock.RLock()
 	for _, key := range keys {
 		change := &apipipeline.ObjectStatusChange{
 			Capsule: capsule,
@@ -218,6 +215,7 @@ func (s *service) UpdateStatus(
 			}
 		}
 	}
+	c.lock.RUnlock()
 
 	if change.GetCheckpoint() != nil {
 		s.sendCheckpoint(namespace, s.watchers)
@@ -232,11 +230,14 @@ func (s *service) sendCheckpoint(namespace string, watchers []*watcher) {
 	}
 
 	for _, c := range s.capsules[namespace] {
+		c.lock.RLock()
 		for _, initialized := range c.plugins {
 			if !initialized {
+				c.lock.RUnlock()
 				return
 			}
 		}
+		c.lock.RUnlock()
 	}
 
 	for _, w := range watchers {
