@@ -228,11 +228,14 @@ func (s *service) sendCheckpoint(namespace string, watchers []*watcher) {
 	}
 
 	for _, c := range s.capsules[namespace] {
+		c.lock.RLock()
 		for _, initialized := range c.plugins {
 			if !initialized {
+				c.lock.RUnlock()
 				return
 			}
 		}
+		c.lock.RUnlock()
 	}
 
 	for _, w := range watchers {
