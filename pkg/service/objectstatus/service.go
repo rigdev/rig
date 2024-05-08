@@ -132,10 +132,6 @@ func (s *service) CapsulesInitialized() {
 }
 
 func (s *service) RegisterCapsule(namespace string, capsule string) {
-	if s.cfg.EnableObjectStatusCache == nil || !*s.cfg.EnableObjectStatusCache {
-		return
-	}
-
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
