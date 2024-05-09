@@ -74,6 +74,5 @@ message Project {
   string kind = 1;
   string apiVersion = 2;
   string name = 3;
-  repeated string environments = 4;
-  ProjEnvCapsuleBase spec = 5;
+  ProjEnvCapsuleBase spec = 4;
 }

@@ -280,6 +280,7 @@
 
 
 
+
 <a name="model_auth-proto"></a>
 
 ## model/auth.proto
@@ -7401,6 +7402,52 @@ Empty response for updating users settings for the Rig project.
 
 
 
+<a name="model_object-proto"></a>
+
+## model/object.proto
+
+
+
+<a name="model-Fingerprint"></a>
+
+### Fingerprint
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| bytes | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="model-ObjectMetadata"></a>
+
+### ObjectMetadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_by | [Author](#model-Author) |  |  |
+| fingerprint | [Fingerprint](#model-Fingerprint) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="v1alpha2_generated-proto"></a>
 
 ## v1alpha2/generated.proto
@@ -8047,7 +8094,6 @@ Empty response for updating users settings for the Rig project.
 | kind | [string](#string) |  |  |
 | apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| environments | [string](#string) | repeated |  |
 | spec | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
 
 

@@ -253,11 +253,6 @@ func (in *ProjEnvCapsuleBase) DeepCopy() *ProjEnvCapsuleBase {
 func (in *Project) DeepCopyInto(out *Project) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	if in.Environments != nil {
-		in, out := &in.Environments, &out.Environments
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	in.Spec.DeepCopyInto(&out.Spec)
 }
 
