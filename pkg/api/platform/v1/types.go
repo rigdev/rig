@@ -28,10 +28,8 @@ type Project struct {
 	metav1.TypeMeta `json:",inline"`
 	// Name is unique
 	Name string `json:"name" protobuf:"3"`
-	// A capsule is only allowed in an environment if its project references the environment in this list
-	Environments []string `json:"environments" protobuf:"4"`
 	// Project level defaults
-	Spec ProjEnvCapsuleBase `json:"spec" protobuf:"5"`
+	Spec ProjEnvCapsuleBase `json:"spec" protobuf:"4"`
 }
 
 //+kubebuilder:object:=true

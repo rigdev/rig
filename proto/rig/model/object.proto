@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package model;
+
+import "google/protobuf/timestamp.proto";
+import "model/author.proto";
+
+message ObjectMetadata {
+  google.protobuf.Timestamp created_at = 1;
+  google.protobuf.Timestamp updated_at = 2;
+  Author updated_by = 3;
+  Fingerprint fingerprint = 4;
+}
+
+message Fingerprint {
+  bytes bytes = 1;
+}
