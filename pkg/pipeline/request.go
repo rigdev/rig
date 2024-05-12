@@ -8,6 +8,8 @@ import (
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/errors"
 	"golang.org/x/exp/maps"
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -436,6 +438,28 @@ func (r *RequestBase) applyChange(ctx context.Context, key ObjectKey, state Reso
 	case ResourceStateUpdated:
 		r.logger.Info("update object", "object", key)
 		obj := r.newObjects[key]
+
+		// Edge case: Deployments, when they are scaled, will apply changes in the following order:
+		//   1) Change the number of replicas (pods) in the current ReplicaSet
+		//	 2) Create a new ReplicaSet is needed (Pod-template changes to the Deployment)
+		//   2a) Delete old ReplicaSets.
+		// Because we put an annotation on the Pod, we always have Pod-template change when applying
+		// scale changes. And the result is that when scaling up, it will first match the new number
+		// of replicas in the *old* ReplicaSet, before moving to the new one.
+		// The "fix" is to apply the change in two rounds:
+		// 	 1) First, we apply the template changes (use current number of replicas)
+		//	 2) Then apply the scale changes.
+		// That way the scale is only being applied to the new ReplicaSet.
+		if key.GroupVersionKind == AppsDeploymentGVK && obj.Materialized != nil {
+			currentObj := obj.Current.(*v1.Deployment)
+			newObj := obj.New.(*v1.Deployment)
+			materializedObj := obj.Materialized.(*v1.Deployment)
+			if !equality.Semantic.DeepEqual(currentObj.Spec.Template, materializedObj.Spec.Template) {
+				// We have changes to the template - don't apply potential replica changes yet.
+				newObj.Spec.Replicas = currentObj.Spec.Replicas
+			}
+		}
+
 		obj.New.SetResourceVersion(obj.Current.GetResourceVersion())
 		if err := r.client.Update(ctx, obj.New); err != nil {
 			return fmt.Errorf("could not update %s: %w", key.GroupVersionKind, err)
