@@ -12,6 +12,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	vpav1 "k8s.io/autoscaler/vertical-pod-autoscaler/pkg/apis/autoscaling.k8s.io/v1"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 )
 
 // New returns a new *runtime.Scheme configured with the types we use in
@@ -29,6 +30,8 @@ func New() *runtime.Scheme {
 	utilruntime.Must(v1alpha2.AddToScheme(s))
 	utilruntime.Must(apiextensionsv1.AddToScheme(s))
 	utilruntime.Must(vpav1.AddToScheme(s))
+
+	utilruntime.Must(metricsv1beta1.AddToScheme(s))
 
 	return s
 }
