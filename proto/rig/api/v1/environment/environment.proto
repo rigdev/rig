@@ -4,16 +4,14 @@ package api.v1.environment;
 
 message Update {
   oneof field {
-    bool default = 1;
+    string add_project = 2;
+    string remove_project = 3;
   }
 }
-
 // Environment model.
 message Environment {
   // ID of the environment.
   string environment_id = 1;
-  // If true, this is the default environment.
-  bool default = 2;
   // The version of the Rig-operator CRD for this environment.
   string operator_version = 3;
   // ID of the backing cluster.
@@ -21,4 +19,10 @@ message Environment {
   // Namespace template is used to generate the namespace name when configuring
   // resources. Default is to set the namespace equal to the project name.
   string namespace_template = 5;
+  // If true, the environment is deletable by developer users, and can be
+  // deleted with capsules running.
+  bool ephemeral = 6;
+  // Active Projects. If this is set, only capsules in these projects can be
+  // deployed to this environment.
+  repeated string active_projects = 7;
 }

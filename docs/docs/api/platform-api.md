@@ -4586,10 +4586,11 @@ Environment model.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | environment_id | [string](#string) |  | ID of the environment. |
-| default | [bool](#bool) |  | If true, this is the default environment. |
 | operator_version | [string](#string) |  | The version of the Rig-operator CRD for this environment. |
 | cluster_id | [string](#string) |  | ID of the backing cluster. |
 | namespace_template | [string](#string) |  | Namespace template is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. |
+| ephemeral | [bool](#bool) |  | If true, the environment is deletable by developer users, and can be deleted with capsules running. |
+| active_projects | [string](#string) | repeated | Active Projects. If this is set, only capsules in these projects can be deployed to this environment. |
 
 
 
@@ -4604,7 +4605,8 @@ Environment model.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| default | [bool](#bool) |  |  |
+| add_project | [string](#string) |  |  |
+| remove_project | [string](#string) |  |  |
 
 
 
@@ -4636,6 +4638,7 @@ Environment model.
 | initializers | [Update](#api-v1-environment-Update) | repeated |  |
 | cluster_id | [string](#string) |  |  |
 | namespace_template | [string](#string) |  | Namespace template is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. Default value is: {{ .Project.Name }} Valid template properties are: .Project.Name - name of the project .Environment.Name - name of the environment. |
+| ephemeral | [bool](#bool) |  | If true, the environment will be marked as ephemeral. It is possible for developers to create ephemeral environments. |
 
 
 
@@ -4717,6 +4720,8 @@ Request for listing available environments.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
+| exclude_ephemeral | [bool](#bool) |  | Exclude ephemeral environments in the list. |
+| project_id | [string](#string) |  | Filter environments by project. |
 
 
 

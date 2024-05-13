@@ -25,6 +25,9 @@ message CreateRequest {
   //  .Project.Name - name of the project
   //  .Environment.Name - name of the environment.
   string namespace_template = 4;
+  // If true, the environment will be marked as ephemeral.
+  // It is possible for developers to create ephemeral environments.
+  bool ephemeral = 5;
 }
 
 message CreateResponse {}
@@ -50,6 +53,10 @@ message DeleteResponse {}
 message ListRequest {
   // Pagination options.
   model.Pagination pagination = 2;
+  // Exclude ephemeral environments in the list.
+  bool exclude_ephemeral = 3;
+  // Filter environments by project.
+  string project_id = 4;
 }
 
 // Response for listing available environments.
