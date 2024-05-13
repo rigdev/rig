@@ -19,7 +19,7 @@ import (
 	container_name "github.com/google/go-containerregistry/pkg/name"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
+	api_rollout "github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	api_image "github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/model"
@@ -503,36 +503,49 @@ func (c *Cmd) promptForExistingImage(ctx context.Context, capsuleID string) (str
 }
 
 func (c *Cmd) waitForRolloutDone(ctx context.Context, rolloutID uint64, capsuleID string) error {
-	var lastConfigure []*rollout.StepInfo
-	var lastResource []*rollout.StepInfo
-	var lastRunning []*rollout.StepInfo
+	var lastConfigure []*api_rollout.StepInfo
+	var lastResource []*api_rollout.StepInfo
+	var lastRunning []*api_rollout.StepInfo
 	for {
-		res, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
-			Msg: &capsule.GetRolloutRequest{
-				CapsuleId: capsuleID,
-				RolloutId: rolloutID,
-				ProjectId: flags.GetProject(c.Scope),
-			},
-		})
+
+		rollout, err := c.getRollout(ctx, capsuleID, rolloutID)
 		if err != nil {
 			return err
 		}
 
-		var configure []*rollout.StepInfo
-		if stage := res.Msg.GetRollout().GetStatus().GetStages().GetConfigure(); stage != nil {
+		// Check if the rollout was stopped by the user or if another rollout was started in the meantime.
+		if rollout.GetStatus().GetState() == api_rollout.State_STATE_STOPPED {
+			str := "🛑 Rollout"
+			switch rollout.GetStatus().GetResult() {
+			case api_rollout.Result_RESULT_REPLACED:
+				str += " was replaced by a later rollout"
+			case api_rollout.Result_RESULT_ABORTED:
+				str += " was aborted"
+			default:
+				str += " was stopped"
+			}
+
+			fmt.Println(str)
+			os.Exit(1)
+
+			return nil
+		}
+
+		var configure []*api_rollout.StepInfo
+		if stage := rollout.GetStatus().GetStages().GetConfigure(); stage != nil {
 			for _, s := range stage.GetSteps() {
-				var info *rollout.StepInfo
+				var info *api_rollout.StepInfo
 
 				switch v := s.GetStep().(type) {
-				case *rollout.ConfigureStep_Generic:
+				case *api_rollout.ConfigureStep_Generic:
 					info = v.Generic.GetInfo()
-				case *rollout.ConfigureStep_Commit:
+				case *api_rollout.ConfigureStep_Commit:
 					info = v.Commit.GetInfo()
-				case *rollout.ConfigureStep_ConfigureCapsule:
+				case *api_rollout.ConfigureStep_ConfigureCapsule:
 					info = v.ConfigureCapsule.GetInfo()
-				case *rollout.ConfigureStep_ConfigureEnv:
+				case *api_rollout.ConfigureStep_ConfigureEnv:
 					info = v.ConfigureEnv.GetInfo()
-				case *rollout.ConfigureStep_ConfigureFile:
+				case *api_rollout.ConfigureStep_ConfigureFile:
 					info = v.ConfigureFile.GetInfo()
 				}
 
@@ -541,15 +554,15 @@ func (c *Cmd) waitForRolloutDone(ctx context.Context, rolloutID uint64, capsuleI
 				}
 			}
 		}
-		var resource []*rollout.StepInfo
-		if stage := res.Msg.GetRollout().GetStatus().GetStages().GetResourceCreation(); stage != nil {
+		var resource []*api_rollout.StepInfo
+		if stage := rollout.GetStatus().GetStages().GetResourceCreation(); stage != nil {
 			for _, s := range stage.GetSteps() {
-				var info *rollout.StepInfo
+				var info *api_rollout.StepInfo
 
 				switch v := s.GetStep().(type) {
-				case *rollout.ResourceCreationStep_Generic:
+				case *api_rollout.ResourceCreationStep_Generic:
 					info = v.Generic.GetInfo()
-				case *rollout.ResourceCreationStep_CreateResource:
+				case *api_rollout.ResourceCreationStep_CreateResource:
 					info = v.CreateResource.GetInfo()
 				}
 
@@ -559,18 +572,27 @@ func (c *Cmd) waitForRolloutDone(ctx context.Context, rolloutID uint64, capsuleI
 			}
 		}
 
-		var running []*rollout.StepInfo
+		var running []*api_rollout.StepInfo
 		done := false
-		if stage := res.Msg.GetRollout().GetStatus().GetStages().GetRunning(); stage != nil {
+		if stage := rollout.GetStatus().GetStages().GetRunning(); stage != nil {
+			done = true
 			for _, s := range stage.GetSteps() {
-				var info *rollout.StepInfo
+				var info *api_rollout.StepInfo
 
 				switch v := s.GetStep().(type) {
-				case *rollout.RunningStep_Generic:
+				case *api_rollout.RunningStep_Generic:
 					info = v.Generic.GetInfo()
-				case *rollout.RunningStep_Instances:
+
+					if info.GetState() != api_rollout.StepState_STEP_STATE_DONE {
+						done = false
+					}
+
+				case *api_rollout.RunningStep_Instances:
 					info = v.Instances.GetInfo()
-					done = info.GetState() == rollout.StepState_STEP_STATE_DONE
+
+					if info.GetState() != api_rollout.StepState_STEP_STATE_DONE {
+						done = false
+					}
 				}
 
 				if info != nil {
@@ -579,18 +601,18 @@ func (c *Cmd) waitForRolloutDone(ctx context.Context, rolloutID uint64, capsuleI
 			}
 		}
 
-		printSteps := func(steps []*rollout.StepInfo) {
+		printSteps := func(steps []*api_rollout.StepInfo) {
 			for _, s := range steps {
 				icon := "❔"
 				msg := ""
 				switch s.GetState() {
-				case rollout.StepState_STEP_STATE_FAILED:
-					icon = "⚠️"
+				case api_rollout.StepState_STEP_STATE_FAILED:
+					icon = "🚫"
 					msg = "Failed"
-				case rollout.StepState_STEP_STATE_ONGOING:
+				case api_rollout.StepState_STEP_STATE_ONGOING:
 					icon = "⏳"
 					msg = "Ongoing"
-				case rollout.StepState_STEP_STATE_DONE:
+				case api_rollout.StepState_STEP_STATE_DONE:
 					icon = "✅"
 					msg = "Done"
 				}
@@ -603,8 +625,8 @@ func (c *Cmd) waitForRolloutDone(ctx context.Context, rolloutID uint64, capsuleI
 			}
 		}
 
-		printNewSteps := func(current, last []*rollout.StepInfo) []*rollout.StepInfo {
-			var newSteps []*rollout.StepInfo
+		printNewSteps := func(current, last []*api_rollout.StepInfo) []*api_rollout.StepInfo {
+			var newSteps []*api_rollout.StepInfo
 			for _, s := range current {
 				found := false
 				for _, l := range last {
@@ -629,11 +651,50 @@ func (c *Cmd) waitForRolloutDone(ctx context.Context, rolloutID uint64, capsuleI
 
 		if done {
 			fmt.Println("")
-			fmt.Println("Done ✅ - All instances are running")
+			fmt.Println("Done ✅ - Rollout Complete")
 			return nil
 		}
 
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func (c *Cmd) getRollout(ctx context.Context, capsuleID string, rolloutID uint64) (*capsule.Rollout, error) {
+	connectionLost := false
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(2*time.Minute))
+	defer cancel()
+
+	for {
+		res, err := c.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
+			Msg: &capsule.GetRolloutRequest{
+				CapsuleId: capsuleID,
+				RolloutId: rolloutID,
+				ProjectId: flags.GetProject(c.Scope),
+			},
+		})
+		if errors.IsUnavailable(err) || ctx.Err() != nil {
+			if !connectionLost {
+				fmt.Println("🚫 Connection lost, retrying...")
+				connectionLost = true
+				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			// Check if deadling exceeded
+			if ctx.Err() != nil {
+				return nil, errors.UnavailableErrorf("🚫 Failed to restore the connection")
+			}
+			time.Sleep(1 * time.Second)
+			continue
+		} else if err != nil {
+			return nil, err
+		}
+
+		if connectionLost {
+			fmt.Println("✅ Connection restored")
+		}
+
+		return res.Msg.GetRollout(), nil
 	}
 }
 
