@@ -112,11 +112,20 @@ func GetViewerPermissions(projectID, environmentID string) []*role.Permission {
 	}
 }
 
-// Developers can do everything a viewer can do,
-// plus work with capsules and images in all aspects except creating and deleting them
+// Developers can do everything a viewer can do, in addition to:
+//   - editing ephemeral environments
+//   - work with capsules and images in all aspects except creating and deleting them
 func GetDeveloperPermissions(projectID, environmentID string) []*role.Permission {
 	permissions := GetViewerPermissions(projectID, environmentID)
 	return append(permissions, []*role.Permission{
+		{
+			Action: ActionEnvironmentEditEphemeral,
+			Scope: &role.Scope{
+				Resource:    WithID(ResourceEnvironment, environmentID),
+				Environment: environmentID,
+				Project:     projectID,
+			},
+		},
 		{
 			Action: ActionCapsuleRestartInstance,
 			Scope: &role.Scope{

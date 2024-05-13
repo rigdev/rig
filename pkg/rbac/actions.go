@@ -116,7 +116,9 @@ const (
 
 const (
 	ActionEnvironmentEdit = "environment:edit"
-	ActionEnvironmentView = "environment:view"
+	// Create and delete ephemeral environments
+	ActionEnvironmentEditEphemeral = "environment:edit:ephemeral"
+	ActionEnvironmentView          = "environment:view"
 )
 
 var CapsuleActionMap = map[string]string{
