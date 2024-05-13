@@ -3,15 +3,17 @@ package ingress_routes
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	v1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/pipeline"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -36,6 +38,7 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatusInfo {
 		State:   apipipeline.ObjectState_OBJECT_STATE_PENDING,
 		Message: "Waiting for IP assignment",
 	}
+
 	for _, lb := range ingress.Status.LoadBalancer.Ingress {
 		if lb.IP != "" {
 			ipCondition.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
@@ -71,32 +74,61 @@ func onCertificateUpdated(
 	}
 
 	for _, c := range cert.Status.Conditions {
+		cond := &apipipeline.ObjectCondition{
+			Name:      "Certificate " + strings.ToLower(string(c.Type)),
+			State:     apipipeline.ObjectState_OBJECT_STATE_PENDING,
+			Message:   c.Message,
+			UpdatedAt: timestamppb.New(c.LastTransitionTime.Time),
+		}
+
+		if c.Status == v1.ConditionTrue {
+			cond.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
+		}
+
 		switch c.Type {
 		case "Issuing":
-			cond := &apipipeline.ObjectCondition{
-				Name:    "Certificate issuing",
-				State:   apipipeline.ObjectState_OBJECT_STATE_PENDING,
-				Message: c.Message,
-			}
-
-			if c.Status == v1.ConditionTrue {
-				cond.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
-			}
-
-			status.Conditions = append(status.Conditions, cond)
+			cond.Name = "Certificate issuing"
 		case "Ready":
-			cond := &apipipeline.ObjectCondition{
-				Name:    "Certificate ready",
-				State:   apipipeline.ObjectState_OBJECT_STATE_PENDING,
-				Message: c.Message,
-			}
-
-			if c.Status == v1.ConditionTrue {
-				cond.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
-			}
-
-			status.Conditions = append(status.Conditions, cond)
+			cond.Name = "Certificate readying"
 		}
+
+		status.Conditions = append(status.Conditions, cond)
+	}
+
+	return status
+}
+
+func onCertificateRequestUpdated(
+	obj client.Object,
+	events []*corev1.Event,
+	objectWatcher plugin.ObjectWatcher,
+) *apipipeline.ObjectStatusInfo {
+	certReq := obj.(*cmv1.CertificateRequest)
+
+	status := &apipipeline.ObjectStatusInfo{
+		Properties: map[string]string{},
+	}
+
+	for _, c := range certReq.Status.Conditions {
+		cond := &apipipeline.ObjectCondition{
+			Name:      "Certificate request " + strings.ToLower(string(c.Type)),
+			State:     apipipeline.ObjectState_OBJECT_STATE_PENDING,
+			Message:   c.Message,
+			UpdatedAt: timestamppb.New(c.LastTransitionTime.Time),
+		}
+
+		if c.Status == v1.ConditionTrue {
+			cond.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
+		}
+
+		switch c.Type {
+		case "Approved":
+			cond.Name = "Certificate request approval"
+		case "Ready":
+			cond.Name = "Certificate request readying"
+		}
+
+		status.Conditions = append(status.Conditions, cond)
 	}
 
 	return status
@@ -109,8 +141,13 @@ func onIngressUpdated(
 ) *apipipeline.ObjectStatusInfo {
 	ingress := obj.(*netv1.Ingress)
 
-	objectWatcher.WatchSecondaryByName(ingress.GetName(), &cmv1.Certificate{}, onCertificateUpdated)
-	objectWatcher.WatchSecondaryByName(fmt.Sprint(ingress.GetName(), "-tls"), &cmv1.Certificate{}, onCertificateUpdated)
+	objectWatcher.WatchSecondaryByLabels(labels.Set{
+		pipeline.LabelOwnedByCapsule: ingress.GetLabels()[pipeline.LabelOwnedByCapsule],
+	}, &cmv1.Certificate{}, onCertificateUpdated)
+
+	objectWatcher.WatchSecondaryByLabels(labels.Set{
+		pipeline.LabelOwnedByCapsule: ingress.GetLabels()[pipeline.LabelOwnedByCapsule],
+	}, &cmv1.CertificateRequest{}, onCertificateRequestUpdated)
 
 	return toIngressStatus(ingress)
 }
