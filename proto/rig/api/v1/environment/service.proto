@@ -55,8 +55,8 @@ message ListRequest {
   model.Pagination pagination = 2;
   // Exclude ephemeral environments in the list.
   bool exclude_ephemeral = 3;
-  // Filter environments by project.
-  string project_id = 4;
+  // Get environments for a specific project.
+  string project_filter = 4;
 }
 
 // Response for listing available environments.
