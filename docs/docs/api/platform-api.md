@@ -4721,7 +4721,7 @@ Request for listing available environments.
 | ----- | ---- | ----- | ----------- |
 | pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
 | exclude_ephemeral | [bool](#bool) |  | Exclude ephemeral environments in the list. |
-| project_id | [string](#string) |  | Filter environments by project. |
+| project_filter | [string](#string) |  | Get environments for a specific project. |
 
 
 
