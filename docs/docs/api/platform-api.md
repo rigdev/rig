@@ -4590,7 +4590,8 @@ Environment model.
 | cluster_id | [string](#string) |  | ID of the backing cluster. |
 | namespace_template | [string](#string) |  | Namespace template is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. |
 | ephemeral | [bool](#bool) |  | If true, the environment is deletable by developer users, and can be deleted with capsules running. |
-| active_projects | [string](#string) | repeated | Active Projects. If this is set, only capsules in these projects can be deployed to this environment. |
+| active_projects | [string](#string) | repeated | Active Projects. These projects can deploy capsules to this environment. This is overridden by a true the global flag. |
+| global | [bool](#bool) |  | If true, the environment is available to all projects. |
 
 
 
@@ -4607,6 +4608,7 @@ Environment model.
 | ----- | ---- | ----- | ----------- |
 | add_project | [string](#string) |  |  |
 | remove_project | [string](#string) |  |  |
+| set_global | [bool](#bool) |  |  |
 
 
 
