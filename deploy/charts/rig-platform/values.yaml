@@ -149,13 +149,6 @@ rig:
     devMode: false
     level: info
 
-  environments:
-    {}
-    # prod:
-    #   cluster: prod
-    #   namespace_template: "{{ .Project.Name }}"
-    #   default: true
-
   clusters:
     {}
     # prod:

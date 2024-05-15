@@ -6,6 +6,7 @@ message Update {
   oneof field {
     string add_project = 2;
     string remove_project = 3;
+    bool set_global = 4;
   }
 }
 // Environment model.
@@ -22,7 +23,9 @@ message Environment {
   // If true, the environment is deletable by developer users, and can be
   // deleted with capsules running.
   bool ephemeral = 6;
-  // Active Projects. If this is set, only capsules in these projects can be
-  // deployed to this environment.
+  // Active Projects. These projects can deploy capsules to this environment.
+  // This is overridden by a true the global flag.
   repeated string active_projects = 7;
+  // If true, the environment is available to all projects.
+  bool global = 8;
 }

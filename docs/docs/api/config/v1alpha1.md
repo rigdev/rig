@@ -282,22 +282,6 @@ _Appears in:_
 
 
 
-### Environment
-
-
-
-Environment configuration of a single environment.
-
-_Appears in:_
-- [PlatformConfig](#platformconfig)
-
-| Field | Description |
-| --- | --- |
-| `cluster` _string_ | Cluster name the environment is hosted in. |
-| `namespace_template` _string_ | NamespaceTemplate is used to generate the namespace name when configuring resources. Default is to set the namespace equal to the project name. |
-| `default` _boolean_ | Default is true if this environment should be preferred for per-environment operations. |
-
-
 ### GitAuthor
 
 
@@ -499,7 +483,6 @@ PlatformConfig is the Schema for the platform config API
 | `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
 | `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
 | `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
-| `environments` _object (keys:string, values:[Environment](#environment))_ | Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups). |
 | `notification` _[Notification](#notification)_ | Notification configuration of the platform. This is backed by notification clients in the client configuratino. Currently supported clients: Slack |
 
 

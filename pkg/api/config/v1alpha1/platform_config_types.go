@@ -51,9 +51,6 @@ type PlatformConfig struct {
 	// Clusters the platform has access to.
 	Clusters map[string]Cluster `json:"clusters,omitempty"`
 
-	// Environments of the platform. Each environment is backed by a cluster (allowing multi-tenant setups).
-	Environments map[string]Environment `json:"environments,omitempty"`
-
 	// Notification configuration of the platform. This is backed by notification clients in the client configuratino.
 	// Currently supported clients: Slack
 	Notification Notification `json:"notification,omitempty"`
@@ -282,19 +279,6 @@ type Cluster struct {
 
 	// If set, secrets will be created if needed, for pulling images.
 	CreatePullSecrets *bool `json:"createPullSecrets,omitempty"`
-}
-
-// Environment configuration of a single environment.
-type Environment struct {
-	// Cluster name the environment is hosted in.
-	Cluster string `json:"cluster,omitempty"`
-
-	// NamespaceTemplate is used to generate the namespace name when configuring resources.
-	// Default is to set the namespace equal to the project name.
-	NamespaceTemplate string `json:"namespace_template,omitempty"`
-
-	// Default is true if this environment should be preferred for per-environment operations.
-	Default bool `json:"default,omitempty"`
 }
 
 // ClusterGit specifies configuration for git integration. This can be used to
