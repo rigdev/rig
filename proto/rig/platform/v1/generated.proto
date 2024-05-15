@@ -63,6 +63,9 @@ message Environment {
   string operatorVersion = 5;
   string cluster = 6;
   ProjEnvCapsuleBase spec = 7;
+  bool ephemeral = 8;
+  repeated string activeProjects = 9;
+  bool global = 10;
 }
 
 message ProjEnvCapsuleBase {

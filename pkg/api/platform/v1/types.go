@@ -18,7 +18,10 @@ type Environment struct {
 	OperatorVersion   string `json:"operatorVersion" protobuf:"5"`
 	Cluster           string `json:"cluster" protobuf:"6"`
 	// Environment level defaults
-	Spec ProjEnvCapsuleBase `json:"spec" protobuf:"7"`
+	Spec           ProjEnvCapsuleBase `json:"spec" protobuf:"7"`
+	Ephemeral      bool               `json:"ephemeral" protobuf:"8"`
+	ActiveProjects []string           `json:"activeProjects" protobuf:"9"`
+	Global         bool               `json:"global" protobuf:"10"`
 }
 
 // +kubebuilder:object:root=true

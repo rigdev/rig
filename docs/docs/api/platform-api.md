@@ -8002,6 +8002,9 @@ Empty response for updating users settings for the Rig project.
 | operatorVersion | [string](#string) |  |  |
 | cluster | [string](#string) |  |  |
 | spec | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
+| ephemeral | [bool](#bool) |  |  |
+| activeProjects | [string](#string) | repeated |  |
+| global | [bool](#bool) |  |  |
 
 
 
