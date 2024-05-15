@@ -262,7 +262,7 @@ func (c *Cmd) completeEnvironment(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return completions.Environments(ctx, c.Rig, toComplete)
+	return completions.Environments(ctx, c.Rig, toComplete, flags.GetProject(c.Scope))
 }
 
 func (c *Cmd) completeContext(

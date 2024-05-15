@@ -153,7 +153,9 @@ func NewRigClient(ctx context.Context, fs afero.Fs, prompter common.Prompter) (r
 	}
 
 	envListResp, err := rc.Environment().List(ctx, &connect.Request[environment.ListRequest]{
-		Msg: &environment.ListRequest{},
+		Msg: &environment.ListRequest{
+			ProjectFilter: Flags.Project,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -173,7 +175,7 @@ func NewRigClient(ctx context.Context, fs afero.Fs, prompter common.Prompter) (r
 	if !found {
 		promptStr := "Select an environment to continue"
 		if Flags.Environment != "" {
-			promptStr = "The environment you selected does not exist. " + promptStr
+			promptStr = "The environment you selected does not exist, or is not active for the chosen project." + promptStr
 		}
 
 		environmentChoices := make([]string, 0, len(envListResp.Msg.Environments))

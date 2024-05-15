@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	connectrpc.com/connect v1.16.1
+	connectrpc.com/connect v1.16.2
 	connectrpc.com/grpcreflect v1.2.0
 	github.com/cert-manager/cert-manager v1.13.1
 	github.com/distribution/reference v0.5.0
@@ -32,7 +32,7 @@ require (
 	github.com/nyaruka/phonenumbers v1.1.7
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20240430111110-fcbd1192198b
+	github.com/rigdev/rig-go-api v0.0.0-20240515113038-55811b146330
 	github.com/rigdev/rig-go-sdk v0.0.0-20240417114812-ecae62a90e9b
 	github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e
 	github.com/robfig/cron v1.2.0
@@ -49,7 +49,7 @@ require (
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
 	golang.org/x/net v0.25.0
 	golang.org/x/term v0.20.0
-	google.golang.org/grpc v1.63.2
+	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -161,7 +161,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.21.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240429193739-8cf5692501f6 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240513163218-0867130af1f8 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect

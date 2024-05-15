@@ -50,8 +50,9 @@ func (c *CmdWScope) promptForProjectID(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	projectID := res.Msg.GetProjects()[i].GetProjectId()
-	return projectID, nil
+	project := res.Msg.GetProjects()[i]
+
+	return project.GetProjectId(), nil
 }
 
 func (c *CmdWScope) projectIDFromArg(ctx context.Context, projectArg string) (string, error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -248,5 +249,5 @@ func (c *CmdWScope) useEnvironmentCompletion(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return completions.Environments(ctx, c.Rig, toComplete)
+	return completions.Environments(ctx, c.Rig, toComplete, flags.GetProject(c.Scope))
 }

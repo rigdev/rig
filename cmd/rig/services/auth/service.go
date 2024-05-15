@@ -119,7 +119,9 @@ func (s *Service) AuthEnvironment(ctx context.Context, interactive bool) error {
 		fmt.Println("Changed environment successfully!")
 	}
 
-	res, err := s.rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
+	res, err := s.rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
+		ProjectFilter: flags.GetProject(s.scope),
+	}))
 	if err != nil {
 		return nil
 	}
@@ -392,7 +394,9 @@ func (s *Service) useProject(ctx context.Context) error {
 }
 
 func (s *Service) promptForEnvironment(ctx context.Context) (string, error) {
-	res, err := s.rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{})
+	res, err := s.rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
+		ProjectFilter: flags.GetProject(s.scope),
+	}))
 	if err != nil {
 		return "", err
 	}
