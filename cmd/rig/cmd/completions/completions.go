@@ -39,7 +39,8 @@ func formatEnvironment(e *environment.Environment) string {
 		operatorVersion = e.GetOperatorVersion()
 	}
 
-	return fmt.Sprintf("%v\t (Operator Version: %v)", e.GetEnvironmentId(), operatorVersion)
+	return fmt.Sprintf("%v\t (Operator Version: %v, Ephemeral: %v)",
+		e.GetEnvironmentId(), operatorVersion, e.GetEphemeral())
 }
 
 func formatGroup(g *group.Group) string {
@@ -69,11 +70,14 @@ func Environments(
 	ctx context.Context,
 	rig rig.Client,
 	toComplete string,
+	projectID string,
 ) ([]string, cobra.ShellCompDirective) {
 	var environmentIDs []string
 
 	resp, err := rig.Environment().List(ctx, &connect.Request[environment.ListRequest]{
-		Msg: &environment.ListRequest{},
+		Msg: &environment.ListRequest{
+			ProjectFilter: projectID,
+		},
 	})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError

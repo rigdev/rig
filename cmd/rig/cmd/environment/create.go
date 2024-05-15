@@ -23,7 +23,10 @@ func (c *Cmd) create(ctx context.Context, _ *cobra.Command, args []string) error
 	return c.createEnvironment(ctx, id, cluster, &useEnvironment)
 }
 
-func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string, useNewEnvironment *bool) error {
+func (c *Cmd) createEnvironment(ctx context.Context,
+	name string,
+	cluster string,
+	useNewEnvironment *bool) error {
 	var err error
 	if name == "" {
 		if !c.Scope.IsInteractive() {
@@ -45,7 +48,21 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 		}
 	}
 
-	initializers := []*environment.Update{}
+	initializers := []*environment.Update{
+		{
+			Field: &environment.Update_SetGlobal{
+				SetGlobal: global,
+			},
+		},
+	}
+
+	for _, project := range addProjects {
+		initializers = append(initializers, &environment.Update{
+			Field: &environment.Update_AddProject{
+				AddProject: project,
+			},
+		})
+	}
 
 	_, err = c.Rig.Environment().Create(ctx, &connect.Request[environment.CreateRequest]{
 		Msg: &environment.CreateRequest{
@@ -53,6 +70,7 @@ func (c *Cmd) createEnvironment(ctx context.Context, name string, cluster string
 			ClusterId:         cluster,
 			Initializers:      initializers,
 			NamespaceTemplate: namespaceTemplate,
+			Ephemeral:         ephemeral,
 		},
 	})
 	if errors.IsAlreadyExists(err) {

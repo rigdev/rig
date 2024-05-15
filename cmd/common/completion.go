@@ -10,6 +10,10 @@ var BoolCompletions = func(cmd *cobra.Command, args []string, toComplete string)
 	return []string{"true", "false"}, cobra.ShellCompDirectiveDefault
 }
 
+var NilCompletions = func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	return []string{}, cobra.ShellCompDirectiveDefault
+}
+
 func MaxArgsCompletionFilter(max int) CompletionFilter {
 	return func(
 		cmd *cobra.Command,
