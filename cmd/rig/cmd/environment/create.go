@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
+	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
@@ -25,24 +26,44 @@ func (c *Cmd) create(ctx context.Context, _ *cobra.Command, args []string) error
 
 func (c *Cmd) createEnvironment(ctx context.Context,
 	name string,
-	cluster string,
+	clusterName string,
 	useNewEnvironment *bool) error {
 	var err error
 	if name == "" {
 		if !c.Scope.IsInteractive() {
 			return fmt.Errorf("missing environment argument")
 		}
-		name, err = c.Prompter.Input("Environment:", common.ValidateSystemNameOpt)
+		resp, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{}))
+		if err != nil {
+			return err
+		}
+		var names []string
+		for _, e := range resp.Msg.GetEnvironments() {
+			names = append(names, e.GetEnvironmentId())
+		}
+		name, err = c.Prompter.Input(
+			"Environment:", common.ValidateSystemNameOpt, common.ValidateUniqueOpt(names, "the environment name already exists"),
+		)
 		if err != nil {
 			return err
 		}
 	}
 
-	if cluster == "" {
+	if clusterName == "" {
 		if !c.Scope.IsInteractive() {
 			return fmt.Errorf("missing cluster argument")
 		}
-		cluster, err = c.Prompter.Input("Cluster:", common.ValidateSystemNameOpt)
+
+		var names []string
+		clusters, err := c.Rig.Cluster().List(ctx, connect.NewRequest(&cluster.ListRequest{}))
+		if err != nil {
+			return err
+		}
+		for _, c := range clusters.Msg.GetClusters() {
+			names = append(names, c.GetClusterId())
+		}
+
+		_, clusterName, err = c.Prompter.Select("Cluster:", names, common.SelectEnableFilterOpt)
 		if err != nil {
 			return err
 		}
@@ -67,7 +88,7 @@ func (c *Cmd) createEnvironment(ctx context.Context,
 	_, err = c.Rig.Environment().Create(ctx, &connect.Request[environment.CreateRequest]{
 		Msg: &environment.CreateRequest{
 			EnvironmentId:     name,
-			ClusterId:         cluster,
+			ClusterId:         clusterName,
 			Initializers:      initializers,
 			NamespaceTemplate: namespaceTemplate,
 			Ephemeral:         ephemeral,
@@ -82,7 +103,7 @@ func (c *Cmd) createEnvironment(ctx context.Context,
 	} else if err != nil {
 		return err
 	} else {
-		fmt.Printf("Successfully created environment %s in cluster %s\n", name, cluster)
+		fmt.Printf("Successfully created environment %s in cluster %s\n", name, clusterName)
 	}
 
 	if useNewEnvironment == nil {

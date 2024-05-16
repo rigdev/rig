@@ -161,12 +161,23 @@ func ValidatePort(s string) error {
 	return nil
 }
 
-func ValidateUnique(values []string) func(string) error {
+func ValidateUnique(values []string, msgAndArgs ...string) func(string) error {
 	return func(s string) error {
 		for _, v := range values {
-			if v == s {
-				return errors.New("must be unique")
+			if v != s {
+				continue
 			}
+			var format string
+			var args []any
+			if len(msgAndArgs) == 0 {
+				format = "must be unique"
+			} else {
+				format = msgAndArgs[0]
+				for _, m := range msgAndArgs[1:] {
+					args = append(args, m)
+				}
+			}
+			return fmt.Errorf(format, args...)
 		}
 		return nil
 	}

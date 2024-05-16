@@ -120,9 +120,9 @@ func ValidateCronExpressionOpt(inp *textinput.TextInput) {
 	inp.Validate = ValidateCronExpression
 }
 
-func ValidateUniqueOpt(values []string) GetInputOption {
+func ValidateUniqueOpt(values []string, msgAndArgs ...string) GetInputOption {
 	return func(inp *textinput.TextInput) {
-		inp.Validate = ValidateUnique(values)
+		inp.Validate = ValidateUnique(values, msgAndArgs...)
 	}
 }
 
