@@ -40,7 +40,15 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Args:  cobra.NoArgs,
 		RunE:  cli.CtxWrap(cmd.get),
 	}
-
 	cluster.AddCommand(getConfig)
+
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the names of the clusters available",
+		Args:  cobra.NoArgs,
+		RunE:  cli.CtxWrap(cmd.list),
+	}
+	cluster.AddCommand(list)
+
 	parent.AddCommand(cluster)
 }
