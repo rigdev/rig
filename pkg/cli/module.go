@@ -42,6 +42,7 @@ type SetupContext struct {
 	Args           []string
 	AddTestCommand bool
 	options        []fx.Option
+	authOptions    []fx.Option
 	firstPreRun    bool
 	preRunsLeft    int
 }
@@ -206,6 +207,8 @@ func (s *SetupContext) PersistentPreRunE(cmd *cobra.Command, args []string) erro
 	}
 
 	allOpts := s.createOptions(cmd, args)
+	// TODO Find better solution than this hack. We need to authenticate before we do anythign else
+	allOpts = append(allOpts, s.authOptions...)
 	allOpts = append(allOpts, s.options...)
 	return fx.New(allOpts...).Err()
 }
@@ -216,19 +219,25 @@ func (s *SetupContext) addRigClientInvokes(cmd *cobra.Command) {
 	}
 	annotations := common.GetAllAnnotations(cmd)
 	if _, ok := annotations[auth.OmitUser]; !ok && !flags.Flags.BasicAuth {
-		s.AddOptions(fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
-			return s.CheckAuth(ctx, bool(interactive), s.AuthUser)
-		}))
+		s.authOptions = append(s.authOptions,
+			fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
+				return s.CheckAuth(ctx, bool(interactive), s.AuthUser)
+			}),
+		)
 	}
 	if _, ok := annotations[auth.OmitProject]; !ok {
-		s.AddOptions(fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
-			return s.CheckAuth(ctx, bool(interactive), s.AuthProject)
-		}))
+		s.authOptions = append(s.authOptions,
+			fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
+				return s.CheckAuth(ctx, bool(interactive), s.AuthProject)
+			}),
+		)
 	}
 	if _, ok := annotations[auth.OmitEnvironment]; !ok {
-		s.AddOptions(fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
-			return s.CheckAuth(ctx, bool(interactive), s.AuthEnvironment)
-		}))
+		s.authOptions = append(s.authOptions,
+			fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
+				return s.CheckAuth(ctx, bool(interactive), s.AuthEnvironment)
+			}),
+		)
 	}
 }
 
