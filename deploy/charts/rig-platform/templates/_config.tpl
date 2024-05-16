@@ -83,6 +83,10 @@ client:
     baseUrl: {{ .client.operator.baseUrl }}
   {{- end }}
 
+  {{- if .client.git }}
+  git:
+    author: {{ .client.git.author | toYaml | nindent 6 }}
+  {{- end }}
 
 environments:
 {{- if .environments }}
@@ -135,6 +139,13 @@ client:
   {{- if .smtp.password }}
   smtp:
     password: {{ .smtp.password | quote }}
+  {{- end }}
+  {{- if and .git .git.auths }}
+  git:
+    auths:
+    {{- range .git.auths }}
+      - {{ . | toYaml | indent 8 | trim }}
+    {{- end }}
   {{- end }}
 {{- end }}
 
