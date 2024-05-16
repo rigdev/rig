@@ -8,6 +8,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/plugins"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
+	"github.com/rigdev/rig/pkg/cli/version"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"k8s.io/client-go/util/homedir"
@@ -45,6 +46,7 @@ func Run(s *cli.SetupContext) error {
 			"If empty, will use the operator config of the running operator.")
 	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 
+	version.Setup(rootCmd, s, "")
 	migrate.Setup(rootCmd, s)
 	plugins.Setup(rootCmd, s)
 	if s.Args != nil {
