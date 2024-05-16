@@ -80,6 +80,7 @@ _Appears in:_
 | `smtp` _[ClientSMTP](#clientsmtp)_ | SMTP sets the host, port, username and password for the SMTP client. |
 | `operator` _[ClientOperator](#clientoperator)_ | Operator sets the base url for the Operator client. |
 | `slack` _[ClientSlack](#clientslack)_ | Slack holds configuration for sending slack messages. |
+| `git` _[ClientGit](#clientgit)_ | Git client configuration for communicating with multiple repositories. |
 
 
 ### ClientDocker
@@ -94,6 +95,21 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `host` _string_ | Host where the docker daemon can be reached. |
+
+
+### ClientGit
+
+
+
+
+
+_Appears in:_
+- [Client](#client)
+
+| Field | Description |
+| --- | --- |
+| `auths` _[GitAuth](#gitauth) array_ | Auths the git client can behave as. |
+| `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits. |
 
 
 ### ClientMailjet
@@ -211,9 +227,9 @@ _Appears in:_
 | `branch` _string_ | Branch to commit changes to. |
 | `pathPrefix` _string_ | PathPrefix path to commit to in git repository. Deprecated: Use `pathPrefixes` instead. |
 | `pathPrefixes` _[PathPrefixes](#pathprefixes)_ | PathPrefixes path to commit to in git repository |
-| `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. |
-| `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits. |
 | `templates` _[GitTemplates](#gittemplates)_ | Templates used for commit messages. |
+| `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. Deprecated: Use `client.git.auths` instead. |
+| `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits. Deprecated: Use `client.git.author` instead. |
 
 
 ### ClusterType
@@ -282,6 +298,22 @@ _Appears in:_
 
 
 
+### GitAuth
+
+
+
+
+
+_Appears in:_
+- [ClientGit](#clientgit)
+
+| Field | Description |
+| --- | --- |
+| `url` _string_ | URL is a exact match for the repo-url this auth can be used for. |
+| `urlPrefix` _string_ | URLPrefix is a prefix-match for the repo urls this auth can be used for. |
+| `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. |
+
+
 ### GitAuthor
 
 
@@ -289,6 +321,7 @@ _Appears in:_
 GitAuthor specifies a git commit author
 
 _Appears in:_
+- [ClientGit](#clientgit)
 - [ClusterGit](#clustergit)
 
 | Field | Description |
@@ -305,6 +338,7 @@ GitCredentials specifies how to authenticate against git.
 
 _Appears in:_
 - [ClusterGit](#clustergit)
+- [GitAuth](#gitauth)
 
 | Field | Description |
 | --- | --- |
@@ -329,17 +363,13 @@ _Appears in:_
 
 ### HTTPSCredential
 
-
+_Underlying type:_ _[struct{Username string "json:\"username,omitempty\""; Password string "json:\"password,omitempty\""}](#struct{username-string-"json:\"username,omitempty\"";-password-string-"json:\"password,omitempty\""})_
 
 HTTPSCredential specifies basic auth credentials
 
 _Appears in:_
 - [GitCredentials](#gitcredentials)
 
-| Field | Description |
-| --- | --- |
-| `username` _string_ | Username is the basic auth user name |
-| `password` _string_ | Password is the basic auth password |
 
 
 ### Logging
@@ -521,17 +551,13 @@ _Appears in:_
 
 ### SSHCredential
 
-
+_Underlying type:_ _[struct{PrivateKey string "json:\"privateKey,omitempty\""; PrivateKeyPassword string "json:\"password,omitempty\""}](#struct{privatekey-string-"json:\"privatekey,omitempty\"";-privatekeypassword-string-"json:\"password,omitempty\""})_
 
 SSHCredential specifies SSH credentials
 
 _Appears in:_
 - [GitCredentials](#gitcredentials)
 
-| Field | Description |
-| --- | --- |
-| `privateKey` _string_ | PrivateKey is a PEM encoded SSH private key. |
-| `password` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
 
 
 ### SSO
