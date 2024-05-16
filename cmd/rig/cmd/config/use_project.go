@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
+	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/api/v1/project"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -28,9 +30,43 @@ func (c *CmdWScope) useProject(ctx context.Context, cmd *cobra.Command, args []s
 	if err := c.Scope.GetCfg().Save(); err != nil {
 		return err
 	}
-
 	cmd.Println("Changed project successfully!")
 
+	envs, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
+		ProjectFilter: projectID,
+	}))
+	if err != nil {
+		return err
+	}
+
+	for _, e := range envs.Msg.GetEnvironments() {
+		if e.GetEnvironmentId() == flags.GetEnvironment(c.Scope) {
+			return nil
+		}
+	}
+
+	chooseEnv, err := c.Prompter.Confirm(
+		"The project is not active in the current environment. Would you like to select a new environment as well?",
+		false)
+	if err != nil {
+		return err
+	}
+
+	if !chooseEnv {
+		return nil
+	}
+
+	env, err := c.promptForEnvironment(ctx)
+	if err != nil {
+		return err
+	}
+
+	c.Scope.GetCurrentContext().EnvironmentID = env
+	if err := c.Scope.GetCfg().Save(); err != nil {
+		return err
+	}
+
+	cmd.Println("Changed environment successfully!")
 	return nil
 }
 

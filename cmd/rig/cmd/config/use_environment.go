@@ -56,10 +56,11 @@ func (c *CmdWScope) promptForEnvironment(ctx context.Context) (string, error) {
 		}
 
 		environment := res.Msg.GetEnvironments()[i]
-		if flags.GetProject(c.Scope) != "" && !slices.Contains(environment.GetActiveProjects(), flags.GetProject(c.Scope)) {
+		if flags.GetProject(c.Scope) != "" && !environment.GetGlobal() &&
+			!slices.Contains(environment.GetActiveProjects(), flags.GetProject(c.Scope)) {
 			selectNew, err := c.Prompter.Confirm(
 				fmt.Sprintf(
-					"Warning: project '%s' is not active in environment '%s'.\n Do you want to select a different one?.\n",
+					"Warning: project '%s' is not active in environment '%s'.\nDo you want to select a different one?",
 					flags.GetProject(c.Scope),
 					environment.GetEnvironmentId(),
 				),
@@ -71,18 +72,14 @@ func (c *CmdWScope) promptForEnvironment(ctx context.Context) (string, error) {
 			if !selectNew {
 				return environment.GetEnvironmentId(), nil
 			}
+		} else {
+			return environment.GetEnvironmentId(), nil
 		}
 	}
 }
 
 func (c *CmdWScope) environmentFromArg(ctx context.Context, environmentArg string) (string, error) {
-	if environmentArg != "" {
-		return environmentArg, nil
-	}
-
-	res, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
-		ProjectFilter: flags.GetProject(c.Scope),
-	}))
+	res, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{}))
 	if err != nil {
 		return "", err
 	}
@@ -92,7 +89,7 @@ func (c *CmdWScope) environmentFromArg(ctx context.Context, environmentArg strin
 			if flags.GetProject(c.Scope) != "" && !slices.Contains(e.GetActiveProjects(), flags.GetProject(c.Scope)) {
 				cont, err := c.Prompter.Confirm(
 					fmt.Sprintf(
-						"Warning: project '%s' is not active in environment '%s'.\n Do you want to continue anyways?.\n",
+						"Warning: project '%s' is not active in environment '%s'.\nDo you want to continue anyways?",
 						flags.GetProject(c.Scope),
 						e.GetEnvironmentId(),
 					),
