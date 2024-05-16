@@ -104,45 +104,44 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 	fmt.Println("Enabled Plugins:", strings.Join(migration.plugins, ", "))
 
-	fmt.Print("Migrating Deployment...")
+	fmt.Print("Scanning for Deployment...")
 	if err := c.migrateDeployment(ctx, migration); err != nil {
 		color.Red(" ✗")
 		return err
 	}
 	color.Green(" ✓")
 
-	fmt.Print("Migrating Services and Ingress...")
+	fmt.Print("Scanning for Services and Ingress...")
 	if err := c.migrateServicesAndIngresses(ctx, migration); err != nil {
 		color.Red(" ✗")
 		return err
 	}
-
 	color.Green(" ✓")
 
-	fmt.Print("Migrating Horizontal Pod Autoscaler...")
+	fmt.Print("Scanning for Horizontal Pod Autoscaler...")
 	if err := c.migrateHPA(ctx, migration); err != nil {
 		color.Red(" ✗")
 		return err
 	}
 	color.Green(" ✓")
 
-	fmt.Print("Migrating Environment...")
+	fmt.Print("Scanning for Environment...")
 	if err := c.migrateEnvironment(ctx, migration); err != nil {
 		color.Red(" ✗")
 		return err
 	}
 	color.Green(" ✓")
 
-	fmt.Print("Migrating ConfigMaps and Secrets...")
+	fmt.Print("Scanning for ConfigMaps and Secrets...")
 	if err := c.migrateConfigFilesAndSecrets(ctx, migration); err != nil {
 		color.Red(" ✗")
 		return err
 	}
 	color.Green(" ✓")
 
-	fmt.Print("Migrating Cronjobs...")
+	fmt.Print("Scanning for Cronjobs...")
 	if err := c.migrateCronJobs(ctx, migration); err != nil && err.Error() != promptAborted {
-		fmt.Print("Migrating Cronjobs...")
+		fmt.Print("Scanning for Cronjobs...")
 		color.Red(" ✗")
 		return err
 	}
@@ -499,7 +498,7 @@ func (c *Cmd) migrateDeployment(
 			Suggestion: "Use the rigdev.init_container plugin or the rigdev.sidecar plugin to migrate the other containers",
 		})
 
-		fmt.Print("Migrating Deployment...")
+		fmt.Print("Scanning for Deployment...")
 	}
 
 	container := migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex]
@@ -1521,7 +1520,7 @@ func (c *Cmd) migrateCronJob(
 		}
 	} else if keepGoing, err := c.Prompter.Confirm(`The cronjob does not fit the deployment image.
 		Do you want to continue with a curl based cronjob?`, false); keepGoing && err == nil {
-		fmt.Printf("Migrating cronjob %s to a curl based cronjob\n", cronJob.Name)
+		fmt.Printf("Scanning for cronjob %s to a curl based cronjob\n", cronJob.Name)
 		fmt.Printf("This will create a new job that will run a curl command to the service\n")
 		fmt.Printf("Current cmd and args are: %s %s\n",
 			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[migration.containerIndex].Command[0],
