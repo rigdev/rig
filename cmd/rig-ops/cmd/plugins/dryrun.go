@@ -107,7 +107,9 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 		for _, c := range capsuleList.Items {
 			choices = append(choices, []string{c.Namespace, c.Name})
 		}
-		idx, err := c.Prompter.TableSelect("Choose a capsule", choices, []string{"Namespace", "Capsule"})
+		idx, err := c.Prompter.TableSelect(
+			"Choose a capsule", choices, []string{"Namespace", "Capsule"}, common.SelectEnableFilterOpt,
+		)
 		if err != nil {
 			return err
 		}
