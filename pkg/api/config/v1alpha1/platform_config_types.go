@@ -169,6 +169,9 @@ type Client struct {
 
 	// Slack holds configuration for sending slack messages.
 	Slack ClientSlack `json:"slack,omitempty"`
+
+	// Git client configuration for communicating with multiple repositories.
+	Git ClientGit `json:"git,omitempty"`
 }
 
 // Logging specifies logging configuration.
@@ -296,15 +299,16 @@ type ClusterGit struct {
 
 	// PathPrefixes path to commit to in git repository
 	PathPrefixes PathPrefixes `json:"pathPrefixes,omitempty"`
+	// Templates used for commit messages.
+	Templates GitTemplates `json:"templates,omitempty"`
 
 	// Credentials to use when connecting to git.
+	// Deprecated: Use `client.git.auths` instead.
 	Credentials GitCredentials `json:"credentials,omitempty"`
 
 	// Author used when creating commits.
+	// Deprecated: Use `client.git.author` instead.
 	Author GitAuthor `json:"author,omitempty"`
-
-	// Templates used for commit messages.
-	Templates GitTemplates `json:"templates,omitempty"`
 }
 
 // PathPrefixes is the (possibly templated) path prefix to commit to in git repository
@@ -312,6 +316,25 @@ type ClusterGit struct {
 type PathPrefixes struct {
 	Capsule string `json:"capsule,omitempty"`
 	Project string `json:"project,omitempty"`
+}
+
+type ClientGit struct {
+	// Auths the git client can behave as.
+	Auths []GitAuth `json:"auths,omitempty"`
+
+	// Author used when creating commits.
+	Author GitAuthor `json:"author,omitempty"`
+}
+
+type GitAuth struct {
+	// URL is a exact match for the repo-url this auth can be used for.
+	URL string `json:"url,omitempty"`
+
+	// URLPrefix is a prefix-match for the repo urls this auth can be used for.
+	URLPrefix string `json:"urlPrefix,omitempty"`
+
+	// Credentials to use when connecting to git.
+	Credentials GitCredentials `json:"credentials,omitempty"`
 }
 
 // GitCredentials specifies how to authenticate against git.
