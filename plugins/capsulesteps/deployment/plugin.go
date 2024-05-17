@@ -39,12 +39,10 @@ const (
 type Config struct{}
 
 type Plugin struct {
-	reader      client.Reader
 	configBytes []byte
 }
 
 func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
-	p.reader = req.Reader
 	p.configBytes = req.Config
 	return nil
 }
@@ -72,7 +70,7 @@ func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hc
 	}
 
 	current := &appsv1.Deployment{}
-	if err := req.GetExisting(current); errors.IsNotFound(err) {
+	if err := req.GetExistingInto(current); errors.IsNotFound(err) {
 		current = nil
 	} else if err != nil {
 		return err
@@ -494,7 +492,7 @@ func (p *Plugin) getConfigs(ctx context.Context, req pipeline.CapsuleRequest) (*
 
 	// Get shared env
 	var configMapList v1.ConfigMapList
-	if err := p.reader.List(ctx, &configMapList, &client.ListOptions{
+	if err := req.Reader().List(ctx, &configMapList, &client.ListOptions{
 		Namespace: req.Capsule().Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			pipeline.LabelSharedConfig: "true",
@@ -508,7 +506,7 @@ func (p *Plugin) getConfigs(ctx context.Context, req pipeline.CapsuleRequest) (*
 		configs.configMaps[cm.Name] = &cm
 	}
 	var secretList v1.SecretList
-	if err := p.reader.List(ctx, &secretList, &client.ListOptions{
+	if err := req.Reader().List(ctx, &secretList, &client.ListOptions{
 		Namespace: req.Capsule().Namespace,
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			pipeline.LabelSharedConfig: "true",
@@ -594,7 +592,7 @@ func (p *Plugin) setUsedSource(
 			return nil
 		}
 		var cm v1.ConfigMap
-		if err := p.reader.Get(ctx, types.NamespacedName{
+		if err := req.Reader().Get(ctx, types.NamespacedName{
 			Name:      name,
 			Namespace: req.Capsule().Namespace,
 		}, &cm); err != nil {
@@ -607,7 +605,7 @@ func (p *Plugin) setUsedSource(
 			return nil
 		}
 		var s v1.Secret
-		if err := p.reader.Get(ctx, types.NamespacedName{
+		if err := req.Reader().Get(ctx, types.NamespacedName{
 			Name:      name,
 			Namespace: req.Capsule().Namespace,
 		}, &s); err != nil {

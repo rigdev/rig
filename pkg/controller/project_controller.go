@@ -8,6 +8,7 @@ import (
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/uuid"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -64,7 +65,8 @@ func (p *ProjectEnvironmentController) Reconcile(ctx context.Context, req ctrl.R
 		return ctrl.Result{}, fmt.Errorf("could not fetch ProjectEnvironment: %w", err)
 	}
 
-	request := pipeline.NewProjectEnvironmentRequest(p.Client, p, p.Config, p.Scheme, p.Logger, projectEnv)
+	vm := scheme.NewVersionMapper(p.Client)
+	request := pipeline.NewProjectEnvironmentRequest(p.Client, p, vm, p.Config, p.Scheme, p.Logger, projectEnv)
 
 	if _, err := pipeline.ExecuteRequest(ctx, request, projectSteps, true); err != nil {
 		p.Logger.Error(err, "reconciliation ended with error")

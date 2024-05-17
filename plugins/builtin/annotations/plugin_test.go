@@ -90,7 +90,8 @@ annotations:
 		t.Run(tt.name, func(t *testing.T) {
 			tt.capsule.Namespace = namespace
 			tt.capsule.Name = name
-			p := pipeline.NewCapsulePipeline(nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
+			vm := scheme.NewVersionMapperFromScheme(scheme.New())
+			p := pipeline.NewCapsulePipeline(nil, scheme.New(), vm, logr.FromContextOrDiscard(context.Background()))
 			req := pipeline.NewCapsuleRequest(p, tt.capsule, nil)
 			assert.NoError(t, req.Set(&appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
@@ -106,7 +107,7 @@ name: name`
 			pp := &Plugin{configBytes: []byte(c)}
 			assert.NoError(t, pp.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}
-			assert.NoError(t, req.GetNew(deploy))
+			assert.NoError(t, req.GetNewInto(deploy))
 			assert.Equal(t, tt.expectedAnnotations, deploy.GetAnnotations())
 			assert.Equal(t, tt.expectedLabels, deploy.GetLabels())
 		})

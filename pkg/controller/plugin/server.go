@@ -3,7 +3,6 @@ package plugin
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/hashicorp/go-hclog"
@@ -13,6 +12,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"github.com/rigdev/rig/pkg/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
@@ -26,12 +26,22 @@ type GRPCServer struct {
 	broker  *plugin.GRPCBroker
 	scheme  *runtime.Scheme
 	watcher Watcher
+	cc      client.WithWatch
+	vm      scheme.VersionMapper
 }
 
 func (m *GRPCServer) Initialize(
 	_ context.Context,
 	req *apiplugin.InitializeRequest,
 ) (*apiplugin.InitializeResponse, error) {
+	if err := m.Impl.Initialize(InitializeRequest{
+		Config: []byte(req.GetPluginConfig()),
+		Tag:    req.GetTag(),
+		scheme: m.scheme,
+	}); err != nil {
+		return nil, err
+	}
+
 	var restConfig *rest.Config
 	var err error
 	if req.RestConfig == nil {
@@ -58,14 +68,8 @@ func (m *GRPCServer) Initialize(
 	}
 
 	m.watcher = NewWatcher(m.logger, cc)
-
-	if err := m.Impl.Initialize(InitializeRequest{
-		Config: []byte(req.GetPluginConfig()),
-		Tag:    req.GetTag(),
-		Reader: cc,
-	}); err != nil {
-		return nil, err
-	}
+	m.cc = cc
+	m.vm = scheme.NewVersionMapper(cc)
 
 	return &apiplugin.InitializeResponse{}, nil
 }
@@ -97,6 +101,8 @@ func (m *GRPCServer) RunCapsule(
 		capsule: capsule,
 		logger:  m.logger,
 		ctx:     ctx,
+		cc:      m.cc,
+		vm:      m.vm,
 	}, m.logger); err != nil {
 		return nil, err
 	}
@@ -144,6 +150,8 @@ type capsuleRequestClient struct {
 	capsule *v1alpha2.Capsule
 	scheme  *runtime.Scheme
 	ctx     context.Context
+	cc      client.Client
+	vm      scheme.VersionMapper
 }
 
 func (c *capsuleRequestClient) getGVK(obj client.Object) (schema.GroupVersionKind, error) {
@@ -161,7 +169,7 @@ func (c *capsuleRequestClient) Scheme() *runtime.Scheme {
 }
 
 func (c *capsuleRequestClient) Reader() client.Reader {
-	panic("unimplemented `Reader` command")
+	return c.cc
 }
 
 func (c *capsuleRequestClient) Capsule() *v1alpha2.Capsule {
@@ -176,45 +184,55 @@ func fromGVK(gvk schema.GroupVersionKind) *apiplugin.GVK {
 	}
 }
 
-func (c *capsuleRequestClient) get(o client.Object, current bool) error {
-	gvk, err := c.getGVK(o)
-	if err != nil {
-		return err
+func fromGK(gk schema.GroupKind) *apiplugin.GVK {
+	return &apiplugin.GVK{
+		Group: gk.Group,
+		Kind:  gk.Kind,
 	}
-
-	res, err := c.client.GetObject(c.ctx, &apiplugin.GetObjectRequest{
-		Gvk:     fromGVK(gvk),
-		Name:    o.GetName(),
-		Current: current,
-	})
-	if err != nil {
-		return err
-	}
-
-	return obj.DecodeInto(res.GetObject(), o, c.scheme)
 }
 
-func (c *capsuleRequestClient) list(o client.Object, current bool) ([]client.Object, error) {
-	gvk, err := c.getGVK(o)
-	if err != nil {
-		return nil, err
-	}
-
-	response, err := c.client.ListObjects(c.ctx, &apiplugin.ListObjectsRequest{
-		Gvk:     fromGVK(gvk),
+func (c *capsuleRequestClient) get(gk schema.GroupKind, name string, current bool) (client.Object, error) {
+	res, err := c.client.GetObject(c.ctx, &apiplugin.GetObjectRequest{
+		Gvk:     fromGK(gk),
+		Name:    name,
 		Current: current,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	oo, ok := o.DeepCopyObject().(client.Object)
-	if !ok {
-		return nil, fmt.Errorf("object had no client.Object type: %T", o)
+	gvk, err := c.vm.FromGroupKind(gk)
+	if err != nil {
+		return nil, err
 	}
+
+	co := obj.New(gvk, c.scheme)
+
+	if err := obj.DecodeInto(res.GetObject(), co, c.scheme); err != nil {
+		return nil, err
+	}
+
+	return co, nil
+}
+
+func (c *capsuleRequestClient) list(gk schema.GroupKind, current bool) ([]client.Object, error) {
+	response, err := c.client.ListObjects(c.ctx, &apiplugin.ListObjectsRequest{
+		Gvk:     fromGK(gk),
+		Current: current,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	gvk, err := c.vm.FromGroupKind(gk)
+	if err != nil {
+		return nil, err
+	}
+
+	co := obj.New(gvk, c.scheme)
 	var res []client.Object
 	for _, bytes := range response.GetObjects() {
-		obj, err := obj.DecodeIntoT(bytes, oo, c.scheme)
+		obj, err := obj.DecodeIntoT(bytes, co, c.scheme)
 		if err != nil {
 			return nil, err
 		}
@@ -224,20 +242,48 @@ func (c *capsuleRequestClient) list(o client.Object, current bool) ([]client.Obj
 	return res, nil
 }
 
-func (c *capsuleRequestClient) GetExisting(obj client.Object) error {
-	return c.get(obj, true)
+func (c *capsuleRequestClient) GetExisting(gk schema.GroupKind, name string) (client.Object, error) {
+	return c.get(gk, name, true)
 }
 
-func (c *capsuleRequestClient) GetNew(obj client.Object) error {
-	return c.get(obj, false)
+func (c *capsuleRequestClient) GetExistingInto(obj client.Object) error {
+	gvk, err := c.getGVK(obj)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.get(gvk.GroupKind(), obj.GetName(), true)
+	if err != nil {
+		return err
+	}
+
+	return c.scheme.Convert(res, obj, nil)
 }
 
-func (c *capsuleRequestClient) ListExisting(obj client.Object) ([]client.Object, error) {
-	return c.list(obj, true)
+func (c *capsuleRequestClient) GetNew(gk schema.GroupKind, name string) (client.Object, error) {
+	return c.get(gk, name, false)
 }
 
-func (c *capsuleRequestClient) ListNew(obj client.Object) ([]client.Object, error) {
-	return c.list(obj, false)
+func (c *capsuleRequestClient) GetNewInto(obj client.Object) error {
+	gvk, err := c.getGVK(obj)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.get(gvk.GroupKind(), obj.GetName(), false)
+	if err != nil {
+		return err
+	}
+
+	return c.scheme.Convert(res, obj, nil)
+}
+
+func (c *capsuleRequestClient) ListExisting(gk schema.GroupKind) ([]client.Object, error) {
+	return c.list(gk, true)
+}
+
+func (c *capsuleRequestClient) ListNew(gk schema.GroupKind) ([]client.Object, error) {
+	return c.list(gk, false)
 }
 
 func (c *capsuleRequestClient) Set(co client.Object) error {
@@ -269,14 +315,10 @@ func (c *capsuleRequestClient) getGVKAndBytes(o client.Object) (schema.GroupVers
 	return gvk, bs, nil
 }
 
-func (c *capsuleRequestClient) Delete(obj client.Object) error {
-	gvk, bytes, err := c.getGVKAndBytes(obj)
-	if err != nil {
-		return err
-	}
+func (c *capsuleRequestClient) Delete(gk schema.GroupKind, name string) error {
 	if _, err := c.client.DeleteObject(c.ctx, &apiplugin.DeleteObjectRequest{
-		Gvk:    fromGVK(gvk),
-		Object: bytes,
+		Gvk:  fromGK(gk),
+		Name: name,
 	}); err != nil {
 		return err
 	}
@@ -325,7 +367,12 @@ func (NoWatchObjectStatus) WatchObjectStatus(context.Context, CapsuleWatcher) er
 type InitializeRequest struct {
 	Config []byte
 	Tag    string
-	Reader client.Reader
+
+	scheme *runtime.Scheme
+}
+
+func (r InitializeRequest) Scheme() *runtime.Scheme {
+	return r.scheme
 }
 
 // StartPlugin starts the plugin so it can listen for requests to be run on a CapsuleRequest

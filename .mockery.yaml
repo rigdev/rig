@@ -8,5 +8,5 @@ packages:
     interfaces:
       Client: {}
   k8s.io/client-go/discovery:
-    interfaces: 
+    interfaces:
       DiscoveryInterface: {}

@@ -244,6 +244,13 @@ type requestServer struct {
 	req pipeline.CapsuleRequest
 }
 
+func toGK(gvk *apiplugin.GVK) schema.GroupKind {
+	return schema.GroupKind{
+		Group: gvk.GetGroup(),
+		Kind:  gvk.GetKind(),
+	}
+}
+
 func toGVK(gvk *apiplugin.GVK) schema.GroupVersionKind {
 	return schema.GroupVersionKind{
 		Group:   gvk.GetGroup(),
@@ -256,20 +263,16 @@ func (s requestServer) GetObject(
 	_ context.Context,
 	req *apiplugin.GetObjectRequest,
 ) (*apiplugin.GetObjectResponse, error) {
-	gvk := toGVK(req.GetGvk())
-	ro, err := s.req.Scheme().New(gvk)
-	if err != nil {
-		return nil, err
-	}
+	gk := toGK(req.GetGvk())
 
-	co := ro.(client.Object)
-	co.SetName(req.GetName())
+	var co client.Object
+	var err error
 	if req.GetCurrent() {
-		if err := s.req.GetExisting(co); err != nil {
+		if co, err = s.req.GetExisting(gk, req.GetName()); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := s.req.GetNew(co); err != nil {
+		if co, err = s.req.GetNew(gk, req.GetName()); err != nil {
 			return nil, err
 		}
 	}
@@ -285,12 +288,7 @@ func (s requestServer) GetObject(
 }
 
 func (s requestServer) decodeObject(gvk *apiplugin.GVK, bytes []byte) (client.Object, error) {
-	ro, err := s.req.Scheme().New(toGVK(gvk))
-	if err != nil {
-		return nil, err
-	}
-
-	co := ro.(client.Object)
+	co := obj.New(toGVK(gvk), s.req.Scheme())
 	if err := obj.DecodeInto(bytes, co, s.req.Scheme()); err != nil {
 		return nil, err
 	}
@@ -306,6 +304,7 @@ func (s requestServer) SetObject(
 	if err != nil {
 		return nil, err
 	}
+
 	if err := s.req.Set(obj); err != nil {
 		return nil, err
 	}
@@ -317,11 +316,7 @@ func (s requestServer) Delete(
 	_ context.Context,
 	req *apiplugin.DeleteObjectRequest,
 ) (*apiplugin.DeleteObjectResponse, error) {
-	obj, err := s.decodeObject(req.GetGvk(), req.GetObject())
-	if err != nil {
-		return nil, err
-	}
-	if err := s.req.Delete(obj); err != nil {
+	if err := s.req.Delete(toGK(req.GetGvk()), req.GetName()); err != nil {
 		return nil, err
 	}
 
@@ -354,21 +349,16 @@ func (s requestServer) ListObjects(
 	_ context.Context,
 	req *apiplugin.ListObjectsRequest,
 ) (*apiplugin.ListObjectsResponse, error) {
-	gvk := toGVK(req.GetGvk())
-	ro, err := s.req.Scheme().New(gvk)
-	if err != nil {
-		return nil, err
-	}
-
-	co := ro.(client.Object)
 	var objects []client.Object
+	var err error
 	if req.GetCurrent() {
-		objects, err = s.req.ListExisting(co)
+		if objects, err = s.req.ListExisting(toGK(req.GetGvk())); err != nil {
+			return nil, err
+		}
 	} else {
-		objects, err = s.req.ListNew(co)
-	}
-	if err != nil {
-		return nil, err
+		if objects, err = s.req.ListNew(toGK(req.GetGvk())); err != nil {
+			return nil, err
+		}
 	}
 
 	var bytes [][]byte

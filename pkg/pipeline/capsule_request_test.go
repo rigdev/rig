@@ -26,14 +26,18 @@ type pipelineTestOpts struct {
 func preparePipelineTest(t *testing.T, options pipelineTestOpts) (
 	context.Context, *mockclient.MockClient, *capsuleRequest,
 ) {
-	scheme := scheme.New()
+	s := scheme.New()
 	cc := mockclient.NewMockClient(t)
 	ctx := context.Background()
 
-	p := NewCapsulePipeline(&v1alpha1.OperatorConfig{}, scheme, logr.Discard())
-	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, cc, options.options...)
+	vm := scheme.NewVersionMapperFromScheme(s)
+	p := NewCapsulePipeline(&v1alpha1.OperatorConfig{}, s, vm, logr.Discard())
+	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, cc, scheme.NewVersionMapperFromScheme(s), options.options...)
 	for _, obj := range options.existingObjects {
-		key, err := c.GetKey(obj)
+		gvks, _, err := s.ObjectKinds(obj)
+		require.NoError(t, err)
+
+		key, err := c.GetKey(gvks[0].GroupKind(), obj.GetName())
 		require.NoError(t, err)
 		c.existingObjects[key] = obj
 	}
@@ -76,8 +80,9 @@ func TestOverrideUntrackedWithoutForceGivesNoop(t *testing.T) {
 	cs, err := c.Commit(ctx)
 	require.NoError(t, err)
 
+	gvk := corev1.SchemeGroupVersion.WithKind("ServiceAccount")
 	require.Equal(t, map[ObjectKey]*Change{
-		{ObjectKey: client.ObjectKeyFromObject(sa), GroupVersionKind: CoreServiceAccount}: {
+		{ObjectKey: client.ObjectKeyFromObject(sa), GroupVersionKind: gvk}: {
 			state: ResourceStateAlreadyExists,
 		},
 	}, cs)

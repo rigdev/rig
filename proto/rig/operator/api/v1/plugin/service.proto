@@ -81,7 +81,7 @@ message GVK {
 
 message DeleteObjectRequest {
   GVK gvk = 1;
-  bytes object = 2;
+  string name = 3;
 }
 
 message DeleteObjectResponse {}
