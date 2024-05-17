@@ -106,6 +106,7 @@ type RequestState struct {
 	existingObjects    map[ObjectKey]client.Object
 	newObjects         map[ObjectKey]*Object
 	observedGeneration int64
+	lastErrors         []string
 	dryRun             bool
 	force              bool
 }
@@ -421,7 +422,12 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 			return nil, fmt.Errorf("could not render update to %s: %w", key, err)
 		}
 
-		if ObjectsEquals(cObj.Current, materializedObj) {
+		equal, err := ObjectsEquals(cObj.Current, materializedObj, r.scheme)
+		if err != nil {
+			return nil, err
+		}
+
+		if equal {
 			r.logger.Info("update object skipped, not changed", "object", key)
 			changes[key] = &Change{state: ResourceStateUnchanged}
 			continue
@@ -430,11 +436,12 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 		cObj.Materialized = normalizeObject(key, materializedObj)
 
 		r.logger.Info("update object", "object", key)
+
 		changes[key] = &Change{state: ResourceStateUpdated}
 	}
 
 	// Skip update if no changes.
-	if r.observedGeneration == r.requestObject.GetGeneration() {
+	if r.observedGeneration == r.requestObject.GetGeneration() && len(r.lastErrors) == 0 {
 		r.logger.Info("already at generation", "generation", r.observedGeneration)
 		hasChanges := false
 		for _, change := range changes {
