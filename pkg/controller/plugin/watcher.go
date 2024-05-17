@@ -441,6 +441,20 @@ func (ow *objectWatcher) removeFilter(f *objectWatch) bool {
 	ow.logger.Info("removing filter")
 
 	delete(ow.filters, f)
+
+	// Flush delete events objects.
+	objects := ow.store.List()
+
+	for _, obj := range objects {
+		co, ok := obj.(client.Object)
+		if !ok {
+			ow.logger.Info("invalid object type")
+			continue
+		}
+
+		ow.handleForFilter(co, f, true)
+	}
+
 	return len(ow.filters) == 0
 }
 

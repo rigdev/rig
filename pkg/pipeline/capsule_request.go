@@ -127,6 +127,7 @@ func newCapsuleRequest(
 
 	if capsule.Status != nil {
 		r.observedGeneration = capsule.Status.ObservedGeneration
+		r.lastErrors = capsule.Status.Errors
 	}
 
 	r.logger.Info("created capsule request",
@@ -266,6 +267,7 @@ func (r *capsuleRequest) UpdateStatusWithChanges(
 	}
 
 	r.observedGeneration = generation
+	r.lastErrors = status.Errors
 	r.capsule.Status = status
 	r.capsule.SetResourceVersion(capsuleCopy.GetResourceVersion())
 	r.logger.Info("updated status with changes", "resource_version", capsuleCopy.GetResourceVersion())
@@ -293,6 +295,7 @@ func (r *capsuleRequest) UpdateStatusWithError(ctx context.Context, err error) e
 		return err
 	}
 
+	r.lastErrors = status.Errors
 	r.capsule.Status = status
 	r.capsule.SetResourceVersion(capsuleCopy.GetResourceVersion())
 	r.logger.Info("updated status with error", "resource_version", capsuleCopy.GetResourceVersion())
