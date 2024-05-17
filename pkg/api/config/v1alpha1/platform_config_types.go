@@ -333,6 +333,9 @@ type GitAuth struct {
 	// URLPrefix is a prefix-match for the repo urls this auth can be used for.
 	URLPrefix string `json:"urlPrefix,omitempty"`
 
+	// WebHookSecret is the secret used to validate incoming webhooks.
+	WebHookSecret string `json:"webHookSecret,omitempty"`
+
 	// Credentials to use when connecting to git.
 	Credentials GitCredentials `json:"credentials,omitempty"`
 }
