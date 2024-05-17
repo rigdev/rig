@@ -26,38 +26,51 @@ type Request interface {
 	Reader() client.Reader
 	// GetExisting populates 'obj' with a copy of the corresponding object owned by the capsule currently present in the cluster.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	GetExisting(obj client.Object) error
+	GetExisting(gk schema.GroupKind, name string) (client.Object, error)
+	GetExistingInto(obj client.Object) error
 	// GetNew populates 'obj' with a copy of the corresponding object owned by the capsule about to be applied.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	GetNew(obj client.Object) error
+	GetNew(gk schema.GroupKind, name string) (client.Object, error)
+	GetNewInto(obj client.Object) error
 	// Set updates the object recorded to be applied.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
 	Set(obj client.Object) error
 	// Delete records the given object to be deleted.
-	// The behaviour is such that that calling req.Delete(obj) and then req.GetNew(obj)
+	// The behavior is such that that calling req.Delete(obj) and then req.GetNew(obj)
 	// returns a not-found error from GetNew.
-	// If an object of the given type and name is present in the cluster, calling req.GetExisting(obj) succeds
+	// If an object of the given type and name is present in the cluster, calling req.GetExisting(obj) succeeds
 	// as calls to Delete (or Set) will only be applied to the cluster at the very end of the reconcilliation.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	Delete(obj client.Object) error
+	Delete(gk schema.GroupKind, name string) error
 	// ListExisting returns a list with a copy of the objects of the corresponding type owned by the capsule and currently present in the cluster.
 	// If you want a slice of typed objects, use the generic free-standing ListExisting function.
-	ListExisting(obj client.Object) ([]client.Object, error)
+	ListExisting(gk schema.GroupKind) ([]client.Object, error)
 	// ListNew returns a list with a copy of the objects of the corresponding type owned by the capsule and about to be applied.
 	// If you want a slice of typed objects, use the generic free-standing ListNew function.
-	ListNew(obj client.Object) ([]client.Object, error)
+	ListNew(gk schema.GroupKind) ([]client.Object, error)
 }
 
 func ListExisting[T client.Object](r Request, obj T) ([]T, error) {
-	objects, err := r.ListExisting(obj)
+	gvks, _, err := r.Scheme().ObjectKinds(obj)
 	if err != nil {
 		return nil, err
 	}
+
+	objects, err := r.ListExisting(gvks[0].GroupKind())
+	if err != nil {
+		return nil, err
+	}
+
 	return ListConvert[T](objects)
 }
 
 func ListNew[T client.Object](r Request, obj T) ([]T, error) {
-	objects, err := r.ListNew(obj)
+	gvks, _, err := r.Scheme().ObjectKinds(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	objects, err := r.ListNew(gvks[0].GroupKind())
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +118,7 @@ type RequestStrategies interface {
 	Prepare()
 	OwnedLabel() string
 
-	GetKey(obj client.Object) (ObjectKey, error)
+	GetKey(gk schema.GroupKind, name string) (ObjectKey, error)
 }
 
 type RequestBase struct {
@@ -148,44 +161,71 @@ func (r *RequestBase) Reader() client.Reader {
 	return r.reader
 }
 
-func (r *RequestBase) GetExisting(obj client.Object) error {
-	key, err := r.Strategies.GetKey(obj)
+func (r *RequestBase) GetExisting(gk schema.GroupKind, name string) (client.Object, error) {
+	key, err := r.Strategies.GetKey(gk, name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	o, ok := r.newObjects[key]
 	if !ok {
-		return errors.NotFoundErrorf("object '%v' of type '%v' not found", key.Name, key.GroupVersionKind)
+		return nil, errors.NotFoundErrorf("object '%v' of type '%v' not found", key.Name, key.GroupVersionKind)
 	}
 
 	if o.Current == nil {
-		return errors.NotFoundErrorf("object '%v' of type '%v' has no existing version", key.Name, key.GroupVersionKind)
+		return nil, errors.NotFoundErrorf("object '%v' of type '%v' has no existing version", key.Name, key.GroupVersionKind)
 	}
 
-	return r.scheme.Converter().Convert(o.Current, obj, nil)
+	return o.Current.DeepCopyObject().(client.Object), nil
 }
 
-func (r *RequestBase) GetNew(obj client.Object) error {
-	key, err := r.Strategies.GetKey(obj)
+func (r *RequestBase) GetExistingInto(obj client.Object) error {
+	gvk, err := getGVK(obj, r.scheme)
 	if err != nil {
 		return err
 	}
 
+	res, err := r.GetExisting(gvk.GroupKind(), obj.GetName())
+
+	return r.scheme.Convert(res, obj, nil)
+}
+
+func (r *RequestBase) GetNew(gk schema.GroupKind, name string) (client.Object, error) {
+	key, err := r.Strategies.GetKey(gk, name)
+	if err != nil {
+		return nil, err
+	}
+
 	o, ok := r.newObjects[key]
 	if !ok {
-		return errors.NotFoundErrorf("object '%v' of type '%v' not found", key.Name, key.GroupVersionKind)
+		return nil, errors.NotFoundErrorf("object '%v' of type '%v' not found", key.Name, key.GroupVersionKind)
 	}
 
 	if o.New == nil {
-		return errors.NotFoundErrorf("object '%v' of type '%v' has no new version", key.Name, key.GroupVersionKind)
+		return nil, errors.NotFoundErrorf("object '%v' of type '%v' has no new version", key.Name, key.GroupVersionKind)
 	}
 
-	return r.scheme.Converter().Convert(o.New, obj, nil)
+	return o.New.DeepCopyObject().(client.Object), nil
+}
+
+func (r *RequestBase) GetNewInto(obj client.Object) error {
+	gvk, err := getGVK(obj, r.scheme)
+	if err != nil {
+		return err
+	}
+
+	res, err := r.GetNew(gvk.GroupKind(), obj.GetName())
+
+	return r.scheme.Convert(res, obj, nil)
 }
 
 func (r *RequestBase) Set(obj client.Object) error {
-	key, err := r.Strategies.GetKey(obj)
+	gvk, err := getGVK(obj, r.scheme)
+	if err != nil {
+		return err
+	}
+
+	key, err := r.Strategies.GetKey(gvk.GroupKind(), obj.GetName())
 	if err != nil {
 		return err
 	}
@@ -199,8 +239,8 @@ func (r *RequestBase) Set(obj client.Object) error {
 	return nil
 }
 
-func (r *RequestBase) Delete(obj client.Object) error {
-	key, err := r.Strategies.GetKey(obj)
+func (r *RequestBase) Delete(gk schema.GroupKind, name string) error {
+	key, err := r.Strategies.GetKey(gk, name)
 	if err != nil {
 		return err
 	}
@@ -213,31 +253,27 @@ func (r *RequestBase) Delete(obj client.Object) error {
 	return nil
 }
 
-func (r *RequestBase) ListExisting(obj client.Object) ([]client.Object, error) {
-	gvk, err := getGVK(obj, r.scheme)
+func (r *RequestBase) ListExisting(gk schema.GroupKind) ([]client.Object, error) {
+	gvk, err := r.getGVK(gk)
 	if err != nil {
 		r.logger.Error(err, "invalid object list type")
 		return nil, err
 	}
 
 	var res []client.Object
-
 	for _, key := range sortedKeys(maps.Keys(r.existingObjects)) {
 		if key.GroupVersionKind != gvk {
 			continue
 		}
-		o, ok := r.existingObjects[key].DeepCopyObject().(client.Object)
-		if !ok {
-			return nil, fmt.Errorf("invalid object type: %T", obj)
-		}
+		o := r.existingObjects[key].DeepCopyObject().(client.Object)
 		res = append(res, o)
 	}
 
 	return res, nil
 }
 
-func (r *RequestBase) ListNew(obj client.Object) ([]client.Object, error) {
-	gvk, err := getGVK(obj, r.scheme)
+func (r *RequestBase) ListNew(gk schema.GroupKind) ([]client.Object, error) {
+	gvk, err := r.getGVK(gk)
 	if err != nil {
 		r.logger.Error(err, "invalid object list type")
 		return nil, err
@@ -248,10 +284,7 @@ func (r *RequestBase) ListNew(obj client.Object) ([]client.Object, error) {
 		if key.GroupVersionKind != gvk {
 			continue
 		}
-		o, ok := r.newObjects[key].New.DeepCopyObject().(client.Object)
-		if !ok {
-			return nil, fmt.Errorf("invalid object type: %T", obj)
-		}
+		o := r.newObjects[key].New.DeepCopyObject().(client.Object)
 		res = append(res, o)
 	}
 
@@ -523,6 +556,15 @@ func (r *RequestBase) PrepareRequest() *Result {
 	r.Strategies.Prepare()
 
 	return result
+}
+
+func (r *RequestBase) getGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
+	res, err := r.client.RESTMapper().RESTMapping(gk)
+	if err != nil {
+		return schema.GroupVersionKind{}, err
+	}
+
+	return res.GroupVersionKind, nil
 }
 
 func getGVK(obj runtime.Object, scheme *runtime.Scheme) (schema.GroupVersionKind, error) {

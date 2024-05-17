@@ -56,24 +56,15 @@ func (p *projectEnvRequest) ProjectEnvironment() *v1alpha2.ProjectEnvironment {
 	return p.projectEnv.DeepCopy()
 }
 
-func (p *projectEnvRequest) GetKey(obj client.Object) (ObjectKey, error) {
-	gvk, err := getGVK(obj, p.scheme)
+func (p *projectEnvRequest) GetKey(gk schema.GroupKind, name string) (ObjectKey, error) {
+	gvk, err := p.getGVK(gk)
 	if err != nil {
-		p.logger.Error(err, "invalid object type")
 		return ObjectKey{}, err
-	}
-
-	ns := obj.GetNamespace()
-	if _, ok := obj.(*corev1.Namespace); ok {
-		ns = obj.GetName()
-	} else if obj.GetName() == "" {
-		obj.SetName(obj.GetNamespace())
 	}
 
 	return ObjectKey{
 		ObjectKey: types.NamespacedName{
-			Namespace: obj.GetName(),
-			Name:      ns,
+			Name: name,
 		},
 		GroupVersionKind: gvk,
 	}, nil
@@ -94,11 +85,12 @@ func (p *projectEnvRequest) LoadExistingObjects(ctx context.Context) error {
 			gk.Group = *o.Ref.APIGroup
 		}
 
-		gvk, err := LookupGVK(gk)
+		mapping, err := p.client.RESTMapper().RESTMapping(gk)
 		if err != nil {
 			return err
 		}
 
+		gvk := mapping.GroupVersionKind
 		ro, err := p.scheme.New(gvk)
 		if err != nil {
 			return err

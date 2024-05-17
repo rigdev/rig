@@ -273,7 +273,7 @@ name: name`
 			}
 			assert.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}
-			assert.NoError(t, req.GetNew(deploy))
+			assert.NoError(t, req.GetNewInto(deploy))
 			tt.expected.Name = name
 			tt.expected.Namespace = namespace
 			assert.Equal(t, tt.expected, deploy)
@@ -328,7 +328,7 @@ object: |
 	}
 	require.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))
 
-	objs, err := req.ListNew(&appsv1.Deployment{})
+	objs, err := req.ListNew(appsv1.SchemeGroupVersion.WithKind("Deployment").GroupKind())
 	require.NoError(t, err)
 	deployments, err := pipeline.ListConvert[*appsv1.Deployment](objs)
 	require.NoError(t, err)

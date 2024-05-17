@@ -23,7 +23,6 @@ import (
 	"sync"
 	"time"
 
-	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -167,10 +166,6 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	if r.Config.Pipeline.VPAStep.Plugin != "" {
 		b = b.Owns(&vpav1.VerticalPodAutoscaler{})
-	}
-
-	if capabilities.GetIngress() {
-		b = b.Owns(&cmv1.Certificate{})
 	}
 
 	return b.

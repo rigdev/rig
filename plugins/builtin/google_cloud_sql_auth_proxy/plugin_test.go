@@ -190,7 +190,7 @@ files:
 			err := plugin.Run(context.Background(), req, hclog.Default())
 			utils.ErrorEqual(t, tt.expectedErr, err)
 			deploy := &appsv1.Deployment{}
-			assert.NoError(t, req.GetNew(deploy))
+			assert.NoError(t, req.GetNewInto(deploy))
 			assert.Equal(t, tt.expected.Spec, deploy.Spec)
 		})
 	}

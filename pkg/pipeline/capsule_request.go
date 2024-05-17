@@ -142,19 +142,23 @@ func (r *capsuleRequest) Capsule() *v1alpha2.Capsule {
 	return r.capsule.DeepCopy()
 }
 
-func (r *capsuleRequest) GetKey(obj client.Object) (ObjectKey, error) {
-	if obj.GetName() == "" {
-		obj.SetName(r.capsule.Name)
-	}
-	obj.SetNamespace(r.capsule.Namespace)
-
-	gvk, err := getGVK(obj, r.scheme)
+func (r *capsuleRequest) GetKey(gk schema.GroupKind, name string) (ObjectKey, error) {
+	res, err := r.client.RESTMapper().RESTMapping(gk)
 	if err != nil {
-		r.logger.Error(err, "invalid object type")
 		return ObjectKey{}, err
 	}
 
-	return r.namedObjectKey(obj.GetName(), gvk), nil
+	if name == "" {
+		name = r.capsule.Name
+	}
+
+	return ObjectKey{
+		GroupVersionKind: res.GroupVersionKind,
+		ObjectKey: types.NamespacedName{
+			Namespace: r.capsule.Namespace,
+			Name:      name,
+		},
+	}, nil
 }
 
 func (r *capsuleRequest) namedObjectKey(name string, gvk schema.GroupVersionKind) ObjectKey {
@@ -189,24 +193,16 @@ func (r *capsuleRequest) LoadExistingObjects(ctx context.Context) error {
 			gk.Group = *o.Ref.APIGroup
 		}
 
-		gvk, err := LookupGVK(gk)
+		mapping, err := r.client.RESTMapper().RESTMapping(gk)
 		if err != nil {
 			return err
 		}
 
-		ro, err := r.scheme.New(gvk)
-		if err != nil {
-			return err
-		}
-
-		co, ok := ro.(client.Object)
-		if !ok {
-			continue
-		}
+		gvk := mapping.GroupVersionKind
+		co := obj.New(gvk, r.scheme)
 
 		co.SetName(o.Ref.Name)
 		co.SetNamespace(r.capsule.Namespace)
-		co.GetObjectKind().SetGroupVersionKind(gvk)
 		if err := r.reader.Get(ctx, client.ObjectKeyFromObject(co), co); kerrors.IsNotFound(err) {
 			// Okay it doesn't exist, ignore the resource.
 			continue

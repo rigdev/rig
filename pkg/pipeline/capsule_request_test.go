@@ -33,7 +33,7 @@ func preparePipelineTest(t *testing.T, options pipelineTestOpts) (
 	p := NewCapsulePipeline(&v1alpha1.OperatorConfig{}, scheme, logr.Discard())
 	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, cc, options.options...)
 	for _, obj := range options.existingObjects {
-		key, err := c.GetKey(obj)
+		key, err := c.GetKey(obj.GetObjectKind().GroupVersionKind().GroupKind(), obj.GetName())
 		require.NoError(t, err)
 		c.existingObjects[key] = obj
 	}
@@ -76,8 +76,9 @@ func TestOverrideUntrackedWithoutForceGivesNoop(t *testing.T) {
 	cs, err := c.Commit(ctx)
 	require.NoError(t, err)
 
+	gvk := corev1.SchemeGroupVersion.WithKind("ServiceAccount")
 	require.Equal(t, map[ObjectKey]*Change{
-		{ObjectKey: client.ObjectKeyFromObject(sa), GroupVersionKind: CoreServiceAccount}: {
+		{ObjectKey: client.ObjectKeyFromObject(sa), GroupVersionKind: gvk}: {
 			state: ResourceStateAlreadyExists,
 		},
 	}, cs)

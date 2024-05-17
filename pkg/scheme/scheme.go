@@ -1,7 +1,6 @@
 package scheme
 
 import (
-	certv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
@@ -21,7 +20,6 @@ func New() *runtime.Scheme {
 	s := runtime.NewScheme()
 
 	utilruntime.Must(clientsetscheme.AddToScheme(s))
-	utilruntime.Must(certv1.AddToScheme(s))
 	utilruntime.Must(monitorv1.AddToScheme(s))
 	utilruntime.Must(batchv1.AddToScheme(s))
 

@@ -7,44 +7,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/pipeline"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-func GetNew(group, kind, name string, req pipeline.CapsuleRequest) (client.Object, error) {
-	currentObject, err := createEmptyObject(group, kind, req)
-	if err != nil {
-		return nil, err
-	}
-	currentObject.SetName(name)
-
-	if err := req.GetNew(currentObject); err != nil {
-		return nil, err
-	}
-
-	return currentObject, nil
-}
-
-func ListNew(group, kind string, req pipeline.CapsuleRequest) ([]client.Object, error) {
-	currentObject, err := createEmptyObject(group, kind, req)
-	if err != nil {
-		return nil, err
-	}
-	return req.ListNew(currentObject)
-}
-
-func createEmptyObject(group, kind string, req pipeline.CapsuleRequest) (client.Object, error) {
-	gvk, err := pipeline.LookupGVK(schema.GroupKind{Group: group, Kind: kind})
-	if err != nil {
-		return nil, err
-	}
-
-	object, err := req.Scheme().New(gvk)
-	if err != nil {
-		return nil, err
-	}
-	return object.(client.Object), nil
-}
 
 type ParseStep[T any] func(config T, req pipeline.CapsuleRequest) (string, any, error)
 

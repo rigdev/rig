@@ -45,7 +45,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 	}
 
 	deployment := &appsv1.Deployment{}
-	if err := req.GetNew(deployment); errors.IsNotFound(err) {
+	if err := req.GetNewInto(deployment); errors.IsNotFound(err) {
 		return nil
 	} else if err != nil {
 		return err

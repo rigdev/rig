@@ -106,7 +106,7 @@ name: name`
 			pp := &Plugin{configBytes: []byte(c)}
 			assert.NoError(t, pp.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}
-			assert.NoError(t, req.GetNew(deploy))
+			assert.NoError(t, req.GetNewInto(deploy))
 			assert.Equal(t, tt.expectedAnnotations, deploy.GetAnnotations())
 			assert.Equal(t, tt.expectedLabels, deploy.GetLabels())
 		})
