@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/go-logr/logr/testr"
 	"github.com/nsf/jsondiff"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -56,6 +57,8 @@ func (s *K8sTestSuite) SetupSuite() {
 	t := s.Suite.T()
 
 	scheme := scheme.New()
+	require.NoError(t, cmv1.AddToScheme(scheme))
+
 	s.TestEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "deploy", "kustomize", "crd", "bases"),
