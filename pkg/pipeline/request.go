@@ -186,6 +186,9 @@ func (r *RequestBase) GetExistingInto(obj client.Object) error {
 	}
 
 	res, err := r.GetExisting(gvk.GroupKind(), obj.GetName())
+	if err != nil {
+		return err
+	}
 
 	return r.scheme.Convert(res, obj, nil)
 }
@@ -215,6 +218,9 @@ func (r *RequestBase) GetNewInto(obj client.Object) error {
 	}
 
 	res, err := r.GetNew(gvk.GroupKind(), obj.GetName())
+	if err != nil {
+		return err
+	}
 
 	return r.scheme.Convert(res, obj, nil)
 }
