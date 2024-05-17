@@ -112,6 +112,8 @@ func (b *serviceBuilder) build() (*service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not merge env config: %w", err)
 	}
+	b.pCFG.Migrate()
+
 	b.oCFG.Default()
 
 	return &service{oCFG: b.oCFG, pCFG: b.pCFG}, nil
