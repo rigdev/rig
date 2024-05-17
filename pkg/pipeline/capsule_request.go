@@ -7,6 +7,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/roclient"
+	"github.com/rigdev/rig/pkg/scheme"
 	"golang.org/x/exp/maps"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -102,17 +103,18 @@ func NewCapsuleRequest(
 	client client.Client,
 	opts ...CapsuleRequestOption,
 ) CapsuleRequest {
-	return newCapsuleRequest(p, capsule, client, opts...)
+	return newCapsuleRequest(p, capsule, client, scheme.NewVersionMapperFromScheme(scheme.New()), opts...)
 }
 
 func newCapsuleRequest(
 	p *CapsulePipeline,
 	capsule *v1alpha2.Capsule,
 	client client.Client,
+	vm scheme.VersionMapper,
 	opts ...CapsuleRequestOption,
 ) *capsuleRequest {
 	r := &capsuleRequest{
-		RequestBase: NewRequestBase(client, client, p.config, p.scheme, p.logger, nil, capsule),
+		RequestBase: NewRequestBase(client, client, vm, p.config, p.scheme, p.logger, nil, capsule),
 		capsule:     capsule,
 	}
 	// TODO This is an ugly hack. Find a better solution
@@ -143,7 +145,7 @@ func (r *capsuleRequest) Capsule() *v1alpha2.Capsule {
 }
 
 func (r *capsuleRequest) GetKey(gk schema.GroupKind, name string) (ObjectKey, error) {
-	res, err := r.client.RESTMapper().RESTMapping(gk)
+	gvk, err := r.vm.FromGroupKind(gk)
 	if err != nil {
 		return ObjectKey{}, err
 	}
@@ -153,7 +155,7 @@ func (r *capsuleRequest) GetKey(gk schema.GroupKind, name string) (ObjectKey, er
 	}
 
 	return ObjectKey{
-		GroupVersionKind: res.GroupVersionKind,
+		GroupVersionKind: gvk,
 		ObjectKey: types.NamespacedName{
 			Namespace: r.capsule.Namespace,
 			Name:      name,
@@ -193,12 +195,11 @@ func (r *capsuleRequest) LoadExistingObjects(ctx context.Context) error {
 			gk.Group = *o.Ref.APIGroup
 		}
 
-		mapping, err := r.client.RESTMapper().RESTMapping(gk)
+		gvk, err := r.vm.FromGroupKind(gk)
 		if err != nil {
 			return err
 		}
 
-		gvk := mapping.GroupVersionKind
 		co := obj.New(gvk, r.scheme)
 
 		co.SetName(o.Ref.Name)

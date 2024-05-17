@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-	mockmeta "github.com/rigdev/rig/gen/mocks/k8s.io/apimachinery/pkg/api/meta"
 	mockclient "github.com/rigdev/rig/gen/mocks/sigs.k8s.io/controller-runtime/pkg/client"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -14,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,27 +26,15 @@ type pipelineTestOpts struct {
 func preparePipelineTest(t *testing.T, options pipelineTestOpts) (
 	context.Context, *mockclient.MockClient, *capsuleRequest,
 ) {
-	scheme := scheme.New()
+	s := scheme.New()
 	cc := mockclient.NewMockClient(t)
 	ctx := context.Background()
 
-	rm := mockmeta.NewMockRESTMapper(t)
-	cc.EXPECT().RESTMapper().Return(rm).Maybe()
-
-	svc := corev1.SchemeGroupVersion.WithKind("Service")
-	rm.EXPECT().RESTMapping(svc.GroupKind()).Return(&meta.RESTMapping{
-		GroupVersionKind: svc,
-	}, nil).Maybe()
-
-	sa := corev1.SchemeGroupVersion.WithKind("ServiceAccount")
-	rm.EXPECT().RESTMapping(sa.GroupKind()).Return(&meta.RESTMapping{
-		GroupVersionKind: sa,
-	}, nil).Maybe()
-
-	p := NewCapsulePipeline(&v1alpha1.OperatorConfig{}, scheme, logr.Discard())
-	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, cc, options.options...)
+	vm := scheme.NewVersionMapperFromScheme(s)
+	p := NewCapsulePipeline(&v1alpha1.OperatorConfig{}, s, vm, logr.Discard())
+	c := newCapsuleRequest(p, &v1alpha2.Capsule{}, cc, scheme.NewVersionMapperFromScheme(s), options.options...)
 	for _, obj := range options.existingObjects {
-		gvks, _, err := scheme.ObjectKinds(obj)
+		gvks, _, err := s.ObjectKinds(obj)
 		require.NoError(t, err)
 
 		key, err := c.GetKey(gvks[0].GroupKind(), obj.GetName())

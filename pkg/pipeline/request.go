@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/scheme"
 	"golang.org/x/exp/maps"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -93,6 +94,7 @@ func ListConvert[T client.Object](objects []client.Object) ([]T, error) {
 type RequestDeps struct {
 	client client.Client
 	reader client.Reader
+	vm     scheme.VersionMapper
 	config *configv1alpha1.OperatorConfig
 	scheme *runtime.Scheme
 	logger logr.Logger
@@ -130,6 +132,7 @@ type RequestBase struct {
 func NewRequestBase(
 	c client.Client,
 	reader client.Reader,
+	vm scheme.VersionMapper,
 	config *configv1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
 	logger logr.Logger,
@@ -140,6 +143,7 @@ func NewRequestBase(
 		RequestDeps: RequestDeps{
 			client: c,
 			reader: reader,
+			vm:     vm,
 			config: config,
 			scheme: scheme,
 			logger: logger,
@@ -235,6 +239,9 @@ func (r *RequestBase) Set(obj client.Object) error {
 	if err != nil {
 		return err
 	}
+
+	obj.SetName(key.Name)
+	obj.SetNamespace(key.Namespace)
 
 	o, ok := r.newObjects[key]
 	if !ok {
@@ -565,12 +572,7 @@ func (r *RequestBase) PrepareRequest() *Result {
 }
 
 func (r *RequestBase) getGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
-	res, err := r.client.RESTMapper().RESTMapping(gk)
-	if err != nil {
-		return schema.GroupVersionKind{}, err
-	}
-
-	return res.GroupVersionKind, nil
+	return r.vm.FromGroupKind(gk)
 }
 
 func getGVK(obj runtime.Object, scheme *runtime.Scheme) (schema.GroupVersionKind, error) {

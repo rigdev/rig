@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"github.com/rigdev/rig/pkg/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
@@ -26,6 +27,7 @@ type GRPCServer struct {
 	scheme  *runtime.Scheme
 	watcher Watcher
 	cc      client.WithWatch
+	vm      scheme.VersionMapper
 }
 
 func (m *GRPCServer) Initialize(
@@ -67,6 +69,7 @@ func (m *GRPCServer) Initialize(
 
 	m.watcher = NewWatcher(m.logger, cc)
 	m.cc = cc
+	m.vm = scheme.NewVersionMapper(cc)
 
 	return &apiplugin.InitializeResponse{}, nil
 }
@@ -99,6 +102,7 @@ func (m *GRPCServer) RunCapsule(
 		logger:  m.logger,
 		ctx:     ctx,
 		cc:      m.cc,
+		vm:      m.vm,
 	}, m.logger); err != nil {
 		return nil, err
 	}
@@ -147,6 +151,7 @@ type capsuleRequestClient struct {
 	scheme  *runtime.Scheme
 	ctx     context.Context
 	cc      client.Client
+	vm      scheme.VersionMapper
 }
 
 func (c *capsuleRequestClient) getGVK(obj client.Object) (schema.GroupVersionKind, error) {
@@ -196,17 +201,12 @@ func (c *capsuleRequestClient) get(gk schema.GroupKind, name string, current boo
 		return nil, err
 	}
 
-	mapping, err := c.cc.RESTMapper().RESTMapping(gk)
+	gvk, err := c.vm.FromGroupKind(gk)
 	if err != nil {
 		return nil, err
 	}
 
-	ro, err := c.scheme.New(mapping.GroupVersionKind)
-	if err != nil {
-		return nil, err
-	}
-
-	co := ro.(client.Object)
+	co := obj.New(gvk, c.scheme)
 
 	if err := obj.DecodeInto(res.GetObject(), co, c.scheme); err != nil {
 		return nil, err
@@ -224,18 +224,12 @@ func (c *capsuleRequestClient) list(gk schema.GroupKind, current bool) ([]client
 		return nil, err
 	}
 
-	mapping, err := c.cc.RESTMapper().RESTMapping(gk)
+	gvk, err := c.vm.FromGroupKind(gk)
 	if err != nil {
 		return nil, err
 	}
 
-	ro, err := c.scheme.New(mapping.GroupVersionKind)
-	if err != nil {
-		return nil, err
-	}
-
-	co := ro.(client.Object)
-
+	co := obj.New(gvk, c.scheme)
 	var res []client.Object
 	for _, bytes := range response.GetObjects() {
 		obj, err := obj.DecodeIntoT(bytes, co, c.scheme)

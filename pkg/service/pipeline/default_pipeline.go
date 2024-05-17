@@ -7,6 +7,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/plugins/capsulesteps/cron_jobs"
 	"github.com/rigdev/rig/plugins/capsulesteps/deployment"
 	"github.com/rigdev/rig/plugins/capsulesteps/service_account"
@@ -14,7 +15,7 @@ import (
 )
 
 func (s *service) initializePipeline(ctx context.Context) error {
-	p, err := CreateDefaultPipeline(ctx, s.client.Scheme(), s.cfg, s.pluginManager, s.logger)
+	p, err := CreateDefaultPipeline(ctx, s.client.Scheme(), s.vm, s.cfg, s.pluginManager, s.logger)
 	if err != nil {
 		return err
 	}
@@ -26,6 +27,7 @@ func (s *service) initializePipeline(ctx context.Context) error {
 func CreateDefaultPipeline(
 	ctx context.Context,
 	scheme *runtime.Scheme,
+	vm scheme.VersionMapper,
 	cfg *v1alpha1.OperatorConfig,
 	pluginManager *plugin.Manager,
 	logger logr.Logger,
@@ -35,7 +37,7 @@ func CreateDefaultPipeline(
 		return nil, err
 	}
 
-	pipeline := pipeline.NewCapsulePipeline(cfg, scheme, logger)
+	pipeline := pipeline.NewCapsulePipeline(cfg, scheme, vm, logger)
 	for _, step := range steps {
 		pipeline.AddStep(step)
 	}

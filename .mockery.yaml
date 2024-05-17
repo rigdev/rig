@@ -7,9 +7,6 @@ packages:
   sigs.k8s.io/controller-runtime/pkg/client:
     interfaces:
       Client: {}
-  k8s.io/apimachinery/pkg/api/meta:
-    interfaces:
-      RESTMapper: {}
   k8s.io/client-go/discovery:
     interfaces:
       DiscoveryInterface: {}
