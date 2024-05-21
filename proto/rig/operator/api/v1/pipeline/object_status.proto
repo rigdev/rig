@@ -69,6 +69,12 @@ message ContainerStatus {
   string image = 4;
 }
 
+message ConfigFileStatus {}
+
+message CronjobStatus {}
+
+message CapsuleStatus {}
+
 message PlatformObjectStatus {
   string name = 1;
 
@@ -76,6 +82,9 @@ message PlatformObjectStatus {
     RouteStatus route = 2;
     InstanceStatus instance = 3;
     ContainerStatus container = 4;
+    ConfigFileStatus config_file = 5;
+    CronjobStatus cronjob = 6;
+    CapsuleStatus capsule = 7;
   }
 }
 

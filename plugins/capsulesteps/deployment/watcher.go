@@ -428,6 +428,57 @@ func onDeploymentUpdated(
 	return status
 }
 
+func onConfigMapUpdated(
+	obj client.Object,
+	_ []*corev1.Event,
+	_ plugin.ObjectWatcher,
+) *apipipeline.ObjectStatusInfo {
+	cm := obj.(*corev1.ConfigMap)
+
+	status := &apipipeline.ObjectStatusInfo{
+		Properties: map[string]string{},
+		PlatformStatus: []*apipipeline.PlatformObjectStatus{
+			{
+				Name: cm.GetName(),
+				Kind: &apipipeline.PlatformObjectStatus_ConfigFile{
+					ConfigFile: &apipipeline.ConfigFileStatus{},
+				},
+			},
+		},
+	}
+
+	return status
+}
+
+func onSecretUpdated(
+	obj client.Object,
+	_ []*corev1.Event,
+	_ plugin.ObjectWatcher,
+) *apipipeline.ObjectStatusInfo {
+	secret := obj.(*corev1.Secret)
+
+	status := &apipipeline.ObjectStatusInfo{
+		Properties: map[string]string{},
+		PlatformStatus: []*apipipeline.PlatformObjectStatus{
+			{
+				Name: secret.GetName(),
+				Kind: &apipipeline.PlatformObjectStatus_ConfigFile{
+					ConfigFile: &apipipeline.ConfigFileStatus{},
+				},
+			},
+		},
+	}
+
+	return status
+}
+
 func (p *Plugin) WatchObjectStatus(ctx context.Context, watcher plugin.CapsuleWatcher) error {
+	if err := watcher.WatchPrimary(ctx, &corev1.ConfigMap{}, onConfigMapUpdated); err != nil {
+		return err
+	}
+
+	if err := watcher.WatchPrimary(ctx, &corev1.Secret{}, onSecretUpdated); err != nil {
+		return err
+	}
 	return watcher.WatchPrimary(ctx, &appsv1.Deployment{}, onDeploymentUpdated)
 }
