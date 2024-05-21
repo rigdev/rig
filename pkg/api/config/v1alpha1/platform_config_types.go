@@ -505,3 +505,18 @@ func (g ClusterGit) validate(path *field.Path) field.ErrorList {
 
 	return errs
 }
+
+func (cfg *PlatformConfig) Migrate() {
+	for _, c := range cfg.Clusters {
+		if c.Git.URL != "" {
+			cfg.Client.Git.Auths = append(cfg.Client.Git.Auths, GitAuth{
+				URL:         c.Git.URL,
+				Credentials: c.Git.Credentials,
+			})
+		}
+		if cfg.Client.Git.Author.Name == "" {
+			cfg.Client.Git.Author.Name = c.Git.Author.Name
+			cfg.Client.Git.Author.Email = c.Git.Author.Email
+		}
+	}
+}
