@@ -66,7 +66,7 @@ func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hc
 func (p *Plugin) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.CronJob, error) {
 	var res []*batchv1.CronJob
 	deployment := &appsv1.Deployment{}
-	if err := req.GetNew(deployment); errors.IsNotFound(err) {
+	if err := req.GetNewInto(deployment); errors.IsNotFound(err) {
 		// TODO(anders): We should support this for command jobs.
 		return nil, nil
 	} else if err != nil {

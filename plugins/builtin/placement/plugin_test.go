@@ -96,7 +96,8 @@ requireTag: true`,
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := pipeline.NewCapsulePipeline(nil, scheme.New(), logr.FromContextOrDiscard(context.Background()))
+			vm := scheme.NewVersionMapperFromScheme(scheme.New())
+			p := pipeline.NewCapsulePipeline(nil, scheme.New(), vm, logr.FromContextOrDiscard(context.Background()))
 			if tt.annotations == nil {
 				tt.annotations = map[string]string{}
 			}
@@ -118,7 +119,7 @@ requireTag: true`,
 			}
 			assert.NoError(t, pp.Run(context.Background(), req, hclog.Default()))
 			deploy := &appsv1.Deployment{}
-			assert.NoError(t, req.GetNew(deploy))
+			assert.NoError(t, req.GetNewInto(deploy))
 			assert.Equal(t, tt.expected, deploy.Spec.Template.Spec)
 		})
 	}

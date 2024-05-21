@@ -53,6 +53,9 @@ type Plugin struct {
 }
 
 func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
+	if err := cmv1.AddToScheme(req.Scheme()); err != nil {
+		return err
+	}
 	p.configBytes = req.Config
 	return nil
 }

@@ -44,6 +44,7 @@ func NewService(
 		capSvc:        capSvc,
 		logger:        logger,
 		pluginManager: pluginManager,
+		vm:            scheme.NewVersionMapper(client),
 	}
 	lc.Append(fx.StartHook(s.initializePipeline))
 	return s
@@ -56,6 +57,7 @@ type service struct {
 	logger        logr.Logger
 	pluginManager *plugin.Manager
 	pipeline      *pipeline.CapsulePipeline
+	vm            scheme.VersionMapper
 }
 
 func (s *service) GetDefaultPipeline() *pipeline.CapsulePipeline {
@@ -92,7 +94,7 @@ func (s *service) DryRun(
 		return nil, err
 	}
 
-	p := pipeline.NewCapsulePipeline(cfg, scheme.New(), s.logger)
+	p := pipeline.NewCapsulePipeline(cfg, scheme.New(), s.vm, s.logger)
 	for _, step := range steps {
 		p.AddStep(step)
 	}

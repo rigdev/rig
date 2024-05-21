@@ -10,6 +10,7 @@ import (
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/scheme"
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -55,6 +56,7 @@ func (ok ObjectKey) MarshalLog() interface{} {
 type CapsulePipeline struct {
 	config *configv1alpha1.OperatorConfig
 	scheme *runtime.Scheme
+	vm     scheme.VersionMapper
 	// TODO Use zap instead
 	logger logr.Logger
 	steps  []Step[CapsuleRequest]
@@ -63,11 +65,13 @@ type CapsulePipeline struct {
 func NewCapsulePipeline(
 	config *configv1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
+	vm scheme.VersionMapper,
 	logger logr.Logger,
 ) *CapsulePipeline {
 	p := &CapsulePipeline{
 		config: config,
 		scheme: scheme,
+		vm:     vm,
 		logger: logger,
 	}
 
@@ -88,7 +92,7 @@ func (p *CapsulePipeline) RunCapsule(
 	client client.Client,
 	opts ...CapsuleRequestOption,
 ) (*Result, error) {
-	req := newCapsuleRequest(p, capsule, client, opts...)
+	req := newCapsuleRequest(p, capsule, client, p.vm, opts...)
 	return ExecuteRequest(ctx, req, p.steps, true)
 }
 
@@ -98,7 +102,7 @@ func (p *CapsulePipeline) DeleteCapsule(
 	client client.Client,
 	opts ...CapsuleRequestOption,
 ) (*Result, error) {
-	req := newCapsuleRequest(p, capsule, client, opts...)
+	req := newCapsuleRequest(p, capsule, client, p.vm, opts...)
 	// Delete capsule by running without steps.
 	return ExecuteRequest(ctx, req, nil, true)
 }

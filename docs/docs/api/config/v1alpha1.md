@@ -311,6 +311,7 @@ _Appears in:_
 | --- | --- |
 | `url` _string_ | URL is a exact match for the repo-url this auth can be used for. |
 | `urlPrefix` _string_ | URLPrefix is a prefix-match for the repo urls this auth can be used for. |
+| `webHookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
 | `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. |
 
 

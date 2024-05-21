@@ -10,6 +10,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -48,9 +49,14 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 		return err
 	}
 
+	gk := schema.GroupKind{
+		Group: config.Group,
+		Kind:  config.Kind,
+	}
+
 	var objects []client.Object
 	if config.Name == "*" {
-		objects, err = plugin.ListNew(config.Group, config.Kind, req)
+		objects, err = req.ListNew(gk)
 		if err != nil {
 			return err
 		}
@@ -59,7 +65,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 		if name == "" {
 			name = req.Capsule().Name
 		}
-		currentObject, err := plugin.GetNew(config.Group, config.Kind, name, req)
+		currentObject, err := req.GetNew(gk, name)
 		if errors.IsNotFound(err) {
 			return nil
 		} else if err != nil {

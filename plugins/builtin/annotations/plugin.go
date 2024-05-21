@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const Name = "rigdev.annotations"
@@ -48,7 +49,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 		name = req.Capsule().Name
 	}
 
-	object, err := plugin.GetNew(config.Group, config.Kind, name, req)
+	object, err := req.GetNew(schema.GroupKind{Group: config.Group, Kind: config.Kind}, name)
 	if err != nil {
 		return err
 	}

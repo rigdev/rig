@@ -6,6 +6,8 @@ import (
 	"github.com/go-logr/logr"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	"github.com/rigdev/rig/pkg/obj"
+	"github.com/rigdev/rig/pkg/scheme"
 	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,13 +35,14 @@ type projectEnvRequest struct {
 func NewProjectEnvironmentRequest(
 	c client.Client,
 	reader client.Reader,
+	vm scheme.VersionMapper,
 	config *configv1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
 	logger logr.Logger,
 	projectEnv *v1alpha2.ProjectEnvironment,
 ) ExecutableRequest[ProjectEnvironmentRequest] {
 	p := &projectEnvRequest{
-		RequestBase: NewRequestBase(c, reader, config, scheme, logger, nil, projectEnv),
+		RequestBase: NewRequestBase(c, reader, vm, config, scheme, logger, nil, projectEnv),
 		projectEnv:  projectEnv,
 	}
 	// TODO Fix this hack
@@ -56,24 +59,15 @@ func (p *projectEnvRequest) ProjectEnvironment() *v1alpha2.ProjectEnvironment {
 	return p.projectEnv.DeepCopy()
 }
 
-func (p *projectEnvRequest) GetKey(obj client.Object) (ObjectKey, error) {
-	gvk, err := getGVK(obj, p.scheme)
+func (p *projectEnvRequest) GetKey(gk schema.GroupKind, name string) (ObjectKey, error) {
+	gvk, err := p.getGVK(gk)
 	if err != nil {
-		p.logger.Error(err, "invalid object type")
 		return ObjectKey{}, err
-	}
-
-	ns := obj.GetNamespace()
-	if _, ok := obj.(*corev1.Namespace); ok {
-		ns = obj.GetName()
-	} else if obj.GetName() == "" {
-		obj.SetName(obj.GetNamespace())
 	}
 
 	return ObjectKey{
 		ObjectKey: types.NamespacedName{
-			Namespace: obj.GetName(),
-			Name:      ns,
+			Name: name,
 		},
 		GroupVersionKind: gvk,
 	}, nil
@@ -94,25 +88,16 @@ func (p *projectEnvRequest) LoadExistingObjects(ctx context.Context) error {
 			gk.Group = *o.Ref.APIGroup
 		}
 
-		gvk, err := LookupGVK(gk)
+		gvk, err := p.vm.FromGroupKind(gk)
 		if err != nil {
 			return err
 		}
 
-		ro, err := p.scheme.New(gvk)
-		if err != nil {
-			return err
-		}
-
-		co, ok := ro.(client.Object)
-		if !ok {
-			continue
-		}
+		co := obj.New(gvk, p.scheme)
 
 		_, isNamespace := co.(*corev1.Namespace)
 
 		co.SetName(o.Ref.Name)
-		co.GetObjectKind().SetGroupVersionKind(gvk)
 		if !isNamespace {
 			co.SetNamespace(*o.Ref.Namespace)
 		}
