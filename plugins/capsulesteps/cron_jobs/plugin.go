@@ -78,7 +78,9 @@ func (p *Plugin) createCronJobs(req pipeline.CapsuleRequest) ([]*batchv1.CronJob
 		if job.Command != nil {
 			template = *deployment.Spec.Template.DeepCopy()
 			c := template.Spec.Containers[0]
-			c.Command = []string{job.Command.Command}
+			if job.Command.Command != "" {
+				c.Command = []string{job.Command.Command}
+			}
 			c.Args = job.Command.Args
 			template.Spec.Containers[0] = c
 			template.Spec.RestartPolicy = corev1.RestartPolicyNever
