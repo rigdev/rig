@@ -8,15 +8,29 @@ import "operator/api/v1/pipeline/object_status.proto";
 import "api/v1/capsule/job.proto";
 
 message Status {
-  // The rollout status contains the following:
-  //   - Rollout ID
-  //   - Stage of the rollout
-  //   - Status of the rollout with instance status if running
-  api.v1.capsule.rollout.Status rollout = 1;
-  ContainerConfig container_config = 2;
-  repeated InterfaceStatus interfaces = 3;
-  repeated ConfigFileStatus config_files = 4;
-  repeated CronJobStatus cron_jobs = 5;
+  string namespace = 1;
+  CapsuleStatus capsule = 2;
+  api.v1.capsule.rollout.Status rollout = 3;
+  ContainerConfig container_config = 4;
+  InstancesStatus instances = 5;
+  repeated InterfaceStatus interfaces = 6;
+  repeated ConfigFileStatus config_files = 7;
+  repeated CronJobStatus cron_jobs = 8;
+}
+
+message CapsuleStatus {
+  repeated api.v1.pipeline.ObjectStatus statuses = 1;
+}
+
+message InstancesStatus {
+  // The number of updated instances.
+  uint32 num_updated = 1;
+  // The number of ready instances.
+  uint32 num_ready = 2;
+  // The number of stuck instances.
+  uint32 num_stuck = 3;
+  // The number of instances with the wrong version.
+  uint32 num_wrong_version = 4;
 }
 
 message ContainerConfig {
@@ -30,21 +44,21 @@ message ContainerConfig {
 message InterfaceStatus {
   message Route {
     HostRoute route = 1;
-    api.v1.pipeline.ObjectStatus status = 2;
+    repeated api.v1.pipeline.ObjectStatus status = 2;
     Transition transition = 3;
   }
 
   string name = 1;
   uint32 port = 2;
   repeated Route routes = 3;
-  api.v1.pipeline.ObjectStatus status = 4;
+  repeated api.v1.pipeline.ObjectStatus status = 4;
   Transition transition = 5;
 }
 
 message ConfigFileStatus {
   string path = 1;
   bool isSecret = 2;
-  api.v1.pipeline.ObjectStatus status = 3;
+  repeated api.v1.pipeline.ObjectStatus status = 3;
   Transition transition = 4;
 }
 
