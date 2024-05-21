@@ -3491,21 +3491,6 @@ The rollout model.
 
 
 
-<a name="api-v1-capsule-CapsuleStatus"></a>
-
-### CapsuleStatus
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| statuses | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
-
-
-
-
-
-
 <a name="api-v1-capsule-ConfigFileStatus"></a>
 
 ### ConfigFileStatus
@@ -3516,7 +3501,7 @@ The rollout model.
 | ----- | ---- | ----- | ----------- |
 | path | [string](#string) |  |  |
 | isSecret | [bool](#bool) |  |  |
-| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
+| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) |  |  |
 | transition | [Transition](#api-v1-capsule-Transition) |  |  |
 
 
@@ -3577,24 +3562,6 @@ The rollout model.
 
 
 
-<a name="api-v1-capsule-InstancesStatus"></a>
-
-### InstancesStatus
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| num_updated | [uint32](#uint32) |  | The number of updated instances. |
-| num_ready | [uint32](#uint32) |  | The number of ready instances. |
-| num_stuck | [uint32](#uint32) |  | The number of stuck instances. |
-| num_wrong_version | [uint32](#uint32) |  | The number of instances with the wrong version. |
-
-
-
-
-
-
 <a name="api-v1-capsule-InterfaceStatus"></a>
 
 ### InterfaceStatus
@@ -3606,7 +3573,7 @@ The rollout model.
 | name | [string](#string) |  |  |
 | port | [uint32](#uint32) |  |  |
 | routes | [InterfaceStatus.Route](#api-v1-capsule-InterfaceStatus-Route) | repeated |  |
-| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
+| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) |  |  |
 | transition | [Transition](#api-v1-capsule-Transition) |  |  |
 
 
@@ -3623,7 +3590,7 @@ The rollout model.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | route | [HostRoute](#api-v1-capsule-HostRoute) |  |  |
-| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
+| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) |  |  |
 | transition | [Transition](#api-v1-capsule-Transition) |  |  |
 
 
@@ -3639,11 +3606,8 @@ The rollout model.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| namespace | [string](#string) |  |  |
-| capsule | [CapsuleStatus](#api-v1-capsule-CapsuleStatus) |  |  |
-| rollout | [rollout.Status](#api-v1-capsule-rollout-Status) |  |  |
+| rollout | [rollout.Status](#api-v1-capsule-rollout-Status) |  | The rollout status contains the following: - Rollout ID - Stage of the rollout - Status of the rollout with instance status if running |
 | container_config | [ContainerConfig](#api-v1-capsule-ContainerConfig) |  |  |
-| instances | [InstancesStatus](#api-v1-capsule-InstancesStatus) |  |  |
 | interfaces | [InterfaceStatus](#api-v1-capsule-InterfaceStatus) | repeated |  |
 | config_files | [ConfigFileStatus](#api-v1-capsule-ConfigFileStatus) | repeated |  |
 | cron_jobs | [CronJobStatus](#api-v1-capsule-CronJobStatus) | repeated |  |
