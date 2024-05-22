@@ -544,7 +544,7 @@ func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
 		return
 	}
 
-	ow.logger.Info("object updated", "gvk", ow.gvkList, "name", co.GetName())
+	ow.logger.Info("object updated", "gvk", ow.gvkList, "name", co.GetName(), "namespace", co.GetNamespace())
 
 	ow.lock.Lock()
 	defer ow.lock.Unlock()
@@ -600,7 +600,9 @@ func (ow *objectWatcher) OnDelete(obj interface{}) {
 			return
 		}
 
-		obj = item
+		// Event deleted, but object still exists. Run OnAdd.
+		ow.OnAdd(item, false)
+		return
 	}
 
 	co, ok := obj.(client.Object)
@@ -609,7 +611,7 @@ func (ow *objectWatcher) OnDelete(obj interface{}) {
 		return
 	}
 
-	ow.logger.Info("object deleted", "gvk", ow.gvkList, "name", co.GetName())
+	ow.logger.Info("object deleted", "gvk", ow.gvkList, "name", co.GetName(), "namespace", co.GetNamespace())
 
 	ow.lock.Lock()
 	defer ow.lock.Unlock()
