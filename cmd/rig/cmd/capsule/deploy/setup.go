@@ -20,13 +20,11 @@ import (
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var (
-	skipImageCheck             bool
-	remote                     bool
-	noWait                     bool
-	forceOverride              bool
+	// Configuration
 	environmentVariables       map[string]string
 	removeEnvironmentVariables []string
 	environmentSources         []string
@@ -38,10 +36,19 @@ var (
 	removeConfigFiles          []string
 	networkInterfaces          []string
 	removeNetworkInterfaces    []string
-	currentRolloutID           uint64
-	timeout                    time.Duration
-	noRollback                 bool
-	prBranchName               string
+	file                       string
+
+	// Other
+	skipImageCheck     bool
+	remote             bool
+	noWait             bool
+	forceOverride      bool
+	currentRolloutID   uint64
+	currentFingerprint string
+	timeout            time.Duration
+	noRollback         bool
+	prBranchName       string
+	dry                bool
 )
 
 var imageID string
@@ -53,6 +60,7 @@ type Cmd struct {
 	DockerClient *client.Client
 	Scope        scope.Scope
 	Prompter     common.Prompter
+	Scheme       *runtime.Scheme
 }
 
 var cmd Cmd
@@ -169,6 +177,14 @@ In that case you must supply branch name in --pr-branch.`,
 	baseDeploy.Flags().StringVar(
 		&prBranchName, "pr-branch", "",
 		"if set will create a proposal pull request with the given branch name instead of a direct rollout.",
+	)
+	baseDeploy.Flags().BoolVarP(
+		&dry, "dry", "d", false,
+		"if set, will not apply the change but display the diff with the current capsule spec.",
+	)
+	baseDeploy.Flags().StringVarP(
+		&file, "file", "f", "",
+		"will deploy the capsule spec at the given path. Cannot be used together with any of the other configuration flags.",
 	)
 
 	if err := baseDeploy.RegisterFlagCompletionFunc(

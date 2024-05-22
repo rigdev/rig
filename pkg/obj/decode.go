@@ -3,8 +3,11 @@ package obj
 import (
 	"bufio"
 	"bytes"
+	json2 "encoding/json"
 	"fmt"
 
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
+	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
 	"github.com/rigdev/rig/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -54,7 +57,7 @@ func Decode(bs []byte, out any) error {
 	return nil
 }
 
-func DecodeAny(bs []byte, scheme *runtime.Scheme) (client.Object, error) {
+func DecodeAnyRuntime(bs []byte, scheme *runtime.Scheme) (runtime.Object, error) {
 	s := json.NewSerializerWithOptions(
 		json.DefaultMetaFactory,
 		scheme,
@@ -69,6 +72,21 @@ func DecodeAny(bs []byte, scheme *runtime.Scheme) (client.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+	return ro, nil
+}
 
+func DecodeAny(bs []byte, scheme *runtime.Scheme) (client.Object, error) {
+	ro, err := DecodeAnyRuntime(bs, scheme)
+	if err != nil {
+		return nil, err
+	}
 	return ro.(client.Object), nil
+}
+
+func CapsuleProtoToK8s(spec *platformv1.Capsule, scheme *runtime.Scheme) (*v1.Capsule, error) {
+	bs, err := json2.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+	return DecodeIntoT(bs, &v1.Capsule{}, scheme)
 }

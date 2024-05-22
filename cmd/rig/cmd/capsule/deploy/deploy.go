@@ -22,10 +22,13 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	api_image "github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/model"
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
@@ -53,6 +56,144 @@ func parseEnvironmentSource(value string) (capsule.EnvironmentSource_Kind, strin
 }
 
 func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
+	if currentFingerprint != "" && currentRolloutID != 0 {
+		return errors.InvalidArgumentErrorf("cannot give both --fingerprint and --current-rollout")
+	}
+
+	capsuleName := ""
+	if len(args) > 0 {
+		capsuleName = args[0]
+	}
+
+	if len(capsuleName) == 0 {
+		if !c.Scope.IsInteractive() {
+			return errors.InvalidArgumentErrorf("missing capsule name argument")
+		}
+
+		name, err := capsule_cmd.SelectCapsule(ctx, c.Rig, c.Prompter, c.Scope)
+		if err != nil {
+			return err
+		}
+
+		capsuleName = name
+	}
+
+	changes, err := c.getChanges(cmd, args)
+	if err != nil {
+		return err
+	}
+
+	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
+		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
+			CapsuleId:     capsuleName,
+		}),
+	)
+	if err != nil {
+		return err
+	}
+	if respGit.Msg.GetEnvironmentEnabled() && prBranchName != "" {
+		resp, err := c.Rig.Capsule().ProposeRollout(ctx, connect.NewRequest(&capsule.ProposeRolloutRequest{
+			CapsuleId:     capsuleName,
+			Changes:       changes,
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
+			BranchName:    prBranchName,
+		}))
+		if err != nil {
+			return err
+		}
+		url := resp.Msg.GetProposal().GetMetadata().GetReviewUrl()
+		fmt.Println("New pull request created at", url)
+		return nil
+	} else if !respGit.Msg.GetEnvironmentEnabled() && prBranchName != "" {
+		return errors.InvalidArgumentErrorf("--pr-branch was set, but the capsule is not git backed")
+	}
+
+	var rollbackID uint64
+	if !noRollback {
+		// TODO: Get this from the Deploy command instead.
+		rollbackID = currentRolloutID
+		if rollbackID == 0 {
+			res, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
+				Msg: &capsule.ListRolloutsRequest{
+					Pagination: &model.Pagination{
+						Limit:      1,
+						Descending: true,
+					},
+					ProjectId:     flags.GetProject(c.Scope),
+					EnvironmentId: flags.GetEnvironment(c.Scope),
+					CapsuleId:     capsuleName,
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			if len(res.Msg.GetRollouts()) > 0 {
+				rollbackID = res.Msg.GetRollouts()[0].GetRolloutId()
+			}
+		}
+	}
+
+	var curf *model.Fingerprint
+	if currentFingerprint != "" {
+		curf = &model.Fingerprint{
+			Data: currentFingerprint,
+		}
+	}
+
+	if dry {
+		return c.deployDry(ctx, capsuleName, changes, currentRolloutID, curf)
+	}
+
+	return capsule_cmd.DeployAndWait(
+		ctx,
+		c.Rig,
+		c.Scope,
+		capsuleName,
+		changes,
+		true,
+		forceOverride,
+		currentRolloutID,
+		timeout,
+		rollbackID,
+		noWait,
+		curf,
+	)
+}
+
+func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, error) {
+	if file != "" {
+		if environmentVariables != nil ||
+			removeEnvironmentVariables != nil ||
+			environmentSources != nil ||
+			removeEnvironmentSources != nil ||
+			annotations != nil ||
+			removeAnnotations != nil ||
+			cmd.Flag("replicas").Changed ||
+			configFiles != nil ||
+			removeConfigFiles != nil ||
+			networkInterfaces != nil ||
+			removeNetworkInterfaces != nil {
+			return nil, errors.InvalidArgumentErrorf("cannot supply both --file and another configuration flag")
+		}
+		bytes, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+		spec, err := v1.YAMLToCapsuleSpecProto(bytes)
+		if err != nil {
+			return nil, err
+		}
+		return []*capsule.Change{{
+			Field: &capsule.Change_Spec{
+				Spec: spec,
+			},
+		}}, nil
+	}
+
 	var changes []*capsule.Change
 
 	// Annotations.
@@ -97,7 +238,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	for _, value := range removeEnvironmentSources {
 		kind, name, err := parseEnvironmentSource(value)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		changes = append(changes, &capsule.Change{
 			Field: &capsule.Change_RemoveEnvironmentSource{
@@ -111,7 +252,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	for _, value := range environmentSources {
 		kind, name, err := parseEnvironmentSource(value)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		changes = append(changes, &capsule.Change{
 			Field: &capsule.Change_SetEnvironmentSource{
@@ -138,17 +279,17 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	for _, file := range networkInterfaces {
 		bs, err := os.ReadFile(file)
 		if err != nil {
-			return errors.InvalidArgumentErrorf("errors reading network interface: %v", err)
+			return nil, errors.InvalidArgumentErrorf("errors reading network interface: %v", err)
 		}
 
 		raw, err := yaml.YAMLToJSON(bs)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		ci := &capsule.Interface{}
 		if err := protojson.Unmarshal(raw, ci); err != nil {
-			return err
+			return nil, err
 		}
 
 		changes = append(changes, &capsule.Change{
@@ -188,29 +329,31 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 			} else if opt == "secret" {
 				secret = true
 			} else {
-				return errors.InvalidArgumentErrorf("invalid config-file argument: %v", configFile)
+				return nil, errors.InvalidArgumentErrorf("invalid config-file argument: %v", configFile)
 			}
 		}
 
 		if !path.IsAbs(target) {
-			return errors.InvalidArgumentErrorf("config-file path is not absolute: %v", target)
+			return nil, errors.InvalidArgumentErrorf("config-file path is not absolute: %v", target)
 		}
 
 		if path.Clean(target) != target {
-			return errors.InvalidArgumentErrorf("config-file path is not clean: %v should be %s", target, path.Clean(target))
+			return nil, errors.InvalidArgumentErrorf(
+				"config-file path is not clean: %v should be %s", target, path.Clean(target),
+			)
 		}
 
 		if strings.HasSuffix(target, "/") {
-			return errors.InvalidArgumentErrorf("config-file path should not end with a '/': %v", target)
+			return nil, errors.InvalidArgumentErrorf("config-file path should not end with a '/': %v", target)
 		}
 
 		bs, err := os.ReadFile(source)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if !utf8.Valid(bs) {
-			return errors.InvalidArgumentErrorf("source file is not valid UTF-8: %v", source)
+			return nil, errors.InvalidArgumentErrorf("source file is not valid UTF-8: %v", source)
 		}
 
 		changes = append(changes, &capsule.Change{
@@ -227,7 +370,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	// Replicas.
 	if cmd.Flag("replicas").Changed {
 		if replicas < 0 {
-			return errors.InvalidArgumentErrorf("number of replicas cannot be negative: %v", replicas)
+			return nil, errors.InvalidArgumentErrorf("number of replicas cannot be negative: %v", replicas)
 		}
 
 		changes = append(changes, &capsule.Change{
@@ -262,108 +405,10 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
-		return err
+		return nil, err
 	}
 
-	// Capsule name.
-	capsuleName := ""
-	if len(args) > 0 {
-		capsuleName = args[0]
-	}
-
-	if len(capsuleName) == 0 {
-		if !c.Scope.IsInteractive() {
-			return errors.InvalidArgumentErrorf("missing capsule name argument")
-		}
-
-		name, err := capsule_cmd.SelectCapsule(ctx, c.Rig, c.Prompter, c.Scope)
-		if err != nil {
-			return err
-		}
-
-		capsuleName = name
-	}
-
-	if len(changes) == 0 {
-		if !c.Scope.IsInteractive() {
-			return errors.InvalidArgumentErrorf("no changes to deploy")
-		}
-
-		imageID, err := c.GetImageID(ctx, capsuleName)
-		if err != nil {
-			return err
-		}
-
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_ImageId{ImageId: imageID},
-		})
-	}
-
-	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
-		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
-			CapsuleId:     capsuleName,
-		}),
-	)
-	if err != nil {
-		return err
-	}
-	if respGit.Msg.GetEnvironmentEnabled() && prBranchName != "" {
-		resp, err := c.Rig.Capsule().ProposeRollout(ctx, connect.NewRequest(&capsule.ProposeRolloutRequest{
-			CapsuleId:     capsuleName,
-			Changes:       changes,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
-			BranchName:    prBranchName,
-		}))
-		if err != nil {
-			return err
-		}
-		url := resp.Msg.GetProposal().GetMetadata().GetReviewUrl()
-		fmt.Println("New pull request created at", url)
-		return nil
-	}
-
-	var rollbackID uint64
-	if !noRollback {
-		// TODO: Get this from the Deploy command instead.
-		rollbackID = currentRolloutID
-		if rollbackID == 0 {
-			res, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
-				Msg: &capsule.ListRolloutsRequest{
-					Pagination: &model.Pagination{
-						Limit:      1,
-						Descending: true,
-					},
-					ProjectId:     flags.GetProject(c.Scope),
-					EnvironmentId: flags.GetEnvironment(c.Scope),
-					CapsuleId:     capsuleName,
-				},
-			})
-			if err != nil {
-				return err
-			}
-
-			if len(res.Msg.GetRollouts()) > 0 {
-				rollbackID = res.Msg.GetRollouts()[0].GetRolloutId()
-			}
-		}
-	}
-
-	return capsule_cmd.DeployAndWait(
-		ctx,
-		c.Rig,
-		c.Scope,
-		capsuleName,
-		changes,
-		true,
-		forceOverride,
-		currentRolloutID,
-		timeout,
-		rollbackID,
-		noWait,
-	)
+	return changes, nil
 }
 
 func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) {
@@ -814,4 +859,63 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	}
 
 	return res.Msg.GetImageId(), nil
+}
+
+func (c *Cmd) deployDry(
+	ctx context.Context, capsuleID string, changes []*capsule.Change,
+	currentRolloutID uint64, currentFingerprint *model.Fingerprint,
+) error {
+	req := &capsule.DeployRequest{
+		CapsuleId:          capsuleID,
+		Changes:            nil,
+		ProjectId:          flags.GetProject(c.Scope),
+		EnvironmentId:      flags.GetEnvironment(c.Scope),
+		DryRun:             true,
+		CurrentRolloutId:   currentRolloutID,
+		CurrentFingerprint: currentFingerprint,
+	}
+
+	// TODO Make interactive diffing against teh current spec
+	// curResp, err := c.Rig.Capsule().Deploy(ctx, connect.NewRequest(req))
+	// if err != nil {
+	// 	return fmt.Errorf("failed to get cur stuff: %s", err)
+	// }
+	// curOutcome := curResp.Msg.GetOutcome()
+
+	req.Changes = changes
+	resp, err := c.Rig.Capsule().Deploy(ctx, connect.NewRequest(req))
+	if err != nil {
+		return fmt.Errorf("failed to get new stuff: %w", err)
+	}
+	outcome := resp.Msg.GetOutcome()
+
+	var out dryOutput
+	out.PlatformCapsule = resp.Msg.GetRevision().GetSpec()
+
+	for _, o := range outcome.GetPlatformObjects() {
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), c.Scheme)
+		if err != nil {
+			return err
+		}
+		out.DirectKubernetes = append(out.DirectKubernetes, co)
+	}
+	for _, o := range outcome.GetKubernetesObjects() {
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), c.Scheme)
+		if err != nil {
+			return err
+		}
+		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
+	}
+
+	outputType := flags.Flags.OutputType
+	if outputType == common.OutputTypePretty {
+		outputType = common.OutputTypeYAML
+	}
+	return common.FormatPrint(out, outputType)
+}
+
+type dryOutput struct {
+	PlatformCapsule   *platformv1.Capsule `json:"platformCapsule"`
+	DirectKubernetes  []any               `json:"directKubernetes"`
+	DerivedKubernetes []any               `json:"derivedKubernetes"`
 }

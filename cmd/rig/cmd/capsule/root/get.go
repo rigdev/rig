@@ -6,6 +6,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -23,6 +24,21 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 
 	if err != nil {
 		return err
+	}
+
+	if spec {
+		capSpec := resp.Msg.GetRevision().GetSpec()
+		for env, rev := range resp.Msg.GetEnvironmentRevisions() {
+			if capSpec.GetEnvironments() == nil {
+				capSpec.Environments = map[string]*platformv1.CapsuleSpec{}
+			}
+			capSpec.Environments[env] = rev.GetSpec().GetSpec()
+		}
+		ot := flags.Flags.OutputType
+		if ot == common.OutputTypePretty {
+			ot = common.OutputTypeYAML
+		}
+		return common.FormatPrint(capSpec, ot)
 	}
 
 	cc := resp.Msg.GetCapsule()

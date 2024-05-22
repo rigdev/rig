@@ -18,6 +18,7 @@ import (
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -33,6 +34,7 @@ var (
 	follow             bool
 	previousContainers bool
 	verbose            bool
+	spec               bool
 )
 
 var since string
@@ -43,6 +45,7 @@ type Cmd struct {
 	Rig      rig.Client
 	Scope    scope.Scope
 	Prompter common.Prompter
+	Scheme   *runtime.Scheme
 }
 
 var cmd Cmd
@@ -128,6 +131,9 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		},
 		GroupID: capsule.BasicGroupID,
 	}
+	capsuleGet.Flags().BoolVarP(
+		&spec, "spec", "s", false, "will display the current spec of the capsule in its environments",
+	)
 	capsuleCmd.AddCommand(capsuleGet)
 
 	capsuleList := &cobra.Command{

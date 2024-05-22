@@ -68,7 +68,6 @@
 | /api.v1.capsule.Service/Deploy | [DeployRequest](#api-v1-capsule-DeployRequest) | [DeployResponse](#api-v1-capsule-DeployResponse) | Deploy changes to a capsule. When deploying, a new rollout will be initiated. Only one rollout can be running at a single point in time. Use `Abort` to abort an already running rollout. |
 | /api.v1.capsule.Service/ProposeRollout | [ProposeRolloutRequest](#api-v1-capsule-ProposeRolloutRequest) | [ProposeRolloutResponse](#api-v1-capsule-ProposeRolloutResponse) |  |
 | /api.v1.capsule.Service/ListProposals | [ListProposalsRequest](#api-v1-capsule-ListProposalsRequest) | [ListProposalsResponse](#api-v1-capsule-ListProposalsResponse) |  |
-| /api.v1.capsule.Service/ApplyCapsuleSpec | [ApplyCapsuleSpecRequest](#api-v1-capsule-ApplyCapsuleSpecRequest) | [ApplyCapsuleSpecResponse](#api-v1-capsule-ApplyCapsuleSpecResponse) | Applies a Capsule spec in an environment which will be rolled out |
 | /api.v1.capsule.Service/ListInstances | [ListInstancesRequest](#api-v1-capsule-ListInstancesRequest) | [ListInstancesResponse](#api-v1-capsule-ListInstancesResponse) | Lists all instances for the capsule. |
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
 | /api.v1.capsule.Service/GetRollout | [GetRolloutRequest](#api-v1-capsule-GetRolloutRequest) | [GetRolloutResponse](#api-v1-capsule-GetRolloutResponse) | Get a single rollout by ID. |
@@ -5151,41 +5150,6 @@ AbortRolloutResponse is an empty response.
 
 
 
-<a name="api-v1-capsule-ApplyCapsuleSpecRequest"></a>
-
-### ApplyCapsuleSpecRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| spec | [platform.v1.CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
-| project_id | [string](#string) |  |  |
-| environment_id | [string](#string) |  |  |
-| capsule_id | [string](#string) |  |  |
-| current_fingerprint | [model.Fingerprint](#model-Fingerprint) |  |  |
-| dry_run | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-ApplyCapsuleSpecResponse"></a>
-
-### ApplyCapsuleSpecResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| fingerprint | [model.Fingerprint](#model-Fingerprint) |  |  |
-
-
-
-
-
-
 <a name="api-v1-capsule-CapsuleMetricsRequest"></a>
 
 ### CapsuleMetricsRequest
@@ -5344,6 +5308,7 @@ rollout.
 | message | [string](#string) |  | Deploy message. |
 | dry_run | [bool](#bool) |  | if true, the deploy will not be executed, but the request will return the rollout config. |
 | current_rollout_id | [uint64](#uint64) |  | If not zero, this will constrain the rollout only to be created if the currently running rollout matches this identifier. If this check fails, the request will return an `Aborted` error. |
+| current_fingerprint | [model.Fingerprint](#model-Fingerprint) |  | If set, this will constrain the rollout only to be created if the current latest capsule fingerprint matches the given. Cannot be used together with `current_rollout_id` |
 | force_override | [bool](#bool) |  | By default, existing objects will be kept in favor of overriding them. To force the override of resources, set this flag to true. An example of this use-case is a migration step, where resource created by a previous toolchain e.g. based on Helm charts, are to be replaced and instead be created by the Rig operator. While the override is irreversible, this flag is not "sticky" and must be set by each deploy that should use this behavior. |
 
 

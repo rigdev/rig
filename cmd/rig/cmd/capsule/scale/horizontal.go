@@ -61,7 +61,7 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 				HorizontalScale: horizontal,
 			},
 		}},
-		forceDeploy, false, 0, 0, 0, false,
+		forceDeploy, false, 0, 0, 0, false, nil,
 	)
 }
 
@@ -137,7 +137,7 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 				HorizontalScale: horizontal,
 			},
 		}},
-		forceDeploy, false, 0, 0, 0, false,
+		forceDeploy, false, 0, 0, 0, false, nil,
 	)
 }
 

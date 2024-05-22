@@ -28,6 +28,13 @@ type ObjectKey struct {
 	schema.GroupVersionKind
 }
 
+func ObjectKeyFromObject(co client.Object) ObjectKey {
+	return ObjectKey{
+		ObjectKey:        client.ObjectKeyFromObject(co),
+		GroupVersionKind: co.GetObjectKind().GroupVersionKind(),
+	}
+}
+
 func sortedKeys(keys []ObjectKey) []ObjectKey {
 	slices.SortStableFunc(keys, func(k1, k2 ObjectKey) int { return strings.Compare(k1.String(), k2.String()) })
 	return keys
