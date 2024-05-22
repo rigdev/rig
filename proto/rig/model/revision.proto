@@ -5,7 +5,7 @@ package model;
 import "google/protobuf/timestamp.proto";
 import "model/author.proto";
 
-message ObjectMetadata {
+message RevisionMetadata {
   google.protobuf.Timestamp created_at = 1;
   google.protobuf.Timestamp updated_at = 2;
   Author updated_by = 3;
