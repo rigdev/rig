@@ -161,13 +161,17 @@ func (c *Comparison) normalize(co client.Object) (client.Object, error) {
 		return nil, nil
 	}
 
-	gvks, _, err := c.scheme.ObjectKinds(co)
-	if err != nil {
-		return nil, err
+	co = co.DeepCopyObject().(client.Object)
+
+	if co.GetObjectKind().GroupVersionKind().Empty() {
+		gvks, _, err := c.scheme.ObjectKinds(co)
+		if err != nil {
+			return nil, err
+		}
+
+		co.GetObjectKind().SetGroupVersionKind(gvks[0])
 	}
 
-	co = co.DeepCopyObject().(client.Object)
-	co.GetObjectKind().SetGroupVersionKind(gvks[0])
 	co.SetManagedFields(nil)
 	co.SetCreationTimestamp(v1.Time{})
 	co.SetGeneration(0)
