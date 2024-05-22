@@ -3585,7 +3585,7 @@ The rollout model.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| num_updated | [uint32](#uint32) |  | The number of updated instances. |
+| num_upgrading | [uint32](#uint32) |  | The number of updated instances. |
 | num_ready | [uint32](#uint32) |  | The number of ready instances. |
 | num_stuck | [uint32](#uint32) |  | The number of stuck instances. |
 | num_wrong_version | [uint32](#uint32) |  | The number of instances with the wrong version. |
@@ -3631,6 +3631,27 @@ The rollout model.
 
 
 
+<a name="api-v1-capsule-RolloutStatus"></a>
+
+### RolloutStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rollout_id | [uint64](#uint64) |  |  |
+| state | [rollout.State](#api-v1-capsule-rollout-State) |  |  |
+| error_message | [string](#string) |  | The error message if the rollout failed |
+| commit_hash | [string](#string) |  | The hash of the commit containing the changes |
+| commit_url | [string](#string) |  | The url to the commit (if known. May be empty) |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| created_by | [model.Author](#model-Author) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-Status"></a>
 
 ### Status
@@ -3641,7 +3662,7 @@ The rollout model.
 | ----- | ---- | ----- | ----------- |
 | namespace | [string](#string) |  |  |
 | capsule | [CapsuleStatus](#api-v1-capsule-CapsuleStatus) |  |  |
-| rollout | [rollout.Status](#api-v1-capsule-rollout-Status) |  |  |
+| rollout | [RolloutStatus](#api-v1-capsule-RolloutStatus) |  |  |
 | container_config | [ContainerConfig](#api-v1-capsule-ContainerConfig) |  |  |
 | instances | [InstancesStatus](#api-v1-capsule-InstancesStatus) |  |  |
 | interfaces | [InterfaceStatus](#api-v1-capsule-InterfaceStatus) | repeated |  |

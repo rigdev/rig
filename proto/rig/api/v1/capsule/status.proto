@@ -6,11 +6,13 @@ import "api/v1/capsule/rollout/status.proto";
 import "api/v1/capsule/change.proto";
 import "operator/api/v1/pipeline/object_status.proto";
 import "api/v1/capsule/job.proto";
+import "google/protobuf/timestamp.proto";
+import "model/author.proto";
 
 message Status {
   string namespace = 1;
   CapsuleStatus capsule = 2;
-  api.v1.capsule.rollout.Status rollout = 3;
+  RolloutStatus rollout = 3;
   ContainerConfig container_config = 4;
   InstancesStatus instances = 5;
   repeated InterfaceStatus interfaces = 6;
@@ -22,9 +24,22 @@ message CapsuleStatus {
   repeated api.v1.pipeline.ObjectStatus statuses = 1;
 }
 
+message RolloutStatus {
+  uint64 rollout_id = 1;
+  api.v1.capsule.rollout.State state = 2;
+  // The error message if the rollout failed
+  string error_message = 3;
+  // The hash of the commit containing the changes
+  string commit_hash = 4;
+  // The url to the commit (if known. May be empty)
+  string commit_url = 5;
+  google.protobuf.Timestamp created_at = 6;
+  model.Author created_by = 7;
+}
+
 message InstancesStatus {
   // The number of updated instances.
-  uint32 num_updated = 1;
+  uint32 num_upgrading = 1;
   // The number of ready instances.
   uint32 num_ready = 2;
   // The number of stuck instances.
