@@ -108,16 +108,16 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		os.Exit(1)
 	}
 
-	createEnvironment.Flags().BoolVar(&global, "set-global", true, "Create a global environment.")
-	if err := createEnvironment.RegisterFlagCompletionFunc("set-global", common.BoolCompletions); err != nil {
+	createEnvironment.Flags().BoolVar(&global, "global", true, "Create a global environment.")
+	if err := createEnvironment.RegisterFlagCompletionFunc("global", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	createEnvironment.Flags().StringSliceVar(&addProjects, "active-projects", nil,
+	createEnvironment.Flags().StringSliceVar(&addProjects, "projects", nil,
 		"Set the active projects for the environment. "+
 			"If left empty, all projects will be active.")
-	if err := createEnvironment.RegisterFlagCompletionFunc("active-projects",
+	if err := createEnvironment.RegisterFlagCompletionFunc("projects",
 		cli.HackCtxWrapCompletion(cmd.completeProject, s)); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

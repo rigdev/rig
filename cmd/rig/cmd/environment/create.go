@@ -27,7 +27,8 @@ func (c *Cmd) create(ctx context.Context, _ *cobra.Command, args []string) error
 func (c *Cmd) createEnvironment(ctx context.Context,
 	name string,
 	clusterName string,
-	useNewEnvironment *bool) error {
+	useNewEnvironment *bool,
+) error {
 	var err error
 	if name == "" {
 		if !c.Scope.IsInteractive() {
@@ -69,12 +70,13 @@ func (c *Cmd) createEnvironment(ctx context.Context,
 		}
 	}
 
-	initializers := []*environment.Update{
-		{
+	var initializers []*environment.Update
+	if global {
+		initializers = append(initializers, &environment.Update{
 			Field: &environment.Update_SetGlobal{
 				SetGlobal: global,
 			},
-		},
+		})
 	}
 
 	for _, project := range addProjects {
