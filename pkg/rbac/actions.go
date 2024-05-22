@@ -122,6 +122,7 @@ const (
 )
 
 var CapsuleActionMap = map[string]string{
+	capsuleconnect.ServiceGetStatusProcedure:                ActionCapsuleView,
 	capsuleconnect.ServiceGetProcedure:                      ActionCapsuleView,
 	capsuleconnect.ServiceListProcedure:                     ActionCapsuleView,
 	capsuleconnect.ServiceGetRolloutProcedure:               ActionCapsuleView,
