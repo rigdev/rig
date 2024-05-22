@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package api.v1.project;
+
+import "model/revision.proto";
+import "platform/v1/generated.proto";
+
+message Revision {
+  platform.v1.Project spec = 1;
+  model.RevisionMetadata metadata = 2;
+}
