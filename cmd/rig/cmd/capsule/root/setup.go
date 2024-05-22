@@ -164,6 +164,17 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	capsuleLogs.Flags().StringVarP(&since, "since", "s", "", "do not show logs older than 'since'")
 	capsuleCmd.AddCommand(capsuleLogs)
 
+	capsuleStatus := &cobra.Command{
+		Use:   "status [capsule]",
+		Short: "Get the status of a capsule in an environment",
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE:    cli.CtxWrap(cmd.status),
+		GroupID: capsule.TroubleshootingGroupID,
+	}
+	capsuleCmd.AddCommand(capsuleStatus)
+
 	parent.AddCommand(capsuleCmd)
 
 	scale.Setup(capsuleCmd, s)
