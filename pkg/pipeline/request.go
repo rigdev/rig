@@ -424,7 +424,9 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 
 		equal, err := ObjectsEquals(cObj.Current, materializedObj, r.scheme)
 		if err != nil {
-			r.logger.Error(err, "equals failed", "current", cObj.Current.GetObjectKind().GroupVersionKind(), "new", materializedObj.GetObjectKind().GroupVersionKind())
+			r.logger.Error(err, "equals failed",
+				"current", cObj.Current.GetObjectKind().GroupVersionKind(),
+				"new", materializedObj.GetObjectKind().GroupVersionKind())
 			return nil, err
 		}
 
