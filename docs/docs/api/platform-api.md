@@ -43,6 +43,7 @@
 
 
 
+
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -70,6 +71,7 @@
 | /api.v1.capsule.Service/Execute | [ExecuteRequest](#api-v1-capsule-ExecuteRequest) stream | [ExecuteResponse](#api-v1-capsule-ExecuteResponse) stream | Execute executes a command in a given in instance, and returns the output along with an exit code. |
 | /api.v1.capsule.Service/GetCustomInstanceMetrics | [GetCustomInstanceMetricsRequest](#api-v1-capsule-GetCustomInstanceMetricsRequest) | [GetCustomInstanceMetricsResponse](#api-v1-capsule-GetCustomInstanceMetricsResponse) |  |
 | /api.v1.capsule.Service/GetJobExecutions | [GetJobExecutionsRequest](#api-v1-capsule-GetJobExecutionsRequest) | [GetJobExecutionsResponse](#api-v1-capsule-GetJobExecutionsResponse) | Get list of job executions performed by the Capsule. |
+| /api.v1.capsule.Service/GetStatus | [GetStatusRequest](#api-v1-capsule-GetStatusRequest) | [GetStatusResponse](#api-v1-capsule-GetStatusResponse) |  |
 
 
 
@@ -3483,6 +3485,195 @@ The rollout model.
 
 
 
+<a name="api_v1_capsule_status-proto"></a>
+
+## api/v1/capsule/status.proto
+
+
+
+<a name="api-v1-capsule-CapsuleStatus"></a>
+
+### CapsuleStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| statuses | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ConfigFileStatus"></a>
+
+### ConfigFileStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| isSecret | [bool](#bool) |  |  |
+| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
+| transition | [Transition](#api-v1-capsule-Transition) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ContainerConfig"></a>
+
+### ContainerConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  |  |
+| command | [string](#string) |  |  |
+| args | [string](#string) | repeated |  |
+| environment_variables | [ContainerConfig.EnvironmentVariablesEntry](#api-v1-capsule-ContainerConfig-EnvironmentVariablesEntry) | repeated |  |
+| scale | [HorizontalScale](#api-v1-capsule-HorizontalScale) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ContainerConfig-EnvironmentVariablesEntry"></a>
+
+### ContainerConfig.EnvironmentVariablesEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-CronJobStatus"></a>
+
+### CronJobStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| job_name | [string](#string) |  |  |
+| schedule | [string](#string) |  |  |
+| last_execution | [JobExecution](#api-v1-capsule-JobExecution) |  |  |
+| transition | [Transition](#api-v1-capsule-Transition) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-InstancesStatus"></a>
+
+### InstancesStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| num_updated | [uint32](#uint32) |  | The number of updated instances. |
+| num_ready | [uint32](#uint32) |  | The number of ready instances. |
+| num_stuck | [uint32](#uint32) |  | The number of stuck instances. |
+| num_wrong_version | [uint32](#uint32) |  | The number of instances with the wrong version. |
+
+
+
+
+
+
+<a name="api-v1-capsule-InterfaceStatus"></a>
+
+### InterfaceStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| port | [uint32](#uint32) |  |  |
+| routes | [InterfaceStatus.Route](#api-v1-capsule-InterfaceStatus-Route) | repeated |  |
+| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
+| transition | [Transition](#api-v1-capsule-Transition) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-InterfaceStatus-Route"></a>
+
+### InterfaceStatus.Route
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| route | [HostRoute](#api-v1-capsule-HostRoute) |  |  |
+| status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
+| transition | [Transition](#api-v1-capsule-Transition) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-Status"></a>
+
+### Status
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| capsule | [CapsuleStatus](#api-v1-capsule-CapsuleStatus) |  |  |
+| rollout | [rollout.Status](#api-v1-capsule-rollout-Status) |  |  |
+| container_config | [ContainerConfig](#api-v1-capsule-ContainerConfig) |  |  |
+| instances | [InstancesStatus](#api-v1-capsule-InstancesStatus) |  |  |
+| interfaces | [InterfaceStatus](#api-v1-capsule-InterfaceStatus) | repeated |  |
+| config_files | [ConfigFileStatus](#api-v1-capsule-ConfigFileStatus) | repeated |  |
+| cron_jobs | [CronJobStatus](#api-v1-capsule-CronJobStatus) | repeated |  |
+
+
+
+
+
+
+
+
+<a name="api-v1-capsule-Transition"></a>
+
+### Transition
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TRANSITION_UNSPECIFIED | 0 |  |
+| TRANSITION_BEING_CREATED | 1 |  |
+| TRANSITION_UP_TO_DATE | 2 |  |
+| TRANSITION_BEING_DELETED | 3 |  |
+
+
+
+
+
+
+
+
 <a name="model_common-proto"></a>
 
 ## model/common.proto
@@ -4023,6 +4214,38 @@ in a project.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rollout | [Rollout](#api-v1-capsule-Rollout) |  | The rollout. |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetStatusRequest"></a>
+
+### GetStatusRequest
+GetStatusRequest is a request to start streaming the capsule status
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | The capsule to get the status from. |
+| project_id | [string](#string) |  | The project in which the capsule lives. |
+| environment_id | [string](#string) |  | The environment to get the status from. |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetStatusResponse"></a>
+
+### GetStatusResponse
+GetCapsuleStatusResponse
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [Status](#api-v1-capsule-Status) |  | The capsule status |
 
 
 
