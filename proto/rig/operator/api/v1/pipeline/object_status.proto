@@ -76,7 +76,10 @@ message CronjobStatus {}
 
 message CapsuleStatus {}
 
-message InterfaceStatus {}
+message InterfaceStatus {
+  string name = 1;
+  uint32 port = 2;
+}
 
 message PlatformObjectStatus {
   string name = 1;
