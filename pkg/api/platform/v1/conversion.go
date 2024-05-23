@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"reflect"
+	"slices"
 	"time"
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
@@ -13,6 +14,7 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	types_v1alpha2 "github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	k8sresource "k8s.io/apimachinery/pkg/api/resource"
 )
@@ -172,6 +174,19 @@ func EnvironmentSourceConversion(source *capsule.EnvironmentSource) (*platformv1
 	return ref, nil
 }
 
+func EnvironmentSourceSpecConversion(source *platformv1.EnvironmentSource) *capsule.EnvironmentSource {
+	ref := &capsule.EnvironmentSource{
+		Name: source.GetName(),
+	}
+	switch source.GetKind() {
+	case string(EnvironmentSourceKindConfigMap):
+		ref.Kind = capsule.EnvironmentSource_KIND_CONFIG_MAP
+	case string(EnvironmentSourceKindSecret):
+		ref.Kind = capsule.EnvironmentSource_KIND_SECRET
+	}
+	return ref
+}
+
 func InterfaceConversion(i *capsule.Interface) (*v1alpha2.CapsuleInterface, error) {
 	capIf := &v1alpha2.CapsuleInterface{
 		Name: i.GetName(),
@@ -303,28 +318,34 @@ func makeVerticalScale(
 
 func CapsuleSpecToRolloutConfig(spec *platformv1.CapsuleSpec) (*capsule.RolloutConfig, error) {
 	config := &capsule.RolloutConfig{
-		ImageId: spec.GetImage(),
-		Network: makeNetworks(spec.GetInterfaces()),
-		ContainerSettings: &capsule.ContainerSettings{
-			EnvironmentVariables: maps.Clone(spec.GetEnv().GetDirect()),
-			Command:              spec.GetCommand(),
-			Args:                 spec.GetArgs(),
-			EnvironmentSources:   makeEnvironmentSources(spec.GetEnv().GetSources()),
-		},
+		ImageId:                   spec.GetImage(),
+		Network:                   makeNetworks(spec.GetInterfaces()),
 		AutoAddRigServiceAccounts: spec.GetAutoAddRigServiceAccounts(),
 		ConfigFiles:               makeConfigFiles(spec.GetFiles()),
-		HorizontalScale:           makeHorizontalScale(spec.GetScale().GetHorizontal()),
+		HorizontalScale:           HorizontalScaleSpecConversion(spec.GetScale().GetHorizontal()),
 		CronJobs:                  makeCronJobs(spec.GetCronJobs()),
 		Annotations:               maps.Clone(spec.GetAnnotations()),
 	}
+	var err error
+	if config.ContainerSettings, err = ContainerSettingsSpecConversion(spec); err != nil {
+		return nil, err
+	}
 
+	return config, nil
+}
+
+func ContainerSettingsSpecConversion(spec *platformv1.CapsuleSpec) (*capsule.ContainerSettings, error) {
 	resources, err := makeResources(spec.GetScale().GetVertical())
 	if err != nil {
 		return nil, err
 	}
-	config.ContainerSettings.Resources = resources
-
-	return config, nil
+	return &capsule.ContainerSettings{
+		EnvironmentVariables: maps.Clone(spec.GetEnv().GetDirect()),
+		Command:              spec.GetCommand(),
+		Args:                 spec.GetArgs(),
+		Resources:            resources,
+		EnvironmentSources:   makeEnvironmentSources(spec.GetEnv().GetSources()),
+	}, nil
 }
 
 func makeEnvironmentSources(spec []*platformv1.EnvironmentSource) []*capsule.EnvironmentSource {
@@ -400,7 +421,7 @@ func parseLimits(r *v1alpha2.ResourceLimits) (float64, float64, error) {
 	return req, limit, nil
 }
 
-func makeHorizontalScale(spec *v1alpha2.HorizontalScale) *capsule.HorizontalScale {
+func HorizontalScaleSpecConversion(spec *v1alpha2.HorizontalScale) *capsule.HorizontalScale {
 	res := &capsule.HorizontalScale{
 		MaxReplicas: spec.GetInstances().GetMax(),
 		MinReplicas: spec.GetInstances().GetMin(),
@@ -448,73 +469,83 @@ func makeConfigFiles(configFiles []*platformv1.File) []*capsule.ConfigFile {
 	var res []*capsule.ConfigFile
 
 	for _, c := range configFiles {
-		res = append(res, &capsule.ConfigFile{
-			Path:     c.GetPath(),
-			Content:  c.GetBytes(),
-			IsSecret: c.GetAsSecret(),
-		})
+		res = append(res, ConfigFileSpecConversion(c))
 	}
 
 	return res
+}
+
+func ConfigFileSpecConversion(c *platformv1.File) *capsule.ConfigFile {
+	return &capsule.ConfigFile{
+		Path:     c.GetPath(),
+		Content:  c.GetBytes(),
+		IsSecret: c.GetAsSecret(),
+	}
 }
 
 func makeCronJobs(cronJobs []*v1alpha2.CronJob) []*capsule.CronJob {
 	var res []*capsule.CronJob
 
 	for _, j := range cronJobs {
-		job := &capsule.CronJob{
-			JobName:    j.GetName(),
-			Schedule:   j.GetSchedule(),
-			MaxRetries: int32(j.GetMaxRetries()),
-			// Timeout:    j.GetTimeoutSeconds(),
-			JobType: nil,
-		}
-		if j.GetTimeoutSeconds() != 0 {
-			job.Timeout = durationpb.New(time.Second * time.Duration(j.GetTimeoutSeconds()))
-		}
-		if cmd := j.GetCommand(); cmd != nil {
-			job.JobType = &capsule.CronJob_Command{
-				Command: &capsule.JobCommand{
-					Command: cmd.GetCommand(),
-					Args:    cmd.GetArgs(),
-				},
-			}
-		} else if url := j.GetUrl(); url != nil {
-			job.JobType = &capsule.CronJob_Url{
-				Url: &capsule.JobURL{
-					Port:            uint64(url.GetPort()),
-					Path:            url.GetPath(),
-					QueryParameters: maps.Clone(url.GetQueryParameters()),
-				},
-			}
-		} else {
-			continue
-		}
-		res = append(res, job)
+		res = append(res, CronJobSpecConversion(j))
 	}
 
 	return res
 }
 
+func CronJobSpecConversion(j *v1alpha2.CronJob) *capsule.CronJob {
+	job := &capsule.CronJob{
+		JobName:    j.GetName(),
+		Schedule:   j.GetSchedule(),
+		MaxRetries: int32(j.GetMaxRetries()),
+		// Timeout:    j.GetTimeoutSeconds(),
+		JobType: nil,
+	}
+	if j.GetTimeoutSeconds() != 0 {
+		job.Timeout = durationpb.New(time.Second * time.Duration(j.GetTimeoutSeconds()))
+	}
+	if cmd := j.GetCommand(); cmd != nil {
+		job.JobType = &capsule.CronJob_Command{
+			Command: &capsule.JobCommand{
+				Command: cmd.GetCommand(),
+				Args:    cmd.GetArgs(),
+			},
+		}
+	} else if url := j.GetUrl(); url != nil {
+		job.JobType = &capsule.CronJob_Url{
+			Url: &capsule.JobURL{
+				Port:            uint64(url.GetPort()),
+				Path:            url.GetPath(),
+				QueryParameters: maps.Clone(url.GetQueryParameters()),
+			},
+		}
+	}
+	return job
+}
+
 func makeNetworks(spec []*v1alpha2.CapsuleInterface) *capsule.Network {
 	res := &capsule.Network{}
 	for _, i := range spec {
-		ii := &capsule.Interface{
-			Port:      uint32(i.GetPort()),
-			Name:      i.GetName(),
-			Liveness:  makeInterfaceProbe(i.GetLiveness()),
-			Readiness: makeInterfaceProbe(i.GetReadiness()),
-			Routes:    []*capsule.HostRoute{},
-		}
-		for _, r := range i.GetRoutes() {
-			ii.Routes = append(ii.Routes, makeHostRoute(r))
-		}
-		if len(ii.Routes) == 0 {
-			ii.Routes = nil
-		}
-		res.Interfaces = append(res.Interfaces, ii)
+		res.Interfaces = append(res.Interfaces, InterfaceSpecConversion(i))
 	}
 	return res
+}
+
+func InterfaceSpecConversion(i *v1alpha2.CapsuleInterface) *capsule.Interface {
+	ii := &capsule.Interface{
+		Port:      uint32(i.GetPort()),
+		Name:      i.GetName(),
+		Liveness:  makeInterfaceProbe(i.GetLiveness()),
+		Readiness: makeInterfaceProbe(i.GetReadiness()),
+		Routes:    []*capsule.HostRoute{},
+	}
+	for _, r := range i.GetRoutes() {
+		ii.Routes = append(ii.Routes, makeHostRoute(r))
+	}
+	if len(ii.Routes) == 0 {
+		ii.Routes = nil
+	}
+	return ii
 }
 
 func makeInterfaceProbe(probe *v1alpha2.InterfaceProbe) *capsule.InterfaceProbe {
@@ -568,4 +599,236 @@ func makeHostRoute(route *v1alpha2.HostRoute) *capsule.HostRoute {
 	}
 
 	return res
+}
+
+func ChangesFromSpecPair(curSpec, newSpec *platformv1.CapsuleSpec) ([]*capsule.Change, error) {
+	var res []*capsule.Change
+
+	if curSpec.GetImage() != newSpec.GetImage() {
+		res = append(res, &capsule.Change{
+			Field: &capsule.Change_ImageId{
+				ImageId: newSpec.GetImage(),
+			},
+		})
+	}
+
+	d := curSpec.GetEnv().GetDirect()
+	for k, v := range newSpec.GetEnv().GetDirect() {
+		if vv, ok := d[k]; !ok || v != vv {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_SetEnvironmentVariable{
+					SetEnvironmentVariable: &capsule.Change_KeyValue{
+						Name:  k,
+						Value: vv,
+					},
+				},
+			})
+		}
+	}
+
+	d = newSpec.GetEnv().GetDirect()
+	for k, v := range curSpec.GetEnv().GetDirect() {
+		if _, ok := d[k]; !ok {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_RemoveEnvironmentVariable{
+					RemoveEnvironmentVariable: v,
+				},
+			})
+		}
+	}
+
+	s := map[source]struct{}{}
+	for _, ss := range newSpec.GetEnv().GetSources() {
+		s[news(ss)] = struct{}{}
+	}
+	for _, ss := range curSpec.GetEnv().GetSources() {
+		if _, ok := s[news(ss)]; !ok {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_RemoveEnvironmentSource{
+					RemoveEnvironmentSource: EnvironmentSourceSpecConversion(ss),
+				},
+			})
+		}
+	}
+
+	clear(s)
+	for _, ss := range curSpec.GetEnv().GetSources() {
+		s[news(ss)] = struct{}{}
+	}
+	for _, ss := range newSpec.GetEnv().GetSources() {
+		if _, ok := s[news(ss)]; !ok {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_SetEnvironmentSource{
+					SetEnvironmentSource: EnvironmentSourceSpecConversion(ss),
+				},
+			})
+		}
+	}
+
+	a := curSpec.GetAnnotations()
+	for k, v := range newSpec.GetAnnotations() {
+		if vv, ok := a[k]; !ok || v != vv {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_SetAnnotation{
+					SetAnnotation: &capsule.Change_KeyValue{
+						Name:  k,
+						Value: vv,
+					},
+				},
+			})
+		}
+	}
+
+	a = newSpec.GetAnnotations()
+	for k := range curSpec.GetAnnotations() {
+		if _, ok := a[k]; !ok {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_RemoveAnnotation{
+					RemoveAnnotation: k,
+				},
+			})
+		}
+	}
+
+	ints := map[string]*v1alpha2.CapsuleInterface{}
+	for _, i := range curSpec.GetInterfaces() {
+		ints[i.GetName()] = i
+	}
+	for _, i := range newSpec.GetInterfaces() {
+		if ii, ok := ints[i.GetName()]; !ok || !proto.Equal(i, ii) {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_SetInterface{
+					SetInterface: InterfaceSpecConversion(i),
+				}},
+			)
+		}
+	}
+
+	clear(ints)
+	for _, i := range newSpec.GetInterfaces() {
+		ints[i.GetName()] = i
+	}
+	for _, i := range curSpec.GetInterfaces() {
+		if _, ok := ints[i.GetName()]; !ok {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_RemoveInterface{
+					RemoveInterface: i.GetName(),
+				},
+			})
+		}
+	}
+
+	if newSpec.GetCommand() != curSpec.GetCommand() || !slices.Equal(newSpec.GetArgs(), curSpec.GetArgs()) {
+		res = append(res, &capsule.Change{
+			Field: &capsule.Change_CommandArguments_{
+				CommandArguments: &capsule.Change_CommandArguments{
+					Command: curSpec.GetCommand(),
+					Args:    curSpec.GetArgs(),
+				},
+			},
+		})
+	}
+
+	c := map[string]*v1alpha2.CronJob{}
+	for _, cc := range curSpec.GetCronJobs() {
+		c[cc.GetName()] = cc
+	}
+	for _, c1 := range newSpec.GetCronJobs() {
+		if c2, ok := c[c1.GetName()]; !ok || !proto.Equal(c1, c2) {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_AddCronJob{
+					AddCronJob: CronJobSpecConversion(c1),
+				},
+			})
+		}
+	}
+
+	clear(c)
+	for _, cc := range newSpec.GetCronJobs() {
+		c[cc.GetName()] = cc
+	}
+	for _, cc := range curSpec.GetCronJobs() {
+		if _, ok := c[cc.GetName()]; !ok {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_RemoveCronJob_{
+					RemoveCronJob: &capsule.Change_RemoveCronJob{
+						JobName: cc.GetName(),
+					},
+				},
+			})
+		}
+	}
+
+	f := map[string]*platformv1.File{}
+	for _, ff := range curSpec.GetFiles() {
+		f[ff.GetPath()] = ff
+	}
+	for _, f1 := range newSpec.GetFiles() {
+		if f2, ok := f[f1.GetPath()]; !ok || !proto.Equal(f1, f2) {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_SetConfigFile{
+					SetConfigFile: &capsule.Change_ConfigFile{
+						Path:     f1.GetPath(),
+						Content:  f1.GetBytes(),
+						IsSecret: f1.GetAsSecret(),
+					},
+				},
+			})
+		}
+	}
+	clear(f)
+	for _, ff := range newSpec.GetFiles() {
+		f[ff.GetPath()] = ff
+	}
+	for _, f1 := range curSpec.GetFiles() {
+		if _, ok := f[f1.GetPath()]; !ok {
+			res = append(res, &capsule.Change{
+				Field: &capsule.Change_RemoveConfigFile{
+					RemoveConfigFile: f1.GetPath(),
+				},
+			})
+		}
+	}
+
+	if !proto.Equal(curSpec.GetScale().GetHorizontal(), newSpec.GetScale().GetHorizontal()) {
+		res = append(res, &capsule.Change{
+			Field: &capsule.Change_HorizontalScale{
+				HorizontalScale: HorizontalScaleSpecConversion(newSpec.GetScale().GetHorizontal()),
+			},
+		})
+	}
+
+	if curSpec.GetAutoAddRigServiceAccounts() != newSpec.GetAutoAddRigServiceAccounts() {
+		res = append(res, &capsule.Change{
+			Field: &capsule.Change_AutoAddRigServiceAccounts{
+				AutoAddRigServiceAccounts: newSpec.GetAutoAddRigServiceAccounts(),
+			},
+		})
+	}
+
+	if !proto.Equal(curSpec.GetScale().GetVertical(), newSpec.GetScale().GetVertical()) {
+		containerSettings, err := ContainerSettingsSpecConversion(newSpec)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, &capsule.Change{
+			Field: &capsule.Change_ContainerSettings{
+				ContainerSettings: containerSettings,
+			},
+		})
+	}
+
+	return res, nil
+}
+
+type source struct {
+	kind string
+	name string
+}
+
+func news(s *platformv1.EnvironmentSource) source {
+	return source{
+		kind: s.GetKind(),
+		name: s.GetName(),
+	}
 }
