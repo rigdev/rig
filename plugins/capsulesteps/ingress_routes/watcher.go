@@ -54,8 +54,9 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatusInfo {
 		Name: routeID,
 		Kind: &apipipeline.PlatformObjectStatus_Route{
 			Route: &apipipeline.RouteStatus{
-				Id:   routeID,
-				Host: host,
+				Id:            routeID,
+				Host:          host,
+				InterfaceName: ingress.GetLabels()[pipeline.RigDevInterfaceLabel],
 			},
 		},
 	})

@@ -173,7 +173,7 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 	for _, inf := range req.Capsule().Spec.Interfaces {
 		for _, route := range getRoutes(inf) {
 			name := getRouteName(req, route)
-			ing := createBasicIngress(req, cfg, name)
+			ing := createBasicIngress(req, cfg, name, inf.Name)
 			rule := netv1.IngressRule{
 				Host: route.Host,
 				IngressRuleValue: netv1.IngressRuleValue{
@@ -254,7 +254,7 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 	return ingresses
 }
 
-func createBasicIngress(req pipeline.CapsuleRequest, cfg Config, name string) *netv1.Ingress {
+func createBasicIngress(req pipeline.CapsuleRequest, cfg Config, name, interfaceName string) *netv1.Ingress {
 	var ingressClassName *string
 	if cfg.IngressClassName != "" {
 		ingressClassName = ptr.New(cfg.IngressClassName)
@@ -269,6 +269,9 @@ func createBasicIngress(req pipeline.CapsuleRequest, cfg Config, name string) *n
 			Name:        name,
 			Namespace:   req.Capsule().Namespace,
 			Annotations: map[string]string{},
+			Labels: map[string]string{
+				pipeline.RigDevInterfaceLabel: interfaceName,
+			},
 		},
 		Spec: netv1.IngressSpec{
 			IngressClassName: ingressClassName,
