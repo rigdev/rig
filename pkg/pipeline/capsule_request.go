@@ -26,7 +26,8 @@ const (
 	LabelCapsule      = "rig.dev/capsule"
 	LabelCron         = "batch.kubernets.io/cronjob"
 
-	RigDevRolloutLabel = "rig.dev/rollout"
+	RigDevRolloutLabel   = "rig.dev/rollout"
+	RigDevInterfaceLabel = "rig.dev/interface"
 
 	AnnotationChecksumFiles     = "rig.dev/config-checksum-files"
 	AnnotationChecksumAutoEnv   = "rig.dev/config-checksum-auto-env"

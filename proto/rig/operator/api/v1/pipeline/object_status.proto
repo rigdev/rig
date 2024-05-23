@@ -37,6 +37,7 @@ message ObjectStatusInfo {
 message RouteStatus {
   string id = 1;
   string host = 2;
+  string interface_name = 3;
 }
 
 message InstanceStatus {
@@ -75,6 +76,8 @@ message CronjobStatus {}
 
 message CapsuleStatus {}
 
+message InterfaceStatus {}
+
 message PlatformObjectStatus {
   string name = 1;
 
@@ -85,6 +88,7 @@ message PlatformObjectStatus {
     ConfigFileStatus config_file = 5;
     CronjobStatus cronjob = 6;
     CapsuleStatus capsule = 7;
+    InterfaceStatus interface = 8;
   }
 }
 
