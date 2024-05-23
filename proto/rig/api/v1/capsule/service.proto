@@ -9,10 +9,13 @@ import "api/v1/capsule/rollout.proto";
 import "api/v1/capsule/instance/status.proto";
 import "api/v1/capsule/event.proto";
 import "api/v1/capsule/job.proto";
+import "platform/v1/generated.proto";
 import "api/v1/capsule/metrics.proto";
 import "api/v1/capsule/change.proto";
 import "api/v1/capsule/status.proto";
+import "api/v1/capsule/revision.proto";
 import "model/common.proto";
+import "model/revision.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -35,6 +38,9 @@ service Service {
   // running at a single point in time.
   // Use `Abort` to abort an already running rollout.
   rpc Deploy(DeployRequest) returns (DeployResponse) {}
+  // Applies a Capsule spec in an environment which will be rolled out
+  rpc ApplyCapsuleSpec(ApplyCapsuleSpecRequest)
+      returns (ApplyCapsuleSpecResponse) {}
   // Lists all instances for the capsule.
   rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {}
   // Restart a single capsule instance.
@@ -70,6 +76,7 @@ service Service {
       returns (GetJobExecutionsResponse) {}
 
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
+  rpc GetRevision(GetRevisionRequest) returns (GetRevisionResponse) {}
 }
 
 // GetStatusRequest is a request to start streaming the capsule status
@@ -180,6 +187,8 @@ message GetRequest {
 message GetResponse {
   // The capsule.
   api.v1.capsule.Capsule capsule = 1;
+  api.v1.capsule.SetRevision revision = 2;
+  map<string, api.v1.capsule.Revision> environment_revisions = 3;
 }
 
 // Request to delete a capsule.
@@ -287,6 +296,19 @@ message DeployResponse {
   map<string, string> resource_yaml = 2;
   // The rollout config.
   api.v1.capsule.RolloutConfig rollout_config = 3;
+}
+
+message ApplyCapsuleSpecRequest {
+  platform.v1.CapsuleSpec spec = 1;
+  string project_id = 2;
+  string environment_id = 3;
+  string capsule_id = 4;
+  model.Fingerprint current_fingerprint = 5;
+  bool dry_run = 6;
+}
+
+message ApplyCapsuleSpecResponse {
+  model.Fingerprint fingerprint = 1;
 }
 
 // List instances request.
@@ -404,6 +426,7 @@ message GetRolloutRequest {
 message GetRolloutResponse {
   // The rollout.
   api.v1.capsule.Rollout rollout = 1;
+  capsule.Revision revision = 2;
 }
 
 // AbortRolloutRequest aborts a rollout.
@@ -527,4 +550,15 @@ message GetJobExecutionsResponse {
   repeated JobExecution job_executions = 1;
   // Total number of executions ignorring pagination.
   uint64 total = 2;
+}
+
+message GetRevisionRequest {
+  string project_id = 1;
+  string environment_id = 2;
+  string capsule_id = 3;
+  model.Fingerprint fingerprint = 4;
+}
+
+message GetRevisionResponse {
+  Revision revision = 1;
 }

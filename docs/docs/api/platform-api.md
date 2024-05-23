@@ -63,6 +63,7 @@
 | /api.v1.capsule.Service/Update | [UpdateRequest](#api-v1-capsule-UpdateRequest) | [UpdateResponse](#api-v1-capsule-UpdateResponse) | Update a capsule. |
 | /api.v1.capsule.Service/List | [ListRequest](#api-v1-capsule-ListRequest) | [ListResponse](#api-v1-capsule-ListResponse) | Lists all capsules for current project. |
 | /api.v1.capsule.Service/Deploy | [DeployRequest](#api-v1-capsule-DeployRequest) | [DeployResponse](#api-v1-capsule-DeployResponse) | Deploy changes to a capsule. When deploying, a new rollout will be initiated. Only one rollout can be running at a single point in time. Use `Abort` to abort an already running rollout. |
+| /api.v1.capsule.Service/ApplyCapsuleSpec | [ApplyCapsuleSpecRequest](#api-v1-capsule-ApplyCapsuleSpecRequest) | [ApplyCapsuleSpecResponse](#api-v1-capsule-ApplyCapsuleSpecResponse) | Applies a Capsule spec in an environment which will be rolled out |
 | /api.v1.capsule.Service/ListInstances | [ListInstancesRequest](#api-v1-capsule-ListInstancesRequest) | [ListInstancesResponse](#api-v1-capsule-ListInstancesResponse) | Lists all instances for the capsule. |
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
 | /api.v1.capsule.Service/GetRollout | [GetRolloutRequest](#api-v1-capsule-GetRolloutRequest) | [GetRolloutResponse](#api-v1-capsule-GetRolloutResponse) | Get a single rollout by ID. |
@@ -77,6 +78,7 @@
 | /api.v1.capsule.Service/GetCustomInstanceMetrics | [GetCustomInstanceMetricsRequest](#api-v1-capsule-GetCustomInstanceMetricsRequest) | [GetCustomInstanceMetricsResponse](#api-v1-capsule-GetCustomInstanceMetricsResponse) |  |
 | /api.v1.capsule.Service/GetJobExecutions | [GetJobExecutionsRequest](#api-v1-capsule-GetJobExecutionsRequest) | [GetJobExecutionsResponse](#api-v1-capsule-GetJobExecutionsResponse) | Get list of job executions performed by the Capsule. |
 | /api.v1.capsule.Service/GetStatus | [GetStatusRequest](#api-v1-capsule-GetStatusRequest) | [GetStatusResponse](#api-v1-capsule-GetStatusResponse) |  |
+| /api.v1.capsule.Service/GetRevision | [GetRevisionRequest](#api-v1-capsule-GetRevisionRequest) | [GetRevisionResponse](#api-v1-capsule-GetRevisionResponse) |  |
 
 
 
@@ -4640,6 +4642,41 @@ AbortRolloutResponse is an empty response.
 
 
 
+<a name="api-v1-capsule-ApplyCapsuleSpecRequest"></a>
+
+### ApplyCapsuleSpecRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| current_fingerprint | [model.Fingerprint](#model-Fingerprint) |  |  |
+| dry_run | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ApplyCapsuleSpecResponse"></a>
+
+### ApplyCapsuleSpecResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| fingerprint | [model.Fingerprint](#model-Fingerprint) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-CapsuleMetricsRequest"></a>
 
 ### CapsuleMetricsRequest
@@ -4990,6 +5027,57 @@ Response to get a capsule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | capsule | [Capsule](#api-v1-capsule-Capsule) |  | The capsule. |
+| revision | [SetRevision](#api-v1-capsule-SetRevision) |  |  |
+| environment_revisions | [GetResponse.EnvironmentRevisionsEntry](#api-v1-capsule-GetResponse-EnvironmentRevisionsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetResponse-EnvironmentRevisionsEntry"></a>
+
+### GetResponse.EnvironmentRevisionsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [Revision](#api-v1-capsule-Revision) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetRevisionRequest"></a>
+
+### GetRevisionRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| fingerprint | [model.Fingerprint](#model-Fingerprint) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetRevisionResponse"></a>
+
+### GetRevisionResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| revision | [Revision](#api-v1-capsule-Revision) |  |  |
 
 
 
@@ -5023,6 +5111,7 @@ in a project.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rollout | [Rollout](#api-v1-capsule-Rollout) |  | The rollout. |
+| revision | [Revision](#api-v1-capsule-Revision) |  |  |
 
 
 

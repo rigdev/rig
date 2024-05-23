@@ -249,25 +249,11 @@ func (p *Plugin) handleInterfaces(req pipeline.CapsuleRequest, deployment *appsv
 			})
 
 			if ni.Liveness != nil {
-				container.LivenessProbe = &v1.Probe{
-					ProbeHandler: v1.ProbeHandler{
-						HTTPGet: &v1.HTTPGetAction{
-							Path: ni.Liveness.Path,
-							Port: intstr.FromInt32(ni.Port),
-						},
-					},
-				}
+				container.LivenessProbe = createProbe(ni.Liveness, ni.Port)
 			}
 
 			if ni.Readiness != nil {
-				container.ReadinessProbe = &v1.Probe{
-					ProbeHandler: v1.ProbeHandler{
-						HTTPGet: &v1.HTTPGetAction{
-							Path: ni.Readiness.Path,
-							Port: intstr.FromInt32(ni.Port),
-						},
-					},
-				}
+				container.ReadinessProbe = createProbe(ni.Readiness, ni.Port)
 			}
 		}
 		container.Ports = ports
@@ -275,6 +261,39 @@ func (p *Plugin) handleInterfaces(req pipeline.CapsuleRequest, deployment *appsv
 	}
 
 	return nil
+}
+
+func createProbe(probe *v1alpha2.InterfaceProbe, port int32) *v1.Probe {
+	switch {
+	case probe.Path != "":
+		return &v1.Probe{
+			ProbeHandler: v1.ProbeHandler{
+				HTTPGet: &v1.HTTPGetAction{
+					Path: probe.Path,
+					Port: intstr.FromInt32(port),
+				},
+			},
+		}
+	case probe.TCP:
+		return &v1.Probe{
+			ProbeHandler: v1.ProbeHandler{
+				TCPSocket: &v1.TCPSocketAction{
+					Port: intstr.FromInt32(port),
+				},
+			},
+		}
+	case probe.GRPC != nil:
+		return &v1.Probe{
+			ProbeHandler: v1.ProbeHandler{
+				GRPC: &v1.GRPCAction{
+					Service: &probe.GRPC.Service,
+					Port:    port,
+				},
+			},
+		}
+	default:
+		return nil
+	}
 }
 
 func (p *Plugin) createService(req pipeline.CapsuleRequest) *v1.Service {
