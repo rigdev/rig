@@ -16,6 +16,7 @@ var (
 	operatorValues    string
 	prometheus        bool
 	vpa               bool
+	skipInit          bool
 	installationID    string
 )
 
@@ -87,6 +88,9 @@ See https://github.com/prometheus-operator/prometheus-operator for information o
 		"vpa", false,
 		`If set, will install the VerticalPodAutoscaler CRD + Recommender in the cluster.
 The operator will be configured to spawn a VerticalPodAutoscaler resource per capsule.`,
+	)
+	create.Flags().BoolVar(
+		&skipInit, "skip-init", false, "If set, will skip prompting for rig initialization after platform is up and running.",
 	)
 	kind.AddCommand(create)
 

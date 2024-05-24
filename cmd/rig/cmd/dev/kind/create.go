@@ -71,10 +71,12 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 	color.Green(" ✓")
 
-	fmt.Println()
-	fmt.Println("To use Rig you need to create at least one admin user.")
-	if err := c.runInit(cmd, args); err != nil {
-		return err
+	if !skipInit {
+		fmt.Println()
+		fmt.Println("To use Rig you need to create at least one admin user.")
+		if err := c.runInit(cmd, args); err != nil {
+			return err
+		}
 	}
 	fmt.Println("Rig is now accessible on http://localhost:4747")
 
