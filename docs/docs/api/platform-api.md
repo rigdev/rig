@@ -4360,7 +4360,7 @@ The rollout model.
 | ----- | ---- | ----- | ----------- |
 | job_name | [string](#string) |  |  |
 | schedule | [string](#string) |  |  |
-| last_execution | [JobExecution](#api-v1-capsule-JobExecution) |  |  |
+| last_execution | [api.v1.pipeline.ObjectState](#api-v1-pipeline-ObjectState) |  |  |
 | transition | [Transition](#api-v1-capsule-Transition) |  |  |
 
 
@@ -4422,6 +4422,23 @@ The rollout model.
 
 
 
+<a name="api-v1-capsule-RolloutStages"></a>
+
+### RolloutStages
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| configure_stage | [Stage](#api-v1-capsule-Stage) |  |  |
+| resource_creation_stage | [Stage](#api-v1-capsule-Stage) |  |  |
+| running_stage | [Stage](#api-v1-capsule-Stage) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-RolloutStatus"></a>
 
 ### RolloutStatus
@@ -4431,12 +4448,29 @@ The rollout model.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rollout_id | [uint64](#uint64) |  |  |
-| state | [rollout.State](#api-v1-capsule-rollout-State) |  |  |
+| current_stage | [rollout.State](#api-v1-capsule-rollout-State) |  |  |
+| stages | [RolloutStages](#api-v1-capsule-RolloutStages) |  |  |
 | error_message | [string](#string) |  | The error message if the rollout failed |
 | commit_hash | [string](#string) |  | The hash of the commit containing the changes |
 | commit_url | [string](#string) |  | The url to the commit (if known. May be empty) |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | created_by | [model.Author](#model-Author) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-Stage"></a>
+
+### Stage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [rollout.StageInfo](#api-v1-capsule-rollout-StageInfo) |  |  |
+| latest_step_info | [rollout.StepInfo](#api-v1-capsule-rollout-StepInfo) |  |  |
 
 
 
