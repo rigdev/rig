@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"slices"
+	"strconv"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -32,6 +33,8 @@ import (
 
 const (
 	Name = "rigdev.deployment"
+
+	AnnotationRecreateStrategy = "rig.dev/recreate-strategy"
 )
 
 // Configuration for the deployment plugin
@@ -197,6 +200,11 @@ func (p *Plugin) createDeployment(
 		}
 	}
 
+	strategy := appsv1.RollingUpdateDeploymentStrategyType
+	if ok, _ := strconv.ParseBool(req.Capsule().GetAnnotations()[AnnotationRecreateStrategy]); ok {
+		strategy = appsv1.RecreateDeploymentStrategyType
+	}
+
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -211,6 +219,9 @@ func (p *Plugin) createDeployment(
 				MatchLabels: p.getPodsSelector(current, req),
 			},
 			Replicas: replicas,
+			Strategy: appsv1.DeploymentStrategy{
+				Type: strategy,
+			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: podAnnotations,
