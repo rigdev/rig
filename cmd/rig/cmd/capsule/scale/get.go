@@ -43,13 +43,13 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	t.AppendRows([]table.Row{
 		{
 			"CPU",
-			milliIntToString(uint64(requests.GetCpuMillis())),
-			formatLimitString(milliIntToString, uint64(limits.GetCpuMillis())),
+			MilliIntToString(uint64(requests.GetCpuMillis())),
+			formatLimitString(MilliIntToString, uint64(limits.GetCpuMillis())),
 		},
 		{
 			"Memory",
-			intToByteString(requests.GetMemoryBytes()),
-			formatLimitString(intToByteString, limits.GetMemoryBytes()),
+			IntToByteString(requests.GetMemoryBytes()),
+			formatLimitString(IntToByteString, limits.GetMemoryBytes()),
 		},
 	})
 	t.AppendSeparator()

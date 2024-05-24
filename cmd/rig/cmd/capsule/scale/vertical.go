@@ -129,7 +129,7 @@ func (c *Cmd) setResourcesInteractive(curResources *capsule.Resources) error {
 				if curR.GetCpuMillis() == 0 && isLimit {
 					current = "-"
 				} else {
-					current = milliIntToString(uint64(curR.GetCpuMillis()))
+					current = MilliIntToString(uint64(curR.GetCpuMillis()))
 				}
 				resourceString = &cpu
 			case 1:
@@ -137,7 +137,7 @@ func (c *Cmd) setResourcesInteractive(curResources *capsule.Resources) error {
 				if curR.GetMemoryBytes() == 0 && isLimit {
 					current = "-"
 				} else {
-					current = intToByteString(curR.GetMemoryBytes())
+					current = IntToByteString(curR.GetMemoryBytes())
 				}
 				resourceString = &mem
 			default:
@@ -161,11 +161,11 @@ func (c *Cmd) setResourcesInteractive(curResources *capsule.Resources) error {
 	return nil
 }
 
-func milliIntToString(millis uint64) string {
+func MilliIntToString(millis uint64) string {
 	return fmt.Sprintf("%v", float64(millis)/1000)
 }
 
-func intToByteString(i uint64) string {
+func IntToByteString(i uint64) string {
 	return common.FormatIntToSI(i, 3) + "B"
 }
 

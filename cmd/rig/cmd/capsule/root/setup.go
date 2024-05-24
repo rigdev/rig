@@ -172,6 +172,10 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		RunE:    cli.CtxWrap(cmd.status),
 		GroupID: capsule.TroubleshootingGroupID,
 	}
+	capsuleStatus.Flags().BoolVarP(&verbose, "verbose", "v", false,
+		"show more detailed status information. Only valid with --output=pretty (default)")
+	capsuleStatus.Flags().BoolVarP(&follow, "follow", "f", false,
+		"keep the connection open and read status until canceled. Only valid with --verbose")
 	capsuleCmd.AddCommand(capsuleStatus)
 
 	capsulePortForward := &cobra.Command{
