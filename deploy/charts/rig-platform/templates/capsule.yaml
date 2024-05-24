@@ -2,6 +2,8 @@ apiVersion: rig.dev/v1alpha2
 kind: Capsule
 metadata:
   name: rig-platform
+  annotations:
+    rig.dev/recreate-strategy: "true"
 spec:
   scale:
     horizontal:
