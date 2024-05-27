@@ -41,7 +41,9 @@ jobs:
         run: |
           rig env create \
             "docs-pr-${{ github.event.number }}" \
-            prod \
+            dev \
+            --ephemeral \
+            --projects docs \
             --namespace-template "{{ .Project.Name }}-{{ .Environment.Name }}"
 
       - name: Deploy
@@ -50,7 +52,7 @@ jobs:
           name: http
           port: 80
           routes:
-          - host: pr${{ github.event.number }}.docs.prod.rig.dev
+          - host: pr${{ github.event.number }}.docs.dev.rig.dev
             id: pr${{ github.event.number }}
           " > interface.yaml
           rig deploy docs \
@@ -67,5 +69,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '📝 Docs preview ready at https://pr${{ github.event.number }}.docs.prod.rig.dev'
+              body: '📝 Docs preview ready at https://pr${{ github.event.number }}.docs.dev.rig.dev'
             })
