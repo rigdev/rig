@@ -108,7 +108,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		os.Exit(1)
 	}
 
-	createEnvironment.Flags().BoolVar(&global, "global", true, "Create a global environment.")
+	createEnvironment.Flags().BoolVar(&global, "global", false, "Create a global environment.")
 	if err := createEnvironment.RegisterFlagCompletionFunc("global", common.BoolCompletions); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -122,6 +122,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	createEnvironment.MarkFlagsMutuallyExclusive("global", "projects")
 	environment.AddCommand(createEnvironment)
 
 	deleteEnvironment := &cobra.Command{
