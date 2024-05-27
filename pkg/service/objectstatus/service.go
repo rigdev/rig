@@ -10,6 +10,7 @@ import (
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	svc_pipeline "github.com/rigdev/rig/pkg/service/pipeline"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -73,13 +74,17 @@ func (s *service) runStepForCapsule(
 	step pipeline.Step[pipeline.CapsuleRequest],
 ) {
 	for {
-		if err := step.WatchObjectStatus(ctx, namespace, capsule, s); err == context.Canceled {
+		if err := step.WatchObjectStatus(ctx, namespace, capsule, s); errors.IsCanceled(err) {
 			return
 		} else if err != nil {
 			s.logger.Error(err, "error getting object status")
 		}
 
-		time.Sleep(3 * time.Second)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(3 * time.Second):
+		}
 	}
 }
 

@@ -68,8 +68,6 @@ func (s *Step) WatchObjectStatus(
 	capsule string,
 	callback pipeline.ObjectStatusCallback,
 ) error {
-	wg := sync.WaitGroup{}
-
 	// TODO: We need annotations here.
 	if !s.matcher.Match(namespace, capsule, nil) {
 		for _, p := range s.plugins {
@@ -80,25 +78,43 @@ func (s *Step) WatchObjectStatus(
 		return nil
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	errChan := make(chan error, 1)
+
 	for _, p := range s.plugins {
 		wg.Add(1)
-
 		go func(p *pluginExecutor) {
+			defer wg.Done()
 			err := p.WatchObjectStatus(ctx, namespace, capsule, callback)
-			if !errors.IsUnimplemented(err) {
-				s.logger.Error(err, "error getting status")
-			} else {
+			if errors.IsUnimplemented(err) {
 				callback.UpdateStatus(namespace, capsule, p.id, &plugin.ObjectStatusChange{
 					Change: &plugin.ObjectStatusChange_Checkpoint_{},
 				})
+			} else if err != nil {
+				if !errors.IsCanceled(err) {
+					s.logger.Error(err, "error getting status")
+				}
+
+				select {
+				default:
+				case errChan <- err:
+				}
 			}
-			wg.Done()
 		}(p)
 	}
 
-	wg.Wait()
-	// TODO:
-	return nil
+	go func() {
+		wg.Wait()
+		select {
+		default:
+		case errChan <- nil:
+		}
+	}()
+
+	return <-errChan
 }
 
 func (s *Step) PluginIDs() []uuid.UUID {
