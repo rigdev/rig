@@ -232,7 +232,6 @@ func (s *testSuite) cfgEqual(cfg *cmdconfig.Config) {
 func newProject(name string) *project.Project {
 	return &project.Project{
 		ProjectId: name,
-		Name:      name,
 	}
 }
 

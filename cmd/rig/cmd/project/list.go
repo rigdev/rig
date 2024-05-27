@@ -31,9 +31,9 @@ func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{fmt.Sprintf("Projects (%d)", resp.Msg.GetTotal()), "Name", "ID", "Created At"})
+	t.AppendHeader(table.Row{fmt.Sprintf("Projects (%d)", resp.Msg.GetTotal()), "ID", "Created At"})
 	for i, p := range resp.Msg.GetProjects() {
-		t.AppendRow(table.Row{i + 1, p.GetName(), p.GetProjectId(), p.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")})
+		t.AppendRow(table.Row{i + 1, p.GetProjectId(), p.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")})
 	}
 	cmd.Println(t.Render())
 	return nil
