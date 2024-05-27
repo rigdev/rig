@@ -6617,7 +6617,6 @@ The top most model that capsules etc belong to.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | project_id | [string](#string) |  | The unique id of the project. |
-| name | [string](#string) |  | Deprecated: Name of the project. |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the project was created. |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the project was last updated. |
 | installation_id | [string](#string) |  | The installation id of the project. |
@@ -6631,11 +6630,6 @@ The top most model that capsules etc belong to.
 
 ### Update
 Update msg for a project.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Update the name of the project. |
 
 
 

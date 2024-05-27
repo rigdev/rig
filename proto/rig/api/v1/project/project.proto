@@ -8,8 +8,6 @@ import "google/protobuf/timestamp.proto";
 message Project {
   // The unique id of the project.
   string project_id = 1;
-  // Deprecated: Name of the project.
-  string name = 2;
   // When the project was created.
   google.protobuf.Timestamp created_at = 3;
   // When the project was last updated.
@@ -20,10 +18,9 @@ message Project {
 
 // Update msg for a project.
 message Update {
-  oneof field {
-    // Update the name of the project.
-    string name = 1;
-  }
+  reserved 1;
+  // TODO: Bring back field
+  // oneof field {}
 }
 
 // The plan for a rig installation

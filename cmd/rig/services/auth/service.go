@@ -266,18 +266,9 @@ func (s *Service) CreateProject(ctx context.Context, name string, useNewProject 
 		}
 	}
 
-	initializers := []*project.Update{
-		{
-			Field: &project.Update_Name{
-				Name: name,
-			},
-		},
-	}
-
 	res, err := s.rig.Project().Create(ctx, &connect.Request[project.CreateRequest]{
 		Msg: &project.CreateRequest{
-			Initializers: initializers,
-			ProjectId:    name,
+			ProjectId: name,
 		},
 	})
 	if err != nil {
@@ -373,7 +364,7 @@ func (s *Service) useProject(ctx context.Context) error {
 
 	var ps []string
 	for _, p := range listRes.Msg.GetProjects() {
-		ps = append(ps, p.GetName())
+		ps = append(ps, p.GetProjectId())
 	}
 
 	i, _, err := s.prompter.Select("Project: ", ps)

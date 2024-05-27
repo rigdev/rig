@@ -78,7 +78,7 @@ func (c *CmdWScope) promptForProjectID(ctx context.Context) (string, error) {
 
 	var ps []string
 	for _, p := range res.Msg.GetProjects() {
-		ps = append(ps, p.GetName())
+		ps = append(ps, p.GetProjectId())
 	}
 
 	i, _, err := c.Prompter.Select("Project: ", ps)
@@ -102,7 +102,7 @@ func (c *CmdWScope) projectIDFromArg(ctx context.Context, projectArg string) (st
 	}
 
 	for _, p := range res.Msg.GetProjects() {
-		if p.GetName() != projectArg {
+		if p.GetProjectId() != projectArg {
 			continue
 		}
 		return p.GetProjectId(), nil

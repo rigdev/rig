@@ -30,7 +30,7 @@ func formatProject(p *project.Project) string {
 		age = p.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")
 	}
 
-	return fmt.Sprintf("%v\t (ID: %v, Created At: %v)", p.GetName(), p.GetProjectId(), age)
+	return fmt.Sprintf("%v\t (ID: %v, Created At: %v)", p.GetProjectId(), p.GetProjectId(), age)
 }
 
 func formatEnvironment(e *environment.Environment) string {
@@ -176,7 +176,8 @@ func Groups(ctx context.Context,
 
 func OutputType(_ *cobra.Command,
 	_ []string,
-	toComplete string) ([]string, cobra.ShellCompDirective) {
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
 	options := []string{
 		"json",
 		"yaml",
