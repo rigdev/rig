@@ -131,11 +131,22 @@ rig:
       baseUrl: http://rig-operator:9000
     slack:
       token: ""
-      channel: ""
-      projects:
-        {}
-      environments:
-        {}
+      channel_id: ""
+    git:
+      auths: 
+        []
+  #     - url: ""
+  #       urlPrefix: ""
+  #       credentials:
+  #         https:
+  #           username: ""
+  #           password: ""
+  #         ssh:
+  #           privateKey: ""
+  #           privateKeyPassword: ""
+      author:
+        name: ""
+        email: ""
 
   repository:
     store: postgres
@@ -149,10 +160,16 @@ rig:
     devMode: false
     level: info
 
+  notification:
+    projects:
+      []
+    environments:
+      []
+
   clusters:
     {}
     # prod:
-    #   kind: k8s
+    #   type: k8s
     #   devRegistry:
     #     host: ""
     #     clusterHost: ""
@@ -160,10 +177,3 @@ rig:
     #     url: ""
     #     branch: ""
     #     pathPrefix: ""
-    #     credentials:
-    #       https:
-    #         username: ""
-    #         password: ""
-    #       ssh:
-    #         privateKey: ""
-    #         privateKeyPassword: ""
