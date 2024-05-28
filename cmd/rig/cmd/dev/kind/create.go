@@ -314,7 +314,7 @@ func setupKindRigCluster() error {
 
 func setupK8s() error {
 	var err error
-	cmd := common.NewDeferredOutputCommand("Setup kind cluster...")
+	cmd := common.NewDeferredOutputCommand("Setup kind cluster...", common.Verbose(verbose))
 	defer func() {
 		cmd.End(err == nil)
 	}()
@@ -349,7 +349,7 @@ func setupK8s() error {
 
 func helmInstall() error {
 	if prometheus {
-		cmd := common.NewDeferredOutputCommand("Installing prometheus...")
+		cmd := common.NewDeferredOutputCommand("Installing prometheus...", common.Verbose(verbose))
 		cmd.Command(
 			"helm", "--kube-context", "kind-rig",
 			"upgrade", "--install", "kube-prometheus-stack", "kube-prometheus-stack",
@@ -473,7 +473,7 @@ func checkBinaries(binaries ...binary) error {
 
 func runCmd(displayMessage string, arg string, args ...string) error {
 	var err error
-	cmd := common.NewDeferredOutputCommand(displayMessage)
+	cmd := common.NewDeferredOutputCommand(displayMessage, common.Verbose(verbose))
 	defer func() {
 		cmd.End(err == nil)
 	}()

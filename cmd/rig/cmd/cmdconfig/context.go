@@ -139,7 +139,7 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 			cfg.CurrentContextName = name
 		}
 	} else {
-		if len(cfg.Contexts) == 0 {
+		if len(cfg.CurrentContextName) == 0 {
 			cfg.CurrentContextName = name
 		}
 	}
