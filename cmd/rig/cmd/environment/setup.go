@@ -183,6 +183,16 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	}
 	environment.AddCommand(removeProject)
 
+	listNamespaces := &cobra.Command{
+		Use: "list-namespaces [environment]",
+		ValidArgsFunction: common.ChainCompletions([]int{1, 2},
+			cli.HackCtxWrapCompletion(cmd.completeEnvironment, s)),
+		Short: "Lists the kubernetes namespaces the environment maps to.",
+		Args:  cobra.MaximumNArgs(1),
+		RunE:  cli.CtxWrap(cmd.listNamespaces),
+	}
+	environment.AddCommand(listNamespaces)
+
 	parent.AddCommand(environment)
 }
 
