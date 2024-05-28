@@ -4,12 +4,11 @@ import (
 	"hash/crc32"
 	"testing"
 
+	righash "github.com/rigdev/rig/pkg/hash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	righash "github.com/rigdev/rig/pkg/hash"
 )
 
 func TestSecret(t *testing.T) {

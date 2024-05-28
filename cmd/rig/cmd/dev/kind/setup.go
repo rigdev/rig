@@ -18,6 +18,7 @@ var (
 	vpa               bool
 	skipInit          bool
 	installationID    string
+	verbose           bool
 )
 
 type Cmd struct {
@@ -92,6 +93,7 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 	create.Flags().BoolVar(
 		&skipInit, "skip-init", false, "If set, will skip prompting for rig initialization after platform is up and running.",
 	)
+	create.Flags().BoolVar(&verbose, "verbose", false, "Sets verbosity")
 	kind.AddCommand(create)
 
 	deploy := &cobra.Command{
@@ -136,6 +138,7 @@ The operator will be configured to spawn a VerticalPodAutoscaler resource per ca
 		"vpa", false,
 		`If set, the operator will be configured to spawn a VerticalPodAutoscaler resource per capsule.`,
 	)
+	deploy.Flags().BoolVar(&verbose, "verbose", false, "Sets verbosity")
 
 	clean := &cobra.Command{
 		Use:   "clean",

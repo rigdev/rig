@@ -1,11 +1,13 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/fatih/color"
 )
@@ -18,6 +20,18 @@ type bytesWithSource struct {
 type buffer struct {
 	lock  sync.Mutex
 	bytes []bytesWithSource
+	idx   int
+}
+
+func (b *buffer) next() ([]byte, bool, bool) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	if b.idx >= len(b.bytes) {
+		return nil, false, false
+	}
+	bb := b.bytes[b.idx]
+	b.idx++
+	return bb.bytes, bb.isStdOut, true
 }
 
 func (b *buffer) write(bytes []byte, isStdOut bool) {
@@ -43,6 +57,10 @@ type cmdBuffer struct {
 	buffer buffer
 	stdOut bufferWithSource
 	stdErr bufferWithSource
+
+	verbose bool
+	cancel  context.CancelFunc
+	ctx     context.Context
 }
 
 func (c *cmdBuffer) makeStdOut() []byte {
@@ -58,23 +76,54 @@ func (c *cmdBuffer) makeStdOut() []byte {
 }
 
 func (c *cmdBuffer) print() {
-	for _, b := range c.buffer.bytes {
-		if b.isStdOut {
-			os.Stdout.WriteString(string(b.bytes))
+	for {
+		bytes, isStdOut, ok := c.buffer.next()
+		if !ok {
+			break
+		}
+		if isStdOut {
+			os.Stdout.WriteString(string(bytes))
 		} else {
-			os.Stderr.WriteString(string(b.bytes))
+			os.Stderr.WriteString(string(bytes))
 		}
 	}
+}
+
+func (c *cmdBuffer) end() {
+	if c.cancel != nil {
+		c.cancel()
+	}
+	if c.verbose {
+		c.print()
+	}
+}
+
+func (c *cmdBuffer) start() {
+	if !c.verbose {
+		return
+	}
+	c.ctx, c.cancel = context.WithCancel(context.Background())
+	go func() {
+		for {
+			select {
+			case <-c.ctx.Done():
+				return
+			case <-time.After(250 * time.Millisecond):
+			}
+			c.print()
+		}
+	}()
 }
 
 func (c *cmdBuffer) clean() {
 	c.buffer.lock.Lock()
 	defer c.buffer.lock.Unlock()
 	c.buffer.bytes = nil
+	c.buffer.idx = 0
 }
 
-func newCmdBuffer() *cmdBuffer {
-	b := &cmdBuffer{buffer: buffer{}}
+func newCmdBuffer(verbose bool) *cmdBuffer {
+	b := &cmdBuffer{buffer: buffer{}, verbose: verbose}
 	b.stdOut = bufferWithSource{
 		buffer:   &b.buffer,
 		isStdOut: true,
@@ -86,6 +135,18 @@ func newCmdBuffer() *cmdBuffer {
 	return b
 }
 
+type option struct {
+	verbose bool
+}
+
+type Option func(*option)
+
+func Verbose(v bool) Option {
+	return func(o *option) {
+		o.verbose = v
+	}
+}
+
 type DeferredOutputCommand struct {
 	cmdBuffer      *cmdBuffer
 	cmd            *exec.Cmd
@@ -93,9 +154,13 @@ type DeferredOutputCommand struct {
 	hasStarted     bool
 }
 
-func NewDeferredOutputCommand(displayMessage string) *DeferredOutputCommand {
+func NewDeferredOutputCommand(displayMessage string, opts ...Option) *DeferredOutputCommand {
+	o := option{}
+	for _, opt := range opts {
+		opt(&o)
+	}
 	d := &DeferredOutputCommand{
-		cmdBuffer:      newCmdBuffer(),
+		cmdBuffer:      newCmdBuffer(o.verbose),
 		displayMessage: displayMessage,
 	}
 	return d
@@ -118,6 +183,7 @@ func (d *DeferredOutputCommand) start() {
 	if !d.hasStarted {
 		d.hasStarted = true
 		fmt.Print(d.displayMessage)
+		d.cmdBuffer.start()
 	}
 }
 
@@ -128,6 +194,7 @@ func (d *DeferredOutputCommand) End(successful bool) {
 		fmt.Println()
 		d.cmdBuffer.print()
 	}
+	d.cmdBuffer.end()
 }
 
 func (d *DeferredOutputCommand) Run() error {
