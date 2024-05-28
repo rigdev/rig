@@ -420,6 +420,13 @@ func onDeploymentUpdated(
 	dep := obj.(*appsv1.Deployment)
 
 	objectWatcher.WatchSecondaryByLabels(labels.Set(dep.Spec.Template.GetLabels()), &corev1.Pod{}, onPodUpdated)
+	for _, v := range dep.Spec.Template.Spec.Volumes {
+		if v.ConfigMap != nil {
+			objectWatcher.WatchSecondaryByName(v.ConfigMap.Name, &corev1.ConfigMap{}, onConfigMapUpdated)
+		} else if v.Secret != nil {
+			objectWatcher.WatchSecondaryByName(v.Secret.SecretName, &corev1.Secret{}, onSecretUpdated)
+		}
+	}
 
 	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
@@ -428,57 +435,99 @@ func onDeploymentUpdated(
 	return status
 }
 
-// func onConfigMapUpdated(
-// 	obj client.Object,
-// 	_ []*corev1.Event,
-// 	_ plugin.ObjectWatcher,
-// ) *apipipeline.ObjectStatusInfo {
-// 	cm := obj.(*corev1.ConfigMap)
+func onConfigMapUpdated(
+	obj client.Object,
+	_ []*corev1.Event,
+	_ plugin.ObjectWatcher,
+) *apipipeline.ObjectStatusInfo {
+	cm := obj.(*corev1.ConfigMap)
 
-// 	status := &apipipeline.ObjectStatusInfo{
-// 		Properties: map[string]string{},
-// 		PlatformStatus: []*apipipeline.PlatformObjectStatus{
-// 			{
-// 				Name: cm.GetName(),
-// 				Kind: &apipipeline.PlatformObjectStatus_ConfigFile{
-// 					ConfigFile: &apipipeline.ConfigFileStatus{},
-// 				},
-// 			},
-// 		},
-// 	}
+	status := &apipipeline.ObjectStatusInfo{
+		Properties: map[string]string{},
+		PlatformStatus: []*apipipeline.PlatformObjectStatus{
+			{
+				Name: cm.GetName(),
+				Kind: &apipipeline.PlatformObjectStatus_ConfigFile{
+					ConfigFile: &apipipeline.ConfigFileStatus{},
+				},
+			},
+		},
+	}
 
-// 	return status
-// }
+	return status
+}
 
-// func onSecretUpdated(
-// 	obj client.Object,
-// 	_ []*corev1.Event,
-// 	_ plugin.ObjectWatcher,
-// ) *apipipeline.ObjectStatusInfo {
-// 	secret := obj.(*corev1.Secret)
+func onSecretUpdated(
+	obj client.Object,
+	_ []*corev1.Event,
+	_ plugin.ObjectWatcher,
+) *apipipeline.ObjectStatusInfo {
+	secret := obj.(*corev1.Secret)
 
-// 	status := &apipipeline.ObjectStatusInfo{
-// 		Properties: map[string]string{},
-// 		PlatformStatus: []*apipipeline.PlatformObjectStatus{
-// 			{
-// 				Name: secret.GetName(),
-// 				Kind: &apipipeline.PlatformObjectStatus_ConfigFile{
-// 					ConfigFile: &apipipeline.ConfigFileStatus{},
-// 				},
-// 			},
-// 		},
-// 	}
+	status := &apipipeline.ObjectStatusInfo{
+		Properties: map[string]string{},
+		PlatformStatus: []*apipipeline.PlatformObjectStatus{
+			{
+				Name: secret.GetName(),
+				Kind: &apipipeline.PlatformObjectStatus_ConfigFile{
+					ConfigFile: &apipipeline.ConfigFileStatus{},
+				},
+			},
+		},
+	}
 
-// 	return status
-// }
+	return status
+}
+
+func onServiceUpdated(
+	obj client.Object,
+	_ []*corev1.Event,
+	_ plugin.ObjectWatcher,
+) *apipipeline.ObjectStatusInfo {
+	svc := obj.(*corev1.Service)
+
+	var platformStatuses []*apipipeline.PlatformObjectStatus
+	for _, p := range svc.Spec.Ports {
+		platformStatuses = append(platformStatuses, &apipipeline.PlatformObjectStatus{
+			Name: p.Name,
+			Kind: &apipipeline.PlatformObjectStatus_Interface{
+				Interface: &apipipeline.InterfaceStatus{
+					Port: uint32(p.Port),
+				},
+			},
+		})
+	}
+
+	return &apipipeline.ObjectStatusInfo{
+		Properties:     map[string]string{},
+		PlatformStatus: platformStatuses,
+	}
+}
 
 func (p *Plugin) WatchObjectStatus(ctx context.Context, watcher plugin.CapsuleWatcher) error {
-	// if err := watcher.WatchPrimary(ctx, &corev1.ConfigMap{}, onConfigMapUpdated); err != nil {
-	// 	return err
-	// }
+	errChan := make(chan error, 1)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	// if err := watcher.WatchPrimary(ctx, &corev1.Secret{}, onSecretUpdated); err != nil {
-	// 	return err
-	// }
-	return watcher.WatchPrimary(ctx, &appsv1.Deployment{}, onDeploymentUpdated)
+	go runWatch(ctx, watcher, &corev1.Service{}, onServiceUpdated, errChan)
+	go runWatch(ctx, watcher, &appsv1.Deployment{}, onDeploymentUpdated, errChan)
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+		return nil
+	}
+}
+
+func runWatch(ctx context.Context,
+	watcher plugin.CapsuleWatcher,
+	obj client.Object,
+	cb plugin.WatchCallback,
+	errChan chan error,
+) {
+	err := watcher.WatchPrimary(ctx, obj, cb)
+	if err != nil {
+		errChan <- err
+	}
 }

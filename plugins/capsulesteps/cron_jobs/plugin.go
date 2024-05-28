@@ -28,8 +28,6 @@ const (
 type Config struct{}
 
 type Plugin struct {
-	plugin.NoWatchObjectStatus
-
 	configBytes []byte
 }
 
