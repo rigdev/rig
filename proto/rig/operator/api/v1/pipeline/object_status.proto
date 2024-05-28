@@ -72,12 +72,13 @@ message ContainerStatus {
 
 message ConfigFileStatus {}
 
-message CronjobStatus {}
+message CronjobStatus {
+  string schedule = 1;
+}
 
 message CapsuleStatus {}
 
 message InterfaceStatus {
-  string name = 1;
   uint32 port = 2;
 }
 

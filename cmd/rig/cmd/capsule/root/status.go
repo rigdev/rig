@@ -61,7 +61,7 @@ func buildRolloutStatus(builder *strings.Builder, r *capsule.RolloutStatus) {
 	builder.WriteString(boldWhite.Sprintf("Rollout %d\n", r.GetRolloutId()))
 	createdAt := r.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")
 
-	builder.WriteString(getIndented(fmt.Sprintf("Stage: %s", rolloutStageToString(r.GetState())), 2))
+	builder.WriteString(getIndented(fmt.Sprintf("Stage: %s", rolloutStageToString(r.GetCurrentStage())), 2))
 	if r.GetCommitHash() != "" {
 		builder.WriteString(getIndented(fmt.Sprintf("Commit: %s", r.GetCommitHash()), 2))
 	}
@@ -149,7 +149,7 @@ func buildCronjobStatus(builder *strings.Builder, cs []*capsule.CronJobStatus) {
 	builder.WriteString(boldWhite.Sprintf("Cron Jobs\n"))
 	for _, c := range cs {
 		transition := transitionToIcon(c.GetTransition())
-		state := cronjobExecutionStateToIcon(c.GetLastExecution().GetState())
+		state := stateToIcon(c.GetLastExecution())
 		builder.WriteString(getIndented(fmt.Sprintf("%s %s%s", c.GetJobName(), transition, state), 2))
 	}
 }
@@ -191,21 +191,6 @@ func transitionToIcon(transition capsule.Transition) string {
 		return "🔼"
 	case capsule.Transition_TRANSITION_BEING_DELETED:
 		return "🔽"
-	default:
-		return ""
-	}
-}
-
-func cronjobExecutionStateToIcon(state capsule.JobState) string {
-	switch state {
-	case capsule.JobState_JOB_STATE_COMPLETED:
-		return "✅"
-	case capsule.JobState_JOB_STATE_FAILED:
-		return "❌"
-	case capsule.JobState_JOB_STATE_TERMINATED:
-		return "🔴"
-	case capsule.JobState_JOB_STATE_ONGOING:
-		return "🟢"
 	default:
 		return ""
 	}
