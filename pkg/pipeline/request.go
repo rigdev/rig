@@ -298,7 +298,11 @@ func (r *RequestBase) ListNew(gk schema.GroupKind) ([]client.Object, error) {
 		if key.GroupVersionKind != gvk {
 			continue
 		}
-		o := r.newObjects[key].New.DeepCopyObject().(client.Object)
+		no := r.newObjects[key]
+		if no.New == nil {
+			continue
+		}
+		o := no.New.DeepCopyObject().(client.Object)
 		res = append(res, o)
 	}
 
