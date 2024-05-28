@@ -585,6 +585,11 @@ func (s *K8sTestSuite) testIngressRoutes(ctx context.Context) {
 						Path:  "/route2",
 						Match: v1alpha2.Exact,
 					},
+					{
+						// regular expression match
+						Path:  "/(route3|route4).*",
+						Match: v1alpha2.RegularExpression,
+					},
 				},
 			},
 		}
@@ -600,10 +605,16 @@ func (s *K8sTestSuite) testIngressRoutes(ctx context.Context) {
 					capsuleOwnerRef,
 				},
 				Annotations: map[string]string{
-					"te": "st",
+					"te":                                    "st",
+					"nginx.ingress.kubernetes.io/use-regex": "true",
+				},
+				Labels: map[string]string{
+					pipeline.LabelOwnedByCapsule:  "test",
+					pipeline.RigDevInterfaceLabel: "http",
 				},
 			},
 			Spec: netv1.IngressSpec{
+				IngressClassName: ptr.New("nginx"),
 				Rules: []netv1.IngressRule{{
 					Host: "test1.com",
 					IngressRuleValue: netv1.IngressRuleValue{
@@ -624,6 +635,18 @@ func (s *K8sTestSuite) testIngressRoutes(ctx context.Context) {
 								{
 									Path:     "/route2",
 									PathType: ptr.New(netv1.PathTypeExact),
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: "test",
+											Port: netv1.ServiceBackendPort{
+												Name: "http",
+											},
+										},
+									},
+								},
+								{
+									Path:     "/(route3|route4).*",
+									PathType: ptr.New(netv1.PathTypeImplementationSpecific),
 									Backend: netv1.IngressBackend{
 										Service: &netv1.IngressServiceBackend{
 											Name: "test",

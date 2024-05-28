@@ -210,6 +210,15 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 				for _, path := range route.Paths {
 					var pt *netv1.PathType
 					switch path.Match {
+					case v1alpha2.RegularExpression:
+						if ing.Spec.IngressClassName != nil && *ing.Spec.IngressClassName == "nginx" {
+							_, regExpOk := ing.Annotations["nginx.ingress.kubernetes.io/use-regex"]
+							_, rewriteOk := ing.Annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+							if !regExpOk && !rewriteOk {
+								ing.Annotations["nginx.ingress.kubernetes.io/use-regex"] = "true"
+							}
+						}
+						pt = ptr.New(netv1.PathTypeImplementationSpecific)
 					case v1alpha2.Exact:
 						pt = ptr.New(netv1.PathTypeExact)
 					default:

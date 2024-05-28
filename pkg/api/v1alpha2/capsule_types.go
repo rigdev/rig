@@ -255,6 +255,8 @@ const (
 	Exact PathMatchType = "Exact"
 	// Path prefix, for when only the prefix needs to match.
 	PathPrefix PathMatchType = "PathPrefix"
+	// Path regular expression, for when the path should match a regular expression.
+	RegularExpression PathMatchType = "RegularExpression"
 )
 
 // A HTTP path routing.
@@ -262,7 +264,7 @@ type HTTPPathRoute struct {
 	// Path of the route.
 	Path string `json:"path" protobuf:"1"`
 	// The method of matching. By default, `PathPrefix` is used.
-	// +kubebuilder:validation:Enum=PathPrefix;Exact
+	// +kubebuilder:validation:Enum=PathPrefix;Exact;RegularExpression
 	Match PathMatchType `json:"match,omitempty" protobuf:"2"`
 }
 

@@ -226,6 +226,8 @@ func InterfaceConversion(i *capsule.Interface) (*v1alpha2.CapsuleInterface, erro
 			switch p.Match {
 			case capsule.PathMatchType_PATH_MATCH_TYPE_EXACT:
 				path.Match = string(types_v1alpha2.Exact)
+			case capsule.PathMatchType_PATH_MATCH_TYPE_REGULAR_EXPRESSION:
+				path.Match = string(types_v1alpha2.RegularExpression)
 			case capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX,
 				capsule.PathMatchType_PATH_MATCH_TYPE_UNSPECIFIED:
 				path.Match = string(types_v1alpha2.PathPrefix)
@@ -594,6 +596,8 @@ func makeHostRoute(route *v1alpha2.HostRoute) *capsule.HostRoute {
 			pp.Match = capsule.PathMatchType_PATH_MATCH_TYPE_EXACT
 		case string(types_v1alpha2.PathPrefix):
 			pp.Match = capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX
+		case string(types_v1alpha2.RegularExpression):
+			pp.Match = capsule.PathMatchType_PATH_MATCH_TYPE_REGULAR_EXPRESSION
 		}
 		res.Paths = append(res.Paths, pp)
 	}
