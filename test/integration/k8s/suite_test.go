@@ -97,7 +97,7 @@ func (s *K8sTestSuite) SetupSuite() {
 				Config: `
 clusterIssuer: "test"
 createCertificateResources: true
-ingressClassName: ""
+ingressClassName: "nginx"
 disableTLS: false
 `,
 			},
