@@ -77,6 +77,20 @@ service Service {
 
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
   rpc GetRevision(GetRevisionRequest) returns (GetRevisionResponse) {}
+  rpc WatchStatus(WatchStatusRequest) returns (stream WatchStatusResponse) {}
+}
+
+message WatchStatusRequest {
+  // The capsule to watch the status of.
+  string capsule_id = 1;
+  // The project in which the capsule lives.
+  string project_id = 2;
+  // The environment to watch the status of.
+  string environment_id = 3;
+}
+
+message WatchStatusResponse {
+  api.v1.capsule.Status status = 1;
 }
 
 // GetStatusRequest is a request to start streaming the capsule status
