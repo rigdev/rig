@@ -147,7 +147,10 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 			"can be read. The Network Interface must have both a name and a port.")
 	baseDeploy.Flags().StringSliceVar(&removeNetworkInterfaces, "rm-network-interface", nil,
 		"remove a network interface by name.")
-	baseDeploy.Flags().Uint64Var(&currentRolloutID, "current-rollout", 0, "If set, will verify that the current rollout is the one given.")
+	baseDeploy.Flags().Uint64Var(
+		&currentRolloutID, "current-rollout", 0,
+		"If set, will verify that the current rollout is the one given.",
+	)
 
 	if err := baseDeploy.RegisterFlagCompletionFunc(
 		"image",
