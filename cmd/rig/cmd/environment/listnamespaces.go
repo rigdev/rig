@@ -8,7 +8,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
@@ -46,8 +46,8 @@ func (c *Cmd) listNamespaces(ctx context.Context, _ *cobra.Command, args []strin
 		}
 	}
 
-	if base.Flags.OutputType != common.OutputTypePretty {
-		return common.FormatPrint(res, base.Flags.OutputType)
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		return common.FormatPrint(res, flags.Flags.OutputType)
 	}
 
 	tbl := table.
