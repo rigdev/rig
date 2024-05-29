@@ -302,12 +302,13 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId:     capsuleName,
-			Changes:       changes,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
-			Force:         true,
-			ForceOverride: forceOverride,
+			CapsuleId:        capsuleName,
+			Changes:          changes,
+			ProjectId:        flags.GetProject(c.Scope),
+			EnvironmentId:    flags.GetEnvironment(c.Scope),
+			Force:            true,
+			ForceOverride:    forceOverride,
+			CurrentRolloutId: currentRolloutID,
 		},
 	}
 
