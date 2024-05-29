@@ -173,6 +173,10 @@ func (p *Plugin) createDeployment(
 	}
 
 	for i, emptyPath := range strings.Split(req.Capsule().GetAnnotations()[AnnotationEmptyDirs], ",") {
+		if emptyPath == "" {
+			continue
+		}
+
 		name := fmt.Sprintf("empty-dir-%d", i)
 		volumes = append(volumes, v1.Volume{
 			Name: name,
