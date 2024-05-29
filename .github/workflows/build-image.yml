@@ -3,6 +3,9 @@ name: Build Docker Image
 on:
   workflow_call: {}
   workflow_dispatch: {}
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-image:
