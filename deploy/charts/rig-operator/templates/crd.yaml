@@ -659,6 +659,7 @@ spec:
                                   enum:
                                   - PathPrefix
                                   - Exact
+                                  - RegularExpression
                                   type: string
                                 path:
                                   description: Path of the route.
