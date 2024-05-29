@@ -23,6 +23,7 @@ import (
 	rerrors "github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	envmapping "github.com/rigdev/rig/plugins/builtin/env_mapping"
+	"github.com/rigdev/rig/plugins/capsulesteps/deployment"
 	"github.com/rigdev/rig/plugins/capsulesteps/ingress_routes"
 	"github.com/rivo/tview"
 	"github.com/spf13/afero"
@@ -446,9 +447,10 @@ func (c *Cmd) getDeployment(ctx context.Context, migration *Migration) error {
 	migration.capsule = &v1alpha2.Capsule{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace:   migration.currentResources.Deployment.Namespace,
-			Annotations: annotations,
+			Annotations: map[string]string{},
 		},
 	}
+	maps.Copy(migration.capsule.Annotations, annotations)
 
 	return nil
 }
@@ -1001,6 +1003,7 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 
 	// Migrate ConfigMap and Secret files
 	var files []v1alpha2.File
+	var emptyPaths []string
 	for _, volume := range migration.currentResources.Deployment.Spec.Template.Spec.Volumes {
 		var file v1alpha2.File
 		var configFile *capsule.Change_ConfigFile
@@ -1025,8 +1028,9 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 			})
 			continue
 		}
+		switch {
 		// If Volume is a ConfigMap
-		if volume.ConfigMap != nil {
+		case volume.ConfigMap != nil:
 			configMap := &corev1.ConfigMap{}
 			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      volume.ConfigMap.Name,
@@ -1072,7 +1076,7 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 				Path: path,
 			}
 			// If Volume is a Secret
-		} else if volume.Secret != nil {
+		case volume.Secret != nil:
 			secret := &corev1.Secret{}
 			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      volume.Secret.SecretName,
@@ -1115,7 +1119,16 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 					Warning: "Volume does not have exactly one item. Cannot migrate files",
 				})
 			}
-		} else {
+
+		case volume.EmptyDir != nil:
+			for _, v := range container.VolumeMounts {
+				if v.Name == volume.Name {
+					emptyPaths = append(emptyPaths, v.MountPath)
+					break
+				}
+			}
+
+		default:
 			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
 				Kind: "Deployment",
 				Name: migration.currentResources.Deployment.Name,
@@ -1133,6 +1146,10 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 				},
 			})
 		}
+	}
+
+	if len(emptyPaths) > 0 {
+		migration.capsule.Annotations[deployment.AnnotationEmptyDirs] = strings.Join(emptyPaths, ",")
 	}
 
 	migration.capsule.Spec.Files = files

@@ -326,6 +326,10 @@ func (p StandardPrompter) TableSelect(
 	columnHeaders []string,
 	opts ...SelectInputOption,
 ) (int, error) {
+	if len(choices) == 0 {
+		return 0, fmt.Errorf("'%s' failed; no choices to select from", label)
+	}
+
 	// TODO Honestly, this thing with manually creating the table rows and header
 	// feels like I'm reinventing the wheel. Maybe find some package to do this for me?
 	// I can't just use our table pretty printer as I don't want to print a table,

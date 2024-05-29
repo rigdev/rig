@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
@@ -35,6 +36,7 @@ const (
 	Name = "rigdev.deployment"
 
 	AnnotationRecreateStrategy = "rig.dev/recreate-strategy"
+	AnnotationEmptyDirs        = "rig.dev/empty-dirs"
 )
 
 // Configuration for the deployment plugin
@@ -167,6 +169,24 @@ func (p *Plugin) createDeployment(
 			SecretRef: &v1.SecretEnvSource{
 				LocalObjectReference: v1.LocalObjectReference{Name: name},
 			},
+		})
+	}
+
+	for i, emptyPath := range strings.Split(req.Capsule().GetAnnotations()[AnnotationEmptyDirs], ",") {
+		if emptyPath == "" {
+			continue
+		}
+
+		name := fmt.Sprintf("empty-dir-%d", i)
+		volumes = append(volumes, v1.Volume{
+			Name: name,
+			VolumeSource: v1.VolumeSource{
+				EmptyDir: &v1.EmptyDirVolumeSource{},
+			},
+		})
+		volumeMounts = append(volumeMounts, v1.VolumeMount{
+			Name:      name,
+			MountPath: emptyPath,
 		})
 	}
 
