@@ -1,0 +1,28 @@
+name: Build Docker Image
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        run: docker build -t ghcr.io/rigdev/rig-operator:${GITHUB_SHA} -f ./build/package/Dockerfile .
+
+      - name: Save image
+        run: docker save ghcr.io/rigdev/rig-operator:${GITHUB_SHA} > rig-operator.tar
+
+      - name: Temporarily save Docker image
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-artifact
+          path: rig-operator.tar
+          retention-days: 1
