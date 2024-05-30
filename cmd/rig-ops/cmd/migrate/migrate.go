@@ -14,6 +14,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -684,7 +685,7 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 							Metric: &capsule.CustomMetric_Object{
 								Object: &capsule.ObjectMetric{
 									MetricName: metric.Object.Metric.Name,
-									ObjectReference: &capsule.ObjectReference{
+									ObjectReference: &model.ObjectReference{
 										Kind:       metric.Object.DescribedObject.Kind,
 										Name:       metric.Object.DescribedObject.Name,
 										ApiVersion: metric.Object.DescribedObject.APIVersion,

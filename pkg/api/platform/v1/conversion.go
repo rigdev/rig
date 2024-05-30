@@ -9,6 +9,7 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	v2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
+	"github.com/rigdev/rig-go-api/model"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/rigdev/rig/cmd/common"
@@ -451,7 +452,7 @@ func HorizontalScaleSpecConversion(spec *v1alpha2.HorizontalScale) *capsule.Hori
 					MatchLabels:  maps.Clone(object.GetMatchLabels()),
 					AverageValue: object.GetAverageValue(),
 					Value:        object.GetValue(),
-					ObjectReference: &capsule.ObjectReference{
+					ObjectReference: &model.ObjectReference{
 						Kind:       object.GetObjectReference().GetKind(),
 						Name:       object.GetObjectReference().GetName(),
 						ApiVersion: object.GetObjectReference().GetApiVersion(),

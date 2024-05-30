@@ -323,7 +323,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		return nil
 	}
 
-	return c.waitForRolloutDone(ctx, res.Msg.GetRolloutId(), capsuleName)
+	return c.waitForRolloutDone(ctx, res.Msg.GetRolloutId(), res.Msg.GetRevision(), capsuleName)
 }
 
 func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) {
@@ -503,7 +503,43 @@ func (c *Cmd) promptForExistingImage(ctx context.Context, capsuleID string) (str
 	return images[idx].GetImageId(), nil
 }
 
-func (c *Cmd) waitForRolloutDone(ctx context.Context, rolloutID uint64, capsuleID string) error {
+func (c *Cmd) waitForRolloutDone(
+	ctx context.Context,
+	rolloutID uint64,
+	revision *capsule.Revision,
+	capsuleID string,
+) error {
+	if rolloutID == 0 {
+		first := true
+		for {
+			resp, err := c.Rig.Capsule().GetRolloutOfRevisions(ctx, connect.NewRequest(&capsule.GetRolloutOfRevisionsRequest{
+				ProjectId:     flags.GetProject(c.Scope),
+				EnvironmentId: flags.GetEnvironment(c.Scope),
+				CapsuleId:     capsuleID,
+				Fingerprints: &model.Fingerprints{
+					Capsule: revision.GetMetadata().GetFingerprint(),
+				},
+			}))
+			if err != nil {
+				return err
+			}
+			switch r := resp.Msg.GetKind().(type) {
+			case *capsule.GetRolloutOfRevisionsResponse_NoRollout_:
+			case *capsule.GetRolloutOfRevisionsResponse_Rollout:
+				rolloutID = r.Rollout.GetRolloutId()
+			}
+			if rolloutID == 0 {
+				if first {
+					fmt.Println("Waiting for rollout to start...")
+					first = false
+				}
+			} else {
+				break
+			}
+			time.Sleep(time.Second)
+		}
+	}
+
 	var lastConfigure []*api_rollout.StepInfo
 	var lastResource []*api_rollout.StepInfo
 	var lastRunning []*api_rollout.StepInfo
