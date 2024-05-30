@@ -15,3 +15,10 @@ message RevisionMetadata {
 message Fingerprint {
   bytes bytes = 1;
 }
+
+message Fingerprints {
+  Fingerprint project = 1;
+  Fingerprint environment = 2;
+  Fingerprint capsule_set = 3;
+  Fingerprint capsule = 4;
+}

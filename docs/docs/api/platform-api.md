@@ -49,6 +49,8 @@
 
 
 
+
+
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -79,6 +81,7 @@
 | /api.v1.capsule.Service/GetJobExecutions | [GetJobExecutionsRequest](#api-v1-capsule-GetJobExecutionsRequest) | [GetJobExecutionsResponse](#api-v1-capsule-GetJobExecutionsResponse) | Get list of job executions performed by the Capsule. |
 | /api.v1.capsule.Service/GetStatus | [GetStatusRequest](#api-v1-capsule-GetStatusRequest) | [GetStatusResponse](#api-v1-capsule-GetStatusResponse) |  |
 | /api.v1.capsule.Service/GetRevision | [GetRevisionRequest](#api-v1-capsule-GetRevisionRequest) | [GetRevisionResponse](#api-v1-capsule-GetRevisionResponse) |  |
+| /api.v1.capsule.Service/GetRolloutOfRevisions | [GetRolloutOfRevisionsRequest](#api-v1-capsule-GetRolloutOfRevisionsRequest) | [GetRolloutOfRevisionsResponse](#api-v1-capsule-GetRolloutOfRevisionsResponse) |  |
 | /api.v1.capsule.Service/WatchStatus | [WatchStatusRequest](#api-v1-capsule-WatchStatusRequest) | [WatchStatusResponse](#api-v1-capsule-WatchStatusResponse) stream |  |
 
 
@@ -98,7 +101,6 @@
 | /api.v1.cluster.Service/List | [ListRequest](#api-v1-cluster-ListRequest) | [ListResponse](#api-v1-cluster-ListResponse) |  |
 | /api.v1.cluster.Service/GetConfig | [GetConfigRequest](#api-v1-cluster-GetConfigRequest) | [GetConfigResponse](#api-v1-cluster-GetConfigResponse) | GetConfig returns the config for the cluster. |
 | /api.v1.cluster.Service/GetConfigs | [GetConfigsRequest](#api-v1-cluster-GetConfigsRequest) | [GetConfigsResponse](#api-v1-cluster-GetConfigsResponse) | GetConfigs returns the configs for all clusters. |
-
 
 
 
@@ -161,7 +163,6 @@
 | /api.v1.image.Service/Add | [AddRequest](#api-v1-image-AddRequest) | [AddResponse](#api-v1-image-AddResponse) | Add a new image. Images are immutable and cannot change. Add a new image to make changes from an existing one. |
 | /api.v1.image.Service/List | [ListRequest](#api-v1-image-ListRequest) | [ListResponse](#api-v1-image-ListResponse) | List images for a capsule. |
 | /api.v1.image.Service/Delete | [DeleteRequest](#api-v1-image-DeleteRequest) | [DeleteResponse](#api-v1-image-DeleteResponse) | Delete a image. |
-
 
 
 
@@ -1141,6 +1142,89 @@ Different states a job execution can be in
 
 
 
+<a name="model_metrics-proto"></a>
+
+## model/metrics.proto
+
+
+
+<a name="model-ContainerMetrics"></a>
+
+### ContainerMetrics
+Metrics for a container.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp of the metrics. |
+| memory_bytes | [uint64](#uint64) |  | Memory usage in bytes. |
+| cpu_ms | [uint64](#uint64) |  | CPU usage in milliseconds. |
+| storage_bytes | [uint64](#uint64) |  | Storage usage in bytes. |
+
+
+
+
+
+
+<a name="model-InstanceMetrics"></a>
+
+### InstanceMetrics
+Metrics for an instance
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | Capsule of the instance. |
+| instance_id | [string](#string) |  | Instance ID. |
+| main_container | [ContainerMetrics](#model-ContainerMetrics) |  | Main container metrics. |
+| proxy_container | [ContainerMetrics](#model-ContainerMetrics) |  | Proxy container metrics. |
+
+
+
+
+
+
+<a name="model-Metric"></a>
+
+### Metric
+Custom metrics
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the metric. |
+| latest_value | [double](#double) |  | Latest value of the metric. |
+| latest_timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp of the latest value. |
+
+
+
+
+
+
+<a name="model-ObjectReference"></a>
+
+### ObjectReference
+A reference to a kubernetes object.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  | Type of object. |
+| name | [string](#string) |  | Name of the object. |
+| api_version | [string](#string) |  | Api version of the object. |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_change-proto"></a>
 
 ## api/v1/capsule/change.proto
@@ -1610,7 +1694,7 @@ Metric emitted by kubernetes object.
 | match_labels | [ObjectMetric.MatchLabelsEntry](#api-v1-capsule-ObjectMetric-MatchLabelsEntry) | repeated | Labels of the object to match. |
 | average_value | [string](#string) |  | Average value target. |
 | value | [string](#string) |  | Value target. |
-| object_reference | [ObjectReference](#api-v1-capsule-ObjectReference) |  | Reference to the object. |
+| object_reference | [model.ObjectReference](#model-ObjectReference) |  | Reference to the object. |
 
 
 
@@ -1627,23 +1711,6 @@ Metric emitted by kubernetes object.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-ObjectReference"></a>
-
-### ObjectReference
-A reference to a kubernetes object.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  | Type of object. |
-| name | [string](#string) |  | Name of the object. |
-| api_version | [string](#string) |  | Api version of the object. |
 
 
 
@@ -2959,55 +3026,6 @@ The actual log message
 
 
 
-<a name="api_v1_capsule_metrics-proto"></a>
-
-## api/v1/capsule/metrics.proto
-
-
-
-<a name="api-v1-capsule-ContainerMetrics"></a>
-
-### ContainerMetrics
-Metrics for a container.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp of the metrics. |
-| memory_bytes | [uint64](#uint64) |  | Memory usage in bytes. |
-| cpu_ms | [uint64](#uint64) |  | CPU usage in milliseconds. |
-| storage_bytes | [uint64](#uint64) |  | Storage usage in bytes. |
-
-
-
-
-
-
-<a name="api-v1-capsule-InstanceMetrics"></a>
-
-### InstanceMetrics
-Metrics for an instance
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | Capsule of the instance. |
-| instance_id | [string](#string) |  | Instance ID. |
-| main_container | [ContainerMetrics](#api-v1-capsule-ContainerMetrics) |  | Main container metrics. |
-| proxy_container | [ContainerMetrics](#api-v1-capsule-ContainerMetrics) |  | Proxy container metrics. |
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="model_revision-proto"></a>
 
 ## model/revision.proto
@@ -3023,6 +3041,24 @@ Metrics for an instance
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | bytes | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="model-Fingerprints"></a>
+
+### Fingerprints
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Fingerprint](#model-Fingerprint) |  |  |
+| environment | [Fingerprint](#model-Fingerprint) |  |  |
+| capsule_set | [Fingerprint](#model-Fingerprint) |  |  |
+| capsule | [Fingerprint](#model-Fingerprint) |  |  |
 
 
 
@@ -4172,6 +4208,64 @@ Different states a step can be in.
 
 
 
+<a name="api_v1_project_revision-proto"></a>
+
+## api/v1/project/revision.proto
+
+
+
+<a name="api-v1-project-Revision"></a>
+
+### Revision
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.Project](#platform-v1-Project) |  |  |
+| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_environment_revision-proto"></a>
+
+## api/v1/environment/revision.proto
+
+
+
+<a name="api-v1-environment-Revision"></a>
+
+### Revision
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.Environment](#platform-v1-Environment) |  |  |
+| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_rollout-proto"></a>
 
 ## api/v1/capsule/rollout.proto
@@ -4197,6 +4291,24 @@ Different states a step can be in.
 
 
 
+<a name="api-v1-capsule-Revisions"></a>
+
+### Revisions
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [api.v1.project.Revision](#api-v1-project-Revision) |  |  |
+| environment | [api.v1.environment.Revision](#api-v1-environment-Revision) |  |  |
+| capsule_set | [SetRevision](#api-v1-capsule-SetRevision) |  |  |
+| capsule | [Revision](#api-v1-capsule-Revision) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-Rollout"></a>
 
 ### Rollout
@@ -4208,6 +4320,8 @@ The rollout model.
 | rollout_id | [uint64](#uint64) |  | Unique indentifier for the rollout. |
 | config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
 | status | [rollout.Status](#api-v1-capsule-rollout-Status) |  | The rollout status. |
+| spec | [platform.v1.CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
+| revisions | [Revisions](#api-v1-capsule-Revisions) |  |  |
 
 
 
@@ -4740,7 +4854,7 @@ Response to getting capsule metrics.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| instance_metrics | [InstanceMetrics](#api-v1-capsule-InstanceMetrics) | repeated | Metrics |
+| instance_metrics | [model.InstanceMetrics](#model-InstanceMetrics) | repeated | Metrics |
 
 
 
@@ -4840,6 +4954,7 @@ Deploy response.
 | rollout_id | [uint64](#uint64) |  | ID of the new rollout. |
 | resource_yaml | [DeployResponse.ResourceYamlEntry](#api-v1-capsule-DeployResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. |
 | rollout_config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
+| revision | [Revision](#api-v1-capsule-Revision) |  | The capsule revision created. |
 
 
 
@@ -4960,7 +5075,7 @@ Response to getting custom metrics for a capsule in an environment.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| metrics | [Metric](#api-v1-capsule-Metric) | repeated | Custom Metrics. |
+| metrics | [model.Metric](#model-Metric) | repeated | Custom Metrics. |
 
 
 
@@ -5120,6 +5235,58 @@ Response to get a capsule.
 
 
 
+<a name="api-v1-capsule-GetRolloutOfRevisionsRequest"></a>
+
+### GetRolloutOfRevisionsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| fingerprints | [model.Fingerprints](#model-Fingerprints) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetRolloutOfRevisionsResponse"></a>
+
+### GetRolloutOfRevisionsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| no_rollout | [GetRolloutOfRevisionsResponse.NoRollout](#api-v1-capsule-GetRolloutOfRevisionsResponse-NoRollout) |  |  |
+| rollout | [Rollout](#api-v1-capsule-Rollout) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetRolloutOfRevisionsResponse-NoRollout"></a>
+
+### GetRolloutOfRevisionsResponse.NoRollout
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [bool](#bool) |  | Indicates no rollout with a project revision at least as new as the one given. |
+| environment | [bool](#bool) |  | Indicates no rollout with an environment revision at least as new as the one given. |
+| capsule_set | [bool](#bool) |  | Indicates no rollout with a capsule set revision at least as new as the one given. |
+| capsule | [bool](#bool) |  | Indicates no rollout with a capsule revision at least as new as the one given. |
+
+
+
+
+
+
 <a name="api-v1-capsule-GetRolloutRequest"></a>
 
 ### GetRolloutRequest
@@ -5147,7 +5314,6 @@ in a project.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rollout | [Rollout](#api-v1-capsule-Rollout) |  | The rollout. |
-| revision | [Revision](#api-v1-capsule-Revision) |  |  |
 
 
 
@@ -5390,23 +5556,6 @@ The response of a capsule.Logs RPC
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | log | [Log](#api-v1-capsule-Log) |  | The actual logs |
-
-
-
-
-
-
-<a name="api-v1-capsule-Metric"></a>
-
-### Metric
-Custom metrics
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the metric. |
-| latest_value | [double](#double) |  | Latest value of the metric. |
-| latest_timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp of the latest value. |
 
 
 
@@ -5799,35 +5948,6 @@ Environment model.
 | add_project | [string](#string) |  |  |
 | remove_project | [string](#string) |  |  |
 | set_global | [bool](#bool) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="api_v1_environment_revision-proto"></a>
-
-## api/v1/environment/revision.proto
-
-
-
-<a name="api-v1-environment-Revision"></a>
-
-### Revision
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| spec | [platform.v1.Environment](#platform-v1-Environment) |  |  |
-| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
 
 
 
@@ -6725,35 +6845,6 @@ The plan for a rig installation
 
 
 
-<a name="api_v1_project_revision-proto"></a>
-
-## api/v1/project/revision.proto
-
-
-
-<a name="api-v1-project-Revision"></a>
-
-### Revision
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| spec | [platform.v1.Project](#platform-v1-Project) |  |  |
-| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="api_v1_project_service-proto"></a>
 
 ## api/v1/project/service.proto
@@ -6824,7 +6915,7 @@ Request to get custom metrics for a project and environment.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| object_reference | [api.v1.capsule.ObjectReference](#api-v1-capsule-ObjectReference) |  | The object to get metrics for. |
+| object_reference | [model.ObjectReference](#model-ObjectReference) |  | The object to get metrics for. |
 | project_id | [string](#string) |  | The project to get metrics for. |
 | environment_id | [string](#string) |  | The environment to get metrics for. |
 
@@ -6841,7 +6932,7 @@ Response for getting custom metrics for a project and environment.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| metrics | [api.v1.capsule.Metric](#api-v1-capsule-Metric) | repeated | The metrics for the given object. |
+| metrics | [model.Metric](#model-Metric) | repeated | The metrics for the given object. |
 | project_id | [string](#string) |  | The project the metrics are for. |
 | environment_id | [string](#string) |  | The environment the metrics are for. |
 

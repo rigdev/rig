@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1.capsule;
 
 import "api/v1/capsule/job.proto";
+import "model/metrics.proto";
 
 // Change to a capsule that ultimately results in a new rollout.
 message Change {
@@ -317,15 +318,5 @@ message ObjectMetric {
   // Value target.
   string value = 4;
   // Reference to the object.
-  ObjectReference object_reference = 5;
-}
-
-// A reference to a kubernetes object.
-message ObjectReference {
-  // Type of object.
-  string kind = 1;
-  // Name of the object.
-  string name = 2;
-  // Api version of the object.
-  string api_version = 3;
+  model.ObjectReference object_reference = 5;
 }

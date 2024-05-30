@@ -7,6 +7,10 @@ import "model/author.proto";
 import "api/v1/capsule/rollout/status.proto";
 import "api/v1/capsule/job.proto";
 import "api/v1/capsule/change.proto";
+import "platform/v1/generated.proto";
+import "api/v1/project/revision.proto";
+import "api/v1/environment/revision.proto";
+import "api/v1/capsule/revision.proto";
 
 // The rollout model.
 message Rollout {
@@ -16,6 +20,8 @@ message Rollout {
   RolloutConfig config = 2;
   // The rollout status.
   api.v1.capsule.rollout.Status status = 4;
+  platform.v1.CapsuleSpec spec = 5;
+  api.v1.capsule.Revisions revisions = 6;
 }
 
 enum EventType {
@@ -47,4 +53,11 @@ message ConfigFile {
   model.Author updated_by = 3;
   google.protobuf.Timestamp updated_at = 4;
   bool is_secret = 5;
+}
+
+message Revisions {
+  api.v1.project.Revision project = 1;
+  api.v1.environment.Revision environment = 2;
+  api.v1.capsule.SetRevision capsule_set = 3;
+  api.v1.capsule.Revision capsule = 4;
 }
