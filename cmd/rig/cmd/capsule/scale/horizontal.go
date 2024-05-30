@@ -14,6 +14,7 @@ import (
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/project"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -400,7 +401,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 	metricResp, err := c.Rig.Project().GetCustomObjectMetrics(
 		ctx,
 		connect.NewRequest(&project.GetCustomObjectMetricsRequest{
-			ObjectReference: &capsule.ObjectReference{
+			ObjectReference: &model.ObjectReference{
 				Kind:       kind,
 				Name:       objName,
 				ApiVersion: api,
@@ -436,7 +437,7 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 		Object: &capsule.ObjectMetric{
 			MetricName:  metricName,
 			MatchLabels: labelSelectors,
-			ObjectReference: &capsule.ObjectReference{
+			ObjectReference: &model.ObjectReference{
 				Kind:       kind,
 				Name:       objName,
 				ApiVersion: api,
@@ -453,8 +454,8 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 	return metric, nil
 }
 
-func (c *Cmd) prompMetricName(metrics []*capsule.Metric) (string, error) {
-	slices.SortFunc(metrics, func(m1, m2 *capsule.Metric) int {
+func (c *Cmd) prompMetricName(metrics []*model.Metric) (string, error) {
+	slices.SortFunc(metrics, func(m1, m2 *model.Metric) int {
 		return strings.Compare(m1.Name, m2.Name)
 	})
 
