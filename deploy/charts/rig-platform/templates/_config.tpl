@@ -140,12 +140,15 @@ client:
   smtp:
     password: {{ .smtp.password | quote }}
   {{- end }}
-  {{- if and .git .git.auths }}
+
+  {{- with .git }}
+  {{- with .auths }}
   git:
     auths:
-    {{- range .git.auths }}
+    {{- range . }}
       - {{ . | toYaml | indent 8 | trim }}
     {{- end }}
+  {{- end }}
   {{- end }}
 {{- end }}
 
@@ -154,26 +157,6 @@ repository:
   secret: {{ .repository.secret | quote }}
 {{- end }}
 
-{{- if and .cluster .cluster.git }}
-{{- with .cluster.git.credentials }}
-{{- if or .https.password .ssh.privateKey }}
-cluster:
-  git:
-    credentials:
-      {{- if .https.password }}
-      https:
-        password: {{ .https.password | quote }}
-      {{- end }}
-      {{- if .ssh.privateKey }}
-      ssh:
-        privateKey: {{ .ssh.privateKey | quote }}
-        {{- if .ssh.privateKeyPassword }}
-        privateKeyPassword: {{ .ssh.privateKeyPassword | quote }}
-        {{- end }}
-      {{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
 auth:
   {{- if not (and .auth.certificateFile .auth.certificateKeyFile) }}
   secret: {{ .auth.secret | quote }}
