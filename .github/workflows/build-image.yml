@@ -42,7 +42,7 @@ jobs:
       - name: Upload Rig CLI
         uses: actions/upload-artifact@v4
         with:
-          name: rig
+          name: rig-cli
           path: bin/rig
           retention-days: 1
 
