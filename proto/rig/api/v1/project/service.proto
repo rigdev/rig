@@ -3,9 +3,8 @@ syntax = "proto3";
 package api.v1.project;
 
 import "api/v1/project/project.proto";
-import "api/v1/capsule/change.proto";
-import "api/v1/capsule/service.proto";
 import "model/common.proto";
+import "model/metrics.proto";
 
 // The service to manage your projects.
 service Service {
@@ -104,7 +103,7 @@ message PublicKeyResponse {
 // Request to get custom metrics for a project and environment.
 message GetCustomObjectMetricsRequest {
   // The object to get metrics for.
-  api.v1.capsule.ObjectReference object_reference = 1;
+  model.ObjectReference object_reference = 1;
   // The project to get metrics for.
   string project_id = 2;
   // The environment to get metrics for.
@@ -114,7 +113,7 @@ message GetCustomObjectMetricsRequest {
 // Response for getting custom metrics for a project and environment.
 message GetCustomObjectMetricsResponse {
   // The metrics for the given object.
-  repeated api.v1.capsule.Metric metrics = 1;
+  repeated model.Metric metrics = 1;
   // The project the metrics are for.
   string project_id = 2;
   // The environment the metrics are for.
