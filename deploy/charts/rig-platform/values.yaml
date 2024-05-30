@@ -133,17 +133,16 @@ rig:
       token: ""
       channel_id: ""
     git:
-      auths: 
-        []
-  #     - url: ""
-  #       urlPrefix: ""
-  #       credentials:
-  #         https:
-  #           username: ""
-  #           password: ""
-  #         ssh:
-  #           privateKey: ""
-  #           privateKeyPassword: ""
+      auths: []
+      # - url: ""
+      #   urlPrefix: ""
+      #   credentials:
+      #     https:
+      #       username: ""
+      #       password: ""
+      #     ssh:
+      #       privateKey: ""
+      #       privateKeyPassword: ""
       author:
         name: ""
         email: ""
@@ -161,10 +160,8 @@ rig:
     level: info
 
   notification:
-    projects:
-      []
-    environments:
-      []
+    projects: []
+    environments: []
 
   clusters:
     {}
