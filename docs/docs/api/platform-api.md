@@ -79,6 +79,7 @@
 | /api.v1.capsule.Service/GetJobExecutions | [GetJobExecutionsRequest](#api-v1-capsule-GetJobExecutionsRequest) | [GetJobExecutionsResponse](#api-v1-capsule-GetJobExecutionsResponse) | Get list of job executions performed by the Capsule. |
 | /api.v1.capsule.Service/GetStatus | [GetStatusRequest](#api-v1-capsule-GetStatusRequest) | [GetStatusResponse](#api-v1-capsule-GetStatusResponse) |  |
 | /api.v1.capsule.Service/GetRevision | [GetRevisionRequest](#api-v1-capsule-GetRevisionRequest) | [GetRevisionResponse](#api-v1-capsule-GetRevisionResponse) |  |
+| /api.v1.capsule.Service/WatchStatus | [WatchStatusRequest](#api-v1-capsule-WatchStatusRequest) | [WatchStatusResponse](#api-v1-capsule-WatchStatusResponse) stream |  |
 
 
 
@@ -5504,6 +5505,38 @@ Deprecated update - This is now a no-op
 
 ### UpdateResponse
 Deprecated: Empty update response.
+
+
+
+
+
+
+<a name="api-v1-capsule-WatchStatusRequest"></a>
+
+### WatchStatusRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | The capsule to watch the status of. |
+| project_id | [string](#string) |  | The project in which the capsule lives. |
+| environment_id | [string](#string) |  | The environment to watch the status of. |
+
+
+
+
+
+
+<a name="api-v1-capsule-WatchStatusResponse"></a>
+
+### WatchStatusResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [Status](#api-v1-capsule-Status) |  |  |
 
 
 
