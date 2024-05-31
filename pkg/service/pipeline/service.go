@@ -7,6 +7,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/scheme"
 	"github.com/rigdev/rig/pkg/service/capabilities"
@@ -69,24 +70,38 @@ func (s *service) DryRun(
 	ctx context.Context,
 	cfg *v1alpha1.OperatorConfig,
 	namespace, capsuleName string,
-	spec *v1alpha2.Capsule,
+	capsuleSpec *v1alpha2.Capsule,
 	opts ...pipeline.CapsuleRequestOption,
 ) (*pipeline.Result, error) {
 	if cfg == nil {
 		cfg = s.cfg
 	}
-	if spec == nil {
-		spec = &v1alpha2.Capsule{}
+
+	if capsuleSpec == nil {
+		capsuleSpec = &v1alpha2.Capsule{}
 		if err := s.client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      capsuleName,
-		}, spec); err != nil {
+		}, capsuleSpec); err != nil {
 			return nil, err
+		}
+	} else {
+		// Load existing status object.
+		currentSpec := &v1alpha2.Capsule{}
+		if err := s.client.Get(ctx, types.NamespacedName{
+			Namespace: namespace,
+			Name:      capsuleName,
+		}, currentSpec); errors.IsNotFound(err) {
+			// Noop.
+		} else if err != nil {
+			return nil, err
+		} else {
+			capsuleSpec.Status = currentSpec.Status
 		}
 	}
 
-	if len(spec.GetUID()) == 0 {
-		spec.SetUID(types.UID("dry-run-spec"))
+	if len(capsuleSpec.GetUID()) == 0 {
+		capsuleSpec.SetUID(types.UID("dry-run-spec"))
 	}
 
 	steps, err := GetDefaultPipelineSteps(ctx, cfg, s.pluginManager, s.logger)
@@ -109,5 +124,5 @@ func (s *service) DryRun(
 		defer ps.Stop(ctx)
 	}
 
-	return p.RunCapsule(ctx, spec, s.client, append(opts, pipeline.WithDryRun())...)
+	return p.RunCapsule(ctx, capsuleSpec, s.client, append(opts, pipeline.WithDryRun())...)
 }

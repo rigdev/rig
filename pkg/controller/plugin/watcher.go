@@ -661,9 +661,15 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 		var events []*corev1.Event
 		for _, e := range ow.eventStore.List() {
 			event := e.(*corev1.Event)
-			if event.InvolvedObject.Name == co.GetName() {
-				events = append(events, event)
+			if event.InvolvedObject.Name != co.GetName() {
+				continue
 			}
+
+			if eventTimestamp(event).Before(co.GetCreationTimestamp().Time) {
+				continue
+			}
+
+			events = append(events, event)
 		}
 		info := f.cb(co, events, &res)
 		status := &apipipeline.ObjectStatus{
@@ -712,6 +718,22 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 			go ow.w.stopWatch(sw)
 		}
 	}
+}
+
+func eventTimestamp(event *corev1.Event) time.Time {
+	if !event.LastTimestamp.IsZero() {
+		return event.LastTimestamp.Time
+	}
+
+	if !event.EventTime.IsZero() {
+		return event.EventTime.Time
+	}
+
+	if !event.FirstTimestamp.IsZero() {
+		return event.FirstTimestamp.Time
+	}
+
+	return event.CreationTimestamp.Time
 }
 
 type objectWatcherResult struct {
