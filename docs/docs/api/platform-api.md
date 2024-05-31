@@ -49,8 +49,6 @@
 
 
 
-
-
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -101,6 +99,7 @@
 | /api.v1.cluster.Service/List | [ListRequest](#api-v1-cluster-ListRequest) | [ListResponse](#api-v1-cluster-ListResponse) |  |
 | /api.v1.cluster.Service/GetConfig | [GetConfigRequest](#api-v1-cluster-GetConfigRequest) | [GetConfigResponse](#api-v1-cluster-GetConfigResponse) | GetConfig returns the config for the cluster. |
 | /api.v1.cluster.Service/GetConfigs | [GetConfigsRequest](#api-v1-cluster-GetConfigsRequest) | [GetConfigsResponse](#api-v1-cluster-GetConfigsResponse) | GetConfigs returns the configs for all clusters. |
+
 
 
 
@@ -163,6 +162,7 @@
 | /api.v1.image.Service/Add | [AddRequest](#api-v1-image-AddRequest) | [AddResponse](#api-v1-image-AddResponse) | Add a new image. Images are immutable and cannot change. Add a new image to make changes from an existing one. |
 | /api.v1.image.Service/List | [ListRequest](#api-v1-image-ListRequest) | [ListResponse](#api-v1-image-ListResponse) | List images for a capsule. |
 | /api.v1.image.Service/Delete | [DeleteRequest](#api-v1-image-DeleteRequest) | [DeleteResponse](#api-v1-image-DeleteResponse) | Delete a image. |
+
 
 
 
@@ -4208,64 +4208,6 @@ Different states a step can be in.
 
 
 
-<a name="api_v1_project_revision-proto"></a>
-
-## api/v1/project/revision.proto
-
-
-
-<a name="api-v1-project-Revision"></a>
-
-### Revision
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| spec | [platform.v1.Project](#platform-v1-Project) |  |  |
-| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="api_v1_environment_revision-proto"></a>
-
-## api/v1/environment/revision.proto
-
-
-
-<a name="api-v1-environment-Revision"></a>
-
-### Revision
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| spec | [platform.v1.Environment](#platform-v1-Environment) |  |  |
-| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="api_v1_capsule_rollout-proto"></a>
 
 ## api/v1/capsule/rollout.proto
@@ -4291,24 +4233,6 @@ Different states a step can be in.
 
 
 
-<a name="api-v1-capsule-Revisions"></a>
-
-### Revisions
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project | [api.v1.project.Revision](#api-v1-project-Revision) |  |  |
-| environment | [api.v1.environment.Revision](#api-v1-environment-Revision) |  |  |
-| capsule_set | [SetRevision](#api-v1-capsule-SetRevision) |  |  |
-| capsule | [Revision](#api-v1-capsule-Revision) |  |  |
-
-
-
-
-
-
 <a name="api-v1-capsule-Rollout"></a>
 
 ### Rollout
@@ -4321,7 +4245,7 @@ The rollout model.
 | config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
 | status | [rollout.Status](#api-v1-capsule-rollout-Status) |  | The rollout status. |
 | spec | [platform.v1.CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
-| revisions | [Revisions](#api-v1-capsule-Revisions) |  |  |
+| metadata | [RolloutMetadata](#api-v1-capsule-RolloutMetadata) |  |  |
 
 
 
@@ -4366,6 +4290,23 @@ The rollout model.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-RolloutMetadata"></a>
+
+### RolloutMetadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| changes | [Change](#api-v1-capsule-Change) | repeated |  |
+| authors | [model.Author](#model-Author) | repeated |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
@@ -5961,6 +5902,35 @@ Environment model.
 
 
 
+<a name="api_v1_environment_revision-proto"></a>
+
+## api/v1/environment/revision.proto
+
+
+
+<a name="api-v1-environment-Revision"></a>
+
+### Revision
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.Environment](#platform-v1-Environment) |  |  |
+| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_environment_service-proto"></a>
 
 ## api/v1/environment/service.proto
@@ -6837,6 +6807,35 @@ The plan for a rig installation
 | PLAN_FREE | 1 | Free tier. |
 | PLAN_TEAM | 2 | Team / Pro tier. |
 | PLAN_ENTERPRISE | 3 | Enterprise tier. |
+
+
+
+
+
+
+
+
+<a name="api_v1_project_revision-proto"></a>
+
+## api/v1/project/revision.proto
+
+
+
+<a name="api-v1-project-Revision"></a>
+
+### Revision
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.Project](#platform-v1-Project) |  |  |
+| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
+
+
+
+
+
 
 
 
