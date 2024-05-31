@@ -50,6 +50,9 @@ service Service {
   rpc GetRollout(GetRolloutRequest) returns (GetRolloutResponse) {}
   // Lists all rollouts for the capsule.
   rpc ListRollouts(ListRolloutsRequest) returns (ListRolloutsResponse) {}
+  // Stream rollouts for a capsule.
+  rpc WatchRollouts(WatchRolloutsRequest)
+      returns (stream WatchRolloutsResponse) {}
   // Abort the rollout.
   rpc AbortRollout(AbortRolloutRequest) returns (AbortRolloutResponse) {}
   // Stop a Rollout, removing all resources associated with it.
@@ -64,6 +67,10 @@ service Service {
   // ListInstanceStatuses lists the status of all instances.
   rpc ListInstanceStatuses(ListInstanceStatusesRequest)
       returns (ListInstanceStatusesResponse) {}
+
+  // Stream Instance Statuses of a capsule.
+  rpc WatchInstanceStatuses(WatchInstanceStatusesRequest)
+      returns (stream WatchInstanceStatusesResponse) {}
   // Execute executes a command in a given in instance,
   // and returns the output along with an exit code.
   rpc Execute(stream ExecuteRequest) returns (stream ExecuteResponse) {}
@@ -79,7 +86,50 @@ service Service {
   rpc GetRevision(GetRevisionRequest) returns (GetRevisionResponse) {}
   rpc GetRolloutOfRevisions(GetRolloutOfRevisionsRequest)
       returns (GetRolloutOfRevisionsResponse) {}
+
+  // Stream the status of a capsule.
   rpc WatchStatus(WatchStatusRequest) returns (stream WatchStatusResponse) {}
+}
+
+message WatchRolloutsRequest {
+  // The capsule to list rollouts for.
+  string capsule_id = 1;
+  // The project in which the capsule lives.
+  string project_id = 2;
+  // The environment to list rollouts for.
+  string environment_id = 3;
+  // If given only the rollout with this ID will be watched.
+  uint64 rollout_id = 4;
+  // Pagination options.
+  model.Pagination pagination = 5;
+}
+
+message WatchRolloutsResponse {
+  api.v1.capsule.Rollout updated = 1;
+}
+
+message WatchInstanceStatusesRequest {
+  // The capsule to get the instance statuses from.
+  string capsule_id = 1;
+  // The project in which the capsule is.
+  string project_id = 2;
+  // The environment to get the instance statuses from.
+  string environment_id = 3;
+  // If given, only the instance with this ID will be watched.
+  string instance_id = 4;
+  // if true, deleted instances will be included in the response.
+  bool include_deleted = 5;
+  // if true, existing instances will be excluded from the response.
+  bool exclude_existing = 6;
+  // Pagination options.
+  model.Pagination pagination = 7;
+}
+
+message WatchInstanceStatusesResponse {
+  oneof response {
+    api.v1.capsule.instance.Status updated = 1;
+    string deleted = 2;
+  }
 }
 
 message WatchStatusRequest {
