@@ -3,6 +3,7 @@ package ingress_routes
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	cmv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
@@ -42,7 +43,7 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatusInfo {
 	for _, lb := range ingress.Status.LoadBalancer.Ingress {
 		if lb.IP != "" {
 			ipCondition.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
-			ipCondition.Message = "IP Assigned"
+			ipCondition.Message = fmt.Sprintf("IP Assigned '%s'", lb.IP)
 			status.Properties["IP"] = lb.IP
 		}
 	}
@@ -69,6 +70,13 @@ func onCertificateUpdated(
 	objectWatcher plugin.ObjectWatcher,
 ) *apipipeline.ObjectStatusInfo {
 	cert := obj.(*cmv1.Certificate)
+
+	revision := 1
+	if cert.Status.Revision != nil {
+		revision = *cert.Status.Revision
+	}
+	requestName := fmt.Sprintf("%s-%d", cert.GetName(), revision)
+	objectWatcher.WatchSecondaryByName(requestName, &cmv1.CertificateRequest{}, onCertificateRequestUpdated)
 
 	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
@@ -145,10 +153,6 @@ func onIngressUpdated(
 	objectWatcher.WatchSecondaryByLabels(labels.Set{
 		pipeline.LabelOwnedByCapsule: ingress.GetLabels()[pipeline.LabelOwnedByCapsule],
 	}, &cmv1.Certificate{}, onCertificateUpdated)
-
-	objectWatcher.WatchSecondaryByLabels(labels.Set{
-		pipeline.LabelOwnedByCapsule: ingress.GetLabels()[pipeline.LabelOwnedByCapsule],
-	}, &cmv1.CertificateRequest{}, onCertificateRequestUpdated)
 
 	return toIngressStatus(ingress)
 }
