@@ -70,19 +70,21 @@
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
 | /api.v1.capsule.Service/GetRollout | [GetRolloutRequest](#api-v1-capsule-GetRolloutRequest) | [GetRolloutResponse](#api-v1-capsule-GetRolloutResponse) | Get a single rollout by ID. |
 | /api.v1.capsule.Service/ListRollouts | [ListRolloutsRequest](#api-v1-capsule-ListRolloutsRequest) | [ListRolloutsResponse](#api-v1-capsule-ListRolloutsResponse) | Lists all rollouts for the capsule. |
+| /api.v1.capsule.Service/WatchRollouts | [WatchRolloutsRequest](#api-v1-capsule-WatchRolloutsRequest) | [WatchRolloutsResponse](#api-v1-capsule-WatchRolloutsResponse) stream | Stream rollouts for a capsule. |
 | /api.v1.capsule.Service/AbortRollout | [AbortRolloutRequest](#api-v1-capsule-AbortRolloutRequest) | [AbortRolloutResponse](#api-v1-capsule-AbortRolloutResponse) | Abort the rollout. |
 | /api.v1.capsule.Service/StopRollout | [StopRolloutRequest](#api-v1-capsule-StopRolloutRequest) | [StopRolloutResponse](#api-v1-capsule-StopRolloutResponse) | Stop a Rollout, removing all resources associated with it. |
 | /api.v1.capsule.Service/ListEvents | [ListEventsRequest](#api-v1-capsule-ListEventsRequest) | [ListEventsResponse](#api-v1-capsule-ListEventsResponse) | List capsule events. |
 | /api.v1.capsule.Service/CapsuleMetrics | [CapsuleMetricsRequest](#api-v1-capsule-CapsuleMetricsRequest) | [CapsuleMetricsResponse](#api-v1-capsule-CapsuleMetricsResponse) | Get metrics for a capsule |
 | /api.v1.capsule.Service/GetInstanceStatus | [GetInstanceStatusRequest](#api-v1-capsule-GetInstanceStatusRequest) | [GetInstanceStatusResponse](#api-v1-capsule-GetInstanceStatusResponse) | GetInstanceStatus returns the current status for the given instance. |
 | /api.v1.capsule.Service/ListInstanceStatuses | [ListInstanceStatusesRequest](#api-v1-capsule-ListInstanceStatusesRequest) | [ListInstanceStatusesResponse](#api-v1-capsule-ListInstanceStatusesResponse) | ListInstanceStatuses lists the status of all instances. |
+| /api.v1.capsule.Service/WatchInstanceStatuses | [WatchInstanceStatusesRequest](#api-v1-capsule-WatchInstanceStatusesRequest) | [WatchInstanceStatusesResponse](#api-v1-capsule-WatchInstanceStatusesResponse) stream | Stream Instance Statuses of a capsule. |
 | /api.v1.capsule.Service/Execute | [ExecuteRequest](#api-v1-capsule-ExecuteRequest) stream | [ExecuteResponse](#api-v1-capsule-ExecuteResponse) stream | Execute executes a command in a given in instance, and returns the output along with an exit code. |
 | /api.v1.capsule.Service/GetCustomInstanceMetrics | [GetCustomInstanceMetricsRequest](#api-v1-capsule-GetCustomInstanceMetricsRequest) | [GetCustomInstanceMetricsResponse](#api-v1-capsule-GetCustomInstanceMetricsResponse) |  |
 | /api.v1.capsule.Service/GetJobExecutions | [GetJobExecutionsRequest](#api-v1-capsule-GetJobExecutionsRequest) | [GetJobExecutionsResponse](#api-v1-capsule-GetJobExecutionsResponse) | Get list of job executions performed by the Capsule. |
 | /api.v1.capsule.Service/GetStatus | [GetStatusRequest](#api-v1-capsule-GetStatusRequest) | [GetStatusResponse](#api-v1-capsule-GetStatusResponse) |  |
 | /api.v1.capsule.Service/GetRevision | [GetRevisionRequest](#api-v1-capsule-GetRevisionRequest) | [GetRevisionResponse](#api-v1-capsule-GetRevisionResponse) |  |
 | /api.v1.capsule.Service/GetRolloutOfRevisions | [GetRolloutOfRevisionsRequest](#api-v1-capsule-GetRolloutOfRevisionsRequest) | [GetRolloutOfRevisionsResponse](#api-v1-capsule-GetRolloutOfRevisionsResponse) |  |
-| /api.v1.capsule.Service/WatchStatus | [WatchStatusRequest](#api-v1-capsule-WatchStatusRequest) | [WatchStatusResponse](#api-v1-capsule-WatchStatusResponse) stream |  |
+| /api.v1.capsule.Service/WatchStatus | [WatchStatusRequest](#api-v1-capsule-WatchStatusRequest) | [WatchStatusResponse](#api-v1-capsule-WatchStatusResponse) stream | Stream the status of a capsule. |
 
 
 
@@ -5654,6 +5656,77 @@ Deprecated update - This is now a no-op
 
 ### UpdateResponse
 Deprecated: Empty update response.
+
+
+
+
+
+
+<a name="api-v1-capsule-WatchInstanceStatusesRequest"></a>
+
+### WatchInstanceStatusesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | The capsule to get the instance statuses from. |
+| project_id | [string](#string) |  | The project in which the capsule is. |
+| environment_id | [string](#string) |  | The environment to get the instance statuses from. |
+| instance_id | [string](#string) |  | If given, only the instance with this ID will be watched. |
+| include_deleted | [bool](#bool) |  | if true, deleted instances will be included in the response. |
+| exclude_existing | [bool](#bool) |  | if true, existing instances will be excluded from the response. |
+| pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
+
+
+
+
+
+
+<a name="api-v1-capsule-WatchInstanceStatusesResponse"></a>
+
+### WatchInstanceStatusesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| updated | [instance.Status](#api-v1-capsule-instance-Status) |  |  |
+| deleted | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-WatchRolloutsRequest"></a>
+
+### WatchRolloutsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | The capsule to list rollouts for. |
+| project_id | [string](#string) |  | The project in which the capsule lives. |
+| environment_id | [string](#string) |  | The environment to list rollouts for. |
+| rollout_id | [uint64](#uint64) |  | If given only the rollout with this ID will be watched. |
+| pagination | [model.Pagination](#model-Pagination) |  | Pagination options. |
+
+
+
+
+
+
+<a name="api-v1-capsule-WatchRolloutsResponse"></a>
+
+### WatchRolloutsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| updated | [Rollout](#api-v1-capsule-Rollout) |  |  |
 
 
 
