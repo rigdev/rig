@@ -21,7 +21,11 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-func (c *Cmd) portForward(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) portForward(
+	ctx context.Context,
+	_ *cobra.Command,
+	args []string,
+) error {
 	capsuleID := capsule_cmd.CapsuleID
 
 	res, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
@@ -153,7 +157,7 @@ func (c *Cmd) portForward(ctx context.Context, cmd *cobra.Command, args []string
 					switch v := res.Msg().GetLog().GetMessage().GetMessage().(type) {
 					case *capsule.LogMessage_ContainerTermination_:
 						fmt.Printf("[rig] instance restarted")
-						break
+						res.Close()
 					case *capsule.LogMessage_Stdout:
 						os.Stdout.Write(v.Stdout)
 					case *capsule.LogMessage_Stderr:
@@ -193,7 +197,14 @@ func (c *Cmd) portForward(ctx context.Context, cmd *cobra.Command, args []string
 	}
 }
 
-func runPortForward(ctx context.Context, capsuleID, instanceID string, conn net.Conn, scope scope.Scope, rig rig.Client, port uint32) error {
+func runPortForward(
+	ctx context.Context,
+	capsuleID, instanceID string,
+	conn net.Conn,
+	scope scope.Scope,
+	rig rig.Client,
+	port uint32,
+) error {
 	defer conn.Close()
 
 	ctx, cancel := context.WithCancel(ctx)

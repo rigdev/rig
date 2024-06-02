@@ -177,33 +177,34 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	capsulePortForward := &cobra.Command{
 		Use:   "port-forward [capsule] [port]",
 		Short: "Forward local request to an instance of the capsule",
-		Long: `A connection is established to an arbitrary instance (this can be overridden by
-			the '--instance' flag).
+		// nolint:lll
+		Long: `Forward local request to an instance of the capsule.
 
-			The connection will target one of the network interfaces, and forward local traffic on the
-			same port to this address, e.g.:
+A connection is established to an arbitrary instance (this can be overridden by the '--instance' flag).
 
-				$ rig capsule port-forward my-capsule http
-				$ rig capsule port-forward my-capsule 80
+The connection will target one of the network interfaces, and forward local traffic on the same port to this address, e.g.:
 
-			Either command will forward local traffic on port 80 to the capsule.
+	$ rig capsule port-forward my-capsule http
+	$ rig capsule port-forward my-capsule 80
 
-			To change the local port, you can use an override:
+Either command will forward local traffic on port 80 to the capsule.
 
-				$ rig capsule port-forward my-capsule 8080:http
-				$ rig capsule port-forward my-capsule 8080:80
+To change the local port, you can use an override:
 
-			Here local traffic on port 8080 will be forwarded to port 80 of the capsule.
+	$ rig capsule port-forward my-capsule 8080:http
+	$ rig capsule port-forward my-capsule 8080:80
 
-			While the port-forwarding is running, a live log feed can be printed with the same
-			command, from the same instance as the connection is forwarded to:
+Here local traffic on port 8080 will be forwarded to port 80 of the capsule.
 
-				$ rig capsule port-forward my-capsule 80 -f
-				$ rig capsule port-forward my-capsule 80 --print-logs
+While the port-forwarding is running, a live log feed can be printed with the same
+command, from the same instance as the connection is forwarded to:
 
-			Finally a --verbose command can be used to troubleshoot errors related to the
-			forwarded traffic.
-		`,
+	$ rig capsule port-forward my-capsule 80 -f
+	$ rig capsule port-forward my-capsule 80 --print-logs
+
+Finally a --verbose command can be used to troubleshoot errors related to the
+forwarded traffic.
+`,
 		Args: cobra.MaximumNArgs(2),
 		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
 			common.MaxArgsCompletionFilter(1)),
