@@ -27,13 +27,12 @@ const (
 )
 
 var (
-	offset int
-	limit  int
-)
-
-var (
+	offset             int
+	limit              int
+	instanceID         string
 	follow             bool
 	previousContainers bool
+	verbose            bool
 )
 
 var since string
@@ -174,6 +173,53 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		GroupID: capsule.TroubleshootingGroupID,
 	}
 	capsuleCmd.AddCommand(capsuleStatus)
+
+	capsulePortForward := &cobra.Command{
+		Use:   "port-forward [capsule] [port]",
+		Short: "Forward local request to an instance of the capsule",
+		Long: `A connection is established to an arbitrary instance (this can be overridden by
+			the '--instance' flag).
+
+			The connection will target one of the network interfaces, and forward local traffic on the
+			same port to this address, e.g.:
+
+				$ rig capsule port-forward my-capsule http
+				$ rig capsule port-forward my-capsule 80
+
+			Either command will forward local traffic on port 80 to the capsule.
+
+			To change the local port, you can use an override:
+
+				$ rig capsule port-forward my-capsule 8080:http
+				$ rig capsule port-forward my-capsule 8080:80
+
+			Here local traffic on port 8080 will be forwarded to port 80 of the capsule.
+
+			While the port-forwarding is running, a live log feed can be printed with the same
+			command, from the same instance as the connection is forwarded to:
+
+				$ rig capsule port-forward my-capsule 80 -f
+				$ rig capsule port-forward my-capsule 80 --print-logs
+
+			Finally a --verbose command can be used to troubleshoot errors related to the
+			forwarded traffic.
+		`,
+		Args: cobra.MaximumNArgs(2),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE:    cli.CtxWrap(cmd.portForward),
+		GroupID: capsule.TroubleshootingGroupID,
+	}
+	capsulePortForward.Flags().BoolVarP(
+		&follow, "print-logs", "f", false, "print the instance logs while the port-forwarding is running",
+	)
+	capsulePortForward.Flags().BoolVarP(
+		&verbose, "verbose", "v", false, "print verbose information about the connections forwarded",
+	)
+	capsulePortForward.Flags().StringVar(
+		&instanceID, "instance", "", "a specific instance to connect to",
+	)
+	capsuleCmd.AddCommand(capsulePortForward)
 
 	parent.AddCommand(capsuleCmd)
 
