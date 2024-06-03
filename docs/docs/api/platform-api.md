@@ -252,6 +252,25 @@
 
 
 
+
+### api.v1.settings.Service
+<a name="api-v1-settings-Service"></a>
+
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| /api.v1.settings.Service/GetConfiguration | [GetConfigurationRequest](#api-v1-settings-GetConfigurationRequest) | [GetConfigurationResponse](#api-v1-settings-GetConfigurationResponse) |  |
+| /api.v1.settings.Service/GetSettings | [GetSettingsRequest](#api-v1-settings-GetSettingsRequest) | [GetSettingsResponse](#api-v1-settings-GetSettingsResponse) |  |
+| /api.v1.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-settings-UpdateSettingsResponse) |  |
+| /api.v1.settings.Service/GetLicenseInfo | [GetLicenseInfoRequest](#api-v1-settings-GetLicenseInfoRequest) | [GetLicenseInfoResponse](#api-v1-settings-GetLicenseInfoResponse) |  |
+
+
+
+
+
+
+
 ### api.v1.user.Service
 <a name="api-v1-user-Service"></a>
 
@@ -7945,6 +7964,372 @@ Response for listing service accounts.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | service_accounts | [model.ServiceAccountEntry](#model-ServiceAccountEntry) | repeated | the retrieved service accounts. |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_settings_configuration-proto"></a>
+
+## api/v1/settings/configuration.proto
+
+
+
+<a name="api-v1-settings-Client"></a>
+
+### Client
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| slack | [Slack](#api-v1-settings-Slack) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Configuration"></a>
+
+### Configuration
+Platform wide static configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| client | [Client](#api-v1-settings-Client) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Slack"></a>
+
+### Slack
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| workspace | [Slack.Workspace](#api-v1-settings-Slack-Workspace) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Slack-Workspace"></a>
+
+### Slack.Workspace
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_settings_settings-proto"></a>
+
+## api/v1/settings/settings.proto
+
+
+
+<a name="api-v1-settings-NotificationEnvironments"></a>
+
+### NotificationEnvironments
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| all | [NotificationEnvironments.All](#api-v1-settings-NotificationEnvironments-All) |  |  |
+| selected | [NotificationEnvironments.Selected](#api-v1-settings-NotificationEnvironments-Selected) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-NotificationEnvironments-All"></a>
+
+### NotificationEnvironments.All
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| include_ephemeral | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-NotificationEnvironments-Selected"></a>
+
+### NotificationEnvironments.Selected
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_ids | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-settings-NotificationNotifier"></a>
+
+### NotificationNotifier
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| target | [NotificationTarget](#api-v1-settings-NotificationTarget) |  |  |
+| topics | [NotificationTopic](#api-v1-settings-NotificationTopic) | repeated |  |
+| environments | [NotificationEnvironments](#api-v1-settings-NotificationEnvironments) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-NotificationTarget"></a>
+
+### NotificationTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| slack | [NotificationTarget.SlackTarget](#api-v1-settings-NotificationTarget-SlackTarget) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-NotificationTarget-SlackTarget"></a>
+
+### NotificationTarget.SlackTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| workspace | [string](#string) |  |  |
+| channel_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Settings"></a>
+
+### Settings
+Platform wide settings.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| notification_notifiers | [NotificationNotifier](#api-v1-settings-NotificationNotifier) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Update"></a>
+
+### Update
+Update message for platform settings.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| set_notification_notifiers | [Update.SetNotificationNotifiers](#api-v1-settings-Update-SetNotificationNotifiers) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Update-SetNotificationNotifiers"></a>
+
+### Update.SetNotificationNotifiers
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| notifiers | [NotificationNotifier](#api-v1-settings-NotificationNotifier) | repeated |  |
+
+
+
+
+
+
+
+
+<a name="api-v1-settings-NotificationTopic"></a>
+
+### NotificationTopic
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NOTIFICATION_TOPIC_UNSPECIFIED | 0 |  |
+| NOTIFICATION_TOPIC_ROLLOUT | 1 |  |
+| NOTIFICATION_TOPIC_ISSUE | 2 |  |
+
+
+
+<a name="api-v1-settings-Plan"></a>
+
+### Plan
+The plan for a rig installation
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PLAN_UNSPECIFIED | 0 | Unspecified / unactivated plan. |
+| PLAN_FREE | 1 | Free tier. |
+| PLAN_TEAM | 2 | Team / Pro tier. |
+| PLAN_ENTERPRISE | 3 | Enterprise tier. |
+
+
+
+
+
+
+
+
+<a name="api_v1_settings_service-proto"></a>
+
+## api/v1/settings/service.proto
+
+
+
+<a name="api-v1-settings-GetConfigurationRequest"></a>
+
+### GetConfigurationRequest
+
+
+
+
+
+
+
+<a name="api-v1-settings-GetConfigurationResponse"></a>
+
+### GetConfigurationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| configuration | [Configuration](#api-v1-settings-Configuration) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GetLicenseInfoRequest"></a>
+
+### GetLicenseInfoRequest
+Request to get the license information of the Rig installation.
+
+
+
+
+
+
+<a name="api-v1-settings-GetLicenseInfoResponse"></a>
+
+### GetLicenseInfoResponse
+Response for getting the license information of the Rig installation.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plan | [Plan](#api-v1-settings-Plan) |  | The plan of the rig installation. |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The expiration date of the license. |
+
+
+
+
+
+
+<a name="api-v1-settings-GetSettingsRequest"></a>
+
+### GetSettingsRequest
+
+
+
+
+
+
+
+<a name="api-v1-settings-GetSettingsResponse"></a>
+
+### GetSettingsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| settings | [Settings](#api-v1-settings-Settings) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-UpdateSettingsRequest"></a>
+
+### UpdateSettingsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| updates | [Update](#api-v1-settings-Update) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-settings-UpdateSettingsResponse"></a>
+
+### UpdateSettingsResponse
+
 
 
 

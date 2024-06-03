@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package api.v1.settings;
+
+import "api/v1/settings/settings.proto";
+import "api/v1/settings/configuration.proto";
+import "google/protobuf/timestamp.proto";
+
+// Service for setting and retrieving platform-wide settings.
+service Service {
+  rpc GetConfiguration(GetConfigurationRequest)
+      returns (GetConfigurationResponse) {}
+
+  rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse) {}
+  rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {}
+
+  rpc GetLicenseInfo(GetLicenseInfoRequest) returns (GetLicenseInfoResponse) {}
+}
+
+// Request to get the license information of the Rig installation.
+message GetLicenseInfoRequest {}
+
+// Response for getting the license information of the Rig installation.
+message GetLicenseInfoResponse {
+  // The plan of the rig installation.
+  api.v1.settings.Plan plan = 1;
+  // The expiration date of the license.
+  google.protobuf.Timestamp expires_at = 2;
+}
+
+message GetSettingsRequest {}
+
+message GetSettingsResponse {
+  api.v1.settings.Settings settings = 1;
+}
+
+message UpdateSettingsRequest {
+  repeated api.v1.settings.Update updates = 1;
+}
+
+message UpdateSettingsResponse {}
+
+message GetConfigurationRequest {}
+
+message GetConfigurationResponse {
+  api.v1.settings.Configuration configuration = 1;
+}
