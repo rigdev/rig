@@ -71,9 +71,14 @@ service Service {
   // Stream Instance Statuses of a capsule.
   rpc WatchInstanceStatuses(WatchInstanceStatusesRequest)
       returns (stream WatchInstanceStatusesResponse) {}
+
   // Execute executes a command in a given in instance,
   // and returns the output along with an exit code.
   rpc Execute(stream ExecuteRequest) returns (stream ExecuteResponse) {}
+  // PortForward establishes a port-forwarding for the port to the given
+  // instance.
+  rpc PortForward(stream PortForwardRequest)
+      returns (stream PortForwardResponse) {}
 
   rpc GetCustomInstanceMetrics(GetCustomInstanceMetricsRequest)
       returns (GetCustomInstanceMetricsResponse) {}
@@ -220,6 +225,35 @@ message ExecuteResponse {
     StreamData stderr = 2;
     // Exit code of the execute.
     int32 exit_code = 3;
+  }
+}
+
+message PortForwardRequest {
+  message Start {
+    // The project ID.
+    string project_id = 1;
+    // The environment ID.
+    string environment_id = 2;
+    string capsule_id = 3;
+    string instance_id = 4;
+    uint32 port = 5;
+  }
+
+  message Close {}
+
+  oneof request {
+    Start start = 1;
+    bytes data = 2;
+    Close close = 3;
+  }
+}
+
+message PortForwardResponse {
+  message Close {}
+
+  oneof response {
+    bytes data = 1;
+    Close close = 2;
   }
 }
 
