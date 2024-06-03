@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package api.v1.settings;
+
+// Platform wide settings.
+message Settings {
+  repeated NotificationNotifier notification_notifiers = 1;
+}
+
+// Update message for platform settings.
+message Update {
+  message SetNotificationNotifiers {
+    repeated NotificationNotifier notifiers = 1;
+  }
+
+  oneof field {
+    SetNotificationNotifiers set_notification_notifiers = 1;
+  }
+}
+
+message NotificationNotifier {
+  NotificationTarget target = 1;
+  repeated NotificationTopic topics = 2;
+  NotificationEnvironments environments = 3;
+}
+
+message NotificationEnvironments {
+  message All {
+    bool include_ephemeral = 1;
+  }
+
+  message Selected {
+    repeated string environment_ids = 1;
+  }
+
+  oneof filter {
+    All all = 1;
+    Selected selected = 2;
+  }
+}
+
+message NotificationTarget {
+  message SlackTarget {
+    string workspace = 1;
+    string channel_id = 2;
+  }
+
+  oneof target {
+    SlackTarget slack = 1;
+  }
+}
+
+enum NotificationTopic {
+  NOTIFICATION_TOPIC_UNSPECIFIED = 0;
+  NOTIFICATION_TOPIC_ROLLOUT = 1;
+  NOTIFICATION_TOPIC_ISSUE = 2;
+}
+
+// The plan for a rig installation
+enum Plan {
+  // Unspecified / unactivated plan.
+  PLAN_UNSPECIFIED = 0;
+  // Free tier.
+  PLAN_FREE = 1;
+  // Team / Pro tier.
+  PLAN_TEAM = 2;
+  // Enterprise tier.
+  PLAN_ENTERPRISE = 3;
+}
