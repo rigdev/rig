@@ -77,6 +77,7 @@
 | /api.v1.capsule.Service/ListInstanceStatuses | [ListInstanceStatusesRequest](#api-v1-capsule-ListInstanceStatusesRequest) | [ListInstanceStatusesResponse](#api-v1-capsule-ListInstanceStatusesResponse) | ListInstanceStatuses lists the status of all instances. |
 | /api.v1.capsule.Service/WatchInstanceStatuses | [WatchInstanceStatusesRequest](#api-v1-capsule-WatchInstanceStatusesRequest) | [WatchInstanceStatusesResponse](#api-v1-capsule-WatchInstanceStatusesResponse) stream | Stream Instance Statuses of a capsule. |
 | /api.v1.capsule.Service/Execute | [ExecuteRequest](#api-v1-capsule-ExecuteRequest) stream | [ExecuteResponse](#api-v1-capsule-ExecuteResponse) stream | Execute executes a command in a given in instance, and returns the output along with an exit code. |
+| /api.v1.capsule.Service/PortForward | [PortForwardRequest](#api-v1-capsule-PortForwardRequest) stream | [PortForwardResponse](#api-v1-capsule-PortForwardResponse) stream | PortForward establishes a port-forwarding for the port to the given instance. |
 | /api.v1.capsule.Service/GetCustomInstanceMetrics | [GetCustomInstanceMetricsRequest](#api-v1-capsule-GetCustomInstanceMetricsRequest) | [GetCustomInstanceMetricsResponse](#api-v1-capsule-GetCustomInstanceMetricsResponse) |  |
 | /api.v1.capsule.Service/GetJobExecutions | [GetJobExecutionsRequest](#api-v1-capsule-GetJobExecutionsRequest) | [GetJobExecutionsResponse](#api-v1-capsule-GetJobExecutionsResponse) | Get list of job executions performed by the Capsule. |
 | /api.v1.capsule.Service/GetStatus | [GetStatusRequest](#api-v1-capsule-GetStatusRequest) | [GetStatusResponse](#api-v1-capsule-GetStatusResponse) |  |
@@ -5499,6 +5500,78 @@ The response of a capsule.Logs RPC
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | log | [Log](#api-v1-capsule-Log) |  | The actual logs |
+
+
+
+
+
+
+<a name="api-v1-capsule-PortForwardRequest"></a>
+
+### PortForwardRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| start | [PortForwardRequest.Start](#api-v1-capsule-PortForwardRequest-Start) |  |  |
+| data | [bytes](#bytes) |  |  |
+| close | [PortForwardRequest.Close](#api-v1-capsule-PortForwardRequest-Close) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-PortForwardRequest-Close"></a>
+
+### PortForwardRequest.Close
+
+
+
+
+
+
+
+<a name="api-v1-capsule-PortForwardRequest-Start"></a>
+
+### PortForwardRequest.Start
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  | The project ID. |
+| environment_id | [string](#string) |  | The environment ID. |
+| capsule_id | [string](#string) |  |  |
+| instance_id | [string](#string) |  |  |
+| port | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-PortForwardResponse"></a>
+
+### PortForwardResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data | [bytes](#bytes) |  |  |
+| close | [PortForwardResponse.Close](#api-v1-capsule-PortForwardResponse-Close) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-PortForwardResponse-Close"></a>
+
+### PortForwardResponse.Close
+
 
 
 
