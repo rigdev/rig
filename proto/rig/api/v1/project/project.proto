@@ -22,3 +22,15 @@ message Update {
   // TODO: Bring back field
   // oneof field {}
 }
+
+// The plan for a rig installation
+enum Plan {
+  // Unspecified / unactivated plan.
+  PLAN_UNSPECIFIED = 0;
+  // Free tier.
+  PLAN_FREE = 1;
+  // Team / Pro tier.
+  PLAN_TEAM = 2;
+  // Enterprise tier.
+  PLAN_ENTERPRISE = 3;
+}

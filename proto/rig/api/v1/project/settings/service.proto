@@ -4,7 +4,7 @@ package api.v1.project.settings;
 
 import "api/v1/project/settings/settings.proto";
 import "google/protobuf/timestamp.proto";
-import "api/v1/settings/settings.proto";
+import "api/v1/project/project.proto";
 
 // Service for setting and retrieving project-wide settings.
 service Service {
@@ -22,7 +22,7 @@ message GetLicenseInfoRequest {}
 // Response for getting the license information of the Rig installation.
 message GetLicenseInfoResponse {
   // The plan of the rig installation.
-  api.v1.settings.Plan plan = 1;
+  api.v1.project.Plan plan = 1;
   // The expiration date of the license.
   google.protobuf.Timestamp expires_at = 2;
 }
