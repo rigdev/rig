@@ -4446,6 +4446,7 @@ The rollout model.
 | args | [string](#string) | repeated |  |
 | environment_variables | [ContainerConfig.EnvironmentVariablesEntry](#api-v1-capsule-ContainerConfig-EnvironmentVariablesEntry) | repeated |  |
 | scale | [HorizontalScale](#api-v1-capsule-HorizontalScale) |  |  |
+| resources | [Resources](#api-v1-capsule-Resources) |  |  |
 
 
 
@@ -4568,7 +4569,6 @@ The rollout model.
 | rollout_id | [uint64](#uint64) |  |  |
 | current_stage | [rollout.State](#api-v1-capsule-rollout-State) |  |  |
 | stages | [RolloutStages](#api-v1-capsule-RolloutStages) |  |  |
-| error_message | [string](#string) |  | The error message if the rollout failed |
 | commit_hash | [string](#string) |  | The hash of the commit containing the changes |
 | commit_url | [string](#string) |  | The url to the commit (if known. May be empty) |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
