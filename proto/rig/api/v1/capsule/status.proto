@@ -27,8 +27,6 @@ message RolloutStatus {
   uint64 rollout_id = 1;
   api.v1.capsule.rollout.State current_stage = 2;
   RolloutStages stages = 3;
-  // The error message if the rollout failed
-  string error_message = 4;
   // The hash of the commit containing the changes
   string commit_hash = 5;
   // The url to the commit (if known. May be empty)
@@ -65,6 +63,7 @@ message ContainerConfig {
   repeated string args = 3;
   map<string, string> environment_variables = 4;
   HorizontalScale scale = 5;
+  Resources resources = 6;
 }
 
 message InterfaceStatus {
