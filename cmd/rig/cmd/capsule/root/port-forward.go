@@ -13,9 +13,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-sdk"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -165,7 +163,7 @@ func (c *Cmd) portForward(
 					}
 				}
 
-				if res.Err() != nil {
+				if err := res.Err(); err != nil {
 					fmt.Printf("[rig] error tailing logs: %v\n", err)
 				}
 
@@ -187,7 +185,7 @@ func (c *Cmd) portForward(
 		}
 
 		go func() {
-			err := runPortForward(ctx, capsuleID, instanceID, conn, c.Scope, c.Rig, remotePort)
+			err := c.runPortForwardForPort(ctx, capsuleID, instanceID, conn, remotePort)
 			if err != nil {
 				fmt.Println("[rig] connection closed with error:", err)
 			} else if verbose {
@@ -197,12 +195,10 @@ func (c *Cmd) portForward(
 	}
 }
 
-func runPortForward(
+func (c *Cmd) runPortForwardForPort(
 	ctx context.Context,
 	capsuleID, instanceID string,
 	conn net.Conn,
-	scope scope.Scope,
-	rig rig.Client,
 	port uint32,
 ) error {
 	defer conn.Close()
@@ -210,12 +206,12 @@ func runPortForward(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	pf := rig.Capsule().PortForward(ctx)
+	pf := c.Rig.Capsule().PortForward(ctx)
 	if err := pf.Send(&capsule.PortForwardRequest{
 		Request: &capsule.PortForwardRequest_Start_{
 			Start: &capsule.PortForwardRequest_Start{
-				ProjectId:     scope.GetCfg().GetProject(),
-				EnvironmentId: scope.GetCfg().GetEnvironment(),
+				ProjectId:     c.Scope.GetCfg().GetProject(),
+				EnvironmentId: c.Scope.GetCfg().GetEnvironment(),
 				CapsuleId:     capsuleID,
 				InstanceId:    instanceID,
 				Port:          port,
