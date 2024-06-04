@@ -8,7 +8,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -36,6 +35,8 @@ func (c *Cmd) status(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return common.FormatPrint(status, flags.Flags.OutputType)
 	}
 
+	// rollout, err := c.Rig.Capsule().GetRollout(ctx, connect.NewRequest()&capsule.GetRolloutRequest{})
+
 	printStatusSummary(status, capsule_cmd.CapsuleID)
 
 	return nil
@@ -43,7 +44,7 @@ func (c *Cmd) status(ctx context.Context, _ *cobra.Command, _ []string) error {
 func printStatusSummary(s *capsule.Status, capsuleID string) {
 	builder := &strings.Builder{}
 	buildCapsuleInfo(builder, s, capsuleID)
-	buildRolloutStatus(builder, s.GetRollout())
+	// buildRolloutStatus(builder, s.GetRollout())
 	buildContainerConfig(builder, s.GetContainerConfig())
 	buildInstanceStatus(builder, s.GetInstances())
 	buildConfigFileStatus(builder, s.GetConfigFiles())
@@ -57,24 +58,24 @@ func buildCapsuleInfo(builder *strings.Builder, s *capsule.Status, capsuleID str
 	builder.WriteString(getIndented(fmt.Sprintf("Namespace: %s", s.GetNamespace()), 2))
 }
 
-func buildRolloutStatus(builder *strings.Builder, r *capsule.RolloutStatus) {
-	builder.WriteString(boldWhite.Sprintf("Rollout %d\n", r.GetRolloutId()))
-	createdAt := r.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")
+// func buildRolloutStatus(builder *strings.Builder, r *capsule.RolloutStatus) {
+// 	builder.WriteString(boldWhite.Sprintf("Rollout %d\n", r.GetRolloutId()))
+// 	createdAt := r.GetCreatedAt().AsTime().Format("2006-01-02 15:04:05")
 
-	builder.WriteString(getIndented(fmt.Sprintf("Stage: %s", rolloutStageToString(r.GetCurrentStage())), 2))
-	if r.GetCommitHash() != "" {
-		builder.WriteString(getIndented(fmt.Sprintf("Commit: %s", r.GetCommitHash()), 2))
-	}
-	if r.GetCommitUrl() != "" {
-		builder.WriteString(getIndented(fmt.Sprintf("Commit URL: %s", r.GetCommitUrl()), 2))
-	}
-	if r.GetCreatedBy() != nil {
-		builder.WriteString(getIndented(fmt.Sprintf("Created by: %s", r.GetCreatedBy().GetPrintableName()), 2))
-	}
-	if !r.GetCreatedAt().AsTime().IsZero() {
-		builder.WriteString(getIndented(fmt.Sprintf("Created at: %s", createdAt), 2))
-	}
-}
+// 	builder.WriteString(getIndented(fmt.Sprintf("Stage: %s", rolloutStageToString(r.GetCurrentStage())), 2))
+// 	if r.GetCommitHash() != "" {
+// 		builder.WriteString(getIndented(fmt.Sprintf("Commit: %s", r.GetCommitHash()), 2))
+// 	}
+// 	if r.GetCommitUrl() != "" {
+// 		builder.WriteString(getIndented(fmt.Sprintf("Commit URL: %s", r.GetCommitUrl()), 2))
+// 	}
+// 	if r.GetCreatedBy() != nil {
+// 		builder.WriteString(getIndented(fmt.Sprintf("Created by: %s", r.GetCreatedBy().GetPrintableName()), 2))
+// 	}
+// 	if !r.GetCreatedAt().AsTime().IsZero() {
+// 		builder.WriteString(getIndented(fmt.Sprintf("Created at: %s", createdAt), 2))
+// 	}
+// }
 
 func buildContainerConfig(builder *strings.Builder, c *capsule.ContainerConfig) {
 	builder.WriteString(boldWhite.Sprintf("Container Config\n"))
@@ -200,19 +201,19 @@ func getIndented(s string, indent int) string {
 	return fmt.Sprintf("%s- %s\n", strings.Repeat(" ", indent), s)
 }
 
-func rolloutStageToString(state rollout.State) string {
-	switch state {
-	case rollout.State_STATE_PREPARING:
-		return "Preparing"
-	case rollout.State_STATE_CONFIGURE:
-		return "Configuring"
-	case rollout.State_STATE_RESOURCE_CREATION:
-		return "Resource Creation"
-	case rollout.State_STATE_RUNNING:
-		return "Running"
-	case rollout.State_STATE_STOPPED:
-		return "Stopped"
-	default:
-		return "Unknown"
-	}
-}
+// func rolloutStageToString(state rollout.State) string {
+// 	switch state {
+// 	case rollout.State_STATE_PREPARING:
+// 		return "Preparing"
+// 	case rollout.State_STATE_CONFIGURE:
+// 		return "Configuring"
+// 	case rollout.State_STATE_RESOURCE_CREATION:
+// 		return "Resource Creation"
+// 	case rollout.State_STATE_RUNNING:
+// 		return "Running"
+// 	case rollout.State_STATE_STOPPED:
+// 		return "Stopped"
+// 	default:
+// 		return "Unknown"
+// 	}
+// }

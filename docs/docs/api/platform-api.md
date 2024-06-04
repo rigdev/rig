@@ -4655,60 +4655,6 @@ The rollout model.
 
 
 
-<a name="api-v1-capsule-RolloutStages"></a>
-
-### RolloutStages
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| configure_stage | [Stage](#api-v1-capsule-Stage) |  |  |
-| resource_creation_stage | [Stage](#api-v1-capsule-Stage) |  |  |
-| running_stage | [Stage](#api-v1-capsule-Stage) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-RolloutStatus"></a>
-
-### RolloutStatus
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| rollout_id | [uint64](#uint64) |  |  |
-| current_stage | [rollout.State](#api-v1-capsule-rollout-State) |  |  |
-| stages | [RolloutStages](#api-v1-capsule-RolloutStages) |  |  |
-| commit_hash | [string](#string) |  | The hash of the commit containing the changes |
-| commit_url | [string](#string) |  | The url to the commit (if known. May be empty) |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| created_by | [model.Author](#model-Author) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-Stage"></a>
-
-### Stage
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [rollout.StageInfo](#api-v1-capsule-rollout-StageInfo) |  |  |
-| latest_step_info | [rollout.StepInfo](#api-v1-capsule-rollout-StepInfo) |  |  |
-
-
-
-
-
-
 <a name="api-v1-capsule-Status"></a>
 
 ### Status
@@ -4719,7 +4665,7 @@ The rollout model.
 | ----- | ---- | ----- | ----------- |
 | namespace | [string](#string) |  |  |
 | capsule | [CapsuleStatus](#api-v1-capsule-CapsuleStatus) |  |  |
-| rollout | [RolloutStatus](#api-v1-capsule-RolloutStatus) |  |  |
+| current_rollout_id | [uint64](#uint64) |  |  |
 | container_config | [ContainerConfig](#api-v1-capsule-ContainerConfig) |  |  |
 | instances | [InstancesStatus](#api-v1-capsule-InstancesStatus) |  |  |
 | interfaces | [InterfaceStatus](#api-v1-capsule-InterfaceStatus) | repeated |  |
