@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1.project;
 
 import "google/protobuf/timestamp.proto";
+import "model/git.proto";
 
 // The top most model that capsules etc belong to.
 message Project {
@@ -14,6 +15,7 @@ message Project {
   google.protobuf.Timestamp updated_at = 4;
   // The installation id of the project.
   string installation_id = 5;
+  model.GitStore git_store = 6;
 }
 
 // Update msg for a project.
