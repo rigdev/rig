@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1.capsule;
 
 import "model/author.proto";
+import "model/git.proto";
 import "google/protobuf/timestamp.proto";
 
 // Environment wide capsule abstraction.
@@ -13,6 +14,7 @@ message Capsule {
   google.protobuf.Timestamp updated_at = 6;
   // Author of the last update.
   model.Author updated_by = 7;
+  model.GitStore git_store = 8;
 }
 
 // Legacy update message

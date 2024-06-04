@@ -2,9 +2,13 @@ syntax = "proto3";
 
 package api.v1.settings;
 
+import "model/environment.proto";
+import "model/git.proto";
+
 // Platform wide settings.
 message Settings {
   repeated NotificationNotifier notification_notifiers = 1;
+  model.GitStore git_store = 2;
 }
 
 // Update message for platform settings.
@@ -21,22 +25,7 @@ message Update {
 message NotificationNotifier {
   NotificationTarget target = 1;
   repeated NotificationTopic topics = 2;
-  NotificationEnvironments environments = 3;
-}
-
-message NotificationEnvironments {
-  message All {
-    bool include_ephemeral = 1;
-  }
-
-  message Selected {
-    repeated string environment_ids = 1;
-  }
-
-  oneof filter {
-    All all = 1;
-    Selected selected = 2;
-  }
+  model.EnvironmentFilter environments = 3;
 }
 
 message NotificationTarget {

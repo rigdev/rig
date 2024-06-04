@@ -51,6 +51,8 @@
 
 
 
+
+
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -1003,6 +1005,98 @@ The type of SSO. Currently only OIDC is supported.
 
 
 
+<a name="model_environment-proto"></a>
+
+## model/environment.proto
+
+
+
+<a name="model-EnvironmentFilter"></a>
+
+### EnvironmentFilter
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| all | [EnvironmentFilter.All](#model-EnvironmentFilter-All) |  |  |
+| selected | [EnvironmentFilter.Selected](#model-EnvironmentFilter-Selected) |  |  |
+
+
+
+
+
+
+<a name="model-EnvironmentFilter-All"></a>
+
+### EnvironmentFilter.All
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| include_ephemeral | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="model-EnvironmentFilter-Selected"></a>
+
+### EnvironmentFilter.Selected
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_ids | [string](#string) | repeated |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="model_git-proto"></a>
+
+## model/git.proto
+
+
+
+<a name="model-GitStore"></a>
+
+### GitStore
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| disabled | [bool](#bool) |  |  |
+| repository | [string](#string) |  |  |
+| branch | [string](#string) |  |  |
+| capsule_path | [string](#string) |  |  |
+| commit_template | [string](#string) |  |  |
+| environments | [EnvironmentFilter](#model-EnvironmentFilter) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_capsule-proto"></a>
 
 ## api/v1/capsule/capsule.proto
@@ -1020,6 +1114,7 @@ Environment wide capsule abstraction.
 | capsule_id | [string](#string) |  | ID of the capsule. |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Last time the capsule was updated. |
 | updated_by | [model.Author](#model-Author) |  | Author of the last update. |
+| git_store | [model.GitStore](#model-GitStore) |  |  |
 
 
 
@@ -6973,6 +7068,7 @@ The top most model that capsules etc belong to.
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the project was created. |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the project was last updated. |
 | installation_id | [string](#string) |  | The installation id of the project. |
+| git_store | [model.GitStore](#model-GitStore) |  |  |
 
 
 
@@ -8056,52 +8152,6 @@ Platform wide static configuration.
 
 
 
-<a name="api-v1-settings-NotificationEnvironments"></a>
-
-### NotificationEnvironments
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| all | [NotificationEnvironments.All](#api-v1-settings-NotificationEnvironments-All) |  |  |
-| selected | [NotificationEnvironments.Selected](#api-v1-settings-NotificationEnvironments-Selected) |  |  |
-
-
-
-
-
-
-<a name="api-v1-settings-NotificationEnvironments-All"></a>
-
-### NotificationEnvironments.All
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| include_ephemeral | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="api-v1-settings-NotificationEnvironments-Selected"></a>
-
-### NotificationEnvironments.Selected
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| environment_ids | [string](#string) | repeated |  |
-
-
-
-
-
-
 <a name="api-v1-settings-NotificationNotifier"></a>
 
 ### NotificationNotifier
@@ -8112,7 +8162,7 @@ Platform wide static configuration.
 | ----- | ---- | ----- | ----------- |
 | target | [NotificationTarget](#api-v1-settings-NotificationTarget) |  |  |
 | topics | [NotificationTopic](#api-v1-settings-NotificationTopic) | repeated |  |
-| environments | [NotificationEnvironments](#api-v1-settings-NotificationEnvironments) |  |  |
+| environments | [model.EnvironmentFilter](#model-EnvironmentFilter) |  |  |
 
 
 
@@ -8159,6 +8209,7 @@ Platform wide settings.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | notification_notifiers | [NotificationNotifier](#api-v1-settings-NotificationNotifier) | repeated |  |
+| git_store | [model.GitStore](#model-GitStore) |  |  |
 
 
 

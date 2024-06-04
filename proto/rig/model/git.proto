@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package model;
+
+import "model/environment.proto";
+
+message GitStore {
+  bool disabled = 1;
+  string repository = 2;
+  string branch = 3;
+  string capsule_path = 4;
+  string commit_template = 5;
+  EnvironmentFilter environments = 6;
+}

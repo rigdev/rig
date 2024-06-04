@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package model;
+
+message EnvironmentFilter {
+  message All {
+    bool include_ephemeral = 1;
+  }
+
+  message Selected {
+    repeated string environment_ids = 1;
+  }
+
+  oneof filter {
+    All all = 1;
+    Selected selected = 2;
+  }
+}
