@@ -68,9 +68,6 @@ func buildRolloutStatus(builder *strings.Builder, r *capsule.RolloutStatus) {
 	if r.GetCommitUrl() != "" {
 		builder.WriteString(getIndented(fmt.Sprintf("Commit URL: %s", r.GetCommitUrl()), 2))
 	}
-	if r.GetErrorMessage() != "" {
-		builder.WriteString(getIndented(red.Sprintf("Error: %s", r.ErrorMessage), 2))
-	}
 	if r.GetCreatedBy() != nil {
 		builder.WriteString(getIndented(fmt.Sprintf("Created by: %s", r.GetCreatedBy().GetPrintableName()), 2))
 	}

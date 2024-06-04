@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package api.v1.settings;
+
+// Platform wide static configuration.
+message Configuration {
+  Client client = 1;
+}
+
+message Client {
+  Slack slack = 1;
+}
+
+message Slack {
+  message Workspace {
+    string name = 1;
+  }
+
+  repeated Workspace workspace = 1;
+}
