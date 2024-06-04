@@ -2,16 +2,13 @@ syntax = "proto3";
 
 package api.v1.capsule;
 
-import "api/v1/capsule/rollout/status.proto";
 import "api/v1/capsule/change.proto";
 import "operator/api/v1/pipeline/object_status.proto";
-import "google/protobuf/timestamp.proto";
-import "model/author.proto";
 
 message Status {
   string namespace = 1;
   CapsuleStatus capsule = 2;
-  RolloutStatus rollout = 3;
+  uint64 current_rollout_id = 3;
   ContainerConfig container_config = 4;
   InstancesStatus instances = 5;
   repeated InterfaceStatus interfaces = 6;
@@ -21,29 +18,6 @@ message Status {
 
 message CapsuleStatus {
   repeated api.v1.pipeline.ObjectStatus statuses = 1;
-}
-
-message RolloutStatus {
-  uint64 rollout_id = 1;
-  api.v1.capsule.rollout.State current_stage = 2;
-  RolloutStages stages = 3;
-  // The hash of the commit containing the changes
-  string commit_hash = 5;
-  // The url to the commit (if known. May be empty)
-  string commit_url = 6;
-  google.protobuf.Timestamp created_at = 7;
-  model.Author created_by = 8;
-}
-
-message RolloutStages {
-  Stage configure_stage = 1;
-  Stage resource_creation_stage = 2;
-  Stage running_stage = 3;
-}
-
-message Stage {
-  api.v1.capsule.rollout.StageInfo info = 1;
-  api.v1.capsule.rollout.StepInfo latest_step_info = 2;
 }
 
 message InstancesStatus {
