@@ -13,7 +13,7 @@ message RevisionMetadata {
 }
 
 message Fingerprint {
-  bytes bytes = 1;
+  string data = 1;
 }
 
 message Fingerprints {
