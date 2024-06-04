@@ -3062,7 +3062,7 @@ The actual log message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| bytes | [bytes](#bytes) |  |  |
+| data | [string](#string) |  |  |
 
 
 
