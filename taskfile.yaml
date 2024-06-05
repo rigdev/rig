@@ -77,7 +77,7 @@ tasks:
       - proto/rig/**/*
     cmds:
       - ./tools/bin/rig-proto-gen proto/rig
-  
+
   proto:
     desc: "🪄 Run protobuf generation"
     deps:
@@ -158,7 +158,13 @@ tasks:
 
   docs-gen:
     desc: "📚 Generate api references"
-    deps: [tools:crd-ref-docs, proto, docs-gen-builtin-plugins, docs-gen-capsule-step-plugins]
+    deps:
+      [
+        tools:crd-ref-docs,
+        proto,
+        docs-gen-builtin-plugins,
+        docs-gen-capsule-step-plugins,
+      ]
     sources:
       - docs/crd-ref-docs/**/*
       - pkg/api/config/v1alpha1/**/*
@@ -257,7 +263,14 @@ tasks:
   test-all:
     desc: "✅ Run all tests"
     deps:
-      [tools:gotestsum, tools:setup-envtest, proto, mocks, manifests, build-rig-operator]
+      [
+        tools:gotestsum,
+        tools:setup-envtest,
+        proto,
+        mocks,
+        manifests,
+        build-rig-operator,
+      ]
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
@@ -277,7 +290,13 @@ tasks:
   test-integration:
     desc: "✅ Run integration tests"
     deps:
-      [tools:gotestsum, tools:setup-envtest, proto, manifests, build-rig-operator]
+      [
+        tools:gotestsum,
+        tools:setup-envtest,
+        proto,
+        manifests,
+        build-rig-operator,
+      ]
     env:
       KUBEBUILDER_ASSETS:
         sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
@@ -293,12 +312,12 @@ tasks:
   docker:
     desc: "🐳 Build docker image"
     cmds:
-      - docker build -t ghcr.io/rigdev/rig-operator:${TAG} -f ./build/package/Dockerfile .
+      - docker buildx build -t ghcr.io/rigdev/rig-operator:${TAG} -f ./build/package/Dockerfile .
 
   docker-docs:
     desc: "🐳 Build docker docs image"
     cmds:
-      - docker build -t ghcr.io/rigdev/docs:${TAG} -f ./build/package/docs/Dockerfile .
+      - docker buildx build -t ghcr.io/rigdev/docs:${TAG} -f ./build/package/docs/Dockerfile .
 
   deploy-operator:
     desc: "🚀 Deploy operator to k8s context defined by $KUBECTX (default: kind-rig)"
