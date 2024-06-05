@@ -5,10 +5,13 @@ package api.v1.settings;
 // Platform wide static configuration.
 message Configuration {
   Client client = 1;
+  repeated string docker_registries = 2;
+  EmailClient default_email = 3;
 }
 
 message Client {
   Slack slack = 1;
+  repeated EmailClient email = 2;
 }
 
 message Slack {
@@ -17,4 +20,15 @@ message Slack {
   }
 
   repeated Workspace workspace = 1;
+}
+
+message EmailClient {
+  string id = 1;
+  EmailType type = 2;
+}
+
+enum EmailType {
+  EMAIL_TYPE_UNSPECIFIED = 0;
+  EMAIL_TYPE_MAILJET = 1;
+  EMAIL_TYPE_SMTP = 2;
 }

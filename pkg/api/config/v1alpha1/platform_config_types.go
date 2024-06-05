@@ -42,7 +42,7 @@ type PlatformConfig struct {
 	// Deprecated: Use `clusters` instead.
 	Cluster Cluster `json:"cluster,omitempty"`
 
-	// Email holds configuration for sending emails. Either using mailjet or using SMTP
+	// Email holds the default configuration for sending emails. Either using mailjet or using SMTP.
 	Email Email `json:"email,omitempty"`
 
 	// Logging holds information about the granularity of logging
@@ -51,17 +51,8 @@ type PlatformConfig struct {
 	// Clusters the platform has access to.
 	Clusters map[string]Cluster `json:"clusters,omitempty"`
 
-	// Notification configuration of the platform. This is backed by notification clients in the client configuratino.
-	// Currently supported clients: Slack
-	Notification Notification `json:"notification,omitempty"`
-}
-
-// Notification configuration
-type Notification struct {
-	// Projects to send notifications for. If empty, all projects are included.
-	Projects []string `json:"projects,omitempty"`
-	// Environments to send notifications for. If empty, all environments are included.
-	Environments []string `json:"environments,omitempty"`
+	// DockerRegistries holds configuration for multiple docker registries. The key is the host of the registry
+	DockerRegistries map[string]DockerRegistryCredentials `json:"dockerRegistries,omitempty"`
 }
 
 // Auth specifies authentication configuration.
@@ -83,6 +74,16 @@ type Auth struct {
 
 	// SSO specifies single sign on configuration.
 	SSO SSO `json:"sso,omitempty"`
+
+	// AllowRegister specifies if users are allowed to register new accounts.
+	AllowRegister bool `json:"allowRegister,omitempty"`
+
+	// IsVerified specifies if users are required to verify their email address.
+	RequireVerification bool `json:"requireVerification,omitempty"`
+
+	// SendWelcomeEmail specifies if a welcome email should be sent to new users.
+	// This will use the default email config
+	SendWelcomeEmail bool `json:"sendWelcomeEmail,omitempty"`
 }
 
 // SSO specifies single sign on configuration.
@@ -158,17 +159,28 @@ type Client struct {
 	// Docker sets the host for the Docker client.
 	Docker ClientDocker `json:"docker,omitempty"`
 
+	// Deprecated: use 'client.mailjets' instead.
 	// Mailjet sets the API key and secret for the Mailjet client.
 	Mailjet ClientMailjet `json:"mailjet,omitempty"`
 
+	// Mailjets holds configuration for multiple mailjet clients.
+	// The key is the id of the client, which should be unique across Mailjet and SMTP clients.
+	Mailjets map[string]ClientMailjet `json:"mailjets,omitempty"`
+
+	// Deprecated: use 'client.smtps' instead.
 	// SMTP sets the host, port, username and password for the SMTP client.
 	SMTP ClientSMTP `json:"smtp,omitempty"`
+
+	// SMTPs holds configuration for muliple SMTP clients.
+	// The key is the id of the client, which should be unique across Mailjet and SMTP clients.
+	SMTPs map[string]ClientSMTP `json:"smtps,omitempty"`
 
 	// Operator sets the base url for the Operator client.
 	Operator ClientOperator `json:"operator,omitempty"`
 
-	// Slack holds configuration for sending slack messages.
-	Slack ClientSlack `json:"slack,omitempty"`
+	// Slack holds configuration for sending slack messages. The key is the id of the client.
+	// For example the workspace in which the app is installed
+	Slack map[string]ClientSlack `json:"slack,omitempty"`
 
 	// Git client configuration for communicating with multiple repositories.
 	Git ClientGit `json:"git,omitempty"`
@@ -211,6 +223,11 @@ type ClientDocker struct {
 	Host string `json:"host,omitempty"`
 }
 
+type ClientSlack struct {
+	// Slack authentication token.
+	Token string `json:"token,omitempty"`
+}
+
 // ClientMailjet specifes the configuration for the mailjet client.
 type ClientMailjet struct {
 	// APIKey is the mailjet API key
@@ -218,13 +235,6 @@ type ClientMailjet struct {
 
 	// SecretKey is the mailjet secret key
 	SecretKey string `json:"secretKey,omitempty"`
-}
-
-type ClientSlack struct {
-	// Slack authentication token.
-	Token string `json:"token,omitempty"`
-	// ID of the slack channel to send messages to.
-	ChannelID string `json:"channel_id,omitempty"`
 }
 
 // ClientSMTP specifies the configuration for the SMTP client.
@@ -398,6 +408,15 @@ type DevRegistry struct {
 	ClusterHost string `json:"clusterHost,omitempty"`
 }
 
+type DockerRegistryCredentials struct {
+	// Username for the docker registry.
+	Username string `json:"username,omitempty"`
+	// Password for the docker registry.
+	Password string `json:"password,omitempty"`
+	// Email for the docker registry.
+	Email string `json:"email,omitempty"`
+}
+
 // ClusterType is a cluster type.
 type ClusterType string
 
@@ -410,10 +429,13 @@ const (
 
 // Email holds configuration for sending emails. Either using mailjet or using SMTP
 type Email struct {
+	// ID is the specified id an email configuration.
+	ID string `json:"id,omitempty"`
+
 	// From is who is set as the sender of rig emails.
 	From string `json:"from,omitempty"`
 
-	// Type is what client rig should use to send emails.
+	// Deprecated: ID for an email configuration is used instead.
 	Type EmailType `json:"type,omitempty"`
 }
 
@@ -455,10 +477,8 @@ func NewDefaultPlatform() *PlatformConfig {
 			Docker: ClientDocker{
 				Host: "",
 			},
-			Mailjet: ClientMailjet{
-				APIKey:    "",
-				SecretKey: "",
-			},
+			Mailjets: map[string]ClientMailjet{},
+			SMTPs:    map[string]ClientSMTP{},
 			Operator: ClientOperator{
 				BaseURL: "rig-operator:9000",
 			},
@@ -468,9 +488,10 @@ func NewDefaultPlatform() *PlatformConfig {
 			Secret: "",
 		},
 		Email: Email{
+			ID:   "",
 			From: "",
-			Type: EmailTypeNoEmail,
 		},
+		DockerRegistries: map[string]DockerRegistryCredentials{},
 	}
 
 	cfg.SetGroupVersionKind(schema.GroupVersionKind{
@@ -519,4 +540,26 @@ func (cfg *PlatformConfig) Migrate() {
 			cfg.Client.Git.Author.Email = c.Git.Author.Email
 		}
 	}
+
+	if cfg.Client.Mailjet != (ClientMailjet{}) {
+		cfg.Client.Mailjets["mailjet"] = cfg.Client.Mailjet
+	}
+
+	if cfg.Client.SMTP != (ClientSMTP{}) {
+		cfg.Client.SMTPs["smtp"] = cfg.Client.SMTP
+	}
+
+	if cfg.Email != (Email{}) && cfg.Email.Type != "" {
+		switch cfg.Email.Type {
+		case EmailTypeMailjet:
+			if cfg.Email.ID == "" {
+				cfg.Email.ID = "mailjet"
+			}
+		case EmailTypeSMTP:
+			if cfg.Email.ID == "" {
+				cfg.Email.ID = "smtp"
+			}
+		}
+	}
+
 }

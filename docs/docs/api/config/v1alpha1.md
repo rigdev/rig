@@ -29,6 +29,9 @@ _Appears in:_
 | `certificateKeyFile` _string_ | CertificateKeyFile specifies a path to a PEM encoded certificate key which will be used for jwt signatures. |
 | `disablePasswords` _boolean_ | DisablePasswords disables password authentication. This makes sense if you want to require SSO, as login method. |
 | `sso` _[SSO](#sso)_ | SSO specifies single sign on configuration. |
+| `allowRegister` _boolean_ | AllowRegister specifies if users are allowed to register new accounts. |
+| `requireVerification` _boolean_ | IsVerified specifies if users are required to verify their email address. |
+| `sendWelcomeEmail` _boolean_ | SendWelcomeEmail specifies if a welcome email should be sent to new users. This will use the default email config |
 
 
 ### CapsuleMatch
@@ -76,10 +79,12 @@ _Appears in:_
 | --- | --- |
 | `postgres` _[ClientPostgres](#clientpostgres)_ | Postgres holds configuration for the postgres client. |
 | `docker` _[ClientDocker](#clientdocker)_ | Docker sets the host for the Docker client. |
-| `mailjet` _[ClientMailjet](#clientmailjet)_ | Mailjet sets the API key and secret for the Mailjet client. |
-| `smtp` _[ClientSMTP](#clientsmtp)_ | SMTP sets the host, port, username and password for the SMTP client. |
+| `mailjet` _[ClientMailjet](#clientmailjet)_ | Deprecated: use 'client.mailjets' instead. Mailjet sets the API key and secret for the Mailjet client. |
+| `mailjets` _object (keys:string, values:[ClientMailjet](#clientmailjet))_ | Mailjets holds configuration for multiple mailjet clients. The key is the id of the client, which should be unique across Mailjet and SMTP clients. |
+| `smtp` _[ClientSMTP](#clientsmtp)_ | Deprecated: use 'client.smtps' instead. SMTP sets the host, port, username and password for the SMTP client. |
+| `smtps` _object (keys:string, values:[ClientSMTP](#clientsmtp))_ | SMTPs holds configuration for muliple SMTP clients. The key is the id of the client, which should be unique across Mailjet and SMTP clients. |
 | `operator` _[ClientOperator](#clientoperator)_ | Operator sets the base url for the Operator client. |
-| `slack` _[ClientSlack](#clientslack)_ | Slack holds configuration for sending slack messages. |
+| `slack` _object (keys:string, values:[ClientSlack](#clientslack))_ | Slack holds configuration for sending slack messages. The key is the id of the client. For example the workspace in which the app is installed |
 | `git` _[ClientGit](#clientgit)_ | Git client configuration for communicating with multiple repositories. |
 
 
@@ -189,7 +194,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `token` _string_ | Slack authentication token. |
-| `channel_id` _string_ | ID of the slack channel to send messages to. |
 
 
 ### Cluster
@@ -272,6 +276,22 @@ _Appears in:_
 | `clusterHost` _string_ | ClusterHost is the host where the registry can be reached from within the cluster. Any image which is named after `Host` will be rename to use `ClusterHost` instead. This ensures that the image can be pulled from within the cluster. |
 
 
+### DockerRegistryCredentials
+
+
+
+
+
+_Appears in:_
+- [PlatformConfig](#platformconfig)
+
+| Field | Description |
+| --- | --- |
+| `username` _string_ | Username for the docker registry. |
+| `password` _string_ | Password for the docker registry. |
+| `email` _string_ | Email for the docker registry. |
+
+
 ### Email
 
 
@@ -283,8 +303,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
+| `id` _string_ | ID is the specified id an email configuration. |
 | `from` _string_ | From is who is set as the sender of rig emails. |
-| `type` _[EmailType](#emailtype)_ | Type is what client rig should use to send emails. |
+| `type` _[EmailType](#emailtype)_ | Deprecated: ID for an email configuration is used instead. |
 
 
 ### EmailType
@@ -386,21 +407,6 @@ _Appears in:_
 | --- | --- |
 | `devMode` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be more human readable. |
 | `level` _[Level](#level)_ | Level sets the granularity of logging. |
-
-
-### Notification
-
-
-
-Notification configuration
-
-_Appears in:_
-- [PlatformConfig](#platformconfig)
-
-| Field | Description |
-| --- | --- |
-| `projects` _string array_ | Projects to send notifications for. If empty, all projects are included. |
-| `environments` _string array_ | Environments to send notifications for. If empty, all environments are included. |
 
 
 ### OIDCProvider
@@ -511,10 +517,10 @@ PlatformConfig is the Schema for the platform config API
 | `client` _[Client](#client)_ | Client holds configuration for clients used in the platform. |
 | `repository` _[Repository](#repository)_ | Repository specifies the type of db to use along with secret key |
 | `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration Deprecated: Use `clusters` instead. |
-| `email` _[Email](#email)_ | Email holds configuration for sending emails. Either using mailjet or using SMTP |
+| `email` _[Email](#email)_ | Email holds the default configuration for sending emails. Either using mailjet or using SMTP. |
 | `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
 | `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
-| `notification` _[Notification](#notification)_ | Notification configuration of the platform. This is backed by notification clients in the client configuratino. Currently supported clients: Slack |
+| `dockerRegistries` _object (keys:string, values:[DockerRegistryCredentials](#dockerregistrycredentials))_ | DockerRegistries holds configuration for multiple docker registries. The key is the host of the registry |
 
 
 ### Plugin

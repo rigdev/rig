@@ -23,11 +23,6 @@ var (
 )
 
 var (
-	field string
-	value string
-)
-
-var (
 	useProject bool
 	current    bool
 )
@@ -58,47 +53,6 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		},
 		GroupID: common.ManagementGroupID,
 	}
-
-	getSettings := &cobra.Command{
-		Use:   "get-settings",
-		Short: "Get project settings",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.getSettings),
-	}
-	project.AddCommand(getSettings)
-
-	updateSettings := &cobra.Command{
-		Use:   "update-settings",
-		Short: "Update project settings",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.updateSettings),
-	}
-	updateSettings.Flags().StringVarP(&field, "field", "f", "", "Field to update")
-	updateSettings.Flags().StringVarP(&value, "value", "v", "", "Value to set")
-	updateSettings.MarkFlagsRequiredTogether("field", "value")
-	updateSettings.SetHelpFunc(
-		func(cmd *cobra.Command, args []string) {
-			cmd.Printf(
-				("Usage:\n" +
-					"  update-settings [flags] \n\n" +
-					"Flags:\n" +
-					"  -f, --field string   Field to update\n" +
-					"  -h, --help           help for update-settings\n" +
-					"  -v, --value string   Value to set\n" +
-
-					"Avaliable fields:\n" +
-					"  email-provder - json \n" +
-					"  add-docker-registry - json \n" +
-					"  delete-docker-registry - string \n" +
-					"  template - json \n"),
-			)
-		},
-	)
-	if err := updateSettings.RegisterFlagCompletionFunc("field", settingsUpdateFieldsCompletion); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	project.AddCommand(updateSettings)
 
 	createProject := &cobra.Command{
 		Use:   "create [project-id]",
@@ -166,25 +120,6 @@ func (c *Cmd) projectCompletions(ctx context.Context,
 		}
 	}
 
-	if len(completions) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return completions, cobra.ShellCompDirectiveNoFileComp
-}
-
-func settingsUpdateFieldsCompletion(
-	_ *cobra.Command,
-	_ []string,
-	toComplete string,
-) ([]string, cobra.ShellCompDirective) {
-	fields := []string{"email-provider", "add-docker-registry", "delete-docker-registry", "template"}
-	var completions []string
-	for _, s := range fields {
-		if strings.HasPrefix(s, toComplete) {
-			completions = append(completions, s)
-		}
-	}
 	if len(completions) == 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}

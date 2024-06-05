@@ -7,10 +7,9 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/group/groupconnect"
 	"github.com/rigdev/rig-go-api/api/v1/image/imageconnect"
 	"github.com/rigdev/rig-go-api/api/v1/project/projectconnect"
-	project_settingsconnect "github.com/rigdev/rig-go-api/api/v1/project/settings/settingsconnect"
 	"github.com/rigdev/rig-go-api/api/v1/role/roleconnect"
 	"github.com/rigdev/rig-go-api/api/v1/service_account/service_accountconnect"
-	user_settingsconnect "github.com/rigdev/rig-go-api/api/v1/user/settings/settingsconnect"
+	"github.com/rigdev/rig-go-api/api/v1/settings/settingsconnect"
 	"github.com/rigdev/rig-go-api/api/v1/user/userconnect"
 )
 
@@ -216,11 +215,9 @@ var RoleActionMap = map[string]string{
 }
 
 var SettingsActionMap = map[string]string{
-	project_settingsconnect.ServiceGetSettingsProcedure:    ActionSettingsView,
-	user_settingsconnect.ServiceGetSettingsProcedure:       ActionSettingsView,
-	project_settingsconnect.ServiceGetLicenseInfoProcedure: ActionSettingsView,
-	project_settingsconnect.ServiceUpdateSettingsProcedure: ActionSettingsEdit,
-	user_settingsconnect.ServiceUpdateSettingsProcedure:    ActionSettingsEdit,
+	settingsconnect.ServiceGetSettingsProcedure:    ActionSettingsView,
+	settingsconnect.ServiceGetLicenseInfoProcedure: ActionSettingsView,
+	settingsconnect.ServiceUpdateSettingsProcedure: ActionSettingsEdit,
 }
 
 var EnvironmentActionMap = map[string]string{
