@@ -23,6 +23,10 @@ var (
 	limit  int
 )
 
+var (
+	follow bool
+)
+
 var forceDeploy bool
 
 type Cmd struct {
@@ -47,19 +51,22 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		GroupID:           capsule.TroubleshootingGroupID,
 	}
 
-	rolloutGet := &cobra.Command{
+	rolloutList := &cobra.Command{
 		Use:   "list [capsule]",
 		Short: "List rollouts",
-		Args:  cobra.MaximumNArgs(2),
+		Args:  cobra.MaximumNArgs(1),
 		RunE:  cli.CtxWrap(cmd.list),
 		ValidArgsFunction: common.Complete(
 			cli.HackCtxWrapCompletion(cmd.capsuleCompletions, s),
 			common.MaxArgsCompletionFilter(1),
 		),
 	}
-	rolloutGet.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
-	rolloutGet.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
-	rollout.AddCommand(rolloutGet)
+	rolloutList.Flags().IntVar(&offset, "offset", 0, "offset for pagination")
+	rolloutList.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
+	rolloutList.Flags().BoolVarP(&follow, "follow", "f", false,
+		"keep the connection open and read out rollouts as it they are updated.")
+	rolloutList.MarkFlagsMutuallyExclusive("follow", "offset")
+	rollout.AddCommand(rolloutList)
 
 	rollback := &cobra.Command{
 		Use:   "rollback [capsule-id] [rollout-id]",

@@ -76,6 +76,9 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		"includes instances which have been deleted in the past 7 days",
 	)
 	listInstances.Flags().BoolVar(&excludeExisting, "exclude-existing", false, "only return instances which are deleted")
+	listInstances.Flags().BoolVarP(&follow, "follow", "f", false,
+		"keep the connection open and read out statuses as they are produced.")
+
 	instance.AddCommand(listInstances)
 
 	getInstances := &cobra.Command{
@@ -89,6 +92,9 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		),
 		RunE: cli.CtxWrap(cmd.get),
 	}
+	getInstances.Flags().BoolVarP(&follow, "follow", "f", false,
+		"keep the connection open and read out status as it is produced.")
+
 	instance.AddCommand(getInstances)
 
 	restartInstance := &cobra.Command{
