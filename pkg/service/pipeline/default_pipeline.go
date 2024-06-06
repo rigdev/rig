@@ -14,25 +14,29 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func (s *service) initializePipeline(ctx context.Context) error {
-	p, err := CreateDefaultPipeline(ctx, s.client.Scheme(), s.vm, s.cfg, s.pluginManager, s.logger)
+func (s *service) initializePipeline() error {
+	execCtx := plugin.NewExecutionContext(context.Background())
+
+	p, err := CreateDefaultPipeline(execCtx, s.client.Scheme(), s.vm, s.cfg, s.pluginManager, s.logger)
 	if err != nil {
+		execCtx.Stop()
 		return err
 	}
 
 	s.pipeline = p
+	s.execCtx = execCtx
 	return nil
 }
 
 func CreateDefaultPipeline(
-	ctx context.Context,
+	execCtx plugin.ExecutionContext,
 	scheme *runtime.Scheme,
 	vm scheme.VersionMapper,
 	cfg *v1alpha1.OperatorConfig,
 	pluginManager *plugin.Manager,
 	logger logr.Logger,
 ) (*pipeline.CapsulePipeline, error) {
-	steps, err := GetDefaultPipelineSteps(ctx, cfg, pluginManager, logger)
+	steps, err := GetDefaultPipelineSteps(execCtx, cfg, pluginManager, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +47,7 @@ func CreateDefaultPipeline(
 	}
 
 	for _, step := range cfg.Pipeline.Steps {
-		ps, err := pluginManager.NewStep(step, logger)
+		ps, err := pluginManager.NewStep(execCtx, step, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +59,7 @@ func CreateDefaultPipeline(
 }
 
 func GetDefaultPipelineSteps(
-	_ context.Context,
+	execCtx plugin.ExecutionContext,
 	cfg *v1alpha1.OperatorConfig,
 	pluginManager *plugin.Manager,
 	logger logr.Logger,
@@ -64,7 +68,7 @@ func GetDefaultPipelineSteps(
 	if cfg.Pipeline.ServiceAccountStep.Plugin != "" {
 		serviceAccountPlugin = cfg.Pipeline.ServiceAccountStep.Plugin
 	}
-	serviceAccountStep, err := NewCapsulePluginStep(serviceAccountPlugin,
+	serviceAccountStep, err := NewCapsulePluginStep(execCtx, serviceAccountPlugin,
 		cfg.Pipeline.ServiceAccountStep.Config, pluginManager, logger)
 	if err != nil {
 		return nil, err
@@ -74,7 +78,7 @@ func GetDefaultPipelineSteps(
 	if cfg.Pipeline.DeploymentStep.Plugin != "" {
 		deploymentPlugin = cfg.Pipeline.DeploymentStep.Plugin
 	}
-	deploymentStep, err := NewCapsulePluginStep(deploymentPlugin,
+	deploymentStep, err := NewCapsulePluginStep(execCtx, deploymentPlugin,
 		cfg.Pipeline.DeploymentStep.Config, pluginManager, logger)
 	if err != nil {
 		return nil, err
@@ -86,7 +90,7 @@ func GetDefaultPipelineSteps(
 	}
 
 	if cfg.Pipeline.VPAStep.Plugin != "" {
-		vpaStep, err := NewCapsulePluginStep(cfg.Pipeline.VPAStep.Plugin,
+		vpaStep, err := NewCapsulePluginStep(execCtx, cfg.Pipeline.VPAStep.Plugin,
 			cfg.Pipeline.VPAStep.Config, pluginManager, logger)
 		if err != nil {
 			return nil, err
@@ -96,7 +100,7 @@ func GetDefaultPipelineSteps(
 	}
 
 	if cfg.Pipeline.RoutesStep.Plugin != "" {
-		routesStep, err := NewCapsulePluginStep(cfg.Pipeline.RoutesStep.Plugin,
+		routesStep, err := NewCapsulePluginStep(execCtx, cfg.Pipeline.RoutesStep.Plugin,
 			cfg.Pipeline.RoutesStep.Config, pluginManager, logger)
 		if err != nil {
 			return nil, err
@@ -109,7 +113,7 @@ func GetDefaultPipelineSteps(
 	if cfg.Pipeline.CronJobsStep.Plugin != "" {
 		cronJobsPlugin = cfg.Pipeline.CronJobsStep.Plugin
 	}
-	cronjobStep, err := NewCapsulePluginStep(cronJobsPlugin,
+	cronjobStep, err := NewCapsulePluginStep(execCtx, cronJobsPlugin,
 		cfg.Pipeline.CronJobsStep.Config, pluginManager, logger)
 	if err != nil {
 		return nil, err
@@ -119,7 +123,7 @@ func GetDefaultPipelineSteps(
 	)
 
 	if cfg.Pipeline.ServiceMonitorStep.Plugin != "" {
-		serviceMonitorStep, err := NewCapsulePluginStep(cfg.Pipeline.ServiceMonitorStep.Plugin,
+		serviceMonitorStep, err := NewCapsulePluginStep(execCtx, cfg.Pipeline.ServiceMonitorStep.Plugin,
 			cfg.Pipeline.ServiceMonitorStep.Config, pluginManager, logger)
 		if err != nil {
 			return nil, err
@@ -132,19 +136,22 @@ func GetDefaultPipelineSteps(
 }
 
 func NewCapsulePluginStep(
+	execCtx plugin.ExecutionContext,
 	pluginName, pluginConfig string,
 	pluginManager *plugin.Manager,
 	logger logr.Logger,
 ) (pipeline.Step[pipeline.CapsuleRequest], error) {
-	pluginStep, err := pluginManager.NewStep(v1alpha1.Step{
-		EnableForPlatform: true,
-		Plugins: []v1alpha1.Plugin{
-			{
-				Name:   pluginName,
-				Config: pluginConfig,
+	pluginStep, err := pluginManager.NewStep(
+		execCtx,
+		v1alpha1.Step{
+			EnableForPlatform: true,
+			Plugins: []v1alpha1.Plugin{
+				{
+					Name:   pluginName,
+					Config: pluginConfig,
+				},
 			},
-		},
-	}, logger)
+		}, logger)
 	if err != nil {
 		return nil, err
 	}

@@ -24,7 +24,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+type ExecutionContext interface {
+	Stop()
+	Context() context.Context
+}
+
+type executionContext struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+func NewExecutionContext(ctx context.Context) ExecutionContext {
+	ctx, cancel := context.WithCancel(ctx)
+	return &executionContext{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+}
+
+func (c *executionContext) Stop() {
+	c.cancel()
+}
+
+func (c *executionContext) Context() context.Context {
+	return c.ctx
+}
+
 type pluginExecutor struct {
+	context      ExecutionContext
 	name         string
 	logger       logr.Logger
 	client       *plugin.Client
@@ -36,6 +63,7 @@ type pluginExecutor struct {
 }
 
 func newPluginExecutor(
+	context ExecutionContext,
 	name, stepTag, pluginTag, pluginConfig, path string,
 	args []string,
 	logger logr.Logger,
@@ -46,15 +74,16 @@ func newPluginExecutor(
 		tag = pluginTag
 	}
 	p := &pluginExecutor{
+		context:    context,
 		name:       name,
-		logger:     logger,
+		logger:     logger.WithValues("plugin", name),
 		binaryPath: path,
 		args:       args,
 		tag:        tag,
 		id:         uuid.New(),
 	}
 
-	return p, p.start(context.Background(), pluginConfig, restConfig)
+	return p, p.start(context.Context(), pluginConfig, restConfig)
 }
 
 type loggerSink struct {
@@ -97,10 +126,34 @@ func (p *pluginExecutor) start(ctx context.Context, pluginConfig string, restCon
 		Stderr:           os.Stderr,
 	})
 
+	_, err := p.client.Start()
+	if err != nil {
+		return err
+	}
+
 	rpcClient, err := p.client.Client()
 	if err != nil {
 		return err
 	}
+
+	go func() {
+		defer p.client.Kill()
+		defer p.context.Stop()
+
+		for {
+			if p.client.Exited() {
+				p.logger.Info("plugin exited")
+				return
+			}
+
+			if err := rpcClient.Ping(); err != nil {
+				p.logger.Error(err, "plugin ping failed")
+				return
+			}
+
+			time.Sleep(1 * time.Second)
+		}
+	}()
 
 	raw, err := rpcClient.Dispense("rigOperatorPlugin")
 	if err != nil {

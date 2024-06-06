@@ -38,6 +38,7 @@ func NewService(
 	logger logr.Logger,
 	pluginManager *plugin.Manager,
 	lc fx.Lifecycle,
+	sh fx.Shutdowner,
 ) Service {
 	s := &service{
 		cfg:           cfg,
@@ -47,7 +48,23 @@ func NewService(
 		pluginManager: pluginManager,
 		vm:            scheme.NewVersionMapper(client),
 	}
-	lc.Append(fx.StartHook(s.initializePipeline))
+
+	lc.Append(fx.StartHook(func() error {
+		if err := s.initializePipeline(); err != nil {
+			return err
+		}
+
+		if sh != nil {
+			go func() {
+				<-s.execCtx.Context().Done()
+				s.logger.Info("default pipeline plugins terminated, restarting")
+				_ = sh.Shutdown(fx.ExitCode(1))
+			}()
+		}
+
+		return nil
+	}))
+
 	return s
 }
 
@@ -58,6 +75,7 @@ type service struct {
 	logger        logr.Logger
 	pluginManager *plugin.Manager
 	pipeline      *pipeline.CapsulePipeline
+	execCtx       plugin.ExecutionContext
 	vm            scheme.VersionMapper
 }
 
@@ -73,6 +91,9 @@ func (s *service) DryRun(
 	capsuleSpec *v1alpha2.Capsule,
 	opts ...pipeline.CapsuleRequestOption,
 ) (*pipeline.Result, error) {
+	execCtx := plugin.NewExecutionContext(ctx)
+	defer execCtx.Stop()
+
 	if cfg == nil {
 		cfg = s.cfg
 	}
@@ -104,7 +125,7 @@ func (s *service) DryRun(
 		capsuleSpec.SetUID(types.UID("dry-run-spec"))
 	}
 
-	steps, err := GetDefaultPipelineSteps(ctx, cfg, s.pluginManager, s.logger)
+	steps, err := GetDefaultPipelineSteps(execCtx, cfg, s.pluginManager, s.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +136,7 @@ func (s *service) DryRun(
 	}
 
 	for _, step := range cfg.Pipeline.Steps {
-		ps, err := s.pluginManager.NewStep(step, s.logger)
+		ps, err := s.pluginManager.NewStep(execCtx, step, s.logger)
 		if err != nil {
 			return nil, err
 		}

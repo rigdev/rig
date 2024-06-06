@@ -136,7 +136,7 @@ container:
 	pmanager, err := plugin.NewManager(cfg, plugin.SetBuiltinBinaryPathOption(builtinBinPath))
 	require.NoError(t, err)
 	lc := fxtest.NewLifecycle(t)
-	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc)
+	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc, nil)
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
 		Scheme:              scheme,

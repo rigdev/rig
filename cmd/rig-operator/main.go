@@ -174,7 +174,11 @@ func run(cmd *cobra.Command, _ []string) error {
 					MaxHeaderBytes:    8 * 1024, // 8KiB
 				}
 
-				lc.Append(fx.StopHook(srv.Shutdown))
+				lc.Append(fx.StopHook(func(ctx context.Context) {
+					ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+					defer cancel()
+					_ = srv.Shutdown(ctx)
+				}))
 
 				go func() {
 					log.Info("starting GRPC server")
@@ -184,8 +188,10 @@ func run(cmd *cobra.Command, _ []string) error {
 					}
 				}()
 
+				ctx, cancel := context.WithCancel(ctx)
 				done := make(chan struct{})
 				lc.Append(fx.StopHook(func() {
+					cancel()
 					<-done
 				}))
 
