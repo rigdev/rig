@@ -233,7 +233,7 @@ func (m *Manager) GetPlugins() []Info {
 	return plugins
 }
 
-func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error) {
+func (m *Manager) NewStep(execCtx ExecutionContext, step v1alpha1.Step, logger logr.Logger) (*Step, error) {
 	var err error
 	var ps []*pluginExecutor
 	defer func() {
@@ -250,6 +250,7 @@ func (m *Manager) NewStep(step v1alpha1.Step, logger logr.Logger) (*Step, error)
 			return nil, fmt.Errorf("plugin '%s' was unknown", plugin.Name)
 		}
 		p, err := newPluginExecutor(
+			execCtx,
 			plugin.Name, step.Tag, plugin.Tag, plugin.Config, info.BinaryPath,
 			info.Args,
 			logger,

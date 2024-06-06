@@ -124,7 +124,7 @@ portName: "metricsport"`,
 	cs := capabilities.NewService(cc, clientSet.Discovery(), nil)
 
 	lc := fxtest.NewLifecycle(t)
-	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc)
+	ps := pipeline.NewService(opConfig, cc, cs, ctrl.Log, pmanager, lc, nil)
 
 	capsuleReconciler := &controller.CapsuleReconciler{
 		Client:              manager.GetClient(),
