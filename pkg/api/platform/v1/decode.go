@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,12 +23,7 @@ func YAMLToCapsuleProto(bytes []byte) (*platformv1.Capsule, error) {
 	return spec, nil
 }
 
-type GetKind interface {
-	proto.Message
-	GetKind() string
-}
-
-func YAMLToSpecProto[T GetKind](bytes []byte, obj T, expectedKind string) error {
+func YAMLToSpecProto[T interface{ GetKind() string }](bytes []byte, obj T, expectedKind string) error {
 	if err := yaml.Unmarshal(bytes, obj); err != nil {
 		return err
 	}
