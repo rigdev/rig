@@ -49,15 +49,15 @@ func NewService(
 		vm:            scheme.NewVersionMapper(client),
 	}
 
-	lc.Append(fx.StartHook(func(ctx context.Context) error {
-		if err := s.initializePipeline(ctx); err != nil {
+	lc.Append(fx.StartHook(func() error {
+		if err := s.initializePipeline(); err != nil {
 			return err
 		}
 
 		go func() {
 			<-s.execCtx.Context().Done()
 			s.logger.Info("default pipeline plugins terminated, restarting")
-			sh.Shutdown(fx.ExitCode(1))
+			_ = sh.Shutdown(fx.ExitCode(1))
 		}()
 
 		return nil

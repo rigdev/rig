@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func (s *service) initializePipeline(ctx context.Context) error {
+func (s *service) initializePipeline() error {
 	execCtx := plugin.NewExecutionContext(context.Background())
 
 	p, err := CreateDefaultPipeline(execCtx, s.client.Scheme(), s.vm, s.cfg, s.pluginManager, s.logger)
