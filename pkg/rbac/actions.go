@@ -76,6 +76,7 @@ const (
 	ActionCapsuleAbortRollout = "capsule:abortrollout"
 	// Stop rollout
 	ActionCapsuleStopRollout = "capsule:stoprollout"
+	ActionCapsuleGetRevision = "capsule:getRevision"
 
 	// Deploy
 	ActionCapsuleDeploy = "capsule:deploy"
@@ -144,6 +145,8 @@ var CapsuleActionMap = map[string]string{
 	capsuleconnect.ServiceStopRolloutProcedure:              ActionCapsuleStopRollout,
 	capsuleconnect.ServiceExecuteProcedure:                  ActionCapsuleExecute,
 	capsuleconnect.ServiceRestartInstanceProcedure:          ActionCapsuleRestartInstance,
+	capsuleconnect.ServiceGetRevisionProcedure:              ActionCapsuleGetRevision,
+	capsuleconnect.ServiceGetRolloutOfRevisionsProcedure:    ActionCapsuleView,
 }
 
 var UserActionMap = map[string]string{

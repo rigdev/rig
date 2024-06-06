@@ -317,7 +317,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		return err
 	}
 
-	cmd.Printf("Deploying to capsule %v in rollout %v \n", capsuleName, res.Msg.GetRolloutId())
+	cmd.Printf("Deploying to capsule %v\n", capsuleName)
 
 	if noWait {
 		return nil
@@ -539,6 +539,8 @@ func (c *Cmd) waitForRolloutDone(
 			time.Sleep(time.Second)
 		}
 	}
+
+	fmt.Printf("Rollout %v started\n", rolloutID)
 
 	var lastConfigure []*api_rollout.StepInfo
 	var lastResource []*api_rollout.StepInfo
