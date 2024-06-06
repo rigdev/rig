@@ -54,11 +54,13 @@ func NewService(
 			return err
 		}
 
-		go func() {
-			<-s.execCtx.Context().Done()
-			s.logger.Info("default pipeline plugins terminated, restarting")
-			_ = sh.Shutdown(fx.ExitCode(1))
-		}()
+		if sh != nil {
+			go func() {
+				<-s.execCtx.Context().Done()
+				s.logger.Info("default pipeline plugins terminated, restarting")
+				_ = sh.Shutdown(fx.ExitCode(1))
+			}()
+		}
 
 		return nil
 	}))
