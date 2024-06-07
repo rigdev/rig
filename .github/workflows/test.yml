@@ -10,7 +10,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu
     steps:
       - uses: actions/checkout@v3
 
@@ -41,7 +41,7 @@ jobs:
         run: task lint
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu
     steps:
       - uses: actions/checkout@v3
 
@@ -83,7 +83,7 @@ jobs:
           files: cover.out
 
   cli-import-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu
     if: github.event_name == 'pull_request'
     steps:
       - name: Set up Go
@@ -100,7 +100,7 @@ jobs:
           go run ./main.go
 
   generated-files-committed:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu
     steps:
       - uses: actions/checkout@v3
 

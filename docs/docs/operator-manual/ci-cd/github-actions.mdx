@@ -77,7 +77,7 @@ In the workflow we will go through the following steps
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu
     env:
       IMAGE_NAME: "ghcr.io/\${{ github.repository_owner }}/\${{ github.repository }}:\${{ github.sha }}"
     steps:

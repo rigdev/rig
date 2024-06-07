@@ -312,12 +312,12 @@ tasks:
   docker:
     desc: "🐳 Build docker image"
     cmds:
-      - docker buildx build -t ghcr.io/rigdev/rig-operator:${TAG} -f ./build/package/Dockerfile .
+      - docker build -t ghcr.io/rigdev/rig-operator:${TAG} -f ./build/package/Dockerfile .
 
   docker-docs:
     desc: "🐳 Build docker docs image"
     cmds:
-      - docker buildx build -t ghcr.io/rigdev/docs:${TAG} -f ./build/package/docs/Dockerfile .
+      - docker build -t ghcr.io/rigdev/docs:${TAG} -f ./build/package/docs/Dockerfile .
 
   deploy-operator:
     desc: "🚀 Deploy operator to k8s context defined by $KUBECTX (default: kind-rig)"

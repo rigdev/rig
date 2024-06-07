@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu
     steps:
       - name: Checkout
         uses: actions/checkout@v3
