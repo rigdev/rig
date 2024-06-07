@@ -4774,6 +4774,7 @@ Pagination option.
 | offset | [uint32](#uint32) |  | Where to start the pagination. |
 | limit | [uint32](#uint32) |  | How many items to return. |
 | descending | [bool](#bool) |  | Whether to sort in descending order. |
+| batch_size | [uint32](#uint32) |  | When fetching, how many to fetch at a time. It is purely an optimization strategy. It does not influence the output. |
 
 
 

@@ -65,4 +65,7 @@ message Pagination {
   uint32 limit = 2;
   // Whether to sort in descending order.
   bool descending = 3;
+  // When fetching, how many to fetch at a time.
+  // It is purely an optimization strategy. It does not influence the output.
+  uint32 batch_size = 4;
 }
