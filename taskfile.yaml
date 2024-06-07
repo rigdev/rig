@@ -3,6 +3,7 @@ env:
   TAG: dev
   PLATFORM_TAG: latest
   KUBECTX: kind-rig
+  CGO_ENABLED: "1"
 
 run: once
 
