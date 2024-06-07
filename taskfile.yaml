@@ -272,12 +272,11 @@ tasks:
         build-rig-operator,
       ]
     env:
-      KUBEBUILDER_ASSETS:
-        sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
       RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
       GOEXPERIMENT: nocoverageredesign
     cmds:
       - |
+        export KUBEBUILDER_ASSETS="`./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path`"
         ./tools/bin/gotestsum \
           --format-hide-empty-pkg \
           --junitfile test-result.xml -- \
@@ -298,11 +297,10 @@ tasks:
         build-rig-operator,
       ]
     env:
-      KUBEBUILDER_ASSETS:
-        sh: ./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path
       RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
     cmds:
       - |
+        export KUBEBUILDER_ASSETS="`./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path`"
         ./tools/bin/gotestsum \
           --format-hide-empty-pkg -- \
           -race \
