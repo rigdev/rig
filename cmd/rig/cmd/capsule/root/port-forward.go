@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -28,8 +29,8 @@ func (c *Cmd) portForward(
 
 	res, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
 		Msg: &capsule.ListRolloutsRequest{
-			ProjectId:     c.Scope.GetCfg().GetProject(),
-			EnvironmentId: c.Scope.GetCfg().GetEnvironment(),
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
 			CapsuleId:     capsuleID,
 			Pagination: &model.Pagination{
 				Descending: true,
@@ -105,8 +106,8 @@ func (c *Cmd) portForward(
 	if instanceID == "" {
 		instancesRes, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 			Msg: &capsule.ListInstancesRequest{
-				ProjectId:     c.Scope.GetCfg().GetProject(),
-				EnvironmentId: c.Scope.GetCfg().GetEnvironment(),
+				ProjectId:     flags.GetProject(c.Scope),
+				EnvironmentId: flags.GetEnvironment(c.Scope),
 				CapsuleId:     capsuleID,
 				Pagination: &model.Pagination{
 					Limit: 1,
@@ -138,8 +139,8 @@ func (c *Cmd) portForward(
 
 				res, err := c.Rig.Capsule().Logs(ctx, &connect.Request[capsule.LogsRequest]{
 					Msg: &capsule.LogsRequest{
-						ProjectId:     c.Scope.GetCfg().GetProject(),
-						EnvironmentId: c.Scope.GetCfg().GetEnvironment(),
+						ProjectId:     flags.GetProject(c.Scope),
+						EnvironmentId: flags.GetEnvironment(c.Scope),
 						CapsuleId:     capsuleID,
 						InstanceId:    instanceID,
 						Follow:        true,
@@ -186,7 +187,10 @@ func (c *Cmd) portForward(
 
 		go func() {
 			err := c.runPortForwardForPort(ctx, capsuleID, instanceID, conn, remotePort)
-			if err != nil {
+			if errors.IsNotFound(err) {
+				fmt.Printf("[rig] instance '%s' no longer available: %v\n", instanceID, err)
+				os.Exit(1)
+			} else if err != nil {
 				fmt.Println("[rig] connection closed with error:", err)
 			} else if verbose {
 				fmt.Printf("[rig] closed connection %s -> %s:%d\n", conn.RemoteAddr().String(), instanceID, remotePort)
@@ -210,8 +214,8 @@ func (c *Cmd) runPortForwardForPort(
 	if err := pf.Send(&capsule.PortForwardRequest{
 		Request: &capsule.PortForwardRequest_Start_{
 			Start: &capsule.PortForwardRequest_Start{
-				ProjectId:     c.Scope.GetCfg().GetProject(),
-				EnvironmentId: c.Scope.GetCfg().GetEnvironment(),
+				ProjectId:     flags.GetProject(c.Scope),
+				EnvironmentId: flags.GetEnvironment(c.Scope),
 				CapsuleId:     capsuleID,
 				InstanceId:    instanceID,
 				Port:          port,
