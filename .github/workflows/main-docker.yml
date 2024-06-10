@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu
     steps:
       - name: Checkout
@@ -21,7 +21,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push rig-operator
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -30,3 +30,13 @@ jobs:
           push: true
           tags: |
             ghcr.io/rigdev/rig-operator:main
+
+      - name: Build and push rig
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./build/package/rig/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/rigdev/rig:main

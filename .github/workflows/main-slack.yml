@@ -1,7 +1,7 @@
 name: Slack notify errors
 on:
   workflow_run:
-    workflows: [Main docker, Main docs, Main Protobuf, Main Charts]
+    workflows: [Main docker, Main docs, Main Protobuf, Main Charts, Test]
     types: [completed]
     branches: [main]
 

@@ -313,6 +313,11 @@ tasks:
     cmds:
       - docker build -t ghcr.io/rigdev/rig-operator:${TAG} -f ./build/package/Dockerfile .
 
+  docker-rig:
+    desc: "🐳 Build docker rig image"
+    cmds:
+      - docker build -t ghcr.io/rigdev/rig:${TAG} -f ./build/package/rig/Dockerfile .
+
   docker-docs:
     desc: "🐳 Build docker docs image"
     cmds:
