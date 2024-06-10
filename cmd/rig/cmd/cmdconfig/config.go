@@ -201,9 +201,11 @@ func (cfg Config) Save() error {
 		return err
 	}
 
+	tmpName := tmpFile.Name()
+
 	defer func() {
 		_ = tmpFile.Close()
-		_ = cfg.fs.Remove(tmpFile.Name())
+		_ = cfg.fs.Remove(tmpName)
 	}()
 
 	if _, err := tmpFile.Write(bs); err != nil {
@@ -214,7 +216,7 @@ func (cfg Config) Save() error {
 		return err
 	}
 
-	return cfg.fs.Rename(tmpFile.Name(), cfg.filePath)
+	return cfg.fs.Rename(tmpName, cfg.filePath)
 }
 
 func NewConfig(cfgPath string, fs afero.Fs, p common.Prompter) (*Config, error) {
