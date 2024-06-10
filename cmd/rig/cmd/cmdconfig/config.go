@@ -201,8 +201,10 @@ func (cfg Config) Save() error {
 		return err
 	}
 
-	defer tmpFile.Close()
-	defer cfg.fs.Remove(tmpFile.Name())
+	defer func() {
+		_ = tmpFile.Close()
+		_ = cfg.fs.Remove(tmpFile.Name())
+	}()
 
 	if _, err := tmpFile.Write(bs); err != nil {
 		return err
