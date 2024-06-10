@@ -196,11 +196,27 @@ func (cfg Config) Save() error {
 		return err
 	}
 
-	if err := afero.WriteFile(cfg.fs, cfg.filePath, bs, 0o600); err != nil {
+	tmpFile, err := afero.TempFile(cfg.fs, path.Dir(cfg.filePath), path.Base(cfg.filePath))
+	if err != nil {
 		return err
 	}
 
-	return nil
+	tmpName := tmpFile.Name()
+
+	defer func() {
+		_ = tmpFile.Close()
+		_ = cfg.fs.Remove(tmpName)
+	}()
+
+	if _, err := tmpFile.Write(bs); err != nil {
+		return err
+	}
+
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+
+	return cfg.fs.Rename(tmpName, cfg.filePath)
 }
 
 func NewConfig(cfgPath string, fs afero.Fs, p common.Prompter) (*Config, error) {
