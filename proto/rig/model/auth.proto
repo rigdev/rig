@@ -15,3 +15,10 @@ enum LoginType {
   // SSO Login
   LOGIN_TYPE_SSO = 4;
 }
+
+// Message that tells how the user was authenticated.
+message AuthMethod {
+  oneof method {
+    LoginType login_type = 1;
+  }
+}

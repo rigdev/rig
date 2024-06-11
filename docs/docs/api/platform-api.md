@@ -320,6 +320,21 @@
 
 
 
+<a name="model-AuthMethod"></a>
+
+### AuthMethod
+Message that tells how the user was authenticated.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| login_type | [LoginType](#model-LoginType) |  |  |
+
+
+
+
+
+
 
 
 <a name="model-LoginType"></a>
@@ -7033,20 +7048,6 @@ Update msg for a project.
 
 
 
-<a name="api-v1-project-Plan"></a>
-
-### Plan
-The plan for a rig installation
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| PLAN_UNSPECIFIED | 0 | Unspecified / unactivated plan. |
-| PLAN_FREE | 1 | Free tier. |
-| PLAN_TEAM | 2 | Team / Pro tier. |
-| PLAN_ENTERPRISE | 3 | Enterprise tier. |
-
-
-
 
 
 
@@ -7437,11 +7438,10 @@ Request to get the license information of the Rig installation.
 ### GetLicenseInfoResponse
 Response for getting the license information of the Rig installation.
 
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| plan | [api.v1.project.Plan](#api-v1-project-Plan) |  | The plan of the rig installation. |
-| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The expiration date of the license. |
+// The plan of the rig installation.
+api.v1.project.Plan plan = 1;
+// The expiration date of the license.
+google.protobuf.Timestamp expires_at = 2;
 
 
 
@@ -8034,6 +8034,7 @@ Response for listing service accounts.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | slack | [Slack](#api-v1-settings-Slack) |  |  |
+| email | [EmailClient](#api-v1-settings-EmailClient) | repeated |  |
 
 
 
@@ -8049,6 +8050,24 @@ Platform wide static configuration.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | client | [Client](#api-v1-settings-Client) |  |  |
+| docker_registries | [string](#string) | repeated |  |
+| default_email | [EmailClient](#api-v1-settings-EmailClient) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-EmailClient"></a>
+
+### EmailClient
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| type | [EmailType](#api-v1-settings-EmailType) |  |  |
 
 
 
@@ -8084,6 +8103,19 @@ Platform wide static configuration.
 
 
 
+
+
+
+<a name="api-v1-settings-EmailType"></a>
+
+### EmailType
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| EMAIL_TYPE_UNSPECIFIED | 0 |  |
+| EMAIL_TYPE_MAILJET | 1 |  |
+| EMAIL_TYPE_SMTP | 2 |  |
 
 
 
@@ -8124,6 +8156,23 @@ Platform wide static configuration.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | slack | [NotificationTarget.SlackTarget](#api-v1-settings-NotificationTarget-SlackTarget) |  |  |
+| email | [NotificationTarget.EmailTarget](#api-v1-settings-NotificationTarget-EmailTarget) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-NotificationTarget-EmailTarget"></a>
+
+### NotificationTarget.EmailTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| from_email | [string](#string) |  |  |
 
 
 
@@ -8170,7 +8219,8 @@ Update message for platform settings.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| set_notification_notifiers | [Update.SetNotificationNotifiers](#api-v1-settings-Update-SetNotificationNotifiers) |  |  |
+| set_notification_notifiers | [Update.SetNotificationNotifiers](#api-v1-settings-Update-SetNotificationNotifiers) |  | Set the notification notifiers. |
+| set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
 
 
 
@@ -8277,6 +8327,7 @@ Response for getting the license information of the Rig installation.
 | ----- | ---- | ----- | ----------- |
 | plan | [Plan](#api-v1-settings-Plan) |  | The plan of the rig installation. |
 | expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The expiration date of the license. |
+| user_limit | [int32](#int32) |  | The number of users allowed in the installation. |
 
 
 
