@@ -162,56 +162,6 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	listSessions.Flags().IntVarP(&limit, "limit", "l", 10, "limit for pagination")
 	user.AddCommand(listSessions)
 
-	getSettings := &cobra.Command{
-		Use:   "get-settings",
-		Short: "Get the user-settings for the current project",
-		RunE:  cli.CtxWrap(cmd.getSettings),
-		Args:  cobra.NoArgs,
-	}
-	user.AddCommand(getSettings)
-
-	updateSettings := &cobra.Command{
-		Use:   "update-settings",
-		Short: "Update the user-settings for the current project",
-		RunE:  cli.CtxWrap(cmd.updateSettings),
-		Args:  cobra.NoArgs,
-	}
-	updateSettings.Flags().StringVarP(&field, "field", "f", "", "field to update")
-	updateSettings.Flags().StringVarP(&value, "value", "v", "", "value to update the field with")
-	updateSettings.MarkFlagsRequiredTogether("field", "value")
-	updateSettings.SetHelpFunc(
-		func(cmd *cobra.Command, args []string) {
-			cmd.Printf(
-				("Usage:\n" +
-					"  rig user update-settings [flags] \n\n" +
-					"Flags: \n" +
-					"  -f, --field string   field to update \n" +
-					"  -v, --value string   value to update the field with \n" +
-					"  -h, --help 		 	help for update-settings \n\n" +
-
-					"Available fields: \n" +
-					"  allow-register 		- bool\n" +
-					"  allow-login 			- bool\n" +
-					"  verify-email-required 	- bool\n" +
-					"  verify-phone-required 	- bool \n" +
-					"  access-token-ttl 		- int (minutes) \n" +
-					"  refresh-token-ttl 		- int (hours) \n" +
-					"  verification-code-ttl 	- int (minutes) \n" +
-					"  password-hashing 		- json \n" +
-					"  login-mechanisms 		- json \n" +
-					"  email-provider 		- json \n" +
-					"  template 			- json \n\n" +
-
-					"Multi-Valued fields should be input as JSON \n"),
-			)
-		},
-	)
-	if err := updateSettings.RegisterFlagCompletionFunc("field", updateSettingsCompletions); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	user.AddCommand(updateSettings)
-
 	parent.AddCommand(user)
 }
 
@@ -245,36 +195,6 @@ func (c *Cmd) userCompletions(
 	}
 
 	return completions, cobra.ShellCompDirectiveNoFileComp
-}
-
-func updateSettingsCompletions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	options := []string{
-		"allow-register",
-		"allow-login",
-		"verify-email-required",
-		"verify-phone-required",
-		"access-token-ttl",
-		"refresh-token-ttl",
-		"verification-code-ttl",
-		"password-hashing",
-		"login-mechanisms",
-		"email-provider",
-		"template",
-	}
-
-	var completions []string
-
-	for _, o := range options {
-		if strings.HasPrefix(o, toComplete) {
-			completions = append(completions, o)
-		}
-	}
-
-	if len(completions) == 0 {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	return completions, cobra.ShellCompDirectiveDefault
 }
 
 func updateUserCompletions(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {

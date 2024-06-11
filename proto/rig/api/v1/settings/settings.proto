@@ -18,7 +18,10 @@ message Update {
   }
 
   oneof field {
+    // Set the notification notifiers.
     SetNotificationNotifiers set_notification_notifiers = 1;
+    // Set the git store.
+    model.GitStore set_git_store = 2;
   }
 }
 
@@ -34,8 +37,14 @@ message NotificationTarget {
     string channel_id = 2;
   }
 
+  message EmailTarget {
+    string id = 1;
+    string from_email = 2;
+  }
+
   oneof target {
     SlackTarget slack = 1;
+    EmailTarget email = 2;
   }
 }
 
