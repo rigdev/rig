@@ -32,12 +32,16 @@ spec:
           {{- with .Values.postgres.resources }}
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
+          env:
+              # Mount data into a sub-folder to avoid conflicts with a top-level ".Lost+Found" etc.
+            - name: PGDATA
+              value: {{ .Values.postgres.mountPath }}/pgdata
           envFrom:
             - secretRef:
                 name: {{ include "rig-platform.fullname" . }}-postgres
           volumeMounts:
             - name: data
-              mountPath: {{ .Values.postgres.mountPath }} 
+              mountPath: {{ .Values.postgres.mountPath }}
       volumes:
         - name: init
           configMap:
