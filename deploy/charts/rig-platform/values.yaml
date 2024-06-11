@@ -75,7 +75,7 @@ postgres:
   storage:
     className: ""
     size: 10Gi
-  mountPath: "/var/lib/postgresql"
+  mountPath: "/var/lib/postgresql/data"
 
 # Wether or not to load secret parts of the configuration from environment
 # variables instead of a config file.
