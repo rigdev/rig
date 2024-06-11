@@ -50,7 +50,7 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 		}
 	}
 
-	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Prompter, connect.NewRequest(&capsule.DeployRequest{
+	if err := capsule_cmd.DeployOld(ctx, c.Rig, c.Prompter, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
 			Field: &capsule.Change_AddCronJob{
@@ -254,7 +254,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 		return fmt.Errorf("no job with name %s", job)
 	}
 
-	if err := capsule_cmd.Deploy(ctx, c.Rig, c.Prompter, connect.NewRequest(&capsule.DeployRequest{
+	if err := capsule_cmd.DeployOld(ctx, c.Rig, c.Prompter, connect.NewRequest(&capsule.DeployRequest{
 		CapsuleId: capsule_cmd.CapsuleID,
 		Changes: []*capsule.Change{{
 			Field: &capsule.Change_RemoveCronJob_{

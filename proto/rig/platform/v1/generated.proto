@@ -79,3 +79,37 @@ message Project {
   string name = 3;
   ProjEnvCapsuleBase spec = 4;
 }
+
+message HostCapsule {
+  string kind = 1;
+  string apiVersion = 2;
+  string name = 3;
+  string project = 4;
+  string environment = 5;
+  HostNetwork network = 6;
+}
+
+message HostNetwork {
+  repeated HostInterface hostInterfaces = 1;
+  repeated CapsuleInterface capsuleInterfaces = 2;
+  uint32 tunnelPort = 3;
+}
+
+message HostInterface {
+  uint32 port = 2;
+  string capsuleTarget = 1;
+  InterfaceOptions options = 3;
+}
+
+message InterfaceOptions {
+  bool tcp = 1;
+  string allowOrigin = 2;
+  bool changeOrigin = 3;
+  map<string, string> headers = 4;
+}
+
+message CapsuleInterface {
+  uint32 port = 1;
+  string hostTarget = 2;
+  InterfaceOptions options = 3;
+}

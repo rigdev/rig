@@ -3,7 +3,6 @@ package root
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"strconv"
@@ -173,105 +172,5 @@ func (c *Cmd) portForward(
 		}()
 	}
 
-	for {
-		conn, err := l.Accept()
-		if err != nil {
-			if verbose {
-				return fmt.Errorf("error listening for incoming connections: %v", err)
-			}
-		}
-
-		if verbose {
-			fmt.Printf("[rig] new connection %s -> %s:%d\n", conn.RemoteAddr().String(), instanceID, remotePort)
-		}
-
-		go func() {
-			err := c.runPortForwardForPort(ctx, capsuleID, instanceID, conn, remotePort)
-			if errors.IsNotFound(err) {
-				fmt.Printf("[rig] instance '%s' no longer available: %v\n", instanceID, err)
-				os.Exit(1)
-			} else if err != nil {
-				fmt.Println("[rig] connection closed with error:", err)
-			} else if verbose {
-				fmt.Printf("[rig] closed connection %s -> %s:%d\n", conn.RemoteAddr().String(), instanceID, remotePort)
-			}
-		}()
-	}
-}
-
-func (c *Cmd) runPortForwardForPort(
-	ctx context.Context,
-	capsuleID, instanceID string,
-	conn net.Conn,
-	port uint32,
-) error {
-	defer conn.Close()
-
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	pf := c.Rig.Capsule().PortForward(ctx)
-	if err := pf.Send(&capsule.PortForwardRequest{
-		Request: &capsule.PortForwardRequest_Start_{
-			Start: &capsule.PortForwardRequest_Start{
-				ProjectId:     flags.GetProject(c.Scope),
-				EnvironmentId: flags.GetEnvironment(c.Scope),
-				CapsuleId:     capsuleID,
-				InstanceId:    instanceID,
-				Port:          port,
-			},
-		},
-	}); err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			buff := make([]byte, 32*1024)
-			n, err := conn.Read(buff)
-			if err == io.EOF {
-				if err := pf.Send(&capsule.PortForwardRequest{Request: &capsule.PortForwardRequest_Close_{
-					Close: &capsule.PortForwardRequest_Close{},
-				}}); err != nil {
-					cancel()
-					if verbose {
-						fmt.Println("[rig] error sending close:", err)
-					}
-					return
-				}
-				return
-			} else if err != nil {
-				cancel()
-				return
-			}
-
-			if err := pf.Send(&capsule.PortForwardRequest{Request: &capsule.PortForwardRequest_Data{
-				Data: buff[:n],
-			}}); err != nil {
-				cancel()
-				if verbose {
-					fmt.Println("[rig] error sending data to server:", err)
-				}
-				return
-			}
-		}
-	}()
-
-	for {
-		res, err := pf.Receive()
-		if err == io.EOF {
-			return nil
-		} else if err != nil {
-			return err
-		}
-
-		switch v := res.GetResponse().(type) {
-		case *capsule.PortForwardResponse_Data:
-			if _, err := conn.Write(v.Data); err != nil {
-				return err
-			}
-		case *capsule.PortForwardResponse_Close_:
-			return nil
-		}
-	}
+	return capsule_cmd.PortForward(ctx, c.Rig, c.Scope, capsuleID, instanceID, localPort, remotePort, verbose)
 }
