@@ -9,12 +9,13 @@ rules:
     - ""
   resources:
     - pods
+    - pods/exec
+    - pods/log
+    - pods/portforward
     - services
     - configmaps
     - secrets
     - namespaces
-    - pods/log
-    - pods/exec
     - events
     - jobs
     - cronjobs
