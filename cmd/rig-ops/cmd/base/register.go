@@ -94,6 +94,11 @@ func NewRigClient(ctx context.Context, fs afero.Fs, prompter common.Prompter) (r
 		return nil, err
 	}
 
+	if cfg.GetCurrentContext() == nil {
+		// TODO Catch with FX instead?
+		return nil, fmt.Errorf("no rig context. Run `rig config init` to setup one up")
+	}
+
 	sessionManager := &sessionManager{cfg: cfg}
 
 	host := cfg.GetCurrentService().Server
