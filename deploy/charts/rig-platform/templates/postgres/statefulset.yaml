@@ -46,6 +46,8 @@ spec:
         - name: init
           configMap:
             name: {{ include "rig-platform.fullname" . }}-postgres
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Delete
   volumeClaimTemplates:
     - metadata:
         name: data
