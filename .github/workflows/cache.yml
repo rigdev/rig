@@ -35,4 +35,4 @@ jobs:
         run: task tools:ci
 
       - name: Populate go cache
-        run: task build
+        run: task build mocks
