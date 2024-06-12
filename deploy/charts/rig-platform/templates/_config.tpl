@@ -6,8 +6,11 @@ apiVersion: config.rig.dev/v1alpha1
 kind: PlatformConfig
 
 {{- with .Values.rig -}}
-{{- if or (and .auth.certificateFile .auth.certificateKeyFile) .auth.sso.oidcProviders }}
+{{- if or (and .auth.certificateFile .auth.certificateKeyFile) .auth.sso.oidcProviders .auth.allowRegister .auth.requireVerification .auth.sendWelcomeEmail }}
 auth:
+  allowRegister: {{ .auth.allowRegister }}
+  requireVerification: {{ .auth.requireVerification }}
+  sendWelcomeEmail: {{ .auth.sendWelcomeEmail }}
   {{- if (and .auth.certificateFile .auth.certificateKeyFile) }}
   certificateFile: {{ .auth.certificateFile | quote }}
   certificateKeyFile: {{ .auth.certificateKeyFile | quote }}
@@ -66,16 +69,22 @@ client:
     database: {{ .client.postgres.database | quote }}
   {{- end }}
 
-  {{- if .client.mailjet.apiKey }}
-  mailjet:
-    apiKey: {{ .client.mailjet.apiKey | quote }}
+  {{- if .client.mailjets }}
+  mailjets:
+    {{- range $id, $provider := .client.mailjets }}
+      {{ $id | quote }}:
+        apiKey: {{ $provider.apiKey | quote }}
+    {{- end }}
   {{- end }}
 
-  {{- if .client.smtp.host }}
-  smtp:
-    host: {{ .client.smtp.host | quote }}
-    port: {{ .client.smtp.port }}
-    username: {{ .client.smtp.username | quote }}
+  {{- if .client.smtps }}
+  smtps:
+    {{- range $id, $provider := .client.smtps }}
+      {{ $id | quote }}:
+        host: {{ $provider.host | quote }}
+        port: {{ $provider.port }}
+        username: {{ $provider.username | quote }}
+    {{- end}}
   {{- end }}
 
   {{- if .client.operator.baseUrl }}
@@ -96,17 +105,26 @@ environments:
     cluster: prod
 {{- end }}
 
-clusters:
 {{- if .clusters }}
+clusters:
 {{ toYaml .clusters | indent 2 }}
 {{- else }}
   prod:
     type: k8s
 {{- end }}
 
-{{- if .email.type }}
+{{- if .dockerRegistries }}
+dockerRegistries:
+{{- range $host, $registry := .dockerRegistries }}
+  {{ $host | quote }}:
+    username: {{ $registry.username | quote }}
+    email: {{ $registry.email | quote}}
+{{- end }}
+{{- end}}
+
+{{- if .email.id }}
 email:
-  type: {{ .email.type | quote }}
+  id: {{ .email.id | quote }}
   from: {{ .email.from | quote }}
 {{- end }}
 logging:
@@ -132,13 +150,29 @@ client:
   postgres:
     password: {{ .postgres.password | quote }}
   {{- end }}
-  {{- if .mailjet.secretKey }}
-  mailjet:
-    secretKey: {{ .mailjet.secretKey | quote }}
+ 
+  {{- if .mailjets }}
+  mailjets:
+    {{- range $id, $provider := .mailjets }}
+      {{ $id | quote }}:
+        secretKey: {{ $provider.secretKey | quote }}
+    {{- end }}
   {{- end }}
-  {{- if .smtp.password }}
-  smtp:
-    password: {{ .smtp.password | quote }}
+
+  {{- if .smtps }}
+  smtps:
+    {{- range $id, $provider := .smtps }}
+      {{ $id | quote }}:
+        password: {{ $provider.password | quote }}
+    {{- end}}
+  {{- end }}
+
+  {{- if .slack }}
+  slack:
+  {{- range $workspace, $provider := .slack }}
+    {{ $workspace | quote }}:
+      token: {{ $provider.token | quote }}
+  {{- end }}
   {{- end }}
 
   {{- with .git }}
@@ -157,6 +191,14 @@ repository:
   secret: {{ .repository.secret | quote }}
 {{- end }}
 
+{{- if .dockerRegistries }}
+dockerRegistries:
+{{- range $host, $registry := .dockerRegistries }}
+  {{ $host | quote }}:
+    password: {{ $registry.password | quote}}
+{{- end }}
+{{- end }}
+
 auth:
   {{- if not (and .auth.certificateFile .auth.certificateKeyFile) }}
   secret: {{ .auth.secret | quote }}
@@ -168,6 +210,6 @@ auth:
       {{ $name | quote }}:
         clientSecret: {{ $provider.clientSecret | quote }}
     {{- end }}
-    {{- end }}
+  {{- end }}
 {{- end -}}
 {{- end -}}
