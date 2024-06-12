@@ -95,6 +95,9 @@ secretName: ""
 # https://docs.rig.dev/api/config/v1alpha1#platformconfig.
 rig:
   auth:
+    requireVerification: false
+    allowRegister: false
+    sendWelcomeEmail: false
     secret: shhhdonotshare
     certificateFile: ""
     certificateKeyFile: ""
@@ -122,16 +125,24 @@ rig:
       user: postgres
       password: postgres
       database: rig
-    mailjet:
-      apiKey: ""
-      secretKey: ""
-    smtp:
-      password: ""
+    mailjets: {}
+    # each key is considered a mailjet ID
+    # mailjet1:
+    #   apiKey: ""
+    #   secretKey: ""
+    smtps: {}
+    # each key is considered an smtp ID
+    # smtp1:
+    #   host: ""
+    #   port: 587
+    #   username: ""
+    #   password: ""
     operator:
       baseUrl: http://rig-operator:9000
-    slack:
-      token: ""
-      channel_id: ""
+    slack: {}
+    # each key is considered a slack workspace
+    # slack1:
+    #   token: ""
     git:
       auths: []
       # - url: ""
@@ -152,7 +163,7 @@ rig:
     secret: ""
 
   email:
-    type: ""
+    id: ""
     from: ""
 
   logging:
@@ -174,3 +185,10 @@ rig:
     #     url: ""
     #     branch: ""
     #     pathPrefix: ""
+
+  dockerRegistries: {}
+  # each key is considered a registry host
+  # registry1:
+  #   username: ""
+  #   password: ""
+  #   email: ""
