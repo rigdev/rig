@@ -142,6 +142,9 @@ func FeedContainerSettings(spec *platformv1.CapsuleSpec, containerSettings *caps
 	spec.Env = &platformv1.EnvironmentVariables{
 		Direct: maps.Clone(containerSettings.GetEnvironmentVariables()),
 	}
+	if spec.Env.Direct == nil {
+		spec.Env.Direct = map[string]string{}
+	}
 
 	for _, es := range containerSettings.GetEnvironmentSources() {
 		ref, err := EnvironmentSourceConversion(es)
