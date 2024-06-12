@@ -26,9 +26,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-go@v4
+      - uses: rigdev/setup-go@main
         with:
           go-version-file: go.mod
+          save-cache: false
 
       - name: Install Task
         uses: arduino/setup-task@v1
