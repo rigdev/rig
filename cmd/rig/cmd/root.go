@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
+	"connectrpc.com/connect"
+	"github.com/jedib0t/go-pretty/v6/table"
+	settings_api "github.com/rigdev/rig-go-api/api/v1/settings"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
@@ -20,14 +24,17 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
 	"github.com/rigdev/rig/cmd/rig/cmd/role"
 	"github.com/rigdev/rig/cmd/rig/cmd/serviceaccount"
+	"github.com/rigdev/rig/cmd/rig/cmd/settings"
 	"github.com/rigdev/rig/cmd/rig/cmd/user"
 	auth_service "github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/cli/version"
+	"github.com/rigdev/rig/pkg/license"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Cmd struct {
@@ -137,6 +144,7 @@ func Run(s *cli.SetupContext) error {
 	config.Setup(rootCmd, s)
 	project.Setup(rootCmd, s)
 	environment.Setup(rootCmd, s)
+	settings.Setup(rootCmd, s)
 	role.Setup(rootCmd, s)
 
 	// if s.AddTestCommand {
@@ -151,38 +159,39 @@ func Run(s *cli.SetupContext) error {
 	return rootCmd.Execute()
 }
 
-func (c *Cmd) getLicenseInfo(_ context.Context, _ *cobra.Command, _ []string) error {
-	// var plan settings.Plan
-	// var expiresAt *timestamppb.Timestamp
+func (c *Cmd) getLicenseInfo(ctx context.Context, cmd *cobra.Command, _ []string) error {
+	var expiresAt *timestamppb.Timestamp
+	var userLimit license.UserLimit
 
-	// resp, err := c.Rig.Settings().GetLicenseInfo(ctx, &connect.Request[settings.GetLicenseInfoRequest]{})
-	// if err != nil {
-	// 	cmd.Println("Unable to get license info", err)
-	// 	plan = settings.Plan_PLAN_FREE
-	// } else {
-	// 	plan = resp.Msg.GetPlan()
-	// 	expiresAt = resp.Msg.GetExpiresAt()
-	// }
+	resp, err := c.Rig.Settings().GetLicenseInfo(ctx, &connect.Request[settings_api.GetLicenseInfoRequest]{})
+	if err != nil {
+		cmd.Println("Unable to get license info", err)
+		userLimit = license.UnspecifiedNumUsers
+	} else {
+		fmt.Println("Got license info", resp.Msg.GetExpiresAt(), resp.Msg.GetUserLimit())
+		expiresAt = resp.Msg.GetExpiresAt()
+		userLimit = license.UserLimit(resp.Msg.GetUserLimit())
+	}
 
-	// if flags.Flags.OutputType != common.OutputTypePretty {
-	// 	obj := struct {
-	// 		Plan      string    `json:"plan" yaml:"plan"`
-	// 		ExpiresAt time.Time `json:"expires_at" yaml:"expires_at"`
-	// 	}{
-	// 		Plan:      plan.String(),
-	// 		ExpiresAt: expiresAt.AsTime(),
-	// 	}
-	// 	return common.FormatPrint(obj, flags.Flags.OutputType)
-	// }
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		obj := struct {
+			UserLimit license.UserLimit `json:"user_limit" yaml:"plan"`
+			ExpiresAt time.Time         `json:"expires_at" yaml:"expires_at"`
+		}{
+			UserLimit: userLimit,
+			ExpiresAt: expiresAt.AsTime(),
+		}
+		return common.FormatPrint(obj, flags.Flags.OutputType)
+	}
 
-	// t := table.NewWriter()
-	// t.AppendHeader(table.Row{"Attribute", "Value"})
-	// t.AppendRows([]table.Row{
-	// 	{"Plan", plan.String()},
-	// 	{"Expires At", expiresAt.AsTime().Format("2006-01-02 15:04:05")},
-	// })
+	t := table.NewWriter()
+	t.AppendHeader(table.Row{"Attribute", "Value"})
+	t.AppendRows([]table.Row{
+		{"User Limit", userLimit},
+		{"Expires At", expiresAt.AsTime().Format("2006-01-02 15:04:05")},
+	})
 
-	// cmd.Println(t.Render())
+	cmd.Println(t.Render())
 
 	return nil
 }

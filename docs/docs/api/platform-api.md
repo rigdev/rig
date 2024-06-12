@@ -8342,7 +8342,6 @@ Response for getting the license information of the Rig installation.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| plan | [Plan](#api-v1-settings-Plan) |  | The plan of the rig installation. |
 | expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The expiration date of the license. |
 | user_limit | [int32](#int32) |  | The number of users allowed in the installation. |
 

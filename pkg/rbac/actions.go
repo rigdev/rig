@@ -215,9 +215,10 @@ var RoleActionMap = map[string]string{
 }
 
 var SettingsActionMap = map[string]string{
-	settingsconnect.ServiceGetSettingsProcedure:    ActionSettingsView,
-	settingsconnect.ServiceGetLicenseInfoProcedure: ActionSettingsView,
-	settingsconnect.ServiceUpdateSettingsProcedure: ActionSettingsEdit,
+	settingsconnect.ServiceGetSettingsProcedure:      ActionSettingsView,
+	settingsconnect.ServiceGetLicenseInfoProcedure:   ActionSettingsView,
+	settingsconnect.ServiceGetConfigurationProcedure: ActionSettingsView,
+	settingsconnect.ServiceUpdateSettingsProcedure:   ActionSettingsEdit,
 }
 
 var EnvironmentActionMap = map[string]string{

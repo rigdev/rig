@@ -22,8 +22,6 @@ message GetLicenseInfoRequest {}
 
 // Response for getting the license information of the Rig installation.
 message GetLicenseInfoResponse {
-  // The plan of the rig installation.
-  api.v1.settings.Plan plan = 1;
   // The expiration date of the license.
   google.protobuf.Timestamp expires_at = 2;
   // The number of users allowed in the installation.
