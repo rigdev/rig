@@ -143,36 +143,3 @@ jobs:
             echo "$GIT_STATUS"
             exit 1
           fi
-
-  cache:
-    runs-on: ubuntu
-    # if: github.event_name != 'pull_request'
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: rigdev/setup-go@main
-        with:
-          go-version: 1.22.0
-          save-cache: true
-
-      - name: Install Task
-        uses: arduino/setup-task@v1
-        with:
-          version: 3.x
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cache tools
-        uses: actions/cache@v3
-        with:
-          path: |
-            tools/bin
-          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-tools-
-
-      - name: Populate tool cache
-        run: task tools:ci
-
-      - name: Populate go cache
-        run: task build test
