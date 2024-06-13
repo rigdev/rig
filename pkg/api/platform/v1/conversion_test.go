@@ -95,6 +95,11 @@ var (
 				Content:  []byte("hej"),
 				IsSecret: false,
 			},
+			{
+				Path:     "/etc/file2.yaml",
+				Content:  []byte{0, 0, 0},
+				IsSecret: false,
+			},
 		},
 		HorizontalScale: &capsule.HorizontalScale{
 			MaxReplicas: 5,
@@ -240,10 +245,16 @@ var (
 		Files: []*platformv1.File{
 			{
 				Path:     "/etc/file1.yaml",
-				Bytes:    []byte("hej"),
+				String_:  "hej",
+				AsSecret: false,
+			},
+			{
+				Path:     "/etc/file2.yaml",
+				Bytes:    []byte{0, 0, 0},
 				AsSecret: false,
 			},
 		},
+
 		CronJobs: []*v1alpha2.CronJob{
 			{
 				Name:     "job",
@@ -285,5 +296,4 @@ func Test_conversion_both_ways(t *testing.T) {
 	config, err = CapsuleSpecToRolloutConfig(spec2)
 	require.NoError(t, err)
 	require.Equal(t, rolloutConfig, config)
-
 }

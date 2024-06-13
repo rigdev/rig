@@ -1,11 +1,13 @@
 package v1
 
 import (
+	"bytes"
 	"fmt"
 	"maps"
 	"reflect"
 	"slices"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	v2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
@@ -37,11 +39,16 @@ func RolloutConfigToCapsuleSpec(rc *capsule.RolloutConfig) (*platformv1.CapsuleS
 	}
 
 	for _, cf := range rc.GetConfigFiles() {
-		spec.Files = append(spec.Files, &platformv1.File{
+		f := &platformv1.File{
 			Path:     cf.GetPath(),
-			Bytes:    cf.GetContent(),
 			AsSecret: cf.GetIsSecret(),
-		})
+		}
+		if ValidString(cf.GetContent()) {
+			f.String_ = string(cf.GetContent())
+		} else {
+			f.Bytes = cf.GetContent()
+		}
+		spec.Files = append(spec.Files, f)
 	}
 
 	for _, i := range rc.GetNetwork().GetInterfaces() {
@@ -482,11 +489,18 @@ func makeConfigFiles(configFiles []*platformv1.File) []*capsule.ConfigFile {
 }
 
 func ConfigFileSpecConversion(c *platformv1.File) *capsule.ConfigFile {
-	return &capsule.ConfigFile{
+	f := &capsule.ConfigFile{
 		Path:     c.GetPath(),
-		Content:  c.GetBytes(),
 		IsSecret: c.GetAsSecret(),
 	}
+	switch {
+	case c.String_ != "":
+		f.Content = []byte(c.GetString_())
+	case len(c.Bytes) != 0:
+		f.Content = c.GetBytes()
+	}
+
+	return f
 }
 
 func makeCronJobs(cronJobs []*v1alpha2.CronJob) []*capsule.CronJob {
@@ -707,7 +721,8 @@ func ChangesFromSpecPair(curSpec, newSpec *platformv1.CapsuleSpec) ([]*capsule.C
 			res = append(res, &capsule.Change{
 				Field: &capsule.Change_SetInterface{
 					SetInterface: InterfaceSpecConversion(i),
-				}},
+				},
+			},
 			)
 		}
 	}
@@ -839,4 +854,21 @@ func news(s *platformv1.EnvironmentSource) source {
 		kind: s.GetKind(),
 		name: s.GetName(),
 	}
+}
+
+const (
+	// Characters in 0..31, not in "\x07\x08\x09\x10\x12\x13\x27"
+	_invalidChars = "\x00\x01\x02\x03\x04\x05\x06\x11\x14\x15\x16\x17\x18\x19\x20\x21\x22\x23\x24\x25\x26\x28\x29\x30\x31"
+)
+
+func ValidString(bs []byte) bool {
+	if !utf8.Valid(bs) {
+		return false
+	}
+
+	if bytes.ContainsAny(bs, _invalidChars) {
+		return false
+	}
+
+	return true
 }
