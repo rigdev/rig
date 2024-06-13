@@ -166,7 +166,7 @@ apicheck:
     create: true
     name: ""
   timeout: 2m
-  interval: 5s
+  interval: 1s
 
 certgen:
   podSecurityContext:

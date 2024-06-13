@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"slices"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	v2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
@@ -37,11 +38,16 @@ func RolloutConfigToCapsuleSpec(rc *capsule.RolloutConfig) (*platformv1.CapsuleS
 	}
 
 	for _, cf := range rc.GetConfigFiles() {
-		spec.Files = append(spec.Files, &platformv1.File{
+		f := &platformv1.File{
 			Path:     cf.GetPath(),
-			Bytes:    cf.GetContent(),
 			AsSecret: cf.GetIsSecret(),
-		})
+		}
+		if utf8.Valid(cf.GetContent()) {
+			f.String_ = string(cf.GetContent())
+		} else {
+			f.Bytes = cf.GetContent()
+		}
+		spec.Files = append(spec.Files, f)
 	}
 
 	for _, i := range rc.GetNetwork().GetInterfaces() {
@@ -707,7 +713,8 @@ func ChangesFromSpecPair(curSpec, newSpec *platformv1.CapsuleSpec) ([]*capsule.C
 			res = append(res, &capsule.Change{
 				Field: &capsule.Change_SetInterface{
 					SetInterface: InterfaceSpecConversion(i),
-				}},
+				},
+			},
 			)
 		}
 	}
