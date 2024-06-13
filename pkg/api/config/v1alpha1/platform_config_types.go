@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"time"
 
 	"go.uber.org/zap/zapcore"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -348,6 +349,10 @@ type GitAuth struct {
 
 	// Credentials to use when connecting to git.
 	Credentials GitCredentials `json:"credentials,omitempty"`
+
+	// If webHookSecret isn't set, pull the git repository at the set interval instead
+	// to fetch changes.
+	PullingInterval time.Duration `json:"pullingInterval"`
 }
 
 // GitCredentials specifies how to authenticate against git.

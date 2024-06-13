@@ -4,6 +4,7 @@ package api.v1.capsule;
 
 import "google/protobuf/timestamp.proto";
 import "model/author.proto";
+import "model/revision.proto";
 import "api/v1/capsule/rollout/status.proto";
 import "api/v1/capsule/job.proto";
 import "api/v1/capsule/change.proto";
@@ -56,8 +57,8 @@ message ConfigFile {
 }
 
 message Revisions {
-  api.v1.project.Revision project = 1;
-  api.v1.environment.Revision environment = 2;
-  api.v1.capsule.SetRevision capsule_set = 3;
-  api.v1.capsule.Revision capsule = 4;
+  repeated model.RevisionMetadata projects = 1;
+  repeated model.RevisionMetadata environments = 2;
+  repeated model.RevisionMetadata capsule_sets = 3;
+  repeated model.RevisionMetadata capsules = 4;
 }
