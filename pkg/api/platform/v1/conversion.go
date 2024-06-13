@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"bytes"
 	"fmt"
 	"maps"
 	"reflect"
@@ -42,7 +43,7 @@ func RolloutConfigToCapsuleSpec(rc *capsule.RolloutConfig) (*platformv1.CapsuleS
 			Path:     cf.GetPath(),
 			AsSecret: cf.GetIsSecret(),
 		}
-		if utf8.Valid(cf.GetContent()) {
+		if ValidString(cf.GetContent()) {
 			f.String_ = string(cf.GetContent())
 		} else {
 			f.Bytes = cf.GetContent()
@@ -488,11 +489,18 @@ func makeConfigFiles(configFiles []*platformv1.File) []*capsule.ConfigFile {
 }
 
 func ConfigFileSpecConversion(c *platformv1.File) *capsule.ConfigFile {
-	return &capsule.ConfigFile{
+	f := &capsule.ConfigFile{
 		Path:     c.GetPath(),
-		Content:  c.GetBytes(),
 		IsSecret: c.GetAsSecret(),
 	}
+	switch {
+	case c.String_ != "":
+		f.Content = []byte(c.GetString_())
+	case len(c.Bytes) != 0:
+		f.Content = c.GetBytes()
+	}
+
+	return f
 }
 
 func makeCronJobs(cronJobs []*v1alpha2.CronJob) []*capsule.CronJob {
@@ -846,4 +854,20 @@ func news(s *platformv1.EnvironmentSource) source {
 		kind: s.GetKind(),
 		name: s.GetName(),
 	}
+}
+
+const (
+	_invalidChars = "\x00\x01\x02\x03\x04\x05\x06\x11\x14\x15\x16\x17\x18\x19\x20\x21\x22\x23\x24\x25\x26\x28\x29\x30\x31"
+)
+
+func ValidString(bs []byte) bool {
+	if !utf8.Valid(bs) {
+		return false
+	}
+
+	if bytes.ContainsAny(bs, _invalidChars) {
+		return false
+	}
+
+	return true
 }
