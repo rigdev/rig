@@ -247,7 +247,7 @@ tasks:
     desc: "🚨 Run linting"
     deps: [tools:golangci-lint, proto, mocks]
     cmds:
-      - ./tools/bin/golangci-lint run --timeout 3m
+      - ./tools/bin/golangci-lint run -v --timeout 5m
 
   test:
     desc: "✅ Run unit tests"
