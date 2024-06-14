@@ -12,6 +12,7 @@ message Configuration {
 message Client {
   Slack slack = 1;
   repeated EmailClient email = 2;
+  repeated Git git = 3;
 }
 
 message Slack {
@@ -31,4 +32,11 @@ enum EmailType {
   EMAIL_TYPE_UNSPECIFIED = 0;
   EMAIL_TYPE_MAILJET = 1;
   EMAIL_TYPE_SMTP = 2;
+}
+
+message Git {
+  // URL is a exact match for the repo-url this auth can be used for.
+  string url = 1;
+  // URLPrefix is a prefix-match for the repo urls this auth can be used for.
+  string url_prefix = 2;
 }
