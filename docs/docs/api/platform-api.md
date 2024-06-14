@@ -8035,6 +8035,7 @@ Response for listing service accounts.
 | ----- | ---- | ----- | ----------- |
 | slack | [Slack](#api-v1-settings-Slack) |  |  |
 | email | [EmailClient](#api-v1-settings-EmailClient) | repeated |  |
+| git | [Git](#api-v1-settings-Git) | repeated |  |
 
 
 
@@ -8068,6 +8069,22 @@ Platform wide static configuration.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  |  |
 | type | [EmailType](#api-v1-settings-EmailType) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Git"></a>
+
+### Git
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| url | [string](#string) |  | URL is a exact match for the repo-url this auth can be used for. |
+| url_prefix | [string](#string) |  | URLPrefix is a prefix-match for the repo urls this auth can be used for. |
 
 
 
