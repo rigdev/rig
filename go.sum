@@ -272,10 +272,10 @@ github.com/prometheus/common v0.53.0 h1:U2pL9w9nmJwJDa4qqLQ3ZaePJ6ZTwt7cMD3AG3+a
 github.com/prometheus/common v0.53.0/go.mod h1:BrxBKv3FWBIGXw89Mg1AeBq7FSyRzXWI3l3e7W3RN5U=
 github.com/prometheus/procfs v0.14.0 h1:Lw4VdGGoKEZilJsayHf0B+9YgLGREba2C6xr+Fdfq6s=
 github.com/prometheus/procfs v0.14.0/go.mod h1:XL+Iwz8k8ZabyZfMFHPiilCniixqQarAy5Mu67pHlNQ=
-github.com/rigdev/rig-go-api v0.0.0-20240604144138-67c1074f13dc h1:5O4NAGZp97li8qSN4Ba04BYa2VDwxHOFiVGsQLir4T4=
-github.com/rigdev/rig-go-api v0.0.0-20240604144138-67c1074f13dc/go.mod h1:N0t0TLNNQKPMFNCxQSndSsygFhzJHUb4PgwERyqphws=
-github.com/rigdev/rig-go-sdk v0.0.0-20240610145046-e154e8325e7f h1:lBTztQzcUIvfbJ/EwcOIcOEowIRC7ImjDmvLdNgZOd0=
-github.com/rigdev/rig-go-sdk v0.0.0-20240610145046-e154e8325e7f/go.mod h1:PCNZx7/wyHX019VbHdMPTCZRyFnrlltZhO8/0tp2UDQ=
+github.com/rigdev/rig-go-api v0.0.0-20240611072026-5c5c342f72e5 h1:qMBCOZZkJmAk5TdJtYRb8FiyG7jnFoHOfLGtq2cfAM4=
+github.com/rigdev/rig-go-api v0.0.0-20240611072026-5c5c342f72e5/go.mod h1:dMBbVloyw5DRRkoRJDdATwsDNCFl7V4zIhXqXMPAGEA=
+github.com/rigdev/rig-go-sdk v0.0.0-20240612092526-69df8621bc22 h1:NFjBY/F42lcgqnqru+h1q3RrzRk645HUilCvbZD7exI=
+github.com/rigdev/rig-go-sdk v0.0.0-20240612092526-69df8621bc22/go.mod h1:bmASl5RyuOoEddGeaOxHB27W3KDI4sBxqfnR1cRTstY=
 github.com/rivo/tview v0.0.0-20240524063012-037df494fb76 h1:iqvDlgyjmqleATtFbA7c14djmPh2n4mCYUv7JlD/ruA=
 github.com/rivo/tview v0.0.0-20240524063012-037df494fb76/go.mod h1:02iFIz7K/A9jGCvrizLPvoqr4cEIx7q54RH5Qudkrss=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
@@ -439,8 +439,8 @@ golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8T
 golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 gomodules.xyz/jsonpatch/v2 v2.4.0 h1:Ci3iUJyx9UeRx7CeFN8ARgGbkESwJK+KB9lLcWxY/Zw=
 gomodules.xyz/jsonpatch/v2 v2.4.0/go.mod h1:AH3dM2RI6uoBZxn3LVrfvJ3E0/9dG4cSrbuBJT4moAY=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 h1:1GBuWVLM/KMVUv1t1En5Gs+gFZCNd360GGb4sSxtrhU=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117/go.mod h1:EfXuqaE1J41VCDicxHzUDm+8rk+7ZdXzHV0IhO/I6s0=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240610135401-a8a62080eff3 h1:9Xyg6I9IWQZhRVfCWjKK+l6kI0jHcPesVlMnT//aHNo=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240610135401-a8a62080eff3/go.mod h1:EfXuqaE1J41VCDicxHzUDm+8rk+7ZdXzHV0IhO/I6s0=
 google.golang.org/grpc v1.64.0 h1:KH3VH9y/MgNQg1dE7b3XfVK0GsPSIzJwdF617gUSbvY=
 google.golang.org/grpc v1.64.0/go.mod h1:oxjF8E3FBnjp+/gVFYdWacaLDx9na1aqy9oovLpxQYg=
 google.golang.org/protobuf v1.34.1 h1:9ddQBjfCyZPOHPUiPxpYESBLc+T8P3E+Vo4IbKZgFWg=
