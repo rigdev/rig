@@ -16,7 +16,7 @@ message GitStore {
 message Commit {
   GitProvider provider = 1;
   string repository = 2;
-  string commit = 3;
+  string commit_id = 3;
   string url = 4;
 }
 
