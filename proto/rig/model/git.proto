@@ -12,3 +12,22 @@ message GitStore {
   string commit_template = 5;
   EnvironmentFilter environments = 6;
 }
+
+message Commit {
+  GitProvider provider = 1;
+  string repository = 2;
+  string commit_id = 3;
+  string url = 4;
+}
+
+message GitChange {
+  Commit commit = 1;
+  repeated string paths = 2;
+}
+
+enum GitProvider {
+  GIT_PROVIDER_UNSPECIFIED = 0;
+  GIT_PROVIDER_GITHUB = 1;
+  GIT_PROVIDER_GITLAB = 2;
+  GIT_PROVIDER_BITBUCKET = 3;
+}

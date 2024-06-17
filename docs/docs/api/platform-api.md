@@ -1085,6 +1085,40 @@ The type of SSO. Currently only OIDC is supported.
 
 
 
+<a name="model-Commit"></a>
+
+### Commit
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [GitProvider](#model-GitProvider) |  |  |
+| repository | [string](#string) |  |  |
+| commit | [string](#string) |  |  |
+| url | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="model-GitChange"></a>
+
+### GitChange
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| commit | [Commit](#model-Commit) |  |  |
+| paths | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="model-GitStore"></a>
 
 ### GitStore
@@ -1104,6 +1138,20 @@ The type of SSO. Currently only OIDC is supported.
 
 
 
+
+
+
+<a name="model-GitProvider"></a>
+
+### GitProvider
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| GIT_PROVIDER_UNSPECIFIED | 0 |  |
+| GIT_PROVIDER_GITHUB | 1 |  |
+| GIT_PROVIDER_GITLAB | 2 |  |
+| GIT_PROVIDER_BITBUCKET | 3 |  |
 
 
 
@@ -3209,6 +3257,7 @@ The actual log message
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_by | [Author](#model-Author) |  |  |
 | fingerprint | [Fingerprint](#model-Fingerprint) |  |  |
+| git_change | [GitChange](#model-GitChange) |  |  |
 
 
 
@@ -4431,10 +4480,10 @@ Different states a step can be in.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| project | [api.v1.project.Revision](#api-v1-project-Revision) |  |  |
-| environment | [api.v1.environment.Revision](#api-v1-environment-Revision) |  |  |
-| capsule_set | [SetRevision](#api-v1-capsule-SetRevision) |  |  |
-| capsule | [Revision](#api-v1-capsule-Revision) |  |  |
+| projects | [model.RevisionMetadata](#model-RevisionMetadata) | repeated |  |
+| environments | [model.RevisionMetadata](#model-RevisionMetadata) | repeated |  |
+| capsule_sets | [model.RevisionMetadata](#model-RevisionMetadata) | repeated |  |
+| capsules | [model.RevisionMetadata](#model-RevisionMetadata) | repeated |  |
 
 
 
