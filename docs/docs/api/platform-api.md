@@ -8239,7 +8239,7 @@ Platform wide static configuration.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  |  |
 | from_email | [string](#string) |  |  |
-| to_email | [string](#string) |  |  |
+| to_emails | [string](#string) | repeated |  |
 
 
 

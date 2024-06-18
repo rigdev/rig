@@ -40,7 +40,7 @@ message NotificationTarget {
   message EmailTarget {
     string id = 1;
     string from_email = 2;
-    string to_email = 3;
+    repeated string to_emails = 3;
   }
 
   oneof target {
