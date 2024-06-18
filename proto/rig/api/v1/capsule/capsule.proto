@@ -17,5 +17,9 @@ message Capsule {
   model.GitStore git_store = 8;
 }
 
-// Legacy update message
-message Update {}
+message Update {
+  oneof field {
+    // Set the git store.
+    model.GitStore set_git_store = 1;
+  }
+}
