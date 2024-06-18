@@ -17,7 +17,6 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var red = color.New(color.FgRed)
@@ -87,53 +86,53 @@ func buildRolloutStatus(builder *strings.Builder, ro *capsule.Rollout) {
 	currentStageIcon := ""
 	switch r.GetState() {
 	case rollout.State_STATE_CONFIGURE:
-		currentStageIcon = stageStateToIcon(r.GetStages().GetConfigure().GetInfo().GetState())
+		currentStageIcon = StageStateToIcon(r.GetStages().GetConfigure().GetInfo().GetState())
 	case rollout.State_STATE_RESOURCE_CREATION:
-		currentStageIcon = stageStateToIcon(r.GetStages().GetResourceCreation().GetInfo().GetState())
+		currentStageIcon = StageStateToIcon(r.GetStages().GetResourceCreation().GetInfo().GetState())
 	case rollout.State_STATE_RUNNING:
-		currentStageIcon = stageStateToIcon(r.GetStages().GetRunning().GetInfo().GetState())
+		currentStageIcon = StageStateToIcon(r.GetStages().GetRunning().GetInfo().GetState())
 	}
-	builder.WriteString(getIndented(fmt.Sprintf("Current Stage: %s %s",
-		rolloutStageToString(r.GetState()), currentStageIcon), 2))
+	builder.WriteString(GetIndented(fmt.Sprintf("Current Stage: %s %s",
+		RolloutStageToString(r.GetState()), currentStageIcon), 2))
 
-	builder.WriteString(getIndented("All Stages:", 2))
+	builder.WriteString(GetIndented("All Stages:", 2))
 
 	if configure := r.GetStages().GetConfigure(); configure != nil {
 		var lastStepInfo *rollout.StepInfo
 		if len(configure.GetSteps()) > 0 {
-			lastStepInfo = getStepInfo(configure.GetSteps()[len(configure.GetSteps())-1])
+			lastStepInfo = GetStepInfo(configure.GetSteps()[len(configure.GetSteps())-1])
 		}
-		builder.WriteString(getIndented(stageToString("Configuring", lastStepInfo), 4))
+		builder.WriteString(GetIndented(StageToString("Configuring", lastStepInfo), 4))
 	}
 	if creation := r.GetStages().GetResourceCreation(); creation != nil {
 		var lastStepInfo *rollout.StepInfo
 		if len(creation.GetSteps()) > 0 {
-			lastStepInfo = getStepInfo(creation.GetSteps()[len(creation.GetSteps())-1])
+			lastStepInfo = GetStepInfo(creation.GetSteps()[len(creation.GetSteps())-1])
 		}
-		builder.WriteString(getIndented(stageToString("Resource Creation", lastStepInfo), 4))
+		builder.WriteString(GetIndented(StageToString("Resource Creation", lastStepInfo), 4))
 	}
 	if running := r.GetStages().GetRunning(); running != nil {
 		var lastStepInfo *rollout.StepInfo
 		if len(running.GetSteps()) > 0 {
-			lastStepInfo = getStepInfo(running.GetSteps()[len(running.GetSteps())-1])
+			lastStepInfo = GetStepInfo(running.GetSteps()[len(running.GetSteps())-1])
 		}
-		builder.WriteString(getIndented(stageToString("Running", lastStepInfo), 4))
+		builder.WriteString(GetIndented(StageToString("Running", lastStepInfo), 4))
 	}
 
 	if configure := r.GetStages().GetConfigure(); configure != nil {
 		for _, s := range configure.GetSteps() {
 			if commitStep := s.GetCommit(); commitStep != nil {
-				builder.WriteString(getIndented(fmt.Sprintf("Commit: %s", commitStep.GetCommitHash()), 2))
-				builder.WriteString(getIndented(fmt.Sprintf("Commit URL: %s", commitStep.GetCommitUrl()), 2))
+				builder.WriteString(GetIndented(fmt.Sprintf("Commit: %s", commitStep.GetCommitHash()), 2))
+				builder.WriteString(GetIndented(fmt.Sprintf("Commit URL: %s", commitStep.GetCommitUrl()), 2))
 			}
 		}
 	}
 
 	if author := ro.GetConfig().GetCreatedBy(); author != nil {
-		builder.WriteString(getIndented(fmt.Sprintf("Created by: %s", author.GetPrintableName()), 2))
+		builder.WriteString(GetIndented(fmt.Sprintf("Created by: %s", author.GetPrintableName()), 2))
 	}
 	if !ro.GetConfig().GetCreatedAt().AsTime().IsZero() {
-		builder.WriteString(getIndented(fmt.Sprintf("Created at: %s", createdAt), 2))
+		builder.WriteString(GetIndented(fmt.Sprintf("Created at: %s", createdAt), 2))
 	}
 }
 
@@ -144,26 +143,26 @@ func buildContainerConfig(builder *strings.Builder, c *capsule.ContainerConfig) 
 	if len(truncatedImg) > 50 {
 		truncatedImg = truncatedImg[:50] + "..."
 	}
-	builder.WriteString(getIndented(fmt.Sprintf("Image: %s", truncatedImg), 2))
+	builder.WriteString(GetIndented(fmt.Sprintf("Image: %s", truncatedImg), 2))
 	if c.GetCommand() != "" {
-		builder.WriteString(getIndented(fmt.Sprintf("%s %s", c.GetCommand(), strings.Join(c.GetArgs(), " ")), 2))
+		builder.WriteString(GetIndented(fmt.Sprintf("%s %s", c.GetCommand(), strings.Join(c.GetArgs(), " ")), 2))
 	}
 	if len(c.GetEnvironmentVariables()) > 0 {
-		builder.WriteString(getIndented("Environment Variables", 2))
+		builder.WriteString(GetIndented("Environment Variables", 2))
 		for key, value := range c.GetEnvironmentVariables() {
-			builder.WriteString(getIndented(fmt.Sprintf("%s=%s", key, value), 4))
+			builder.WriteString(GetIndented(fmt.Sprintf("%s=%s", key, value), 4))
 		}
 	}
 
 	if c.GetScale().GetCpuTarget() == nil {
-		builder.WriteString(getIndented(fmt.Sprintf("#Replicas: %d", c.GetScale().GetMinReplicas()), 2))
+		builder.WriteString(GetIndented(fmt.Sprintf("#Replicas: %d", c.GetScale().GetMinReplicas()), 2))
 	} else {
-		builder.WriteString(getIndented(fmt.Sprintf("Auto-scaling: %d-%d",
+		builder.WriteString(GetIndented(fmt.Sprintf("Auto-scaling: %d-%d",
 			c.GetScale().GetMinReplicas(), c.GetScale().GetMaxReplicas()), 2))
 	}
 
 	if c.GetResources().GetRequests() != nil {
-		builder.WriteString(getIndented("Requsted Resources:", 2))
+		builder.WriteString(GetIndented("Requsted Resources:", 2))
 
 		cpu := "-"
 		memory := "-"
@@ -173,18 +172,18 @@ func buildContainerConfig(builder *strings.Builder, c *capsule.ContainerConfig) 
 		if c.GetResources().GetRequests().GetMemoryBytes() != 0 {
 			memory = scale.IntToByteString(c.GetResources().GetRequests().GetMemoryBytes())
 		}
-		builder.WriteString(getIndented(fmt.Sprintf("CPU: %s", cpu), 4))
-		builder.WriteString(getIndented(fmt.Sprintf("Memory: %s", memory), 4))
+		builder.WriteString(GetIndented(fmt.Sprintf("CPU: %s", cpu), 4))
+		builder.WriteString(GetIndented(fmt.Sprintf("Memory: %s", memory), 4))
 
 	}
 }
 
 func buildInstanceStatus(builder *strings.Builder, i *capsule.InstancesStatus) {
 	builder.WriteString("Running Instances\n")
-	builder.WriteString(getIndented(green.Sprintf("#Healthy: %d", i.GetNumReady()), 2))
-	builder.WriteString(getIndented(blue.Sprintf("#Upgrading: %d", i.GetNumUpgrading()), 2))
-	builder.WriteString(getIndented(yellow.Sprintf("#Old Version: %d", i.GetNumWrongVersion()), 2))
-	builder.WriteString(getIndented(red.Sprintf("#Failing: %d", i.GetNumStuck()), 2))
+	builder.WriteString(GetIndented(green.Sprintf("#Healthy: %d", i.GetNumReady()), 2))
+	builder.WriteString(GetIndented(blue.Sprintf("#Upgrading: %d", i.GetNumUpgrading()), 2))
+	builder.WriteString(GetIndented(yellow.Sprintf("#Old Version: %d", i.GetNumWrongVersion()), 2))
+	builder.WriteString(GetIndented(red.Sprintf("#Failing: %d", i.GetNumStuck()), 2))
 }
 
 func buildConfigFileStatus(builder *strings.Builder, c []*capsule.ConfigFileStatus) {
@@ -195,9 +194,9 @@ func buildConfigFileStatus(builder *strings.Builder, c []*capsule.ConfigFileStat
 
 	builder.WriteString("Config Files\n")
 	for _, cf := range c {
-		transition := transitionToIcon(cf.GetTransition())
-		state := stateToIcon(getAggregatedStatus(cf.GetStatus()))
-		builder.WriteString(getIndented(fmt.Sprintf("%s %s%s", cf.GetPath(), transition, state), 2))
+		transition := TransitionToIcon(cf.GetTransition())
+		state := StateToIcon(getAggregatedStatus(cf.GetStatus()))
+		builder.WriteString(GetIndented(fmt.Sprintf("%s %s%s", cf.GetPath(), transition, state), 2))
 	}
 }
 
@@ -208,13 +207,13 @@ func buildInterfaceStatus(builder *strings.Builder, c []*capsule.InterfaceStatus
 	}
 	builder.WriteString("Interfaces\n")
 	for _, i := range c {
-		transition := transitionToIcon(i.GetTransition())
-		state := stateToIcon(getAggregatedStatus(i.GetStatus()))
-		builder.WriteString(getIndented(fmt.Sprintf("%s:%d %s%s", i.GetName(), i.GetPort(), transition, state), 2))
+		transition := TransitionToIcon(i.GetTransition())
+		state := StateToIcon(getAggregatedStatus(i.GetStatus()))
+		builder.WriteString(GetIndented(fmt.Sprintf("%s:%d %s%s", i.GetName(), i.GetPort(), transition, state), 2))
 		for _, r := range i.GetRoutes() {
-			state := stateToIcon(getAggregatedStatus(r.GetStatus()))
-			transition := transitionToIcon(r.GetTransition())
-			builder.WriteString(getIndented(fmt.Sprintf("%s %s%s", r.GetRoute().GetHost(), transition, state), 4))
+			state := StateToIcon(getAggregatedStatus(r.GetStatus()))
+			transition := TransitionToIcon(r.GetTransition())
+			builder.WriteString(GetIndented(fmt.Sprintf("%s %s%s", r.GetRoute().GetHost(), transition, state), 4))
 		}
 	}
 }
@@ -226,9 +225,9 @@ func buildCronjobStatus(builder *strings.Builder, cs []*capsule.CronJobStatus) {
 	}
 	builder.WriteString("Cron Jobs\n")
 	for _, c := range cs {
-		transition := transitionToIcon(c.GetTransition())
-		state := stateToIcon(c.GetLastExecution())
-		builder.WriteString(getIndented(fmt.Sprintf("%s %s%s", c.GetJobName(), transition, state), 2))
+		transition := TransitionToIcon(c.GetTransition())
+		state := StateToIcon(c.GetLastExecution())
+		builder.WriteString(GetIndented(fmt.Sprintf("%s %s%s", c.GetJobName(), transition, state), 2))
 	}
 }
 
@@ -276,8 +275,8 @@ func showStatus(
 			text, state := getSelectedObjectTextAndState(objectTree.GetCurrentNode().GetText(), s)
 
 			selectedView.SetTitle(objectTree.GetCurrentNode().GetText())
-			selectedView.SetTitleColor(stateToTCellColor(state))
-			selectedView.SetBorderColor(stateToTCellColor(state))
+			selectedView.SetTitleColor(StateToTCellColor(state))
+			selectedView.SetBorderColor(StateToTCellColor(state))
 			selectedView.SetText(tview.TranslateANSI(text))
 			event = nil
 		case tcell.KeyTab:
@@ -365,11 +364,11 @@ func buildRolloutSummary(ro *capsule.Rollout) *tview.TextView {
 	color := tcell.ColorWhite
 	switch r.GetState() {
 	case rollout.State_STATE_CONFIGURE:
-		color = stageStateToColor(r.GetStages().GetConfigure().GetInfo().GetState())
+		color = StageStateToColor(r.GetStages().GetConfigure().GetInfo().GetState())
 	case rollout.State_STATE_RESOURCE_CREATION:
-		color = stageStateToColor(r.GetStages().GetResourceCreation().GetInfo().GetState())
+		color = StageStateToColor(r.GetStages().GetResourceCreation().GetInfo().GetState())
 	case rollout.State_STATE_RUNNING:
-		color = stageStateToColor(r.GetStages().GetRunning().GetInfo().GetState())
+		color = StageStateToColor(r.GetStages().GetRunning().GetInfo().GetState())
 	}
 
 	summary := tview.NewTextView()
@@ -414,27 +413,27 @@ func buildObjectTree(s *capsule.Status, capsuleID string, selectedNodeName strin
 	}
 
 	root := tview.NewTreeNode(fmt.Sprintf("Capsule/%s %s", capsuleID,
-		stateToIcon(getAggregatedStatus(s.Capsule.GetStatuses())))).SetSelectable(true)
+		StateToIcon(getAggregatedStatus(s.Capsule.GetStatuses())))).SetSelectable(true)
 
 	tree := tview.NewTreeView().
 		SetRoot(root)
 
 	for _, i := range s.Interfaces {
-		interfaceNode := add(root, "Interface", i.GetName(), transitionToIcon(i.GetTransition()),
-			stateToIcon(getAggregatedStatus(i.GetStatus())))
+		interfaceNode := add(root, "Interface", i.GetName(), TransitionToIcon(i.GetTransition()),
+			StateToIcon(getAggregatedStatus(i.GetStatus())))
 		for _, r := range i.Routes {
-			add(interfaceNode, "Route", r.GetRoute().GetHost(), transitionToIcon(r.GetTransition()),
-				stateToIcon(getAggregatedStatus(r.GetStatus())))
+			add(interfaceNode, "Route", r.GetRoute().GetHost(), TransitionToIcon(r.GetTransition()),
+				StateToIcon(getAggregatedStatus(r.GetStatus())))
 		}
 	}
 
 	for _, i := range s.ConfigFiles {
-		add(root, "ConfigFile", i.GetPath(), transitionToIcon(i.GetTransition()),
-			stateToIcon(getAggregatedStatus(i.GetStatus())))
+		add(root, "ConfigFile", i.GetPath(), TransitionToIcon(i.GetTransition()),
+			StateToIcon(getAggregatedStatus(i.GetStatus())))
 	}
 
 	for _, i := range s.CronJobs {
-		add(root, "CronJob", i.GetJobName(), transitionToIcon(i.GetTransition()), stateToIcon(i.GetLastExecution()))
+		add(root, "CronJob", i.GetJobName(), TransitionToIcon(i.GetTransition()), StateToIcon(i.GetLastExecution()))
 	}
 
 	if selectedNode != nil {
@@ -466,8 +465,8 @@ func buildSelectedView(node *tview.TreeNode, status *capsule.Status) *tview.Text
 	text, state := getSelectedObjectTextAndState(node.GetText(), status)
 
 	selectedView.SetText(tview.TranslateANSI(text))
-	selectedView.SetTitleColor(stateToTCellColor(state))
-	selectedView.SetBorderColor(stateToTCellColor(state))
+	selectedView.SetTitleColor(StateToTCellColor(state))
+	selectedView.SetBorderColor(StateToTCellColor(state))
 
 	return selectedView
 }
@@ -482,7 +481,7 @@ func getSelectedObjectTextAndState(name string, status *capsule.Status) (string,
 	switch kind {
 	case "Capsule":
 		for _, s := range status.GetCapsule().GetStatuses() {
-			genericObjectStatusToString(s, builder)
+			GenericObjectStatusToString(s, builder)
 		}
 		return builder.String(), getAggregatedStatus(status.GetCapsule().GetStatuses())
 	case "Interface":
@@ -491,11 +490,11 @@ func getSelectedObjectTextAndState(name string, status *capsule.Status) (string,
 				state := getAggregatedStatus(i.GetStatus())
 
 				builder.WriteString(fmt.Sprintf("Port: %d\n", i.GetPort()))
-				builder.WriteString(fmt.Sprintf("Transition: %s\n", transitionToString(i.GetTransition())))
-				builder.WriteString(fmt.Sprintf("State: %s\n", stateToString(state)))
+				builder.WriteString(fmt.Sprintf("Transition: %s\n", TransitionToString(i.GetTransition())))
+				builder.WriteString(fmt.Sprintf("State: %s\n", StateToString(state)))
 				builder.WriteString("\nStatuses:\n")
 				for _, s := range i.Status {
-					genericObjectStatusToString(s, builder)
+					GenericObjectStatusToString(s, builder)
 				}
 				return builder.String(), state
 			}
@@ -507,24 +506,24 @@ func getSelectedObjectTextAndState(name string, status *capsule.Status) (string,
 					state := getAggregatedStatus(r.GetStatus())
 
 					builder.WriteString(fmt.Sprintf("ID: %s\n", r.GetRoute().GetId()))
-					builder.WriteString(fmt.Sprintf("Transition: %s\n", transitionToString(r.GetTransition())))
-					builder.WriteString(fmt.Sprintf("State: %s\n", stateToString(state)))
+					builder.WriteString(fmt.Sprintf("Transition: %s\n", TransitionToString(r.GetTransition())))
+					builder.WriteString(fmt.Sprintf("State: %s\n", StateToString(state)))
 					if len(r.GetRoute().GetPaths()) > 0 {
 						builder.WriteString("Paths:\n")
 						for _, p := range r.GetRoute().GetPaths() {
-							builder.WriteString(getIndented(fmt.Sprintf("%s %s", pathMatchToString(p.GetMatch()), p.GetPath()), 2))
+							builder.WriteString(GetIndented(fmt.Sprintf("%s %s", PathMatchToString(p.GetMatch()), p.GetPath()), 2))
 						}
 					}
 					if len(r.GetRoute().GetOptions().GetAnnotations()) > 0 {
 						builder.WriteString("Annotations:\n")
 						for key, value := range r.GetRoute().GetOptions().GetAnnotations() {
-							builder.WriteString(getIndented(fmt.Sprintf("%s: %s", key, value), 2))
+							builder.WriteString(GetIndented(fmt.Sprintf("%s: %s", key, value), 2))
 						}
 					}
 
 					builder.WriteString("\nStatuses:\n")
 					for _, s := range r.Status {
-						genericObjectStatusToString(s, builder)
+						GenericObjectStatusToString(s, builder)
 					}
 
 					return builder.String(), state
@@ -537,11 +536,11 @@ func getSelectedObjectTextAndState(name string, status *capsule.Status) (string,
 				state := getAggregatedStatus(c.GetStatus())
 
 				builder.WriteString(fmt.Sprintf("Is secret: %t\n", c.GetIsSecret()))
-				builder.WriteString(fmt.Sprintf("Transition: %s\n", transitionToString(c.GetTransition())))
-				builder.WriteString(fmt.Sprintf("State: %s\n", stateToString(state)))
+				builder.WriteString(fmt.Sprintf("Transition: %s\n", TransitionToString(c.GetTransition())))
+				builder.WriteString(fmt.Sprintf("State: %s\n", StateToString(state)))
 				builder.WriteString("\nStatuses:\n")
 				for _, s := range c.GetStatus() {
-					genericObjectStatusToString(s, builder)
+					GenericObjectStatusToString(s, builder)
 				}
 				return builder.String(), state
 			}
@@ -551,8 +550,8 @@ func getSelectedObjectTextAndState(name string, status *capsule.Status) (string,
 			if c.GetJobName() == kindName {
 				builder.WriteString(fmt.Sprintf("Schedule: %s\n", c.GetSchedule()))
 				builder.WriteString("Last execution:\n")
-				builder.WriteString(fmt.Sprintf("Transition: %s\n", transitionToString(c.GetTransition())))
-				builder.WriteString(getIndented(fmt.Sprintf("State: %s", stateToString(c.GetLastExecution())), 2))
+				builder.WriteString(fmt.Sprintf("Transition: %s\n", TransitionToString(c.GetTransition())))
+				builder.WriteString(GetIndented(fmt.Sprintf("State: %s", StateToString(c.GetLastExecution())), 2))
 				builder.WriteString("\nStatuses:\n")
 
 				// TODO: INCLUDE STATUSES
@@ -565,7 +564,7 @@ func getSelectedObjectTextAndState(name string, status *capsule.Status) (string,
 	return "", pipeline.ObjectState_OBJECT_STATE_UNSPECIFIED
 }
 
-// -------------------- Helper Functions --------------------
+// -------------------- Watching Functions --------------------
 
 func watchCapsuleStatus(
 	ctx context.Context,
@@ -670,235 +669,4 @@ func watchRollout(
 	} else if stream.Err() != nil {
 		errChan <- stream.Err()
 	}
-}
-
-func getAggregatedStatus(statuses []*pipeline.ObjectStatus) pipeline.ObjectState {
-	if len(statuses) == 0 {
-		return pipeline.ObjectState_OBJECT_STATE_UNSPECIFIED
-	}
-	state := pipeline.ObjectState_OBJECT_STATE_HEALTHY
-	for _, s := range statuses {
-		for _, c := range s.GetInfo().GetConditions() {
-			if c.State == pipeline.ObjectState_OBJECT_STATE_PENDING {
-				state = pipeline.ObjectState_OBJECT_STATE_PENDING
-			}
-			if c.State == pipeline.ObjectState_OBJECT_STATE_ERROR {
-				return pipeline.ObjectState_OBJECT_STATE_ERROR
-			}
-		}
-	}
-	return state
-}
-
-func stageToString(StageType string, step *rollout.StepInfo) string {
-	stepInfoString := ""
-	if step != nil {
-		stepInfoString = stepInfoToString(step)
-	}
-	return fmt.Sprintf("%s: %s", StageType, stepInfoString)
-}
-
-func stepInfoToString(info *rollout.StepInfo) string {
-	return fmt.Sprintf("%s %s %s %s", info.GetUpdatedAt().AsTime().Format("2006-01-02 15:04:05"),
-		info.GetName(), stepStateToIcon(info.GetState()), info.GetMessage())
-}
-
-func stateToIcon(state pipeline.ObjectState) string {
-	switch state {
-	case pipeline.ObjectState_OBJECT_STATE_HEALTHY:
-		return "✅"
-	case pipeline.ObjectState_OBJECT_STATE_PENDING:
-		return "⏳"
-	case pipeline.ObjectState_OBJECT_STATE_ERROR:
-		return "❌"
-	default:
-		return ""
-	}
-}
-
-func stepStateToIcon(state rollout.StepState) string {
-	switch state {
-	case rollout.StepState_STEP_STATE_DONE:
-		return "✅"
-	case rollout.StepState_STEP_STATE_FAILED:
-		return "❌"
-	case rollout.StepState_STEP_STATE_ONGOING:
-		return "⏳"
-	default:
-		return ""
-	}
-}
-
-func stageStateToIcon(state rollout.StageState) string {
-	switch state {
-	case rollout.StageState_STAGE_STATE_DEPLOYING:
-		return "❌"
-	case rollout.StageState_STAGE_STATE_STOPPED:
-		return "✅"
-	case rollout.StageState_STAGE_STATE_RUNNING:
-		return "⏳"
-	default:
-		return ""
-	}
-}
-
-func stageStateToColor(state rollout.StageState) tcell.Color {
-	switch state {
-	case rollout.StageState_STAGE_STATE_DEPLOYING:
-		return tcell.ColorRed
-	case rollout.StageState_STAGE_STATE_STOPPED:
-		return tcell.ColorGreen
-	case rollout.StageState_STAGE_STATE_RUNNING:
-		return tcell.ColorYellow
-	default:
-		return tcell.ColorWhite
-	}
-}
-
-func stateToString(state pipeline.ObjectState) string {
-	switch state {
-	case pipeline.ObjectState_OBJECT_STATE_HEALTHY:
-		return "Healthy"
-	case pipeline.ObjectState_OBJECT_STATE_PENDING:
-		return "Pending"
-	case pipeline.ObjectState_OBJECT_STATE_ERROR:
-		return "Failing"
-	default:
-		return "Unknown"
-	}
-}
-
-func stateToTCellColor(state pipeline.ObjectState) tcell.Color {
-	switch state {
-	case pipeline.ObjectState_OBJECT_STATE_HEALTHY:
-		return tcell.ColorGreen
-	case pipeline.ObjectState_OBJECT_STATE_PENDING:
-		return tcell.ColorYellow
-	case pipeline.ObjectState_OBJECT_STATE_ERROR:
-		return tcell.ColorRed
-	default:
-		return tcell.ColorWhite
-	}
-}
-
-func stateToFatihColor(state pipeline.ObjectState) *color.Color {
-	switch state {
-	case pipeline.ObjectState_OBJECT_STATE_HEALTHY:
-		return green
-	case pipeline.ObjectState_OBJECT_STATE_PENDING:
-		return yellow
-	case pipeline.ObjectState_OBJECT_STATE_ERROR:
-		return red
-	default:
-		return color.New(color.FgWhite)
-	}
-}
-
-func transitionToIcon(transition capsule.Transition) string {
-	switch transition {
-	case capsule.Transition_TRANSITION_BEING_CREATED:
-		return "🔼"
-	case capsule.Transition_TRANSITION_BEING_DELETED:
-		return "🔽"
-	default:
-		return ""
-	}
-}
-
-func transitionToString(transition capsule.Transition) string {
-	switch transition {
-	case capsule.Transition_TRANSITION_BEING_CREATED:
-		return "Being Created"
-	case capsule.Transition_TRANSITION_BEING_DELETED:
-		return "Being Deleted"
-	case capsule.Transition_TRANSITION_UP_TO_DATE:
-		return "Up to Date"
-	default:
-		return "Unknown"
-	}
-}
-
-func rolloutStageToString(state rollout.State) string {
-	switch state {
-	case rollout.State_STATE_PREPARING:
-		return "Preparing"
-	case rollout.State_STATE_CONFIGURE:
-		return "Configuring"
-	case rollout.State_STATE_RESOURCE_CREATION:
-		return "Resource Creation"
-	case rollout.State_STATE_RUNNING:
-		return "Running"
-	case rollout.State_STATE_STOPPED:
-		return "Stopped"
-	default:
-		return "Unknown"
-	}
-}
-
-func getIndented(s string, indent int) string {
-	return fmt.Sprintf("%s- %s\n", strings.Repeat(" ", indent), s)
-}
-
-func genericObjectStatusToString(s *pipeline.ObjectStatus, builder *strings.Builder) {
-	builder.WriteString(getIndented("Object:", 2))
-	builder.WriteString(getIndented(fmt.Sprintf("Name: %s", s.GetObjectRef().GetName()), 4))
-	builder.WriteString(getIndented(fmt.Sprintf("Namespace: %s", s.GetObjectRef().GetNamespace()), 4))
-	builder.WriteString(getIndented(fmt.Sprintf("GVK: %s", gvkToString(s.GetObjectRef().GetGvk())), 4))
-
-	if len(s.GetInfo().GetConditions()) == 0 {
-		builder.WriteString(getIndented("No conditions", 2))
-	} else {
-		builder.WriteString(getIndented("Conditions:", 2))
-		for _, c := range s.GetInfo().GetConditions() {
-			builder.WriteString(getIndented(fmt.Sprintf("Name: %s", c.GetName()), 4))
-			builder.WriteString(getIndented(stateToFatihColor(c.GetState()).
-				Sprintf("State: %s", stateToString(c.GetState())), 6))
-			builder.WriteString(getIndented(fmt.Sprintf("Message: %s", c.GetMessage()), 6))
-		}
-	}
-
-	if len(s.GetInfo().GetProperties()) == 0 {
-		builder.WriteString(getIndented("No properties", 2))
-	} else {
-		builder.WriteString(getIndented("Properties:", 2))
-		for key, value := range s.GetInfo().GetProperties() {
-			builder.WriteString(getIndented(fmt.Sprintf("%s: %s\n", key, value), 4))
-		}
-	}
-}
-
-func gvkToString(gvk *pipeline.GVK) string {
-	return fmt.Sprintf("%s/%s/%s", gvk.GetGroup(), gvk.GetVersion(), gvk.GetKind())
-}
-
-func pathMatchToString(match capsule.PathMatchType) string {
-	switch match {
-	case capsule.PathMatchType_PATH_MATCH_TYPE_EXACT:
-		return "Exact"
-	case capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX:
-		return "Prefix"
-	default:
-		return "Unknown"
-	}
-}
-
-type getInfoStep interface {
-	GetInfo() *rollout.StepInfo
-}
-
-func getStepInfo(s interface{}) *rollout.StepInfo {
-	msg, ok := s.(protoreflect.ProtoMessage)
-	if !ok {
-		return nil
-	}
-	var info *rollout.StepInfo
-	msg.ProtoReflect().Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
-		if getInfoStep, ok := v.Message().Interface().(getInfoStep); ok {
-			info = getInfoStep.GetInfo()
-			return false
-		}
-		return true
-	})
-
-	return info
 }

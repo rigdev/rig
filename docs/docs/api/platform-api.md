@@ -1095,7 +1095,7 @@ The type of SSO. Currently only OIDC is supported.
 | ----- | ---- | ----- | ----------- |
 | provider | [GitProvider](#model-GitProvider) |  |  |
 | repository | [string](#string) |  |  |
-| commit | [string](#string) |  |  |
+| commit_id | [string](#string) |  |  |
 | url | [string](#string) |  |  |
 
 
