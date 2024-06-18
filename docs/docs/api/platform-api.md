@@ -270,6 +270,7 @@
 | /api.v1.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-settings-UpdateSettingsResponse) |  |
 | /api.v1.settings.Service/GetLicenseInfo | [GetLicenseInfoRequest](#api-v1-settings-GetLicenseInfoRequest) | [GetLicenseInfoResponse](#api-v1-settings-GetLicenseInfoResponse) |  |
 | /api.v1.settings.Service/GetGitStoreStatus | [GetGitStoreStatusRequest](#api-v1-settings-GetGitStoreStatusRequest) | [GetGitStoreStatusResponse](#api-v1-settings-GetGitStoreStatusResponse) |  |
+<<<<<<< HEAD
 
 
 
@@ -284,6 +285,8 @@
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.tunnel.Service/Tunnel | [TunnelRequest](#api-v1-tunnel-TunnelRequest) stream | [TunnelResponse](#api-v1-tunnel-TunnelResponse) stream |  |
+=======
+>>>>>>> d6e394da (wiP)
 
 
 
@@ -8720,7 +8723,11 @@ The plan for a rig installation
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | capsule | [model.CapsuleID](#model-CapsuleID) |  |  |
+<<<<<<< HEAD
 | status | [model.GitStatus](#model-GitStatus) |  |  |
+=======
+| status | [GitStatus](#api-v1-settings-GitStatus) |  |  |
+>>>>>>> d6e394da (wiP)
 
 
 
@@ -8735,8 +8742,13 @@ The plan for a rig installation
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+<<<<<<< HEAD
 | repo | [model.RepoBranch](#model-RepoBranch) |  |  |
 | status | [model.GitStatus](#model-GitStatus) |  |  |
+=======
+| repo | [RepoBranch](#api-v1-settings-RepoBranch) |  |  |
+| status | [GitStatus](#api-v1-settings-GitStatus) |  |  |
+>>>>>>> d6e394da (wiP)
 
 
 
@@ -8788,6 +8800,41 @@ Response for getting the license information of the Rig installation.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | settings | [Settings](#api-v1-settings-Settings) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GitStatus"></a>
+
+### GitStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| last_processed_commit_id | [string](#string) |  |  |
+| last_processed_commit_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| last_successful_commit_id | [string](#string) |  |  |
+| last_successful_commit_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| error | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-RepoBranch"></a>
+
+### RepoBranch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | [string](#string) |  |  |
+| branch | [string](#string) |  |  |
 
 
 

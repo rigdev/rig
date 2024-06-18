@@ -15,8 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const abortedErrMsg = "prompt aborted"
-
 func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	if !c.Scope.IsInteractive() {
 		return errors.New("non-interactive mode is not supported for this command")
@@ -32,12 +30,17 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		s = &settings_api.Settings{}
 	}
 
+	envResp, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{}))
+	if err != nil {
+		return err
+	}
+
 	var updates []*settings_api.Update
 	for {
 		i, _, err := c.Prompter.Select("Select the setting to update (CTRL + C to cancel)",
 			[]string{"Notification Notifer", "Git store", "Done"})
 		if err != nil {
-			if err.Error() == abortedErrMsg {
+			if common.ErrIsAborted(err) {
 				return nil
 			}
 			return err
@@ -46,24 +49,28 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		done := false
 		switch i {
 		case 0:
-			us, err := c.updateNotificationNotifiers(s)
+			us, err := c.updateNotificationNotifiers(ctx, s)
 			if err != nil {
-				if err.Error() == abortedErrMsg {
+				if common.ErrIsAborted(err) {
 					continue
 				}
 				return err
 			}
 			updates = append(updates, us...)
 		case 1:
-			us, err := c.updateGitStore(s)
+			gitStore, err := common.PromptGitStore(c.Prompter, s.GetGitStore(), envResp.Msg.GetEnvironments())
 			if err != nil {
-				if err.Error() == abortedErrMsg {
+				if common.ErrIsAborted(err) {
 					continue
 				}
 				return err
 			}
 
-			updates = append(updates, us...)
+			updates = append(updates, &settings_api.Update{
+				Field: &settings_api.Update_SetGitStore{
+					SetGitStore: gitStore,
+				},
+			})
 		case 2:
 			done = true
 		}
@@ -87,11 +94,14 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	return nil
 }
 
-func (c *Cmd) updateNotificationNotifiers(s *settings_api.Settings) ([]*settings_api.Update, error) {
+func (c *Cmd) updateNotificationNotifiers(
+	ctx context.Context,
+	s *settings_api.Settings,
+) ([]*settings_api.Update, error) {
 	if len(s.NotificationNotifiers) == 0 {
 		fmt.Println("No notification notifiers configured - Let's configure one!")
 		notifier := &settings_api.NotificationNotifier{}
-		if err := c.UpdateNotifier(notifier); err != nil {
+		if err := c.UpdateNotifier(ctx, notifier); err != nil {
 			return nil, err
 		}
 
@@ -132,7 +142,7 @@ func (c *Cmd) updateNotificationNotifiers(s *settings_api.Settings) ([]*settings
 			i, err := c.Prompter.TableSelect("Select the notifier to delete (CTRL + C to cancel)",
 				notifierRows[:len(notifierRows)-3], header)
 			if err != nil {
-				if err.Error() == abortedErrMsg {
+				if common.ErrIsAborted(err) {
 					continue
 				}
 				return nil, err
@@ -147,8 +157,8 @@ func (c *Cmd) updateNotificationNotifiers(s *settings_api.Settings) ([]*settings
 		if i == len(notifierRows)-3 {
 			// Add new notifier
 			notifier := &settings_api.NotificationNotifier{}
-			if err := c.UpdateNotifier(notifier); err != nil {
-				if err.Error() == abortedErrMsg {
+			if err := c.UpdateNotifier(ctx, notifier); err != nil {
+				if common.ErrIsAborted(err) {
 					continue
 				}
 
@@ -164,8 +174,8 @@ func (c *Cmd) updateNotificationNotifiers(s *settings_api.Settings) ([]*settings
 		}
 
 		// Update existing notifier
-		if err := c.UpdateNotifier(s.NotificationNotifiers[i]); err != nil {
-			if err.Error() == abortedErrMsg {
+		if err := c.UpdateNotifier(ctx, s.NotificationNotifiers[i]); err != nil {
+			if common.ErrIsAborted(err) {
 				continue
 			}
 
@@ -236,7 +246,7 @@ func topicToString(t settings_api.NotificationTopic) string {
 	}
 }
 
-func (c *Cmd) UpdateNotifier(n *settings_api.NotificationNotifier) error {
+func (c *Cmd) UpdateNotifier(ctx context.Context, n *settings_api.NotificationNotifier) error {
 	fields := []string{
 		"Target",
 		"Topics",
@@ -257,14 +267,14 @@ func (c *Cmd) UpdateNotifier(n *settings_api.NotificationNotifier) error {
 			}
 
 			if err := c.updateNotifierTarget(n.GetTarget()); err != nil {
-				if err.Error() == abortedErrMsg {
+				if common.ErrIsAborted(err) {
 					continue
 				}
 				return err
 			}
 		case 1:
 			if err := c.updateNotifierTopics(n); err != nil {
-				if err.Error() == abortedErrMsg {
+				if common.ErrIsAborted(err) {
 					continue
 				}
 				return err
@@ -274,8 +284,13 @@ func (c *Cmd) UpdateNotifier(n *settings_api.NotificationNotifier) error {
 				n.Environments = &model.EnvironmentFilter{}
 			}
 
-			if err := c.updateEnvironmentFilter(n.GetEnvironments()); err != nil {
-				if err.Error() == abortedErrMsg {
+			resp, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{}))
+			if err != nil {
+				return err
+			}
+			n.Environments, err = common.PromptEnvironmentFilter(c.Prompter, n.GetEnvironments(), resp.Msg.GetEnvironments())
+			if err != nil {
+				if common.ErrIsAborted(err) {
 					continue
 				}
 				return err
@@ -284,85 +299,6 @@ func (c *Cmd) UpdateNotifier(n *settings_api.NotificationNotifier) error {
 			return nil
 		}
 	}
-}
-
-func (c *Cmd) updateEnvironmentFilter(filter *model.EnvironmentFilter) error {
-	if filter == nil {
-		filter = &model.EnvironmentFilter{}
-	}
-
-	envResp, err := c.Rig.Environment().List(context.Background(), connect.NewRequest(&environment.ListRequest{}))
-	if err != nil {
-		return err
-	}
-
-	for {
-		var envs []string
-		for _, e := range envResp.Msg.GetEnvironments() {
-			env := e.GetEnvironmentId()
-			if slices.Contains(filter.GetSelected().GetEnvironmentIds(), e.GetEnvironmentId()) {
-				env += " *"
-			}
-
-			envs = append(envs, env)
-		}
-
-		all := "All"
-		allEphemeral := "All + Ephemeral"
-		if filter.GetAll() != nil {
-			if filter.GetAll().GetIncludeEphemeral() {
-				allEphemeral += " *"
-			} else {
-				all += " *"
-			}
-		}
-
-		envs = append(envs, all, allEphemeral, "Done")
-
-		i, _, err := c.Prompter.Select("Select Environments (select current environments marked by * to remove)", envs)
-		if err != nil {
-			return err
-		}
-
-		if i == len(envs)-1 {
-			break
-		}
-
-		if i == len(envs)-2 {
-			if filter.GetAll() == nil {
-				filter.Filter = &model.EnvironmentFilter_All_{
-					All: &model.EnvironmentFilter_All{},
-				}
-			}
-
-			filter.GetAll().IncludeEphemeral = true
-		} else if i == len(envs)-3 {
-			if filter.GetAll() == nil {
-				filter.Filter = &model.EnvironmentFilter_All_{
-					All: &model.EnvironmentFilter_All{},
-				}
-			}
-
-			filter.GetAll().IncludeEphemeral = false
-		} else {
-			env := envResp.Msg.GetEnvironments()[i]
-
-			if filter.GetSelected() == nil {
-				filter.Filter = &model.EnvironmentFilter_Selected_{
-					Selected: &model.EnvironmentFilter_Selected{},
-				}
-			}
-
-			if i := slices.Index(filter.GetSelected().GetEnvironmentIds(), env.GetEnvironmentId()); i != -1 {
-				filter.GetSelected().EnvironmentIds = slices.Delete(filter.GetSelected().GetEnvironmentIds(), i, i+1)
-			} else {
-				filter.GetSelected().EnvironmentIds = append(filter.GetSelected().GetEnvironmentIds(), env.GetEnvironmentId())
-			}
-		}
-
-	}
-
-	return nil
 }
 
 func (c *Cmd) updateNotifierTopics(n *settings_api.NotificationNotifier) error {
@@ -542,104 +478,4 @@ func (c *Cmd) updateEmailNotifier(e *settings_api.NotificationTarget_EmailTarget
 	e.FromEmail = fromEmail
 
 	return nil
-}
-
-func (c *Cmd) updateGitStore(s *settings_api.Settings) ([]*settings_api.Update, error) {
-	gitStore := s.GetGitStore()
-	if gitStore == nil {
-		gitStore = &model.GitStore{}
-	}
-
-	fields := []string{
-		"Disabled",
-		"Repository",
-		"Branch",
-		"Capsule Path",
-		"Commit Template",
-		"Environments",
-		"Done",
-	}
-
-	for {
-		i, _, err := c.Prompter.Select("Select the field to update (CTRL + c to cancel)", fields)
-		if err != nil {
-			return nil, err
-		}
-
-		switch i {
-		case 0:
-			disable, err := c.Prompter.Confirm("Disable Git store", false)
-			if err != nil {
-				if err.Error() == abortedErrMsg {
-					continue
-				}
-				return nil, err
-			}
-
-			gitStore.Disabled = disable
-		case 1:
-			repo, err := c.Prompter.Input("Enter the repository URL",
-				common.ValidateNonEmptyOpt, common.InputDefaultOpt(gitStore.GetRepository()))
-			if err != nil {
-				if err.Error() == abortedErrMsg {
-					continue
-				}
-				return nil, err
-			}
-
-			gitStore.Repository = repo
-		case 2:
-			branch, err := c.Prompter.Input("Enter the branch",
-				common.ValidateNonEmptyOpt, common.InputDefaultOpt(gitStore.GetBranch()))
-			if err != nil {
-				if err.Error() == abortedErrMsg {
-					continue
-				}
-				return nil, err
-			}
-
-			gitStore.Branch = branch
-		case 3:
-			path, err := c.Prompter.Input("Enter the capsule path",
-				common.ValidateNonEmptyOpt, common.InputDefaultOpt(gitStore.GetCapsulePath()))
-			if err != nil {
-				if err.Error() == abortedErrMsg {
-					continue
-				}
-				return nil, err
-			}
-
-			gitStore.CapsulePath = path
-		case 4:
-			template, err := c.Prompter.Input("Enter the commit template",
-				common.ValidateNonEmptyOpt, common.InputDefaultOpt(gitStore.GetCommitTemplate()))
-			if err != nil {
-				if err.Error() == abortedErrMsg {
-					continue
-				}
-				return nil, err
-			}
-
-			gitStore.CommitTemplate = template
-		case 5:
-			if gitStore.Environments == nil {
-				gitStore.Environments = &model.EnvironmentFilter{}
-			}
-
-			if err := c.updateEnvironmentFilter(gitStore.GetEnvironments()); err != nil {
-				if err.Error() == abortedErrMsg {
-					continue
-				}
-				return nil, err
-			}
-		default:
-			return []*settings_api.Update{
-				{
-					Field: &settings_api.Update_SetGitStore{
-						SetGitStore: gitStore,
-					},
-				},
-			}, nil
-		}
-	}
 }

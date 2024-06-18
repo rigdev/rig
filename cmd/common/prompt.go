@@ -15,6 +15,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+const AbortedErrMsg = "prompt aborted"
+
 type GetInputOption = func(*textinput.TextInput)
 
 // TODO What about non-string Selection
@@ -425,4 +427,12 @@ func formatRows(rows [][]string, colDelimiter string) ([]string, []int, error) {
 	}
 
 	return result, colLengths, nil
+}
+
+// TODO Check against error type using errors.Is
+func ErrIsAborted(err error) bool {
+	if err == nil {
+		return false
+	}
+	return err.Error() == AbortedErrMsg
 }

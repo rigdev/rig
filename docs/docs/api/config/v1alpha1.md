@@ -334,7 +334,11 @@ _Appears in:_
 | `urlPrefix` _string_ | URLPrefix is a prefix-match for the repo urls this auth can be used for. |
 | `webHookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
 | `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. |
+<<<<<<< HEAD
 | `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead to fetch changes. |
+=======
+| `pullngIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead to fetch changes. |
+>>>>>>> d6e394da (wiP)
 
 
 ### GitAuthor

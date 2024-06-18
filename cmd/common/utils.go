@@ -441,3 +441,10 @@ func FormatTime(t time.Time) string {
 	}
 	return t.Format(time.DateTime)
 }
+
+func StringOr(s string, def string) string {
+	if s == "" {
+		return def
+	}
+	return s
+}
