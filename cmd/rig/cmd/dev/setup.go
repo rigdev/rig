@@ -16,7 +16,7 @@ var (
 	capsuleInterface []string
 	filePath         string
 	capsuleName      string
-	print            bool
+	printConfig      bool
 )
 
 type Cmd struct {
@@ -49,6 +49,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	host := &cobra.Command{
 		Use:   "host",
 		Short: "Configure a Capsule to tunnel traffic to/from the host machine",
+		Args:  cobra.NoArgs,
 		RunE:  cli.CtxWrap(cmd.host),
 	}
 
@@ -69,7 +70,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		"capsule", "c", "", "Name of capsule to configure as.",
 	)
 	host.Flags().BoolVar(
-		&print,
+		&printConfig,
 		"print", false, "Print the HostCapsule configuration file as configured and exit.",
 	)
 

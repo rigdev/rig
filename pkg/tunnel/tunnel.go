@@ -41,7 +41,7 @@ func HandleInbound(ctx context.Context, t Tunnel, conn net.Conn, port uint32) er
 			bs, err := buff.Take(ctx)
 			if err == io.EOF {
 				if v, ok := conn.(*net.TCPConn); ok {
-					v.CloseWrite()
+					_ = v.CloseWrite()
 				} else {
 					conn.Close()
 				}
@@ -176,7 +176,7 @@ func handleOutboundInner(ctx context.Context, t Tunnel, tunnelID uint64, port ui
 		bs, err := buff.Take(ctx)
 		if err == io.EOF {
 			if v, ok := conn.(*net.TCPConn); ok {
-				v.CloseWrite()
+				_ = v.CloseWrite()
 			} else {
 				conn.Close()
 			}

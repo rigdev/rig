@@ -30,7 +30,8 @@ func parseInterface(arg string) (uint32, string, *platformv1.InterfaceOptions, e
 	base := parts[0]
 	baseParts := strings.Split(base, ":")
 	if len(baseParts) < 3 {
-		return 0, "", nil, errors.InvalidArgumentErrorf("wrong format of format rule, expected `local-port:target-capsule:target-port`")
+		return 0, "", nil, errors.InvalidArgumentErrorf(
+			"wrong format of format rule, expected `local-port:target-capsule:target-port`")
 	}
 
 	port, err := strconv.ParseUint(baseParts[0], 10, 32)
@@ -58,7 +59,7 @@ func parseInterface(arg string) (uint32, string, *platformv1.InterfaceOptions, e
 	}, nil
 }
 
-func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, args []string) error {
+func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	cfg := &platformv1.HostCapsule{}
 
 	if cmd.Flags().Changed("path") {
@@ -127,7 +128,7 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, args []string) error
 		})
 	}
 
-	if print {
+	if printConfig {
 		bs, err := obj.EncodeAny(cfg)
 		if err != nil {
 			return err
@@ -202,76 +203,72 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, args []string) error
 		}
 	}
 
-	errChan := make(chan error)
-	if cfg.GetNetwork().GetTunnelPort() != 0 {
-		capInterfaces := map[uint32]*platformv1.CapsuleInterface{}
-		for _, capIf := range cfg.GetNetwork().GetCapsuleInterfaces() {
-			capInterfaces[capIf.GetPort()] = capIf
-		}
-
-		l, err := net.Listen("tcp", "127.0.0.1:0")
-		if err != nil {
-			return err
-		}
-
-		go func() {
-			errChan <- capsule_cmd.PortForwardOnListener(ctx, c.Rig, c.Scope, capsuleName, instanceID, l, cfg.GetNetwork().GetTunnelPort(), true)
-		}()
-
-		gc, err := grpc.NewClient(l.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return err
-		}
-
-		ls := map[uint32]hostListener{}
-		for _, hostIf := range cfg.GetNetwork().GetHostInterfaces() {
-			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", hostIf.GetPort()))
-			if err != nil {
-				return err
-			}
-
-			_, portStr, err := net.SplitHostPort(l.Addr().String())
-			if err != nil {
-				return err
-			}
-
-			port, err := strconv.ParseUint(portStr, 10, 32)
-			if err != nil {
-				return err
-			}
-
-			ls[uint32(port)] = hostListener{
-				cfg:      hostIf,
-				listener: l,
-			}
-		}
-
-		tunnelClient := api_tunnel.NewServiceClient(gc)
-		go func() {
-			for {
-
-				tunnelStream, err := tunnelClient.Tunnel(ctx)
-				if err != nil {
-					fmt.Println("[rig] error establishing tunnel: ", err)
-					time.Sleep(1 * time.Second)
-					continue
-				}
-
-				rt := &ReverseTunnel{
-					tunnelStream:   tunnelStream,
-					capInterfaces:  capInterfaces,
-					tunnels:        map[uint64]*tunnel.Buffer{},
-					hostInterfaces: ls,
-				}
-
-				if err := rt.Run(ctx); err != nil {
-					fmt.Println("[rig] err processing tunnel: ", err)
-				}
-			}
-		}()
+	capInterfaces := map[uint32]*platformv1.CapsuleInterface{}
+	for _, capIf := range cfg.GetNetwork().GetCapsuleInterfaces() {
+		capInterfaces[capIf.GetPort()] = capIf
 	}
 
-	return <-errChan
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return err
+	}
+
+	gc, err := grpc.NewClient(l.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+
+	ls := map[uint32]hostListener{}
+	for _, hostIf := range cfg.GetNetwork().GetHostInterfaces() {
+		l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", hostIf.GetPort()))
+		if err != nil {
+			return err
+		}
+
+		_, portStr, err := net.SplitHostPort(l.Addr().String())
+		if err != nil {
+			return err
+		}
+
+		port, err := strconv.ParseUint(portStr, 10, 32)
+		if err != nil {
+			return err
+		}
+
+		ls[uint32(port)] = hostListener{
+			cfg:      hostIf,
+			listener: l,
+		}
+	}
+
+	tunnelClient := api_tunnel.NewServiceClient(gc)
+	go func() {
+		for {
+
+			tunnelStream, err := tunnelClient.Tunnel(ctx)
+			if err != nil {
+				fmt.Println("[rig] error establishing tunnel: ", err)
+				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			rt := &ReverseTunnel{
+				tunnelStream:   tunnelStream,
+				capInterfaces:  capInterfaces,
+				tunnels:        map[uint64]*tunnel.Buffer{},
+				hostInterfaces: ls,
+			}
+
+			if err := rt.Run(ctx); err != nil {
+				fmt.Println("[rig] err processing tunnel: ", err)
+			}
+
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	return capsule_cmd.PortForwardOnListener(
+		ctx, c.Rig, c.Scope, capsuleName, instanceID, l, cfg.GetNetwork().GetTunnelPort(), true)
 }
 
 type hostListener struct {
@@ -382,7 +379,7 @@ func (t *ReverseTunnel) Close(tunnelID uint64, err error) {
 	})
 }
 
-func (t *ReverseTunnel) Target(tunnelID uint64, port uint32) (tunnel.Target, error) {
+func (t *ReverseTunnel) Target(_ uint64, port uint32) (tunnel.Target, error) {
 	cfg, ok := t.capInterfaces[port]
 	if !ok {
 		return tunnel.Target{}, errors.NotFoundErrorf("tunnel port '%d' not found", port)
