@@ -198,7 +198,7 @@ func (c *Cmd) updateNotificationNotifiers(
 func notifierToRow(n *settings_api.NotificationNotifier) []string {
 	row := []string{}
 	if email := n.GetTarget().GetEmail(); email != nil {
-		detail := fmt.Sprintf("From: %s", email.GetFromEmail())
+		detail := fmt.Sprintf("%s -> %s", email.GetFromEmail(), strings.Join(email.GetToEmails(), ","))
 		row = append(row, []string{"Email", email.GetId(), detail}...)
 	} else if slack := n.GetTarget().GetSlack(); slack != nil {
 		detail := fmt.Sprintf("Channel: %s", slack.GetChannelId())
@@ -470,12 +470,21 @@ func (c *Cmd) updateEmailNotifier(e *settings_api.NotificationTarget_EmailTarget
 		return err
 	}
 
+	toEmail, err := c.Prompter.Input("Enter the email address to send to",
+		common.ValidateEmailOpt, common.InputDefaultOpt(strings.Join(e.GetToEmails(), ",")))
+	if err != nil {
+		return err
+	}
+
 	if e == nil {
 		e = &settings_api.NotificationTarget_EmailTarget{}
 	}
 
-	e.Id = id
+	e.Id = strings.Split(id, " ")[0]
 	e.FromEmail = fromEmail
+	e.ToEmails = []string{
+		toEmail,
+	}
 
 	return nil
 }
