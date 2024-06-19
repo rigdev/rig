@@ -24,19 +24,19 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func parseInterface(arg string) (uint32, string, *platformv1.InterfaceOptions, error) {
+func parseInterface(arg string) (*platformv1.ProxyInterface, error) {
 	parts := strings.Split(arg, ",")
 
 	base := parts[0]
 	baseParts := strings.Split(base, ":")
 	if len(baseParts) < 3 {
-		return 0, "", nil, errors.InvalidArgumentErrorf(
+		return nil, errors.InvalidArgumentErrorf(
 			"wrong format of format rule, expected `local-port:target-capsule:target-port`")
 	}
 
 	port, err := strconv.ParseUint(baseParts[0], 10, 32)
 	if err != nil {
-		return 0, "", nil, errors.InvalidArgumentErrorf("invalid port '%s': %v", baseParts[0], err)
+		return nil, errors.InvalidArgumentErrorf("invalid port '%s': %v", baseParts[0], err)
 	}
 
 	allowOrigin := ""
@@ -49,13 +49,17 @@ func parseInterface(arg string) (uint32, string, *platformv1.InterfaceOptions, e
 		case "tcp":
 			tcp = true
 		default:
-			return 0, "", nil, errors.InvalidArgumentErrorf("invalid option '%s'", optParts[0])
+			return nil, errors.InvalidArgumentErrorf("invalid option '%s'", optParts[0])
 		}
 	}
 
-	return uint32(port), baseParts[1] + ":" + baseParts[2], &platformv1.InterfaceOptions{
-		Tcp:         tcp,
-		AllowOrigin: allowOrigin,
+	return &platformv1.ProxyInterface{
+		Port:   uint32(port),
+		Target: baseParts[1] + ":" + baseParts[2],
+		Options: &platformv1.InterfaceOptions{
+			Tcp:         tcp,
+			AllowOrigin: allowOrigin,
+		},
 	}, nil
 }
 
@@ -103,29 +107,21 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	}
 
 	for _, arg := range capsuleInterface {
-		port, target, options, err := parseInterface(arg)
+		proxyIf, err := parseInterface(arg)
 		if err != nil {
 			return err
 		}
 
-		cfg.Network.CapsuleInterfaces = append(cfg.Network.CapsuleInterfaces, &platformv1.CapsuleInterface{
-			Port:       port,
-			HostTarget: target,
-			Options:    options,
-		})
+		cfg.Network.CapsuleInterfaces = append(cfg.Network.CapsuleInterfaces, proxyIf)
 	}
 
 	for _, arg := range hostInterface {
-		port, target, options, err := parseInterface(arg)
+		proxyIf, err := parseInterface(arg)
 		if err != nil {
 			return err
 		}
 
-		cfg.Network.HostInterfaces = append(cfg.Network.HostInterfaces, &platformv1.HostInterface{
-			Port:          port,
-			CapsuleTarget: target,
-			Options:       options,
-		})
+		cfg.Network.HostInterfaces = append(cfg.Network.HostInterfaces, proxyIf)
 	}
 
 	if printConfig {
@@ -203,7 +199,7 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	capInterfaces := map[uint32]*platformv1.CapsuleInterface{}
+	capInterfaces := map[uint32]*platformv1.ProxyInterface{}
 	for _, capIf := range cfg.GetNetwork().GetCapsuleInterfaces() {
 		capInterfaces[capIf.GetPort()] = capIf
 	}
@@ -252,7 +248,7 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 				continue
 			}
 
-			rt := &ReverseTunnel{
+			rt := &clientTunnel{
 				tunnelStream:   tunnelStream,
 				capInterfaces:  capInterfaces,
 				tunnels:        map[uint64]*tunnel.Buffer{},
@@ -272,13 +268,13 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 }
 
 type hostListener struct {
-	cfg      *platformv1.HostInterface
+	cfg      *platformv1.ProxyInterface
 	listener net.Listener
 }
 
-type ReverseTunnel struct {
+type clientTunnel struct {
 	tunnelStream   api_tunnel.Service_TunnelClient
-	capInterfaces  map[uint32]*platformv1.CapsuleInterface
+	capInterfaces  map[uint32]*platformv1.ProxyInterface
 	hostInterfaces map[uint32]hostListener
 
 	tunnelID atomic.Uint64
@@ -286,7 +282,7 @@ type ReverseTunnel struct {
 	tunnels  map[uint64]*tunnel.Buffer
 }
 
-func (t *ReverseTunnel) Run(ctx context.Context) error {
+func (t *clientTunnel) Run(ctx context.Context) error {
 	for port, listener := range t.hostInterfaces {
 		port := port
 		listener := listener
@@ -298,7 +294,7 @@ func (t *ReverseTunnel) Run(ctx context.Context) error {
 					return
 				}
 
-				fmt.Printf("[rig] new incoming request %s -> %s\n", conn.LocalAddr(), listener.cfg.GetCapsuleTarget())
+				fmt.Printf("[rig] new incoming request %s -> %s\n", conn.LocalAddr(), listener.cfg.GetTarget())
 
 				if err := tunnel.HandleInbound(ctx, t, conn, port); err != nil {
 					fmt.Println("[rig] error initializing reverse tunnel: ", err)
@@ -352,7 +348,7 @@ func (t *ReverseTunnel) Run(ctx context.Context) error {
 	}
 }
 
-func (t *ReverseTunnel) Write(tunnelID uint64, data []byte) error {
+func (t *clientTunnel) Write(tunnelID uint64, data []byte) error {
 	return t.tunnelStream.Send(&api_tunnel.TunnelRequest{
 		Message: &api_tunnel.TunnelMessage{
 			Message: &api_tunnel.TunnelMessage_Data{
@@ -365,7 +361,7 @@ func (t *ReverseTunnel) Write(tunnelID uint64, data []byte) error {
 	})
 }
 
-func (t *ReverseTunnel) Close(tunnelID uint64, err error) {
+func (t *clientTunnel) Close(tunnelID uint64, err error) {
 	_ = t.tunnelStream.Send(&api_tunnel.TunnelRequest{
 		Message: &api_tunnel.TunnelMessage{
 			Message: &api_tunnel.TunnelMessage_Close{
@@ -379,16 +375,16 @@ func (t *ReverseTunnel) Close(tunnelID uint64, err error) {
 	})
 }
 
-func (t *ReverseTunnel) Target(_ uint64, port uint32) (tunnel.Target, error) {
+func (t *clientTunnel) Target(_ uint64, port uint32) (tunnel.Target, error) {
 	cfg, ok := t.capInterfaces[port]
 	if !ok {
 		return tunnel.Target{}, errors.NotFoundErrorf("tunnel port '%d' not found", port)
 	}
 
-	return tunnel.Target{Host: cfg.GetHostTarget(), Options: cfg.GetOptions()}, nil
+	return tunnel.Target{Host: cfg.GetTarget(), Options: cfg.GetOptions()}, nil
 }
 
-func (t *ReverseTunnel) NewTunnelID(port uint32) (uint64, *tunnel.Buffer, error) {
+func (t *clientTunnel) NewTunnelID(port uint32) (uint64, *tunnel.Buffer, error) {
 	tunnelID := t.tunnelID.Add(2)
 
 	buff := tunnel.NewBuffer()

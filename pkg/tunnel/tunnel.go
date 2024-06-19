@@ -140,6 +140,11 @@ func handleOutboundInner(ctx context.Context, t Tunnel, tunnelID uint64, port ui
 			},
 		}
 
+		// To server HTTP traffic, we need a listener + client to interact with the http.Server.
+		// The easiest way to accomplish that is to do a net.Pipe, which will generate two
+		// connections that are connected. We then forward buffer-traffic to the one and
+		// provide the other to the HTTP server through a dummy listener.
+
 		c1, c2 := net.Pipe()
 		l := newSingleConnListener(c2)
 		go func() {

@@ -29,31 +29,24 @@ type HostCapsule struct {
 type HostNetwork struct {
 	// HostInterfaces are interfaces activated on the local machine (the host) and forwarded
 	// to the Kubernetes cluster capsules.
-	HostInterfaces []HostInterface `json:"hostInterfaces" protobuf:"1"`
+	HostInterfaces []ProxyInterface `json:"hostInterfaces" protobuf:"1"`
 
 	// CapsuleInterfaces are interfaces activated on the Capsule within the Kubernetes cluster
 	// and forwarded to the local machine (the host). The traffic is directed to a single target,
 	// e.g. `localhost:8080`.
-	CapsuleInterface []CapsuleInterface `json:"capsuleInterfaces" protobuf:"2"`
+	CapsuleInterface []ProxyInterface `json:"capsuleInterfaces" protobuf:"2"`
 
 	// TunnelPort for which the proxy-capsule should listen on. This is automatically set by the tooling.
 	TunnelPort uint32 `json:"tunnelPort,omitempty" protobuf:"3"`
 }
 
-type HostInterface struct {
-	// Port on the host from where to accept traffic from.
-	Port *uint32 `json:"port,omitempty" protobuf:"2"`
-	// CapsuleTarget is the capsule-name:capsule-port to forward traffic to.
-	CapsuleTarget string           `json:"capsuleTarget" protobuf:"1"`
-	Options       InterfaceOptions `json:"options,omitempty" protobuf:"3"`
-}
-
-type CapsuleInterface struct {
-	// Port on the Capsule from where to accept traffic from.
+type ProxyInterface struct {
+	// Port to accept traffic from.
 	Port uint32 `json:"port" protobuf:"1"`
-	// HostTarget is the local address:port to forward traffic to.
-	HostTarget string           `json:"hostTarget,omitempty" protobuf:"2"`
-	Options    InterfaceOptions `json:"options,omitempty" protobuf:"3"`
+	// Target is the address:port to forward traffic to.
+	Target string `json:"target" protobuf:"2"`
+	// Options to further configure the proxying aspects of the interface.
+	Options InterfaceOptions `json:"options,omitempty" protobuf:"3"`
 }
 
 type InterfaceOptions struct {

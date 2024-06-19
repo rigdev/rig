@@ -3768,23 +3768,6 @@ The actual log message
 
 
 
-<a name="platform-v1-CapsuleInterface"></a>
-
-### CapsuleInterface
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| port | [uint32](#uint32) |  |  |
-| hostTarget | [string](#string) |  |  |
-| options | [InterfaceOptions](#platform-v1-InterfaceOptions) |  |  |
-
-
-
-
-
-
 <a name="platform-v1-CapsuleSet"></a>
 
 ### CapsuleSet
@@ -3974,23 +3957,6 @@ The actual log message
 
 
 
-<a name="platform-v1-HostInterface"></a>
-
-### HostInterface
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| port | [uint32](#uint32) |  |  |
-| capsuleTarget | [string](#string) |  |  |
-| options | [InterfaceOptions](#platform-v1-InterfaceOptions) |  |  |
-
-
-
-
-
-
 <a name="platform-v1-HostNetwork"></a>
 
 ### HostNetwork
@@ -3999,8 +3965,8 @@ The actual log message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| hostInterfaces | [HostInterface](#platform-v1-HostInterface) | repeated |  |
-| capsuleInterfaces | [CapsuleInterface](#platform-v1-CapsuleInterface) | repeated |  |
+| hostInterfaces | [ProxyInterface](#platform-v1-ProxyInterface) | repeated |  |
+| capsuleInterfaces | [ProxyInterface](#platform-v1-ProxyInterface) | repeated |  |
 | tunnelPort | [uint32](#uint32) |  |  |
 
 
@@ -4070,6 +4036,23 @@ The actual log message
 | apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | spec | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-ProxyInterface"></a>
+
+### ProxyInterface
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| port | [uint32](#uint32) |  |  |
+| target | [string](#string) |  |  |
+| options | [InterfaceOptions](#platform-v1-InterfaceOptions) |  |  |
 
 
 
