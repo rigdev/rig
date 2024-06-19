@@ -398,7 +398,7 @@ tasks:
     deps: [tools:goreleaser, proto]
     cmds:
       - |
-        ./tools/bin/goreleaser release \
+        ./tools/bin/goreleaser release -p 2 \
           -f ./build/package/goreleaser/goreleaser.yml
 
   release-build:
@@ -406,7 +406,7 @@ tasks:
     deps: [tools:goreleaser, proto]
     cmds:
       - |
-        ./tools/bin/goreleaser release \
+        ./tools/bin/goreleaser release -p 2 \
           -f ./build/package/goreleaser/goreleaser.yml \
           --snapshot \
           --clean
