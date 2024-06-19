@@ -105,8 +105,8 @@ environments:
     cluster: prod
 {{- end }}
 
-{{- if .clusters }}
 clusters:
+{{- if .clusters }}
 {{ toYaml .clusters | indent 2 }}
 {{- else }}
   prod:
