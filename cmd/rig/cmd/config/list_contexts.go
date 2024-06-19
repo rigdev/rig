@@ -55,16 +55,12 @@ func (c *CmdNoScope) listContexts(_ *cobra.Command, _ []string) error {
 		if c.loggedIn {
 			loggedIn = "✔"
 		}
-		tbl.AddRow(current, c.name, def(c.host, "-"), loggedIn, def(c.project, "-"), def(c.environment, "-"))
+		tbl.AddRow(current, c.name,
+			common.StringOr(c.host, "-"), loggedIn, common.StringOr(c.project, "-"),
+			common.StringOr(c.environment, "-"),
+		)
 	}
 	tbl.Print()
 
 	return nil
-}
-
-func def(s string, def string) string {
-	if s == "" {
-		return def
-	}
-	return s
 }

@@ -89,6 +89,13 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	getProjects.Flags().IntVarP(&limit, "limit", "l", 10, "Limit")
 	project.AddCommand(getProjects)
 
+	update := &cobra.Command{
+		Use:   "update",
+		Short: "Update the settings of the project",
+		RunE:  cli.CtxWrap(cmd.update),
+	}
+	project.AddCommand(update)
+
 	parent.AddCommand(project)
 }
 

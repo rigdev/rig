@@ -226,6 +226,16 @@ forwarded traffic.
 	)
 	capsuleCmd.AddCommand(capsulePortForward)
 
+	capsuleUpdate := &cobra.Command{
+		Use:   "update",
+		Short: "Update the settings of the capsule",
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.update),
+	}
+	capsuleCmd.AddCommand(capsuleUpdate)
+
 	parent.AddCommand(capsuleCmd)
 
 	scale.Setup(capsuleCmd, s)
