@@ -272,6 +272,20 @@
 
 
 
+### api.v1.tunnel.Service
+<a name="api-v1-tunnel-Service"></a>
+
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| /api.v1.tunnel.Service/Tunnel | [TunnelRequest](#api-v1-tunnel-TunnelRequest) stream | [TunnelResponse](#api-v1-tunnel-TunnelResponse) stream |  |
+
+
+
+
+
+
 
 ### api.v1.user.Service
 <a name="api-v1-user-Service"></a>
@@ -3923,6 +3937,77 @@ The actual log message
 
 
 
+<a name="platform-v1-HostCapsule"></a>
+
+### HostCapsule
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| network | [HostNetwork](#platform-v1-HostNetwork) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-HostNetwork"></a>
+
+### HostNetwork
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hostInterfaces | [ProxyInterface](#platform-v1-ProxyInterface) | repeated |  |
+| capsuleInterfaces | [ProxyInterface](#platform-v1-ProxyInterface) | repeated |  |
+| tunnelPort | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-InterfaceOptions"></a>
+
+### InterfaceOptions
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tcp | [bool](#bool) |  |  |
+| allowOrigin | [string](#string) |  |  |
+| changeOrigin | [bool](#bool) |  |  |
+| headers | [InterfaceOptions.HeadersEntry](#platform-v1-InterfaceOptions-HeadersEntry) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-InterfaceOptions-HeadersEntry"></a>
+
+### InterfaceOptions.HeadersEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-ProjEnvCapsuleBase"></a>
 
 ### ProjEnvCapsuleBase
@@ -3951,6 +4036,23 @@ The actual log message
 | apiVersion | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | spec | [ProjEnvCapsuleBase](#platform-v1-ProjEnvCapsuleBase) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-ProxyInterface"></a>
+
+### ProxyInterface
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| port | [uint32](#uint32) |  |  |
+| target | [string](#string) |  |  |
+| options | [InterfaceOptions](#platform-v1-InterfaceOptions) |  |  |
 
 
 
@@ -8444,6 +8546,115 @@ Response for getting the license information of the Rig installation.
 
 ### UpdateSettingsResponse
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_tunnel_service-proto"></a>
+
+## api/v1/tunnel/service.proto
+
+
+
+<a name="api-v1-tunnel-TunnelClose"></a>
+
+### TunnelClose
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tunnel_id | [uint64](#uint64) |  |  |
+| code | [uint32](#uint32) |  |  |
+| message | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-tunnel-TunnelData"></a>
+
+### TunnelData
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tunnel_id | [uint64](#uint64) |  |  |
+| data | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="api-v1-tunnel-TunnelInfo"></a>
+
+### TunnelInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tunnel_id | [uint64](#uint64) |  |  |
+| port | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="api-v1-tunnel-TunnelMessage"></a>
+
+### TunnelMessage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| new_tunnel | [TunnelInfo](#api-v1-tunnel-TunnelInfo) |  |  |
+| data | [TunnelData](#api-v1-tunnel-TunnelData) |  |  |
+| close | [TunnelClose](#api-v1-tunnel-TunnelClose) |  |  |
+
+
+
+
+
+
+<a name="api-v1-tunnel-TunnelRequest"></a>
+
+### TunnelRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [TunnelMessage](#api-v1-tunnel-TunnelMessage) |  |  |
+
+
+
+
+
+
+<a name="api-v1-tunnel-TunnelResponse"></a>
+
+### TunnelResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [TunnelMessage](#api-v1-tunnel-TunnelMessage) |  |  |
 
 
 

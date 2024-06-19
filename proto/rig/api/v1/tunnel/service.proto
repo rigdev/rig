@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package api.v1.tunnel;
+
+service Service {
+  rpc Tunnel(stream TunnelRequest) returns (stream TunnelResponse) {}
+}
+
+message TunnelRequest {
+  TunnelMessage message = 1;
+}
+
+message TunnelResponse {
+  TunnelMessage message = 1;
+}
+
+message TunnelMessage {
+  oneof message {
+    TunnelInfo new_tunnel = 1;
+    TunnelData data = 2;
+    TunnelClose close = 3;
+  }
+}
+
+message TunnelInfo {
+  uint64 tunnel_id = 1;
+  uint32 port = 2;
+}
+
+message TunnelData {
+  uint64 tunnel_id = 1;
+  bytes data = 2;
+}
+
+message TunnelClose {
+  uint64 tunnel_id = 1;
+  uint32 code = 2;
+  string message = 3;
+}

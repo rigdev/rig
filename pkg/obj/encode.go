@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"sigs.k8s.io/yaml"
 )
 
 func Encode(obj runtime.Object, scheme *runtime.Scheme) ([]byte, error) {
@@ -18,4 +19,8 @@ func Encode(obj runtime.Object, scheme *runtime.Scheme) ([]byte, error) {
 	}
 
 	return buffer.Bytes(), nil
+}
+
+func EncodeAny(obj any) ([]byte, error) {
+	return yaml.Marshal(obj)
 }

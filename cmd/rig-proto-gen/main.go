@@ -39,6 +39,7 @@ var (
 		v1.Capsule{},
 		v1.Environment{},
 		v1.Project{},
+		v1.HostCapsule{},
 	}
 )
 
@@ -80,10 +81,10 @@ func run(_ *cobra.Command, args []string) error {
 		pkg.compile(&b)
 		filePath := path.Join(outputDir, pkg.name, GENERATED_FILE_NAME)
 		fmt.Println("writing", filePath)
-		if err := os.MkdirAll(path.Dir(filePath), 0777); err != nil {
+		if err := os.MkdirAll(path.Dir(filePath), 0o777); err != nil {
 			return err
 		}
-		if err := os.WriteFile(filePath, []byte(b.String()), 0777); err != nil {
+		if err := os.WriteFile(filePath, []byte(b.String()), 0o777); err != nil {
 			return err
 		}
 	}
