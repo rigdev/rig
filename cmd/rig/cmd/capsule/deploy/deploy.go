@@ -299,6 +299,32 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		})
 	}
 
+	var rollbackID uint64
+	if !noRollback {
+		// TODO: Get this from the Deploy command instead.
+		rollbackID = currentRolloutID
+		if rollbackID == 0 {
+			res, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
+				Msg: &capsule.ListRolloutsRequest{
+					Pagination: &model.Pagination{
+						Limit:      1,
+						Descending: true,
+					},
+					ProjectId:     flags.GetProject(c.Scope),
+					EnvironmentId: flags.GetEnvironment(c.Scope),
+					CapsuleId:     capsuleName,
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			if len(res.Msg.GetRollouts()) > 0 {
+				rollbackID = res.Msg.GetRollouts()[0].GetRolloutId()
+			}
+		}
+	}
+
 	revision, rolloutID, err := capsule_cmd.Deploy(
 		ctx,
 		c.Rig,
@@ -319,7 +345,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		return nil
 	}
 
-	return capsule_cmd.WaitForRollout(ctx, c.Rig, c.Scope, capsuleName, revision, rolloutID)
+	return capsule_cmd.WaitForRollout(ctx, c.Rig, c.Scope, capsuleName, revision, rolloutID, timeout, rollbackID)
 }
 
 func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) {

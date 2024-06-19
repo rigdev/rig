@@ -187,7 +187,7 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if err := capsule_cmd.WaitForRollout(ctx, c.Rig, c.Scope, capsuleName, revision, rolloutID); err != nil {
+	if err := capsule_cmd.WaitForRollout(ctx, c.Rig, c.Scope, capsuleName, revision, rolloutID, 0, 0); err != nil {
 		return err
 	}
 

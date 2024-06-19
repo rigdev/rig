@@ -252,6 +252,25 @@ func Deploy(
 	return res.Msg.GetRevision(), res.Msg.GetRolloutId(), nil
 }
 
+func Rollback(
+	ctx context.Context,
+	rig rig.Client,
+	scope scope.Scope,
+	capsuleName string,
+	currentRolloutID uint64,
+	rollbackID uint64,
+) (*capsule.Revision, uint64, error) {
+	return Deploy(ctx, rig, scope, capsuleName, []*capsule.Change{
+		{
+			Field: &capsule.Change_Rollback_{
+				Rollback: &capsule.Change_Rollback{
+					RollbackId: rollbackID,
+				},
+			},
+		},
+	}, true, false, currentRolloutID)
+}
+
 func WaitForRollout(
 	ctx context.Context,
 	rig rig.Client,
@@ -259,6 +278,8 @@ func WaitForRollout(
 	capsuleID string,
 	revision *capsule.Revision,
 	rolloutID uint64,
+	timeout time.Duration,
+	rollbackID uint64,
 ) error {
 	if rolloutID == 0 {
 		first := true
@@ -293,10 +314,29 @@ func WaitForRollout(
 
 	fmt.Printf("Rollout %v started\n", rolloutID)
 
+	var deadline time.Time
+	if timeout != 0 {
+		deadline = time.Now().Add(timeout)
+	}
+
 	var lastConfigure []*api_rollout.StepInfo
 	var lastResource []*api_rollout.StepInfo
 	var lastRunning []*api_rollout.StepInfo
 	for {
+		if !deadline.IsZero() && time.Now().After(deadline) {
+			fmt.Println()
+			fmt.Printf("🛑 Rollout timed out after %s... ", timeout)
+			if rollbackID == 0 {
+				return fmt.Errorf("aborted")
+			}
+
+			_, _, err := Rollback(ctx, rig, scope, capsuleID, rolloutID, rollbackID)
+			if err != nil {
+				return err
+			}
+
+			return fmt.Errorf("rollback to %d initiated", rollbackID)
+		}
 
 		rollout, err := getRollout(ctx, rig, scope, capsuleID, rolloutID)
 		if err != nil {
