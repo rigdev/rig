@@ -15,6 +15,8 @@ config:
         createCertificateResources: true
         ingressClassName: nginx
         disableTLS: false
+        annotations:
+          my-annotation: "my-value"
 ```
 
 ## Config
