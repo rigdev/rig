@@ -17,8 +17,10 @@ import (
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/ptr"
 	"golang.org/x/exp/maps"
+	v1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const Name = "rigdev.ingress_routes"
@@ -75,7 +77,11 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 			return errors.New("ingress is not supported. Either disable TLS or set a cluster issuer")
 		}
 
-		ingresses := p.createIngresses(req, config)
+		ingresses, err := p.createIngresses(req, config)
+		if err != nil {
+			return err
+		}
+
 		for _, ing := range ingresses {
 			if err := req.Set(ing); err != nil {
 				return err
@@ -168,7 +174,8 @@ func (p *Plugin) createCertificate(req pipeline.CapsuleRequest, cfg Config) []*c
 	return crts
 }
 
-func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*netv1.Ingress {
+func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) ([]*netv1.Ingress, error) {
+	albServiceCreated := false
 	var ingresses []*netv1.Ingress
 	for _, inf := range req.Capsule().Spec.Interfaces {
 		for _, route := range getRoutes(inf) {
@@ -184,8 +191,24 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 			for key, value := range route.Annotations {
 				ing.Annotations[key] = value
 			}
-
 			useImplementationSpecific, _ := strconv.ParseBool(route.Annotations[AnnotationImplementationSpecificPathType])
+
+			serviceName := req.Capsule().Name
+
+			switch cfg.IngressClassName {
+			case "alb":
+				targetType := ing.Annotations["alb.ingress.kubernetes.io/target-type"]
+				if targetType == "" || targetType == "instance" {
+					if !albServiceCreated {
+						if err := createAlbService(req); err != nil {
+							return nil, err
+						}
+						albServiceCreated = true
+					}
+
+					serviceName = fmt.Sprintf("%s-alb", req.Capsule().Name)
+				}
+			}
 
 			if len(route.Paths) == 0 {
 				pathType := netv1.PathTypePrefix
@@ -198,7 +221,7 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 						Path:     "/",
 						Backend: netv1.IngressBackend{
 							Service: &netv1.IngressServiceBackend{
-								Name: req.Capsule().Name,
+								Name: serviceName,
 								Port: netv1.ServiceBackendPort{
 									Name: inf.Name,
 								},
@@ -211,7 +234,7 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 					var pt *netv1.PathType
 					switch path.Match {
 					case v1alpha2.RegularExpression:
-						if ing.Spec.IngressClassName != nil && *ing.Spec.IngressClassName == "nginx" {
+						if cfg.IngressClassName == "nginx" {
 							_, regExpOk := ing.Annotations["nginx.ingress.kubernetes.io/use-regex"]
 							_, rewriteOk := ing.Annotations["nginx.ingress.kubernetes.io/rewrite-target"]
 							if !regExpOk && !rewriteOk {
@@ -235,7 +258,7 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 							Path:     path.Path,
 							Backend: netv1.IngressBackend{
 								Service: &netv1.IngressServiceBackend{
-									Name: req.Capsule().Name,
+									Name: serviceName,
 									Port: netv1.ServiceBackendPort{
 										Name: inf.Name,
 									},
@@ -260,7 +283,7 @@ func (p *Plugin) createIngresses(req pipeline.CapsuleRequest, cfg Config) []*net
 		}
 	}
 
-	return ingresses
+	return ingresses, nil
 }
 
 func createBasicIngress(req pipeline.CapsuleRequest, cfg Config, name, interfaceName string) *netv1.Ingress {
@@ -294,4 +317,31 @@ func createBasicIngress(req pipeline.CapsuleRequest, cfg Config, name, interface
 	}
 
 	return i
+}
+
+func createAlbService(req pipeline.CapsuleRequest) error {
+	albService := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-alb", req.Capsule().Name),
+			Namespace: req.Capsule().Namespace,
+			Labels: map[string]string{
+				pipeline.LabelCapsule: req.Capsule().Name,
+			},
+		},
+		Spec: v1.ServiceSpec{
+			Type: v1.ServiceTypeNodePort,
+			Selector: map[string]string{
+				pipeline.LabelCapsule: req.Capsule().Name,
+			},
+		},
+	}
+
+	for _, inf := range req.Capsule().Spec.Interfaces {
+		albService.Spec.Ports = append(albService.Spec.Ports, v1.ServicePort{
+			Name:       inf.Name,
+			Port:       0,
+			TargetPort: intstr.FromString(inf.Name),
+		})
+	}
+	return req.Set(albService)
 }
