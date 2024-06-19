@@ -39,6 +39,8 @@ var (
 	networkInterfaces          []string
 	removeNetworkInterfaces    []string
 	currentRolloutID           uint64
+	timeout                    time.Duration
+	rollback                   bool
 )
 
 var imageID string
@@ -150,6 +152,14 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 	baseDeploy.Flags().Uint64Var(
 		&currentRolloutID, "current-rollout", 0,
 		"If set, will verify that the current rollout is the one given.",
+	)
+	baseDeploy.Flags().DurationVarP(
+		&timeout, "timeout", "t", 0,
+		"Timeout for when the deploy command should terminate. Unless --no-rollback is configured, this will result in a rollback.",
+	)
+	baseDeploy.Flags().BoolVar(
+		&rollback, "rollout", true,
+		"If disabled, deploy will not attempt to rollback the change if failed.",
 	)
 
 	if err := baseDeploy.RegisterFlagCompletionFunc(
