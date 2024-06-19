@@ -64,16 +64,8 @@ message Revisions {
   repeated model.RevisionMetadata capsules = 4;
 }
 
-message RolloutProposal {
-  string project_id = 1;
-  string environment_id = 2;
-  string capsule_id = 3;
-  string branch_name = 4;
-  platform.v1.CapsuleSpec spec = 5;
-  repeated Change changes = 6;
-  google.protobuf.Timestamp created_at = 7;
-  model.Author created_by = 8;
-  string proposal_id = 9;
-  model.RepoBranch repo_branch = 10;
-  string review_url = 11;
+message CapsuleProposal {
+  platform.v1.Capsule spec = 1;
+  repeated Change changes = 2;
+  model.ProposalMetadata metadata = 3;
 }

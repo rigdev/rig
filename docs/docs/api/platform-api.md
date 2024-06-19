@@ -68,7 +68,7 @@
 | /api.v1.capsule.Service/List | [ListRequest](#api-v1-capsule-ListRequest) | [ListResponse](#api-v1-capsule-ListResponse) | Lists all capsules for current project. |
 | /api.v1.capsule.Service/Deploy | [DeployRequest](#api-v1-capsule-DeployRequest) | [DeployResponse](#api-v1-capsule-DeployResponse) | Deploy changes to a capsule. When deploying, a new rollout will be initiated. Only one rollout can be running at a single point in time. Use `Abort` to abort an already running rollout. |
 | /api.v1.capsule.Service/ProposeRollout | [ProposeRolloutRequest](#api-v1-capsule-ProposeRolloutRequest) | [ProposeRolloutResponse](#api-v1-capsule-ProposeRolloutResponse) |  |
-| /api.v1.capsule.Service/ListRolloutProposals | [ListRolloutProposalsRequest](#api-v1-capsule-ListRolloutProposalsRequest) | [ListRolloutProposalsResponse](#api-v1-capsule-ListRolloutProposalsResponse) |  |
+| /api.v1.capsule.Service/ListCapsuleProposals | [ListCapsuleProposalsRequest](#api-v1-capsule-ListCapsuleProposalsRequest) | [ListCapsuleProposalsResponse](#api-v1-capsule-ListCapsuleProposalsResponse) |  |
 | /api.v1.capsule.Service/ApplyCapsuleSpec | [ApplyCapsuleSpecRequest](#api-v1-capsule-ApplyCapsuleSpecRequest) | [ApplyCapsuleSpecResponse](#api-v1-capsule-ApplyCapsuleSpecResponse) | Applies a Capsule spec in an environment which will be rolled out |
 | /api.v1.capsule.Service/ListInstances | [ListInstancesRequest](#api-v1-capsule-ListInstancesRequest) | [ListInstancesResponse](#api-v1-capsule-ListInstancesResponse) | Lists all instances for the capsule. |
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
@@ -3303,6 +3303,26 @@ The actual log message
 
 
 
+<a name="model-ProposalMetadata"></a>
+
+### ProposalMetadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| created_by | [Author](#model-Author) |  |  |
+| fingerprint | [Fingerprint](#model-Fingerprint) |  |  |
+| spawn_point | [RepoBranch](#model-RepoBranch) |  |  |
+| branch | [string](#string) |  |  |
+| review_url | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="model-RevisionMetadata"></a>
 
 ### RevisionMetadata
@@ -4599,6 +4619,23 @@ Different states a step can be in.
 
 
 
+<a name="api-v1-capsule-CapsuleProposal"></a>
+
+### CapsuleProposal
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.Capsule](#platform-v1-Capsule) |  |  |
+| changes | [Change](#api-v1-capsule-Change) | repeated |  |
+| metadata | [model.ProposalMetadata](#model-ProposalMetadata) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-ConfigFile"></a>
 
 ### ConfigFile
@@ -4693,31 +4730,6 @@ The rollout model.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-RolloutProposal"></a>
-
-### RolloutProposal
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  |  |
-| environment_id | [string](#string) |  |  |
-| capsule_id | [string](#string) |  |  |
-| branch_name | [string](#string) |  |  |
-| spec | [platform.v1.CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
-| changes | [Change](#api-v1-capsule-Change) | repeated |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| created_by | [model.Author](#model-Author) |  |  |
-| proposal_id | [string](#string) |  |  |
-| repo_branch | [model.RepoBranch](#model-RepoBranch) |  |  |
-| review_url | [string](#string) |  |  |
 
 
 
@@ -5650,6 +5662,38 @@ GetCapsuleStatusResponse
 
 
 
+<a name="api-v1-capsule-ListCapsuleProposalsRequest"></a>
+
+### ListCapsuleProposalsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ListCapsuleProposalsResponse"></a>
+
+### ListCapsuleProposalsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| proposals | [CapsuleProposal](#api-v1-capsule-CapsuleProposal) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-ListEventsRequest"></a>
 
 ### ListEventsRequest
@@ -5784,38 +5828,6 @@ List capsule response.
 | ----- | ---- | ----- | ----------- |
 | capsules | [Capsule](#api-v1-capsule-Capsule) | repeated | The capsules. |
 | total | [uint64](#uint64) |  | Total number of capsules in the project. |
-
-
-
-
-
-
-<a name="api-v1-capsule-ListRolloutProposalsRequest"></a>
-
-### ListRolloutProposalsRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  |  |
-| environment_id | [string](#string) |  |  |
-| capsule_id | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-ListRolloutProposalsResponse"></a>
-
-### ListRolloutProposalsResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| proposals | [RolloutProposal](#api-v1-capsule-RolloutProposal) | repeated |  |
 
 
 
@@ -5997,7 +6009,7 @@ rollout.
 | proposal_id | [string](#string) |  |  |
 | resource_yaml | [ProposeRolloutResponse.ResourceYamlEntry](#api-v1-capsule-ProposeRolloutResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. |
 | rollout_config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
-| deploy | [RolloutProposal](#api-v1-capsule-RolloutProposal) |  |  |
+| deploy | [CapsuleProposal](#api-v1-capsule-CapsuleProposal) |  |  |
 
 
 

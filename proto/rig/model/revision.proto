@@ -24,3 +24,12 @@ message Fingerprints {
   Fingerprint capsule_set = 3;
   Fingerprint capsule = 4;
 }
+
+message ProposalMetadata {
+  google.protobuf.Timestamp created_at = 1;
+  Author created_by = 2;
+  Fingerprint fingerprint = 3;
+  RepoBranch spawn_point = 4;
+  string branch = 5;
+  string review_url = 6;
+}
