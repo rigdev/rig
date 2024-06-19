@@ -5,6 +5,8 @@ package api.v1.settings;
 import "api/v1/settings/settings.proto";
 import "api/v1/settings/configuration.proto";
 import "google/protobuf/timestamp.proto";
+import "model/id.proto";
+import "model/git.proto";
 
 // Service for setting and retrieving platform-wide settings.
 service Service {
@@ -15,6 +17,8 @@ service Service {
   rpc UpdateSettings(UpdateSettingsRequest) returns (UpdateSettingsResponse) {}
 
   rpc GetLicenseInfo(GetLicenseInfoRequest) returns (GetLicenseInfoResponse) {}
+  rpc GetGitStoreStatus(GetGitStoreStatusRequest)
+      returns (GetGitStoreStatusResponse) {}
 }
 
 // Request to get the license information of the Rig installation.
@@ -44,4 +48,24 @@ message GetConfigurationRequest {}
 
 message GetConfigurationResponse {
   api.v1.settings.Configuration configuration = 1;
+}
+
+message GetGitStoreStatusRequest {}
+
+message GetGitStoreStatusResponse {
+  message RepoGitStatus {
+    model.RepoBranch repo = 1;
+    model.GitStatus status = 2;
+  }
+  message CapsuleStatus {
+    model.CapsuleID capsule = 1;
+    model.GitStatus status = 3;
+  }
+  message CallbackErr {
+    string err = 1;
+    google.protobuf.Timestamp timestamp = 2;
+  }
+  repeated RepoGitStatus repositories = 1;
+  repeated CapsuleStatus capsules = 2;
+  repeated CallbackErr errors = 3;
 }

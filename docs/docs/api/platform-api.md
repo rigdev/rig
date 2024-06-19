@@ -255,6 +255,7 @@
 
 
 
+
 ### api.v1.settings.Service
 <a name="api-v1-settings-Service"></a>
 
@@ -266,6 +267,7 @@
 | /api.v1.settings.Service/GetSettings | [GetSettingsRequest](#api-v1-settings-GetSettingsRequest) | [GetSettingsResponse](#api-v1-settings-GetSettingsResponse) |  |
 | /api.v1.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-settings-UpdateSettingsResponse) |  |
 | /api.v1.settings.Service/GetLicenseInfo | [GetLicenseInfoRequest](#api-v1-settings-GetLicenseInfoRequest) | [GetLicenseInfoResponse](#api-v1-settings-GetLicenseInfoResponse) |  |
+| /api.v1.settings.Service/GetGitStoreStatus | [GetGitStoreStatusRequest](#api-v1-settings-GetGitStoreStatusRequest) | [GetGitStoreStatusResponse](#api-v1-settings-GetGitStoreStatusResponse) |  |
 
 
 
@@ -1133,6 +1135,25 @@ The type of SSO. Currently only OIDC is supported.
 
 
 
+<a name="model-GitStatus"></a>
+
+### GitStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| last_processed_commit_id | [string](#string) |  |  |
+| last_processed_commit_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| last_successful_commit_id | [string](#string) |  |  |
+| last_successful_commit_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| error | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="model-GitStore"></a>
 
 ### GitStore
@@ -1147,6 +1168,22 @@ The type of SSO. Currently only OIDC is supported.
 | capsule_path | [string](#string) |  |  |
 | commit_template | [string](#string) |  |  |
 | environments | [EnvironmentFilter](#model-EnvironmentFilter) |  |  |
+
+
+
+
+
+
+<a name="model-RepoBranch"></a>
+
+### RepoBranch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | [string](#string) |  |  |
+| branch | [string](#string) |  |  |
 
 
 
@@ -1201,7 +1238,12 @@ Environment wide capsule abstraction.
 <a name="api-v1-capsule-Update"></a>
 
 ### Update
-Legacy update message
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
 
 
 
@@ -7193,6 +7235,11 @@ The top most model that capsules etc belong to.
 Update msg for a project.
 
 
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
+
+
 
 
 
@@ -8445,6 +8492,36 @@ The plan for a rig installation
 
 
 
+<a name="model_id-proto"></a>
+
+## model/id.proto
+
+
+
+<a name="model-CapsuleID"></a>
+
+### CapsuleID
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| capsule | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_settings_service-proto"></a>
 
 ## api/v1/settings/service.proto
@@ -8470,6 +8547,81 @@ The plan for a rig installation
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | configuration | [Configuration](#api-v1-settings-Configuration) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GetGitStoreStatusRequest"></a>
+
+### GetGitStoreStatusRequest
+
+
+
+
+
+
+
+<a name="api-v1-settings-GetGitStoreStatusResponse"></a>
+
+### GetGitStoreStatusResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repositories | [GetGitStoreStatusResponse.RepoGitStatus](#api-v1-settings-GetGitStoreStatusResponse-RepoGitStatus) | repeated |  |
+| capsules | [GetGitStoreStatusResponse.CapsuleStatus](#api-v1-settings-GetGitStoreStatusResponse-CapsuleStatus) | repeated |  |
+| errors | [GetGitStoreStatusResponse.CallbackErr](#api-v1-settings-GetGitStoreStatusResponse-CallbackErr) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GetGitStoreStatusResponse-CallbackErr"></a>
+
+### GetGitStoreStatusResponse.CallbackErr
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| err | [string](#string) |  |  |
+| timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GetGitStoreStatusResponse-CapsuleStatus"></a>
+
+### GetGitStoreStatusResponse.CapsuleStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule | [model.CapsuleID](#model-CapsuleID) |  |  |
+| status | [model.GitStatus](#model-GitStatus) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GetGitStoreStatusResponse-RepoGitStatus"></a>
+
+### GetGitStoreStatusResponse.RepoGitStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repo | [model.RepoBranch](#model-RepoBranch) |  |  |
+| status | [model.GitStatus](#model-GitStatus) |  |  |
 
 
 

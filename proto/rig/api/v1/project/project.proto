@@ -20,7 +20,8 @@ message Project {
 
 // Update msg for a project.
 message Update {
-  reserved 1;
-  // TODO: Bring back field
-  // oneof field {}
+  oneof field {
+    // Set the git store.
+    model.GitStore set_git_store = 1;
+  }
 }

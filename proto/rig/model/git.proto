@@ -3,6 +3,7 @@ syntax = "proto3";
 package model;
 
 import "model/environment.proto";
+import "google/protobuf/timestamp.proto";
 
 message GitStore {
   bool disabled = 1;
@@ -30,4 +31,17 @@ enum GitProvider {
   GIT_PROVIDER_GITHUB = 1;
   GIT_PROVIDER_GITLAB = 2;
   GIT_PROVIDER_BITBUCKET = 3;
+}
+
+message GitStatus {
+  string last_processed_commit_id = 1;
+  google.protobuf.Timestamp last_processed_commit_time = 2;
+  string last_successful_commit_id = 3;
+  google.protobuf.Timestamp last_successful_commit_time = 4;
+  string error = 5;
+}
+
+message RepoBranch {
+  string repository = 1;
+  string branch = 2;
 }
