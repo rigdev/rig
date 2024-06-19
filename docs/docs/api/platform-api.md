@@ -67,6 +67,8 @@
 | /api.v1.capsule.Service/Update | [UpdateRequest](#api-v1-capsule-UpdateRequest) | [UpdateResponse](#api-v1-capsule-UpdateResponse) | Update a capsule. |
 | /api.v1.capsule.Service/List | [ListRequest](#api-v1-capsule-ListRequest) | [ListResponse](#api-v1-capsule-ListResponse) | Lists all capsules for current project. |
 | /api.v1.capsule.Service/Deploy | [DeployRequest](#api-v1-capsule-DeployRequest) | [DeployResponse](#api-v1-capsule-DeployResponse) | Deploy changes to a capsule. When deploying, a new rollout will be initiated. Only one rollout can be running at a single point in time. Use `Abort` to abort an already running rollout. |
+| /api.v1.capsule.Service/ProposeRollout | [ProposeRolloutRequest](#api-v1-capsule-ProposeRolloutRequest) | [ProposeRolloutResponse](#api-v1-capsule-ProposeRolloutResponse) |  |
+| /api.v1.capsule.Service/ListRolloutProposals | [ListRolloutProposalsRequest](#api-v1-capsule-ListRolloutProposalsRequest) | [ListRolloutProposalsResponse](#api-v1-capsule-ListRolloutProposalsResponse) |  |
 | /api.v1.capsule.Service/ApplyCapsuleSpec | [ApplyCapsuleSpecRequest](#api-v1-capsule-ApplyCapsuleSpecRequest) | [ApplyCapsuleSpecResponse](#api-v1-capsule-ApplyCapsuleSpecResponse) | Applies a Capsule spec in an environment which will be rolled out |
 | /api.v1.capsule.Service/ListInstances | [ListInstancesRequest](#api-v1-capsule-ListInstancesRequest) | [ListInstancesResponse](#api-v1-capsule-ListInstancesResponse) | Lists all instances for the capsule. |
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
@@ -4697,6 +4699,31 @@ The rollout model.
 
 
 
+<a name="api-v1-capsule-RolloutProposal"></a>
+
+### RolloutProposal
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| branch_name | [string](#string) |  |  |
+| spec | [platform.v1.CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
+| changes | [Change](#api-v1-capsule-Change) | repeated |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| created_by | [model.Author](#model-Author) |  |  |
+| proposal_id | [string](#string) |  |  |
+| repo_branch | [model.RepoBranch](#model-RepoBranch) |  |  |
+| review_url | [string](#string) |  |  |
+
+
+
+
+
+
 
 
 <a name="api-v1-capsule-EventType"></a>
@@ -5763,6 +5790,38 @@ List capsule response.
 
 
 
+<a name="api-v1-capsule-ListRolloutProposalsRequest"></a>
+
+### ListRolloutProposalsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ListRolloutProposalsResponse"></a>
+
+### ListRolloutProposalsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| proposals | [RolloutProposal](#api-v1-capsule-RolloutProposal) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-ListRolloutsRequest"></a>
 
 ### ListRolloutsRequest
@@ -5899,6 +5958,62 @@ The response of a capsule.Logs RPC
 
 ### PortForwardResponse.Close
 
+
+
+
+
+
+
+<a name="api-v1-capsule-ProposeRolloutRequest"></a>
+
+### ProposeRolloutRequest
+Deploy request. This will deploy a number of changes which results in a new
+rollout.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | Capsule to deploy to. |
+| changes | [Change](#api-v1-capsule-Change) | repeated | Changes to include in the new rollout. |
+| project_id | [string](#string) |  | Project in which the capsule lives. |
+| environment_id | [string](#string) |  | Environment in which to deploy. |
+| message | [string](#string) |  | Deploy message. |
+| force_override | [bool](#bool) |  | By default, existing objects will be kept in favor of overriding them. To force the override of resources, set this flag to true. An example of this use-case is a migration step, where resource created by a previous toolchain e.g. based on Helm charts, are to be replaced and instead be created by the Rig operator. While the override is irreversible, this flag is not "sticky" and must be set by each deploy that should use this behavior. |
+| branch_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ProposeRolloutResponse"></a>
+
+### ProposeRolloutResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| proposal_id | [string](#string) |  |  |
+| resource_yaml | [ProposeRolloutResponse.ResourceYamlEntry](#api-v1-capsule-ProposeRolloutResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. |
+| rollout_config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
+| deploy | [RolloutProposal](#api-v1-capsule-RolloutProposal) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ProposeRolloutResponse-ResourceYamlEntry"></a>
+
+### ProposeRolloutResponse.ResourceYamlEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 
