@@ -60,12 +60,13 @@ jobs:
         run: |
           # Fetch ghcr.io/rigdev/rig-platform:dev from main.
           docker pull ghcr.io/rigdev/rig-platform:main
-          docker tag ghcr.io/rigdev/rig-platform:main ghcr.io/rigdev/rig-operator:dev
+          docker tag ghcr.io/rigdev/rig-platform:main ghcr.io/rigdev/rig-platform:dev
 
       - uses: actions/checkout@v4
         with:
           repository: rigdev/platform
           path: platform/
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: cd platform/
 
