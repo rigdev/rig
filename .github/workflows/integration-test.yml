@@ -68,22 +68,24 @@ jobs:
           path: platform/
           token: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
 
-      - run: cd platform/
-
       - name: Rig kind setup
-        run: ./tests/integration/init.sh
+        run: |
+          cd platform/
+          ./tests/integration/init.sh
 
       - name: Test
         env:
           RUN_INTEGRATION_TEST: true
-        run: task test-integration
+        run: |
+          cd platform/
+          task test-integration
 
       - name: Upload test output
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-integration
-          path: output/test-integration
+          path: platform/output/test-integration
 
       - name: Platform Output
         if: always()
