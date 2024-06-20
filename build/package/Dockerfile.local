@@ -1,10 +1,9 @@
-FROM alpine:3 as builder
+FROM alpine:3
 
 RUN apk add --no-cache ca-certificates curl
 
-FROM scratch
-
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY ./bin/rig-operator /usr/local/bin/
+
+USER 1000
 
 CMD ["rig-operator"]
