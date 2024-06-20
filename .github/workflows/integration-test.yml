@@ -40,19 +40,6 @@ jobs:
         run: |
           task docker-local build-rig tools:kind
 
-        # env:
-        #   GH_TOKEN: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
-        # run: |
-        #   # Fetch rig CLI from main.
-        #   docker pull ghcr.io/rigdev/rig:main
-        #   mkdir -p rig/bin
-        #   docker run --rm --entrypoint sh ghcr.io/rigdev/rig:main -c 'cat `which rig`' > rig/bin/rig
-        #   chmod +x rig/bin/rig
-
-        #   # Fetch ghcr.io/rigdev/rig-operator:dev from main.
-        #   docker pull ghcr.io/rigdev/rig-operator:main
-        #   docker tag ghcr.io/rigdev/rig-operator:main ghcr.io/rigdev/rig-operator:dev
-
       - run: echo "$PWD/tools/bin" >> $GITHUB_PATH
       - run: echo "$PWD/bin" >> $GITHUB_PATH
 
