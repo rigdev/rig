@@ -42,15 +42,15 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			auth.OmitEnvironment: "",
 			auth.OmitUser:        "",
 		},
-		GroupID:           common.OtherGroupID,
-		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		GroupID: common.OtherGroupID,
 	}
 
 	host := &cobra.Command{
-		Use:   "host",
-		Short: "Configure a Capsule to tunnel traffic to/from the host machine",
-		Args:  cobra.NoArgs,
-		RunE:  cli.CtxWrap(cmd.host),
+		Use:               "host",
+		Short:             "Configure a Capsule to tunnel traffic to/from the host machine",
+		Args:              cobra.NoArgs,
+		RunE:              cli.CtxWrap(cmd.host),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	host.Flags().StringArrayVar(

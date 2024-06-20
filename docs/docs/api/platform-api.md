@@ -51,8 +51,6 @@
 
 
 
-
-
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -115,6 +113,7 @@
 
 
 
+
 ### api.v1.environment.Service
 <a name="api-v1-environment-Service"></a>
 
@@ -170,6 +169,7 @@
 | /api.v1.image.Service/Add | [AddRequest](#api-v1-image-AddRequest) | [AddResponse](#api-v1-image-AddResponse) | Add a new image. Images are immutable and cannot change. Add a new image to make changes from an existing one. |
 | /api.v1.image.Service/List | [ListRequest](#api-v1-image-ListRequest) | [ListResponse](#api-v1-image-ListResponse) | List images for a capsule. |
 | /api.v1.image.Service/Delete | [DeleteRequest](#api-v1-image-DeleteRequest) | [DeleteResponse](#api-v1-image-DeleteResponse) | Delete a image. |
+
 
 
 
@@ -4555,64 +4555,6 @@ Different states a step can be in.
 
 
 
-<a name="api_v1_project_revision-proto"></a>
-
-## api/v1/project/revision.proto
-
-
-
-<a name="api-v1-project-Revision"></a>
-
-### Revision
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| spec | [platform.v1.Project](#platform-v1-Project) |  |  |
-| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="api_v1_environment_revision-proto"></a>
-
-## api/v1/environment/revision.proto
-
-
-
-<a name="api-v1-environment-Revision"></a>
-
-### Revision
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| spec | [platform.v1.Environment](#platform-v1-Environment) |  |  |
-| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="api_v1_capsule_rollout-proto"></a>
 
 ## api/v1/capsule/rollout.proto
@@ -6502,6 +6444,35 @@ Environment model.
 
 
 
+<a name="api_v1_environment_revision-proto"></a>
+
+## api/v1/environment/revision.proto
+
+
+
+<a name="api-v1-environment-Revision"></a>
+
+### Revision
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.Environment](#platform-v1-Environment) |  |  |
+| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_environment_service-proto"></a>
 
 ## api/v1/environment/service.proto
@@ -7365,6 +7336,35 @@ Update msg for a project.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_project_revision-proto"></a>
+
+## api/v1/project/revision.proto
+
+
+
+<a name="api-v1-project-Revision"></a>
+
+### Revision
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.Project](#platform-v1-Project) |  |  |
+| metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
 
 
 
