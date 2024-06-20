@@ -1,9 +1,9 @@
 name: PR Update docs
 
-on:
-  pull_request:
-    branches:
-      - main
+# on:
+#   pull_request:
+#     branches:
+#       - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}

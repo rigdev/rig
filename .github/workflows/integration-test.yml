@@ -1,0 +1,99 @@
+name: Integration Test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  integration_test:
+    runs-on: ubuntu
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: rigdev/setup-go@main
+        with:
+          go-version: 1.22.0
+          save-cache: false
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            tools/bin
+          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-tools-
+
+      - name: Build Rig
+        run: |
+          task docker-local build-rig tools:kind
+
+        # env:
+        #   GH_TOKEN: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
+        # run: |
+        #   # Fetch rig CLI from main.
+        #   docker pull ghcr.io/rigdev/rig:main
+        #   mkdir -p rig/bin
+        #   docker run --rm --entrypoint sh ghcr.io/rigdev/rig:main -c 'cat `which rig`' > rig/bin/rig
+        #   chmod +x rig/bin/rig
+
+        #   # Fetch ghcr.io/rigdev/rig-operator:dev from main.
+        #   docker pull ghcr.io/rigdev/rig-operator:main
+        #   docker tag ghcr.io/rigdev/rig-operator:main ghcr.io/rigdev/rig-operator:dev
+
+      - run: echo "$PWD/tools/bin" >> $GITHUB_PATH
+      - run: echo "$PWD/bin" >> $GITHUB_PATH
+
+      - name: Fetch Rig Platform
+        env:
+          GH_TOKEN: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
+        run: |
+          # Fetch ghcr.io/rigdev/rig-platform:dev from main.
+          docker pull ghcr.io/rigdev/rig-platform:main
+          docker tag ghcr.io/rigdev/rig-platform:main ghcr.io/rigdev/rig-operator:dev
+
+      - uses: actions/checkout@v4
+        with:
+          repository: rigdev/platform
+          path: platform/
+
+      - run: cd platform/
+
+      - name: Rig kind setup
+        run: ./tests/integration/init.sh
+
+      - name: Test
+        env:
+          RUN_INTEGRATION_TEST: true
+        run: task test-integration
+
+      - name: Upload test output
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-integration
+          path: output/test-integration
+
+      - name: Platform Output
+        if: always()
+        run: kubectl logs -n rig-system deploy/rig-platform
+
+      - name: Operator Output
+        if: always()
+        run: kubectl logs -n rig-system deploy/rig-operator
+
+      - name: Kubectl Output
+        if: always()
+        run: kubectl get all,capsule -A
