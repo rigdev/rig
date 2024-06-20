@@ -58,10 +58,10 @@ message ConfigFile {
 }
 
 message Revisions {
-  repeated model.RevisionMetadata projects = 1;
-  repeated model.RevisionMetadata environments = 2;
-  repeated model.RevisionMetadata capsule_sets = 3;
-  repeated model.RevisionMetadata capsules = 4;
+  repeated model.RevisionMetadata projects = 5;
+  repeated model.RevisionMetadata environments = 6;
+  repeated model.RevisionMetadata capsule_sets = 7;
+  repeated model.RevisionMetadata capsules = 8;
 }
 
 message CapsuleProposal {
