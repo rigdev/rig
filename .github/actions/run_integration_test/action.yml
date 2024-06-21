@@ -6,6 +6,7 @@ runs:
   using: "composite"
   steps:
     - name: Rig kind setup
+      shell: bash
       run: |
         cd ${{ inputs.platform-path }}
         ./tests/integration/init.sh
@@ -13,6 +14,7 @@ runs:
     - name: Test
       env:
         RUN_INTEGRATION_TEST: true
+      shell: bash
       run: |
         cd ${{ inputs.platform-path }}
         task test-integration
@@ -30,8 +32,10 @@ runs:
 
     - name: Operator Output
       if: always()
+      shell: bash
       run: kubectl logs -n rig-system deploy/rig-operator
 
     - name: Kubectl Output
       if: always()
+      shell: bash
       run: kubectl get all,capsule -A

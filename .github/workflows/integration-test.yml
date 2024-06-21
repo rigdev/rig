@@ -21,33 +21,33 @@ jobs:
           go-version: 1.22.0
           save-cache: false
 
-      - name: Install Task
-        uses: arduino/setup-task@v1
-        with:
-          version: 3.x
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Install Task
+      #   uses: arduino/setup-task@v1
+      #   with:
+      #     version: 3.x
+      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache tools
-        uses: actions/cache@v3
-        with:
-          path: |
-            tools/bin
-          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-tools-
+      # - name: Cache tools
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       tools/bin
+      #     key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-tools-
 
-      - name: Build Rig
-        run: |
-          task docker-local build-rig tools:kind
+      # - name: Build Rig
+      #   run: |
+      #     task docker-local build-rig tools:kind
 
-      - run: echo "$PWD/tools/bin" >> $GITHUB_PATH
-      - run: echo "$PWD/bin" >> $GITHUB_PATH
+      # - run: echo "$PWD/tools/bin" >> $GITHUB_PATH
+      # - run: echo "$PWD/bin" >> $GITHUB_PATH
 
-      - name: Fetch Rig Platform
-        run: |
-          # Fetch ghcr.io/rigdev/rig-platform:dev from main.
-          docker pull ghcr.io/rigdev/rig-platform:main
-          docker tag ghcr.io/rigdev/rig-platform:main ghcr.io/rigdev/rig-platform:dev
+      # - name: Fetch Rig Platform
+      #   run: |
+      #     # Fetch ghcr.io/rigdev/rig-platform:dev from main.
+      #     docker pull ghcr.io/rigdev/rig-platform:main
+      #     docker tag ghcr.io/rigdev/rig-platform:main ghcr.io/rigdev/rig-platform:dev
 
       - uses: actions/checkout@v4
         with:
@@ -55,7 +55,8 @@ jobs:
           path: platform/
           token: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
 
-      - uses: ./.github/actions/run_integration_test
+      - name: Run Integration Tests
+        uses: rigdev/rig/.github/actions/run_integration_test
         with:
           platform-path: platform/
 
