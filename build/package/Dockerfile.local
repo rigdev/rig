@@ -1,0 +1,9 @@
+FROM alpine:3
+
+RUN apk add --no-cache ca-certificates curl
+
+COPY ./bin/rig-operator /usr/local/bin/
+
+USER 1000
+
+CMD ["rig-operator"]
