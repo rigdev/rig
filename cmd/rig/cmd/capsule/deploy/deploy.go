@@ -299,6 +299,30 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		})
 	}
 
+	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
+		ProjectId:     flags.GetProject(c.Scope),
+		EnvironmentId: flags.GetEnvironment(c.Scope),
+		CapsuleId:     capsuleName,
+	}))
+	if err != nil {
+		return err
+	}
+	if respGit.Msg.GetEnvironmentEnabled() && prBranchName != "" {
+		resp, err := c.Rig.Capsule().ProposeRollout(ctx, connect.NewRequest(&capsule.ProposeRolloutRequest{
+			CapsuleId:     capsuleName,
+			Changes:       changes,
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
+			BranchName:    prBranchName,
+		}))
+		if err != nil {
+			return err
+		}
+		url := resp.Msg.GetProposal().GetMetadata().GetReviewUrl()
+		fmt.Println("New pull request created at", url)
+		return nil
+	}
+
 	var rollbackID uint64
 	if !noRollback {
 		// TODO: Get this from the Deploy command instead.

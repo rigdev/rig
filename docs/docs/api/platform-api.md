@@ -6140,25 +6140,8 @@ rollout.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| resource_yaml | [ProposeRolloutResponse.ResourceYamlEntry](#api-v1-capsule-ProposeRolloutResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. |
-| rollout_config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
 | proposal | [Proposal](#api-v1-capsule-Proposal) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-ProposeRolloutResponse-ResourceYamlEntry"></a>
-
-### ProposeRolloutResponse.ResourceYamlEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. |
 
 
 

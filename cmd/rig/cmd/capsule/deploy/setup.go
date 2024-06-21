@@ -41,6 +41,7 @@ var (
 	currentRolloutID           uint64
 	timeout                    time.Duration
 	noRollback                 bool
+	prBranchName               string
 )
 
 var imageID string
@@ -73,7 +74,10 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 All the changes given will be deployed as one rollout, then waiting for the rollout to complete.
 Use '--no-wait' to skip this.
 
-If --image is given, rig creates a new reference to the docker image if it doesn't already exist`,
+If --image is given, rig creates a new reference to the docker image if it doesn't already exist
+
+If the capsule is configured to require a pull request, the deploy will be executed as a proposal,not a direct rollout.
+In that case you must supply branch name in --pr-branch.`,
 	}
 	baseDeploy.Flags().BoolVar(&noWait, "no-wait", false, "skip waiting for the changes to be applied.")
 
@@ -161,6 +165,10 @@ If --image is given, rig creates a new reference to the docker image if it doesn
 	baseDeploy.Flags().BoolVar(
 		&noRollback, "no-rollback", false,
 		"disable automatic rollback if the change was unsuccessful.",
+	)
+	baseDeploy.Flags().StringVar(
+		&prBranchName, "pr-branch", "",
+		"if set will create a proposal pull request with the given branch name instead of a direct rollout.",
 	)
 
 	if err := baseDeploy.RegisterFlagCompletionFunc(

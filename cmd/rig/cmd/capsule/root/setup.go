@@ -236,6 +236,16 @@ forwarded traffic.
 	}
 	capsuleCmd.AddCommand(capsuleUpdate)
 
+	capsuleListProposal := &cobra.Command{
+		Use:   "list-proposals",
+		Short: "Lists the ongoing capsule rollout proposals",
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.listProposals),
+	}
+	capsuleCmd.AddCommand(capsuleListProposal)
+
 	parent.AddCommand(capsuleCmd)
 
 	scale.Setup(capsuleCmd, s)
