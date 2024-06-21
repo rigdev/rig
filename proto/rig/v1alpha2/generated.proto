@@ -21,6 +21,7 @@ message InterfaceProbe {
 
 message InterfaceGRPCProbe {
   string service = 1;
+  bool enabled = 2;
 }
 
 message CapsulePublicInterface {

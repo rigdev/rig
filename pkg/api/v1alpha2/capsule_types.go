@@ -290,9 +290,12 @@ type InterfaceProbe struct {
 
 // InterfaceGRPCProbe specifies a GRPC probe.
 type InterfaceGRPCProbe struct {
-	// Service specifies the GRPC health probe service to probe. This is a
-	// used as service name as per standard GRPC health/v1.
+	// Service specifies the gRPC health probe service to probe. This is a
+	// used as service name as per standard gRPC health/v1.
 	Service string `json:"service" protobuf:"1"`
+
+	// Enabled controls if the gRPC health check is activated.
+	Enabled bool `json:"enabled,omitempty" protobuf:"2"`
 }
 
 // CapsulePublicInterface defines how to publicly expose the interface
