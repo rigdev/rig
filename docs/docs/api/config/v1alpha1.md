@@ -106,7 +106,7 @@ _Appears in:_
 
 
 
-
+ClientGit contains configuration for git integrations. A given git repository can have authentication from either Auths or GitHubAuths with preference for GitHubAuths if there is a match.
 
 _Appears in:_
 - [Client](#client)
@@ -114,6 +114,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `auths` _[GitAuth](#gitauth) array_ | Auths the git client can behave as. |
+| `gitHubAuths` _[GitHubAuth](#githubauth) array_ | GitHubAuths is authentication information for GitHub repositories |
 | `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits. |
 
 
@@ -332,7 +333,6 @@ _Appears in:_
 | --- | --- |
 | `url` _string_ | URL is a exact match for the repo-url this auth can be used for. |
 | `urlPrefix` _string_ | URLPrefix is a prefix-match for the repo urls this auth can be used for. |
-| `webHookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
 | `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. |
 | `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead to fetch changes. |
 
@@ -367,6 +367,27 @@ _Appears in:_
 | --- | --- |
 | `https` _[HTTPSCredential](#httpscredential)_ | HTTPS specifies basic auth credentials. |
 | `ssh` _[SSHCredential](#sshcredential)_ | SSH specifies SSH credentials. |
+
+
+### GitHubAuth
+
+
+
+GitHubAuth contains authentication specifically for GitHub To enable pull requests on a GitHub repository, you must add GitHub authentication using appID, installationID and privateKey for a GitHub app with read/write access to pull requests. To have normal read/write access to a repository, you can forego GitHub app authentication if there is a GitAuth section with credentials for the given repository instead. If you have GitHub app authentication for a GitHub app with read/write access to the repository, you don't need a matching GitAuth section.
+
+_Appears in:_
+- [ClientGit](#clientgit)
+
+| Field | Description |
+| --- | --- |
+| `organization` _string_ | Organization is the GitHub organization to match |
+| `repository` _string_ | Repository matches the GitHub repository. If empty, matches all. |
+| `appID` _integer_ | AppID is the app ID of the GitHub app |
+| `installationID` _integer_ | InstallationID is the installation ID of the GitHub app |
+| `privateKey` _string_ | PrivateKey is a path to a PEM encoded SSH private key. |
+| `password` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
+| `webhookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
+| `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead to fetch changes. |
 
 
 ### GitTemplates

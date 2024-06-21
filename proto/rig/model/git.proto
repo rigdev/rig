@@ -12,11 +12,15 @@ message GitStore {
   string capsule_path = 4;
   string commit_template = 5;
   EnvironmentFilter environments = 6;
+  string pr_title_template = 7;
+  string pr_body_template = 8;
+  bool require_pull_request = 9;
 }
 
 message Commit {
   GitProvider provider = 1;
   string repository = 2;
+  string owner = 5;
   string commit_id = 3;
   string url = 4;
 }
