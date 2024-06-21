@@ -15,39 +15,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Set up Go
-      #   uses: rigdev/setup-go@main
-      #   with:
-      #     go-version: 1.22.0
-      #     save-cache: false
+      - name: Set up Go
+        uses: rigdev/setup-go@main
+        with:
+          go-version: 1.22.0
+          save-cache: false
 
-      # - name: Install Task
-      #   uses: arduino/setup-task@v1
-      #   with:
-      #     version: 3.x
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Cache tools
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       tools/bin
-      #     key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-tools-
+      - name: Cache tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            tools/bin
+          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-tools-
 
-      # - name: Build Rig
-      #   run: |
-      #     task docker-local build-rig tools:kind
+      - name: Build Rig
+        run: |
+          task docker-local build-rig tools:kind
 
-      # - run: echo "$PWD/tools/bin" >> $GITHUB_PATH
-      # - run: echo "$PWD/bin" >> $GITHUB_PATH
+      - run: echo "$PWD/tools/bin" >> $GITHUB_PATH
+      - run: echo "$PWD/bin" >> $GITHUB_PATH
 
-      # - name: Fetch Rig Platform
-      #   run: |
-      #     # Fetch ghcr.io/rigdev/rig-platform:dev from main.
-      #     docker pull ghcr.io/rigdev/rig-platform:main
-      #     docker tag ghcr.io/rigdev/rig-platform:main ghcr.io/rigdev/rig-platform:dev
+      - name: Fetch Rig Platform
+        run: |
+          # Fetch ghcr.io/rigdev/rig-platform:dev from main.
+          docker pull ghcr.io/rigdev/rig-platform:main
+          docker tag ghcr.io/rigdev/rig-platform:main ghcr.io/rigdev/rig-platform:dev
 
       - uses: actions/checkout@v4
         with:
@@ -55,38 +55,33 @@ jobs:
           path: platform/
           token: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
 
-      - name: Run Integration Tests
-        uses: rigdev/rig/.github/actions/run_integration_test
+      - name: Rig kind setup
+        run: |
+          cd platform/
+          ./tests/integration/init.sh
+
+      - name: Test
+        env:
+          RUN_INTEGRATION_TEST: true
+        run: |
+          cd platform/
+          task test-integration
+
+      - name: Upload test output
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          platform-path: platform/
+          name: test-integration
+          path: platform/output/test-integration
 
-      # - name: Rig kind setup
-      #   run: |
-      #     cd platform/
-      #     ./tests/integration/init.sh
+      - name: Platform Output
+        if: always()
+        run: kubectl logs -n rig-system deploy/rig-platform
 
-      # - name: Test
-      #   env:
-      #     RUN_INTEGRATION_TEST: true
-      #   run: |
-      #     cd platform/
-      #     task test-integration
+      - name: Operator Output
+        if: always()
+        run: kubectl logs -n rig-system deploy/rig-operator
 
-      # - name: Upload test output
-      #   uses: actions/upload-artifact@v4
-      #   if: always()
-      #   with:
-      #     name: test-integration
-      #     path: platform/output/test-integration
-
-      # - name: Platform Output
-      #   if: always()
-      #   run: kubectl logs -n rig-system deploy/rig-platform
-
-      # - name: Operator Output
-      #   if: always()
-      #   run: kubectl logs -n rig-system deploy/rig-operator
-
-      # - name: Kubectl Output
-      #   if: always()
-      #   run: kubectl get all,capsule -A
+      - name: Kubectl Output
+        if: always()
+        run: kubectl get all,capsule -A
