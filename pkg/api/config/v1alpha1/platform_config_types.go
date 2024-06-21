@@ -352,8 +352,8 @@ type GitAuth struct {
 	// Credentials to use when connecting to git.
 	Credentials GitCredentials `json:"credentials,omitempty"`
 
-	// If webHookSecret isn't set, pull the git repository at the set interval instead
-	// to fetch changes.
+	// If no web hook is confugured, pull the git repository at the set interval instead
+	// to fetch changes. Defaults to 3 mins if no value.
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds"`
 }
 
@@ -382,13 +382,13 @@ type GitHubAuth struct {
 	PrivateKey string `json:"privateKey,omitempty"`
 
 	// PrivateKeyPassword is an optional password for the SSH private key.
-	PrivateKeyPassword string `json:"password,omitempty"`
+	PrivateKeyPassword string `json:"privateKeyPassword,omitempty"`
 
 	// WebHookSecret is the secret used to validate incoming webhooks.
 	WebhookSecret string `json:"webhookSecret,omitempty"`
 
 	// If webHookSecret isn't set, pull the git repository at the set interval instead
-	// to fetch changes.
+	// to fetch changes. Defaults to 3 mins if no value.
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds,omitempty"`
 }
 
