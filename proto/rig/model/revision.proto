@@ -33,3 +33,10 @@ message ProposalMetadata {
   string branch = 5;
   string review_url = 6;
 }
+
+message Revisions {
+  repeated model.RevisionMetadata projects = 5;
+  repeated model.RevisionMetadata environments = 6;
+  repeated model.RevisionMetadata capsule_sets = 7;
+  repeated model.RevisionMetadata capsules = 8;
+}

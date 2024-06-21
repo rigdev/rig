@@ -140,12 +140,14 @@ var CapsuleActionMap = map[string]string{
 	capsuleconnect.ServiceUpdateProcedure:                   ActionCapsuleEdit,
 	capsuleconnect.ServiceGetJobExecutionsProcedure:         ActionCapsuleView,
 	capsuleconnect.ServiceDeployProcedure:                   ActionCapsuleDeploy,
+	capsuleconnect.ServiceProposeRolloutProcedure:           ActionCapsuleDeploy,
 	capsuleconnect.ServiceAbortRolloutProcedure:             ActionCapsuleAbortRollout,
 	capsuleconnect.ServiceStopRolloutProcedure:              ActionCapsuleStopRollout,
 	capsuleconnect.ServiceExecuteProcedure:                  ActionCapsuleExecute,
 	capsuleconnect.ServiceRestartInstanceProcedure:          ActionCapsuleRestartInstance,
 	capsuleconnect.ServiceGetRevisionProcedure:              ActionCapsuleGetRevision,
 	capsuleconnect.ServiceGetRolloutOfRevisionsProcedure:    ActionCapsuleView,
+	capsuleconnect.ServiceGetEffectiveGitSettingsProcedure:  ActionCapsuleView,
 }
 
 var UserActionMap = map[string]string{

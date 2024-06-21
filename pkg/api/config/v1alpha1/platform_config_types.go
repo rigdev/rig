@@ -328,9 +328,15 @@ type PathPrefixes struct {
 	Project string `json:"project,omitempty"`
 }
 
+// ClientGit contains configuration for git integrations.
+// A given git repository can have authentication from either Auths or GitHubAuths with preference
+// for GitHubAuths if there is a match.
 type ClientGit struct {
 	// Auths the git client can behave as.
 	Auths []GitAuth `json:"auths,omitempty"`
+
+	// GitHubAuths is authentication information for GitHub repositories
+	GitHubAuths []GitHubAuth `json:"gitHubAuths,omitempty"`
 
 	// Author used when creating commits.
 	Author GitAuthor `json:"author,omitempty"`
@@ -343,15 +349,47 @@ type GitAuth struct {
 	// URLPrefix is a prefix-match for the repo urls this auth can be used for.
 	URLPrefix string `json:"urlPrefix,omitempty"`
 
-	// WebHookSecret is the secret used to validate incoming webhooks.
-	WebHookSecret string `json:"webHookSecret,omitempty"`
-
 	// Credentials to use when connecting to git.
 	Credentials GitCredentials `json:"credentials,omitempty"`
 
 	// If webHookSecret isn't set, pull the git repository at the set interval instead
 	// to fetch changes.
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds"`
+}
+
+// GitHubAuth contains authentication specifically for GitHub
+// To enable pull requests on a GitHub repository, you must add GitHub authentication
+// using appID, installationID and privateKey for a GitHub app with read/write access to
+// pull requests.
+// To have normal read/write access to a repository, you can forego GitHub app authentication
+// if there is a GitAuth section with credentials for the given repository instead.
+// If you have GitHub app authentication for a GitHub app with read/write access to the repository,
+// you don't need a matching GitAuth section.
+type GitHubAuth struct {
+	// Organization is the GitHub organization to match
+	Organization string `json:"organization"`
+
+	// Repository matches the GitHub repository. If empty, matches all.
+	Repository string `json:"repository,omitempty"`
+
+	// AppID is the app ID of the GitHub app
+	AppID int64 `json:"appID,omitempty"`
+
+	// InstallationID is the installation ID of the GitHub app
+	InstallationID int64 `json:"installationID,omitempty"`
+
+	// PrivateKey is a path to a PEM encoded SSH private key.
+	PrivateKey string `json:"privateKey,omitempty"`
+
+	// PrivateKeyPassword is an optional password for the SSH private key.
+	PrivateKeyPassword string `json:"password,omitempty"`
+
+	// WebHookSecret is the secret used to validate incoming webhooks.
+	WebhookSecret string `json:"webhookSecret,omitempty"`
+
+	// If webHookSecret isn't set, pull the git repository at the set interval instead
+	// to fetch changes.
+	PullingIntervalSeconds int `json:"pullingIntervalSeconds,omitempty"`
 }
 
 // GitCredentials specifies how to authenticate against git.
@@ -374,7 +412,7 @@ type HTTPSCredential struct {
 
 // SSHCredential specifies SSH credentials
 type SSHCredential struct {
-	// PrivateKey is a PEM encoded SSH private key.
+	// PrivateKey is a path to a PEM encoded SSH private key.
 	PrivateKey string `json:"privateKey,omitempty"`
 
 	// PrivateKeyPassword is an optional password for the SSH private key.
