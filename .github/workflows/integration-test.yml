@@ -55,33 +55,37 @@ jobs:
           path: platform/
           token: ${{ secrets.RIGBOT_GITHUB_TOKEN }}
 
-      - name: Rig kind setup
-        run: |
-          cd platform/
-          ./tests/integration/init.sh
-
-      - name: Test
-        env:
-          RUN_INTEGRATION_TEST: true
-        run: |
-          cd platform/
-          task test-integration
-
-      - name: Upload test output
-        uses: actions/upload-artifact@v4
-        if: always()
+      - uses: ./.github/actions/run_integration_test
         with:
-          name: test-integration
-          path: platform/output/test-integration
+          platform-path: platform/
 
-      - name: Platform Output
-        if: always()
-        run: kubectl logs -n rig-system deploy/rig-platform
+      # - name: Rig kind setup
+      #   run: |
+      #     cd platform/
+      #     ./tests/integration/init.sh
 
-      - name: Operator Output
-        if: always()
-        run: kubectl logs -n rig-system deploy/rig-operator
+      # - name: Test
+      #   env:
+      #     RUN_INTEGRATION_TEST: true
+      #   run: |
+      #     cd platform/
+      #     task test-integration
 
-      - name: Kubectl Output
-        if: always()
-        run: kubectl get all,capsule -A
+      # - name: Upload test output
+      #   uses: actions/upload-artifact@v4
+      #   if: always()
+      #   with:
+      #     name: test-integration
+      #     path: platform/output/test-integration
+
+      # - name: Platform Output
+      #   if: always()
+      #   run: kubectl logs -n rig-system deploy/rig-platform
+
+      # - name: Operator Output
+      #   if: always()
+      #   run: kubectl logs -n rig-system deploy/rig-operator
+
+      # - name: Kubectl Output
+      #   if: always()
+      #   run: kubectl get all,capsule -A
