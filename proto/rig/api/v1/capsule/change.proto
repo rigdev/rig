@@ -4,6 +4,7 @@ package api.v1.capsule;
 
 import "api/v1/capsule/job.proto";
 import "model/metrics.proto";
+import "platform/v1/generated.proto";
 
 // Change to a capsule that ultimately results in a new rollout.
 message Change {
@@ -105,6 +106,8 @@ message Change {
     string remove_annotation = 22;
     // Image to deploy, adding it to images if not already present.
     AddImage add_image = 23;
+    // Complete capsule-spec to replace the current.
+    platform.v1.CapsuleSpec spec = 24;
   }
 }
 
