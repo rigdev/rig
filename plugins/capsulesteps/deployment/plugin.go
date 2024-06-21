@@ -313,7 +313,7 @@ func createProbe(probe *v1alpha2.InterfaceProbe, port int32) *v1.Probe {
 				},
 			},
 		}
-	case probe.GRPC != nil:
+	case probe.GRPC != nil && probe.GRPC.Enabled:
 		return &v1.Probe{
 			ProbeHandler: v1.ProbeHandler{
 				GRPC: &v1.GRPCAction{

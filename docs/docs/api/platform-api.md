@@ -3644,6 +3644,7 @@ The actual log message
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | service | [string](#string) |  |  |
+| enabled | [bool](#bool) |  |  |
 
 
 

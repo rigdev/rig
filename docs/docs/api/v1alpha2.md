@@ -304,7 +304,7 @@ _Appears in:_
 
 ### InterfaceGRPCProbe
 
-_Underlying type:_ _[struct{Service string "json:\"service\" protobuf:\"1\""}](#struct{service-string-"json:\"service\"-protobuf:\"1\""})_
+_Underlying type:_ _[struct{Service string "json:\"service\" protobuf:\"1\""; Enabled bool "json:\"enabled,omitempty\" protobuf:\"2\""}](#struct{service-string-"json:\"service\"-protobuf:\"1\"";-enabled-bool-"json:\"enabled,omitempty\"-protobuf:\"2\""})_
 
 InterfaceGRPCProbe specifies a GRPC probe.
 
