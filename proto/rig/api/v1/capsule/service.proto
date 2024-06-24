@@ -100,27 +100,6 @@ service Service {
 
   rpc GetEffectiveGitSettings(GetEffectiveGitSettingsRequest)
       returns (GetEffectiveGitSettingsResponse) {}
-  // Experimental: Get Environment differences between two environment in terms
-  // of capsule changes. This can be used with a subsequent deploy to promote a
-  // capsule from one environment to another.
-  rpc GetEnvironmentDifferences(GetEnvironmentDifferencesRequest)
-      returns (GetEnvironmentDifferencesResponse) {}
-}
-
-message GetEnvironmentDifferencesRequest {
-  // The capsule to promote.
-  string capsule_id = 1;
-  // The project in which the capsule lives.
-  string project_id = 2;
-  // The environment to promote from
-  string from_environment = 3;
-  // The environment to promote to
-  string to_environment = 4;
-}
-
-message GetEnvironmentDifferencesResponse {
-  // The changes between the environments
-  repeated api.v1.capsule.Change changes = 1;
 }
 
 message WatchRolloutsRequest {
