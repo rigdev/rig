@@ -89,7 +89,6 @@
 | /api.v1.capsule.Service/GetRolloutOfRevisions | [GetRolloutOfRevisionsRequest](#api-v1-capsule-GetRolloutOfRevisionsRequest) | [GetRolloutOfRevisionsResponse](#api-v1-capsule-GetRolloutOfRevisionsResponse) |  |
 | /api.v1.capsule.Service/WatchStatus | [WatchStatusRequest](#api-v1-capsule-WatchStatusRequest) | [WatchStatusResponse](#api-v1-capsule-WatchStatusResponse) stream | Stream the status of a capsule. |
 | /api.v1.capsule.Service/GetEffectiveGitSettings | [GetEffectiveGitSettingsRequest](#api-v1-capsule-GetEffectiveGitSettingsRequest) | [GetEffectiveGitSettingsResponse](#api-v1-capsule-GetEffectiveGitSettingsResponse) |  |
-| /api.v1.capsule.Service/GetEnvironmentDifferences | [GetEnvironmentDifferencesRequest](#api-v1-capsule-GetEnvironmentDifferencesRequest) | [GetEnvironmentDifferencesResponse](#api-v1-capsule-GetEnvironmentDifferencesResponse) | Experimental: Get Environment differences between two environment in terms of capsule changes. This can be used with a subsequent deploy to promote a capsule from one environment to another. |
 
 
 
@@ -5385,39 +5384,6 @@ Response to getting custom metrics for a capsule in an environment.
 | ----- | ---- | ----- | ----------- |
 | git | [model.GitStore](#model-GitStore) |  |  |
 | environment_enabled | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="api-v1-capsule-GetEnvironmentDifferencesRequest"></a>
-
-### GetEnvironmentDifferencesRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | The capsule to promote. |
-| project_id | [string](#string) |  | The project in which the capsule lives. |
-| from_environment | [string](#string) |  | The environment to promote from |
-| to_environment | [string](#string) |  | The environment to promote to |
-
-
-
-
-
-
-<a name="api-v1-capsule-GetEnvironmentDifferencesResponse"></a>
-
-### GetEnvironmentDifferencesResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| changes | [Change](#api-v1-capsule-Change) | repeated | The changes between the environments |
 
 
 
