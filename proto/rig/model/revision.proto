@@ -32,6 +32,13 @@ message ProposalMetadata {
   RepoBranch spawn_point = 4;
   string branch = 5;
   string review_url = 6;
+  oneof provider {
+    GithubProposal github = 7;
+  }
+}
+
+message GithubProposal {
+  int64 pr_id = 1;
 }
 
 message Revisions {

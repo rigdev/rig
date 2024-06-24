@@ -465,10 +465,12 @@ message ListProposalsRequest {
   string project_id = 1;
   string environment_id = 2;
   string capsule_id = 3;
+  model.Pagination pagination = 4;
 }
 
 message ListProposalsResponse {
   repeated Proposal proposals = 1;
+  uint64 total = 2;
 }
 
 message ApplyCapsuleSpecRequest {
