@@ -4092,6 +4092,21 @@ The actual log message
 
 
 
+<a name="model-GithubProposal"></a>
+
+### GithubProposal
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pr_id | [int64](#int64) |  |  |
+
+
+
+
+
+
 <a name="model-ProposalMetadata"></a>
 
 ### ProposalMetadata
@@ -4106,6 +4121,7 @@ The actual log message
 | spawn_point | [RepoBranch](#model-RepoBranch) |  |  |
 | branch | [string](#string) |  |  |
 | review_url | [string](#string) |  |  |
+| github | [GithubProposal](#model-GithubProposal) |  |  |
 
 
 
@@ -5797,6 +5813,7 @@ List instances response.
 | project_id | [string](#string) |  |  |
 | environment_id | [string](#string) |  |  |
 | capsule_id | [string](#string) |  |  |
+| pagination | [model.Pagination](#model-Pagination) |  |  |
 
 
 
@@ -5812,6 +5829,7 @@ List instances response.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | proposals | [Proposal](#api-v1-capsule-Proposal) | repeated |  |
+| total | [uint64](#uint64) |  |  |
 
 
 
