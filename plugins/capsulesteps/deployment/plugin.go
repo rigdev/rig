@@ -214,10 +214,15 @@ func (p *Plugin) createDeployment(
 	if err != nil {
 		return nil, err
 	}
-	if hasHPA {
-		if current != nil && current.Spec.Replicas != nil {
-			replicas = ptr.New(*current.Spec.Replicas)
+	if hasHPA && current != nil && current.Spec.Replicas != nil {
+		cur := uint32(*current.Spec.Replicas)
+		ins := req.Capsule().Spec.Scale.Horizontal.Instances
+		if cur < ins.Min {
+			cur = ins.Min
+		} else if ins.Max != nil && cur > *ins.Max {
+			cur = *ins.Max
 		}
+		replicas = ptr.New(int32(cur))
 	}
 
 	strategy := appsv1.RollingUpdateDeploymentStrategyType
