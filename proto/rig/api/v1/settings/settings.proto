@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1.settings;
 
 import "model/environment.proto";
+import "model/project.proto";
 import "model/git.proto";
 
 // Platform wide settings.
@@ -29,6 +30,7 @@ message NotificationNotifier {
   NotificationTarget target = 1;
   repeated NotificationTopic topics = 2;
   model.EnvironmentFilter environments = 3;
+  model.ProjectFilter projects = 4;
 }
 
 message NotificationTarget {
