@@ -51,6 +51,7 @@
 
 
 
+
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -2986,6 +2987,53 @@ An event that is associated with a rollout.
 
 
 
+<a name="api_v1_capsule_field-proto"></a>
+
+## api/v1/capsule/field.proto
+
+
+
+<a name="api-v1-capsule-FieldChange"></a>
+
+### FieldChange
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| field_id | [string](#string) |  | The Field-ID associated with this change. This is formated as a json-path string with '?' placeholders. |
+| field_path | [string](#string) |  | The unique Field-path identifying this change. This is formated as a json-path string. |
+| old_value_yaml | [string](#string) |  | YAML encoding of the old value (if any). |
+| new_value_yaml | [string](#string) |  | YAML encoding of the new value (if any). |
+| operation | [FieldOperation](#api-v1-capsule-FieldOperation) |  | Operation is how this field-change is applied against the source to get to the target spec. |
+| description | [string](#string) |  | Pretty-printed string description of the field change. |
+
+
+
+
+
+
+
+
+<a name="api-v1-capsule-FieldOperation"></a>
+
+### FieldOperation
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| FIELD_OPERATION_UNSPECIFIED | 0 |  |
+| FIELD_OPERATION_ADDED | 1 |  |
+| FIELD_OPERATION_REMOVED | 2 |  |
+| FIELD_OPERATION_MODIFIED | 3 |  |
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_image-proto"></a>
 
 ## api/v1/capsule/image.proto
@@ -5228,9 +5276,27 @@ Deploy response.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rollout_id | [uint64](#uint64) |  | ID of the new rollout. |
-| resource_yaml | [DeployResponse.ResourceYamlEntry](#api-v1-capsule-DeployResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. |
+| resource_yaml | [DeployResponse.ResourceYamlEntry](#api-v1-capsule-DeployResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. Only populated if dry-run is used. |
 | rollout_config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
 | revision | [Revision](#api-v1-capsule-Revision) |  | The capsule revision created. |
+| field_changes | [FieldChange](#api-v1-capsule-FieldChange) | repeated | The field-level changes that comes from applying this change. Only populated if dry-run is used. |
+| kubernetes_objects_yaml | [DeployResponse.KubernetesObjectsYamlEntry](#api-v1-capsule-DeployResponse-KubernetesObjectsYamlEntry) | repeated | The YAML of the Kubernetes objects created by deploying this Capsule to the cluster. Only populated if dry-run is used. |
+
+
+
+
+
+
+<a name="api-v1-capsule-DeployResponse-KubernetesObjectsYamlEntry"></a>
+
+### DeployResponse.KubernetesObjectsYamlEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

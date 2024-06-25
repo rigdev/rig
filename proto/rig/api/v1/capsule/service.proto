@@ -9,6 +9,7 @@ import "api/v1/capsule/rollout.proto";
 import "api/v1/capsule/instance/status.proto";
 import "api/v1/capsule/event.proto";
 import "api/v1/capsule/job.proto";
+import "api/v1/capsule/field.proto";
 import "platform/v1/generated.proto";
 import "model/metrics.proto";
 import "api/v1/capsule/change.proto";
@@ -399,11 +400,19 @@ message DeployResponse {
   // ID of the new rollout.
   uint64 rollout_id = 1;
   // The YAML of the resources that will be deployed.
+  // Only populated if dry-run is used.
   map<string, string> resource_yaml = 2;
   // The rollout config.
   api.v1.capsule.RolloutConfig rollout_config = 3;
   // The capsule revision created.
   Revision revision = 4;
+  // The field-level changes that comes from applying this change.
+  // Only populated if dry-run is used.
+  repeated api.v1.capsule.FieldChange field_changes = 5;
+  // The YAML of the Kubernetes objects created by deploying this Capsule to the
+  // cluster.
+  // Only populated if dry-run is used.
+  map<string, string> kubernetes_objects_yaml = 6;
 }
 
 // Deploy request. This will deploy a number of changes which results in a new
