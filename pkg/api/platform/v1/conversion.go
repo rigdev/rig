@@ -17,7 +17,6 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	types_v1alpha2 "github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
-	"golang.org/x/exp/constraints"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	k8sresource "k8s.io/apimachinery/pkg/api/resource"
@@ -431,13 +430,6 @@ func parseLimits(r *v1alpha2.ResourceLimits) (float64, float64, error) {
 	}
 
 	return req, limit, nil
-}
-
-func max[T constraints.Ordered](a, b T) T {
-	if b > a {
-		return b
-	}
-	return a
 }
 
 func HorizontalScaleSpecConversion(spec *platformv1.HorizontalScale) *capsule.HorizontalScale {
