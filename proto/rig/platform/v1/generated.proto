@@ -24,7 +24,7 @@ message CapsuleSpec {
   repeated v1alpha2.CapsuleInterface interfaces = 6;
   repeated File files = 7;
   EnvironmentVariables env = 12;
-  v1alpha2.CapsuleScale scale = 8;
+  Scale scale = 8;
   repeated v1alpha2.CronJob cronJobs = 10;
   bool autoAddRigServiceAccounts = 13;
 }
@@ -44,6 +44,19 @@ message EnvironmentVariables {
 message EnvironmentSource {
   string name = 1;
   string kind = 2;
+}
+
+message Scale {
+  HorizontalScale horizontal = 1;
+  v1alpha2.VerticalScale vertical = 2;
+}
+
+message HorizontalScale {
+  uint32 min = 4;
+  uint32 max = 5;
+  v1alpha2.Instances instances = 1;
+  v1alpha2.CPUTarget cpuTarget = 2;
+  repeated v1alpha2.CustomMetric customMetrics = 3;
 }
 
 message Capsule {

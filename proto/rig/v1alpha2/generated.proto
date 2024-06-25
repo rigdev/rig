@@ -50,17 +50,6 @@ message HTTPPathRoute {
   string match = 2;
 }
 
-message CapsuleScale {
-  HorizontalScale horizontal = 1;
-  VerticalScale vertical = 2;
-}
-
-message HorizontalScale {
-  Instances instances = 1;
-  CPUTarget cpuTarget = 2;
-  repeated CustomMetric customMetrics = 3;
-}
-
 message Instances {
   uint32 min = 1;
   uint32 max = 2;
@@ -122,4 +111,15 @@ message URL {
 message JobCommand {
   string command = 1;
   repeated string args = 2;
+}
+
+message CapsuleScale {
+  HorizontalScale horizontal = 1;
+  VerticalScale vertical = 2;
+}
+
+message HorizontalScale {
+  Instances instances = 1;
+  CPUTarget cpuTarget = 2;
+  repeated CustomMetric customMetrics = 3;
 }
