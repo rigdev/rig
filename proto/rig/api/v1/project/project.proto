@@ -5,6 +5,7 @@ package api.v1.project;
 import "google/protobuf/timestamp.proto";
 import "model/git.proto";
 import "model/notification.proto";
+import "model/pipeline.proto";
 
 // The top most model that capsules etc belong to.
 message Project {
@@ -19,6 +20,8 @@ message Project {
   model.GitStore git_store = 6;
   // The notifiers for the project.
   NotificationNotifiers notifiers = 7;
+  // Environment pipeline for the project
+  Pipelines pipeline = 8;
 }
 
 // Update msg for a project.
@@ -28,6 +31,8 @@ message Update {
     model.GitStore set_git_store = 1;
     // Set the notifiers.
     NotificationNotifiers notifiers = 2;
+    // Set the pipelines
+    Pipelines set_pipelines = 3;
   }
 }
 
@@ -36,4 +41,11 @@ message NotificationNotifiers {
   // if these notifiers at this level are empty.
   bool disabled = 1;
   repeated model.NotificationNotifier notifiers = 2;
+}
+
+message Pipelines {
+  // If the pipelines are disabled, pipelines from parent are not inherited even
+  // if pipelines at this level are empty.
+  bool disabled = 1;
+  repeated model.Pipeline pipelines = 2;
 }

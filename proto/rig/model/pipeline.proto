@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package model;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+message Pipeline {
+  // Custom name for the pipeline.
+  string name = 1;
+  string initial_environment = 2;
+  repeated Phase phases = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message Phase {
+  // Environment to promote to. The project must be active in this environment.
+  string environment_id = 1;
+  // Fixed fields, that are not changed upon promotion.
+  repeated string fixed_fields = 2;
+  // Promotion triggers.
+  repeated PromotionTrigger triggers = 3;
+}
+
+message PromotionTrigger {
+  message Manual {}
+
+  message Auto {
+    oneof trigger {
+      google.protobuf.Duration time_alive = 1;
+    }
+  }
+
+  oneof trigger {
+    Manual manual = 1;
+    Auto auto = 2;
+  }
+}
