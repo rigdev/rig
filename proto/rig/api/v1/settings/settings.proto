@@ -3,12 +3,14 @@ syntax = "proto3";
 package api.v1.settings;
 
 import "model/notification.proto";
+import "model/pipeline.proto";
 import "model/git.proto";
 
 // Platform wide settings.
 message Settings {
   repeated model.NotificationNotifier notification_notifiers = 1;
   model.GitStore git_store = 2;
+  repeated model.Pipeline pipelines = 3;
 }
 
 // Update message for platform settings.
@@ -17,11 +19,17 @@ message Update {
     repeated model.NotificationNotifier notifiers = 1;
   }
 
+  message SetPipelines {
+    repeated model.Pipeline pipelines = 1;
+  }
+
   oneof field {
     // Set the notification notifiers.
     SetNotificationNotifiers set_notification_notifiers = 1;
     // Set the git store.
     model.GitStore set_git_store = 2;
+    // Set the pipelines.
+    SetPipelines set_pipelines = 3;
   }
 }
 
