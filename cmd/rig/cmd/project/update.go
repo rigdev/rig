@@ -51,7 +51,7 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 	var updates []*project.Update
 	for {
 		i, _, err := c.Prompter.Select("Select the setting to update (CTRL + C to cancel)",
-			[]string{"Git store", "Done"})
+			[]string{"Git store", "Notifiers", "Done"})
 		if err != nil {
 			if common.ErrIsAborted(err) {
 				return nil
@@ -75,6 +75,19 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 					SetGitStore: p.GetGitStore(),
 				},
 			})
+		case 1:
+			if err := c.updateNotifiers(ctx, p.GetNotifiers()); err != nil {
+				if common.ErrIsAborted(err) {
+					continue
+				}
+				return err
+			}
+
+			updates = append(updates, &project.Update{
+				Field: &project.Update_Notifiers{
+					Notifiers: p.GetNotifiers(),
+				},
+			})
 		case 2:
 			done = true
 		}
@@ -96,5 +109,38 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 
 	fmt.Println("Project updated")
+	return nil
+}
+
+func (c *Cmd) updateNotifiers(ctx context.Context, p *project.NotificationNotifiers) error {
+	if p == nil {
+		p = &project.NotificationNotifiers{}
+	}
+
+	enableDisableStr := "disable global notifiers"
+	if p.GetDisabled() {
+		enableDisableStr = "enable global notifiers"
+	}
+
+	i, _, err := c.Prompter.Select("Select the field to update (CTRL + c to cancel)", []string{
+		enableDisableStr,
+		"Update Notifiers",
+	})
+	if err != nil {
+		return err
+	}
+
+	switch i {
+	case 0:
+		p.Disabled = !p.GetDisabled()
+	case 1:
+		notifiers, err := common.PromptNotificationNotifiers(ctx, c.Prompter, c.Rig, p.GetNotifiers())
+		if err != nil {
+			return err
+		}
+
+		p.Notifiers = notifiers
+	}
+
 	return nil
 }

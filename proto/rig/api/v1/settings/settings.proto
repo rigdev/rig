@@ -2,20 +2,19 @@ syntax = "proto3";
 
 package api.v1.settings;
 
-import "model/environment.proto";
-import "model/project.proto";
+import "model/notification.proto";
 import "model/git.proto";
 
 // Platform wide settings.
 message Settings {
-  repeated NotificationNotifier notification_notifiers = 1;
+  repeated model.NotificationNotifier notification_notifiers = 1;
   model.GitStore git_store = 2;
 }
 
 // Update message for platform settings.
 message Update {
   message SetNotificationNotifiers {
-    repeated NotificationNotifier notifiers = 1;
+    repeated model.NotificationNotifier notifiers = 1;
   }
 
   oneof field {
@@ -24,37 +23,6 @@ message Update {
     // Set the git store.
     model.GitStore set_git_store = 2;
   }
-}
-
-message NotificationNotifier {
-  NotificationTarget target = 1;
-  repeated NotificationTopic topics = 2;
-  model.EnvironmentFilter environments = 3;
-  model.ProjectFilter projects = 4;
-}
-
-message NotificationTarget {
-  message SlackTarget {
-    string workspace = 1;
-    string channel_id = 2;
-  }
-
-  message EmailTarget {
-    string id = 1;
-    string from_email = 2;
-    repeated string to_emails = 3;
-  }
-
-  oneof target {
-    SlackTarget slack = 1;
-    EmailTarget email = 2;
-  }
-}
-
-enum NotificationTopic {
-  NOTIFICATION_TOPIC_UNSPECIFIED = 0;
-  NOTIFICATION_TOPIC_ROLLOUT = 1;
-  NOTIFICATION_TOPIC_ISSUE = 2;
 }
 
 // The plan for a rig installation
