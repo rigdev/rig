@@ -259,6 +259,7 @@
 
 
 
+
 ### api.v1.settings.Service
 <a name="api-v1-settings-Service"></a>
 
@@ -8523,6 +8524,60 @@ Platform wide static configuration.
 
 
 
+<a name="model_project-proto"></a>
+
+## model/project.proto
+
+
+
+<a name="model-ProjectFilter"></a>
+
+### ProjectFilter
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| all | [ProjectFilter.All](#model-ProjectFilter-All) |  |  |
+| selected | [ProjectFilter.Selected](#model-ProjectFilter-Selected) |  |  |
+
+
+
+
+
+
+<a name="model-ProjectFilter-All"></a>
+
+### ProjectFilter.All
+
+
+
+
+
+
+
+<a name="model-ProjectFilter-Selected"></a>
+
+### ProjectFilter.Selected
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_ids | [string](#string) | repeated |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_settings_settings-proto"></a>
 
 ## api/v1/settings/settings.proto
@@ -8540,6 +8595,7 @@ Platform wide static configuration.
 | target | [NotificationTarget](#api-v1-settings-NotificationTarget) |  |  |
 | topics | [NotificationTopic](#api-v1-settings-NotificationTopic) | repeated |  |
 | environments | [model.EnvironmentFilter](#model-EnvironmentFilter) |  |  |
+| projects | [model.ProjectFilter](#model-ProjectFilter) |  |  |
 
 
 
