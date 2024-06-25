@@ -5325,7 +5325,7 @@ Deploy response.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rollout_id | [uint64](#uint64) |  | ID of the new rollout. |
-| resource_yaml | [DeployResponse.ResourceYamlEntry](#api-v1-capsule-DeployResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. Deprecated. |
+| resource_yaml | [DeployResponse.ResourceYamlEntry](#api-v1-capsule-DeployResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. Deprecated. Use `outcome` instead. |
 | rollout_config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
 | revision | [Revision](#api-v1-capsule-Revision) |  | The capsule revision created. |
 | outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. Only populated if dry-run is used. |
