@@ -271,7 +271,7 @@ func DeployAndWait(
 		scope,
 		capsuleName,
 		changes,
-		true,
+		forceDeploy,
 		forceOverride,
 		currentRolloutID,
 	)

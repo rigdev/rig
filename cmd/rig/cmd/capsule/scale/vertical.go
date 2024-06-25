@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error {
 	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, c.Rig, c.Scope)
 	if err != nil {
 		return nil
