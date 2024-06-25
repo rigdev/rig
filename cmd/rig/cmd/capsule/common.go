@@ -252,6 +252,39 @@ func Deploy(
 	return res.Msg.GetRevision(), res.Msg.GetRolloutId(), nil
 }
 
+func DeployAndWait(
+	ctx context.Context,
+	rig rig.Client,
+	scope scope.Scope,
+	capsuleName string,
+	changes []*capsule.Change,
+	forceDeploy bool,
+	forceOverride bool,
+	currentRolloutID uint64,
+	timeout time.Duration,
+	rollbackID uint64,
+	noWait bool,
+) error {
+	revision, rolloutID, err := Deploy(
+		ctx,
+		rig,
+		scope,
+		capsuleName,
+		changes,
+		true,
+		forceOverride,
+		currentRolloutID,
+	)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Deploying to capsule", capsuleName)
+	if noWait {
+		return nil
+	}
+	return WaitForRollout(ctx, rig, scope, capsuleName, revision, rolloutID, timeout, rollbackID)
+}
+
 func Rollback(
 	ctx context.Context,
 	rig rig.Client,
