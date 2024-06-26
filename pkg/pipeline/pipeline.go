@@ -100,7 +100,10 @@ func (p *CapsulePipeline) RunCapsule(
 	opts ...CapsuleRequestOption,
 ) (*Result, error) {
 	req := newCapsuleRequest(p, capsule, client, p.vm, opts...)
-	return ExecuteRequest(ctx, req, p.steps, true)
+	pipelineOptions := PipelineOptions{
+		AdditionalObjects: req.additionalObjects,
+	}
+	return ExecuteRequest(ctx, req, p.steps, true, pipelineOptions)
 }
 
 func (p *CapsulePipeline) DeleteCapsule(
@@ -111,7 +114,11 @@ func (p *CapsulePipeline) DeleteCapsule(
 ) (*Result, error) {
 	req := newCapsuleRequest(p, capsule, client, p.vm, opts...)
 	// Delete capsule by running without steps.
-	return ExecuteRequest(ctx, req, nil, true)
+	pipelineOptions := PipelineOptions{
+		AdditionalObjects: req.additionalObjects,
+	}
+
+	return ExecuteRequest(ctx, req, nil, true, pipelineOptions)
 }
 
 type OutputObject struct {
@@ -137,8 +144,9 @@ func ExecuteRequest[T Request](
 	req ExecutableRequest[T],
 	steps []Step[T],
 	commit bool,
+	opts PipelineOptions,
 ) (*Result, error) {
-	result, err := executeRequestInner(ctx, req, steps, commit)
+	result, err := executeRequestInner(ctx, req, steps, commit, opts)
 	if errors.IsFailedPrecondition(err) {
 		return nil, err
 	} else if err != nil {
@@ -158,6 +166,7 @@ func executeRequestInner[T Request](
 	ctx context.Context,
 	req ExecutableRequest[T], steps []Step[T],
 	commit bool,
+	opts PipelineOptions,
 ) (*Result, error) {
 	if err := req.GetBase().Strategies.LoadExistingObjects(ctx); err != nil {
 		return nil, err
@@ -168,7 +177,7 @@ func executeRequestInner[T Request](
 		req.GetBase().logger.Info("run steps", "existing_objects", maps.Keys(req.GetBase().existingObjects))
 
 		for _, s := range steps {
-			if err := s.Apply(ctx, req.GetRequest()); err != nil {
+			if err := s.Apply(ctx, req.GetRequest(), opts); err != nil {
 				return nil, err
 			}
 		}

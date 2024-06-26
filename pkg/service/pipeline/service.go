@@ -91,28 +91,21 @@ func (s *service) DryRun(
 	capsuleSpec *v1alpha2.Capsule,
 	opts ...pipeline.CapsuleRequestOption,
 ) (*pipeline.Result, error) {
-	execCtx := plugin.NewExecutionContext(ctx)
-	defer execCtx.Stop()
-
-	if cfg == nil {
-		cfg = s.cfg
-	}
-
 	if capsuleSpec == nil {
 		capsuleSpec = &v1alpha2.Capsule{}
-		if err := s.client.Get(ctx, types.NamespacedName{
+		if err := errors.FromK8sClient(s.client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      capsuleName,
-		}, capsuleSpec); err != nil {
+		}, capsuleSpec)); err != nil {
 			return nil, err
 		}
 	} else {
 		// Load existing status object.
 		currentSpec := &v1alpha2.Capsule{}
-		if err := s.client.Get(ctx, types.NamespacedName{
+		if err := errors.FromK8sClient(s.client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      capsuleName,
-		}, currentSpec); errors.IsNotFound(err) {
+		}, currentSpec)); errors.IsNotFound(err) {
 			// Noop.
 		} else if err != nil {
 			return nil, err
@@ -125,24 +118,32 @@ func (s *service) DryRun(
 		capsuleSpec.SetUID(types.UID("dry-run-spec"))
 	}
 
-	steps, err := GetDefaultPipelineSteps(execCtx, cfg, s.pluginManager, s.logger)
-	if err != nil {
-		return nil, err
-	}
+	var p *pipeline.CapsulePipeline
+	if cfg == nil {
+		p = s.GetDefaultPipeline()
+	} else {
+		execCtx := plugin.NewExecutionContext(ctx)
+		defer execCtx.Stop()
 
-	p := pipeline.NewCapsulePipeline(cfg, scheme.New(), s.vm, s.logger)
-	for _, step := range steps {
-		p.AddStep(step)
-	}
-
-	for _, step := range cfg.Pipeline.Steps {
-		ps, err := s.pluginManager.NewStep(execCtx, step, s.logger)
+		steps, err := GetDefaultPipelineSteps(execCtx, cfg, s.pluginManager, s.logger)
 		if err != nil {
 			return nil, err
 		}
 
-		p.AddStep(ps)
-		defer ps.Stop(ctx)
+		p := pipeline.NewCapsulePipeline(cfg, scheme.New(), s.vm, s.logger)
+		for _, step := range steps {
+			p.AddStep(step)
+		}
+
+		for _, step := range cfg.Pipeline.Steps {
+			ps, err := s.pluginManager.NewStep(execCtx, step, s.logger)
+			if err != nil {
+				return nil, err
+			}
+
+			p.AddStep(ps)
+			defer ps.Stop(ctx)
+		}
 	}
 
 	return p.RunCapsule(ctx, capsuleSpec, s.client, append(opts, pipeline.WithDryRun())...)

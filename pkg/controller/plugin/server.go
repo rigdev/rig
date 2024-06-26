@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/pipeline"
+	"github.com/rigdev/rig/pkg/roclient"
 	"github.com/rigdev/rig/pkg/scheme"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -95,6 +96,18 @@ func (m *GRPCServer) RunCapsule(
 		capsule.Labels = map[string]string{}
 	}
 
+	reader := roclient.NewReader(m.scheme)
+	for _, ao := range req.GetAdditionalObjects() {
+		co, err := obj.DecodeAny(ao, m.scheme)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := reader.AddObject(co); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := m.Impl.Run(ctx, &capsuleRequestClient{
 		client:  apiplugin.NewRequestServiceClient(conn),
 		scheme:  m.scheme,
@@ -103,6 +116,7 @@ func (m *GRPCServer) RunCapsule(
 		ctx:     ctx,
 		cc:      m.cc,
 		vm:      m.vm,
+		cr:      roclient.NewLayeredReader(reader, m.cc),
 	}, m.logger); err != nil {
 		return nil, err
 	}
@@ -151,6 +165,7 @@ type capsuleRequestClient struct {
 	scheme  *runtime.Scheme
 	ctx     context.Context
 	cc      client.Client
+	cr      client.Reader
 	vm      scheme.VersionMapper
 }
 
@@ -169,7 +184,7 @@ func (c *capsuleRequestClient) Scheme() *runtime.Scheme {
 }
 
 func (c *capsuleRequestClient) Reader() client.Reader {
-	return c.cc
+	return c.cr
 }
 
 func (c *capsuleRequestClient) Capsule() *v1alpha2.Capsule {

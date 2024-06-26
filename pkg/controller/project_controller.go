@@ -68,7 +68,7 @@ func (p *ProjectEnvironmentController) Reconcile(ctx context.Context, req ctrl.R
 	vm := scheme.NewVersionMapper(p.Client)
 	request := pipeline.NewProjectEnvironmentRequest(p.Client, p, vm, p.Config, p.Scheme, p.Logger, projectEnv)
 
-	if _, err := pipeline.ExecuteRequest(ctx, request, projectSteps, true); err != nil {
+	if _, err := pipeline.ExecuteRequest(ctx, request, projectSteps, true, pipeline.PipelineOptions{}); err != nil {
 		p.Logger.Error(err, "reconciliation ended with error")
 		return ctrl.Result{}, err
 	}
@@ -84,7 +84,7 @@ var projectSteps = []pipeline.Step[pipeline.ProjectEnvironmentRequest]{
 
 type namespaceStep struct{}
 
-func (s namespaceStep) Apply(_ context.Context, req pipeline.ProjectEnvironmentRequest) error {
+func (s namespaceStep) Apply(_ context.Context, req pipeline.ProjectEnvironmentRequest, _ pipeline.PipelineOptions) error {
 	projectEnv := req.ProjectEnvironment()
 	if err := req.Set(&corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
