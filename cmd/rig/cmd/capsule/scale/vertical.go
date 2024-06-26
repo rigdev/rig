@@ -6,17 +6,14 @@ import (
 	"math"
 	"strconv"
 
-	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
-	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error {
 	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, c.Rig, c.Scope)
 	if err != nil {
 		return nil
@@ -35,34 +32,18 @@ func (c *Cmd) vertical(ctx context.Context, cmd *cobra.Command, _ []string) erro
 		return err
 	}
 
-	req := connect.NewRequest(&capsule.DeployRequest{
-		CapsuleId: capsule_cmd.CapsuleID,
-		Changes: []*capsule.Change{
-			{
-				Field: &capsule.Change_ContainerSettings{
-					ContainerSettings: container,
-				},
+	return capsule_cmd.DeployAndWait(
+		ctx,
+		c.Rig,
+		c.Scope,
+		capsule_cmd.CapsuleID,
+		[]*capsule.Change{{
+			Field: &capsule.Change_ContainerSettings{
+				ContainerSettings: container,
 			},
-		},
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
-	})
-
-	_, err = c.Rig.Capsule().Deploy(ctx, req)
-	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
-		if forceDeploy {
-			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
-		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, c.Prompter, req)
-		}
-	}
-	if err != nil {
-		return err
-	}
-
-	cmd.Println("Vertical scaling configured")
-
-	return nil
+		}},
+		forceDeploy, false, 0, 0, 0, false,
+	)
 }
 
 func (c *Cmd) setResourcesInteractive(curResources *capsule.Resources) error {
