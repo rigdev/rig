@@ -101,6 +101,7 @@ var (
 				IsSecret: false,
 			},
 		},
+		Replicas: 2,
 		HorizontalScale: &capsule.HorizontalScale{
 			MaxReplicas: 5,
 			MinReplicas: 2,
