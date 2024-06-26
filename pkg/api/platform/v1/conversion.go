@@ -337,6 +337,7 @@ func CapsuleSpecToRolloutConfig(spec *platformv1.CapsuleSpec) (*capsule.RolloutC
 		CronJobs:                  makeCronJobs(spec.GetCronJobs()),
 		Annotations:               maps.Clone(spec.GetAnnotations()),
 	}
+	config.Replicas = config.GetHorizontalScale().GetMinReplicas()
 	var err error
 	if config.ContainerSettings, err = ContainerSettingsSpecConversion(spec); err != nil {
 		return nil, err
