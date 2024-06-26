@@ -299,11 +299,13 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		})
 	}
 
-	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
-		CapsuleId:     capsuleName,
-	}))
+	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
+		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
+			ProjectId:     flags.GetProject(c.Scope),
+			EnvironmentId: flags.GetEnvironment(c.Scope),
+			CapsuleId:     capsuleName,
+		}),
+	)
 	if err != nil {
 		return err
 	}
