@@ -2008,7 +2008,7 @@ A reference to a kubernetes object.
 | interfaces | [v1alpha2.CapsuleInterface](#v1alpha2-CapsuleInterface) | repeated |  |
 | files | [File](#platform-v1-File) | repeated |  |
 | env | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
-| scale | [v1alpha2.CapsuleScale](#v1alpha2-CapsuleScale) |  |  |
+| scale | [Scale](#platform-v1-Scale) |  |  |
 | cronJobs | [v1alpha2.CronJob](#v1alpha2-CronJob) | repeated |  |
 | autoAddRigServiceAccounts | [bool](#bool) |  |  |
 
@@ -2117,6 +2117,25 @@ A reference to a kubernetes object.
 | asSecret | [bool](#bool) |  |  |
 | bytes | [bytes](#bytes) |  |  |
 | string | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-HorizontalScale"></a>
+
+### HorizontalScale
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| min | [uint32](#uint32) |  |  |
+| max | [uint32](#uint32) |  |  |
+| instances | [v1alpha2.Instances](#v1alpha2-Instances) |  |  |
+| cpuTarget | [v1alpha2.CPUTarget](#v1alpha2-CPUTarget) |  |  |
+| customMetrics | [v1alpha2.CustomMetric](#v1alpha2-CustomMetric) | repeated |  |
 
 
 
@@ -2239,6 +2258,22 @@ A reference to a kubernetes object.
 | port | [uint32](#uint32) |  |  |
 | target | [string](#string) |  |  |
 | options | [InterfaceOptions](#platform-v1-InterfaceOptions) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-Scale"></a>
+
+### Scale
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| horizontal | [HorizontalScale](#platform-v1-HorizontalScale) |  |  |
+| vertical | [v1alpha2.VerticalScale](#v1alpha2-VerticalScale) |  |  |
 
 
 
