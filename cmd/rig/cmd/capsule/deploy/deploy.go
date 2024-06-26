@@ -351,7 +351,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		}
 	}
 
-	revision, rolloutID, err := capsule_cmd.Deploy(
+	return capsule_cmd.DeployAndWait(
 		ctx,
 		c.Rig,
 		c.Scope,
@@ -360,18 +360,10 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		true,
 		forceOverride,
 		currentRolloutID,
+		timeout,
+		rollbackID,
+		noWait,
 	)
-	if err != nil {
-		return err
-	}
-
-	cmd.Printf("Deploying to capsule %v\n", capsuleName)
-
-	if noWait {
-		return nil
-	}
-
-	return capsule_cmd.WaitForRollout(ctx, c.Rig, c.Scope, capsuleName, revision, rolloutID, timeout, rollbackID)
 }
 
 func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) {

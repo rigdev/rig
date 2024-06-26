@@ -51,34 +51,18 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 	horizontal.MinReplicas = replicas
 	horizontal.MaxReplicas = replicas
 
-	req := connect.NewRequest(&capsule.DeployRequest{
-		CapsuleId: capsule_cmd.CapsuleID,
-		Changes: []*capsule.Change{
-			{
-				Field: &capsule.Change_HorizontalScale{
-					HorizontalScale: horizontal,
-				},
+	return capsule_cmd.DeployAndWait(
+		ctx,
+		c.Rig,
+		c.Scope,
+		capsule_cmd.CapsuleID,
+		[]*capsule.Change{{
+			Field: &capsule.Change_HorizontalScale{
+				HorizontalScale: horizontal,
 			},
-		},
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
-	})
-
-	_, err = c.Rig.Capsule().Deploy(ctx, req)
-	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
-		if forceDeploy {
-			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
-		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, c.Prompter, req)
-		}
-	}
-	if err != nil {
-		return err
-	}
-
-	cmd.Println("Horizontal scale updated")
-
-	return nil
+		}},
+		forceDeploy, false, 0, 0, 0, false,
+	)
 }
 
 func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) error {
@@ -143,34 +127,18 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 		}
 	}
 
-	req := connect.NewRequest(&capsule.DeployRequest{
-		CapsuleId: capsule_cmd.CapsuleID,
-		Changes: []*capsule.Change{
-			{
-				Field: &capsule.Change_HorizontalScale{
-					HorizontalScale: horizontal,
-				},
+	return capsule_cmd.DeployAndWait(
+		ctx,
+		c.Rig,
+		c.Scope,
+		capsule_cmd.CapsuleID,
+		[]*capsule.Change{{
+			Field: &capsule.Change_HorizontalScale{
+				HorizontalScale: horizontal,
 			},
-		},
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
-	})
-
-	_, err = c.Rig.Capsule().Deploy(ctx, req)
-	if errors.IsFailedPrecondition(err) && errors.MessageOf(err) == "rollout already in progress" {
-		if forceDeploy {
-			_, err = capsule_cmd.AbortAndDeploy(ctx, c.Rig, req)
-		} else {
-			_, err = capsule_cmd.PromptAbortAndDeploy(ctx, c.Rig, c.Prompter, req)
-		}
-	}
-	if err != nil {
-		return err
-	}
-
-	cmd.Println("Autoscaler updated")
-
-	return nil
+		}},
+		forceDeploy, false, 0, 0, 0, false,
+	)
 }
 
 func hasAutoscalerFlagsSet(cmd *cobra.Command) bool {
