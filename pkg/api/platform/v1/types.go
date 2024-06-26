@@ -120,7 +120,7 @@ type CapsuleSpec struct {
 	Env EnvironmentVariables `json:"env" protobuf:"12"`
 
 	// Scale specifies the scaling of the Capsule.
-	Scale v1alpha2.CapsuleScale `json:"scale,omitempty" protobuf:"8"`
+	Scale Scale `json:"scale,omitempty" protobuf:"8"`
 
 	CronJobs []v1alpha2.CronJob `json:"cronJobs,omitempty" protobuf:"10" patchMergeKey:"name" patchStrategy:"replace"`
 
@@ -139,4 +139,36 @@ type File struct {
 	Bytes    *[]byte `json:"bytes,omitempty" protobuf:"4"`
 	String   *string `json:"string,omitempty" protobuf:"5"`
 	// TODO Ref
+}
+
+type Scale struct {
+	// Horizontal specifies the horizontal scaling of the Capsule.
+	Horizontal HorizontalScale `json:"horizontal,omitempty" protobuf:"1"`
+
+	// Vertical specifies the vertical scaling of the Capsule.
+	Vertical *v1alpha2.VerticalScale `json:"vertical,omitempty" protobuf:"2"`
+}
+
+// HorizontalScale defines the policy for the number of replicas of
+// the capsule It can both be configured with autoscaling and with a
+// static number of replicas
+type HorizontalScale struct {
+	// Min specifies the minimum amount of instances to run.
+	Min uint32 `json:"min" protobuf:"4"`
+
+	// Max specifies the maximum amount of instances to run. Omit to
+	// disable autoscaling.
+	Max *uint32 `json:"max,omitempty" protobuf:"5"`
+
+	// Instances specifies minimum and maximum amount of Capsule
+	// instances.
+	// Deprecated; use `min` and `max` instead.
+	Instances *v1alpha2.Instances `json:"instances,omitempty" protobuf:"1"`
+
+	// CPUTarget specifies that this Capsule should be scaled using CPU
+	// utilization.
+	CPUTarget *v1alpha2.CPUTarget `json:"cpuTarget,omitempty" protobuf:"2"`
+	// CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API
+	// which the autoscaler should scale on
+	CustomMetrics []v1alpha2.CustomMetric `json:"customMetrics,omitempty" protobuf:"3" patchStrategy:"replace"`
 }

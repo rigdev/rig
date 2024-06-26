@@ -2,13 +2,11 @@ syntax = "proto3";
 
 package model;
 
-message EnvironmentFilter {
-  message All {
-    bool include_ephemeral = 1;
-  }
+message ProjectFilter {
+  message All {}
 
   message Selected {
-    repeated string environment_ids = 1;
+    repeated string project_ids = 1;
   }
 
   oneof filter {

@@ -190,12 +190,10 @@ var (
 				}},
 			},
 		},
-		Scale: &v1alpha2.CapsuleScale{
-			Horizontal: &v1alpha2.HorizontalScale{
-				Instances: &v1alpha2.Instances{
-					Min: 2,
-					Max: 5,
-				},
+		Scale: &platformv1.Scale{
+			Horizontal: &platformv1.HorizontalScale{
+				Min: 2,
+				Max: 5,
 				CpuTarget: &v1alpha2.CPUTarget{
 					Utilization: 50,
 				},

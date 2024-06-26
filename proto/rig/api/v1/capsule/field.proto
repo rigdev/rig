@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package api.v1.capsule;
+
+enum FieldOperation {
+  FIELD_OPERATION_UNSPECIFIED = 0;
+  FIELD_OPERATION_ADDED = 1;
+  FIELD_OPERATION_REMOVED = 2;
+  FIELD_OPERATION_MODIFIED = 3;
+}
+
+message FieldChange {
+  // The Field-ID associated with this change. This is formated as a
+  // json-path string with '?' placeholders.
+  string field_id = 1;
+  // The unique Field-path identifying this change. This is formated as a
+  // json-path string.
+  string field_path = 2;
+  // YAML encoding of the old value (if any).
+  string old_value_yaml = 3;
+  // YAML encoding of the new value (if any).
+  string new_value_yaml = 4;
+  // Operation is how this field-change is applied against the source to get
+  // to the target spec.
+  FieldOperation operation = 5;
+  // Pretty-printed string description of the field change.
+  string description = 6;
+}

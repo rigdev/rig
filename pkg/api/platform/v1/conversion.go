@@ -27,7 +27,7 @@ func RolloutConfigToCapsuleSpec(rc *capsule.RolloutConfig) (*platformv1.CapsuleS
 		Kind:       "CapsuleSpec",
 		ApiVersion: "v1", // TODO
 		Image:      rc.GetImageId(),
-		Scale: &v1alpha2.CapsuleScale{
+		Scale: &platformv1.Scale{
 			Horizontal: HorizontalScaleConversion(rc.GetHorizontalScale(), rc.GetReplicas()),
 		},
 		Annotations:               maps.Clone(rc.GetAnnotations()),
@@ -93,11 +93,9 @@ func CronJobConversion(j *capsule.CronJob) *v1alpha2.CronJob {
 	return job
 }
 
-func HorizontalScaleConversion(horizontal *capsule.HorizontalScale, replicas uint32) *v1alpha2.HorizontalScale {
-	res := &v1alpha2.HorizontalScale{
-		Instances: &v1alpha2.Instances{
-			Min: max(replicas, horizontal.GetMinReplicas()),
-		},
+func HorizontalScaleConversion(horizontal *capsule.HorizontalScale, replicas uint32) *platformv1.HorizontalScale {
+	res := &platformv1.HorizontalScale{
+		Min: max(replicas, horizontal.GetMinReplicas()),
 	}
 
 	if horizontal.GetCpuTarget().GetAverageUtilizationPercentage() > 0 {
@@ -131,7 +129,7 @@ func HorizontalScaleConversion(horizontal *capsule.HorizontalScale, replicas uin
 	}
 
 	if len(res.CustomMetrics) > 0 || res.CpuTarget != nil {
-		res.Instances.Max = horizontal.GetMaxReplicas()
+		res.Max = horizontal.GetMaxReplicas()
 	}
 
 	return res
@@ -139,7 +137,7 @@ func HorizontalScaleConversion(horizontal *capsule.HorizontalScale, replicas uin
 
 func FeedContainerSettings(spec *platformv1.CapsuleSpec, containerSettings *capsule.ContainerSettings) error {
 	if spec.Scale == nil {
-		spec.Scale = &v1alpha2.CapsuleScale{}
+		spec.Scale = &platformv1.Scale{}
 	}
 	spec.Scale.Vertical = makeVerticalScale(
 		containerSettings.GetResources().GetRequests(),
@@ -434,11 +432,12 @@ func parseLimits(r *v1alpha2.ResourceLimits) (float64, float64, error) {
 	return req, limit, nil
 }
 
-func HorizontalScaleSpecConversion(spec *v1alpha2.HorizontalScale) *capsule.HorizontalScale {
+func HorizontalScaleSpecConversion(spec *platformv1.HorizontalScale) *capsule.HorizontalScale {
 	res := &capsule.HorizontalScale{
-		MaxReplicas: spec.GetInstances().GetMax(),
-		MinReplicas: spec.GetInstances().GetMin(),
+		MaxReplicas: max(spec.GetMax(), spec.GetInstances().GetMax()),
+		MinReplicas: max(spec.GetMin(), spec.GetInstances().GetMin()),
 	}
+
 	if cpu := spec.GetCpuTarget(); cpu != nil {
 		res.CpuTarget = &capsule.CPUTarget{
 			AverageUtilizationPercentage: cpu.GetUtilization(),
