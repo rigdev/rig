@@ -114,10 +114,8 @@ tasks:
       - gen/mocks/**/*.go
       - gen/uncommitedmocks/**/*.go
     cmds:
-      - cmd: rm -r gen/mocks
-        ignore_error: true
-      - cmd: rm -r gen/mocks_not_commited
-        ignore_error: true
+      - cmd: rm -fr gen/mocks
+      - cmd: rm -fr gen/mocks_not_commited
       - ./tools/bin/mockery
       - ./tools/bin/mockery --config .mockery_uncommitted.yaml
 

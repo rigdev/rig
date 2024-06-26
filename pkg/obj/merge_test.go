@@ -540,12 +540,10 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 		{
 			name: "scale patch",
 			patch: &platformv1.CapsuleSpec{
-				Scale: &v1alpha2.CapsuleScale{
-					Horizontal: &v1alpha2.HorizontalScale{
-						Instances: &v1alpha2.Instances{
-							Min: 2,
-							Max: 4,
-						},
+				Scale: &platformv1.Scale{
+					Horizontal: &platformv1.HorizontalScale{
+						Min: 2,
+						Max: 4,
 						CustomMetrics: []*v1alpha2.CustomMetric{
 							{
 								InstanceMetric: &v1alpha2.InstanceMetric{
@@ -563,12 +561,10 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				},
 			},
 			into: &platformv1.CapsuleSpec{
-				Scale: &v1alpha2.CapsuleScale{
-					Horizontal: &v1alpha2.HorizontalScale{
-						Instances: &v1alpha2.Instances{
-							Min: 1,
-							Max: 1,
-						},
+				Scale: &platformv1.Scale{
+					Horizontal: &platformv1.HorizontalScale{
+						Min: 1,
+						Max: 1,
 						CustomMetrics: []*v1alpha2.CustomMetric{
 							{
 								InstanceMetric: &v1alpha2.InstanceMetric{
@@ -586,12 +582,10 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				},
 			},
 			expected: &platformv1.CapsuleSpec{
-				Scale: &v1alpha2.CapsuleScale{
-					Horizontal: &v1alpha2.HorizontalScale{
-						Instances: &v1alpha2.Instances{
-							Min: 2,
-							Max: 4,
-						},
+				Scale: &platformv1.Scale{
+					Horizontal: &platformv1.HorizontalScale{
+						Min: 2,
+						Max: 4,
 						CustomMetrics: []*v1alpha2.CustomMetric{
 							{
 								InstanceMetric: &v1alpha2.InstanceMetric{
