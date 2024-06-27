@@ -33,13 +33,14 @@ It should look like the below screenshot (with your own domain). Take note of yo
 <img style={{
     width: '600px',
     height: 'auto',
-}} src={require('../../static/img/operator-manual/google-oauth-client.png').default} alt="Screenshot of google credential creation" />
+}} src={require('../../../../static/img/operator-manual/google-oauth-client.png').default} alt="Screenshot of google credential creation" />
 
 Example of how to add the configuration of your google OIDC provider to the
 rig-platform configuration.
 
 ```yaml
 rig:
+  publicURL: "https://<your-domain>"
   auth:
     sso:
       oidcProviders:
