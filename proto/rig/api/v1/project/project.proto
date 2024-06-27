@@ -4,6 +4,7 @@ package api.v1.project;
 
 import "google/protobuf/timestamp.proto";
 import "model/git.proto";
+import "model/notification.proto";
 
 // The top most model that capsules etc belong to.
 message Project {
@@ -16,6 +17,8 @@ message Project {
   // The installation id of the project.
   string installation_id = 5;
   model.GitStore git_store = 6;
+  // The notifiers for the project.
+  NotificationNotifiers notifiers = 7;
 }
 
 // Update msg for a project.
@@ -23,5 +26,14 @@ message Update {
   oneof field {
     // Set the git store.
     model.GitStore set_git_store = 1;
+    // Set the notifiers.
+    NotificationNotifiers notifiers = 2;
   }
+}
+
+message NotificationNotifiers {
+  // If the notifiers are disabled, notifiers from parent are not inherited even
+  // if these notifiers at this level are empty.
+  bool disabled = 1;
+  repeated model.NotificationNotifier notifiers = 2;
 }
