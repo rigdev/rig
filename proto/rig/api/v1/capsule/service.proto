@@ -459,11 +459,9 @@ message ProposeRolloutRequest {
 }
 
 message ProposeRolloutResponse {
-  // The YAML of the resources that will be deployed.
-  map<string, string> resource_yaml = 1;
-  // The rollout config.
-  api.v1.capsule.RolloutConfig rollout_config = 2;
-  Proposal proposal = 3;
+  Proposal proposal = 1;
+  // Breakdown of the changes that this deploy would make to the system.
+  DeployOutcome outcome = 2;
 }
 
 message ListProposalsRequest {
