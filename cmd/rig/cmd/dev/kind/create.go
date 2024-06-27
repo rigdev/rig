@@ -106,9 +106,6 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if operatorDockerTag == "" {
 		operatorDockerTag = "latest"
 	}
-	if platformDockerTag == "" {
-		platformDockerTag = "latest"
-	}
 
 	cert, err := certgen.GenerateCerts([]string{
 		"rig-operator",
@@ -148,6 +145,9 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if platformDockerTag == "" {
+		platformDockerTag = "latest"
+	}
 	platformArgs := []string{
 		"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
 		"--set", "rig.clusters.kind.type=k8s",
@@ -158,7 +158,6 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 		"--set", "loadBalancer.enabled=true",
 		"--set", fmt.Sprintf("rollout=%d", version),
 	}
-
 	if platformValues != "" {
 		platformArgs = append(platformArgs, "--values", platformValues)
 	}
@@ -170,7 +169,6 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 		chartPath:   platformChartPath,
 		customArgs:  platformArgs,
 		rollout:     fmt.Sprint(version),
-		// Restart to pick up new changes.
 	}); err != nil {
 		return err
 	}
