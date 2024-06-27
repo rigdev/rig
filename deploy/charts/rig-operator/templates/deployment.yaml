@@ -78,8 +78,8 @@ spec:
             httpGet:
               path: /readyz
               port: health
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 3
+            periodSeconds: 2
           resources: {{ toYaml .Values.resources | nindent 12 }}
           env:
             - name: POD_NAMESPACE

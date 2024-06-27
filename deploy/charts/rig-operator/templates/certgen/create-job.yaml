@@ -1,4 +1,16 @@
 {{- if and .Values.config.webhooksEnabled (not .Values.certManager.enabled) -}}
+{{- if .Values.certgen.certificate.ca -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{ include "rig-operator.fullname" . }}-webhook-tls"
+  labels: {{ include "rig-operator.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  "ca.crt": {{ .Values.certgen.certificate.ca | quote }}
+  "tls.crt": {{ .Values.certgen.certificate.cert | quote }}
+  "tls.key": {{ .Values.certgen.certificate.key | quote }}
+{{- else -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -25,4 +37,5 @@ spec:
             - "{{ include "rig-operator.fullname" . }}-webhook-tls"
             - "--hosts={{ include "rig-operator.fullname" . }},{{ include "rig-operator.fullname" . }}.{{ .Release.Namespace }}.svc"
             - "--namespace={{ .Release.Namespace }}"
+{{- end -}}
 {{- end -}}

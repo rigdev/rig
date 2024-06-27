@@ -3,6 +3,7 @@ package kind
 import (
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/fatih/color"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig-operator/certgen"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
@@ -36,6 +38,19 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 	if err := setupKindRigCluster(); err != nil {
 		return err
 	}
+
+	images := map[string]string{
+		"postgres": "16",
+	}
+
+	go func() {
+		deferred := common.NewDeferredOutputCommand("")
+		for image, tag := range images {
+			if err := c.loadImage(ctx, deferred, image, tag); err != nil {
+				fmt.Printf("Warning; error fetching image '%s:%s': %v\n", image, tag, err)
+			}
+		}
+	}()
 
 	if err := setupK8s(); err != nil {
 		return err
@@ -91,7 +106,28 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if operatorDockerTag == "" {
 		operatorDockerTag = "latest"
 	}
-	operatorArgs := []string{"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag)}
+	if platformDockerTag == "" {
+		platformDockerTag = "latest"
+	}
+
+	cert, err := certgen.GenerateCerts([]string{
+		"rig-operator",
+		"rig-operator.rig-system.svc",
+	})
+	if err != nil {
+		return err
+	}
+
+	version := time.Now().UnixMilli()
+
+	operatorArgs := []string{
+		"--set", fmt.Sprintf("image.tag=%s", operatorDockerTag),
+		"--set", fmt.Sprintf("podAnnotations.rig\\.dev\\.reload=ts%d", version),
+		"--set", fmt.Sprintf("certgen.certificate.ca=%s", base64.StdEncoding.EncodeToString(cert.CA)),
+		"--set", fmt.Sprintf("certgen.certificate.cert=%s", base64.StdEncoding.EncodeToString(cert.Cert)),
+		"--set", fmt.Sprintf("certgen.certificate.key=%s", base64.StdEncoding.EncodeToString(cert.Key)),
+		"--set", "apicheck.enabled=false",
+	}
 	if prometheus {
 		operatorArgs = append(operatorArgs, "--set", "config.prometheusServiceMonitor.portName=metrics")
 	}
@@ -101,20 +137,17 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if operatorValues != "" {
 		operatorArgs = append(operatorArgs, "--values", operatorValues)
 	}
+
 	if err := c.deployInner(ctx, deployParams{
 		dockerImage: "ghcr.io/rigdev/rig-operator",
 		dockerTag:   operatorDockerTag,
 		chartName:   "rig-operator",
 		chartPath:   operatorChartPath,
 		customArgs:  operatorArgs,
-		restart:     true,
 	}); err != nil {
 		return err
 	}
 
-	if platformDockerTag == "" {
-		platformDockerTag = "latest"
-	}
 	platformArgs := []string{
 		"--set", fmt.Sprintf("image.tag=%s", platformDockerTag),
 		"--set", "rig.clusters.kind.type=k8s",
@@ -123,7 +156,9 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 		"--set", "rig.environments.kind.cluster=kind",
 		"--set", "postgres.enabled=true",
 		"--set", "loadBalancer.enabled=true",
+		"--set", fmt.Sprintf("rollout=%d", version),
 	}
+
 	if platformValues != "" {
 		platformArgs = append(platformArgs, "--values", platformValues)
 	}
@@ -134,8 +169,8 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 		chartName:   "rig-platform",
 		chartPath:   platformChartPath,
 		customArgs:  platformArgs,
+		rollout:     fmt.Sprint(version),
 		// Restart to pick up new changes.
-		restart: true,
 	}); err != nil {
 		return err
 	}
@@ -146,8 +181,16 @@ func (c *Cmd) deploy(ctx context.Context, _ *cobra.Command, _ []string) error {
 func waitUntilDeploymentIsReady(
 	cmd *common.DeferredOutputCommand,
 	deployment string,
+	rollout string,
 ) error {
 	type ready struct {
+		Spec struct {
+			Template struct {
+				Metadata struct {
+					Annotations map[string]string
+				}
+			}
+		}
 		Status struct {
 			Replicas            int `yaml:"replicas,omitempty"`
 			UnavailableReplicas int `yaml:"unavailableReplicas,omitempty"`
@@ -176,7 +219,10 @@ func waitUntilDeploymentIsReady(
 			return err
 		}
 
-		if r.Status.Replicas >= 1 &&
+		currentRollout := r.Spec.Template.Metadata.Annotations["rig.dev/rollout"]
+
+		if currentRollout == rollout &&
+			r.Status.Replicas >= 1 &&
 			r.Status.AvailableReplicas == r.Status.Replicas &&
 			r.Status.UpdatedReplicas == r.Status.Replicas {
 			break
@@ -192,7 +238,7 @@ type deployParams struct {
 	chartName   string
 	chartPath   string
 	customArgs  []string
-	restart     bool
+	rollout     string
 }
 
 func (c *Cmd) deployInner(ctx context.Context, p deployParams) error {
@@ -224,20 +270,8 @@ func (c *Cmd) deployInner(ctx context.Context, p deployParams) error {
 		return err
 	}
 
-	if err = waitUntilDeploymentIsReady(cmd, fmt.Sprintf("deployment.apps/%s", p.chartName)); err != nil {
+	if err = waitUntilDeploymentIsReady(cmd, fmt.Sprintf("deployment.apps/%s", p.chartName), p.rollout); err != nil {
 		return err
-	}
-
-	if p.restart {
-		if err = cmd.RunNew(
-			"kubectl", "--context", "kind-rig", "rollout", "restart", "deployment", "-n", "rig-system", p.chartName,
-		); err != nil {
-			return err
-		}
-
-		if err = waitUntilDeploymentIsReady(cmd, fmt.Sprintf("deployment.apps/%s", p.chartName)); err != nil {
-			return err
-		}
 	}
 
 	return nil

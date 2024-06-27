@@ -152,6 +152,7 @@ serviceMonitor:
   labels: {}
 
 apicheck:
+  enabled: true
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 15000
@@ -184,6 +185,12 @@ certgen:
     name: ""
   timeout: 2m
   interval: 5s
+
+  # Pre-generated certificate for the webhook.
+  certificate:
+    ca: ""
+    cert: ""
+    key: ""
 
 certManager:
   enabled: false

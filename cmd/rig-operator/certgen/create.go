@@ -45,7 +45,7 @@ func create(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			certs, err := generateCerts(hosts)
+			certs, err := GenerateCerts(hosts)
 			if err != nil {
 				return err
 			}
@@ -86,14 +86,13 @@ func encodeCert(derBytes []byte) []byte {
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 }
 
-type certs struct {
-	ca   []byte
-	cert []byte
-	key  []byte
+type Certs struct {
+	CA   []byte
+	Cert []byte
+	Key  []byte
 }
 
-func generateCerts(hosts []string) (*certs, error) {
-
+func GenerateCerts(hosts []string) (*Certs, error) {
 	rootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate root key: %w", err)
@@ -168,9 +167,9 @@ func generateCerts(hosts []string) (*certs, error) {
 		return nil, fmt.Errorf("could not create certificate: %w", err)
 	}
 
-	return &certs{
-		ca:   ca,
-		key:  key,
-		cert: encodeCert(derBytes),
+	return &Certs{
+		CA:   ca,
+		Key:  key,
+		Cert: encodeCert(derBytes),
 	}, nil
 }

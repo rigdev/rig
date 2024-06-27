@@ -1,4 +1,4 @@
-{{- if and .Values.config.webhooksEnabled (not .Values.certManager.enabled) -}}
+{{- if and .Values.config.webhooksEnabled (not .Values.certManager.enabled) (not .Values.certgen.certificate.ca) -}}
 apiVersion: batch/v1
 kind: Job
 metadata:

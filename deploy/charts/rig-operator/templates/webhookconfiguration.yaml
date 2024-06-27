@@ -17,6 +17,9 @@ webhooks:
       namespace: {{ .Release.Namespace }}
       path: /mutate-rig-dev-v1alpha2-capsule
       port: 9443
+    {{- if .Values.certgen.certificate.ca }}
+    caBundle: {{ .Values.certgen.certificate.ca | quote }}
+    {{- end }}
   failurePolicy: Fail
   name: mcapsule.kb.io
   rules:
@@ -49,6 +52,9 @@ webhooks:
       namespace: {{ .Release.Namespace }}
       path: /validate-rig-dev-v1alpha2-capsule
       port: 9443
+    {{- if .Values.certgen.certificate.ca }}
+    caBundle: {{ .Values.certgen.certificate.ca | quote }}
+    {{- end }}
   failurePolicy: Fail
   name: vcapsule.kb.io
   rules:
