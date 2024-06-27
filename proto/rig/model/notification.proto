@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package model;
+
+import "model/environment.proto";
+
+message NotificationNotifier {
+  NotificationTarget target = 1;
+  repeated NotificationTopic topics = 2;
+  model.EnvironmentFilter environments = 3;
+}
+
+message NotificationTarget {
+  message SlackTarget {
+    string workspace = 1;
+    string channel_id = 2;
+  }
+
+  message EmailTarget {
+    string id = 1;
+    string from_email = 2;
+    repeated string to_emails = 3;
+  }
+
+  oneof target {
+    SlackTarget slack = 1;
+    EmailTarget email = 2;
+  }
+}
+
+enum NotificationTopic {
+  NOTIFICATION_TOPIC_UNSPECIFIED = 0;
+  NOTIFICATION_TOPIC_ROLLOUT = 1;
+  NOTIFICATION_TOPIC_ISSUE = 2;
+}

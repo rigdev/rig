@@ -179,6 +179,7 @@
 
 
 
+
 ### api.v1.project.Service
 <a name="api-v1-project-Service"></a>
 
@@ -251,7 +252,6 @@
 | /api.v1.service_account.Service/Create | [CreateRequest](#api-v1-service_account-CreateRequest) | [CreateResponse](#api-v1-service_account-CreateResponse) | Create a new Service Account. The returned client_id and client_secret can be used as login credentials. Note that the client_secret can only be read out once, at creation. |
 | /api.v1.service_account.Service/List | [ListRequest](#api-v1-service_account-ListRequest) | [ListResponse](#api-v1-service_account-ListResponse) | List all service accounts. |
 | /api.v1.service_account.Service/Delete | [DeleteRequest](#api-v1-service_account-DeleteRequest) | [DeleteResponse](#api-v1-service_account-DeleteResponse) | Delete a service account. It can take up to the TTL of access tokens for existing sessions using this service_account, to expire. |
-
 
 
 
@@ -7476,9 +7476,117 @@ A docker image tag.
 
 
 
+<a name="model_notification-proto"></a>
+
+## model/notification.proto
+
+
+
+<a name="model-NotificationNotifier"></a>
+
+### NotificationNotifier
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| target | [NotificationTarget](#model-NotificationTarget) |  |  |
+| topics | [NotificationTopic](#model-NotificationTopic) | repeated |  |
+| environments | [EnvironmentFilter](#model-EnvironmentFilter) |  |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget"></a>
+
+### NotificationTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| slack | [NotificationTarget.SlackTarget](#model-NotificationTarget-SlackTarget) |  |  |
+| email | [NotificationTarget.EmailTarget](#model-NotificationTarget-EmailTarget) |  |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget-EmailTarget"></a>
+
+### NotificationTarget.EmailTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| from_email | [string](#string) |  |  |
+| to_emails | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget-SlackTarget"></a>
+
+### NotificationTarget.SlackTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| workspace | [string](#string) |  |  |
+| channel_id | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+<a name="model-NotificationTopic"></a>
+
+### NotificationTopic
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NOTIFICATION_TOPIC_UNSPECIFIED | 0 |  |
+| NOTIFICATION_TOPIC_ROLLOUT | 1 |  |
+| NOTIFICATION_TOPIC_ISSUE | 2 |  |
+
+
+
+
+
+
+
+
 <a name="api_v1_project_project-proto"></a>
 
 ## api/v1/project/project.proto
+
+
+
+<a name="api-v1-project-NotificationNotifiers"></a>
+
+### NotificationNotifiers
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| disabled | [bool](#bool) |  | If the notifiers are disabled, notifiers from parent are not inherited even if these notifiers at this level are empty. |
+| notifiers | [model.NotificationNotifier](#model-NotificationNotifier) | repeated |  |
+
+
+
 
 
 
@@ -7495,6 +7603,7 @@ The top most model that capsules etc belong to.
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the project was last updated. |
 | installation_id | [string](#string) |  | The installation id of the project. |
 | git_store | [model.GitStore](#model-GitStore) |  |  |
+| notifiers | [NotificationNotifiers](#api-v1-project-NotificationNotifiers) |  | The notifiers for the project. |
 
 
 
@@ -7510,6 +7619,7 @@ Update msg for a project.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
+| notifiers | [NotificationNotifiers](#api-v1-project-NotificationNotifiers) |  | Set the notifiers. |
 
 
 
@@ -8640,130 +8750,9 @@ Platform wide static configuration.
 
 
 
-<a name="model_project-proto"></a>
-
-## model/project.proto
-
-
-
-<a name="model-ProjectFilter"></a>
-
-### ProjectFilter
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| all | [ProjectFilter.All](#model-ProjectFilter-All) |  |  |
-| selected | [ProjectFilter.Selected](#model-ProjectFilter-Selected) |  |  |
-
-
-
-
-
-
-<a name="model-ProjectFilter-All"></a>
-
-### ProjectFilter.All
-
-
-
-
-
-
-
-<a name="model-ProjectFilter-Selected"></a>
-
-### ProjectFilter.Selected
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project_ids | [string](#string) | repeated |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a name="api_v1_settings_settings-proto"></a>
 
 ## api/v1/settings/settings.proto
-
-
-
-<a name="api-v1-settings-NotificationNotifier"></a>
-
-### NotificationNotifier
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| target | [NotificationTarget](#api-v1-settings-NotificationTarget) |  |  |
-| topics | [NotificationTopic](#api-v1-settings-NotificationTopic) | repeated |  |
-| environments | [model.EnvironmentFilter](#model-EnvironmentFilter) |  |  |
-| projects | [model.ProjectFilter](#model-ProjectFilter) |  |  |
-
-
-
-
-
-
-<a name="api-v1-settings-NotificationTarget"></a>
-
-### NotificationTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| slack | [NotificationTarget.SlackTarget](#api-v1-settings-NotificationTarget-SlackTarget) |  |  |
-| email | [NotificationTarget.EmailTarget](#api-v1-settings-NotificationTarget-EmailTarget) |  |  |
-
-
-
-
-
-
-<a name="api-v1-settings-NotificationTarget-EmailTarget"></a>
-
-### NotificationTarget.EmailTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| from_email | [string](#string) |  |  |
-| to_emails | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="api-v1-settings-NotificationTarget-SlackTarget"></a>
-
-### NotificationTarget.SlackTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| workspace | [string](#string) |  |  |
-| channel_id | [string](#string) |  |  |
-
-
-
 
 
 
@@ -8775,7 +8764,7 @@ Platform wide settings.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| notification_notifiers | [NotificationNotifier](#api-v1-settings-NotificationNotifier) | repeated |  |
+| notification_notifiers | [model.NotificationNotifier](#model-NotificationNotifier) | repeated |  |
 | git_store | [model.GitStore](#model-GitStore) |  |  |
 
 
@@ -8807,25 +8796,12 @@ Update message for platform settings.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| notifiers | [NotificationNotifier](#api-v1-settings-NotificationNotifier) | repeated |  |
+| notifiers | [model.NotificationNotifier](#model-NotificationNotifier) | repeated |  |
 
 
 
 
 
-
-
-
-<a name="api-v1-settings-NotificationTopic"></a>
-
-### NotificationTopic
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| NOTIFICATION_TOPIC_UNSPECIFIED | 0 |  |
-| NOTIFICATION_TOPIC_ROLLOUT | 1 |  |
-| NOTIFICATION_TOPIC_ISSUE | 2 |  |
 
 
 
