@@ -143,7 +143,7 @@ func Test_Compare(t *testing.T) {
 			Name: "remove one environment variable",
 			From: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 						"key2": "value2",
 					},
@@ -151,7 +151,7 @@ func Test_Compare(t *testing.T) {
 			},
 			To: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 					},
 				},
@@ -164,7 +164,7 @@ func Test_Compare(t *testing.T) {
 			Name: "remove all envs",
 			From: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 						"key2": "value2",
 					},
@@ -172,7 +172,7 @@ func Test_Compare(t *testing.T) {
 			},
 			To: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{},
+					Raw: map[string]string{},
 				},
 			},
 			Changes: []string{
@@ -184,14 +184,14 @@ func Test_Compare(t *testing.T) {
 			Name: "add one environment variable",
 			From: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 					},
 				},
 			},
 			To: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 						"key2": "value2",
 					},
@@ -205,14 +205,14 @@ func Test_Compare(t *testing.T) {
 			Name: "add multiple environment variables",
 			From: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 					},
 				},
 			},
 			To: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 						"key2": "value2",
 						"key3": "value3",
