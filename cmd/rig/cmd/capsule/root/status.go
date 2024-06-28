@@ -249,9 +249,6 @@ func showStatus(
 
 	defer func() {
 		cancel()
-		close(errChan)
-		close(statusChan)
-		close(rolloutChan)
 		if rolloutCancelFunc != nil {
 			rolloutCancelFunc()
 		}

@@ -13,6 +13,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -35,6 +36,8 @@ var (
 	previousContainers bool
 	verbose            bool
 	spec               bool
+	force              bool
+	dryRun             bool
 )
 
 var since string
@@ -233,7 +236,7 @@ forwarded traffic.
 	capsuleCmd.AddCommand(capsulePortForward)
 
 	capsuleUpdate := &cobra.Command{
-		Use:   "update",
+		Use:   "update [capsule]",
 		Short: "Update the settings of the capsule",
 		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
@@ -251,6 +254,21 @@ forwarded traffic.
 		RunE: cli.CtxWrap(cmd.listProposals),
 	}
 	capsuleCmd.AddCommand(capsuleListProposal)
+	capsulePromote := &cobra.Command{
+		Use:   "promote [capsule] [from-environment] [to-environment]",
+		Short: "Promote a capsule from one environment to another",
+		Args:  cobra.MaximumNArgs(3),
+		RunE:  cli.CtxWrap(cmd.promote),
+		ValidArgsFunction: common.ChainCompletions(
+			[]int{1, 3},
+			cli.HackCtxWrapCompletion(cmd.completions, s),
+			cli.HackCtxWrapCompletion(cmd.environmentCompletion, s),
+		),
+	}
+	capsulePromote.Flags().BoolVar(&force, "force", false, "force the promotion without checking for differences")
+	capsulePromote.Flags().BoolVar(&dryRun, "dry-run", false, "dry run the promotion without making any changes")
+
+	capsuleCmd.AddCommand(capsulePromote)
 
 	parent.AddCommand(capsuleCmd)
 
@@ -293,4 +311,18 @@ func (c *Cmd) persistentPreRunE(ctx context.Context, cmd *cobra.Command, args []
 
 	capsule.CapsuleID = name
 	return nil
+}
+
+func (c *Cmd) environmentCompletion(
+	ctx context.Context,
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+	s *cli.SetupContext,
+) ([]string, cobra.ShellCompDirective) {
+	if err := s.ExecuteInvokes(cmd, args, initCmd); err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return completions.Environments(ctx, c.Rig, toComplete, flags.GetProject(c.Scope))
 }
