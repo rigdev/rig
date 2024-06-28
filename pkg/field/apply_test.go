@@ -83,7 +83,7 @@ func Test_Apply(t *testing.T) {
 			Name: "change environment variable",
 			Base: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 					},
 				},
@@ -99,7 +99,7 @@ func Test_Apply(t *testing.T) {
 			},
 			Expected: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value2",
 					},
 				},
