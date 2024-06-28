@@ -235,7 +235,7 @@ var (
 			},
 		},
 		Env: &platformv1.EnvironmentVariables{
-			Direct: map[string]string{"key1": "value1"},
+			Raw: map[string]string{"key1": "value1"},
 			Sources: []*platformv1.EnvironmentSource{{
 				Name: "some-map",
 				Kind: "ConfigMap",

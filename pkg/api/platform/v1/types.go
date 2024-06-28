@@ -131,7 +131,7 @@ type CapsuleSpec struct {
 }
 
 type EnvironmentVariables struct {
-	Direct  map[string]string   `json:"direct" protobuf:"1"`
+	Raw     map[string]string   `json:"raw" protobuf:"1"`
 	Sources []EnvironmentSource `json:"sources" protobuf:"2"`
 }
 

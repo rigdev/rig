@@ -37,7 +37,7 @@ message File {
 }
 
 message EnvironmentVariables {
-  map<string, string> direct = 1;
+  map<string, string> raw = 1;
   repeated EnvironmentSource sources = 2;
 }
 
