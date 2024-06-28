@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -35,7 +36,8 @@ func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error 
 	return capsule_cmd.DeployAndWait(
 		ctx,
 		c.Rig,
-		c.Scope,
+		flags.GetProject(c.Scope),
+		flags.GetEnvironment(c.Scope),
 		capsule_cmd.CapsuleID,
 		[]*capsule.Change{{
 			Field: &capsule.Change_ContainerSettings{

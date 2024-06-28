@@ -182,12 +182,33 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		},
 	}})
 
-	revision, rolloutID, err := capsule_cmd.Deploy(ctx, c.Rig, c.Scope, capsuleName, changes, true, false, 0, nil)
+	revision, rolloutID, err := capsule_cmd.Deploy(
+		ctx,
+		c.Rig,
+		flags.GetProject(c.Scope),
+		flags.GetEnvironment(c.Scope),
+		capsuleName,
+		changes,
+		true,
+		false,
+		0,
+		nil,
+	)
 	if err != nil {
 		return err
 	}
 
-	if err := capsule_cmd.WaitForRollout(ctx, c.Rig, c.Scope, capsuleName, revision, rolloutID, 0, 0); err != nil {
+	if err := capsule_cmd.WaitForRollout(
+		ctx,
+		c.Rig,
+		flags.GetProject(c.Scope),
+		flags.GetEnvironment(c.Scope),
+		capsuleName,
+		revision,
+		rolloutID,
+		0,
+		0,
+	); err != nil {
 		return err
 	}
 

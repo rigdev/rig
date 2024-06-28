@@ -54,7 +54,8 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 	return capsule_cmd.DeployAndWait(
 		ctx,
 		c.Rig,
-		c.Scope,
+		flags.GetProject(c.Scope),
+		flags.GetEnvironment(c.Scope),
 		capsule_cmd.CapsuleID,
 		[]*capsule.Change{{
 			Field: &capsule.Change_HorizontalScale{
@@ -130,7 +131,8 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 	return capsule_cmd.DeployAndWait(
 		ctx,
 		c.Rig,
-		c.Scope,
+		flags.GetProject(c.Scope),
+		flags.GetEnvironment(c.Scope),
 		capsule_cmd.CapsuleID,
 		[]*capsule.Change{{
 			Field: &capsule.Change_HorizontalScale{

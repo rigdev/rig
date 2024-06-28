@@ -645,7 +645,7 @@ func ChangesFromSpecPair(curSpec, newSpec *platformv1.CapsuleSpec) ([]*capsule.C
 				Field: &capsule.Change_SetEnvironmentVariable{
 					SetEnvironmentVariable: &capsule.Change_KeyValue{
 						Name:  k,
-						Value: vv,
+						Value: v,
 					},
 				},
 			})

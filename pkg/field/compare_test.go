@@ -994,14 +994,14 @@ func Test_Compare_Exact(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			diff, err := Compare(test.From, test.To, "port", "id", "path", "name")
+			diff, err := Compare(test.From, test.To, SpecKeys...)
 			require.NoError(t, err)
 			require.Equal(t, test.Changes, diff.Changes)
 
 			applied, err := Apply(test.From, diff.Changes)
 			require.NoError(t, err)
 
-			diff2, err := Compare(applied, test.To, "port", "id", "path", "name")
+			diff2, err := Compare(applied, test.To, SpecKeys...)
 			require.NoError(t, err, applied)
 			require.Empty(t, diff2.Changes, applied)
 		})

@@ -683,7 +683,7 @@ func runTests(t *testing.T, tests []test) {
 			result, err := Apply(test.Base, test.Changes)
 			spec := result.(*platformv1.CapsuleSpec)
 			require.NoError(t, err)
-			d, err := Compare(spec, test.Expected)
+			d, err := Compare(spec, test.Expected, SpecKeys...)
 			require.Empty(t, d.Changes)
 			require.NoError(t, err)
 			require.True(t, proto.Equal(test.Expected, result), d.Changes)

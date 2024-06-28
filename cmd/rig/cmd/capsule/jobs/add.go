@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -48,11 +49,12 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 		}
 	}
 
-	if _, _, err := capsule_cmd.Deploy(ctx, c.Rig, c.Scope, capsule_cmd.CapsuleID, []*capsule.Change{{
-		Field: &capsule.Change_AddCronJob{
-			AddCronJob: job,
-		},
-	}}, true, false, 0, nil); err != nil {
+	if _, _, err := capsule_cmd.Deploy(ctx, c.Rig, flags.GetProject(c.Scope),
+		flags.GetEnvironment(c.Scope), capsule_cmd.CapsuleID, []*capsule.Change{{
+			Field: &capsule.Change_AddCronJob{
+				AddCronJob: job,
+			},
+		}}, true, false, 0, nil); err != nil {
 		return err
 	}
 
@@ -247,13 +249,14 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 		return fmt.Errorf("no job with name %s", job)
 	}
 
-	if _, _, err := capsule_cmd.Deploy(ctx, c.Rig, c.Scope, capsule_cmd.CapsuleID, []*capsule.Change{{
-		Field: &capsule.Change_RemoveCronJob_{
-			RemoveCronJob: &capsule.Change_RemoveCronJob{
-				JobName: job,
+	if _, _, err := capsule_cmd.Deploy(ctx, c.Rig, flags.GetProject(c.Scope),
+		flags.GetEnvironment(c.Scope), capsule_cmd.CapsuleID, []*capsule.Change{{
+			Field: &capsule.Change_RemoveCronJob_{
+				RemoveCronJob: &capsule.Change_RemoveCronJob{
+					JobName: job,
+				},
 			},
-		},
-	}}, true, false, 0, nil); err != nil {
+		}}, true, false, 0, nil); err != nil {
 		return err
 	}
 

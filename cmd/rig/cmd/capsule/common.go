@@ -11,16 +11,23 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	api_rollout "github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/model"
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/utils"
+	"github.com/rivo/tview"
+	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var CapsuleID string
@@ -225,8 +232,9 @@ func printInstanceID(instanceID string, out *os.File) error {
 func Deploy(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
-	capsuleName string,
+	projectID string,
+	environmentID string,
+	capsuleID string,
 	changes []*capsule.Change,
 	forceDeploy bool,
 	forceOverride bool,
@@ -235,11 +243,11 @@ func Deploy(
 ) (*capsule.Revision, uint64, error) {
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId:          capsuleName,
+			CapsuleId:          capsuleID,
 			Changes:            changes,
 			Force:              forceDeploy,
-			ProjectId:          flags.GetProject(scope),
-			EnvironmentId:      flags.GetEnvironment(scope),
+			ProjectId:          projectID,
+			EnvironmentId:      environmentID,
 			DryRun:             false,
 			CurrentRolloutId:   currentRolloutID,
 			ForceOverride:      forceOverride,
@@ -258,8 +266,9 @@ func Deploy(
 func DeployAndWait(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
-	capsuleName string,
+	projectID string,
+	environmentID string,
+	capsuleID string,
 	changes []*capsule.Change,
 	forceDeploy bool,
 	forceOverride bool,
@@ -272,8 +281,9 @@ func DeployAndWait(
 	revision, rolloutID, err := Deploy(
 		ctx,
 		rig,
-		scope,
-		capsuleName,
+		projectID,
+		environmentID,
+		capsuleID,
 		changes,
 		forceDeploy,
 		forceOverride,
@@ -283,22 +293,154 @@ func DeployAndWait(
 	if err != nil {
 		return err
 	}
-	fmt.Println("Deploying to capsule", capsuleName)
+	fmt.Println("Deploying to capsule", capsuleID)
 	if noWait {
 		return nil
 	}
-	return WaitForRollout(ctx, rig, scope, capsuleName, revision, rolloutID, timeout, rollbackID)
+	return WaitForRollout(ctx, rig, projectID, environmentID, capsuleID, revision, rolloutID, timeout, rollbackID)
+}
+
+func DeployDry(
+	ctx context.Context, rig rig.Client, projectID, environmentID, capsuleID string, changes []*capsule.Change,
+	currentRolloutID uint64, currentFingerprint *model.Fingerprint,
+	scheme *runtime.Scheme, isInteractive bool,
+) error {
+	req := &capsule.DeployRequest{
+		CapsuleId:          capsuleID,
+		Changes:            nil,
+		ProjectId:          projectID,
+		EnvironmentId:      environmentID,
+		DryRun:             true,
+		CurrentRolloutId:   currentRolloutID,
+		CurrentFingerprint: currentFingerprint,
+	}
+
+	// TODO Make interactive diffing
+	req.Changes = changes
+	resp, err := rig.Capsule().Deploy(ctx, connect.NewRequest(req))
+	if err != nil {
+		return fmt.Errorf("failed to get new stuff: %w", err)
+	}
+	outcome := resp.Msg.GetOutcome()
+
+	var out DryOutput
+	out.PlatformCapsule = resp.Msg.GetRevision().GetSpec()
+
+	for _, o := range outcome.GetPlatformObjects() {
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
+		if err != nil {
+			return err
+		}
+		out.DirectKubernetes = append(out.DirectKubernetes, co)
+	}
+	for _, o := range outcome.GetKubernetesObjects() {
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
+		if err != nil {
+			return err
+		}
+		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
+	}
+
+	if !isInteractive {
+		outputType := flags.Flags.OutputType
+		if outputType == common.OutputTypePretty {
+			outputType = common.OutputTypeYAML
+		}
+		return common.FormatPrint(out, outputType)
+	}
+
+	return promptDryOutput(ctx, out, outcome)
+}
+
+func promptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.DeployOutcome) error {
+	listView := tview.NewList().ShowSecondaryText(false)
+	listView.SetBorder(true).
+		SetTitle("Resources (Return to view)")
+
+	capsuleYamlBytes, err := yaml.Marshal(out.PlatformCapsule)
+	if err != nil {
+		return err
+	}
+
+	capsuleYaml := string(capsuleYamlBytes)
+
+	listView.AddItem("[::b]Platform Capsule", "", 0, nil)
+	content := []string{capsuleYaml}
+	for i, o := range out.DirectKubernetes {
+		obj := o.(client.Object)
+		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
+		content = append(content, outcome.PlatformObjects[i].ContentYaml)
+	}
+	for i, o := range out.DerivedKubernetes {
+		obj := o.(client.Object)
+		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
+		content = append(content, outcome.KubernetesObjects[i].ContentYaml)
+	}
+
+	textView := tview.NewTextView()
+	textView.SetTitle(fmt.Sprintf("%s (ESC to continue and CTRL+C to cancel)", "Capsule Diff"))
+	textView.SetBorder(true)
+	textView.SetDynamicColors(true)
+	textView.SetWrap(true)
+	textView.SetText(capsuleYaml)
+	textView.SetBackgroundColor(tcell.ColorNone)
+
+	errChan := make(chan error)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	grid := tview.NewGrid().SetRows(-1).SetColumns(-1, -2)
+	grid.AddItem(textView, 0, 1, 1, 1, 0, 0, false)
+	grid.AddItem(listView, 0, 0, 1, 1, 0, 0, true)
+
+	app := tview.NewApplication().SetRoot(grid, true).EnableMouse(true)
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEnter:
+			textView.SetText(content[listView.GetCurrentItem()])
+		case tcell.KeyEsc:
+			cancel()
+		case tcell.KeyCtrlC:
+			cancel()
+		}
+		return event
+	})
+
+	go func() {
+		err := app.Run()
+		if err != nil {
+			errChan <- err
+		}
+	}()
+
+	defer app.Stop()
+
+	for {
+		select {
+		case err := <-errChan:
+			return err
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+type DryOutput struct {
+	PlatformCapsule   *platformv1.Capsule `json:"platformCapsule"`
+	DirectKubernetes  []any               `json:"directKubernetes"`
+	DerivedKubernetes []any               `json:"derivedKubernetes"`
 }
 
 func Rollback(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
+	projectID string,
+	environmentID string,
 	capsuleName string,
 	currentRolloutID uint64,
 	rollbackID uint64,
 ) (*capsule.Revision, uint64, error) {
-	return Deploy(ctx, rig, scope, capsuleName, []*capsule.Change{
+	return Deploy(ctx, rig, projectID, environmentID, capsuleName, []*capsule.Change{
 		{
 			Field: &capsule.Change_Rollback_{
 				Rollback: &capsule.Change_Rollback{
@@ -312,7 +454,8 @@ func Rollback(
 func WaitForRollout(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
+	projectID string,
+	environmentID string,
 	capsuleID string,
 	revision *capsule.Revision,
 	rolloutID uint64,
@@ -323,8 +466,8 @@ func WaitForRollout(
 		first := true
 		for {
 			resp, err := rig.Capsule().GetRolloutOfRevisions(ctx, connect.NewRequest(&capsule.GetRolloutOfRevisionsRequest{
-				ProjectId:     flags.GetProject(scope),
-				EnvironmentId: flags.GetEnvironment(scope),
+				ProjectId:     projectID,
+				EnvironmentId: environmentID,
 				CapsuleId:     capsuleID,
 				Fingerprints: &model.Fingerprints{
 					Capsule: revision.GetMetadata().GetFingerprint(),
@@ -368,7 +511,7 @@ func WaitForRollout(
 				return fmt.Errorf("aborted")
 			}
 
-			_, _, err := Rollback(ctx, rig, scope, capsuleID, rolloutID, rollbackID)
+			_, _, err := Rollback(ctx, rig, projectID, environmentID, capsuleID, rolloutID, rollbackID)
 			if err != nil {
 				return err
 			}
@@ -376,7 +519,7 @@ func WaitForRollout(
 			return fmt.Errorf("rollback to %d initiated", rollbackID)
 		}
 
-		rollout, err := getRollout(ctx, rig, scope, capsuleID, rolloutID)
+		rollout, err := getRollout(ctx, rig, projectID, capsuleID, rolloutID)
 		if err != nil {
 			return err
 		}
@@ -530,7 +673,7 @@ func WaitForRollout(
 func getRollout(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
+	projectID string,
 	capsuleID string,
 	rolloutID uint64,
 ) (*capsule.Rollout, error) {
@@ -543,7 +686,7 @@ func getRollout(
 			Msg: &capsule.GetRolloutRequest{
 				CapsuleId: capsuleID,
 				RolloutId: rolloutID,
-				ProjectId: flags.GetProject(scope),
+				ProjectId: projectID,
 			},
 		})
 		if errors.IsUnavailable(err) || ctx.Err() != nil {
