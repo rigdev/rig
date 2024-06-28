@@ -3,6 +3,7 @@ package scheme
 import (
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	configv1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	batchv1 "k8s.io/api/batch/v1"
@@ -30,6 +31,7 @@ func New() *runtime.Scheme {
 	utilruntime.Must(vpav1.AddToScheme(s))
 
 	utilruntime.Must(metricsv1beta1.AddToScheme(s))
+	utilruntime.Must(v1.AddToScheme(s))
 
 	return s
 }

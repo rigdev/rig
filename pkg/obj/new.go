@@ -19,3 +19,12 @@ func New(gvk schema.GroupVersionKind, scheme *runtime.Scheme) client.Object {
 
 	return co
 }
+
+func NewRuntime(gvk schema.GroupVersionKind, scheme *runtime.Scheme) runtime.Object {
+	ro, err := scheme.New(gvk)
+	if err != nil {
+		ro = &unstructured.Unstructured{}
+	}
+	ro.GetObjectKind().SetGroupVersionKind(gvk)
+	return ro
+}

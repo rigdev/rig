@@ -231,16 +231,19 @@ func Deploy(
 	forceDeploy bool,
 	forceOverride bool,
 	currentRolloutID uint64,
+	currentFingerprint *model.Fingerprint,
 ) (*capsule.Revision, uint64, error) {
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId:        capsuleName,
-			Changes:          changes,
-			ProjectId:        flags.GetProject(scope),
-			EnvironmentId:    flags.GetEnvironment(scope),
-			Force:            forceDeploy,
-			ForceOverride:    forceOverride,
-			CurrentRolloutId: currentRolloutID,
+			CapsuleId:          capsuleName,
+			Changes:            changes,
+			Force:              forceDeploy,
+			ProjectId:          flags.GetProject(scope),
+			EnvironmentId:      flags.GetEnvironment(scope),
+			DryRun:             false,
+			CurrentRolloutId:   currentRolloutID,
+			ForceOverride:      forceOverride,
+			CurrentFingerprint: currentFingerprint,
 		},
 	}
 
@@ -264,6 +267,7 @@ func DeployAndWait(
 	timeout time.Duration,
 	rollbackID uint64,
 	noWait bool,
+	currentFingerprint *model.Fingerprint,
 ) error {
 	revision, rolloutID, err := Deploy(
 		ctx,
@@ -274,6 +278,7 @@ func DeployAndWait(
 		forceDeploy,
 		forceOverride,
 		currentRolloutID,
+		currentFingerprint,
 	)
 	if err != nil {
 		return err
@@ -301,7 +306,7 @@ func Rollback(
 				},
 			},
 		},
-	}, true, false, currentRolloutID)
+	}, true, false, currentRolloutID, nil)
 }
 
 func WaitForRollout(

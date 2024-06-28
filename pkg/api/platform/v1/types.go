@@ -5,6 +5,8 @@ package v1
 import (
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
 // +kubebuilder:object:root=true
@@ -171,4 +173,19 @@ type HorizontalScale struct {
 	// CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API
 	// which the autoscaler should scale on
 	CustomMetrics []v1alpha2.CustomMetric `json:"customMetrics,omitempty" protobuf:"3" patchStrategy:"replace"`
+}
+
+var (
+	// GroupVersion is group version used to register these objects
+	GroupVersion = schema.GroupVersion{Group: "platform.rig.dev", Version: "v1"}
+
+	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
+	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
+
+	// AddToScheme adds the types in this group-version to the given scheme.
+	AddToScheme = SchemeBuilder.AddToScheme
+)
+
+func init() {
+	SchemeBuilder.Register(&Capsule{}, &Project{}, &Environment{}, &CapsuleSet{})
 }

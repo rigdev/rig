@@ -182,7 +182,7 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		},
 	}})
 
-	revision, rolloutID, err := capsule_cmd.Deploy(ctx, c.Rig, c.Scope, capsuleName, changes, true, false, 0)
+	revision, rolloutID, err := capsule_cmd.Deploy(ctx, c.Rig, c.Scope, capsuleName, changes, true, false, 0, nil)
 	if err != nil {
 		return err
 	}

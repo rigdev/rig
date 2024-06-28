@@ -52,7 +52,7 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 		Field: &capsule.Change_AddCronJob{
 			AddCronJob: job,
 		},
-	}}, true, false, 0); err != nil {
+	}}, true, false, 0, nil); err != nil {
 		return err
 	}
 
@@ -253,7 +253,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 				JobName: job,
 			},
 		},
-	}}, true, false, 0); err != nil {
+	}}, true, false, 0, nil); err != nil {
 		return err
 	}
 

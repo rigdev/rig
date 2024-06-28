@@ -347,14 +347,14 @@ func PromptDiffingChanges(
 
 		report, _ := reports.GetKind(kind)
 		if len(report) == 0 {
-			if err := showDiffReport(nil, kind, "", warnings[kind]); err != nil {
+			if err := ShowDiffReport(nil, kind, "", warnings[kind]); err != nil {
 				return err
 			}
 			continue
 		}
 		if len(report) == 1 {
 			name := maps.Keys(report)[0]
-			if err := showDiffReport(report[name], kind, name, warnings[kind]); err != nil {
+			if err := ShowDiffReport(report[name], kind, name, warnings[kind]); err != nil {
 				return err
 			}
 			continue
@@ -374,7 +374,7 @@ func PromptDiffingChanges(
 				return err
 			}
 
-			if err := showDiffReport(report[name], kind, name, warnings[kind]); err != nil {
+			if err := ShowDiffReport(report[name], kind, name, warnings[kind]); err != nil {
 				return err
 			}
 		}

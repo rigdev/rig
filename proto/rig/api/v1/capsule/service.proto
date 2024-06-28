@@ -42,9 +42,6 @@ service Service {
   rpc Deploy(DeployRequest) returns (DeployResponse) {}
   rpc ProposeRollout(ProposeRolloutRequest) returns (ProposeRolloutResponse) {}
   rpc ListProposals(ListProposalsRequest) returns (ListProposalsResponse) {}
-  // Applies a Capsule spec in an environment which will be rolled out
-  rpc ApplyCapsuleSpec(ApplyCapsuleSpecRequest)
-      returns (ApplyCapsuleSpecResponse) {}
   // Lists all instances for the capsule.
   rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {}
   // Restart a single capsule instance.
@@ -385,6 +382,11 @@ message DeployRequest {
   // request will return an `Aborted` error.
   uint64 current_rollout_id = 8;
 
+  // If set, this will constrain the rollout only to be created if the current
+  // latest capsule fingerprint matches the given.
+  // Cannot be used together with `current_rollout_id`
+  model.Fingerprint current_fingerprint = 10;
+
   // By default, existing objects will be kept in favor of overriding them. To
   // force the override of resources, set this flag to true. An example of this
   // use-case is a migration step, where resource created by a previous
@@ -474,19 +476,6 @@ message ListProposalsRequest {
 message ListProposalsResponse {
   repeated Proposal proposals = 1;
   uint64 total = 2;
-}
-
-message ApplyCapsuleSpecRequest {
-  platform.v1.CapsuleSpec spec = 1;
-  string project_id = 2;
-  string environment_id = 3;
-  string capsule_id = 4;
-  model.Fingerprint current_fingerprint = 5;
-  bool dry_run = 6;
-}
-
-message ApplyCapsuleSpecResponse {
-  model.Fingerprint fingerprint = 1;
 }
 
 // List instances request.

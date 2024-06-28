@@ -42,7 +42,7 @@ func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error 
 				ContainerSettings: container,
 			},
 		}},
-		forceDeploy, false, 0, 0, 0, false,
+		forceDeploy, false, 0, 0, 0, false, nil,
 	)
 }
 

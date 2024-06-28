@@ -211,7 +211,7 @@ func showOverview(
 // 	return app.Run()
 // }
 
-func showDiffReport(r *dyff.Report, kind, name string, warnings []*Warning) error {
+func ShowDiffReport(r *dyff.Report, kind, name string, warnings []*Warning) error {
 	var text *tview.TextView
 	if r != nil {
 		var out bytes.Buffer
