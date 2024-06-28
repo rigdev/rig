@@ -1,6 +1,7 @@
 package field
 
 import (
+	"fmt"
 	"testing"
 
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
@@ -16,6 +17,7 @@ func Test_Compare(t *testing.T) {
 		Changes []string
 	}{
 		{
+			Name: "change interface name",
 			From: &platformv1.CapsuleSpec{
 				Interfaces: []*v1alpha2.CapsuleInterface{{
 					Name: "foobar",
@@ -33,6 +35,7 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
+			Name: "add interface",
 			From: &platformv1.CapsuleSpec{},
 			To: &platformv1.CapsuleSpec{
 				Interfaces: []*v1alpha2.CapsuleInterface{{
@@ -146,6 +149,7 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
+			Name: "remove all envs",
 			From: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
 					Direct: map[string]string{
@@ -160,7 +164,8 @@ func Test_Compare(t *testing.T) {
 				},
 			},
 			Changes: []string{
-				"Removed env.direct",
+				"Removed env.direct.key1",
+				"Removed env.direct.key2",
 			},
 		},
 		{
@@ -208,11 +213,12 @@ func Test_Compare(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(t.Name(), func(t *testing.T) {
+		t.Run(test.Name, func(t *testing.T) {
 			diff, err := Compare(test.From, test.To)
 			require.NoError(t, err)
 			var changes []string
 			for _, c := range diff.Changes {
+				fmt.Println(c.Operation, c.FieldPath, c.To.AsString)
 				changes = append(changes, c.String())
 			}
 			require.Equal(t, test.Changes, changes)
