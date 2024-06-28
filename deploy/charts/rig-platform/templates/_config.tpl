@@ -150,7 +150,7 @@ client:
   postgres:
     password: {{ .postgres.password | quote }}
   {{- end }}
- 
+
   {{- if .mailjets }}
   mailjets:
     {{- range $id, $provider := .mailjets }}
@@ -213,3 +213,4 @@ auth:
   {{- end }}
 {{- end -}}
 {{- end -}}
+

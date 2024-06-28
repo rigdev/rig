@@ -4,6 +4,7 @@ metadata:
   name: rig-platform
   annotations:
     rig.dev/recreate-strategy: "true"
+    rig.dev/rollout: {{ .Values.rollout | quote }}
 spec:
   scale:
     horizontal:

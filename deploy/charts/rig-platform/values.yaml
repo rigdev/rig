@@ -12,7 +12,7 @@ rbac:
   # Specifies whether the ClusterRole and ClusterRoleBinding should be created
   create: true
 
-podAnnotations: {}
+rollout: ""
 
 podSecurityContext:
   {}

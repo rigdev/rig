@@ -1,4 +1,4 @@
-{{- if .Values.config.webhooksEnabled -}}
+{{- if and .Values.config.webhooksEnabled .Values.apicheck.enabled -}}
 apiVersion: batch/v1
 kind: Job
 metadata:

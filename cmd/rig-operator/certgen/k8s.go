@@ -57,7 +57,7 @@ func (k *k8s) getSecret(ctx context.Context, namespace, name string) (*v1.Secret
 	return s, nil
 }
 
-func (k *k8s) createSecret(ctx context.Context, namespace, name string, certs *certs) error {
+func (k *k8s) createSecret(ctx context.Context, namespace, name string, certs *Certs) error {
 	s := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
@@ -65,9 +65,9 @@ func (k *k8s) createSecret(ctx context.Context, namespace, name string, certs *c
 		},
 		Type: v1.SecretTypeTLS,
 		Data: map[string][]byte{
-			"ca.crt":  certs.ca,
-			"tls.crt": certs.cert,
-			"tls.key": certs.key,
+			"ca.crt":  certs.CA,
+			"tls.crt": certs.Cert,
+			"tls.key": certs.Key,
 		},
 	}
 

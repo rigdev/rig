@@ -29,6 +29,8 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 5432
+            initialDelaySeconds: 2
+            periodSeconds: 1
           {{- with .Values.postgres.resources }}
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}

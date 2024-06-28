@@ -27,6 +27,9 @@ spec:
           namespace: {{ .Release.Namespace }}
           path: /convert
           port: 9443
+        {{- if .Values.certgen.certificate.ca }}
+        caBundle: {{ .Values.certgen.certificate.ca | quote }}
+        {{- end }}
       conversionReviewVersions:
         - v1alpha1
         - v1alpha2
