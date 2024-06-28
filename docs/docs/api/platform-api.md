@@ -2080,7 +2080,7 @@ A reference to a kubernetes object.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| direct | [EnvironmentVariables.DirectEntry](#platform-v1-EnvironmentVariables-DirectEntry) | repeated |  |
+| raw | [EnvironmentVariables.RawEntry](#platform-v1-EnvironmentVariables-RawEntry) | repeated |  |
 | sources | [EnvironmentSource](#platform-v1-EnvironmentSource) | repeated |  |
 
 
@@ -2088,9 +2088,9 @@ A reference to a kubernetes object.
 
 
 
-<a name="platform-v1-EnvironmentVariables-DirectEntry"></a>
+<a name="platform-v1-EnvironmentVariables-RawEntry"></a>
 
-### EnvironmentVariables.DirectEntry
+### EnvironmentVariables.RawEntry
 
 
 
