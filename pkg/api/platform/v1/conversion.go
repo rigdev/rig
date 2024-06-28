@@ -145,10 +145,10 @@ func FeedContainerSettings(spec *platformv1.CapsuleSpec, containerSettings *caps
 		containerSettings.GetResources().GetGpuLimits(),
 	)
 	spec.Env = &platformv1.EnvironmentVariables{
-		Direct: maps.Clone(containerSettings.GetEnvironmentVariables()),
+		Raw: maps.Clone(containerSettings.GetEnvironmentVariables()),
 	}
-	if spec.Env.Direct == nil {
-		spec.Env.Direct = map[string]string{}
+	if spec.Env.Raw == nil {
+		spec.Env.Raw = map[string]string{}
 	}
 
 	for _, es := range containerSettings.GetEnvironmentSources() {
@@ -352,7 +352,7 @@ func ContainerSettingsSpecConversion(spec *platformv1.CapsuleSpec) (*capsule.Con
 		return nil, err
 	}
 	return &capsule.ContainerSettings{
-		EnvironmentVariables: maps.Clone(spec.GetEnv().GetDirect()),
+		EnvironmentVariables: maps.Clone(spec.GetEnv().GetRaw()),
 		Command:              spec.GetCommand(),
 		Args:                 spec.GetArgs(),
 		Resources:            resources,
@@ -634,8 +634,8 @@ func ChangesFromSpecPair(curSpec, newSpec *platformv1.CapsuleSpec) ([]*capsule.C
 		})
 	}
 
-	d := curSpec.GetEnv().GetDirect()
-	for k, v := range newSpec.GetEnv().GetDirect() {
+	d := curSpec.GetEnv().GetRaw()
+	for k, v := range newSpec.GetEnv().GetRaw() {
 		if vv, ok := d[k]; !ok || v != vv {
 			res = append(res, &capsule.Change{
 				Field: &capsule.Change_SetEnvironmentVariable{
@@ -648,8 +648,8 @@ func ChangesFromSpecPair(curSpec, newSpec *platformv1.CapsuleSpec) ([]*capsule.C
 		}
 	}
 
-	d = newSpec.GetEnv().GetDirect()
-	for k, v := range curSpec.GetEnv().GetDirect() {
+	d = newSpec.GetEnv().GetRaw()
+	for k, v := range curSpec.GetEnv().GetRaw() {
 		if _, ok := d[k]; !ok {
 			res = append(res, &capsule.Change{
 				Field: &capsule.Change_RemoveEnvironmentVariable{
