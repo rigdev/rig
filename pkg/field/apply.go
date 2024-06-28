@@ -17,7 +17,7 @@ func Apply(spec *platformv1.CapsuleSpec, changes []Change) (*platformv1.CapsuleS
 	out := proto.Clone(spec).(*platformv1.CapsuleSpec)
 
 	for _, change := range changes {
-		path, err := parseJsonPath(change.FieldPath)
+		path, err := parseJSONPath(change.FieldPath)
 		if err != nil {
 			return nil, err
 		}
@@ -35,7 +35,7 @@ func Apply(spec *platformv1.CapsuleSpec, changes []Change) (*platformv1.CapsuleS
 			switch value.Type().Kind() {
 			case reflect.Slice:
 				found := false
-				for i := range value.Len() {
+				for i := range value.Len() { //nolint:typecheck
 					if pe.Key != "" {
 						elem := value.Index(i).Elem()
 						field, err := findInStruct(elem, pe.Key)
@@ -99,7 +99,7 @@ func Apply(spec *platformv1.CapsuleSpec, changes []Change) (*platformv1.CapsuleS
 		case RemovedOperation:
 			switch parent.Type().Kind() {
 			case reflect.Slice:
-				for i := range parent.Len() {
+				for i := range parent.Len() { //nolint:typecheck
 					elem := parent.Index(i).Elem()
 					if elem == value {
 						nval := reflect.MakeSlice(parent.Type(), parent.Len()-1, parent.Len()-1)
@@ -138,11 +138,13 @@ func Apply(spec *platformv1.CapsuleSpec, changes []Change) (*platformv1.CapsuleS
 	return out, nil
 }
 
-func parseJsonPath(jsonPath string) (ytbx.Path, error) {
+func parseJSONPath(jsonPath string) (ytbx.Path, error) {
 	sc := scanner.Scanner{}
 	sc.Init(strings.NewReader(jsonPath))
 	sc.Error = func(*scanner.Scanner, string) {}
-	sc.IsIdentRune = func(r rune, pos int) bool { return unicode.IsLetter(r) || r == '_' || (pos > 0 && unicode.IsDigit(r)) }
+	sc.IsIdentRune = func(r rune, pos int) bool {
+		return unicode.IsLetter(r) || r == '_' || (pos > 0 && unicode.IsDigit(r))
+	}
 	sc.Filename = jsonPath + "\t"
 
 	var result ytbx.Path
@@ -157,7 +159,7 @@ func parseJsonPath(jsonPath string) (ytbx.Path, error) {
 		case ".":
 		case "$":
 		case "[":
-			s, err := parseJsonPathNamed(&sc)
+			s, err := parseJSONPathNamed(&sc)
 			if err != nil {
 				return ytbx.Path{}, err
 			}
@@ -174,7 +176,7 @@ func parseJsonPath(jsonPath string) (ytbx.Path, error) {
 	return result, nil
 }
 
-func parseJsonPathNamed(sc *scanner.Scanner) (ytbx.PathElement, error) {
+func parseJSONPathNamed(sc *scanner.Scanner) (ytbx.PathElement, error) {
 	if sc.Scan() != '@' {
 		return ytbx.PathElement{}, fmt.Errorf("invalid jsonpath")
 	}
@@ -205,7 +207,7 @@ func parseJsonPathNamed(sc *scanner.Scanner) (ytbx.PathElement, error) {
 }
 
 func findInStruct(value reflect.Value, name string) (reflect.Value, error) {
-	for i := range value.Type().NumField() {
+	for i := range value.Type().NumField() { //nolint:typecheck
 		field := value.Type().Field(i)
 		if tag, ok := field.Tag.Lookup("json"); ok {
 			tagName := strings.Split(tag, ",")[0]

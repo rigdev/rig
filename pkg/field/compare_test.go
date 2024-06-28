@@ -1,7 +1,6 @@
 package field
 
 import (
-	"fmt"
 	"testing"
 
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
@@ -48,18 +47,7 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
-			From: &platformv1.CapsuleSpec{},
-			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
-					Name: "foobar-123",
-					Port: 80,
-				}},
-			},
-			Changes: []string{
-				"Added interface (with port 80)",
-			},
-		},
-		{
+			Name: "change port",
 			From: &platformv1.CapsuleSpec{
 				Interfaces: []*v1alpha2.CapsuleInterface{{
 					Name: "foobar",
@@ -78,6 +66,7 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
+			Name: "remove interface",
 			From: &platformv1.CapsuleSpec{
 				Interfaces: []*v1alpha2.CapsuleInterface{{
 					Name: "foobar-123",
@@ -90,6 +79,27 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
+			Name: "remove multiple interfaces",
+			From: &platformv1.CapsuleSpec{
+				Interfaces: []*v1alpha2.CapsuleInterface{
+					{
+						Name: "foobar-123",
+						Port: 80,
+					},
+					{
+						Name: "foobar-456",
+						Port: 81,
+					},
+				},
+			},
+			To: &platformv1.CapsuleSpec{},
+			Changes: []string{
+				"Removed interface (with port 80)",
+				"Removed interface (with port 81)",
+			},
+		},
+		{
+			Name: "add bytes to file",
 			From: &platformv1.CapsuleSpec{
 				Files: []*platformv1.File{
 					{
@@ -110,6 +120,7 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
+			Name: "change scale replicas",
 			From: &platformv1.CapsuleSpec{
 				Scale: &platformv1.Scale{
 					Horizontal: &platformv1.HorizontalScale{
@@ -129,6 +140,7 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
+			Name: "remove one environment variable",
 			From: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
 					Direct: map[string]string{
@@ -169,6 +181,7 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
+			Name: "add one environment variable",
 			From: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
 					Direct: map[string]string{
@@ -189,6 +202,7 @@ func Test_Compare(t *testing.T) {
 			},
 		},
 		{
+			Name: "add multiple environment variables",
 			From: &platformv1.CapsuleSpec{
 				Env: &platformv1.EnvironmentVariables{
 					Direct: map[string]string{
@@ -202,12 +216,92 @@ func Test_Compare(t *testing.T) {
 						"key1": "value1",
 						"key2": "value2",
 						"key3": "value3",
+						"key4": "value4",
 					},
 				},
 			},
 			Changes: []string{
 				"Added env.direct.key2",
 				"Added env.direct.key3",
+				"Added env.direct.key4",
+			},
+		},
+		{
+			Name: "remove all args",
+			From: &platformv1.CapsuleSpec{
+				Args: []string{"arg1", "arg2"},
+			},
+			To: &platformv1.CapsuleSpec{},
+			Changes: []string{
+				"Removed args.arg1",
+				"Removed args.arg2",
+			},
+		},
+		{
+			Name: "remove multiple args",
+			From: &platformv1.CapsuleSpec{
+				Args: []string{"arg1", "arg2", "arg3"},
+			},
+			To: &platformv1.CapsuleSpec{
+				Args: []string{"arg1"},
+			},
+			Changes: []string{
+				"Removed args.arg2",
+				"Removed args.arg3",
+			},
+		},
+		{
+			Name: "Remove all cronjobs",
+			From: &platformv1.CapsuleSpec{
+				CronJobs: []*v1alpha2.CronJob{
+					{
+						Name: "cronjob1",
+					},
+					{
+						Name: "cronjob2",
+					},
+				},
+			},
+			To: &platformv1.CapsuleSpec{},
+			Changes: []string{
+				"Removed cronJob (with name cronjob1)",
+				"Removed cronJob (with name cronjob2)",
+			},
+		},
+		{
+			Name: "Add a cronjob",
+			From: &platformv1.CapsuleSpec{},
+			To: &platformv1.CapsuleSpec{
+				CronJobs: []*v1alpha2.CronJob{
+					{
+						Name: "cronjob1",
+					},
+				},
+			},
+			Changes: []string{
+				"Added cronJob (with name cronjob1)",
+			},
+		},
+		{
+			Name: "modify a cronjob",
+			From: &platformv1.CapsuleSpec{
+				CronJobs: []*v1alpha2.CronJob{
+					{
+						Name:     "cronjob1",
+						Schedule: "0 0 * * *",
+					},
+				},
+			},
+			To: &platformv1.CapsuleSpec{
+				CronJobs: []*v1alpha2.CronJob{
+					{
+						Name:     "cronjob1",
+						Schedule: "0 5 * * *",
+					},
+				},
+			},
+			Changes: []string{
+				"Changed cronJob.schedule (with name cronjob1) from '0 0 * * *' to '0 5 * * *'",
 			},
 		},
 	}
@@ -218,7 +312,6 @@ func Test_Compare(t *testing.T) {
 			require.NoError(t, err)
 			var changes []string
 			for _, c := range diff.Changes {
-				fmt.Println(c.Operation, c.FieldPath, c.To.AsString)
 				changes = append(changes, c.String())
 			}
 			require.Equal(t, test.Changes, changes)

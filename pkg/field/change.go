@@ -2,7 +2,6 @@ package field
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"text/scanner"
 	"unicode"
@@ -53,19 +52,22 @@ func (c Change) String() string {
 	case RemovedOperation:
 		description = fmt.Sprintf("Removed %s", pathDescription(c.FieldPath))
 	case ModifiedOperation:
-		description = fmt.Sprintf("Changed %s from '%v' to '%v'", pathDescription(c.FieldPath), c.From.AsString, c.To.AsString)
+		description = fmt.Sprintf(
+			"Changed %s from '%v' to '%v'", pathDescription(c.FieldPath), c.From.AsString, c.To.AsString)
 	}
 
 	return description
 }
 
-var _namedIndexRegexp = regexp.MustCompile(`^(.*)\[\@(.*)\=(.*)\]$`)
+// var _namedIndexRegexp = regexp.MustCompile(`^(.*)\[\@(.*)\=(.*)\]$`)
 
 func pathDescription(fieldPath string) string {
 	sc := scanner.Scanner{}
 	sc.Init(strings.NewReader(fieldPath))
 	sc.Error = func(*scanner.Scanner, string) {}
-	sc.IsIdentRune = func(r rune, pos int) bool { return unicode.IsLetter(r) || r == '_' || (pos > 0 && unicode.IsDigit(r)) }
+	sc.IsIdentRune = func(r rune, pos int) bool {
+		return unicode.IsLetter(r) || r == '_' || (pos > 0 && unicode.IsDigit(r))
+	}
 	sc.Filename = fieldPath + "\t"
 
 	var result []string

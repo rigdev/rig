@@ -115,11 +115,14 @@ func getNodePaths(node *yaml.Node) ([][]ytbx.PathElement, error) {
 	case yaml.SequenceNode:
 		for i, value := range node.Content {
 			found := false
-			for _, idKey := range []string{"port", "path"} {
-				altKey, _ := ytbx.Grab(&yaml.Node{
+			for _, idKey := range []string{"port", "path", "name"} {
+				altKey, err := ytbx.Grab(&yaml.Node{
 					Kind:    yaml.DocumentNode,
 					Content: []*yaml.Node{value},
 				}, idKey)
+				if err != nil {
+					continue
+				}
 				if altKey != value {
 					paths = append(paths, []ytbx.PathElement{{
 						Idx:  i,
@@ -132,19 +135,20 @@ func getNodePaths(node *yaml.Node) ([][]ytbx.PathElement, error) {
 			}
 			if !found {
 				paths = append(paths, []ytbx.PathElement{{
-					Idx: i,
+					Idx:  i,
+					Name: value.Value,
 				}})
 			}
 		}
 
 	case yaml.MappingNode:
 		singleElement := len(node.Content) == 2
-		for i := range len(node.Content) / 2 {
+		for i := range len(node.Content) / 2 { //nolint:typecheck
 			key := node.Content[i*2]
 			value := node.Content[i*2+1]
 			found := false
 			var keyPath ytbx.PathElement
-			for _, idKey := range []string{"port", "path"} {
+			for _, idKey := range []string{"port", "path", "name"} {
 				altKey, err := ytbx.Grab(&yaml.Node{
 					Kind:    yaml.DocumentNode,
 					Content: []*yaml.Node{value},
@@ -211,7 +215,12 @@ func compareBytes(from, to []byte) (*dyff.Report, error) {
 		Documents: toNodes,
 	}
 
-	r, err := dyff.CompareInputFiles(fromFile, toFile, dyff.KubernetesEntityDetection(false), dyff.AdditionalIdentifiers("port", "path"))
+	r, err := dyff.CompareInputFiles(
+		fromFile,
+		toFile,
+		dyff.KubernetesEntityDetection(false),
+		dyff.AdditionalIdentifiers("port", "path"),
+	)
 	if err != nil {
 		return nil, err
 	}
