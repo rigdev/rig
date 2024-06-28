@@ -409,7 +409,7 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 			patch: &platformv1.ProjEnvCapsuleBase{
 				Files: []*platformv1.File{},
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 						"key2": "value2",
 					},
@@ -419,7 +419,7 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				Kind:       "CapsuleSpec",
 				ApiVersion: "v1",
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "other-value",
 						"key3": "value3",
 					},
@@ -429,7 +429,7 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				Kind:       "CapsuleSpec",
 				ApiVersion: "v1",
 				Env: &platformv1.EnvironmentVariables{
-					Direct: map[string]string{
+					Raw: map[string]string{
 						"key1": "value1",
 						"key2": "value2",
 						"key3": "value3",
