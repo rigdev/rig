@@ -1,0 +1,62 @@
+name: Build Docker Image
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: rigdev/rig
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            tools/bin
+          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-tools-
+
+      - name: Build Rig CLI
+        run: task build-rig
+
+      - name: Upload Rig CLI
+        uses: actions/upload-artifact@v4
+        with:
+          name: rig-cli
+          path: bin/rig
+          retention-days: 1
+
+      - name: Build image
+        run: docker build -t ghcr.io/rigdev/rig-operator:${GITHUB_SHA} -f ./build/package/Dockerfile .
+
+      - name: Save image
+        run: docker save ghcr.io/rigdev/rig-operator:${GITHUB_SHA} > rig-operator.tar
+
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: rig-operator-image
+          path: rig-operator.tar
+          retention-days: 1
