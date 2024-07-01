@@ -4,7 +4,11 @@ import ThemedImage from '@theme/ThemedImage';
 
 # CRD & Operator
 
-The foundation of Rig is our Capsule CRD (CustomResourceDefinition). The Rig Operator will spawn all derived Kubernetes resources as defined by a Capsule resource. It will also watch these derived resources and undo any changes applied to them which conflicts with their Capsule parent. Updating these resources can only be done by updating the corresponding capsule spec. The resources we (can) spawn are
+The foundation of Rig is our Capsule specification. The Capsule exists as a two-stage object consisting of
+- Platform Capsule
+- Kubernetes Capsule
+
+The Platform Capsule is the spec which the end-user of Rig will be working with. This spec (among other things) abstracts away cluster-level information in favor of Project and Environment terminology. The Platform will translate a Platform Capsule into a Kubernetes Capsule, which is our [CustomResourceDefinition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRD) defining the Capsule functionality within a Kubernetes cluster. The Rig Operator will from a Kubernetes Capsule spawn derived Kubernetes resources which will be owned by the corresponding Kubernetes Capsule. It will also watch these derived resources and undo any changes applied to them which conflicts with their Capsule parent. Updating these resources can only be done by updating the corresponding Kubernetes Capsule. The resources we (can) spawn are
 
 - [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
 - [Service](https://kubernetes.io/docs/concepts/services-networking/service/)
@@ -15,10 +19,93 @@ The foundation of Rig is our Capsule CRD (CustomResourceDefinition). The Rig Ope
 
 ConfigMaps and Secrets used by a capsule is not owned by the capsule though. These will be created by the Platform and can be updated independently of the capsules. The operator, however, will watch those config files and redeploy instances if configs or secrets they depend on have been changed.
 
+
+<img src="/img/operator-manual/platform-capsule.png" alt="Platform Capsule" width="500"/>
+
 ## Capsule Spec
-You can find a documentation of the capsule spec [here](/api). This is a complete example of the `Capsule` CRD spec
+You can find a documentation of the Platform Capsule and Kubernetes Capsule [here](/api). The following is a comprehensive example of both the Platform Capsule and Kubernetes Capsule spec.
+
 <Tabs>
-<TabItem value="v1alpha2" label="v1alpha2">
+
+<TabItem value="Platform v1" label="Platform v1">
+```yaml
+apiVersion: rig.dev/v1alpha2
+kind: Capsule
+metadata:
+  name: my-capsule
+  namespace: default
+spec:
+  args:
+    - arg1
+    - arg2
+  command: ./somecommand
+  files:
+    - path: /etc/config.yaml
+      ref:
+        key: config.yaml
+        kind: Secret
+        name: config
+  image: nginx:latest
+  interfaces:
+    - name: http
+      port: 4747
+      liveness:
+        path: /healthz
+      public:
+        loadBalancer:
+          port: 4747
+    - name: ingress
+      port: 5678
+      public:
+        ingress:
+          host: http://www.example.com
+  scale:
+    horizontal:
+      cpuTarget:
+        utilization: 80
+      instances:
+        max: 5
+        min: 2
+      customMetrics:
+        - instanceMetric:
+            metricName: some-metric
+            averageValue: 10
+        - objectMetric:
+            metricName: some-metric
+            describedObject:
+              kind: Service
+              name: some-service
+            value: 3
+    vertical:
+      cpu:
+        request: 2.5
+        limit: 5
+      memory:
+        request: 500M
+        limit: 2G
+      gpu:
+        request: 1
+        limit: 2
+  cronJobs:
+    - name: some-bash-job
+      schedule: 30 12 * * *
+      command:
+        command: ./cmd 
+        args: ['arg1', 'arg2']
+      maxRetries: 3
+      timeoutSeconds: 600
+    - name: some-http-job
+      schedule: 1/10 * * * *
+      url:
+        port: 1234
+        path: /some/path
+        queryParameters:
+          key1: value1
+          key2: value2
+      timeoutSeconds: 60
+```
+</TabItem>
+<TabItem value="K8s v1alpha2" label="K8s v1alpha2">
 
 ```yaml
 apiVersion: rig.dev/v1alpha2
@@ -97,7 +184,7 @@ spec:
       timeoutSeconds: 60
 ```
 </TabItem>
-<TabItem value="v1alpha1" label="v1alpha1">
+<TabItem value="K8s v1alpha1" label="K8s v1alpha1">
 
 ```yaml
 apiVersion: rig.dev/v1alpha1

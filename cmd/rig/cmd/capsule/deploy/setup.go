@@ -164,7 +164,8 @@ In that case you must supply branch name in --pr-branch.`,
 	// 	&dry, "dry", "d", false,
 	// 	"if set, will not apply the change but display the diff with the current capsule spec.",
 	// )
-	parent.AddCommand(capsuleSetDeploy)
+
+	// parent.AddCommand(capsuleSetDeploy) TODO Enable when ready!
 
 	// Add as top-level command as well.
 	rootDeploy := baseDeploy
@@ -239,7 +240,8 @@ func setupConfigurationFlags(c *cobra.Command) {
 		"remove a network interface by name.")
 	c.Flags().StringVarP(
 		&file, "file", "f", "",
-		"will deploy the capsule spec at the given path. Cannot be used together with any of the other configuration flags.",
+		`will deploy the capsule spec at the given path. Cannot be used together with any of the other configuration flags.
+The spec is the Platform Capsule spec defined at https://docs.rig.dev/api/platformv1#capsule`,
 	)
 }
 
