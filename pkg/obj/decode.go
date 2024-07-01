@@ -1,13 +1,9 @@
 package obj
 
 import (
-	"bufio"
 	"bytes"
-	json2 "encoding/json"
 	"fmt"
 
-	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
 	"github.com/rigdev/rig/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -49,7 +45,7 @@ func DecodeIntoT[T runtime.Object](bs []byte, into T, scheme *runtime.Scheme) (T
 }
 
 func Decode(bs []byte, out any) error {
-	r := yaml.NewYAMLToJSONDecoder(bufio.NewReader(bytes.NewReader(bs)))
+	r := yaml.NewYAMLToJSONDecoder(bytes.NewReader(bs))
 	if err := r.Decode(out); err != nil {
 		return errors.InvalidArgumentErrorf("bad yaml input: %v", err)
 	}
@@ -81,12 +77,4 @@ func DecodeAny(bs []byte, scheme *runtime.Scheme) (client.Object, error) {
 		return nil, err
 	}
 	return ro.(client.Object), nil
-}
-
-func CapsuleProtoToK8s(spec *platformv1.Capsule, scheme *runtime.Scheme) (*v1.Capsule, error) {
-	bs, err := json2.Marshal(spec)
-	if err != nil {
-		return nil, err
-	}
-	return DecodeIntoT(bs, &v1.Capsule{}, scheme)
 }

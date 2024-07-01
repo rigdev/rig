@@ -2,6 +2,7 @@ package v1
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"reflect"
@@ -17,9 +18,12 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	types_v1alpha2 "github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/obj"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	k8sresource "k8s.io/apimachinery/pkg/api/resource"
+	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
 
 func RolloutConfigToCapsuleSpec(rc *capsule.RolloutConfig) (*platformv1.CapsuleSpec, error) {
@@ -871,4 +875,54 @@ func ValidString(bs []byte) bool {
 	}
 
 	return true
+}
+
+// nolint:lll
+// MergeProjectEnv merges a ProjEnvCapsuleBase into a CapsuleSpec and returns a new object with the merged result
+// It uses StrategicMergePatch (https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
+func MergeProjectEnv(patch *platformv1.ProjEnvCapsuleBase, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
+	return mergeCapsuleSpec(patch, into)
+}
+
+// nolint:lll
+// MergeCapsuleSpec merges a CapsuleSpec into another CapsuleSpec and returns a new object with the merged result
+// It uses StrategicMergePatch (https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
+func MergeCapsuleSpecs(patch, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
+	return mergeCapsuleSpec(patch, into)
+}
+
+func mergeCapsuleSpec(patch any, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
+	// It would be possible to do much faster merging by manualling overwriting protobuf fields.
+	// This is tedius to maintain so until it becomes an issue, we use json marshalling to leverage StrategicMergePatch
+	patchBytes, err := json.Marshal(patch)
+	if err != nil {
+		return nil, err
+	}
+
+	intoBytes, err := json.Marshal(into)
+	if err != nil {
+		return nil, err
+	}
+
+	outBytes, err := strategicpatch.StrategicMergePatch(intoBytes, patchBytes, &CapsuleSpec{})
+	if err != nil {
+		return nil, err
+	}
+
+	out := &platformv1.CapsuleSpec{}
+	if err := json.Unmarshal(outBytes, out); err != nil {
+		return nil, err
+	}
+	out.Kind = into.GetKind()
+	out.ApiVersion = into.GetApiVersion()
+
+	return out, nil
+}
+
+func CapsuleProtoToK8s(spec *platformv1.Capsule, scheme *runtime.Scheme) (*Capsule, error) {
+	bs, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+	return obj.DecodeIntoT(bs, &Capsule{}, scheme)
 }

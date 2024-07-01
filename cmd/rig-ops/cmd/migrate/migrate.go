@@ -817,10 +817,21 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 					Namespace: migration.currentResources.Deployment.Namespace,
 				}, configMap)
 				if err != nil {
-					return onCCGetError(err, "ConfigMap",
-						cfgMap.Name,
-						migration.currentResources.Deployment.Namespace,
-					)
+					if kerrors.IsNotFound(err) {
+						migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+							Kind: "Deployment",
+							Name: migration.currentResources.Deployment.Name,
+							Field: fmt.Sprintf("spec.template.spec.containers.%s.env.%s.valueFrom.configMapRef",
+								migration.currentResources.Deployment.Spec.
+									Template.Spec.Containers[migration.containerIndex].Name, envVar.Name),
+							Warning: err.Error(),
+						})
+					} else {
+						return onCCGetError(err, "ConfigMap",
+							cfgMap.Name,
+							migration.currentResources.Deployment.Namespace,
+						)
+					}
 				}
 
 				if err := migration.currentResources.AddObject("ConfigMap",
@@ -940,9 +951,20 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 				Namespace: migration.currentResources.Deployment.Namespace,
 			}, configMap)
 			if err != nil {
-				return onCCGetError(err, "ConfigMap",
-					source.ConfigMapRef.Name,
-					migration.currentResources.Deployment.Namespace)
+				if kerrors.IsNotFound(err) {
+					migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+						Kind: "Deployment",
+						Name: migration.currentResources.Deployment.Name,
+						Field: fmt.Sprintf("spec.template.spec.containers.%s.envFrom",
+							migration.currentResources.Deployment.Spec.
+								Template.Spec.Containers[migration.containerIndex].Name),
+						Warning: err.Error(),
+					})
+				} else {
+					return onCCGetError(err, "ConfigMap",
+						source.ConfigMapRef.Name,
+						migration.currentResources.Deployment.Namespace)
+				}
 			}
 
 			if err := migration.currentResources.AddObject("ConfigMap", source.ConfigMapRef.Name, configMap); err != nil {

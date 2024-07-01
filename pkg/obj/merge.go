@@ -2,11 +2,8 @@ package obj
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 
-	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
@@ -28,7 +25,8 @@ func NewSerializer(scheme *runtime.Scheme) runtime.Serializer {
 func Merge[T runtime.Object](patch runtime.Object,
 	object runtime.Object,
 	result T,
-	serializer runtime.Serializer) (T, error) {
+	serializer runtime.Serializer,
+) (T, error) {
 	var empty T
 
 	var srcB bytes.Buffer
@@ -99,46 +97,4 @@ func convert[T any](obj any) (T, error) {
 		return empty, fmt.Errorf("expected output to have type %T, it had type %T", empty, obj)
 	}
 	return objT, nil
-}
-
-// nolint:lll
-// MergeProjectEnv merges a ProjEnvCapsuleBase into a CapsuleSpec and returns a new object with the merged result
-// It uses StrategicMergePatch (https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
-func MergeProjectEnv(patch *platformv1.ProjEnvCapsuleBase, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
-	return mergeCapsuleSpec(patch, into)
-}
-
-// nolint:lll
-// MergeCapsuleSpec merges a CapsuleSpec into another CapsuleSpec and returns a new object with the merged result
-// It uses StrategicMergePatch (https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)
-func MergeCapsuleSpecs(patch, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
-	return mergeCapsuleSpec(patch, into)
-}
-
-func mergeCapsuleSpec(patch any, into *platformv1.CapsuleSpec) (*platformv1.CapsuleSpec, error) {
-	// It would be possible to do much faster merging by manualling overwriting protobuf fields.
-	// This is tedius to maintain so until it becomes an issue, we use json marshalling to leverage StrategicMergePatch
-	patchBytes, err := json.Marshal(patch)
-	if err != nil {
-		return nil, err
-	}
-
-	intoBytes, err := json.Marshal(into)
-	if err != nil {
-		return nil, err
-	}
-
-	outBytes, err := strategicpatch.StrategicMergePatch(intoBytes, patchBytes, &v1.CapsuleSpec{})
-	if err != nil {
-		return nil, err
-	}
-
-	out := &platformv1.CapsuleSpec{}
-	if err := json.Unmarshal(outBytes, out); err != nil {
-		return nil, err
-	}
-	out.Kind = into.GetKind()
-	out.ApiVersion = into.GetApiVersion()
-
-	return out, nil
 }
