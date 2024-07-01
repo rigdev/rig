@@ -90,7 +90,7 @@ func Test_Apply(t *testing.T) {
 			},
 			Changes: []Change{
 				{
-					FieldPath: "$.env.direct.key1",
+					FieldPath: "$.env.raw.key1",
 					To: Value{
 						AsString: "value2",
 					},
