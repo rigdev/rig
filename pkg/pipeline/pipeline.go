@@ -100,7 +100,7 @@ func (p *CapsulePipeline) RunCapsule(
 	opts ...CapsuleRequestOption,
 ) (*Result, error) {
 	req := newCapsuleRequest(p, capsule, client, p.vm, opts...)
-	pipelineOptions := PipelineOptions{
+	pipelineOptions := Options{
 		AdditionalObjects: req.additionalObjects,
 	}
 	return ExecuteRequest(ctx, req, p.steps, true, pipelineOptions)
@@ -114,7 +114,7 @@ func (p *CapsulePipeline) DeleteCapsule(
 ) (*Result, error) {
 	req := newCapsuleRequest(p, capsule, client, p.vm, opts...)
 	// Delete capsule by running without steps.
-	pipelineOptions := PipelineOptions{
+	pipelineOptions := Options{
 		AdditionalObjects: req.additionalObjects,
 	}
 
@@ -144,7 +144,7 @@ func ExecuteRequest[T Request](
 	req ExecutableRequest[T],
 	steps []Step[T],
 	commit bool,
-	opts PipelineOptions,
+	opts Options,
 ) (*Result, error) {
 	result, err := executeRequestInner(ctx, req, steps, commit, opts)
 	if errors.IsFailedPrecondition(err) {
@@ -166,7 +166,7 @@ func executeRequestInner[T Request](
 	ctx context.Context,
 	req ExecutableRequest[T], steps []Step[T],
 	commit bool,
-	opts PipelineOptions,
+	opts Options,
 ) (*Result, error) {
 	if err := req.GetBase().Strategies.LoadExistingObjects(ctx); err != nil {
 		return nil, err

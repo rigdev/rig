@@ -12,12 +12,12 @@ type ObjectStatusCallback interface {
 	UpdateStatus(namespace string, capsule string, pluginID uuid.UUID, change *apiplugin.ObjectStatusChange)
 }
 
-type PipelineOptions struct {
+type Options struct {
 	AdditionalObjects []client.Object
 }
 
 type Step[T Request] interface {
-	Apply(ctx context.Context, req T, opts PipelineOptions) error
+	Apply(ctx context.Context, req T, opts Options) error
 	WatchObjectStatus(ctx context.Context, namespace, capsule string, callback ObjectStatusCallback) error
 	PluginIDs() []uuid.UUID
 }

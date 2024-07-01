@@ -171,7 +171,7 @@ func (p *pluginExecutor) Stop(context.Context) {
 	}
 }
 
-func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.PipelineOptions) error {
+func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.Options) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	return p.pluginClient.Run(ctx, req, opts)
@@ -238,7 +238,7 @@ func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, tag string,
 	return err
 }
 
-func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.PipelineOptions) error {
+func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.Options) error {
 	reqServer := &requestServer{req: req}
 	capsuleBytes, err := obj.Encode(req.Capsule(), req.Scheme())
 	if err != nil {

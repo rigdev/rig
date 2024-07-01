@@ -34,7 +34,7 @@ func makeGlobs(strings []string) ([]glob.Glob, error) {
 	return res, nil
 }
 
-func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.PipelineOptions) error {
+func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.Options) error {
 	c := req.Capsule()
 	if !s.matcher.Match(c.Namespace, c.Name, c.Annotations) {
 		return nil
