@@ -56,6 +56,15 @@ type object struct {
 }
 
 func (r *reader) AddObject(obj client.Object) error {
+	if obj.GetObjectKind().GroupVersionKind().Empty() {
+		gvk, err := apiutil.GVKForObject(obj, r.scheme)
+		if err != nil {
+			return err
+		}
+
+		obj.GetObjectKind().SetGroupVersionKind(gvk)
+	}
+
 	bs, err := gojson.Marshal(obj)
 	if err != nil {
 		return err

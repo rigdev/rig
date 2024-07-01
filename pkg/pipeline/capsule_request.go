@@ -52,8 +52,9 @@ type CapsuleRequest interface {
 
 type capsuleRequest struct {
 	RequestBase
-	capsule       *v1alpha2.Capsule
-	usedResources []v1alpha2.UsedResource
+	capsule           *v1alpha2.Capsule
+	usedResources     []v1alpha2.UsedResource
+	additionalObjects []client.Object
 }
 
 type CapsuleRequestOption interface {
@@ -82,6 +83,8 @@ func (w withAdditionalResources) apply(r *capsuleRequest) {
 		if err := reader.AddObject(proposal); err != nil {
 			continue
 		}
+
+		r.additionalObjects = append(r.additionalObjects, proposal)
 	}
 
 	r.reader = roclient.NewLayeredReader(r.reader, reader)

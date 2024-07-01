@@ -171,10 +171,10 @@ func (p *pluginExecutor) Stop(context.Context) {
 	}
 }
 
-func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest) error {
+func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.Options) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	return p.pluginClient.Run(ctx, req)
+	return p.pluginClient.Run(ctx, req, opts)
 }
 
 func (p *pluginExecutor) WatchObjectStatus(
@@ -238,7 +238,7 @@ func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, tag string,
 	return err
 }
 
-func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest) error {
+func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.Options) error {
 	reqServer := &requestServer{req: req}
 	capsuleBytes, err := obj.Encode(req.Capsule(), req.Scheme())
 	if err != nil {
@@ -258,9 +258,19 @@ func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest) err
 	s := <-c
 	defer s.Stop()
 
+	var additionalObjects [][]byte
+	for _, ao := range opts.AdditionalObjects {
+		bs, err := obj.Encode(ao, req.Scheme())
+		if err != nil {
+			return err
+		}
+		additionalObjects = append(additionalObjects, bs)
+	}
+
 	_, err = m.client.RunCapsule(ctx, &apiplugin.RunCapsuleRequest{
-		RunServer:     brokerID,
-		CapsuleObject: capsuleBytes,
+		RunServer:         brokerID,
+		CapsuleObject:     capsuleBytes,
+		AdditionalObjects: additionalObjects,
 	})
 
 	return err

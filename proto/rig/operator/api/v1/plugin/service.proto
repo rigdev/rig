@@ -55,6 +55,7 @@ message InitializeResponse {}
 message RunCapsuleRequest {
   uint32 run_server = 1;
   bytes capsule_object = 2;
+  repeated bytes additional_objects = 3;
 }
 message RunCapsuleResponse {}
 

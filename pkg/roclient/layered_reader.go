@@ -3,12 +3,14 @@ package roclient
 import (
 	"context"
 	gojson "encoding/json"
+	"strings"
 
 	"github.com/rigdev/rig/pkg/scheme"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 type LayeredReader struct {
@@ -22,7 +24,8 @@ func NewLayeredReader(rs ...client.Reader) client.Reader {
 func (r *LayeredReader) Get(ctx context.Context,
 	key client.ObjectKey,
 	obj client.Object,
-	opts ...client.GetOption) error {
+	opts ...client.GetOption,
+) error {
 	for _, reader := range r.readers {
 		if err := reader.Get(ctx, key, obj, opts...); err == nil {
 			return nil
@@ -36,57 +39,38 @@ func (r *LayeredReader) List(ctx context.Context, list client.ObjectList, opts .
 	objs := []client.Object{}
 	scheme := scheme.New()
 
-	s := json.NewSerializerWithOptions(
-		json.DefaultMetaFactory,
-		scheme,
-		scheme,
-		json.SerializerOptions{
-			Yaml:   true,
-			Pretty: true,
-		},
-	)
+	listGvk, err := apiutil.GVKForObject(list, scheme)
+	if err != nil {
+		return err
+	}
+
+	objGvk := listGvk
+	objGvk.Kind = strings.TrimSuffix(objGvk.Kind, "List")
 
 	for _, reader := range r.readers {
-		newList := list.DeepCopyObject().(client.ObjectList)
+		newList := &unstructured.UnstructuredList{}
+		newList.GetObjectKind().SetGroupVersionKind(listGvk)
 		if err := reader.List(ctx, newList, opts...); err != nil {
 			return err
 		}
 
-		listBytes, err := gojson.Marshal(newList)
-		if err != nil {
-			return err
-		}
-
-		list := struct {
-			Items []gojson.RawMessage `json:"items"`
-		}{}
-		if err := gojson.Unmarshal(listBytes, &list); err != nil {
-			return err
-		}
-
-		for _, item := range list.Items {
-			ro, gvk, err := s.Decode(item, nil, nil)
-			if err != nil {
-				return err
+		for _, item := range newList.Items {
+			item := &item
+			if item.GetObjectKind().GroupVersionKind().Empty() {
+				item.GetObjectKind().SetGroupVersionKind(objGvk)
 			}
-
-			ro.GetObjectKind().SetGroupVersionKind(*gvk)
-			co := ro.(client.Object)
 
 			found := false
 			for _, o := range objs {
-				if o.GetName() == co.GetName() &&
-					o.GetObjectKind().GroupVersionKind().GroupKind() == co.GetObjectKind().GroupVersionKind().GroupKind() &&
-					o.GetNamespace() == co.GetNamespace() {
+				if o.GetName() == item.GetName() &&
+					o.GetObjectKind().GroupVersionKind().GroupKind() == item.GetObjectKind().GroupVersionKind().GroupKind() &&
+					o.GetNamespace() == item.GetNamespace() {
 					found = true
 					break
 				}
 			}
 			if !found {
-				objs = append(objs, object{
-					Object: co,
-					raw:    item,
-				})
+				objs = append(objs, item)
 			}
 		}
 	}

@@ -157,7 +157,7 @@ func Test_Compare(t *testing.T) {
 				},
 			},
 			Changes: []string{
-				"Removed env.direct.key2",
+				"Removed env.raw.key2",
 			},
 		},
 		{
@@ -176,8 +176,8 @@ func Test_Compare(t *testing.T) {
 				},
 			},
 			Changes: []string{
-				"Removed env.direct.key1",
-				"Removed env.direct.key2",
+				"Removed env.raw.key1",
+				"Removed env.raw.key2",
 			},
 		},
 		{
@@ -198,7 +198,7 @@ func Test_Compare(t *testing.T) {
 				},
 			},
 			Changes: []string{
-				"Added env.direct.key2",
+				"Added env.raw.key2",
 			},
 		},
 		{
@@ -221,9 +221,9 @@ func Test_Compare(t *testing.T) {
 				},
 			},
 			Changes: []string{
-				"Added env.direct.key2",
-				"Added env.direct.key3",
-				"Added env.direct.key4",
+				"Added env.raw.key2",
+				"Added env.raw.key3",
+				"Added env.raw.key4",
 			},
 		},
 		{

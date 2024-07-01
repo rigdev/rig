@@ -4,10 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 type Error struct {
@@ -513,4 +518,37 @@ func New(s string) error {
 
 func Join(errs ...error) error {
 	return errors.Join(errs...)
+}
+
+func FromK8sClient(err error) error {
+	if err == nil {
+		return err
+	}
+
+	str := err.Error()
+
+	switch kerrors.ReasonForError(err) {
+	case metav1.StatusReasonNotFound:
+		return NotFoundErrorf("%v", str)
+	case metav1.StatusReasonAlreadyExists:
+		return AlreadyExistsErrorf("%v", str)
+	case metav1.StatusReasonUnauthorized:
+		return PermissionDeniedErrorf("%v", str)
+	}
+
+	if status, ok := err.(*meta.NoResourceMatchError); ok || errors.As(err, &status) {
+		return NotFoundErrorf("%s", str)
+	}
+
+	if status, ok := err.(*apiutil.ErrResourceDiscoveryFailed); ok || errors.As(err, &status) {
+		for _, e := range status.Unwrap() {
+			return FromK8sClient(e)
+		}
+	}
+
+	if strings.HasPrefix(str, `error upgrading connection: pods "`) && strings.HasSuffix(str, `" not found`) {
+		return NotFoundErrorf("%v", str)
+	}
+
+	return err
 }
