@@ -318,3 +318,112 @@ func Test_Compare(t *testing.T) {
 		})
 	}
 }
+
+func Test_Compare_Exact(t *testing.T) {
+	tests := []struct {
+		Name    string
+		From    *platformv1.CapsuleSpec
+		To      *platformv1.CapsuleSpec
+		Changes []Change
+	}{
+		{
+			Name: "add one environment variable",
+			From: &platformv1.CapsuleSpec{
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{},
+				},
+			},
+			To: &platformv1.CapsuleSpec{
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{
+						"key1": "value1",
+					},
+				},
+			},
+			Changes: []Change{
+				{
+					FieldPath: "$.env.raw.key1",
+					FieldID:   "$.env.raw.key1",
+					To: Value{
+						AsString: "key1: value1\n",
+						Type:     MapType,
+					},
+					Operation: AddedOperation,
+				},
+			},
+		},
+		{
+			Name: "add one additional environment variable",
+			From: &platformv1.CapsuleSpec{
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{
+						"key1": "value1",
+					},
+				},
+			},
+			To: &platformv1.CapsuleSpec{
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{
+						"key1": "value1",
+						"key2": "value2",
+					},
+				},
+			},
+			Changes: []Change{
+				{
+					FieldPath: "$.env.raw.key2",
+					FieldID:   "$.env.raw.key2",
+					To: Value{
+						AsString: "key2: value2\n",
+						Type:     MapType,
+					},
+					Operation: AddedOperation,
+				},
+			},
+		},
+		{
+			Name: "add multiple environment variables",
+			From: &platformv1.CapsuleSpec{
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{},
+				},
+			},
+			To: &platformv1.CapsuleSpec{
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{
+						"key1": "value1",
+						"key2": "value2",
+					},
+				},
+			},
+			Changes: []Change{
+				{
+					FieldPath: "$.env.raw.key1",
+					FieldID:   "$.env.raw.key1",
+					To: Value{
+						AsString: "key1: value1\n",
+						Type:     MapType,
+					},
+					Operation: AddedOperation,
+				},
+				{
+					FieldPath: "$.env.raw.key2",
+					FieldID:   "$.env.raw.key2",
+					To: Value{
+						AsString: "key2: value2\n",
+						Type:     MapType,
+					},
+					Operation: AddedOperation,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			diff, err := Compare(test.From, test.To)
+			require.NoError(t, err)
+			require.Equal(t, test.Changes, diff.Changes)
+		})
+	}
+}

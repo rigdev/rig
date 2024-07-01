@@ -9,11 +9,11 @@ import (
 type Type int
 
 const (
+	NullType     Type = iota
 	DocumentType Type = iota
 	MapType      Type = iota
 	ListType     Type = iota
 	StringType   Type = iota
-	NullType     Type = iota
 	OtherType    Type = iota
 )
 

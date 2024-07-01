@@ -41,7 +41,7 @@ func Compare(from *platformv1.CapsuleSpec, to *platformv1.CapsuleSpec) (*Diff, e
 		for _, det := range d.Details {
 			basePath := d.Path.PathElements
 
-			var paths [][]ytbx.PathElement
+			var paths []nodePath
 
 			var op Operation
 			switch det.Kind {
@@ -65,24 +65,27 @@ func Compare(from *platformv1.CapsuleSpec, to *platformv1.CapsuleSpec) (*Diff, e
 
 			case dyff.MODIFICATION:
 				op = ModifiedOperation
-				paths = [][]ytbx.PathElement{nil}
+				paths = []nodePath{{
+					path: nil,
+					node: det.To,
+				}}
 			}
 
-			for _, p := range paths {
-				path := append(basePath, p...)
+			for _, np := range paths {
+				path := append(basePath, np.path...)
 				fieldPath := "$"
 				fieldID := "$"
-				for _, p := range path {
-					if p.Key != "" {
-						fieldPath += fmt.Sprintf("[@%s=%s]", p.Key, p.Name)
+				for _, pe := range path {
+					if pe.Key != "" {
+						fieldPath += fmt.Sprintf("[@%s=%s]", pe.Key, pe.Name)
 					} else {
-						fieldPath += "." + p.Name
+						fieldPath += "." + pe.Name
 					}
 
-					if p.Key != "" {
-						fieldID += fmt.Sprintf("[@%s=]", p.Key)
+					if pe.Key != "" {
+						fieldID += fmt.Sprintf("[@%s=]", pe.Key)
 					} else {
-						fieldID += "." + p.Name
+						fieldID += "." + pe.Name
 					}
 				}
 
@@ -91,7 +94,7 @@ func Compare(from *platformv1.CapsuleSpec, to *platformv1.CapsuleSpec) (*Diff, e
 					FieldID:   fieldID,
 					Operation: op,
 					From:      GetValue(det.From),
-					To:        GetValue(det.To),
+					To:        GetValue(np.node),
 				})
 			}
 		}
@@ -107,13 +110,20 @@ func Compare(from *platformv1.CapsuleSpec, to *platformv1.CapsuleSpec) (*Diff, e
 	}, nil
 }
 
-func getNodePaths(node *yaml.Node) ([][]ytbx.PathElement, error) {
-	var paths [][]ytbx.PathElement
+type nodePath struct {
+	path        []ytbx.PathElement
+	node        *yaml.Node
+	mapResolved bool
+}
+
+func getNodePaths(node *yaml.Node) ([]nodePath, error) {
+	var paths []nodePath
 
 	ytbx.RestructureObject(node)
 	switch node.Kind {
 	case yaml.SequenceNode:
 		for i, value := range node.Content {
+			fmt.Println("In list", i, value)
 			found := false
 			for _, idKey := range []string{"port", "path", "name"} {
 				altKey, err := ytbx.Grab(&yaml.Node{
@@ -124,20 +134,26 @@ func getNodePaths(node *yaml.Node) ([][]ytbx.PathElement, error) {
 					continue
 				}
 				if altKey != value {
-					paths = append(paths, []ytbx.PathElement{{
-						Idx:  i,
-						Key:  idKey,
-						Name: altKey.Value,
-					}})
+					paths = append(paths, nodePath{
+						path: []ytbx.PathElement{{
+							Idx:  i,
+							Key:  idKey,
+							Name: altKey.Value,
+						}},
+						node: value,
+					})
 					found = true
 					break
 				}
 			}
 			if !found {
-				paths = append(paths, []ytbx.PathElement{{
-					Idx:  i,
-					Name: value.Value,
-				}})
+				paths = append(paths, nodePath{
+					path: []ytbx.PathElement{{
+						Idx:  i,
+						Name: value.Value,
+					}},
+					node: value,
+				})
 			}
 		}
 
@@ -176,15 +192,32 @@ func getNodePaths(node *yaml.Node) ([][]ytbx.PathElement, error) {
 					return nil, err
 				}
 				for _, sub := range subNodePaths {
-					paths = append(paths, append([]ytbx.PathElement{keyPath}, sub...))
+					mapPair := *sub.node
+					if !sub.mapResolved {
+						mapPair = *node
+					}
+					paths = append(paths, nodePath{
+						path:        append([]ytbx.PathElement{keyPath}, sub.path...),
+						node:        &mapPair,
+						mapResolved: true,
+					})
 				}
 			} else {
-				paths = append(paths, []ytbx.PathElement{keyPath})
+				mapPair := *node
+				mapPair.Content = mapPair.Content[i*2 : i*2+2]
+				paths = append(paths, nodePath{
+					path:        []ytbx.PathElement{keyPath},
+					node:        &mapPair,
+					mapResolved: true,
+				})
 			}
 		}
 
 	default:
-		paths = append(paths, []ytbx.PathElement{{}})
+		paths = append(paths, nodePath{
+			path: []ytbx.PathElement{},
+			node: node,
+		})
 	}
 
 	return paths, nil
