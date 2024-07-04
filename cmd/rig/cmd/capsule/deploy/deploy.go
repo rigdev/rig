@@ -90,7 +90,9 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 			CapsuleId:     capsuleName,
 		}),
 	)
-	if err != nil {
+	if errors.IsUnimplemented(err) {
+		respGit = &connect.Response[capsule.GetEffectiveGitSettingsResponse]{}
+	} else if err != nil {
 		return err
 	}
 	if respGit.Msg.GetEnvironmentEnabled() && prBranchName != "" {
