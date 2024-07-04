@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig-go-api/v1alpha2"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
@@ -295,4 +296,273 @@ func Test_conversion_both_ways(t *testing.T) {
 	config, err = CapsuleSpecToRolloutConfig(spec2)
 	require.NoError(t, err)
 	require.Equal(t, rolloutConfig, config)
+}
+
+func Test_mergeCapsuleSpec(t *testing.T) {
+	tests := []struct {
+		name     string
+		patch    any
+		into     *platformv1.CapsuleSpec
+		expected *platformv1.CapsuleSpec
+	}{
+		{
+			name:  "empty projEnv base",
+			patch: &platformv1.ProjEnvCapsuleBase{},
+			into: &platformv1.CapsuleSpec{
+				Kind:       "CapsuleSpec",
+				ApiVersion: "v1",
+			},
+			expected: &platformv1.CapsuleSpec{
+				Kind:       "CapsuleSpec",
+				ApiVersion: "v1",
+			},
+		},
+		{
+			name: "projEnv config files",
+			patch: &platformv1.ProjEnvCapsuleBase{
+				Files: []*platformv1.File{{
+					Path:  "some-path",
+					Bytes: []byte{1, 2, 3},
+				}},
+			},
+			into: &platformv1.CapsuleSpec{
+				Kind:       "CapsuleSpec",
+				ApiVersion: "v1",
+				Files: []*platformv1.File{
+					{
+						Path:  "some-path",
+						Bytes: []byte{5, 6, 7},
+					},
+					{
+						Path:  "some-path2",
+						Bytes: []byte{1, 2, 3, 4},
+					},
+				},
+			},
+			expected: &platformv1.CapsuleSpec{
+				Kind:       "CapsuleSpec",
+				ApiVersion: "v1",
+				Files: []*platformv1.File{
+					{
+						Path:  "some-path",
+						Bytes: []byte{1, 2, 3},
+					},
+					{
+						Path:  "some-path2",
+						Bytes: []byte{1, 2, 3, 4},
+					},
+				},
+			},
+		},
+		{
+			name: "projEnv has env vars",
+			patch: &platformv1.ProjEnvCapsuleBase{
+				Files: []*platformv1.File{},
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{
+						"key1": "value1",
+						"key2": "value2",
+					},
+				},
+			},
+			into: &platformv1.CapsuleSpec{
+				Kind:       "CapsuleSpec",
+				ApiVersion: "v1",
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{
+						"key1": "other-value",
+						"key3": "value3",
+					},
+				},
+			},
+			expected: &platformv1.CapsuleSpec{
+				Kind:       "CapsuleSpec",
+				ApiVersion: "v1",
+				Env: &platformv1.EnvironmentVariables{
+					Raw: map[string]string{
+						"key1": "value1",
+						"key2": "value2",
+						"key3": "value3",
+					},
+				},
+			},
+		},
+		{
+			name:  "empty capsule patch",
+			patch: &platformv1.CapsuleSpec{},
+			into: &platformv1.CapsuleSpec{
+				Kind:       "CapsuleSpec",
+				ApiVersion: "v1",
+				Image:      "image",
+				Args:       []string{"arg"},
+			},
+			expected: &platformv1.CapsuleSpec{
+				Kind:       "CapsuleSpec",
+				ApiVersion: "v1",
+				Image:      "image",
+				Args:       []string{"arg"},
+			},
+		},
+		{
+			name: "capsule patch with simple values",
+			patch: &platformv1.CapsuleSpec{
+				Image:       "image",
+				Command:     "command",
+				Args:        []string{"arg1", "arg2"},
+				Annotations: map[string]string{"key2": "value2"},
+			},
+			into: &platformv1.CapsuleSpec{
+				Kind:        "CapsuleSpec",
+				ApiVersion:  "v1",
+				Image:       "otherimage",
+				Command:     "othercommand",
+				Args:        []string{"otherarg"},
+				Annotations: map[string]string{"key3": "value3"},
+			},
+			expected: &platformv1.CapsuleSpec{
+				Kind:        "CapsuleSpec",
+				ApiVersion:  "v1",
+				Image:       "image",
+				Command:     "command",
+				Args:        []string{"arg1", "arg2"},
+				Annotations: map[string]string{"key2": "value2", "key3": "value3"},
+			},
+		},
+		{
+			name: "interface patch",
+			patch: &platformv1.CapsuleSpec{
+				Interfaces: []*v1alpha2.CapsuleInterface{
+					{
+						Name: "interface1",
+						Port: 1001,
+						Liveness: &v1alpha2.InterfaceProbe{
+							Path: "some-path",
+							Tcp:  true,
+						},
+					},
+					{
+						Name: "interface2",
+						Port: 1002,
+					},
+				},
+			},
+			into: &platformv1.CapsuleSpec{
+				Interfaces: []*v1alpha2.CapsuleInterface{
+					{
+						Name: "interface1",
+						Port: 1001,
+						Readiness: &v1alpha2.InterfaceProbe{
+							Path: "other-path",
+							Tcp:  true,
+						},
+					},
+					{
+						Name: "interface3",
+						Port: 1003,
+					},
+				},
+			},
+			expected: &platformv1.CapsuleSpec{
+				Interfaces: []*v1alpha2.CapsuleInterface{
+					{
+						Name: "interface1",
+						Port: 1001,
+						Liveness: &v1alpha2.InterfaceProbe{
+							Path: "some-path",
+							Tcp:  true,
+						},
+						Readiness: &v1alpha2.InterfaceProbe{
+							Path: "other-path",
+							Tcp:  true,
+						},
+					},
+					{
+						Name: "interface2",
+						Port: 1002,
+					},
+					{
+						Name: "interface3",
+						Port: 1003,
+					},
+				},
+			},
+		},
+		{
+			name: "scale patch",
+			patch: &platformv1.CapsuleSpec{
+				Scale: &platformv1.Scale{
+					Horizontal: &platformv1.HorizontalScale{
+						Min: 2,
+						Max: 4,
+						CustomMetrics: []*v1alpha2.CustomMetric{
+							{
+								InstanceMetric: &v1alpha2.InstanceMetric{
+									MetricName:   "some-metric",
+									AverageValue: "1",
+								},
+							},
+						},
+					},
+					Vertical: &v1alpha2.VerticalScale{
+						Cpu: &v1alpha2.ResourceLimits{
+							Request: "1",
+						},
+					},
+				},
+			},
+			into: &platformv1.CapsuleSpec{
+				Scale: &platformv1.Scale{
+					Horizontal: &platformv1.HorizontalScale{
+						Min: 1,
+						Max: 1,
+						CustomMetrics: []*v1alpha2.CustomMetric{
+							{
+								InstanceMetric: &v1alpha2.InstanceMetric{
+									MetricName:   "some-other-metric",
+									AverageValue: "2",
+								},
+							},
+						},
+					},
+					Vertical: &v1alpha2.VerticalScale{
+						Memory: &v1alpha2.ResourceLimits{
+							Request: "100M",
+						},
+					},
+				},
+			},
+			expected: &platformv1.CapsuleSpec{
+				Scale: &platformv1.Scale{
+					Horizontal: &platformv1.HorizontalScale{
+						Min: 2,
+						Max: 4,
+						CustomMetrics: []*v1alpha2.CustomMetric{
+							{
+								InstanceMetric: &v1alpha2.InstanceMetric{
+									MetricName:   "some-metric",
+									AverageValue: "1",
+								},
+							},
+						},
+					},
+					Vertical: &v1alpha2.VerticalScale{
+						Cpu: &v1alpha2.ResourceLimits{
+							Request: "1",
+						},
+						Memory: &v1alpha2.ResourceLimits{
+							Request: "100M",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := mergeCapsuleSpec(tt.patch, tt.into)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, res)
+		})
+	}
 }

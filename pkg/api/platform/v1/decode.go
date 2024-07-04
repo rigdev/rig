@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 func YAMLToCapsuleSpecProto(bytes []byte) (*platformv1.CapsuleSpec, error) {
@@ -23,12 +23,12 @@ func YAMLToCapsuleProto(bytes []byte) (*platformv1.Capsule, error) {
 	return spec, nil
 }
 
-func YAMLToSpecProto[T interface{ GetKind() string }](bytes []byte, obj T, expectedKind string) error {
-	if err := yaml.Unmarshal(bytes, obj); err != nil {
+func YAMLToSpecProto[T interface{ GetKind() string }](bs []byte, o T, expectedKind string) error {
+	if err := yaml.Unmarshal(bs, o, yaml.DisallowUnknownFields); err != nil {
 		return err
 	}
-	if obj.GetKind() != "" && obj.GetKind() != expectedKind {
-		return fmt.Errorf("kind was %s, not the expected %s", obj.GetKind(), expectedKind)
+	if o.GetKind() != "" && o.GetKind() != expectedKind {
+		return fmt.Errorf("kind was %s, not the expected %s", o.GetKind(), expectedKind)
 	}
 	return nil
 }

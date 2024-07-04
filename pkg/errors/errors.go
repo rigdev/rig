@@ -534,6 +534,10 @@ func FromK8sClient(err error) error {
 		return AlreadyExistsErrorf("%v", str)
 	case metav1.StatusReasonUnauthorized:
 		return PermissionDeniedErrorf("%v", str)
+	case metav1.StatusReasonConflict:
+		return AbortedErrorf("%v", str)
+	case metav1.StatusReasonInvalid:
+		return InvalidArgumentErrorf("%v", str)
 	}
 
 	if status, ok := err.(*meta.NoResourceMatchError); ok || errors.As(err, &status) {
@@ -544,6 +548,10 @@ func FromK8sClient(err error) error {
 		for _, e := range status.Unwrap() {
 			return FromK8sClient(e)
 		}
+	}
+
+	if strings.HasPrefix(str, `namespaces "`) && strings.HasSuffix(str, `" not found`) {
+		return FailedPreconditionErrorf("%v", str)
 	}
 
 	if strings.HasPrefix(str, `error upgrading connection: pods "`) && strings.HasSuffix(str, `" not found`) {

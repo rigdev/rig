@@ -342,16 +342,16 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 
 		if cObj.Current == nil {
 			materializedObj := cObj.New.DeepCopyObject().(client.Object)
-			if err := r.client.Create(ctx, materializedObj, client.DryRunAll); kerrors.IsConflict(err) {
+			if err := errors.FromK8sClient(r.client.Create(ctx, materializedObj, client.DryRunAll)); errors.IsAborted(err) {
 				return nil, errors.FailedPreconditionErrorf("new object version available for '%v'", key)
-			} else if kerrors.IsAlreadyExists(err) || kerrors.IsInvalid(err) {
+			} else if errors.IsAlreadyExists(err) || errors.IsInvalidArgument(err) {
 				o, newErr := r.scheme.New(key.GroupVersionKind)
 				if newErr != nil {
 					return nil, err
 				}
 
 				co := o.(client.Object)
-				if getErr := r.client.Get(ctx, key.ObjectKey, co); kerrors.IsNotFound(getErr) {
+				if getErr := errors.FromK8sClient(r.client.Get(ctx, key.ObjectKey, co)); errors.IsNotFound(getErr) {
 					r.logger.Info("configuration is invalid", "object", key, "error", err)
 					return nil, err
 				} else if getErr != nil {
@@ -367,6 +367,8 @@ func (r *RequestBase) Commit(ctx context.Context) (map[ObjectKey]*Change, error)
 				r.logger.Info("create object skipped, not owned by controller", "object", key)
 				changes[key] = &Change{state: ResourceStateAlreadyExists}
 				continue
+			} else if errors.IsFailedPrecondition(err) {
+				return nil, errors.InvalidArgumentErrorf("invalid create config: %s", errors.MessageOf(err))
 			} else if err != nil {
 				return nil, fmt.Errorf("could not render create to %s: %w", key, err)
 			}

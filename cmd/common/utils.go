@@ -87,11 +87,11 @@ func ValidateEmail(input string) error {
 }
 
 func ValidateSystemName(input string) error {
-	if l := len(input); l < 3 || l > 63 {
-		return errors.InvalidArgumentErrorf("must be between 3 and 63 characters long")
+	if l := len(input); l < 1 || l > 63 {
+		return errors.InvalidArgumentErrorf("must be between 1 and 63 characters long")
 	}
 
-	if !regexp.MustCompile(`^[a-z][a-z0-9-]+[a-z0-9]$`).MatchString(input) {
+	if !regexp.MustCompile(`^[a-z][a-z0-9-]+$`).MatchString(input) {
 		return errors.InvalidArgumentErrorf("invalid name; can only contain a-z, 0-9 and '-'")
 	}
 
