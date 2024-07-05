@@ -4,6 +4,7 @@ package api.v1.project;
 
 import "api/v1/project/project.proto";
 import "model/common.proto";
+import "model/git.proto";
 import "model/metrics.proto";
 
 // The service to manage your projects.
@@ -26,6 +27,8 @@ service Service {
   // Returns all metrics of a given custom object.
   rpc GetCustomObjectMetrics(GetCustomObjectMetricsRequest)
       returns (GetCustomObjectMetricsResponse) {}
+  rpc GetEffectiveGitSettings(GetEffectiveGitSettingsRequest)
+      returns (GetEffectiveGitSettingsResponse) {}
 }
 
 // The request to create a project.
@@ -145,4 +148,12 @@ message GetObjectsByKindRequest {
 message GetObjectsByKindResponse {
   // The objects of the given kind.
   repeated KubernetesObject objects = 1;
+}
+
+message GetEffectiveGitSettingsRequest {
+  string project_id = 1;
+}
+
+message GetEffectiveGitSettingsResponse {
+  model.GitStore git = 1;
 }
