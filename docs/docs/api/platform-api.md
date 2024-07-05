@@ -194,6 +194,7 @@
 | /api.v1.project.Service/PublicKey | [PublicKeyRequest](#api-v1-project-PublicKeyRequest) | [PublicKeyResponse](#api-v1-project-PublicKeyResponse) | Get public key. |
 | /api.v1.project.Service/GetObjectsByKind | [GetObjectsByKindRequest](#api-v1-project-GetObjectsByKindRequest) | [GetObjectsByKindResponse](#api-v1-project-GetObjectsByKindResponse) | Returns all objects of a given kind. |
 | /api.v1.project.Service/GetCustomObjectMetrics | [GetCustomObjectMetricsRequest](#api-v1-project-GetCustomObjectMetricsRequest) | [GetCustomObjectMetricsResponse](#api-v1-project-GetCustomObjectMetricsResponse) | Returns all metrics of a given custom object. |
+| /api.v1.project.Service/GetEffectiveGitSettings | [GetEffectiveGitSettingsRequest](#api-v1-project-GetEffectiveGitSettingsRequest) | [GetEffectiveGitSettingsResponse](#api-v1-project-GetEffectiveGitSettingsResponse) |  |
 
 
 
@@ -7717,6 +7718,36 @@ Response for getting custom metrics for a project and environment.
 | metrics | [model.Metric](#model-Metric) | repeated | The metrics for the given object. |
 | project_id | [string](#string) |  | The project the metrics are for. |
 | environment_id | [string](#string) |  | The environment the metrics are for. |
+
+
+
+
+
+
+<a name="api-v1-project-GetEffectiveGitSettingsRequest"></a>
+
+### GetEffectiveGitSettingsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-project-GetEffectiveGitSettingsResponse"></a>
+
+### GetEffectiveGitSettingsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| git | [model.GitStore](#model-GitStore) |  |  |
 
 
 
