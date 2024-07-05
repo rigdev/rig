@@ -32,6 +32,15 @@ func NewService(scheme *runtime.Scheme, filePaths ...string) (Service, error) {
 		build()
 }
 
+func NewServiceWithContent(scheme *runtime.Scheme, content string) (Service, error) {
+	decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+	return newServiceBuilder().
+		withDecoder(decoder).
+		withContents(content).
+		withSerializer(obj.NewSerializer(scheme)).
+		build()
+}
+
 func NewServiceFromConfigs(op *v1alpha1.OperatorConfig, platform *v1alpha1.PlatformConfig) Service {
 	return &service{
 		oCFG: op,
@@ -58,6 +67,7 @@ type serviceBuilder struct {
 	decoder    runtime.Decoder
 	serializer runtime.Serializer
 	filePaths  []string
+	content    string
 }
 
 func newServiceBuilder() *serviceBuilder {
@@ -77,6 +87,11 @@ func (b *serviceBuilder) withFiles(filePaths ...string) *serviceBuilder {
 	return b
 }
 
+func (b *serviceBuilder) withContents(content string) *serviceBuilder {
+	b.content = content
+	return b
+}
+
 func (b *serviceBuilder) withSerializer(serializer runtime.Serializer) *serviceBuilder {
 	b.serializer = serializer
 	return b
@@ -93,6 +108,13 @@ func (b *serviceBuilder) build() (*service, error) {
 			return nil, err
 		}
 	}
+
+	if b.content != "" {
+		if err := b.decode([]byte(b.content)); err != nil {
+			return nil, err
+		}
+	}
+
 	var oCFGFromEnv v1alpha1.OperatorConfig
 	if err := getCFGFromEnv(&oCFGFromEnv); err != nil {
 		return nil, err

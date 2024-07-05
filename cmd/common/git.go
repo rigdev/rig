@@ -1,11 +1,140 @@
 package common
 
 import (
+	"context"
+	"fmt"
+	"strings"
+
+	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/model"
+	"github.com/rigdev/rig-go-sdk"
+	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/proto"
 )
+
+type GitFlags struct {
+	Repository     string
+	Branch         string
+	CapsulePath    string
+	CommitTemplate string
+	Environments   string
+	Disable        bool
+	Enable         bool
+}
+
+var (
+	capsulePathDefault    = "{{ .Project }}/{{ .Capsule }}/{{ .Environment}}.yaml"
+	commitTemplateDefault = "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"
+)
+
+func (g *GitFlags) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&g.Repository, "repository", "", "URL to the git repository to use.")
+	cmd.Flags().StringVar(&g.Branch, "branch", "", "The branch of the git repository to use.")
+	cmd.Flags().StringVar(&g.CapsulePath, "capsule-path",
+		capsulePathDefault,
+		"The templated path to the file containing the capsule spec.",
+	)
+	cmd.Flags().StringVar(&g.CommitTemplate, "commit-template",
+		commitTemplateDefault, "The commit template when Rig creates commits on behalf of a user.",
+	)
+	cmd.Flags().StringVar(&g.Environments, "environments", "",
+		"The environment filter to use. Can be one of 'all', 'all+ephem' or a comma separated list of env names.",
+	)
+	cmd.Flags().BoolVar(&g.Disable, "disable", false, "disable git store")
+}
+
+func (g *GitFlags) FeedStore(store *model.GitStore) {
+	updated := false
+	if g.Repository != "" {
+		store.Repository = g.Repository
+		updated = true
+	}
+	if g.Branch != "" {
+		store.Branch = g.Branch
+		updated = true
+	}
+	if g.CapsulePath != "" {
+		if g.CapsulePath != capsulePathDefault || store.CapsulePath == "" {
+			store.CapsulePath = g.CapsulePath
+			updated = true
+		}
+	}
+	if g.CommitTemplate != "" {
+		if g.CommitTemplate != commitTemplateDefault || store.CommitTemplate == "" {
+			store.CommitTemplate = g.CommitTemplate
+			updated = true
+		}
+	}
+	if g.Environments != "" {
+		store.Environments = ParseEnvironmentFilter(g.Environments)
+		updated = true
+	}
+	if g.Disable {
+		store.Disabled = g.Disable
+	} else if updated {
+		store.Disabled = false
+	}
+}
+
+func UpdateGit(
+	ctx context.Context, rig rig.Client, flags GitFlags, isInteractive bool, prompter Prompter, gitStore *model.GitStore,
+) (*model.GitStore, error) {
+	flags.FeedStore(gitStore)
+	var missing string
+	if gitStore.GetRepository() == "" {
+		missing = "--repository"
+	} else if gitStore.GetBranch() == "" {
+		missing = "--branch"
+	} else if gitStore.GetEnvironments() == nil {
+		missing = "--environments"
+	}
+
+	if isInteractive {
+		if missing != "" {
+			return nil, fmt.Errorf("%s must be given", missing)
+		}
+	} else if missing != "" {
+		envResp, err := rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{}))
+		if err != nil {
+			return nil, err
+		}
+		if gitStore, err = PromptGitStore(prompter, gitStore, envResp.Msg.GetEnvironments()); err != nil {
+			return nil, err
+		}
+	}
+	return gitStore, nil
+}
+
+func ParseEnvironmentFilter(envString string) *model.EnvironmentFilter {
+	switch envString {
+	case "all":
+		return &model.EnvironmentFilter{
+			Filter: &model.EnvironmentFilter_All_{
+				All: &model.EnvironmentFilter_All{
+					IncludeEphemeral: false,
+				},
+			},
+		}
+	case "all+ephem":
+		return &model.EnvironmentFilter{
+			Filter: &model.EnvironmentFilter_All_{
+				All: &model.EnvironmentFilter_All{
+					IncludeEphemeral: true,
+				},
+			},
+		}
+	default:
+		return &model.EnvironmentFilter{
+			Filter: &model.EnvironmentFilter_Selected_{
+				Selected: &model.EnvironmentFilter_Selected{
+					EnvironmentIds: strings.Split(envString, ","),
+				},
+			},
+		}
+	}
+}
 
 func PromptGitStore(
 	prompter Prompter,

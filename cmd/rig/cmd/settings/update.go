@@ -3,6 +3,7 @@ package settings
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
@@ -96,5 +97,35 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	}
 
 	cmd.Println("Settings updated")
+	return nil
+}
+
+func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error {
+	resp, err := c.Rig.Settings().GetSettings(ctx, connect.NewRequest(&settings_api.GetSettingsRequest{}))
+	if err != nil {
+		return err
+	}
+
+	gitStore := resp.Msg.GetSettings().GetGitStore()
+	if gitStore, err = common.UpdateGit(ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore); err != nil {
+		return err
+	}
+
+	if _, err := c.Rig.Settings().UpdateSettings(ctx, connect.NewRequest(&settings_api.UpdateSettingsRequest{
+		Updates: []*settings_api.Update{{
+			Field: &settings_api.Update_SetGitStore{
+				SetGitStore: gitStore,
+			},
+		}},
+	})); err != nil {
+		return err
+	}
+
+	fmt.Println("Updated global git store settings to:")
+	fmt.Println()
+	if err := common.FormatPrint(gitStore, common.OutputTypeYAML); err != nil {
+		return err
+	}
+
 	return nil
 }

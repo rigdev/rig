@@ -180,14 +180,15 @@ var ServiceAccountActionMap = map[string]string{
 }
 
 var ProjectActionMap = map[string]string{
-	projectconnect.ServiceCreateProcedure:                 ActionProjectEdit,
-	projectconnect.ServiceDeleteProcedure:                 ActionProjectEdit,
-	projectconnect.ServiceGetProcedure:                    ActionProjectView,
-	projectconnect.ServiceGetCustomObjectMetricsProcedure: ActionProjectView,
-	projectconnect.ServiceGetObjectsByKindProcedure:       ActionProjectView,
-	projectconnect.ServiceListProcedure:                   ActionProjectView,
-	projectconnect.ServicePublicKeyProcedure:              ActionProjectView,
-	projectconnect.ServiceUpdateProcedure:                 ActionProjectEdit,
+	projectconnect.ServiceCreateProcedure:                  ActionProjectEdit,
+	projectconnect.ServiceDeleteProcedure:                  ActionProjectEdit,
+	projectconnect.ServiceGetProcedure:                     ActionProjectView,
+	projectconnect.ServiceGetCustomObjectMetricsProcedure:  ActionProjectView,
+	projectconnect.ServiceGetObjectsByKindProcedure:        ActionProjectView,
+	projectconnect.ServiceListProcedure:                    ActionProjectView,
+	projectconnect.ServicePublicKeyProcedure:               ActionProjectView,
+	projectconnect.ServiceUpdateProcedure:                  ActionProjectEdit,
+	projectconnect.ServiceGetEffectiveGitSettingsProcedure: ActionProjectEdit,
 }
 
 var ClusterActionMap = map[string]string{

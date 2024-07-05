@@ -35,7 +35,7 @@ func GetClientOptions(scope scope.Scope) ([]rig.Option, error) {
 	return options, nil
 }
 
-func newRigClient(scope scope.Scope) (rig.Client, error) {
+func NewRigClient(scope scope.Scope) (rig.Client, error) {
 	opts, err := GetClientOptions(scope)
 	if err != nil {
 		return nil, err

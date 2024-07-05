@@ -27,6 +27,8 @@ var (
 	current    bool
 )
 
+var gitFlags common.GitFlags
+
 type Cmd struct {
 	fx.In
 
@@ -95,6 +97,15 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		RunE:  cli.CtxWrap(cmd.update),
 	}
 	project.AddCommand(update)
+
+	updateGit := &cobra.Command{
+		Use:   "git",
+		Short: "Update git settings",
+		RunE:  cli.CtxWrap(cmd.updateGit),
+		Args:  cobra.NoArgs,
+	}
+	gitFlags.AddFlags(updateGit)
+	update.AddCommand(updateGit)
 
 	parent.AddCommand(project)
 }

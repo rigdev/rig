@@ -21,6 +21,8 @@ type Cmd struct {
 
 var cmd Cmd
 
+var gitFlags common.GitFlags
+
 func initCmd(c Cmd) {
 	cmd = c
 }
@@ -60,6 +62,15 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Args:  cobra.NoArgs,
 	}
 	settings.AddCommand(update)
+
+	updateGit := &cobra.Command{
+		Use:   "git",
+		Short: "Update git settings",
+		RunE:  cli.CtxWrap(cmd.updateGit),
+		Args:  cobra.NoArgs,
+	}
+	gitFlags.AddFlags(updateGit)
+	update.AddCommand(updateGit)
 
 	parent.AddCommand(settings)
 }
