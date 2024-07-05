@@ -100,14 +100,14 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	return nil
 }
 
-func (c *Cmd) updateGit(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Settings().GetSettings(ctx, connect.NewRequest(&settings_api.GetSettingsRequest{}))
 	if err != nil {
 		return err
 	}
 
 	gitStore := resp.Msg.GetSettings().GetGitStore()
-	if err := common.UpdateGit(ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore); err != nil {
+	if gitStore, err = common.UpdateGit(ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore); err != nil {
 		return err
 	}
 
@@ -121,7 +121,8 @@ func (c *Cmd) updateGit(ctx context.Context, cmd *cobra.Command, _ []string) err
 		return err
 	}
 
-	fmt.Println("Updated global git store settings to:\n")
+	fmt.Println("Updated global git store settings to:")
+	fmt.Println()
 	if err := common.FormatPrint(gitStore, common.OutputTypeYAML); err != nil {
 		return err
 	}

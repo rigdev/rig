@@ -156,15 +156,17 @@ func (c *Cmd) updateNotifiers(ctx context.Context, p *project.NotificationNotifi
 
 func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error {
 	gitStore := &model.GitStore{}
-	if resp, err := c.Rig.Project().GetEffectiveGitSettings(ctx, connect.NewRequest(&project.GetEffectiveGitSettingsRequest{
-		ProjectId: flags.GetProject(c.Scope),
-	})); errors.IsNotFound(err) {
+	if resp, err := c.Rig.Project().GetEffectiveGitSettings(
+		ctx, connect.NewRequest(&project.GetEffectiveGitSettingsRequest{
+			ProjectId: flags.GetProject(c.Scope),
+		})); errors.IsNotFound(err) {
 	} else if err != nil {
 		return err
 	} else {
 		gitStore = resp.Msg.GetGit()
 	}
-	if err := common.UpdateGit(ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore); err != nil {
+	var err error
+	if gitStore, err = common.UpdateGit(ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore); err != nil {
 		return err
 	}
 
@@ -175,7 +177,8 @@ func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error
 		return err
 	}
 
-	fmt.Println("Updated project git store settings to:\n")
+	fmt.Println("Updated project git store settings to:")
+	fmt.Println()
 	if err := common.FormatPrint(gitStore, common.OutputTypeYAML); err != nil {
 		return err
 	}

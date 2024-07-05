@@ -78,7 +78,9 @@ func (g *GitFlags) FeedStore(store *model.GitStore) {
 	}
 }
 
-func UpdateGit(ctx context.Context, rig rig.Client, flags GitFlags, isInteractive bool, prompter Prompter, gitStore *model.GitStore) error {
+func UpdateGit(
+	ctx context.Context, rig rig.Client, flags GitFlags, isInteractive bool, prompter Prompter, gitStore *model.GitStore,
+) (*model.GitStore, error) {
 	flags.FeedStore(gitStore)
 	var missing string
 	if gitStore.GetRepository() == "" {
@@ -91,18 +93,18 @@ func UpdateGit(ctx context.Context, rig rig.Client, flags GitFlags, isInteractiv
 
 	if isInteractive {
 		if missing != "" {
-			return fmt.Errorf("%s must be given", missing)
+			return nil, fmt.Errorf("%s must be given", missing)
 		}
 	} else if missing != "" {
 		envResp, err := rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{}))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if gitStore, err = PromptGitStore(prompter, gitStore, envResp.Msg.GetEnvironments()); err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return gitStore, nil
 }
 
 func ParseEnvironmentFilter(envString string) *model.EnvironmentFilter {
