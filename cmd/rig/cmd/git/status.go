@@ -43,7 +43,7 @@ func (c *Cmd) status(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	tbl = table.New(
 		"Project", "| Capsule", "| Environment",
-		"| Last Successful Commt", "| Age", "| Last Processed Commit",
+		"| Last Successful Commit", "| Age", "| Last Processed Commit",
 		"| Age", "| Error",
 	)
 	tbl.WithHeaderFormatter(headerFmt)

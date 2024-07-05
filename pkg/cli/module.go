@@ -61,7 +61,7 @@ var StandardSetupContext = NewSetupContext(Module, nil)
 
 var Module = fx.Module(
 	"rig-cli",
-	fx.Provide(newRigClient),
+	fx.Provide(NewRigClient),
 	fx.Provide(auth.NewService),
 	fx.Provide(afero.NewOsFs),
 	fx.Provide(scheme.New),
