@@ -105,7 +105,6 @@ func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error
 	if err != nil {
 		return err
 	}
-
 	gitStore := resp.Msg.GetSettings().GetGitStore()
 	if gitStore, err = common.UpdateGit(ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore); err != nil {
 		return err

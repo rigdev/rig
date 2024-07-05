@@ -81,6 +81,10 @@ func (g *GitFlags) FeedStore(store *model.GitStore) {
 func UpdateGit(
 	ctx context.Context, rig rig.Client, flags GitFlags, isInteractive bool, prompter Prompter, gitStore *model.GitStore,
 ) (*model.GitStore, error) {
+	if gitStore == nil {
+		gitStore = &model.GitStore{}
+	}
+	gitStore = proto.Clone(gitStore).(*model.GitStore)
 	flags.FeedStore(gitStore)
 	var missing string
 	if gitStore.GetRepository() == "" {

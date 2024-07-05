@@ -155,7 +155,7 @@ func (c *Cmd) updateNotifiers(ctx context.Context, p *project.NotificationNotifi
 }
 
 func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error {
-	gitStore := &model.GitStore{}
+	var gitStore *model.GitStore
 	if resp, err := c.Rig.Project().GetEffectiveGitSettings(
 		ctx, connect.NewRequest(&project.GetEffectiveGitSettingsRequest{
 			ProjectId: flags.GetProject(c.Scope),
