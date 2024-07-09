@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"text/scanner"
 	"unicode"
@@ -59,7 +60,7 @@ func (c Change) String() string {
 	return description
 }
 
-// var _namedIndexRegexp = regexp.MustCompile(`^(.*)\[\@(.*)\=(.*)\]$`)
+var _indexRegexp = regexp.MustCompile(`^\d+$`)
 
 func pathDescription(fieldPath string) string {
 	sc := scanner.Scanner{}
@@ -84,7 +85,7 @@ func pathDescription(fieldPath string) string {
 		case ".":
 		case "$":
 		case "[":
-			s, err := parseNamed(&sc)
+			s, err := parseBracket(&sc)
 			if err != nil {
 				panic(err)
 			}
@@ -102,11 +103,40 @@ func pathDescription(fieldPath string) string {
 	return strings.Join(result, ".") + suffix
 }
 
-func parseNamed(sc *scanner.Scanner) (string, error) {
-	if sc.Scan() != '@' {
-		return "", fmt.Errorf("invalid jsonpath")
+func parseBracket(sc *scanner.Scanner) (string, error) {
+	sc.Scan()
+	t := sc.TokenText()
+	if t == "@" {
+		return parseNamed(sc)
 	}
 
+	match := _indexRegexp.MatchString(t)
+	if match {
+		return parseIndex(sc)
+	}
+
+	return "", fmt.Errorf("invalid jsonpath")
+}
+
+func parseIndex(sc *scanner.Scanner) (string, error) {
+	index := sc.TokenText()
+	for {
+		switch sc.Scan() {
+		case ']':
+			return fmt.Sprintf(" (at index %s)", index), nil
+		default:
+			p := sc.TokenText()
+			match := _indexRegexp.MatchString(p)
+			if !match {
+				return "", fmt.Errorf("invalid jsonpath")
+			}
+
+			index += p
+		}
+	}
+}
+
+func parseNamed(sc *scanner.Scanner) (string, error) {
 	sc.Scan()
 	name := sc.TokenText()
 
