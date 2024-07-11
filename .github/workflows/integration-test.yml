@@ -67,7 +67,6 @@ jobs:
           RUN_INTEGRATION_TEST: true
           RIG_INTEGRATION_TEST_GITHUB_TOKEN: ${{ secrets.RIG_INTEGRATION_TEST_GITHUB_TOKEN }}
         run: |
-          echo ${#RIG_INTEGRATION_TEST_GITHUB_TOKEN}
           cd platform/
           task test-integration
 
