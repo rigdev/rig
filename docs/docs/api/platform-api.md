@@ -66,7 +66,9 @@
 | /api.v1.capsule.Service/Update | [UpdateRequest](#api-v1-capsule-UpdateRequest) | [UpdateResponse](#api-v1-capsule-UpdateResponse) | Update a capsule. |
 | /api.v1.capsule.Service/List | [ListRequest](#api-v1-capsule-ListRequest) | [ListResponse](#api-v1-capsule-ListResponse) | Lists all capsules for current project. |
 | /api.v1.capsule.Service/Deploy | [DeployRequest](#api-v1-capsule-DeployRequest) | [DeployResponse](#api-v1-capsule-DeployResponse) | Deploy changes to a capsule. When deploying, a new rollout will be initiated. Only one rollout can be running at a single point in time. Use `Abort` to abort an already running rollout. |
+| /api.v1.capsule.Service/DeploySet | [DeploySetRequest](#api-v1-capsule-DeploySetRequest) | [DeploySetResponse](#api-v1-capsule-DeploySetResponse) |  |
 | /api.v1.capsule.Service/ProposeRollout | [ProposeRolloutRequest](#api-v1-capsule-ProposeRolloutRequest) | [ProposeRolloutResponse](#api-v1-capsule-ProposeRolloutResponse) |  |
+| /api.v1.capsule.Service/ProposeSetRollout | [ProposeSetRolloutRequest](#api-v1-capsule-ProposeSetRolloutRequest) | [ProposeSetRolloutResponse](#api-v1-capsule-ProposeSetRolloutResponse) |  |
 | /api.v1.capsule.Service/ListProposals | [ListProposalsRequest](#api-v1-capsule-ListProposalsRequest) | [ListProposalsResponse](#api-v1-capsule-ListProposalsResponse) |  |
 | /api.v1.capsule.Service/ListInstances | [ListInstancesRequest](#api-v1-capsule-ListInstancesRequest) | [ListInstancesResponse](#api-v1-capsule-ListInstancesResponse) | Lists all instances for the capsule. |
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
@@ -4364,6 +4366,23 @@ The actual log message
 
 
 
+<a name="api-v1-capsule-SetProposal"></a>
+
+### SetProposal
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [platform.v1.CapsuleSet](#platform-v1-CapsuleSet) |  |  |
+| changes | [Change](#api-v1-capsule-Change) | repeated |  |
+| metadata | [model.ProposalMetadata](#model-ProposalMetadata) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-SetRevision"></a>
 
 ### SetRevision
@@ -5420,6 +5439,109 @@ Deploy response.
 
 
 
+<a name="api-v1-capsule-DeploySetOutcome"></a>
+
+### DeploySetOutcome
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environments | [DeploySetOutcome.EnvironmentsEntry](#api-v1-capsule-DeploySetOutcome-EnvironmentsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-DeploySetOutcome-EnvironmentsEntry"></a>
+
+### DeploySetOutcome.EnvironmentsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-DeploySetRequest"></a>
+
+### DeploySetRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | Capsule to deploy to. |
+| changes | [Change](#api-v1-capsule-Change) | repeated | Changes to include in the new rollout. |
+| force | [bool](#bool) |  | Force deploy, aborting existing rollouts if ongoing. |
+| project_id | [string](#string) |  | Project in which the capsule lives. |
+| message | [string](#string) |  | Deploy message. |
+| dry_run | [bool](#bool) |  | if true, the deploy will not be executed, but the request will return the rollout config. |
+| current_rollout_ids | [DeploySetRequest.CurrentRolloutIdsEntry](#api-v1-capsule-DeploySetRequest-CurrentRolloutIdsEntry) | repeated | If present, maps from environment to expected current rollout within that environment. This will constrain the rollout only to be created if the currently running rollout matches this identifier. If this check fails, the request will return an `Aborted` error. |
+| current_fingerprint | [model.Fingerprint](#model-Fingerprint) |  | If set, this will constrain the rollout only to be created if the current latest capsuleset fingerprint matches the given. |
+| current_environment_fingerprints | [DeploySetRequest.CurrentEnvironmentFingerprintsEntry](#api-v1-capsule-DeploySetRequest-CurrentEnvironmentFingerprintsEntry) | repeated | If set, this will constrain the rollout only to be created if the current latest capsule fingerprint for each environment in the map matches the ones in the map. Cannot be used together with `current_rollout_ids` |
+| outcome | [DeploySetOutcome](#api-v1-capsule-DeploySetOutcome) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-DeploySetRequest-CurrentEnvironmentFingerprintsEntry"></a>
+
+### DeploySetRequest.CurrentEnvironmentFingerprintsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [model.Fingerprint](#model-Fingerprint) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-DeploySetRequest-CurrentRolloutIdsEntry"></a>
+
+### DeploySetRequest.CurrentRolloutIdsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-DeploySetResponse"></a>
+
+### DeploySetResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| revision | [SetRevision](#api-v1-capsule-SetRevision) |  | The capsule revision created. |
+| outcome | [DeploySetOutcome](#api-v1-capsule-DeploySetOutcome) |  | Breakdown of the changes that this deploy would make to the system. Only populated if dry-run is used. |
+
+
+
+
+
+
 <a name="api-v1-capsule-ExecuteRequest"></a>
 
 ### ExecuteRequest
@@ -6176,6 +6298,42 @@ rollout.
 | ----- | ---- | ----- | ----------- |
 | proposal | [Proposal](#api-v1-capsule-Proposal) |  |  |
 | outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. |
+
+
+
+
+
+
+<a name="api-v1-capsule-ProposeSetRolloutRequest"></a>
+
+### ProposeSetRolloutRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | Capsule to deploy to. |
+| changes | [Change](#api-v1-capsule-Change) | repeated | Changes to include in the new rollout. |
+| project_id | [string](#string) |  | Project in which the capsule lives. |
+| message | [string](#string) |  | Deploy message. |
+| force_override | [bool](#bool) |  | By default, existing objects will be kept in favor of overriding them. To force the override of resources, set this flag to true. An example of this use-case is a migration step, where resource created by a previous toolchain e.g. based on Helm charts, are to be replaced and instead be created by the Rig operator. While the override is irreversible, this flag is not "sticky" and must be set by each deploy that should use this behavior. |
+| branch_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ProposeSetRolloutResponse"></a>
+
+### ProposeSetRolloutResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| proposal | [SetProposal](#api-v1-capsule-SetProposal) |  |  |
+| outcome | [DeploySetOutcome](#api-v1-capsule-DeploySetOutcome) |  | Breakdown of the changes that this deploy would make to the system. |
 
 
 

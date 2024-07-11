@@ -23,3 +23,9 @@ message Proposal {
   repeated Change changes = 2;
   model.ProposalMetadata metadata = 3;
 }
+
+message SetProposal {
+  platform.v1.CapsuleSet spec = 1;
+  repeated Change changes = 2;
+  model.ProposalMetadata metadata = 3;
+}
