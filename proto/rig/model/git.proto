@@ -18,11 +18,16 @@ message GitStore {
 }
 
 message Commit {
+  reserved 2, 5;
   GitProvider provider = 1;
-  string repository = 2;
-  string owner = 5;
+  oneof provider_info {
+    GitHubInfo github = 7;
+    GitLabInfo gitlab = 8;
+    BitBucketInfo bitbucket = 9;
+  }
   string commit_id = 3;
-  string url = 4;
+  string commit_url = 4;
+  string repository_url = 6;
 }
 
 message GitChange {
@@ -48,4 +53,20 @@ message GitStatus {
 message RepoBranch {
   string repository = 1;
   string branch = 2;
+}
+
+message GitHubInfo {
+  string owner = 1;
+  string repository = 2;
+}
+
+message GitLabInfo {
+  repeated string groups = 1;
+  string project = 2;
+}
+
+message BitBucketInfo {
+  string team = 1;
+  string project = 2;
+  string repository = 3;
 }

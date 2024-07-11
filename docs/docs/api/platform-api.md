@@ -1108,6 +1108,23 @@ The type of SSO. Currently only OIDC is supported.
 
 
 
+<a name="model-BitBucketInfo"></a>
+
+### BitBucketInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| team | [string](#string) |  |  |
+| project | [string](#string) |  |  |
+| repository | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="model-Commit"></a>
 
 ### Commit
@@ -1117,10 +1134,12 @@ The type of SSO. Currently only OIDC is supported.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [GitProvider](#model-GitProvider) |  |  |
-| repository | [string](#string) |  |  |
-| owner | [string](#string) |  |  |
+| github | [GitHubInfo](#model-GitHubInfo) |  |  |
+| gitlab | [GitLabInfo](#model-GitLabInfo) |  |  |
+| bitbucket | [BitBucketInfo](#model-BitBucketInfo) |  |  |
 | commit_id | [string](#string) |  |  |
-| url | [string](#string) |  |  |
+| commit_url | [string](#string) |  |  |
+| repository_url | [string](#string) |  |  |
 
 
 
@@ -1137,6 +1156,38 @@ The type of SSO. Currently only OIDC is supported.
 | ----- | ---- | ----- | ----------- |
 | commit | [Commit](#model-Commit) |  |  |
 | paths | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="model-GitHubInfo"></a>
+
+### GitHubInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| owner | [string](#string) |  |  |
+| repository | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="model-GitLabInfo"></a>
+
+### GitLabInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| groups | [string](#string) | repeated |  |
+| project | [string](#string) |  |  |
 
 
 
@@ -4177,6 +4228,21 @@ The actual log message
 
 
 
+<a name="model-GitLabProposal"></a>
+
+### GitLabProposal
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pr_id | [int64](#int64) |  |  |
+
+
+
+
+
+
 <a name="model-GithubProposal"></a>
 
 ### GithubProposal
@@ -4207,6 +4273,7 @@ The actual log message
 | branch | [string](#string) |  |  |
 | review_url | [string](#string) |  |  |
 | github | [GithubProposal](#model-GithubProposal) |  |  |
+| gitlab | [GitLabProposal](#model-GitLabProposal) |  |  |
 
 
 

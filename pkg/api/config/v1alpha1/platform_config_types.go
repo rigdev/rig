@@ -338,6 +338,8 @@ type ClientGit struct {
 	// GitHubAuths is authentication information for GitHub repositories
 	GitHubAuths []GitHubAuth `json:"gitHubAuths,omitempty"`
 
+	GiLabAuths []GitLabAuth `json:"gitLabAuths,omitempty"`
+
 	// Author used when creating commits.
 	Author GitAuthor `json:"author,omitempty"`
 }
@@ -387,6 +389,16 @@ type GitHubAuth struct {
 	// WebHookSecret is the secret used to validate incoming webhooks.
 	WebhookSecret string `json:"webhookSecret,omitempty"`
 
+	// If webHookSecret isn't set, pull the git repository at the set interval instead
+	// to fetch changes. Defaults to 3 mins if no value.
+	PullingIntervalSeconds int `json:"pullingIntervalSeconds,omitempty"`
+}
+
+type GitLabAuth struct {
+	Groups        []string `json:"groups,omitempty"`
+	Project       string   `json:"project,omitempty"`
+	WebhookSecret string   `json:"webhookSecret,omitempty"`
+	Accesstoken   string   `json:"accessToken,omitempty"`
 	// If webHookSecret isn't set, pull the git repository at the set interval instead
 	// to fetch changes. Defaults to 3 mins if no value.
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds,omitempty"`
