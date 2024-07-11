@@ -115,6 +115,7 @@ _Appears in:_
 | --- | --- |
 | `auths` _[GitAuth](#gitauth) array_ | Auths the git client can behave as. |
 | `gitHubAuths` _[GitHubAuth](#githubauth) array_ | GitHubAuths is authentication information for GitHub repositories |
+| `gitLabAuths` _[GitLabAuth](#gitlabauth) array_ |  |
 | `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits. |
 
 
@@ -386,6 +387,24 @@ _Appears in:_
 | `privateKey` _string_ | PrivateKey is a path to a PEM encoded SSH private key. |
 | `privateKeyPassword` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
 | `webhookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
+| `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead to fetch changes. Defaults to 3 mins if no value. |
+
+
+### GitLabAuth
+
+
+
+
+
+_Appears in:_
+- [ClientGit](#clientgit)
+
+| Field | Description |
+| --- | --- |
+| `groups` _string array_ |  |
+| `project` _string_ |  |
+| `webhookSecret` _string_ |  |
+| `accessToken` _string_ |  |
 | `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead to fetch changes. Defaults to 3 mins if no value. |
 
 

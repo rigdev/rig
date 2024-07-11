@@ -34,10 +34,15 @@ message ProposalMetadata {
   string review_url = 6;
   oneof provider {
     GithubProposal github = 7;
+    GitLabProposal gitlab = 8;
   }
 }
 
 message GithubProposal {
+  int64 pr_id = 1;
+}
+
+message GitLabProposal {
   int64 pr_id = 1;
 }
 
