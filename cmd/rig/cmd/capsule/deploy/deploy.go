@@ -144,36 +144,41 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		}
 	}
 
-	if dry {
-		return capsule_cmd.DeployDry(
-			ctx,
-			c.Rig,
-			flags.GetProject(c.Scope),
-			flags.GetEnvironment(c.Scope),
-			capsuleName,
-			changes,
-			currentRolloutID,
-			curf,
-			c.Scheme,
-			c.Scope.IsInteractive(),
-		)
+	baseInput := capsule_cmd.BaseInput{
+		Ctx:           ctx,
+		Rig:           c.Rig,
+		ProjectID:     flags.GetProject(c.Scope),
+		EnvironmentID: flags.GetEnvironment(c.Scope),
+		CapsuleID:     capsuleName,
 	}
 
-	return capsule_cmd.DeployAndWait(
-		ctx,
-		c.Rig,
-		flags.GetProject(c.Scope),
-		flags.GetEnvironment(c.Scope),
-		capsuleName,
-		changes,
-		true,
-		forceOverride,
-		currentRolloutID,
-		timeout,
-		rollbackID,
-		noWait,
-		curf,
-	)
+	if dry {
+		input := capsule_cmd.DeployDryInput{
+			BaseInput:          baseInput,
+			Changes:            changes,
+			Scheme:             c.Scheme,
+			CurrentRolloutID:   currentRolloutID,
+			CurrentFingerprint: curf,
+			IsInteractive:      c.Scope.IsInteractive(),
+		}
+
+		return capsule_cmd.DeployDry(input)
+	}
+
+	input := capsule_cmd.DeployAndWaitInput{
+		DeployInput: capsule_cmd.DeployInput{
+			BaseInput:          baseInput,
+			Changes:            changes,
+			ForceDeploy:        true,
+			ForceOverride:      forceOverride,
+			CurrentRolloutID:   currentRolloutID,
+			CurrentFingerprint: curf,
+		},
+		Timeout:    timeout,
+		RollbackID: rollbackID,
+		NoWait:     noWait,
+	}
+	return capsule_cmd.DeployAndWait(input)
 }
 
 func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, error) {

@@ -33,19 +33,25 @@ func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error 
 		return err
 	}
 
-	return capsule_cmd.DeployAndWait(
-		ctx,
-		c.Rig,
-		flags.GetProject(c.Scope),
-		flags.GetEnvironment(c.Scope),
-		capsule_cmd.CapsuleID,
-		[]*capsule.Change{{
-			Field: &capsule.Change_ContainerSettings{
-				ContainerSettings: container,
+	deployInput := capsule_cmd.DeployAndWaitInput{
+		DeployInput: capsule_cmd.DeployInput{
+			BaseInput: capsule_cmd.BaseInput{
+				Ctx:           ctx,
+				Rig:           c.Rig,
+				ProjectID:     flags.GetProject(c.Scope),
+				EnvironmentID: flags.GetEnvironment(c.Scope),
+				CapsuleID:     capsule_cmd.CapsuleID,
 			},
-		}},
-		forceDeploy, false, 0, 0, 0, false, nil,
-	)
+			Changes: []*capsule.Change{{
+				Field: &capsule.Change_ContainerSettings{
+					ContainerSettings: container,
+				},
+			}},
+			ForceDeploy: forceDeploy,
+		},
+	}
+
+	return capsule_cmd.DeployAndWait(deployInput)
 }
 
 func (c *Cmd) setResourcesInteractive(curResources *capsule.Resources) error {

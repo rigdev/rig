@@ -182,33 +182,34 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		},
 	}})
 
+	baseInput := capsule_cmd.BaseInput{
+		Ctx:           ctx,
+		Rig:           c.Rig,
+		ProjectID:     flags.GetProject(c.Scope),
+		EnvironmentID: flags.GetEnvironment(c.Scope),
+		CapsuleID:     capsuleName,
+	}
+
+	deployInput := capsule_cmd.DeployInput{
+		BaseInput:   baseInput,
+		Changes:     changes,
+		ForceDeploy: true,
+	}
 	revision, rolloutID, err := capsule_cmd.Deploy(
-		ctx,
-		c.Rig,
-		flags.GetProject(c.Scope),
-		flags.GetEnvironment(c.Scope),
-		capsuleName,
-		changes,
-		true,
-		false,
-		0,
-		nil,
+		deployInput,
 	)
 	if err != nil {
 		return err
 	}
 
-	if err := capsule_cmd.WaitForRollout(
-		ctx,
-		c.Rig,
-		flags.GetProject(c.Scope),
-		flags.GetEnvironment(c.Scope),
-		capsuleName,
-		revision,
-		rolloutID,
-		0,
-		0,
-	); err != nil {
+	waitInput := capsule_cmd.WaitForRolloutInput{
+		RollbackInput: capsule_cmd.RollbackInput{
+			BaseInput:        baseInput,
+			CurrentRolloutID: rolloutID,
+		},
+		Revision: revision,
+	}
+	if err := capsule_cmd.WaitForRollout(waitInput); err != nil {
 		return err
 	}
 

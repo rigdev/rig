@@ -38,6 +38,57 @@ const (
 	TroubleshootingGroupID = "troubleshooting"
 )
 
+// deployment structs
+type BaseInput struct {
+	Ctx           context.Context
+	Rig           rig.Client
+	ProjectID     string
+	EnvironmentID string
+	CapsuleID     string
+}
+
+type DeployInput struct {
+	BaseInput
+	Changes            []*capsule.Change
+	ForceDeploy        bool
+	ForceOverride      bool
+	CurrentRolloutID   uint64
+	CurrentFingerprint *model.Fingerprint
+}
+
+type DeployAndWaitInput struct {
+	DeployInput
+	Timeout    time.Duration
+	RollbackID uint64
+	NoWait     bool
+}
+
+type DeployDryInput struct {
+	BaseInput
+	Changes            []*capsule.Change
+	CurrentRolloutID   uint64
+	CurrentFingerprint *model.Fingerprint
+	Scheme             *runtime.Scheme
+	IsInteractive      bool
+}
+
+type RollbackInput struct {
+	BaseInput
+	CurrentRolloutID uint64
+	RollbackID       uint64
+}
+
+type WaitForRolloutInput struct {
+	RollbackInput
+	Revision *capsule.Revision
+	Timeout  time.Duration
+}
+
+type GetRolloutInput struct {
+	BaseInput
+	RolloutID uint64
+}
+
 func GetCurrentContainerResources(
 	ctx context.Context,
 	client rig.Client,
@@ -229,33 +280,22 @@ func printInstanceID(instanceID string, out *os.File) error {
 	return nil
 }
 
-func Deploy(
-	ctx context.Context,
-	rig rig.Client,
-	projectID string,
-	environmentID string,
-	capsuleID string,
-	changes []*capsule.Change,
-	forceDeploy bool,
-	forceOverride bool,
-	currentRolloutID uint64,
-	currentFingerprint *model.Fingerprint,
-) (*capsule.Revision, uint64, error) {
+func Deploy(input DeployInput) (*capsule.Revision, uint64, error) {
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId:          capsuleID,
-			Changes:            changes,
-			Force:              forceDeploy,
-			ProjectId:          projectID,
-			EnvironmentId:      environmentID,
+			CapsuleId:          input.CapsuleID,
+			Changes:            input.Changes,
+			Force:              input.ForceDeploy,
+			ProjectId:          input.ProjectID,
+			EnvironmentId:      input.EnvironmentID,
 			DryRun:             false,
-			CurrentRolloutId:   currentRolloutID,
-			ForceOverride:      forceOverride,
-			CurrentFingerprint: currentFingerprint,
+			CurrentRolloutId:   input.CurrentRolloutID,
+			ForceOverride:      input.ForceOverride,
+			CurrentFingerprint: input.CurrentFingerprint,
 		},
 	}
 
-	res, err := rig.Capsule().Deploy(ctx, req)
+	res, err := input.Rig.Capsule().Deploy(input.Ctx, req)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -264,60 +304,41 @@ func Deploy(
 }
 
 func DeployAndWait(
-	ctx context.Context,
-	rig rig.Client,
-	projectID string,
-	environmentID string,
-	capsuleID string,
-	changes []*capsule.Change,
-	forceDeploy bool,
-	forceOverride bool,
-	currentRolloutID uint64,
-	timeout time.Duration,
-	rollbackID uint64,
-	noWait bool,
-	currentFingerprint *model.Fingerprint,
+	input DeployAndWaitInput,
 ) error {
-	revision, rolloutID, err := Deploy(
-		ctx,
-		rig,
-		projectID,
-		environmentID,
-		capsuleID,
-		changes,
-		forceDeploy,
-		forceOverride,
-		currentRolloutID,
-		currentFingerprint,
-	)
+	revision, rolloutID, err := Deploy(input.DeployInput)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Deploying to capsule", capsuleID)
-	if noWait {
+	fmt.Println("Deploying to capsule", input.CapsuleID)
+	if input.NoWait {
 		return nil
 	}
-	return WaitForRollout(ctx, rig, projectID, environmentID, capsuleID, revision, rolloutID, timeout, rollbackID)
+
+	waitForRolloutInput := WaitForRolloutInput{
+		RollbackInput: RollbackInput{
+			BaseInput:        input.BaseInput,
+			CurrentRolloutID: rolloutID,
+			RollbackID:       input.RollbackID,
+		},
+		Revision: revision,
+		Timeout:  input.Timeout,
+	}
+	return WaitForRollout(waitForRolloutInput)
 }
 
-func DeployDry(
-	ctx context.Context, rig rig.Client, projectID, environmentID, capsuleID string, changes []*capsule.Change,
-	currentRolloutID uint64, currentFingerprint *model.Fingerprint,
-	scheme *runtime.Scheme, isInteractive bool,
-) error {
+func DeployDry(input DeployDryInput) error {
 	req := &capsule.DeployRequest{
-		CapsuleId:          capsuleID,
-		Changes:            nil,
-		ProjectId:          projectID,
-		EnvironmentId:      environmentID,
+		CapsuleId:          input.CapsuleID,
+		Changes:            input.Changes,
+		ProjectId:          input.ProjectID,
+		EnvironmentId:      input.EnvironmentID,
 		DryRun:             true,
-		CurrentRolloutId:   currentRolloutID,
-		CurrentFingerprint: currentFingerprint,
+		CurrentRolloutId:   input.CurrentRolloutID,
+		CurrentFingerprint: input.CurrentFingerprint,
 	}
 
-	// TODO Make interactive diffing
-	req.Changes = changes
-	resp, err := rig.Capsule().Deploy(ctx, connect.NewRequest(req))
+	resp, err := input.Rig.Capsule().Deploy(input.Ctx, connect.NewRequest(req))
 	if err != nil {
 		return fmt.Errorf("failed to get new stuff: %w", err)
 	}
@@ -327,21 +348,21 @@ func DeployDry(
 	out.PlatformCapsule = resp.Msg.GetRevision().GetSpec()
 
 	for _, o := range outcome.GetPlatformObjects() {
-		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), input.Scheme)
 		if err != nil {
 			return err
 		}
 		out.DirectKubernetes = append(out.DirectKubernetes, co)
 	}
 	for _, o := range outcome.GetKubernetesObjects() {
-		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), input.Scheme)
 		if err != nil {
 			return err
 		}
 		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
 	}
 
-	if !isInteractive {
+	if !input.IsInteractive {
 		outputType := flags.Flags.OutputType
 		if outputType == common.OutputTypePretty {
 			outputType = common.OutputTypeYAML
@@ -349,7 +370,7 @@ func DeployDry(
 		return common.FormatPrint(out, outputType)
 	}
 
-	return promptDryOutput(ctx, out, outcome)
+	return promptDryOutput(input.Ctx, out, outcome)
 }
 
 func promptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.DeployOutcome) error {
@@ -431,57 +452,50 @@ type DryOutput struct {
 	DerivedKubernetes []any               `json:"derivedKubernetes"`
 }
 
-func Rollback(
-	ctx context.Context,
-	rig rig.Client,
-	projectID string,
-	environmentID string,
-	capsuleName string,
-	currentRolloutID uint64,
-	rollbackID uint64,
-) (*capsule.Revision, uint64, error) {
-	return Deploy(ctx, rig, projectID, environmentID, capsuleName, []*capsule.Change{
-		{
-			Field: &capsule.Change_Rollback_{
-				Rollback: &capsule.Change_Rollback{
-					RollbackId: rollbackID,
+func Rollback(input RollbackInput) (*capsule.Revision, uint64, error) {
+	deployInput := DeployInput{
+		BaseInput: input.BaseInput,
+		Changes: []*capsule.Change{
+			{
+				Field: &capsule.Change_Rollback_{
+					Rollback: &capsule.Change_Rollback{
+						RollbackId: input.RollbackID,
+					},
 				},
 			},
 		},
-	}, true, false, currentRolloutID, nil)
+		ForceDeploy:      true,
+		CurrentRolloutID: input.CurrentRolloutID,
+	}
+
+	return Deploy(deployInput)
 }
 
 func WaitForRollout(
-	ctx context.Context,
-	rig rig.Client,
-	projectID string,
-	environmentID string,
-	capsuleID string,
-	revision *capsule.Revision,
-	rolloutID uint64,
-	timeout time.Duration,
-	rollbackID uint64,
+	input WaitForRolloutInput,
 ) error {
-	if rolloutID == 0 {
+	if input.CurrentRolloutID == 0 {
 		first := true
 		for {
-			resp, err := rig.Capsule().GetRolloutOfRevisions(ctx, connect.NewRequest(&capsule.GetRolloutOfRevisionsRequest{
-				ProjectId:     projectID,
-				EnvironmentId: environmentID,
-				CapsuleId:     capsuleID,
-				Fingerprints: &model.Fingerprints{
-					Capsule: revision.GetMetadata().GetFingerprint(),
-				},
-			}))
+			resp, err := input.Rig.Capsule().GetRolloutOfRevisions(
+				input.Ctx,
+				connect.NewRequest(&capsule.GetRolloutOfRevisionsRequest{
+					ProjectId:     input.ProjectID,
+					EnvironmentId: input.EnvironmentID,
+					CapsuleId:     input.CapsuleID,
+					Fingerprints: &model.Fingerprints{
+						Capsule: input.Revision.GetMetadata().GetFingerprint(),
+					},
+				}))
 			if err != nil {
 				return err
 			}
 			switch r := resp.Msg.GetKind().(type) {
 			case *capsule.GetRolloutOfRevisionsResponse_NoRollout_:
 			case *capsule.GetRolloutOfRevisionsResponse_Rollout:
-				rolloutID = r.Rollout.GetRolloutId()
+				input.CurrentRolloutID = r.Rollout.GetRolloutId()
 			}
-			if rolloutID == 0 {
+			if input.CurrentRolloutID == 0 {
 				if first {
 					fmt.Println("Waiting for rollout to start...")
 					first = false
@@ -493,11 +507,11 @@ func WaitForRollout(
 		}
 	}
 
-	fmt.Printf("Rollout %v started\n", rolloutID)
+	fmt.Printf("Rollout %v started\n", input.CurrentRolloutID)
 
 	var deadline time.Time
-	if timeout != 0 {
-		deadline = time.Now().Add(timeout)
+	if input.Timeout != 0 {
+		deadline = time.Now().Add(input.Timeout)
 	}
 
 	var lastConfigure []*api_rollout.StepInfo
@@ -506,20 +520,25 @@ func WaitForRollout(
 	for {
 		if !deadline.IsZero() && time.Now().After(deadline) {
 			fmt.Println()
-			fmt.Printf("🛑 Rollout timed out after %s... ", timeout)
-			if rollbackID == 0 {
+			fmt.Printf("🛑 Rollout timed out after %s... ", input.Timeout)
+			if input.RollbackID == 0 {
 				return fmt.Errorf("aborted")
 			}
 
-			_, _, err := Rollback(ctx, rig, projectID, environmentID, capsuleID, rolloutID, rollbackID)
+			_, _, err := Rollback(input.RollbackInput)
 			if err != nil {
 				return err
 			}
 
-			return fmt.Errorf("rollback to %d initiated", rollbackID)
+			return fmt.Errorf("rollback to %d initiated", input.RollbackID)
 		}
 
-		rollout, err := getRollout(ctx, rig, projectID, capsuleID, rolloutID)
+		getRolloutInput := GetRolloutInput{
+			BaseInput: input.BaseInput,
+			RolloutID: input.CurrentRolloutID,
+		}
+
+		rollout, err := getRollout(getRolloutInput)
 		if err != nil {
 			return err
 		}
@@ -671,22 +690,18 @@ func WaitForRollout(
 }
 
 func getRollout(
-	ctx context.Context,
-	rig rig.Client,
-	projectID string,
-	capsuleID string,
-	rolloutID uint64,
+	input GetRolloutInput,
 ) (*capsule.Rollout, error) {
 	connectionLost := false
-	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(2*time.Minute))
+	ctx, cancel := context.WithDeadline(input.Ctx, time.Now().Add(2*time.Minute))
 	defer cancel()
 
 	for {
-		res, err := rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
+		res, err := input.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
 			Msg: &capsule.GetRolloutRequest{
-				CapsuleId: capsuleID,
-				RolloutId: rolloutID,
-				ProjectId: projectID,
+				CapsuleId: input.CapsuleID,
+				RolloutId: input.RolloutID,
+				ProjectId: input.ProjectID,
 			},
 		})
 		if errors.IsUnavailable(err) || ctx.Err() != nil {
