@@ -46,9 +46,13 @@ func (g *GitFlags) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&g.Environments, "environments", "",
 		"The environment filter to use. Can be one of 'all', 'all+ephem' or a comma separated list of env names.",
 	)
-	cmd.Flags().StringVar(&g.PRTitleTemplate, "pr-title", prTitleTemplateDefault, "The (templated) title to use for pull requests")
+	cmd.Flags().StringVar(
+		&g.PRTitleTemplate, "pr-title", prTitleTemplateDefault, "The (templated) title to use for pull requests",
+	)
 	cmd.Flags().StringVar(&g.PRBodyTemplate, "pr-body", "", "The (templated) body to use for pull requests")
-	cmd.Flags().BoolVar(&g.RequirePR, "require-pr", false, "Requires that a deploy to a capsule is done through a pull request.")
+	cmd.Flags().BoolVar(
+		&g.RequirePR, "require-pr", false, "Requires that a deploy to a capsule is done through a pull request.",
+	)
 	cmd.Flags().BoolVar(&g.Disable, "disable", false, "disable git store")
 }
 
