@@ -15,18 +15,22 @@ import (
 )
 
 type GitFlags struct {
-	Repository     string
-	Branch         string
-	CapsulePath    string
-	CommitTemplate string
-	Environments   string
-	Disable        bool
-	Enable         bool
+	Repository      string
+	Branch          string
+	CapsulePath     string
+	CommitTemplate  string
+	Environments    string
+	Disable         bool
+	Enable          bool
+	PRTitleTemplate string
+	PRBodyTemplate  string
+	RequirePR       bool
 }
 
 var (
-	capsulePathDefault    = "{{ .Project }}/{{ .Capsule }}/{{ .Environment}}.yaml"
-	commitTemplateDefault = "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"
+	capsulePathDefault     = "{{ .Project }}/{{ .Capsule }}/{{ .Environment}}.yaml"
+	commitTemplateDefault  = "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"
+	prTitleTemplateDefault = "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"
 )
 
 func (g *GitFlags) AddFlags(cmd *cobra.Command) {
@@ -41,6 +45,13 @@ func (g *GitFlags) AddFlags(cmd *cobra.Command) {
 	)
 	cmd.Flags().StringVar(&g.Environments, "environments", "",
 		"The environment filter to use. Can be one of 'all', 'all+ephem' or a comma separated list of env names.",
+	)
+	cmd.Flags().StringVar(
+		&g.PRTitleTemplate, "pr-title", prTitleTemplateDefault, "The (templated) title to use for pull requests",
+	)
+	cmd.Flags().StringVar(&g.PRBodyTemplate, "pr-body", "", "The (templated) body to use for pull requests")
+	cmd.Flags().BoolVar(
+		&g.RequirePR, "require-pr", false, "Requires that a deploy to a capsule is done through a pull request.",
 	)
 	cmd.Flags().BoolVar(&g.Disable, "disable", false, "disable git store")
 }
@@ -71,6 +82,18 @@ func (g *GitFlags) FeedStore(store *model.GitStore) {
 		store.Environments = ParseEnvironmentFilter(g.Environments)
 		updated = true
 	}
+
+	if g.PRTitleTemplate != "" {
+		if g.PRTitleTemplate != prTitleTemplateDefault || store.PrTitleTemplate == "" {
+			store.PrTitleTemplate = g.PRTitleTemplate
+			updated = true
+		}
+	}
+	if g.PRBodyTemplate != "" {
+		store.PrBodyTemplate = g.PRBodyTemplate
+		updated = true
+	}
+
 	if g.Disable {
 		store.Disabled = g.Disable
 	} else if updated {
@@ -156,6 +179,8 @@ func PromptGitStore(
 		"Capsule Path",
 		"Commit Template",
 		"Environments",
+		"PR Title Template",
+		"PR Body Template",
 		"Done",
 	}
 
@@ -203,7 +228,7 @@ func PromptGitStore(
 		case 3:
 			path, err := prompter.Input("Enter the capsule path",
 				ValidateNonEmptyOpt,
-				InputDefaultOpt(StringOr(gitStore.GetCapsulePath(), "{{ .Project }}/{{ .Capsule }}/{{ .Environment}}.yaml")),
+				InputDefaultOpt(StringOr(gitStore.GetCapsulePath(), capsulePathDefault)),
 			)
 			if err != nil {
 				if ErrIsAborted(err) {
@@ -217,7 +242,7 @@ func PromptGitStore(
 			template, err := prompter.Input("Enter the commit template",
 				ValidateNonEmptyOpt,
 				InputDefaultOpt(
-					StringOr(gitStore.GetCommitTemplate(), "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"),
+					StringOr(gitStore.GetCommitTemplate(), commitTemplateDefault),
 				),
 			)
 			if err != nil {
@@ -239,6 +264,35 @@ func PromptGitStore(
 				}
 				return nil, err
 			}
+		case 6:
+			template, err := prompter.Input("Enter the pr title template",
+				ValidateNonEmptyOpt,
+				InputDefaultOpt(
+					StringOr(gitStore.GetPrTitleTemplate(), prTitleTemplateDefault),
+				),
+			)
+			if err != nil {
+				if ErrIsAborted(err) {
+					continue
+				}
+				return nil, err
+			}
+
+			gitStore.PrTitleTemplate = template
+		case 7:
+			template, err := prompter.Input("Enter the pr body template",
+				InputDefaultOpt(
+					StringOr(gitStore.GetPrBodyTemplate(), ""),
+				),
+			)
+			if err != nil {
+				if ErrIsAborted(err) {
+					continue
+				}
+				return nil, err
+			}
+
+			gitStore.PrBodyTemplate = template
 		default:
 			return gitStore, nil
 		}
