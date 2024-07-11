@@ -89,7 +89,6 @@
 | /api.v1.capsule.Service/GetRolloutOfRevisions | [GetRolloutOfRevisionsRequest](#api-v1-capsule-GetRolloutOfRevisionsRequest) | [GetRolloutOfRevisionsResponse](#api-v1-capsule-GetRolloutOfRevisionsResponse) |  |
 | /api.v1.capsule.Service/WatchStatus | [WatchStatusRequest](#api-v1-capsule-WatchStatusRequest) | [WatchStatusResponse](#api-v1-capsule-WatchStatusResponse) stream | Stream the status of a capsule. |
 | /api.v1.capsule.Service/GetEffectiveGitSettings | [GetEffectiveGitSettingsRequest](#api-v1-capsule-GetEffectiveGitSettingsRequest) | [GetEffectiveGitSettingsResponse](#api-v1-capsule-GetEffectiveGitSettingsResponse) |  |
-| /api.v1.capsule.Service/Promote | [PromoteRequest](#api-v1-capsule-PromoteRequest) | [PromoteResponse](#api-v1-capsule-PromoteResponse) | Experimental: Promote a capsule to the next environment in a pipeline. |
 
 
 
@@ -6139,40 +6138,6 @@ The response of a capsule.Logs RPC
 
 ### PortForwardResponse.Close
 
-
-
-
-
-
-
-<a name="api-v1-capsule-PromoteRequest"></a>
-
-### PromoteRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| capsule_id | [string](#string) |  | The capsule to promote. |
-| project_id | [string](#string) |  | The project in which the capsule lives. |
-| environment_id | [string](#string) |  | the environment to promote from. |
-| pipeline | [string](#string) |  | the pipeline to follow. |
-| dry_run | [bool](#bool) |  | if true, the promotion will not be executed, but the request will return the rollout config. |
-
-
-
-
-
-
-<a name="api-v1-capsule-PromoteResponse"></a>
-
-### PromoteResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| deploy_response | [DeployResponse](#api-v1-capsule-DeployResponse) |  |  |
 
 
 
