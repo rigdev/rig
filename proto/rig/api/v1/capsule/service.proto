@@ -98,6 +98,27 @@ service Service {
 
   rpc GetEffectiveGitSettings(GetEffectiveGitSettingsRequest)
       returns (GetEffectiveGitSettingsResponse) {}
+
+  // Experimental: Promote a capsule to the next environment in a pipeline.
+  rpc Promote(PromoteRequest) returns (PromoteResponse) {}
+}
+
+message PromoteRequest {
+  // The capsule to promote.
+  string capsule_id = 1;
+  // The project in which the capsule lives.
+  string project_id = 2;
+  // the environment to promote from.
+  string environment_id = 3;
+  // the pipeline to follow.
+  string pipeline = 4;
+  // if true, the promotion will not be executed, but the request will return
+  // the rollout config.
+  bool dry_run = 5;
+}
+
+message PromoteResponse {
+  DeployResponse deploy_response = 1;
 }
 
 message WatchRolloutsRequest {

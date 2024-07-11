@@ -89,6 +89,7 @@
 | /api.v1.capsule.Service/GetRolloutOfRevisions | [GetRolloutOfRevisionsRequest](#api-v1-capsule-GetRolloutOfRevisionsRequest) | [GetRolloutOfRevisionsResponse](#api-v1-capsule-GetRolloutOfRevisionsResponse) |  |
 | /api.v1.capsule.Service/WatchStatus | [WatchStatusRequest](#api-v1-capsule-WatchStatusRequest) | [WatchStatusResponse](#api-v1-capsule-WatchStatusResponse) stream | Stream the status of a capsule. |
 | /api.v1.capsule.Service/GetEffectiveGitSettings | [GetEffectiveGitSettingsRequest](#api-v1-capsule-GetEffectiveGitSettingsRequest) | [GetEffectiveGitSettingsResponse](#api-v1-capsule-GetEffectiveGitSettingsResponse) |  |
+| /api.v1.capsule.Service/Promote | [PromoteRequest](#api-v1-capsule-PromoteRequest) | [PromoteResponse](#api-v1-capsule-PromoteResponse) | Experimental: Promote a capsule to the next environment in a pipeline. |
 
 
 
@@ -170,6 +171,7 @@
 | /api.v1.image.Service/Add | [AddRequest](#api-v1-image-AddRequest) | [AddResponse](#api-v1-image-AddResponse) | Add a new image. Images are immutable and cannot change. Add a new image to make changes from an existing one. |
 | /api.v1.image.Service/List | [ListRequest](#api-v1-image-ListRequest) | [ListResponse](#api-v1-image-ListResponse) | List images for a capsule. |
 | /api.v1.image.Service/Delete | [DeleteRequest](#api-v1-image-DeleteRequest) | [DeleteResponse](#api-v1-image-DeleteResponse) | Delete a image. |
+
 
 
 
@@ -6076,6 +6078,40 @@ The response of a capsule.Logs RPC
 
 
 
+<a name="api-v1-capsule-PromoteRequest"></a>
+
+### PromoteRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  | The capsule to promote. |
+| project_id | [string](#string) |  | The project in which the capsule lives. |
+| environment_id | [string](#string) |  | the environment to promote from. |
+| pipeline | [string](#string) |  | the pipeline to follow. |
+| dry_run | [bool](#bool) |  | if true, the promotion will not be executed, but the request will return the rollout config. |
+
+
+
+
+
+
+<a name="api-v1-capsule-PromoteResponse"></a>
+
+### PromoteResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| deploy_response | [DeployResponse](#api-v1-capsule-DeployResponse) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-ProposeRolloutRequest"></a>
 
 ### ProposeRolloutRequest
@@ -7534,6 +7570,96 @@ A docker image tag.
 
 
 
+<a name="model_pipeline-proto"></a>
+
+## model/pipeline.proto
+
+
+
+<a name="model-Phase"></a>
+
+### Phase
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  | Environment to promote to. The project must be active in this environment. |
+| fixed_fields | [string](#string) | repeated | Fixed fields, that are not changed upon promotion. |
+| triggers | [PromotionTrigger](#model-PromotionTrigger) | repeated | Promotion triggers. |
+
+
+
+
+
+
+<a name="model-Pipeline"></a>
+
+### Pipeline
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Custom name for the pipeline. |
+| initial_environment | [string](#string) |  |  |
+| phases | [Phase](#model-Phase) | repeated |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="model-PromotionTrigger"></a>
+
+### PromotionTrigger
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| manual | [PromotionTrigger.Manual](#model-PromotionTrigger-Manual) |  |  |
+| auto | [PromotionTrigger.Auto](#model-PromotionTrigger-Auto) |  |  |
+
+
+
+
+
+
+<a name="model-PromotionTrigger-Auto"></a>
+
+### PromotionTrigger.Auto
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| time_alive | [google.protobuf.Duration](#google-protobuf-Duration) |  |  |
+
+
+
+
+
+
+<a name="model-PromotionTrigger-Manual"></a>
+
+### PromotionTrigger.Manual
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_project_project-proto"></a>
 
 ## api/v1/project/project.proto
@@ -7556,6 +7682,22 @@ A docker image tag.
 
 
 
+<a name="api-v1-project-Pipelines"></a>
+
+### Pipelines
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| disabled | [bool](#bool) |  | If the pipelines are disabled, pipelines from parent are not inherited even if pipelines at this level are empty. |
+| pipelines | [model.Pipeline](#model-Pipeline) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-project-Project"></a>
 
 ### Project
@@ -7570,6 +7712,7 @@ The top most model that capsules etc belong to.
 | installation_id | [string](#string) |  | The installation id of the project. |
 | git_store | [model.GitStore](#model-GitStore) |  |  |
 | notifiers | [NotificationNotifiers](#api-v1-project-NotificationNotifiers) |  | The notifiers for the project. |
+| pipeline | [Pipelines](#api-v1-project-Pipelines) |  | Environment pipeline for the project |
 
 
 
@@ -7586,6 +7729,7 @@ Update msg for a project.
 | ----- | ---- | ----- | ----------- |
 | set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
 | notifiers | [NotificationNotifiers](#api-v1-project-NotificationNotifiers) |  | Set the notifiers. |
+| set_pipelines | [Pipelines](#api-v1-project-Pipelines) |  | Set the pipelines |
 
 
 
@@ -8762,6 +8906,7 @@ Platform wide settings.
 | ----- | ---- | ----- | ----------- |
 | notification_notifiers | [model.NotificationNotifier](#model-NotificationNotifier) | repeated |  |
 | git_store | [model.GitStore](#model-GitStore) |  |  |
+| pipelines | [model.Pipeline](#model-Pipeline) | repeated |  |
 
 
 
@@ -8778,6 +8923,7 @@ Update message for platform settings.
 | ----- | ---- | ----- | ----------- |
 | set_notification_notifiers | [Update.SetNotificationNotifiers](#api-v1-settings-Update-SetNotificationNotifiers) |  | Set the notification notifiers. |
 | set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
+| set_pipelines | [Update.SetPipelines](#api-v1-settings-Update-SetPipelines) |  | Set the pipelines. |
 
 
 
@@ -8793,6 +8939,21 @@ Update message for platform settings.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | notifiers | [model.NotificationNotifier](#model-NotificationNotifier) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Update-SetPipelines"></a>
+
+### Update.SetPipelines
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pipelines | [model.Pipeline](#model-Pipeline) | repeated |  |
 
 
 
