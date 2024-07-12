@@ -35,7 +35,7 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	var updates []*settings_api.Update
 	for {
 		i, _, err := c.Prompter.Select("Select the setting to update (CTRL + C to cancel)",
-			[]string{"Notification Notifer", "Git store", "Done"})
+			[]string{"Notification Notifer", "Git store", "Promotion Pipelines", "Done"})
 		if err != nil {
 			if common.ErrIsAborted(err) {
 				return nil
@@ -78,6 +78,24 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 				},
 			})
 		case 2:
+			promotionPipelines, err := common.PromptPipelines(c.Prompter, s.GetPipelines(), envResp.Msg.GetEnvironments())
+			if err != nil {
+				if common.ErrIsAborted(err) {
+					continue
+				}
+				return err
+			}
+
+			s.Pipelines = promotionPipelines
+
+			updates = append(updates, &settings_api.Update{
+				Field: &settings_api.Update_SetPipelines_{
+					SetPipelines: &settings_api.Update_SetPipelines{
+						Pipelines: promotionPipelines,
+					},
+				},
+			})
+		case 3:
 			done = true
 		}
 		if done {
