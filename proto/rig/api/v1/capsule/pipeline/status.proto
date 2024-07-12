@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package api.v1.capsule.pipeline;
+
+import "google/protobuf/timestamp.proto";
+
+message Status {
+  // The name of the pipeline.
+  string pipeline_name = 1;
+  // The capsule that is executing the pipeline.
+  string capsule_id = 2;
+  // The ID of the pipeline execution
+  uint64 execution_id = 3;
+  // The overall state of the pipeline execution.
+  State state = 4;
+  // The statuses of the phases in the pipeline.
+  repeated PhaseStatus phase_statuses = 5;
+  // When the pipeline was started.
+  google.protobuf.Timestamp started_at = 6;
+  // When the pipeline was last updated.
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message PhaseStatus {
+  string environment_id = 1;
+  PhaseState state = 2;
+  uint64 rollout_id = 3;
+  string message = 4;
+}
+
+enum State {
+  // The state is unspecified.
+  STATE_UNSPECIFIED = 0;
+  // The pipeline has started.
+  STATE_RUNNING = 1;
+  // The pipeline is aborted.
+  STATE_ABORTED = 2;
+  // The pipeline is completed.
+  STATE_COMPLETED = 3;
+}
+
+enum PhaseState {
+  // The state is unspecified.
+  PHASE_STATE_UNSPECIFIED = 0;
+  // The phase is not ready for promotion
+  PHASE_STATE_NOT_READY = 1;
+  // The phase is ready for promotion
+  PHASE_STATE_READY = 2;
+  // The phase is promoted
+  PHASE_STATE_PROMOTED = 3;
+}

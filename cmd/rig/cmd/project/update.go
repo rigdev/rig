@@ -98,7 +98,7 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 				},
 			})
 		case 2:
-			if err := c.updatePromotionPipelines(ctx, p.GetPipeline()); err != nil {
+			if err := c.updatePromotionPipelines(ctx, p.GetPipelines()); err != nil {
 				if common.ErrIsAborted(err) {
 					continue
 				}
@@ -107,7 +107,7 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 			updates = append(updates, &project.Update{
 				Field: &project.Update_SetPipelines{
-					SetPipelines: p.GetPipeline(),
+					SetPipelines: p.GetPipelines(),
 				},
 			})
 		case 3:

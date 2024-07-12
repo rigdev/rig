@@ -19,6 +19,7 @@ import "model/revision.proto";
 import "model/git.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "api/v1/capsule/pipeline/status.proto";
 
 // The service to manage capsules.
 service Service {
@@ -102,6 +103,76 @@ service Service {
 
   rpc GetEffectiveGitSettings(GetEffectiveGitSettingsRequest)
       returns (GetEffectiveGitSettingsResponse) {}
+
+  // Will initiate the pipeline, from the initial environment and it's current
+  // rollout.
+  rpc StartPipeline(StartPipelineRequest) returns (StartPipelineResponse) {}
+  rpc GetPipelineStatus(GetPipelineStatusRequest)
+      returns (GetPipelineStatusResponse) {}
+  // Progress the pipeline to the next environment.
+  rpc ProgressPipeline(ProgressPipelineRequest)
+      returns (ProgressPipelineResponse) {}
+  // Abort the pipeline execution. This will stop the pipeline from any further
+  // promotions.
+  rpc AbortPipeline(AbortPipelineRequest) returns (AbortPipelineResponse) {}
+  rpc ListPipelineStatuses(ListPipelineStatusesRequest)
+      returns (ListPipelineStatusesResponse) {}
+}
+
+message ListPipelineStatusesRequest {
+  model.Pagination pagination = 1;
+  // Only include pipelines that are run in the given project.
+  string project_filter = 2;
+  // Only include pipelines that are run with the given capsule.
+  string capsule_filter = 3;
+  // Only include pipelines that are in one of the given states.
+  repeated api.v1.capsule.pipeline.State states_filter = 4;
+  // Only include pipelines that have the given name.
+  string name_filter = 5;
+}
+
+message ListPipelineStatusesResponse {
+  repeated api.v1.capsule.pipeline.Status statuses = 1;
+}
+
+message AbortPipelineRequest {
+  uint64 execution_id = 1;
+}
+
+message AbortPipelineResponse {
+  api.v1.capsule.pipeline.Status status = 1;
+}
+
+message ProgressPipelineRequest {
+  uint64 execution_id = 1;
+  // If true, the progression will not be executed, but instead a
+  // breakdown of changes will be returned
+  bool dry_run = 2;
+}
+
+message ProgressPipelineResponse {
+  api.v1.capsule.pipeline.Status status = 1;
+  // Breakdown of the changes that this deploy would make to the system.
+  // Only populated if dry-run is used.
+  DeployOutcome outcome = 2;
+}
+
+message GetPipelineStatusRequest {
+  uint64 execution_id = 1;
+}
+
+message GetPipelineStatusResponse {
+  api.v1.capsule.pipeline.Status status = 1;
+}
+
+message StartPipelineRequest {
+  string project_id = 1;
+  string capsule_id = 2;
+  string pipeline_name = 3;
+}
+
+message StartPipelineResponse {
+  api.v1.capsule.pipeline.Status status = 1;
 }
 
 message WatchRolloutsRequest {
