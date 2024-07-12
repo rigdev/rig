@@ -51,18 +51,25 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 	horizontal.MinReplicas = replicas
 	horizontal.MaxReplicas = replicas
 
-	return capsule_cmd.DeployAndWait(
-		ctx,
-		c.Rig,
-		c.Scope,
-		capsule_cmd.CapsuleID,
-		[]*capsule.Change{{
-			Field: &capsule.Change_HorizontalScale{
-				HorizontalScale: horizontal,
+	deployInput := capsule_cmd.DeployAndWaitInput{
+		DeployInput: capsule_cmd.DeployInput{
+			BaseInput: capsule_cmd.BaseInput{
+				Ctx:           ctx,
+				Rig:           c.Rig,
+				ProjectID:     flags.GetProject(c.Scope),
+				EnvironmentID: flags.GetEnvironment(c.Scope),
+				CapsuleID:     capsule_cmd.CapsuleID,
 			},
-		}},
-		forceDeploy, false, 0, 0, 0, false, nil,
-	)
+			Changes: []*capsule.Change{{
+				Field: &capsule.Change_HorizontalScale{
+					HorizontalScale: horizontal,
+				},
+			}},
+			ForceDeploy: forceDeploy,
+		},
+	}
+
+	return capsule_cmd.DeployAndWait(deployInput)
 }
 
 func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) error {
@@ -127,18 +134,25 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 		}
 	}
 
-	return capsule_cmd.DeployAndWait(
-		ctx,
-		c.Rig,
-		c.Scope,
-		capsule_cmd.CapsuleID,
-		[]*capsule.Change{{
-			Field: &capsule.Change_HorizontalScale{
-				HorizontalScale: horizontal,
+	deployInput := capsule_cmd.DeployAndWaitInput{
+		DeployInput: capsule_cmd.DeployInput{
+			BaseInput: capsule_cmd.BaseInput{
+				Ctx:           ctx,
+				Rig:           c.Rig,
+				ProjectID:     flags.GetProject(c.Scope),
+				EnvironmentID: flags.GetEnvironment(c.Scope),
+				CapsuleID:     capsule_cmd.CapsuleID,
 			},
-		}},
-		forceDeploy, false, 0, 0, 0, false, nil,
-	)
+			Changes: []*capsule.Change{{
+				Field: &capsule.Change_HorizontalScale{
+					HorizontalScale: horizontal,
+				},
+			}},
+			ForceDeploy: forceDeploy,
+		},
+	}
+
+	return capsule_cmd.DeployAndWait(deployInput)
 }
 
 func hasAutoscalerFlagsSet(cmd *cobra.Command) bool {

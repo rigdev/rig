@@ -22,13 +22,11 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	api_image "github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/model"
-	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
@@ -146,24 +144,41 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		}
 	}
 
-	if dry {
-		return c.deployDry(ctx, capsuleName, changes, currentRolloutID, curf)
+	baseInput := capsule_cmd.BaseInput{
+		Ctx:           ctx,
+		Rig:           c.Rig,
+		ProjectID:     flags.GetProject(c.Scope),
+		EnvironmentID: flags.GetEnvironment(c.Scope),
+		CapsuleID:     capsuleName,
 	}
 
-	return capsule_cmd.DeployAndWait(
-		ctx,
-		c.Rig,
-		c.Scope,
-		capsuleName,
-		changes,
-		true,
-		forceOverride,
-		currentRolloutID,
-		timeout,
-		rollbackID,
-		noWait,
-		curf,
-	)
+	if dry {
+		input := capsule_cmd.DeployDryInput{
+			BaseInput:          baseInput,
+			Changes:            changes,
+			Scheme:             c.Scheme,
+			CurrentRolloutID:   currentRolloutID,
+			CurrentFingerprint: curf,
+			IsInteractive:      c.Scope.IsInteractive(),
+		}
+
+		return capsule_cmd.DeployDry(input)
+	}
+
+	input := capsule_cmd.DeployAndWaitInput{
+		DeployInput: capsule_cmd.DeployInput{
+			BaseInput:          baseInput,
+			Changes:            changes,
+			ForceDeploy:        true,
+			ForceOverride:      forceOverride,
+			CurrentRolloutID:   currentRolloutID,
+			CurrentFingerprint: curf,
+		},
+		Timeout:    timeout,
+		RollbackID: rollbackID,
+		NoWait:     noWait,
+	}
+	return capsule_cmd.DeployAndWait(input)
 }
 
 func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, error) {
@@ -861,63 +876,4 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	}
 
 	return res.Msg.GetImageId(), nil
-}
-
-func (c *Cmd) deployDry(
-	ctx context.Context, capsuleID string, changes []*capsule.Change,
-	currentRolloutID uint64, currentFingerprint *model.Fingerprint,
-) error {
-	req := &capsule.DeployRequest{
-		CapsuleId:          capsuleID,
-		Changes:            nil,
-		ProjectId:          flags.GetProject(c.Scope),
-		EnvironmentId:      flags.GetEnvironment(c.Scope),
-		DryRun:             true,
-		CurrentRolloutId:   currentRolloutID,
-		CurrentFingerprint: currentFingerprint,
-	}
-
-	// TODO Make interactive diffing against teh current spec
-	// curResp, err := c.Rig.Capsule().Deploy(ctx, connect.NewRequest(req))
-	// if err != nil {
-	// 	return fmt.Errorf("failed to get cur stuff: %s", err)
-	// }
-	// curOutcome := curResp.Msg.GetOutcome()
-
-	req.Changes = changes
-	resp, err := c.Rig.Capsule().Deploy(ctx, connect.NewRequest(req))
-	if err != nil {
-		return fmt.Errorf("failed to get new stuff: %w", err)
-	}
-	outcome := resp.Msg.GetOutcome()
-
-	var out dryOutput
-	out.PlatformCapsule = resp.Msg.GetRevision().GetSpec()
-
-	for _, o := range outcome.GetPlatformObjects() {
-		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), c.Scheme)
-		if err != nil {
-			return err
-		}
-		out.DirectKubernetes = append(out.DirectKubernetes, co)
-	}
-	for _, o := range outcome.GetKubernetesObjects() {
-		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), c.Scheme)
-		if err != nil {
-			return err
-		}
-		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
-	}
-
-	outputType := flags.Flags.OutputType
-	if outputType == common.OutputTypePretty {
-		outputType = common.OutputTypeYAML
-	}
-	return common.FormatPrint(out, outputType)
-}
-
-type dryOutput struct {
-	PlatformCapsule   *platformv1.Capsule `json:"platformCapsule"`
-	DirectKubernetes  []any               `json:"directKubernetes"`
-	DerivedKubernetes []any               `json:"derivedKubernetes"`
 }

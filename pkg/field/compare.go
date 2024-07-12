@@ -19,6 +19,8 @@ type Diff struct {
 	Changes   []Change
 }
 
+var SpecKeys = []string{"port", "path", "id", "name"}
+
 func Compare(from, to proto.Message, keys ...string) (*Diff, error) {
 	fromBytes, err := obj.EncodeAny(from)
 	if err != nil {

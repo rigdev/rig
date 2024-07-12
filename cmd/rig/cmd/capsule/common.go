@@ -11,16 +11,23 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	api_rollout "github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/model"
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/utils"
+	"github.com/rivo/tview"
+	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var CapsuleID string
@@ -30,6 +37,57 @@ const (
 	DeploymentGroupID      = "deployment"
 	TroubleshootingGroupID = "troubleshooting"
 )
+
+// deployment structs
+type BaseInput struct {
+	Ctx           context.Context
+	Rig           rig.Client
+	ProjectID     string
+	EnvironmentID string
+	CapsuleID     string
+}
+
+type DeployInput struct {
+	BaseInput
+	Changes            []*capsule.Change
+	ForceDeploy        bool
+	ForceOverride      bool
+	CurrentRolloutID   uint64
+	CurrentFingerprint *model.Fingerprint
+}
+
+type DeployAndWaitInput struct {
+	DeployInput
+	Timeout    time.Duration
+	RollbackID uint64
+	NoWait     bool
+}
+
+type DeployDryInput struct {
+	BaseInput
+	Changes            []*capsule.Change
+	CurrentRolloutID   uint64
+	CurrentFingerprint *model.Fingerprint
+	Scheme             *runtime.Scheme
+	IsInteractive      bool
+}
+
+type RollbackInput struct {
+	BaseInput
+	CurrentRolloutID uint64
+	RollbackID       uint64
+}
+
+type WaitForRolloutInput struct {
+	RollbackInput
+	Revision *capsule.Revision
+	Timeout  time.Duration
+}
+
+type GetRolloutInput struct {
+	BaseInput
+	RolloutID uint64
+}
 
 func GetCurrentContainerResources(
 	ctx context.Context,
@@ -222,32 +280,22 @@ func printInstanceID(instanceID string, out *os.File) error {
 	return nil
 }
 
-func Deploy(
-	ctx context.Context,
-	rig rig.Client,
-	scope scope.Scope,
-	capsuleName string,
-	changes []*capsule.Change,
-	forceDeploy bool,
-	forceOverride bool,
-	currentRolloutID uint64,
-	currentFingerprint *model.Fingerprint,
-) (*capsule.Revision, uint64, error) {
+func Deploy(input DeployInput) (*capsule.Revision, uint64, error) {
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId:          capsuleName,
-			Changes:            changes,
-			Force:              forceDeploy,
-			ProjectId:          flags.GetProject(scope),
-			EnvironmentId:      flags.GetEnvironment(scope),
+			CapsuleId:          input.CapsuleID,
+			Changes:            input.Changes,
+			Force:              input.ForceDeploy,
+			ProjectId:          input.ProjectID,
+			EnvironmentId:      input.EnvironmentID,
 			DryRun:             false,
-			CurrentRolloutId:   currentRolloutID,
-			ForceOverride:      forceOverride,
-			CurrentFingerprint: currentFingerprint,
+			CurrentRolloutId:   input.CurrentRolloutID,
+			ForceOverride:      input.ForceOverride,
+			CurrentFingerprint: input.CurrentFingerprint,
 		},
 	}
 
-	res, err := rig.Capsule().Deploy(ctx, req)
+	res, err := input.Rig.Capsule().Deploy(input.Ctx, req)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -256,89 +304,198 @@ func Deploy(
 }
 
 func DeployAndWait(
-	ctx context.Context,
-	rig rig.Client,
-	scope scope.Scope,
-	capsuleName string,
-	changes []*capsule.Change,
-	forceDeploy bool,
-	forceOverride bool,
-	currentRolloutID uint64,
-	timeout time.Duration,
-	rollbackID uint64,
-	noWait bool,
-	currentFingerprint *model.Fingerprint,
+	input DeployAndWaitInput,
 ) error {
-	revision, rolloutID, err := Deploy(
-		ctx,
-		rig,
-		scope,
-		capsuleName,
-		changes,
-		forceDeploy,
-		forceOverride,
-		currentRolloutID,
-		currentFingerprint,
-	)
+	revision, rolloutID, err := Deploy(input.DeployInput)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Deploying to capsule", capsuleName)
-	if noWait {
+	fmt.Println("Deploying to capsule", input.CapsuleID)
+	if input.NoWait {
 		return nil
 	}
-	return WaitForRollout(ctx, rig, scope, capsuleName, revision, rolloutID, timeout, rollbackID)
+
+	waitForRolloutInput := WaitForRolloutInput{
+		RollbackInput: RollbackInput{
+			BaseInput:        input.BaseInput,
+			CurrentRolloutID: rolloutID,
+			RollbackID:       input.RollbackID,
+		},
+		Revision: revision,
+		Timeout:  input.Timeout,
+	}
+	return WaitForRollout(waitForRolloutInput)
 }
 
-func Rollback(
-	ctx context.Context,
-	rig rig.Client,
-	scope scope.Scope,
-	capsuleName string,
-	currentRolloutID uint64,
-	rollbackID uint64,
-) (*capsule.Revision, uint64, error) {
-	return Deploy(ctx, rig, scope, capsuleName, []*capsule.Change{
-		{
-			Field: &capsule.Change_Rollback_{
-				Rollback: &capsule.Change_Rollback{
-					RollbackId: rollbackID,
+func DeployDry(input DeployDryInput) error {
+	req := &capsule.DeployRequest{
+		CapsuleId:          input.CapsuleID,
+		Changes:            input.Changes,
+		ProjectId:          input.ProjectID,
+		EnvironmentId:      input.EnvironmentID,
+		DryRun:             true,
+		CurrentRolloutId:   input.CurrentRolloutID,
+		CurrentFingerprint: input.CurrentFingerprint,
+	}
+
+	resp, err := input.Rig.Capsule().Deploy(input.Ctx, connect.NewRequest(req))
+	if err != nil {
+		return fmt.Errorf("failed to get new stuff: %w", err)
+	}
+	outcome := resp.Msg.GetOutcome()
+
+	var out DryOutput
+	out.PlatformCapsule = resp.Msg.GetRevision().GetSpec()
+
+	for _, o := range outcome.GetPlatformObjects() {
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), input.Scheme)
+		if err != nil {
+			return err
+		}
+		out.DirectKubernetes = append(out.DirectKubernetes, co)
+	}
+	for _, o := range outcome.GetKubernetesObjects() {
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), input.Scheme)
+		if err != nil {
+			return err
+		}
+		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
+	}
+
+	if !input.IsInteractive {
+		outputType := flags.Flags.OutputType
+		if outputType == common.OutputTypePretty {
+			outputType = common.OutputTypeYAML
+		}
+		return common.FormatPrint(out, outputType)
+	}
+
+	return promptDryOutput(input.Ctx, out, outcome)
+}
+
+func promptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.DeployOutcome) error {
+	listView := tview.NewList().ShowSecondaryText(false)
+	listView.SetBorder(true).
+		SetTitle("Resources (Return to view)")
+
+	capsuleYamlBytes, err := yaml.Marshal(out.PlatformCapsule)
+	if err != nil {
+		return err
+	}
+
+	capsuleYaml := string(capsuleYamlBytes)
+
+	listView.AddItem("[::b]Platform Capsule", "", 0, nil)
+	content := []string{capsuleYaml}
+	for i, o := range out.DirectKubernetes {
+		obj := o.(client.Object)
+		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
+		content = append(content, outcome.PlatformObjects[i].ContentYaml)
+	}
+	for i, o := range out.DerivedKubernetes {
+		obj := o.(client.Object)
+		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
+		content = append(content, outcome.KubernetesObjects[i].ContentYaml)
+	}
+
+	textView := tview.NewTextView()
+	textView.SetTitle(fmt.Sprintf("%s (ESC to continue and CTRL+C to cancel)", "Capsule Diff"))
+	textView.SetBorder(true)
+	textView.SetDynamicColors(true)
+	textView.SetWrap(true)
+	textView.SetText(capsuleYaml)
+	textView.SetBackgroundColor(tcell.ColorNone)
+
+	errChan := make(chan error)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	grid := tview.NewGrid().SetRows(-1).SetColumns(-1, -2)
+	grid.AddItem(textView, 0, 1, 1, 1, 0, 0, false)
+	grid.AddItem(listView, 0, 0, 1, 1, 0, 0, true)
+
+	app := tview.NewApplication().SetRoot(grid, true).EnableMouse(true)
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEnter:
+			textView.SetText(content[listView.GetCurrentItem()])
+		case tcell.KeyEsc:
+			cancel()
+		case tcell.KeyCtrlC:
+			cancel()
+		}
+		return event
+	})
+
+	go func() {
+		err := app.Run()
+		if err != nil {
+			errChan <- err
+		}
+	}()
+
+	defer app.Stop()
+
+	for {
+		select {
+		case err := <-errChan:
+			return err
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+type DryOutput struct {
+	PlatformCapsule   *platformv1.Capsule `json:"platformCapsule"`
+	DirectKubernetes  []any               `json:"directKubernetes"`
+	DerivedKubernetes []any               `json:"derivedKubernetes"`
+}
+
+func Rollback(input RollbackInput) (*capsule.Revision, uint64, error) {
+	deployInput := DeployInput{
+		BaseInput: input.BaseInput,
+		Changes: []*capsule.Change{
+			{
+				Field: &capsule.Change_Rollback_{
+					Rollback: &capsule.Change_Rollback{
+						RollbackId: input.RollbackID,
+					},
 				},
 			},
 		},
-	}, true, false, currentRolloutID, nil)
+		ForceDeploy:      true,
+		CurrentRolloutID: input.CurrentRolloutID,
+	}
+
+	return Deploy(deployInput)
 }
 
 func WaitForRollout(
-	ctx context.Context,
-	rig rig.Client,
-	scope scope.Scope,
-	capsuleID string,
-	revision *capsule.Revision,
-	rolloutID uint64,
-	timeout time.Duration,
-	rollbackID uint64,
+	input WaitForRolloutInput,
 ) error {
-	if rolloutID == 0 {
+	if input.CurrentRolloutID == 0 {
 		first := true
 		for {
-			resp, err := rig.Capsule().GetRolloutOfRevisions(ctx, connect.NewRequest(&capsule.GetRolloutOfRevisionsRequest{
-				ProjectId:     flags.GetProject(scope),
-				EnvironmentId: flags.GetEnvironment(scope),
-				CapsuleId:     capsuleID,
-				Fingerprints: &model.Fingerprints{
-					Capsule: revision.GetMetadata().GetFingerprint(),
-				},
-			}))
+			resp, err := input.Rig.Capsule().GetRolloutOfRevisions(
+				input.Ctx,
+				connect.NewRequest(&capsule.GetRolloutOfRevisionsRequest{
+					ProjectId:     input.ProjectID,
+					EnvironmentId: input.EnvironmentID,
+					CapsuleId:     input.CapsuleID,
+					Fingerprints: &model.Fingerprints{
+						Capsule: input.Revision.GetMetadata().GetFingerprint(),
+					},
+				}))
 			if err != nil {
 				return err
 			}
 			switch r := resp.Msg.GetKind().(type) {
 			case *capsule.GetRolloutOfRevisionsResponse_NoRollout_:
 			case *capsule.GetRolloutOfRevisionsResponse_Rollout:
-				rolloutID = r.Rollout.GetRolloutId()
+				input.CurrentRolloutID = r.Rollout.GetRolloutId()
 			}
-			if rolloutID == 0 {
+			if input.CurrentRolloutID == 0 {
 				if first {
 					fmt.Println("Waiting for rollout to start...")
 					first = false
@@ -350,11 +507,11 @@ func WaitForRollout(
 		}
 	}
 
-	fmt.Printf("Rollout %v started\n", rolloutID)
+	fmt.Printf("Rollout %v started\n", input.CurrentRolloutID)
 
 	var deadline time.Time
-	if timeout != 0 {
-		deadline = time.Now().Add(timeout)
+	if input.Timeout != 0 {
+		deadline = time.Now().Add(input.Timeout)
 	}
 
 	var lastConfigure []*api_rollout.StepInfo
@@ -363,20 +520,25 @@ func WaitForRollout(
 	for {
 		if !deadline.IsZero() && time.Now().After(deadline) {
 			fmt.Println()
-			fmt.Printf("🛑 Rollout timed out after %s... ", timeout)
-			if rollbackID == 0 {
+			fmt.Printf("🛑 Rollout timed out after %s... ", input.Timeout)
+			if input.RollbackID == 0 {
 				return fmt.Errorf("aborted")
 			}
 
-			_, _, err := Rollback(ctx, rig, scope, capsuleID, rolloutID, rollbackID)
+			_, _, err := Rollback(input.RollbackInput)
 			if err != nil {
 				return err
 			}
 
-			return fmt.Errorf("rollback to %d initiated", rollbackID)
+			return fmt.Errorf("rollback to %d initiated", input.RollbackID)
 		}
 
-		rollout, err := getRollout(ctx, rig, scope, capsuleID, rolloutID)
+		getRolloutInput := GetRolloutInput{
+			BaseInput: input.BaseInput,
+			RolloutID: input.CurrentRolloutID,
+		}
+
+		rollout, err := getRollout(getRolloutInput)
 		if err != nil {
 			return err
 		}
@@ -528,22 +690,18 @@ func WaitForRollout(
 }
 
 func getRollout(
-	ctx context.Context,
-	rig rig.Client,
-	scope scope.Scope,
-	capsuleID string,
-	rolloutID uint64,
+	input GetRolloutInput,
 ) (*capsule.Rollout, error) {
 	connectionLost := false
-	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(2*time.Minute))
+	ctx, cancel := context.WithDeadline(input.Ctx, time.Now().Add(2*time.Minute))
 	defer cancel()
 
 	for {
-		res, err := rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
+		res, err := input.Rig.Capsule().GetRollout(ctx, &connect.Request[capsule.GetRolloutRequest]{
 			Msg: &capsule.GetRolloutRequest{
-				CapsuleId: capsuleID,
-				RolloutId: rolloutID,
-				ProjectId: flags.GetProject(scope),
+				CapsuleId: input.CapsuleID,
+				RolloutId: input.RolloutID,
+				ProjectId: input.ProjectID,
 			},
 		})
 		if errors.IsUnavailable(err) || ctx.Err() != nil {

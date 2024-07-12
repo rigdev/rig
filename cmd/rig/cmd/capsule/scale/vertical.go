@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -32,18 +33,25 @@ func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error 
 		return err
 	}
 
-	return capsule_cmd.DeployAndWait(
-		ctx,
-		c.Rig,
-		c.Scope,
-		capsule_cmd.CapsuleID,
-		[]*capsule.Change{{
-			Field: &capsule.Change_ContainerSettings{
-				ContainerSettings: container,
+	deployInput := capsule_cmd.DeployAndWaitInput{
+		DeployInput: capsule_cmd.DeployInput{
+			BaseInput: capsule_cmd.BaseInput{
+				Ctx:           ctx,
+				Rig:           c.Rig,
+				ProjectID:     flags.GetProject(c.Scope),
+				EnvironmentID: flags.GetEnvironment(c.Scope),
+				CapsuleID:     capsule_cmd.CapsuleID,
 			},
-		}},
-		forceDeploy, false, 0, 0, 0, false, nil,
-	)
+			Changes: []*capsule.Change{{
+				Field: &capsule.Change_ContainerSettings{
+					ContainerSettings: container,
+				},
+			}},
+			ForceDeploy: forceDeploy,
+		},
+	}
+
+	return capsule_cmd.DeployAndWait(deployInput)
 }
 
 func (c *Cmd) setResourcesInteractive(curResources *capsule.Resources) error {
