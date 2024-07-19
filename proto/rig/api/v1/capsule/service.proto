@@ -830,8 +830,6 @@ message GetRolloutOfRevisionsResponse {
   }
 }
 
-message AnnotatedRollout {}
-
 message GetEffectiveGitSettingsRequest {
   string project_id = 1;
   string environment_id = 2;
