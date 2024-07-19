@@ -23,6 +23,14 @@ func YAMLToCapsuleProto(bytes []byte) (*platformv1.Capsule, error) {
 	return spec, nil
 }
 
+func YAMLToCapsuleSetProto(bytes []byte) (*platformv1.CapsuleSet, error) {
+	spec := &platformv1.CapsuleSet{}
+	if err := YAMLToSpecProto(bytes, spec, "CapsuleSet"); err != nil {
+		return nil, err
+	}
+	return spec, nil
+}
+
 func YAMLToSpecProto[T interface{ GetKind() string }](bs []byte, o T, expectedKind string) error {
 	if err := yaml.Unmarshal(bs, o, yaml.DisallowUnknownFields); err != nil {
 		return err

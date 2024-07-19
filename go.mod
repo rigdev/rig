@@ -32,7 +32,7 @@ require (
 	github.com/nyaruka/phonenumbers v1.1.7
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20240705081958-020a39b8fd04
+	github.com/rigdev/rig-go-api v0.0.0-20240719083514-b3e29d7b88d7
 	github.com/rigdev/rig-go-sdk v0.0.0-20240612092526-69df8621bc22
 	github.com/rivo/tview v0.0.0-20240524063012-037df494fb76
 	github.com/robfig/cron v1.2.0
@@ -47,8 +47,8 @@ require (
 	go.uber.org/fx v1.19.3
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
-	golang.org/x/net v0.26.0
-	golang.org/x/term v0.21.0
+	golang.org/x/net v0.27.0
+	golang.org/x/term v0.22.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v2 v2.4.0
@@ -161,7 +161,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240711142825-46eb208f015d // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect

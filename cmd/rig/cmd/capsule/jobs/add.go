@@ -68,7 +68,7 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 		CurrentRolloutID: rollout.GetRolloutId(),
 	}
 
-	if _, _, err := capsule_cmd.Deploy(input); err != nil {
+	if _, err := capsule_cmd.Deploy(input); err != nil {
 		return err
 	}
 
@@ -282,7 +282,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 		CurrentRolloutID: rollout.GetRolloutId(),
 	}
 
-	if _, _, err := capsule_cmd.Deploy(input); err != nil {
+	if _, err := capsule_cmd.Deploy(input); err != nil {
 		return err
 	}
 

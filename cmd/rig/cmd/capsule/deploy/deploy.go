@@ -58,22 +58,9 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		return errors.InvalidArgumentErrorf("cannot give both --fingerprint and --current-rollout")
 	}
 
-	capsuleName := ""
-	if len(args) > 0 {
-		capsuleName = args[0]
-	}
-
-	if len(capsuleName) == 0 {
-		if !c.Scope.IsInteractive() {
-			return errors.InvalidArgumentErrorf("missing capsule name argument")
-		}
-
-		name, err := capsule_cmd.SelectCapsule(ctx, c.Rig, c.Prompter, c.Scope)
-		if err != nil {
-			return err
-		}
-
-		capsuleName = name
+	capsuleName, err := c.getCapsuleID(ctx, args)
+	if err != nil {
+		return err
 	}
 
 	changes, err := c.getChanges(cmd, args)
@@ -137,13 +124,6 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		}
 	}
 
-	var curf *model.Fingerprint
-	if currentFingerprint != "" {
-		curf = &model.Fingerprint{
-			Data: currentFingerprint,
-		}
-	}
-
 	baseInput := capsule_cmd.BaseInput{
 		Ctx:           ctx,
 		Rig:           c.Rig,
@@ -158,7 +138,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 			Changes:            changes,
 			Scheme:             c.Scheme,
 			CurrentRolloutID:   currentRolloutID,
-			CurrentFingerprint: curf,
+			CurrentFingerprint: parseFingerprint(currentFingerprint),
 			IsInteractive:      c.Scope.IsInteractive(),
 		}
 
@@ -172,7 +152,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 			ForceDeploy:        true,
 			ForceOverride:      forceOverride,
 			CurrentRolloutID:   currentRolloutID,
-			CurrentFingerprint: curf,
+			CurrentFingerprint: parseFingerprint(currentFingerprint),
 		},
 		Timeout:    timeout,
 		RollbackID: rollbackID,
@@ -876,4 +856,35 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	}
 
 	return res.Msg.GetImageId(), nil
+}
+
+func (c *Cmd) getCapsuleID(ctx context.Context, args []string) (string, error) {
+	capsuleName := ""
+	if len(args) > 0 {
+		capsuleName = args[0]
+	}
+
+	if len(capsuleName) == 0 {
+		if !c.Scope.IsInteractive() {
+			return "", errors.InvalidArgumentErrorf("missing capsule name argument")
+		}
+
+		name, err := capsule_cmd.SelectCapsule(ctx, c.Rig, c.Prompter, c.Scope)
+		if err != nil {
+			return "", err
+		}
+
+		capsuleName = name
+	}
+
+	return capsuleName, nil
+}
+
+func parseFingerprint(s string) *model.Fingerprint {
+	if s == "" {
+		return nil
+	}
+	return &model.Fingerprint{
+		Data: s,
+	}
 }
