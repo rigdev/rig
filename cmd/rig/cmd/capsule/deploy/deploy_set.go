@@ -139,7 +139,7 @@ func waitForRollouts(inputs []capsule_cmd.WaitForRolloutInput, timeout time.Dura
 	}
 	start := time.Now()
 	for len(inps) > 0 {
-		if time.Since(start) > timeout {
+		if timeout > 0 && time.Since(start) > timeout {
 			fmt.Println()
 			fmt.Printf("🛑 Rollouts timed out after %s... ", timeout)
 			return fmt.Errorf("aborted")

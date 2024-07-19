@@ -16,6 +16,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
+	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
@@ -140,6 +141,9 @@ In that case you must supply branch name in --pr-branch.`,
 			common.MaxArgsCompletionFilter(1)),
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		RunE:              cli.CtxWrap(cmd.deploySet),
+		Annotations: map[string]string{
+			auth.OmitEnvironment: "",
+		},
 	}
 	setupConfigurationFlags(capsuleSetDeploy)
 	capsuleSetDeploy.Flags().StringVar(
