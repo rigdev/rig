@@ -10,6 +10,7 @@ message GitStore {
   string repository = 2;
   string branch = 3;
   string capsule_path = 4;
+  string capsule_set_path = 10;
   string commit_template = 5;
   EnvironmentFilter environments = 6;
   string pr_title_template = 7;

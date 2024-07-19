@@ -7,3 +7,8 @@ message CapsuleID {
   string environment = 2;
   string capsule = 3;
 }
+
+message CapsuleSetID {
+  string project = 1;
+  string capsule = 2;
+}
