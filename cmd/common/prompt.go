@@ -138,6 +138,12 @@ func InputDefaultOpt(def string) GetInputOption {
 	}
 }
 
+func InputGetInfoOpt(getInfo func(s string) string) GetInputOption {
+	return func(inp *textinput.TextInput) {
+		inp.ExtendedTemplateFuncs["GetInfo"] = getInfo
+	}
+}
+
 func SelectEnableFilterOpt(s *selection.Selection[string]) {
 	s.Filter = selection.FilterContainsCaseSensitive[string]
 }
@@ -172,6 +178,9 @@ func SelectDontShowResultOpt(s *selection.Selection[string]) {
 
 var inputTemplate = `
 	{{- Bold .Prompt }} {{ .Input -}}
+	{{- if ge (len (GetInfo .Input)) 0 }}
+    	{{- printf " %s" (Italic (GetInfo .Input)) }}
+	{{- end -}}
 	{{- if .ValidationError }}
         {{- Foreground "1" (Bold "✘") }}
         {{- if ge (len (StripCursor .Input)) 3 }}
@@ -222,11 +231,16 @@ func formatValidationError(err error) string {
 	return s
 }
 
+func getInfo(_ string) string {
+	return ""
+}
+
 var templateExtensions = map[string]any{
 	// The Input variable to the Input template will get the blinking cursor prepended
 	// Thus you need to strip it if you want access to the real input
 	"StripCursor":           stripCursor,
 	"FormatValidationError": formatValidationError,
+	"GetInfo":               getInfo,
 }
 
 type Prompter interface {

@@ -154,7 +154,7 @@ func (c *Cmd) updateNotifiers(ctx context.Context, p *project.NotificationNotifi
 	return nil
 }
 
-func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error {
+func (c *Cmd) updateGit(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	var gitStore *model.GitStore
 	if resp, err := c.Rig.Project().GetEffectiveGitSettings(
 		ctx, connect.NewRequest(&project.GetEffectiveGitSettingsRequest{
@@ -166,7 +166,9 @@ func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error
 		gitStore = resp.Msg.GetGit()
 	}
 	var err error
-	if gitStore, err = common.UpdateGit(ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore); err != nil {
+	if gitStore, err = common.UpdateGit(
+		ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore, cmd,
+	); err != nil {
 		return err
 	}
 
