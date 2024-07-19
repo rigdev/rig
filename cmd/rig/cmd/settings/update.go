@@ -100,13 +100,15 @@ func (c *Cmd) update(ctx context.Context, cmd *cobra.Command, _ []string) error 
 	return nil
 }
 
-func (c *Cmd) updateGit(ctx context.Context, _ *cobra.Command, _ []string) error {
+func (c *Cmd) updateGit(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Settings().GetSettings(ctx, connect.NewRequest(&settings_api.GetSettingsRequest{}))
 	if err != nil {
 		return err
 	}
 	gitStore := resp.Msg.GetSettings().GetGitStore()
-	if gitStore, err = common.UpdateGit(ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore); err != nil {
+	if gitStore, err = common.UpdateGit(
+		ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore, cmd,
+	); err != nil {
 		return err
 	}
 

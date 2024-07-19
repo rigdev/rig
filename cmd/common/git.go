@@ -18,6 +18,7 @@ type GitFlags struct {
 	Repository      string
 	Branch          string
 	CapsulePath     string
+	CapsuleSetPath  string
 	CommitTemplate  string
 	Environments    string
 	Disable         bool
@@ -29,6 +30,7 @@ type GitFlags struct {
 
 var (
 	capsulePathDefault     = "{{ .Project }}/{{ .Capsule }}/{{ .Environment}}.yaml"
+	capsuleSetPathDefault  = "{{ .Project }}/{{ .Capsule }}/set.yaml"
 	commitTemplateDefault  = "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"
 	prTitleTemplateDefault = "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"
 )
@@ -39,6 +41,11 @@ func (g *GitFlags) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&g.CapsulePath, "capsule-path",
 		capsulePathDefault,
 		"The templated path to the file containing the capsule spec.",
+	)
+	cmd.Flags().StringVar(&g.CapsuleSetPath, "capsule-set-path",
+		"",
+		"The templated path to the file containing the capsule set spec. Git-backed capsule sets is enabled iff this is set."+
+			" If you want to disable git-backed capsule set, pass an empty string (e.g. \"\")",
 	)
 	cmd.Flags().StringVar(&g.CommitTemplate, "commit-template",
 		commitTemplateDefault, "The commit template when Rig creates commits on behalf of a user.",
@@ -56,7 +63,7 @@ func (g *GitFlags) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&g.Disable, "disable", false, "disable git store")
 }
 
-func (g *GitFlags) FeedStore(store *model.GitStore) {
+func (g *GitFlags) FeedStore(store *model.GitStore, c *cobra.Command) bool {
 	updated := false
 	if g.Repository != "" {
 		store.Repository = g.Repository
@@ -72,6 +79,12 @@ func (g *GitFlags) FeedStore(store *model.GitStore) {
 			updated = true
 		}
 	}
+
+	if c.Flags().Changed("capsule-set-path") {
+		store.CapsuleSetPath = g.CapsuleSetPath
+		updated = true
+	}
+
 	if g.CommitTemplate != "" {
 		if g.CommitTemplate != commitTemplateDefault || store.CommitTemplate == "" {
 			store.CommitTemplate = g.CommitTemplate
@@ -96,19 +109,28 @@ func (g *GitFlags) FeedStore(store *model.GitStore) {
 
 	if g.Disable {
 		store.Disabled = g.Disable
+		updated = true
 	} else if updated {
 		store.Disabled = false
 	}
+
+	return updated
 }
 
 func UpdateGit(
-	ctx context.Context, rig rig.Client, flags GitFlags, isInteractive bool, prompter Prompter, gitStore *model.GitStore,
+	ctx context.Context,
+	rig rig.Client,
+	flags GitFlags,
+	isInteractive bool,
+	prompter Prompter,
+	gitStore *model.GitStore,
+	c *cobra.Command,
 ) (*model.GitStore, error) {
 	if gitStore == nil {
 		gitStore = &model.GitStore{}
 	}
 	gitStore = proto.Clone(gitStore).(*model.GitStore)
-	flags.FeedStore(gitStore)
+	updated := flags.FeedStore(gitStore, c)
 	var missing string
 	if gitStore.GetRepository() == "" {
 		missing = "--repository"
@@ -118,11 +140,11 @@ func UpdateGit(
 		missing = "--environments"
 	}
 
-	if isInteractive {
+	if !isInteractive {
 		if missing != "" {
 			return nil, fmt.Errorf("%s must be given", missing)
 		}
-	} else if missing != "" {
+	} else if missing != "" || !updated {
 		envResp, err := rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{}))
 		if err != nil {
 			return nil, err
@@ -131,6 +153,7 @@ func UpdateGit(
 			return nil, err
 		}
 	}
+
 	return gitStore, nil
 }
 
@@ -177,6 +200,7 @@ func PromptGitStore(
 		"Repository",
 		"Branch",
 		"Capsule Path",
+		"Capsule Set Path",
 		"Commit Template",
 		"Environments",
 		"PR Title Template",
@@ -239,6 +263,30 @@ func PromptGitStore(
 
 			gitStore.CapsulePath = path
 		case 4:
+			template, err := prompter.Input("Enter the capsule set path",
+				ValidateAllowEmptyOpt(func(s string) error {
+					return nil
+				}),
+				InputGetInfoOpt(func(s string) string {
+					s = stripCursor(s)
+					if s != "" {
+						return ""
+					}
+					return "If empty, will disable git-backing of the capsule set"
+				}),
+				InputDefaultOpt(
+					StringOr(gitStore.GetCapsuleSetPath(), capsuleSetPathDefault),
+				),
+			)
+			if err != nil {
+				if ErrIsAborted(err) {
+					continue
+				}
+				return nil, err
+			}
+
+			gitStore.CapsuleSetPath = template
+		case 5:
 			template, err := prompter.Input("Enter the commit template",
 				ValidateNonEmptyOpt,
 				InputDefaultOpt(
@@ -253,7 +301,7 @@ func PromptGitStore(
 			}
 
 			gitStore.CommitTemplate = template
-		case 5:
+		case 6:
 			if gitStore.Environments == nil {
 				gitStore.Environments = &model.EnvironmentFilter{}
 			}
@@ -264,7 +312,7 @@ func PromptGitStore(
 				}
 				return nil, err
 			}
-		case 6:
+		case 7:
 			template, err := prompter.Input("Enter the pr title template",
 				ValidateNonEmptyOpt,
 				InputDefaultOpt(
@@ -279,7 +327,7 @@ func PromptGitStore(
 			}
 
 			gitStore.PrTitleTemplate = template
-		case 7:
+		case 8:
 			template, err := prompter.Input("Enter the pr body template",
 				InputDefaultOpt(
 					StringOr(gitStore.GetPrBodyTemplate(), ""),
