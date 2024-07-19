@@ -17,7 +17,7 @@ import (
 func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error {
 	container, _, err := capsule_cmd.GetCurrentContainerResources(ctx, c.Rig, c.Scope)
 	if err != nil {
-		return nil
+		return err
 	}
 	if container == nil {
 		fmt.Println("Capsule has no rollouts yet")

@@ -40,6 +40,7 @@ const (
 
 // deployment structs
 type BaseInput struct {
+	// TODO Remove ctx and add as separate argument to functions
 	Ctx           context.Context
 	Rig           rig.Client
 	ProjectID     string
@@ -80,8 +81,9 @@ type RollbackInput struct {
 
 type WaitForRolloutInput struct {
 	RollbackInput
-	Revision *capsule.Revision
-	Timeout  time.Duration
+	Fingerprints *model.Fingerprints
+	Timeout      time.Duration
+	PrintPrefix  string
 }
 
 type GetRolloutInput struct {
@@ -280,7 +282,7 @@ func printInstanceID(instanceID string, out *os.File) error {
 	return nil
 }
 
-func Deploy(input DeployInput) (*capsule.Revision, uint64, error) {
+func Deploy(input DeployInput) (*capsule.Revision, error) {
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
 			CapsuleId:          input.CapsuleID,
@@ -297,16 +299,14 @@ func Deploy(input DeployInput) (*capsule.Revision, uint64, error) {
 
 	res, err := input.Rig.Capsule().Deploy(input.Ctx, req)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return res.Msg.GetRevision(), res.Msg.GetRolloutId(), nil
+	return res.Msg.GetRevision(), nil
 }
 
-func DeployAndWait(
-	input DeployAndWaitInput,
-) error {
-	revision, rolloutID, err := Deploy(input.DeployInput)
+func DeployAndWait(input DeployAndWaitInput) error {
+	revision, err := Deploy(input.DeployInput)
 	if err != nil {
 		return err
 	}
@@ -317,12 +317,13 @@ func DeployAndWait(
 
 	waitForRolloutInput := WaitForRolloutInput{
 		RollbackInput: RollbackInput{
-			BaseInput:        input.BaseInput,
-			CurrentRolloutID: rolloutID,
-			RollbackID:       input.RollbackID,
+			BaseInput:  input.BaseInput,
+			RollbackID: input.RollbackID,
 		},
-		Revision: revision,
-		Timeout:  input.Timeout,
+		Fingerprints: &model.Fingerprints{
+			Capsule: revision.GetMetadata().GetFingerprint(),
+		},
+		Timeout: input.Timeout,
 	}
 	return WaitForRollout(waitForRolloutInput)
 }
@@ -387,6 +388,16 @@ func promptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.Deploy
 
 	listView.AddItem("[::b]Platform Capsule", "", 0, nil)
 	content := []string{capsuleYaml}
+
+	if out.PlatformCapsule != nil {
+		capsuleYamlBytes, err := yaml.Marshal(out.PlatformCapsule)
+		if err != nil {
+			return err
+		}
+		capsuleYaml := string(capsuleYamlBytes)
+		listView.AddItem("[::b]Platform Capsule", "", 0, nil)
+		content = append(content, capsuleYaml)
+	}
 	for i, o := range out.DirectKubernetes {
 		obj := o.(client.Object)
 		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
@@ -452,7 +463,7 @@ type DryOutput struct {
 	DerivedKubernetes []any               `json:"derivedKubernetes"`
 }
 
-func Rollback(input RollbackInput) (*capsule.Revision, uint64, error) {
+func Rollback(input RollbackInput) (*capsule.Revision, error) {
 	deployInput := DeployInput{
 		BaseInput: input.BaseInput,
 		Changes: []*capsule.Change{
@@ -471,221 +482,261 @@ func Rollback(input RollbackInput) (*capsule.Revision, uint64, error) {
 	return Deploy(deployInput)
 }
 
-func WaitForRollout(
-	input WaitForRolloutInput,
-) error {
-	if input.CurrentRolloutID == 0 {
-		first := true
-		for {
-			resp, err := input.Rig.Capsule().GetRolloutOfRevisions(
-				input.Ctx,
-				connect.NewRequest(&capsule.GetRolloutOfRevisionsRequest{
-					ProjectId:     input.ProjectID,
-					EnvironmentId: input.EnvironmentID,
-					CapsuleId:     input.CapsuleID,
-					Fingerprints: &model.Fingerprints{
-						Capsule: input.Revision.GetMetadata().GetFingerprint(),
-					},
-				}))
-			if err != nil {
-				return err
-			}
-			switch r := resp.Msg.GetKind().(type) {
-			case *capsule.GetRolloutOfRevisionsResponse_NoRollout_:
-			case *capsule.GetRolloutOfRevisionsResponse_Rollout:
-				input.CurrentRolloutID = r.Rollout.GetRolloutId()
-			}
-			if input.CurrentRolloutID == 0 {
-				if first {
-					fmt.Println("Waiting for rollout to start...")
-					first = false
-				}
-			} else {
-				break
-			}
-			time.Sleep(time.Second)
-		}
-	}
+type WaitForRolloutState struct {
+	HasPolledForRollout bool
+	CurrentRolloutID    uint64
+	Deadline            time.Time
+	LastConfigure       []*api_rollout.StepInfo
+	LastResource        []*api_rollout.StepInfo
+	LastRunning         []*api_rollout.StepInfo
+}
 
-	fmt.Printf("Rollout %v started\n", input.CurrentRolloutID)
+type printer struct {
+	prefix string
+}
 
-	var deadline time.Time
-	if input.Timeout != 0 {
-		deadline = time.Now().Add(input.Timeout)
-	}
+func (p printer) Println(a ...any) (n int, err error) {
+	fmt.Printf(p.prefix)
+	return fmt.Println(a...)
+}
 
-	var lastConfigure []*api_rollout.StepInfo
-	var lastResource []*api_rollout.StepInfo
-	var lastRunning []*api_rollout.StepInfo
+func (p printer) Printf(format string, a ...any) (int, error) {
+	fmt.Printf(p.prefix)
+	return fmt.Printf(format, a...)
+}
+
+func WaitForRollout(input WaitForRolloutInput) error {
+	state := &WaitForRolloutState{}
+	start := time.Now()
 	for {
-		if !deadline.IsZero() && time.Now().After(deadline) {
+		if input.Timeout > 0 && time.Since(start) > input.Timeout {
 			fmt.Println()
 			fmt.Printf("🛑 Rollout timed out after %s... ", input.Timeout)
 			if input.RollbackID == 0 {
 				return fmt.Errorf("aborted")
 			}
-
-			_, _, err := Rollback(input.RollbackInput)
-			if err != nil {
-				return err
-			}
-
-			return fmt.Errorf("rollback to %d initiated", input.RollbackID)
+			break
 		}
-
-		getRolloutInput := GetRolloutInput{
-			BaseInput: input.BaseInput,
-			RolloutID: input.CurrentRolloutID,
-		}
-
-		rollout, err := getRollout(getRolloutInput)
-		if err != nil {
+		if ok, err := WaitForRolloutIteration(input, state); err != nil {
 			return err
-		}
-
-		// Check if the rollout was stopped by the user or if another rollout was started in the meantime.
-		if rollout.GetStatus().GetState() == api_rollout.State_STATE_STOPPED {
-			str := "🛑 Rollout"
-			switch rollout.GetStatus().GetResult() {
-			case api_rollout.Result_RESULT_REPLACED:
-				str += " was replaced by a later rollout"
-			case api_rollout.Result_RESULT_ABORTED:
-				str += " was aborted"
-			default:
-				str += " was stopped"
-			}
-
-			fmt.Println(str)
-			os.Exit(1)
-
+		} else if ok {
 			return nil
 		}
+		time.Sleep(time.Second)
+	}
 
-		var configure []*api_rollout.StepInfo
-		if stage := rollout.GetStatus().GetStages().GetConfigure(); stage != nil {
-			for _, s := range stage.GetSteps() {
-				var info *api_rollout.StepInfo
+	_, err := Rollback(input.RollbackInput)
+	if err != nil {
+		return err
+	}
 
-				switch v := s.GetStep().(type) {
-				case *api_rollout.ConfigureStep_Generic:
-					info = v.Generic.GetInfo()
-				case *api_rollout.ConfigureStep_Commit:
-					info = v.Commit.GetInfo()
-				case *api_rollout.ConfigureStep_ConfigureCapsule:
-					info = v.ConfigureCapsule.GetInfo()
-				case *api_rollout.ConfigureStep_ConfigureEnv:
-					info = v.ConfigureEnv.GetInfo()
-				case *api_rollout.ConfigureStep_ConfigureFile:
-					info = v.ConfigureFile.GetInfo()
+	return nil
+}
+
+func WaitForRolloutIteration(input WaitForRolloutInput, state *WaitForRolloutState) (bool, error) {
+	p := printer{prefix: input.PrintPrefix}
+	printRolloutStarted := state.CurrentRolloutID == 0
+	if state.CurrentRolloutID == 0 {
+		resp, err := input.Rig.Capsule().GetRolloutOfRevisions(
+			input.Ctx,
+			connect.NewRequest(&capsule.GetRolloutOfRevisionsRequest{
+				ProjectId:     input.ProjectID,
+				EnvironmentId: input.EnvironmentID,
+				CapsuleId:     input.CapsuleID,
+				Fingerprints:  input.Fingerprints,
+			}))
+		if err != nil {
+			return false, err
+		}
+		switch r := resp.Msg.GetKind().(type) {
+		case *capsule.GetRolloutOfRevisionsResponse_NoRollout_:
+		case *capsule.GetRolloutOfRevisionsResponse_Rollout:
+			state.CurrentRolloutID = r.Rollout.GetRolloutId()
+		}
+		if state.CurrentRolloutID == 0 {
+			if !state.HasPolledForRollout {
+				p.Println("Waiting for rollout to start...")
+				state.HasPolledForRollout = true
+			}
+			return false, nil
+		}
+	}
+
+	if printRolloutStarted {
+		p.Printf("Rollout %v started\n", state.CurrentRolloutID)
+	}
+
+	if input.Timeout != 0 && state.Deadline.IsZero() {
+		state.Deadline = time.Now().Add(input.Timeout)
+	}
+
+	if !state.Deadline.IsZero() && time.Now().After(state.Deadline) {
+		p.Println()
+		p.Printf("🛑 Rollout timed out after %s... ", input.Timeout)
+		if input.RollbackID == 0 {
+			return false, fmt.Errorf("aborted")
+		}
+
+		_, err := Rollback(input.RollbackInput)
+		if err != nil {
+			return false, err
+		}
+
+		return false, fmt.Errorf("rollback to %d initiated", input.RollbackID)
+	}
+
+	getRolloutInput := GetRolloutInput{
+		BaseInput: input.BaseInput,
+		RolloutID: state.CurrentRolloutID,
+	}
+
+	rollout, err := getRollout(getRolloutInput)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if the rollout was stopped by the user or if another rollout was started in the meantime.
+	if rollout.GetStatus().GetState() == api_rollout.State_STATE_STOPPED {
+		str := "🛑 Rollout"
+		switch rollout.GetStatus().GetResult() {
+		case api_rollout.Result_RESULT_REPLACED:
+			str += " was replaced by a later rollout"
+		case api_rollout.Result_RESULT_ABORTED:
+			str += " was aborted"
+		default:
+			str += " was stopped"
+		}
+
+		p.Println(str)
+		os.Exit(1)
+
+		return true, nil
+	}
+
+	var configure []*api_rollout.StepInfo
+	if stage := rollout.GetStatus().GetStages().GetConfigure(); stage != nil {
+		for _, s := range stage.GetSteps() {
+			var info *api_rollout.StepInfo
+
+			switch v := s.GetStep().(type) {
+			case *api_rollout.ConfigureStep_Generic:
+				info = v.Generic.GetInfo()
+			case *api_rollout.ConfigureStep_Commit:
+				info = v.Commit.GetInfo()
+			case *api_rollout.ConfigureStep_ConfigureCapsule:
+				info = v.ConfigureCapsule.GetInfo()
+			case *api_rollout.ConfigureStep_ConfigureEnv:
+				info = v.ConfigureEnv.GetInfo()
+			case *api_rollout.ConfigureStep_ConfigureFile:
+				info = v.ConfigureFile.GetInfo()
+			}
+
+			if info != nil {
+				configure = append(configure, info)
+			}
+		}
+	}
+	var resource []*api_rollout.StepInfo
+	if stage := rollout.GetStatus().GetStages().GetResourceCreation(); stage != nil {
+		for _, s := range stage.GetSteps() {
+			var info *api_rollout.StepInfo
+
+			switch v := s.GetStep().(type) {
+			case *api_rollout.ResourceCreationStep_Generic:
+				info = v.Generic.GetInfo()
+			case *api_rollout.ResourceCreationStep_CreateResource:
+				info = v.CreateResource.GetInfo()
+			}
+
+			if info != nil {
+				resource = append(resource, info)
+			}
+		}
+	}
+
+	var running []*api_rollout.StepInfo
+	done := false
+	if stage := rollout.GetStatus().GetStages().GetRunning(); stage != nil {
+		done = true
+		for _, s := range stage.GetSteps() {
+			var info *api_rollout.StepInfo
+
+			switch v := s.GetStep().(type) {
+			case *api_rollout.RunningStep_Generic:
+				info = v.Generic.GetInfo()
+
+				if info.GetState() != api_rollout.StepState_STEP_STATE_DONE {
+					done = false
 				}
 
-				if info != nil {
-					configure = append(configure, info)
+			case *api_rollout.RunningStep_Instances:
+				info = v.Instances.GetInfo()
+
+				if info.GetState() != api_rollout.StepState_STEP_STATE_DONE {
+					done = false
+				}
+			}
+
+			if info != nil {
+				running = append(running, info)
+			}
+		}
+	}
+
+	state.LastConfigure = append(state.LastConfigure, printNewSteps(configure, state.LastConfigure, p)...)
+	state.LastResource = append(state.LastResource, printNewSteps(resource, state.LastResource, p)...)
+	state.LastRunning = append(state.LastRunning, printNewSteps(running, state.LastRunning, p)...)
+
+	if done {
+		p.Println("")
+		p.Println("Done ✅ - Rollout Complete")
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func printNewSteps(current, last []*api_rollout.StepInfo, p printer) []*api_rollout.StepInfo {
+	var newSteps []*api_rollout.StepInfo
+	for _, s := range current {
+		found := false
+		for _, l := range last {
+			if l.GetName() == s.GetName() {
+				if l.GetState() == s.GetState() && l.GetMessage() == s.GetMessage() {
+					found = true
+					break
 				}
 			}
 		}
-		var resource []*api_rollout.StepInfo
-		if stage := rollout.GetStatus().GetStages().GetResourceCreation(); stage != nil {
-			for _, s := range stage.GetSteps() {
-				var info *api_rollout.StepInfo
+		if !found {
+			newSteps = append(newSteps, s)
+		}
+	}
+	printSteps(newSteps, p)
+	return newSteps
+}
 
-				switch v := s.GetStep().(type) {
-				case *api_rollout.ResourceCreationStep_Generic:
-					info = v.Generic.GetInfo()
-				case *api_rollout.ResourceCreationStep_CreateResource:
-					info = v.CreateResource.GetInfo()
-				}
-
-				if info != nil {
-					resource = append(resource, info)
-				}
-			}
+func printSteps(steps []*api_rollout.StepInfo, p printer) {
+	for _, s := range steps {
+		icon := "❔"
+		msg := ""
+		switch s.GetState() {
+		case api_rollout.StepState_STEP_STATE_FAILED:
+			icon = "🚫"
+			msg = "Failed"
+		case api_rollout.StepState_STEP_STATE_ONGOING:
+			icon = "⏳"
+			msg = "Ongoing"
+		case api_rollout.StepState_STEP_STATE_DONE:
+			icon = "✅"
+			msg = "Done"
 		}
 
-		var running []*api_rollout.StepInfo
-		done := false
-		if stage := rollout.GetStatus().GetStages().GetRunning(); stage != nil {
-			done = true
-			for _, s := range stage.GetSteps() {
-				var info *api_rollout.StepInfo
-
-				switch v := s.GetStep().(type) {
-				case *api_rollout.RunningStep_Generic:
-					info = v.Generic.GetInfo()
-
-					if info.GetState() != api_rollout.StepState_STEP_STATE_DONE {
-						done = false
-					}
-
-				case *api_rollout.RunningStep_Instances:
-					info = v.Instances.GetInfo()
-
-					if info.GetState() != api_rollout.StepState_STEP_STATE_DONE {
-						done = false
-					}
-				}
-
-				if info != nil {
-					running = append(running, info)
-				}
-			}
+		if s.GetMessage() != "" {
+			msg = s.GetMessage()
 		}
 
-		printSteps := func(steps []*api_rollout.StepInfo) {
-			for _, s := range steps {
-				icon := "❔"
-				msg := ""
-				switch s.GetState() {
-				case api_rollout.StepState_STEP_STATE_FAILED:
-					icon = "🚫"
-					msg = "Failed"
-				case api_rollout.StepState_STEP_STATE_ONGOING:
-					icon = "⏳"
-					msg = "Ongoing"
-				case api_rollout.StepState_STEP_STATE_DONE:
-					icon = "✅"
-					msg = "Done"
-				}
-
-				if s.GetMessage() != "" {
-					msg = s.GetMessage()
-				}
-
-				fmt.Printf("%s %s: %s\n", icon, s.GetName(), msg)
-			}
-		}
-
-		printNewSteps := func(current, last []*api_rollout.StepInfo) []*api_rollout.StepInfo {
-			var newSteps []*api_rollout.StepInfo
-			for _, s := range current {
-				found := false
-				for _, l := range last {
-					if l.GetName() == s.GetName() {
-						if l.GetState() == s.GetState() && l.GetMessage() == s.GetMessage() {
-							found = true
-							break
-						}
-					}
-				}
-				if !found {
-					newSteps = append(newSteps, s)
-				}
-			}
-			printSteps(newSteps)
-			return newSteps
-		}
-
-		lastConfigure = append(lastConfigure, printNewSteps(configure, lastConfigure)...)
-		lastResource = append(lastResource, printNewSteps(resource, lastResource)...)
-		lastRunning = append(lastRunning, printNewSteps(running, lastRunning)...)
-
-		if done {
-			fmt.Println("")
-			fmt.Println("Done ✅ - Rollout Complete")
-			return nil
-		}
-
-		time.Sleep(1 * time.Second)
+		p.Printf("%s %s: %s\n", icon, s.GetName(), msg)
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	api_tunnel "github.com/rigdev/rig-go-api/api/v1/tunnel"
+	"github.com/rigdev/rig-go-api/model"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -195,7 +196,7 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		Changes:     changes,
 		ForceDeploy: true,
 	}
-	revision, rolloutID, err := capsule_cmd.Deploy(
+	revision, err := capsule_cmd.Deploy(
 		deployInput,
 	)
 	if err != nil {
@@ -204,10 +205,11 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 
 	waitInput := capsule_cmd.WaitForRolloutInput{
 		RollbackInput: capsule_cmd.RollbackInput{
-			BaseInput:        baseInput,
-			CurrentRolloutID: rolloutID,
+			BaseInput: baseInput,
 		},
-		Revision: revision,
+		Fingerprints: &model.Fingerprints{
+			Capsule: revision.GetMetadata().GetFingerprint(),
+		},
 	}
 	if err := capsule_cmd.WaitForRollout(waitInput); err != nil {
 		return err
