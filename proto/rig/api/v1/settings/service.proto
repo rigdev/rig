@@ -61,11 +61,16 @@ message GetGitStoreStatusResponse {
     model.CapsuleID capsule = 1;
     model.GitStatus status = 3;
   }
+  message CapsuleSetStatus {
+    model.CapsuleSetID capsule = 1;
+    model.GitStatus status = 2;
+  }
   message CallbackErr {
     string err = 1;
     google.protobuf.Timestamp timestamp = 2;
   }
   repeated RepoGitStatus repositories = 1;
   repeated CapsuleStatus capsules = 2;
+  repeated CapsuleSetStatus capsule_sets = 4;
   repeated CallbackErr errors = 3;
 }

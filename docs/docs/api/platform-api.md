@@ -1226,6 +1226,7 @@ The type of SSO. Currently only OIDC is supported.
 | repository | [string](#string) |  |  |
 | branch | [string](#string) |  |  |
 | capsule_path | [string](#string) |  |  |
+| capsule_set_path | [string](#string) |  |  |
 | commit_template | [string](#string) |  |  |
 | environments | [EnvironmentFilter](#model-EnvironmentFilter) |  |  |
 | pr_title_template | [string](#string) |  |  |
@@ -5238,6 +5239,16 @@ AbortRolloutResponse is an empty response.
 
 
 
+<a name="api-v1-capsule-AnnotatedRollout"></a>
+
+### AnnotatedRollout
+
+
+
+
+
+
+
 <a name="api-v1-capsule-CapsuleMetricsRequest"></a>
 
 ### CapsuleMetricsRequest
@@ -5414,8 +5425,8 @@ Deploy response.
 | ----- | ---- | ----- | ----------- |
 | rollout_id | [uint64](#uint64) |  | ID of the new rollout. |
 | resource_yaml | [DeployResponse.ResourceYamlEntry](#api-v1-capsule-DeployResponse-ResourceYamlEntry) | repeated | The YAML of the resources that will be deployed. Deprecated. Use `outcome` instead. |
-| rollout_config | [RolloutConfig](#api-v1-capsule-RolloutConfig) |  | The rollout config. |
-| revision | [Revision](#api-v1-capsule-Revision) |  | The capsule revision created. |
+| revision | [Revision](#api-v1-capsule-Revision) |  | The rollout config. api.v1.capsule.RolloutConfig rollout_config = 3; The capsule revision created. |
+| set_revision | [SetRevision](#api-v1-capsule-SetRevision) |  | The capsule set revision created if it's the first time deploying to the environment. |
 | outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. Only populated if dry-run is used. |
 
 
@@ -5447,6 +5458,7 @@ Deploy response.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| field_changes | [FieldChange](#api-v1-capsule-FieldChange) | repeated | The field-level changes that comes from applying this change. |
 | environments | [DeploySetOutcome.EnvironmentsEntry](#api-v1-capsule-DeploySetOutcome-EnvironmentsEntry) | repeated |  |
 
 
@@ -5487,7 +5499,6 @@ Deploy response.
 | current_rollout_ids | [DeploySetRequest.CurrentRolloutIdsEntry](#api-v1-capsule-DeploySetRequest-CurrentRolloutIdsEntry) | repeated | If present, maps from environment to expected current rollout within that environment. This will constrain the rollout only to be created if the currently running rollout matches this identifier. If this check fails, the request will return an `Aborted` error. |
 | current_fingerprint | [model.Fingerprint](#model-Fingerprint) |  | If set, this will constrain the rollout only to be created if the current latest capsuleset fingerprint matches the given. |
 | current_environment_fingerprints | [DeploySetRequest.CurrentEnvironmentFingerprintsEntry](#api-v1-capsule-DeploySetRequest-CurrentEnvironmentFingerprintsEntry) | repeated | If set, this will constrain the rollout only to be created if the current latest capsule fingerprint for each environment in the map matches the ones in the map. Cannot be used together with `current_rollout_ids` |
-| outcome | [DeploySetOutcome](#api-v1-capsule-DeploySetOutcome) |  |  |
 
 
 
@@ -5536,6 +5547,7 @@ Deploy response.
 | ----- | ---- | ----- | ----------- |
 | revision | [SetRevision](#api-v1-capsule-SetRevision) |  | The capsule revision created. |
 | outcome | [DeploySetOutcome](#api-v1-capsule-DeploySetOutcome) |  | Breakdown of the changes that this deploy would make to the system. Only populated if dry-run is used. |
+| ActiveEnvironments | [string](#string) | repeated | The environments which currently have rollouts. These will receive a rollout as result of the SetDeploy |
 
 
 
@@ -9194,6 +9206,22 @@ The plan for a rig installation
 
 
 
+<a name="model-CapsuleSetID"></a>
+
+### CapsuleSetID
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [string](#string) |  |  |
+| capsule | [string](#string) |  |  |
+
+
+
+
+
+
 
 
 
@@ -9252,6 +9280,7 @@ The plan for a rig installation
 | ----- | ---- | ----- | ----------- |
 | repositories | [GetGitStoreStatusResponse.RepoGitStatus](#api-v1-settings-GetGitStoreStatusResponse-RepoGitStatus) | repeated |  |
 | capsules | [GetGitStoreStatusResponse.CapsuleStatus](#api-v1-settings-GetGitStoreStatusResponse-CapsuleStatus) | repeated |  |
+| capsule_sets | [GetGitStoreStatusResponse.CapsuleSetStatus](#api-v1-settings-GetGitStoreStatusResponse-CapsuleSetStatus) | repeated |  |
 | errors | [GetGitStoreStatusResponse.CallbackErr](#api-v1-settings-GetGitStoreStatusResponse-CallbackErr) | repeated |  |
 
 
@@ -9269,6 +9298,22 @@ The plan for a rig installation
 | ----- | ---- | ----- | ----------- |
 | err | [string](#string) |  |  |
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GetGitStoreStatusResponse-CapsuleSetStatus"></a>
+
+### GetGitStoreStatusResponse.CapsuleSetStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule | [model.CapsuleSetID](#model-CapsuleSetID) |  |  |
+| status | [model.GitStatus](#model-GitStatus) |  |  |
 
 
 
