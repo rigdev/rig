@@ -438,6 +438,9 @@ message DeployOutcome {
   // The objects are both the outcome of what the platform generated for
   // the Kubernetes cluster directly and what plugins are further adding.
   repeated KubernetesObject kubernetes_objects = 3;
+  // In case generation of kubernetes files failed, this field will
+  // be populated with the error.
+  string kubernetes_error = 4;
 }
 
 message DeploySetRequest {
