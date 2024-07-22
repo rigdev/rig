@@ -70,6 +70,7 @@
 | /api.v1.capsule.Service/ProposeRollout | [ProposeRolloutRequest](#api-v1-capsule-ProposeRolloutRequest) | [ProposeRolloutResponse](#api-v1-capsule-ProposeRolloutResponse) |  |
 | /api.v1.capsule.Service/ProposeSetRollout | [ProposeSetRolloutRequest](#api-v1-capsule-ProposeSetRolloutRequest) | [ProposeSetRolloutResponse](#api-v1-capsule-ProposeSetRolloutResponse) |  |
 | /api.v1.capsule.Service/ListProposals | [ListProposalsRequest](#api-v1-capsule-ListProposalsRequest) | [ListProposalsResponse](#api-v1-capsule-ListProposalsResponse) |  |
+| /api.v1.capsule.Service/ListSetProposals | [ListSetProposalsRequest](#api-v1-capsule-ListSetProposalsRequest) | [ListSetProposalsResponse](#api-v1-capsule-ListSetProposalsResponse) |  |
 | /api.v1.capsule.Service/ListInstances | [ListInstancesRequest](#api-v1-capsule-ListInstancesRequest) | [ListInstancesResponse](#api-v1-capsule-ListInstancesResponse) | Lists all instances for the capsule. |
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
 | /api.v1.capsule.Service/GetRollout | [GetRolloutRequest](#api-v1-capsule-GetRolloutRequest) | [GetRolloutResponse](#api-v1-capsule-GetRolloutResponse) | Get a single rollout by ID. |
@@ -6155,6 +6156,39 @@ ListRolloutsResponse lists rollouts for a capsule and an environment.
 | ----- | ---- | ----- | ----------- |
 | rollouts | [Rollout](#api-v1-capsule-Rollout) | repeated | The rollouts. |
 | total | [uint64](#uint64) |  | Total number of rollouts in the capsule for the given environment. |
+
+
+
+
+
+
+<a name="api-v1-capsule-ListSetProposalsRequest"></a>
+
+### ListSetProposalsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| pagination | [model.Pagination](#model-Pagination) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ListSetProposalsResponse"></a>
+
+### ListSetProposalsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| proposals | [SetProposal](#api-v1-capsule-SetProposal) | repeated |  |
+| total | [uint64](#uint64) |  |  |
 
 
 

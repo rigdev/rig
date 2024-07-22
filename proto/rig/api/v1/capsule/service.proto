@@ -44,6 +44,8 @@ service Service {
   rpc ProposeSetRollout(ProposeSetRolloutRequest)
       returns (ProposeSetRolloutResponse) {}
   rpc ListProposals(ListProposalsRequest) returns (ListProposalsResponse) {}
+  rpc ListSetProposals(ListSetProposalsRequest)
+      returns (ListSetProposalsResponse) {}
   // Lists all instances for the capsule.
   rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {}
   // Restart a single capsule instance.
@@ -560,6 +562,17 @@ message ListProposalsRequest {
 
 message ListProposalsResponse {
   repeated Proposal proposals = 1;
+  uint64 total = 2;
+}
+
+message ListSetProposalsRequest {
+  string project_id = 1;
+  string capsule_id = 2;
+  model.Pagination pagination = 3;
+}
+
+message ListSetProposalsResponse {
+  repeated SetProposal proposals = 1;
   uint64 total = 2;
 }
 
