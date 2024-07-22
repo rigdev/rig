@@ -151,6 +151,7 @@ var CapsuleActionMap = map[string]string{
 	capsuleconnect.ServiceGetRolloutOfRevisionsProcedure:    ActionCapsuleView,
 	capsuleconnect.ServiceGetEffectiveGitSettingsProcedure:  ActionCapsuleView,
 	capsuleconnect.ServiceListProposalsProcedure:            ActionCapsuleView,
+	capsuleconnect.ServiceListSetProposalsProcedure:         ActionCapsuleView,
 }
 
 var UserActionMap = map[string]string{
