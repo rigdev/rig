@@ -298,6 +298,7 @@ tasks:
     env:
       RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
     cmds:
+      - mkdir -p output/test-integration
       - |
         export KUBEBUILDER_ASSETS="`./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path`"
         ./tools/bin/gotestsum \
