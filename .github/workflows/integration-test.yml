@@ -58,6 +58,7 @@ jobs:
       - name: Rig kind setup
         env:
           RIG_INTEGRATION_TEST_GITHUB_TOKEN: ${{ secrets.RIG_INTEGRATION_TEST_GITHUB_TOKEN }}
+          RIG_INTEGRATION_TEST_GHCR_TOKEN: ${{ secrets.RIG_INTEGRATION_TEST_GHCR_TOKEN }}
         run: |
           cd platform/
           ./tests/integration/init.sh
