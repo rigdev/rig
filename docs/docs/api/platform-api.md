@@ -5240,16 +5240,6 @@ AbortRolloutResponse is an empty response.
 
 
 
-<a name="api-v1-capsule-AnnotatedRollout"></a>
-
-### AnnotatedRollout
-
-
-
-
-
-
-
 <a name="api-v1-capsule-CapsuleMetricsRequest"></a>
 
 ### CapsuleMetricsRequest
