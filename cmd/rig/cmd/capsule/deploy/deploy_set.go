@@ -50,7 +50,6 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 			BranchName: prBranchName,
 		}))
 		if err != nil {
-			fmt.Println("propose oof")
 			return err
 		}
 		url := resp.Msg.GetProposal().GetMetadata().GetReviewUrl()

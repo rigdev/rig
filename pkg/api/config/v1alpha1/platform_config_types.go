@@ -581,7 +581,7 @@ func (g ClusterGit) validate(path *field.Path) field.ErrorList {
 
 func (cfg *PlatformConfig) Migrate() {
 	for _, c := range cfg.Clusters {
-		if c.Git.URL != "" {
+		if c.Git.URL != "" && c.Git.Credentials != (GitCredentials{}) {
 			cfg.Client.Git.Auths = append(cfg.Client.Git.Auths, GitAuth{
 				URL:         c.Git.URL,
 				Credentials: c.Git.Credentials,

@@ -258,6 +258,17 @@ forwarded traffic.
 		RunE: cli.CtxWrap(cmd.listProposals),
 	}
 	capsuleCmd.AddCommand(capsuleListProposal)
+
+	capsuleListSetProposal := &cobra.Command{
+		Use:   "list-set-proposals",
+		Short: "Lists the ongoing capsule set rollout proposals",
+		Args:  cobra.MaximumNArgs(1),
+		ValidArgsFunction: common.Complete(cli.HackCtxWrapCompletion(cmd.completions, s),
+			common.MaxArgsCompletionFilter(1)),
+		RunE: cli.CtxWrap(cmd.listSetProposals),
+	}
+	capsuleCmd.AddCommand(capsuleListSetProposal)
+
 	capsulePromote := &cobra.Command{
 		Use:   "promote [capsule] [from-environment] [to-environment]",
 		Short: "Promote a capsule from one environment to another",
