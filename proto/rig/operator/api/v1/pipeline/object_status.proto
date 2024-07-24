@@ -93,7 +93,31 @@ message PlatformObjectStatus {
     CronjobStatus cronjob = 6;
     CapsuleStatus capsule = 7;
     InterfaceStatus interface = 8;
+    JobExecutionStatus job_execution = 9;
   }
+}
+
+message JobExecutionStatus {
+  string job_name = 1;
+  uint64 rollout_id = 2;
+  int32 retries = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp finished_at = 5;
+  JobExecutionState state = 6;
+}
+
+// Different states a job execution can be in
+enum JobExecutionState {
+  // Default value.
+  JOB_STATE_UNSPECIFIED = 0;
+  // The job is running.
+  JOB_STATE_ONGOING = 1;
+  // The job completed successfully.
+  JOB_STATE_COMPLETED = 2;
+  // The job failed.
+  JOB_STATE_FAILED = 3;
+  // The job was terminated.
+  JOB_STATE_TERMINATED = 4;
 }
 
 message SubObjectStatus {
