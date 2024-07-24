@@ -28,7 +28,7 @@ import (
 type ObjectWatcher interface {
 	Reschedule(deadline time.Time)
 	WatchSecondaryByName(objectName string, objType client.Object, cb WatchCallback)
-	WatchSecondaryByLabels(objectLabels labels.Set, objType client.Object, cb WatchCallback)
+	WatchSecondaryByLabels(selector labels.Selector, objType client.Object, cb WatchCallback)
 }
 
 type CapsuleWatcher interface {
@@ -188,9 +188,9 @@ func (w *watcher) watchPrimary(
 	f := &objectWatch{
 		key: objectWatchKey{
 			watcherKey: key,
-			labels: labels.Set{
+			labelSelector: labels.Set{
 				pipeline.LabelOwnedByCapsule: capsule,
-			},
+			}.AsSelector(),
 		},
 		cb:          cb,
 		cw:          cw,
@@ -245,19 +245,20 @@ func (w *watcher) stopWatch(f *objectWatch) {
 }
 
 type objectWatchKey struct {
-	watcherKey watcherKey
-	names      []string
-	labels     labels.Set
+	watcherKey     watcherKey
+	names          []string
+	labelSelector  labels.Selector
+	negativeLabels map[string]struct{}
 }
 
 // TODO: This is not a very optimal way of computing this!
 func (k objectWatchKey) id() string {
-	return fmt.Sprint(k.watcherKey, strings.Join(k.names, ","), k.labels)
+	return fmt.Sprint(k.watcherKey, strings.Join(k.names, ","), k.labelSelector)
 }
 
 func (k objectWatchKey) matches(obj client.Object) bool {
 	ls := obj.GetLabels()
-	if !k.labels.AsSelector().Matches(labels.Set(ls)) {
+	if k.labelSelector != nil && !k.labelSelector.Matches(labels.Set(ls)) {
 		return false
 	}
 
@@ -772,10 +773,10 @@ func (r *objectWatcherResult) WatchSecondaryByName(objectName string, objType cl
 	)
 }
 
-func (r *objectWatcherResult) WatchSecondaryByLabels(objectLabels labels.Set, objType client.Object, cb WatchCallback) {
+func (r *objectWatcherResult) WatchSecondaryByLabels(objectLabels labels.Selector, objType client.Object, cb WatchCallback) {
 	r.watchObject(
 		objectWatchKey{
-			labels: objectLabels,
+			labelSelector: objectLabels,
 		},
 		objType,
 		cb,
