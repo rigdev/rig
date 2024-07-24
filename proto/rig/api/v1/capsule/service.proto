@@ -844,8 +844,8 @@ message GetRolloutOfRevisionsResponse {
   }
 
   oneof kind {
-    NoRollout no_rollout = 4;
-    Rollout rollout = 5;
+    NoRollout no_rollout = 1;
+    Rollout rollout = 2;
   }
 }
 
