@@ -443,6 +443,9 @@ message DeployOutcome {
   // In case generation of kubernetes files failed, this field will
   // be populated with the error.
   string kubernetes_error = 4;
+
+  string cluster_name = 5;
+  string kubernetes_namespace = 6;
 }
 
 message DeploySetRequest {
