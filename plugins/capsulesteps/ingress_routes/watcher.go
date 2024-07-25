@@ -152,7 +152,7 @@ func onIngressUpdated(
 
 	objectWatcher.WatchSecondaryByLabels(labels.Set{
 		pipeline.LabelOwnedByCapsule: ingress.GetLabels()[pipeline.LabelOwnedByCapsule],
-	}, &cmv1.Certificate{}, onCertificateUpdated)
+	}.AsSelector(), &cmv1.Certificate{}, onCertificateUpdated)
 
 	return toIngressStatus(ingress)
 }

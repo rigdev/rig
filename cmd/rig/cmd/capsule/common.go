@@ -341,7 +341,7 @@ func DeployDry(input DeployDryInput) error {
 
 	resp, err := input.Rig.Capsule().Deploy(input.Ctx, connect.NewRequest(req))
 	if err != nil {
-		return fmt.Errorf("failed to get new stuff: %w", err)
+		return err
 	}
 	outcome := resp.Msg.GetOutcome()
 

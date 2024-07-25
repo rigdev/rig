@@ -17,6 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -419,7 +420,24 @@ func onDeploymentUpdated(
 ) *apipipeline.ObjectStatusInfo {
 	dep := obj.(*appsv1.Deployment)
 
-	objectWatcher.WatchSecondaryByLabels(labels.Set(dep.Spec.Template.GetLabels()), &corev1.Pod{}, onPodUpdated)
+	selector := labels.NewSelector()
+	for key, val := range dep.Spec.Template.GetLabels() {
+		req, err := labels.NewRequirement(key, selection.Equals, []string{val})
+		if err != nil {
+			// This cannot happen
+			panic(err)
+		}
+		selector = selector.Add(*req)
+	}
+
+	req, err := labels.NewRequirement("batch.kubernetes.io/job-name", selection.DoesNotExist, nil)
+	if err != nil {
+		// This cannot happen
+		panic(err)
+	}
+	selector = selector.Add(*req)
+
+	objectWatcher.WatchSecondaryByLabels(selector, &corev1.Pod{}, onPodUpdated)
 	for _, v := range dep.Spec.Template.Spec.Volumes {
 		if v.ConfigMap != nil {
 			objectWatcher.WatchSecondaryByName(v.ConfigMap.Name, &corev1.ConfigMap{}, onConfigMapUpdated)
