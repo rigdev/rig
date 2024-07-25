@@ -14,7 +14,7 @@ import (
 
 func (c *Cmd) get(ctx context.Context, _ *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Cluster().GetConfig(ctx, connect.NewRequest(&cluster.GetConfigRequest{
-		EnvironmentId: flags.GetEnvironment(c.Scope),
+		EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 	}))
 	if err != nil {
 		return err

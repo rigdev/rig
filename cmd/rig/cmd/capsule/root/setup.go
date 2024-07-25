@@ -14,7 +14,6 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -349,5 +348,5 @@ func (c *Cmd) environmentCompletion(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return completions.Environments(ctx, c.Rig, toComplete, flags.GetProject(c.Scope))
+	return completions.Environments(ctx, c.Rig, toComplete, c.Scope.GetCurrentContext().GetProject())
 }

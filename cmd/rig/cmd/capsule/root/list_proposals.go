@@ -18,8 +18,8 @@ import (
 func (c *Cmd) listProposals(ctx context.Context, _ *cobra.Command, _ []string) error {
 	capsuleID := capsule_cmd.CapsuleID
 	resp, err := c.Rig.Capsule().ListProposals(ctx, connect.NewRequest(&capsule.ListProposalsRequest{
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
+		ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		CapsuleId:     capsuleID,
 	}))
 	if err != nil {
@@ -31,7 +31,7 @@ func (c *Cmd) listProposals(ctx context.Context, _ *cobra.Command, _ []string) e
 func (c *Cmd) listSetProposals(ctx context.Context, _ *cobra.Command, _ []string) error {
 	capsuleID := capsule_cmd.CapsuleID
 	resp, err := c.Rig.Capsule().ListSetProposals(ctx, connect.NewRequest(&capsule.ListSetProposalsRequest{
-		ProjectId: flags.GetProject(c.Scope),
+		ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		CapsuleId: capsuleID,
 	}))
 	if err != nil {

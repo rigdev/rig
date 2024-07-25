@@ -6,7 +6,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -25,8 +24,8 @@ func (c *Cmd) restart(ctx context.Context, cmd *cobra.Command, args []string) er
 		Msg: &capsule.RestartInstanceRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
 			InstanceId:    instanceID,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		},
 	}); err != nil {
 		return err

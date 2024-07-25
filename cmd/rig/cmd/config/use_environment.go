@@ -8,7 +8,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -56,12 +55,12 @@ func (c *CmdWScope) promptForEnvironment(ctx context.Context) (string, error) {
 		}
 
 		environment := res.Msg.GetEnvironments()[i]
-		if flags.GetProject(c.Scope) != "" && !environment.GetGlobal() &&
-			!slices.Contains(environment.GetActiveProjects(), flags.GetProject(c.Scope)) {
+		if c.Scope.GetCurrentContext().GetProject() != "" && !environment.GetGlobal() &&
+			!slices.Contains(environment.GetActiveProjects(), c.Scope.GetCurrentContext().GetProject()) {
 			selectNew, err := c.Prompter.Confirm(
 				fmt.Sprintf(
 					"Warning: project '%s' is not active in environment '%s'.\nDo you want to select a different one?",
-					flags.GetProject(c.Scope),
+					c.Scope.GetCurrentContext().GetProject(),
 					environment.GetEnvironmentId(),
 				),
 				false)
@@ -86,11 +85,11 @@ func (c *CmdWScope) environmentFromArg(ctx context.Context, environmentArg strin
 
 	for _, e := range res.Msg.GetEnvironments() {
 		if e.GetEnvironmentId() == environmentArg {
-			if flags.GetProject(c.Scope) != "" && !slices.Contains(e.GetActiveProjects(), flags.GetProject(c.Scope)) {
+			if c.Scope.GetCurrentContext().GetProject() != "" && !slices.Contains(e.GetActiveProjects(), c.Scope.GetCurrentContext().GetProject()) {
 				cont, err := c.Prompter.Confirm(
 					fmt.Sprintf(
 						"Warning: project '%s' is not active in environment '%s'.\nDo you want to continue anyways?",
-						flags.GetProject(c.Scope),
+						c.Scope.GetCurrentContext().GetProject(),
 						e.GetEnvironmentId(),
 					),
 					true)
@@ -98,12 +97,12 @@ func (c *CmdWScope) environmentFromArg(ctx context.Context, environmentArg strin
 					return "", err
 				}
 
-				if cont {
-					return e.GetEnvironmentId(), nil
+				if !cont {
+					os.Exit(0)
 				}
-
-				os.Exit(0)
 			}
+
+			return e.GetEnvironmentId(), nil
 		}
 	}
 

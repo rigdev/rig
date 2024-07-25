@@ -8,14 +8,15 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli/scope"
 )
 
-func GetClientOptions(scope scope.Scope) ([]rig.Option, error) {
+func GetClientOptions(cfg *cmdconfig.Config, ctx *cmdconfig.Context) ([]rig.Option, error) {
 	options := []rig.Option{
 		rig.WithInterceptors(&userAgentInterceptor{}),
-		rig.WithSessionManager(&configSessionManager{scope: scope}),
+		rig.WithSessionManager(&configSessionManager{cfg: cfg, ctx: ctx}),
 	}
 
 	if flags.Flags.BasicAuth {
@@ -24,8 +25,8 @@ func GetClientOptions(scope scope.Scope) ([]rig.Option, error) {
 
 	host := flags.Flags.Host
 	if host == "" {
-		if rCtx := scope.GetCurrentContext(); rCtx != nil {
-			if svc := rCtx.GetService(); svc != nil {
+		if ctx != nil {
+			if svc := ctx.GetService(); svc != nil {
 				host = svc.Server
 			}
 		}
@@ -36,7 +37,7 @@ func GetClientOptions(scope scope.Scope) ([]rig.Option, error) {
 }
 
 func NewRigClient(scope scope.Scope) (rig.Client, error) {
-	opts, err := GetClientOptions(scope)
+	opts, err := GetClientOptions(scope.GetCfg(), scope.GetCurrentContext())
 	if err != nil {
 		return nil, err
 	}
@@ -73,21 +74,22 @@ func (i *userAgentInterceptor) setUserAgent(h http.Header) {
 }
 
 type configSessionManager struct {
-	scope scope.Scope
+	cfg *cmdconfig.Config
+	ctx *cmdconfig.Context
 }
 
 func (s *configSessionManager) GetAccessToken() string {
-	return s.scope.GetCurrentContext().GetAuth().AccessToken
+	return s.ctx.GetAuth().AccessToken
 }
 
 func (s *configSessionManager) GetRefreshToken() string {
-	return s.scope.GetCurrentContext().GetAuth().RefreshToken
+	return s.ctx.GetAuth().RefreshToken
 }
 
 func (s *configSessionManager) SetAccessToken(accessToken, refreshToken string) {
-	s.scope.GetCurrentContext().GetAuth().AccessToken = accessToken
-	s.scope.GetCurrentContext().GetAuth().RefreshToken = refreshToken
-	if err := s.scope.GetCfg().Save(); err != nil {
+	s.ctx.GetAuth().AccessToken = accessToken
+	s.ctx.GetAuth().RefreshToken = refreshToken
+	if err := s.cfg.Save(); err != nil {
 		fmt.Fprintf(os.Stderr, "error saving config: %v\n", err)
 	}
 }

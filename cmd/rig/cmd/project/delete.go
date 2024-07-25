@@ -5,7 +5,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +13,7 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 	if len(args) > 0 {
 		projectID = args[0]
 	} else {
-		projectID = flags.GetProject(c.Scope)
+		projectID = c.Scope.GetCurrentContext().GetProject()
 	}
 
 	req := &project.DeleteRequest{

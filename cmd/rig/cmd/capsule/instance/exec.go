@@ -11,7 +11,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -75,8 +74,8 @@ func (c *Cmd) exec(ctx context.Context, cmd *cobra.Command, args []string) error
 				Interactive: interactive,
 			},
 		},
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
+		ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 	}
 
 	stream := c.Rig.Capsule().Execute(ctx)

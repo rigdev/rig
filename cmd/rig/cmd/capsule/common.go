@@ -18,6 +18,7 @@ import (
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -138,8 +139,8 @@ func GetCurrentRolloutOfCapsule(
 			Limit:      1,
 			Descending: true,
 		},
-		ProjectId:     flags.GetProject(scope),
-		EnvironmentId: flags.GetEnvironment(scope),
+		ProjectId:     scope.GetCurrentContext().GetProject(),
+		EnvironmentId: scope.GetCurrentContext().GetEnvironment(),
 	}))
 	if err != nil {
 		return nil, err
@@ -233,7 +234,7 @@ func PrintLogs(stream *connect.ServerStreamForClient[capsule.LogsResponse]) erro
 func SelectCapsule(ctx context.Context, rc rig.Client, prompter common.Prompter, scope scope.Scope) (string, error) {
 	resp, err := rc.Capsule().List(ctx, connect.NewRequest(&capsule.ListRequest{
 		Pagination: &model.Pagination{},
-		ProjectId:  flags.GetProject(scope),
+		ProjectId:  scope.GetCurrentContext().GetProject(),
 	}))
 	if err != nil {
 		return "", err
@@ -784,7 +785,7 @@ func getRollout(
 func PortForward(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
+	rCtx *cmdconfig.Context,
 	capsuleID, instanceID string,
 	localPort uint32,
 	remotePort uint32,
@@ -795,13 +796,13 @@ func PortForward(
 		return err
 	}
 
-	return PortForwardOnListener(ctx, rig, scope, capsuleID, instanceID, l, remotePort, verbose)
+	return PortForwardOnListener(ctx, rig, rCtx, capsuleID, instanceID, l, remotePort, verbose)
 }
 
 func PortForwardOnListener(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
+	rCtx *cmdconfig.Context,
 	capsuleID, instanceID string,
 	l net.Listener,
 	remotePort uint32,
@@ -822,7 +823,7 @@ func PortForwardOnListener(
 		}
 
 		go func() {
-			err := runPortForwardForPort(ctx, rig, scope, capsuleID, instanceID, conn, remotePort, verbose)
+			err := runPortForwardForPort(ctx, rig, rCtx, capsuleID, instanceID, conn, remotePort, verbose)
 			if errors.IsNotFound(err) {
 				fmt.Printf("[rig] instance '%s' no longer available: %v\n", instanceID, err)
 				os.Exit(1)
@@ -838,7 +839,7 @@ func PortForwardOnListener(
 func runPortForwardForPort(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
+	rCtx *cmdconfig.Context,
 	capsuleID, instanceID string,
 	conn net.Conn,
 	port uint32,
@@ -853,8 +854,8 @@ func runPortForwardForPort(
 	if err := pf.Send(&capsule.PortForwardRequest{
 		Request: &capsule.PortForwardRequest_Start_{
 			Start: &capsule.PortForwardRequest_Start{
-				ProjectId:     flags.GetProject(scope),
-				EnvironmentId: flags.GetEnvironment(scope),
+				ProjectId:     rCtx.GetProject(),
+				EnvironmentId: rCtx.GetEnvironment(),
 				CapsuleId:     capsuleID,
 				InstanceId:    instanceID,
 				Port:          port,
@@ -918,13 +919,14 @@ func runPortForwardForPort(
 func GetCapsuleInstance(
 	ctx context.Context,
 	rig rig.Client,
-	scope scope.Scope,
+	projectID string,
+	environtmentID string,
 	capsuleID string,
 ) (string, error) {
 	instancesRes, err := rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
-			ProjectId:     flags.GetProject(scope),
-			EnvironmentId: flags.GetEnvironment(scope),
+			ProjectId:     projectID,
+			EnvironmentId: environtmentID,
 			CapsuleId:     capsuleID,
 			Pagination: &model.Pagination{
 				Limit: 1,

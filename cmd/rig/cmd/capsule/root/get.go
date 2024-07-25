@@ -18,10 +18,9 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
 		Msg: &capsule.GetRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		},
 	})
-
 	if err != nil {
 		return err
 	}

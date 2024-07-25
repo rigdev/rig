@@ -6,7 +6,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +19,7 @@ func (c *Cmd) stop(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		Msg: &capsule.StopRolloutRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			RolloutId: currentRollout.GetRolloutId(),
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		},
 	}); err != nil {
 		return err

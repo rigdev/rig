@@ -12,7 +12,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
@@ -53,8 +52,8 @@ func (c *Cmd) add(ctx context.Context, _ *cobra.Command, _ []string) error {
 		BaseInput: capsule_cmd.BaseInput{
 			Ctx:           ctx,
 			Rig:           c.Rig,
-			ProjectID:     flags.GetProject(c.Scope),
-			EnvironmentID: flags.GetEnvironment(c.Scope),
+			ProjectID:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentID: c.Scope.GetCurrentContext().GetEnvironment(),
 			CapsuleID:     capsule_cmd.CapsuleID,
 		},
 		Changes: []*capsule.Change{
@@ -267,8 +266,8 @@ func (c *Cmd) delete(ctx context.Context, cmd *cobra.Command, args []string) err
 		BaseInput: capsule_cmd.BaseInput{
 			Ctx:           ctx,
 			Rig:           c.Rig,
-			ProjectID:     flags.GetProject(c.Scope),
-			EnvironmentID: flags.GetEnvironment(c.Scope),
+			ProjectID:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentID: c.Scope.GetCurrentContext().GetEnvironment(),
 			CapsuleID:     capsule_cmd.CapsuleID,
 		},
 		Changes: []*capsule.Change{{

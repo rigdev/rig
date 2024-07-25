@@ -15,7 +15,6 @@ import (
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/field"
 	"github.com/rivo/tview"
@@ -56,13 +55,13 @@ func (c *Cmd) promote(ctx context.Context, cmd *cobra.Command, args []string) er
 		return errors.InvalidArgumentErrorf("from and to environment IDs must be different")
 	}
 
-	fromRollout, err := c.getLatestRollout(ctx, capsuleID, fromEnvID, flags.GetProject(c.Scope))
+	fromRollout, err := c.getLatestRollout(ctx, capsuleID, fromEnvID, c.Scope.GetCurrentContext().GetProject())
 	if err != nil {
 		return err
 	}
 	fromSpec := fromRollout.GetSpec()
 
-	toRollout, err := c.getLatestRollout(ctx, capsuleID, toEnvID, flags.GetProject(c.Scope))
+	toRollout, err := c.getLatestRollout(ctx, capsuleID, toEnvID, c.Scope.GetCurrentContext().GetProject())
 	if err != nil {
 		return err
 	}
@@ -125,7 +124,7 @@ func (c *Cmd) promote(ctx context.Context, cmd *cobra.Command, args []string) er
 		Rig:           c.Rig,
 		CapsuleID:     capsuleID,
 		EnvironmentID: toEnvID,
-		ProjectID:     flags.GetProject(c.Scope),
+		ProjectID:     c.Scope.GetCurrentContext().GetProject(),
 	}
 
 	if dryRun {
@@ -178,12 +177,12 @@ func (c *Cmd) promptForEnvironment(ctx context.Context) (string, error) {
 		}
 
 		environment := res.Msg.GetEnvironments()[i]
-		if flags.GetProject(c.Scope) != "" && !environment.GetGlobal() &&
-			!slices.Contains(environment.GetActiveProjects(), flags.GetProject(c.Scope)) {
+		if c.Scope.GetCurrentContext().GetProject() != "" && !environment.GetGlobal() &&
+			!slices.Contains(environment.GetActiveProjects(), c.Scope.GetCurrentContext().GetProject()) {
 			selectNew, err := c.Prompter.Confirm(
 				fmt.Sprintf(
 					"Warning: project '%s' is not active in environment '%s'.\nDo you want to select a different one?",
-					flags.GetProject(c.Scope),
+					c.Scope.GetCurrentContext().GetProject(),
 					environment.GetEnvironmentId(),
 				),
 				false)

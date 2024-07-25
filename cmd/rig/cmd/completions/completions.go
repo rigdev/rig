@@ -13,7 +13,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/project"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
 )
@@ -137,7 +136,7 @@ func Capsules(
 
 	resp, err := rig.Capsule().List(ctx, &connect.Request[capsule.ListRequest]{
 		Msg: &capsule.ListRequest{
-			ProjectId: flags.GetProject(scope),
+			ProjectId: scope.GetCurrentContext().GetProject(),
 		},
 	})
 	if err != nil {

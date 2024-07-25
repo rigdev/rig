@@ -19,18 +19,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var red = color.New(color.FgRed)
-var green = color.New(color.FgGreen)
-var blue = color.New(color.FgBlue)
-var yellow = color.New(color.FgYellow)
+var (
+	red    = color.New(color.FgRed)
+	green  = color.New(color.FgGreen)
+	blue   = color.New(color.FgBlue)
+	yellow = color.New(color.FgYellow)
+)
 
 func (c *Cmd) status(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if !verbose {
 		statusResp, err := c.Rig.Capsule().GetStatus(ctx, &connect.Request[capsule.GetStatusRequest]{
 			Msg: &capsule.GetStatusRequest{
 				CapsuleId:     capsule_cmd.CapsuleID,
-				ProjectId:     flags.GetProject(c.Scope),
-				EnvironmentId: flags.GetEnvironment(c.Scope),
+				ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+				EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 			},
 		})
 		if err != nil {
@@ -45,7 +47,7 @@ func (c *Cmd) status(ctx context.Context, _ *cobra.Command, _ []string) error {
 		rolloutResp, err := c.Rig.Capsule().GetRollout(ctx, connect.NewRequest(&capsule.GetRolloutRequest{
 			CapsuleId: capsule_cmd.CapsuleID,
 			RolloutId: status.GetCurrentRolloutId(),
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		}))
 		if err != nil {
 			return err
@@ -554,7 +556,6 @@ func getSelectedObjectTextAndState(name string, status *capsule.Status) (string,
 				// TODO: INCLUDE STATUSES
 				return builder.String(), pipeline.ObjectState_OBJECT_STATE_HEALTHY
 			}
-
 		}
 	}
 
@@ -573,8 +574,8 @@ func watchCapsuleStatus(
 	if !follow {
 		statusResp, err := c.Rig.Capsule().GetStatus(ctx, connect.NewRequest(&capsule.GetStatusRequest{
 			CapsuleId:     capsuleID,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		}))
 		if err != nil {
 			errChan <- err
@@ -587,10 +588,9 @@ func watchCapsuleStatus(
 
 	stream, err := c.Rig.Capsule().WatchStatus(ctx, connect.NewRequest(&capsule.WatchStatusRequest{
 		CapsuleId:     capsuleID,
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
+		ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 	}))
-
 	if err != nil {
 		errChan <- err
 		return
@@ -628,7 +628,7 @@ func watchRollout(
 		rolloutResp, err := c.Rig.Capsule().GetRollout(ctx, connect.NewRequest(&capsule.GetRolloutRequest{
 			CapsuleId: capsuleID,
 			RolloutId: rolloutID,
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		}))
 		if err != nil {
 			errChan <- err
@@ -641,8 +641,8 @@ func watchRollout(
 
 	stream, err := c.Rig.Capsule().WatchRollouts(ctx, connect.NewRequest(&capsule.WatchRolloutsRequest{
 		CapsuleId:     capsuleID,
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
+		ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		RolloutId:     rolloutID,
 	}))
 	if err != nil {

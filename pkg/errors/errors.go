@@ -544,6 +544,10 @@ func FromK8sClient(err error) error {
 		return NotFoundErrorf("%s", str)
 	}
 
+	if status, ok := err.(*meta.NoKindMatchError); ok || errors.As(err, &status) {
+		return UnimplementedErrorf("%s", str)
+	}
+
 	if status, ok := err.(*apiutil.ErrResourceDiscoveryFailed); ok || errors.As(err, &status) {
 		for _, e := range status.Unwrap() {
 			return FromK8sClient(e)

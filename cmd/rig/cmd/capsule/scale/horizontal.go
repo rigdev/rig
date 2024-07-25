@@ -56,8 +56,8 @@ func (c *Cmd) horizontal(ctx context.Context, cmd *cobra.Command, _ []string) er
 			BaseInput: capsule_cmd.BaseInput{
 				Ctx:           ctx,
 				Rig:           c.Rig,
-				ProjectID:     flags.GetProject(c.Scope),
-				EnvironmentID: flags.GetEnvironment(c.Scope),
+				ProjectID:     c.Scope.GetCurrentContext().GetProject(),
+				EnvironmentID: c.Scope.GetCurrentContext().GetEnvironment(),
 				CapsuleID:     capsule_cmd.CapsuleID,
 			},
 			Changes: []*capsule.Change{{
@@ -139,8 +139,8 @@ func (c *Cmd) autoscale(ctx context.Context, cmd *cobra.Command, _ []string) err
 			BaseInput: capsule_cmd.BaseInput{
 				Ctx:           ctx,
 				Rig:           c.Rig,
-				ProjectID:     flags.GetProject(c.Scope),
-				EnvironmentID: flags.GetEnvironment(c.Scope),
+				ProjectID:     c.Scope.GetCurrentContext().GetProject(),
+				EnvironmentID: c.Scope.GetCurrentContext().GetEnvironment(),
 				CapsuleID:     capsule_cmd.CapsuleID,
 			},
 			Changes: []*capsule.Change{{
@@ -307,8 +307,8 @@ func (c *Cmd) promptInstanceMetric(ctx context.Context) (*capsule.CustomMetric_I
 	metrics, err := c.Rig.Capsule().
 		GetCustomInstanceMetrics(ctx, connect.NewRequest(&capsule.GetCustomInstanceMetricsRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		}))
 	if err != nil {
 		return nil, err
@@ -346,8 +346,8 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 
 	resp, err := c.Rig.Project().GetObjectsByKind(ctx, connect.NewRequest(&project.GetObjectsByKindRequest{
 		Kind:          kind,
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
+		ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 	}))
 
 	var objName string
@@ -388,8 +388,8 @@ func (c *Cmd) promptObjectMetric(ctx context.Context) (*capsule.CustomMetric_Obj
 				Name:       objName,
 				ApiVersion: api,
 			},
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		}))
 	if err != nil {
 		return nil, err

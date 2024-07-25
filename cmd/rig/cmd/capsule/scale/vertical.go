@@ -9,7 +9,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -38,8 +37,8 @@ func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error 
 			BaseInput: capsule_cmd.BaseInput{
 				Ctx:           ctx,
 				Rig:           c.Rig,
-				ProjectID:     flags.GetProject(c.Scope),
-				EnvironmentID: flags.GetEnvironment(c.Scope),
+				ProjectID:     c.Scope.GetCurrentContext().GetProject(),
+				EnvironmentID: c.Scope.GetCurrentContext().GetEnvironment(),
 				CapsuleID:     capsule_cmd.CapsuleID,
 			},
 			Changes: []*capsule.Change{{

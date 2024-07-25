@@ -17,6 +17,8 @@ var (
 	filePath         string
 	capsuleName      string
 	printConfig      bool
+	remoteContext    string
+	interfaces       []string
 )
 
 type Cmd struct {
@@ -75,6 +77,30 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	)
 
 	dev.AddCommand(host)
+
+	remote := &cobra.Command{
+		Use:               "remote",
+		Short:             "Connect a remote Capsule from different context, to the local dev environment",
+		Args:              cobra.NoArgs,
+		RunE:              cli.CtxWrap(cmd.remote),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+	}
+
+	remote.Flags().StringArrayVarP(
+		&interfaces,
+		"interface", "i", nil, "Capsules interface to tunnel. Default is to forward all. Can both given as both name and port.",
+	)
+	remote.Flags().StringVarP(
+		&remoteContext,
+		"remote-context", "r", "", "The remote context to connect to",
+	)
+	remote.Flags().StringVarP(
+		&capsuleName,
+		"capsule", "c", "", "Name of capsule to forward.",
+	)
+	remote.MarkFlagRequired("remote-context")
+
+	dev.AddCommand(remote)
 
 	kind.Setup(dev, s)
 

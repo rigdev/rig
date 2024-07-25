@@ -15,7 +15,6 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
@@ -286,7 +285,7 @@ func (c *Cmd) imageCompletions(
 	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(
 		&image.ListRequest{
 			CapsuleId: capsule.CapsuleID,
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		}),
 	)
 	if err != nil {

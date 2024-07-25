@@ -34,8 +34,8 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 					Limit:      uint32(limit),
 					Descending: true,
 				},
-				ProjectId:     flags.GetProject(c.Scope),
-				EnvironmentId: flags.GetEnvironment(c.Scope),
+				ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+				EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 			},
 		})
 		if err != nil {
@@ -58,8 +58,8 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	stream, err := c.Rig.Capsule().WatchRollouts(ctx, connect.NewRequest(&capsule.WatchRolloutsRequest{
 		CapsuleId:     capsule_cmd.CapsuleID,
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
+		ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		Pagination: &model.Pagination{
 			Offset:     uint32(offset),
 			Limit:      uint32(limit),

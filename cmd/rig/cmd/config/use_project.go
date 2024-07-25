@@ -6,7 +6,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -40,7 +39,7 @@ func (c *CmdWScope) useProject(ctx context.Context, cmd *cobra.Command, args []s
 	}
 
 	for _, e := range envs.Msg.GetEnvironments() {
-		if e.GetEnvironmentId() == flags.GetEnvironment(c.Scope) {
+		if e.GetEnvironmentId() == c.Scope.GetCurrentContext().GetEnvironment() {
 			return nil
 		}
 	}

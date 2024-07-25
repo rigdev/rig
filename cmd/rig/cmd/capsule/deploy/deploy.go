@@ -24,7 +24,6 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
@@ -70,8 +69,8 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 
 	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
 		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 			CapsuleId:     capsuleName,
 		}),
 	)
@@ -84,8 +83,8 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		resp, err := c.Rig.Capsule().ProposeRollout(ctx, connect.NewRequest(&capsule.ProposeRolloutRequest{
 			CapsuleId:     capsuleName,
 			Changes:       changes,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 			BranchName:    prBranchName,
 		}))
 		if err != nil {
@@ -109,8 +108,8 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 						Limit:      1,
 						Descending: true,
 					},
-					ProjectId:     flags.GetProject(c.Scope),
-					EnvironmentId: flags.GetEnvironment(c.Scope),
+					ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+					EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 					CapsuleId:     capsuleName,
 				},
 			})
@@ -127,8 +126,8 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	baseInput := capsule_cmd.BaseInput{
 		Ctx:           ctx,
 		Rig:           c.Rig,
-		ProjectID:     flags.GetProject(c.Scope),
-		EnvironmentID: flags.GetEnvironment(c.Scope),
+		ProjectID:     c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentID: c.Scope.GetCurrentContext().GetEnvironment(),
 		CapsuleID:     capsuleName,
 	}
 
@@ -413,7 +412,7 @@ func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) 
 		// TODO Figure out pagination
 		resp, err := c.Rig.Image().List(ctx, connect.NewRequest(&api_image.ListRequest{
 			CapsuleId: capsuleID,
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		}))
 		if err != nil {
 			return "", err
@@ -541,7 +540,7 @@ func (c *Cmd) promptForExistingImage(ctx context.Context, capsuleID string) (str
 	resp, err := c.Rig.Image().List(ctx, connect.NewRequest(&api_image.ListRequest{
 		CapsuleId:  capsuleID,
 		Pagination: &model.Pagination{},
-		ProjectId:  flags.GetProject(c.Scope),
+		ProjectId:  c.Scope.GetCurrentContext().GetProject(),
 	}))
 	if err != nil {
 		return "", err
@@ -843,7 +842,7 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 		Image:          imageRef.Image,
 		Digest:         digest,
 		SkipImageCheck: skipImageCheck,
-		ProjectId:      flags.GetProject(c.Scope),
+		ProjectId:      c.Scope.GetCurrentContext().GetProject(),
 	}))
 	if err != nil {
 		return "", err

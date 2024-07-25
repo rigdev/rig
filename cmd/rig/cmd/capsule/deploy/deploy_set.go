@@ -11,7 +11,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +33,7 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 
 	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
 		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 			CapsuleId: capsuleID,
 		}),
 	)
@@ -46,7 +45,7 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 		resp, err := c.Rig.Capsule().ProposeSetRollout(ctx, connect.NewRequest(&capsule.ProposeSetRolloutRequest{
 			CapsuleId:  capsuleID,
 			Changes:    changes,
-			ProjectId:  flags.GetProject(c.Scope),
+			ProjectId:  c.Scope.GetCurrentContext().GetProject(),
 			BranchName: prBranchName,
 		}))
 		if err != nil {
@@ -62,7 +61,7 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 	resp, err := c.Rig.Capsule().DeploySet(ctx, connect.NewRequest(&capsule.DeploySetRequest{
 		CapsuleId:          capsuleID,
 		Changes:            changes,
-		ProjectId:          flags.GetProject(c.Scope),
+		ProjectId:          c.Scope.GetCurrentContext().GetProject(),
 		CurrentRolloutIds:  currentRolloutIDs,
 		CurrentFingerprint: parseFingerprint(currentFingerprint),
 	}))
@@ -77,7 +76,7 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 				BaseInput: capsule_cmd.BaseInput{
 					Ctx:           ctx,
 					Rig:           c.Rig,
-					ProjectID:     flags.GetProject(c.Scope),
+					ProjectID:     c.Scope.GetCurrentContext().GetProject(),
 					EnvironmentID: env,
 					CapsuleID:     capsuleID,
 				},

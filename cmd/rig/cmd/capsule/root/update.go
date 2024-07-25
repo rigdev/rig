@@ -10,7 +10,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +20,7 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 	capsuleID := capsule_cmd.CapsuleID
 	resp, err := c.Rig.Capsule().Get(ctx, connect.NewRequest(&capsule.GetRequest{
 		CapsuleId: capsuleID,
-		ProjectId: flags.GetProject(c.Scope),
+		ProjectId: c.Scope.GetCurrentContext().GetProject(),
 	}))
 	if err != nil {
 		return err
@@ -29,7 +28,7 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 	cc := resp.Msg.GetCapsule()
 
 	envResp, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
-		ProjectFilter: flags.GetProject(c.Scope),
+		ProjectFilter: c.Scope.GetCurrentContext().GetProject(),
 	}))
 	if err != nil {
 		return err
@@ -77,7 +76,7 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	if _, err = c.Rig.Capsule().Update(ctx, connect.NewRequest(&capsule.UpdateRequest{
 		Updates:   updates,
-		ProjectId: flags.GetProject(c.Scope),
+		ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		CapsuleId: capsuleID,
 	})); err != nil {
 		return err

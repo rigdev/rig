@@ -12,7 +12,6 @@ import (
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -89,7 +88,7 @@ func (s *Service) handleAuthError(origErr error, interactive bool) (bool, error)
 }
 
 func (s *Service) AuthEnvironment(ctx context.Context, interactive bool) error {
-	environmentID := flags.GetEnvironment(s.scope)
+	environmentID := s.scope.GetCurrentContext().GetEnvironment()
 	if !interactive {
 		if environmentID == "" {
 			return errors.FailedPreconditionErrorf("no environment selected, use --environment or -E to select an environment")
@@ -120,7 +119,7 @@ func (s *Service) AuthEnvironment(ctx context.Context, interactive bool) error {
 	}
 
 	res, err := s.rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
-		ProjectFilter: flags.GetProject(s.scope),
+		ProjectFilter: s.scope.GetCurrentContext().GetProject(),
 	}))
 	if err != nil {
 		return nil
@@ -179,7 +178,7 @@ func (s *Service) AuthUser(ctx context.Context, interactive bool) error {
 }
 
 func (s *Service) AuthProject(ctx context.Context, interactive bool) error {
-	projectID := flags.GetProject(s.scope)
+	projectID := s.scope.GetCurrentContext().GetProject()
 	if !interactive {
 		if projectID == "" {
 			return errors.FailedPreconditionErrorf("no project selected, use --project/-P or RIG_PROJECT= to select a project")
@@ -206,7 +205,7 @@ func (s *Service) AuthProject(ctx context.Context, interactive bool) error {
 			return err
 		}
 
-		projectID = flags.GetProject(s.scope)
+		projectID = s.scope.GetCurrentContext().GetProject()
 
 		res, err = s.rig.Project().List(ctx, &connect.Request[project.ListRequest]{})
 		if err != nil {
@@ -226,7 +225,7 @@ func (s *Service) AuthProject(ctx context.Context, interactive bool) error {
 		if err := s.useProject(ctx); err != nil {
 			return err
 		}
-		projectID = flags.GetProject(s.scope)
+		projectID = s.scope.GetCurrentContext().GetProject()
 	}
 
 	found := false
@@ -386,7 +385,7 @@ func (s *Service) useProject(ctx context.Context) error {
 
 func (s *Service) promptForEnvironment(ctx context.Context) (string, error) {
 	res, err := s.rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
-		ProjectFilter: flags.GetProject(s.scope),
+		ProjectFilter: s.scope.GetCurrentContext().GetProject(),
 	}))
 	if err != nil {
 		return "", err

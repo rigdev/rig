@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/pkg/cli/scope"
 )
 
 //nolint:revive
@@ -30,18 +29,4 @@ func InitFlags() {
 		Host:           os.Getenv("RIG_HOST"),
 		Context:        "",
 	}
-}
-
-func GetEnvironment(scope scope.Scope) string {
-	if Flags.Environment != "" {
-		return Flags.Environment
-	}
-	return scope.GetCurrentContext().EnvironmentID
-}
-
-func GetProject(scope scope.Scope) string {
-	if Flags.Project != "" {
-		return Flags.Project
-	}
-	return scope.GetCurrentContext().ProjectID
 }
