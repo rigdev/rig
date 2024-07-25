@@ -245,10 +245,9 @@ func (w *watcher) stopWatch(f *objectWatch) {
 }
 
 type objectWatchKey struct {
-	watcherKey     watcherKey
-	names          []string
-	labelSelector  labels.Selector
-	negativeLabels map[string]struct{}
+	watcherKey    watcherKey
+	names         []string
+	labelSelector labels.Selector
 }
 
 // TODO: This is not a very optimal way of computing this!
@@ -773,7 +772,9 @@ func (r *objectWatcherResult) WatchSecondaryByName(objectName string, objType cl
 	)
 }
 
-func (r *objectWatcherResult) WatchSecondaryByLabels(objectLabels labels.Selector, objType client.Object, cb WatchCallback) {
+func (r *objectWatcherResult) WatchSecondaryByLabels(
+	objectLabels labels.Selector, objType client.Object, cb WatchCallback,
+) {
 	r.watchObject(
 		objectWatchKey{
 			labelSelector: objectLabels,
