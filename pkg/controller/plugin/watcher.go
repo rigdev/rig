@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
@@ -501,6 +502,11 @@ func (ow *objectWatcher) List(options metav1.ListOptions) (runtime.Object, error
 		Namespace: ow.namespace,
 		Raw:       &options,
 	}); err != nil {
+		if errors.IsUnimplemented(errors.FromK8sClient(err)) {
+			ow.logger.Info("type not registered", "gvk", ow.gvkList, "error", err)
+			return list, nil
+		}
+
 		ow.logger.Error("error getting object list", "gvk", ow.gvkList, "error", err)
 		return nil, err
 	}

@@ -33,8 +33,8 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 				Limit:      uint32(limit),
 				Descending: true,
 			},
-			ProjectId:       flags.GetProject(c.Scope),
-			EnvironmentId:   flags.GetEnvironment(c.Scope),
+			ProjectId:       c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId:   c.Scope.GetCurrentContext().GetEnvironment(),
 			ExcludeExisting: excludeExisting,
 			IncludeDeleted:  includeDeleted,
 		}))
@@ -58,8 +58,8 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 
 	stream, err := c.Rig.Capsule().WatchInstanceStatuses(ctx, connect.NewRequest(&capsule.WatchInstanceStatusesRequest{
 		CapsuleId:       cmd_capsule.CapsuleID,
-		ProjectId:       flags.GetProject(c.Scope),
-		EnvironmentId:   flags.GetEnvironment(c.Scope),
+		ProjectId:       c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId:   c.Scope.GetCurrentContext().GetEnvironment(),
 		ExcludeExisting: excludeExisting,
 		IncludeDeleted:  includeDeleted,
 	}))

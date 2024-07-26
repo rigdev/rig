@@ -147,6 +147,15 @@ func getContext(p contextParams) (*cmdconfig.Context, error) {
 	}
 	c.SetAuth(user.Auth)
 
+	// Apply flags overrides.
+	if flags.Flags.Project != "" {
+		c.SetProjectOverride(flags.Flags.Project)
+	}
+
+	if flags.Flags.Environment != "" {
+		c.SetEnvironmentOverride(flags.Flags.Environment)
+	}
+
 	return c, nil
 }
 

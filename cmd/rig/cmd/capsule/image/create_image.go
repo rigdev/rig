@@ -6,7 +6,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -39,8 +38,8 @@ func (c *Cmd) addImage(ctx context.Context, cmd *cobra.Command, _ []string) erro
 					ImageId: imageID,
 				},
 			}},
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		},
 	}
 

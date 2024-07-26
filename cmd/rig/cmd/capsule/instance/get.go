@@ -37,8 +37,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 			&capsule.GetInstanceStatusRequest{
 				CapsuleId:     capsule_cmd.CapsuleID,
 				InstanceId:    instanceID,
-				ProjectId:     flags.GetProject(c.Scope),
-				EnvironmentId: flags.GetEnvironment(c.Scope),
+				ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+				EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 			},
 		))
 		if err != nil {
@@ -57,8 +57,8 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, args []string) error 
 
 	stream, err := c.Rig.Capsule().WatchInstanceStatuses(ctx, connect.NewRequest(&capsule.WatchInstanceStatusesRequest{
 		CapsuleId:      capsule_cmd.CapsuleID,
-		ProjectId:      flags.GetProject(c.Scope),
-		EnvironmentId:  flags.GetEnvironment(c.Scope),
+		ProjectId:      c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId:  c.Scope.GetCurrentContext().GetEnvironment(),
 		InstanceId:     instanceID,
 		IncludeDeleted: true,
 	}))

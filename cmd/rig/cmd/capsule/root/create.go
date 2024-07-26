@@ -7,7 +7,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +24,7 @@ func (c *Cmd) create(ctx context.Context, cmd *cobra.Command, args []string) err
 	res, err := c.Rig.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
 		Msg: &capsule.CreateRequest{
 			Name:      capsule_cmd.CapsuleID,
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		},
 	})
 	if err != nil {

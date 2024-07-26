@@ -27,6 +27,9 @@ type Context struct {
 
 	service *Service
 	auth    *Auth
+
+	projectIDOverride     string
+	environmentIDOverride string
 }
 
 func (c *Context) GetService() *Service {
@@ -43,6 +46,30 @@ func (c *Context) GetAuth() *Auth {
 
 func (c *Context) SetAuth(a *Auth) {
 	c.auth = a
+}
+
+func (c *Context) GetProject() string {
+	if c.projectIDOverride != "" {
+		return c.projectIDOverride
+	}
+
+	return c.ProjectID
+}
+
+func (c *Context) SetProjectOverride(projectID string) {
+	c.projectIDOverride = projectID
+}
+
+func (c *Context) GetEnvironment() string {
+	if c.environmentIDOverride != "" {
+		return c.environmentIDOverride
+	}
+
+	return c.EnvironmentID
+}
+
+func (c *Context) SetEnvironmentOverride(environmentID string) {
+	c.environmentIDOverride = environmentID
 }
 
 type Service struct {
@@ -108,6 +135,14 @@ func (cfg *Config) GetCurrentContext() *Context {
 func (cfg *Config) GetContext(name string) *Context {
 	for _, c := range cfg.Contexts {
 		if c.Name == name {
+			if service, err := cfg.GetService(c.ServiceName); err == nil {
+				c.SetService(service)
+			}
+
+			if user, err := cfg.GetUser(c.Name); err == nil {
+				c.SetAuth(user.Auth)
+			}
+
 			return c
 		}
 	}

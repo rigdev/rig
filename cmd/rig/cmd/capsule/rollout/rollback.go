@@ -8,7 +8,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -28,8 +27,8 @@ func (c *Cmd) rollback(ctx context.Context, cmd *cobra.Command, args []string) e
 				},
 			},
 		}},
-		ProjectId:     flags.GetProject(c.Scope),
-		EnvironmentId: flags.GetEnvironment(c.Scope),
+		ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+		EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 	})
 
 	resp, err := c.Rig.Capsule().Deploy(ctx, req)
@@ -60,8 +59,8 @@ func (c *Cmd) getRollback(ctx context.Context, args []string) (uint64, error) {
 		resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
 			Msg: &capsule.ListRolloutsRequest{
 				CapsuleId:     capsule_cmd.CapsuleID,
-				ProjectId:     flags.GetProject(c.Scope),
-				EnvironmentId: flags.GetEnvironment(c.Scope),
+				ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+				EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 				Pagination: &model.Pagination{
 					Limit:      10,
 					Descending: true,

@@ -13,7 +13,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -28,8 +27,8 @@ func (c *Cmd) portForward(
 
 	res, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
 		Msg: &capsule.ListRolloutsRequest{
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 			CapsuleId:     capsuleID,
 			Pagination: &model.Pagination{
 				Descending: true,
@@ -105,8 +104,8 @@ func (c *Cmd) portForward(
 	if instanceID == "" {
 		instancesRes, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 			Msg: &capsule.ListInstancesRequest{
-				ProjectId:     flags.GetProject(c.Scope),
-				EnvironmentId: flags.GetEnvironment(c.Scope),
+				ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+				EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 				CapsuleId:     capsuleID,
 				Pagination: &model.Pagination{
 					Limit: 1,
@@ -138,8 +137,8 @@ func (c *Cmd) portForward(
 
 				res, err := c.Rig.Capsule().Logs(ctx, &connect.Request[capsule.LogsRequest]{
 					Msg: &capsule.LogsRequest{
-						ProjectId:     flags.GetProject(c.Scope),
-						EnvironmentId: flags.GetEnvironment(c.Scope),
+						ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+						EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 						CapsuleId:     capsuleID,
 						InstanceId:    instanceID,
 						Follow:        true,
@@ -172,5 +171,6 @@ func (c *Cmd) portForward(
 		}()
 	}
 
-	return capsule_cmd.PortForwardOnListener(ctx, c.Rig, c.Scope, capsuleID, instanceID, l, remotePort, verbose)
+	return capsule_cmd.PortForwardOnListener(
+		ctx, c.Rig, c.Scope.GetCurrentContext(), capsuleID, instanceID, l, remotePort, verbose)
 }

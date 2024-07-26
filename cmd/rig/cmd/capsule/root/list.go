@@ -22,7 +22,7 @@ func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, _ []string) error {
 				Offset: uint32(offset),
 				Limit:  uint32(limit),
 			},
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		},
 	})
 	if err != nil {

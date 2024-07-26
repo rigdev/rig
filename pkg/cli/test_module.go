@@ -28,7 +28,7 @@ func MakeTestModule(i TestModuleInput) fx.Option {
 		fx.Provide(func() afero.Fs { return i.FS }),
 		fx.Provide(func() common.Prompter { return i.Prompter }),
 		fx.Provide(func(scope scope.Scope) (rig.Client, error) {
-			_, err := GetClientOptions(scope)
+			_, err := GetClientOptions(scope.GetCfg(), scope.GetCurrentContext())
 			if err != nil {
 				return nil, err
 			}

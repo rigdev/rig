@@ -11,7 +11,6 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/spf13/cobra"
@@ -23,9 +22,7 @@ var (
 	limit  int
 )
 
-var (
-	follow bool
-)
+var follow bool
 
 var forceDeploy bool
 
@@ -118,8 +115,8 @@ func (c *Cmd) rolloutCompletions(
 	resp, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule_api.ListRolloutsRequest]{
 		Msg: &capsule_api.ListRolloutsRequest{
 			CapsuleId:     capsule.CapsuleID,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		},
 	})
 	if err != nil {

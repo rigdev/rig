@@ -13,7 +13,6 @@ import (
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
@@ -168,8 +167,8 @@ func (c *Cmd) provideInstanceID(ctx context.Context, capsuleID string, arg strin
 	res, err := c.Rig.Capsule().ListInstanceStatuses(ctx, &connect.Request[capsule.ListInstanceStatusesRequest]{
 		Msg: &capsule.ListInstanceStatusesRequest{
 			CapsuleId:     capsuleID,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		},
 	})
 	if err != nil {
@@ -223,8 +222,8 @@ func (c *Cmd) instanceCompletions(
 	resp, err := c.Rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
 			CapsuleId:     capsule_cmd.CapsuleID,
-			ProjectId:     flags.GetProject(c.Scope),
-			EnvironmentId: flags.GetEnvironment(c.Scope),
+			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
+			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
 		},
 	})
 	if err != nil {

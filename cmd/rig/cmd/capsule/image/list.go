@@ -24,7 +24,7 @@ func (c *Cmd) list(ctx context.Context, cmd *cobra.Command, _ []string) error {
 				Limit:      uint32(limit),
 				Descending: true,
 			},
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		}),
 	)
 	if err != nil {

@@ -18,7 +18,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	"github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig/cmd/common"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/rigdev/rig/pkg/utils"
@@ -172,7 +171,7 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 		Image:          imageRef.Image,
 		Digest:         digest,
 		SkipImageCheck: skipImageCheck,
-		ProjectId:      flags.GetProject(c.Scope),
+		ProjectId:      c.Scope.GetCurrentContext().GetProject(),
 	}),
 	)
 	if err != nil {

@@ -158,7 +158,7 @@ func (c *Cmd) updateGit(ctx context.Context, cmd *cobra.Command, _ []string) err
 	var gitStore *model.GitStore
 	if resp, err := c.Rig.Project().GetEffectiveGitSettings(
 		ctx, connect.NewRequest(&project.GetEffectiveGitSettingsRequest{
-			ProjectId: flags.GetProject(c.Scope),
+			ProjectId: c.Scope.GetCurrentContext().GetProject(),
 		})); errors.IsNotFound(err) {
 	} else if err != nil {
 		return err
@@ -174,7 +174,7 @@ func (c *Cmd) updateGit(ctx context.Context, cmd *cobra.Command, _ []string) err
 
 	if _, err := c.Rig.Project().Update(ctx, connect.NewRequest(&project.UpdateRequest{
 		Updates:   []*project.Update{{Field: &project.Update_SetGitStore{SetGitStore: gitStore}}},
-		ProjectId: flags.GetProject(c.Scope),
+		ProjectId: c.Scope.GetCurrentContext().GetProject(),
 	})); err != nil {
 		return err
 	}
