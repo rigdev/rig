@@ -105,7 +105,7 @@ func (c *Cmd) createHostTunnel(ctx context.Context, cfg *platformv1.HostCapsule)
 	instanceID := ""
 
 	if instanceID == "" {
-		if instanceID, err = capsule_cmd.GetCapsuleInstance(ctx, c.Rig, cfg.GetProject(), cfg.GetEnvironment(), capsuleName); err != nil {
+		if instanceID, err = capsule_cmd.GetCapsuleInstance(ctx, c.Rig, cfg, capsuleName); err != nil {
 			return err
 		}
 	}

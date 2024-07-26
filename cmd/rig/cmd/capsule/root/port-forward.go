@@ -171,5 +171,6 @@ func (c *Cmd) portForward(
 		}()
 	}
 
-	return capsule_cmd.PortForwardOnListener(ctx, c.Rig, c.Scope.GetCurrentContext(), capsuleID, instanceID, l, remotePort, verbose)
+	return capsule_cmd.PortForwardOnListener(
+		ctx, c.Rig, c.Scope.GetCurrentContext(), capsuleID, instanceID, l, remotePort, verbose)
 }

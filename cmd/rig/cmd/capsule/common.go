@@ -916,17 +916,21 @@ func runPortForwardForPort(
 	}
 }
 
+type TargetContext interface {
+	GetProject() string
+	GetEnvironment() string
+}
+
 func GetCapsuleInstance(
 	ctx context.Context,
 	rig rig.Client,
-	projectID string,
-	environtmentID string,
+	rCtx TargetContext,
 	capsuleID string,
 ) (string, error) {
 	instancesRes, err := rig.Capsule().ListInstances(ctx, &connect.Request[capsule.ListInstancesRequest]{
 		Msg: &capsule.ListInstancesRequest{
-			ProjectId:     projectID,
-			EnvironmentId: environtmentID,
+			ProjectId:     rCtx.GetProject(),
+			EnvironmentId: rCtx.GetEnvironment(),
 			CapsuleId:     capsuleID,
 			Pagination: &model.Pagination{
 				Limit: 1,

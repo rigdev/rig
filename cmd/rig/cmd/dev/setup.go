@@ -88,7 +88,8 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 
 	remote.Flags().StringArrayVarP(
 		&interfaces,
-		"interface", "i", nil, "Capsules interface to tunnel. Default is to forward all. Can both given as both name and port.",
+		"interface", "i", nil,
+		"Capsules interface to tunnel. Default is to forward all. Can both given as both name and port.",
 	)
 	remote.Flags().StringVarP(
 		&remoteContext,
@@ -98,7 +99,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		&capsuleName,
 		"capsule", "c", "", "Name of capsule to forward.",
 	)
-	remote.MarkFlagRequired("remote-context")
+	remote.MarkFlagsOneRequired("remote-context")
 
 	dev.AddCommand(remote)
 

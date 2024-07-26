@@ -84,26 +84,29 @@ func (c *CmdWScope) environmentFromArg(ctx context.Context, environmentArg strin
 	}
 
 	for _, e := range res.Msg.GetEnvironments() {
-		if e.GetEnvironmentId() == environmentArg {
-			if c.Scope.GetCurrentContext().GetProject() != "" && !slices.Contains(e.GetActiveProjects(), c.Scope.GetCurrentContext().GetProject()) {
-				cont, err := c.Prompter.Confirm(
-					fmt.Sprintf(
-						"Warning: project '%s' is not active in environment '%s'.\nDo you want to continue anyways?",
-						c.Scope.GetCurrentContext().GetProject(),
-						e.GetEnvironmentId(),
-					),
-					true)
-				if err != nil {
-					return "", err
-				}
+		if e.GetEnvironmentId() != environmentArg {
+			continue
+		}
 
-				if !cont {
-					os.Exit(0)
-				}
+		if c.Scope.GetCurrentContext().GetProject() != "" &&
+			!slices.Contains(e.GetActiveProjects(), c.Scope.GetCurrentContext().GetProject()) {
+			cont, err := c.Prompter.Confirm(
+				fmt.Sprintf(
+					"Warning: project '%s' is not active in environment '%s'.\nDo you want to continue anyways?",
+					c.Scope.GetCurrentContext().GetProject(),
+					e.GetEnvironmentId(),
+				),
+				true)
+			if err != nil {
+				return "", err
 			}
 
-			return e.GetEnvironmentId(), nil
+			if !cont {
+				os.Exit(0)
+			}
 		}
+
+		return e.GetEnvironmentId(), nil
 	}
 
 	return "", errors.NotFoundErrorf("environment '%v' not found", environmentArg)

@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Cmd) remote(ctx context.Context, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) remote(ctx context.Context, _ *cobra.Command, _ []string) error {
 	remoteCtx := c.Scope.GetCfg().GetContext(remoteContext)
 	if remoteCtx == nil {
 		return errors.NotFoundErrorf("remote context `%s` not found", remoteContext)
@@ -50,7 +50,7 @@ func (c *Cmd) remote(ctx context.Context, cmd *cobra.Command, _ []string) error 
 		return fmt.Errorf("no active rollouts for capsule `%s` in environment `%s`", capsuleName, remoteCtx.GetEnvironment())
 	}
 
-	instanceID, err := capsule_cmd.GetCapsuleInstance(ctx, remoteClient, remoteCtx.GetProject(), remoteCtx.GetEnvironment(), capsuleName)
+	instanceID, err := capsule_cmd.GetCapsuleInstance(ctx, remoteClient, remoteCtx, capsuleName)
 	if err != nil {
 		return err
 	}
