@@ -77,6 +77,10 @@ jobs:
           kubectl logs -n rig-system deploy/rig-platform > platform/output/test-integration/platformlogs.txt
           kubectl logs -n rig-system deploy/rig-operator > platform/output/test-integration/operatorlogs.txt
           kubectl get all,capsule -A > platform/output/test-integration/kubectl.txt
+          kubectl exec pod/rig-platform-postgres-0 -n rig-system -- /bin/sh -c 'export PGPASSWORD=postgres ; psql -U postgres -d rig -c "SELECT id, blob_type, object_id, fingerprint, timestamp, deleted_at FROM rig.blob ORDER BY id"' > platform/output/test-integration/blob.txt
+          kubectl exec pod/rig-platform-postgres-0 -n rig-system -- /bin/sh -c 'export PGPASSWORD=postgres ; psql -U postgres -d rig -c "SELECT id, blob_type, object_id, fingerprint, timestamp FROM rig.rollout_bookmark ORDER BY id"' > platform/output/test-integration/bookmark.txt
+          kubectl exec pod/rig-platform-postgres-0 -n rig-system -- /bin/sh -c 'export PGPASSWORD=postgres ; psql -U postgres -d rig -c "SELECT id, project_id, capsule_id, environment_id, rollout_id, version FROM rig.rollout"' > platform/output/test-integration/rollout.txt
+
 
       - name: Upload test output
         uses: actions/upload-artifact@v4
