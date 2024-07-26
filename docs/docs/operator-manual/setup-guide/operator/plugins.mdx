@@ -10,7 +10,7 @@ Rig supplies a list of builtin plugins you can see [here](/operator-manual/plugi
 
 
 ## Configuring Plugins
-Plugin executions are defined as a fixed sequence of plugins and their configuration to be executed. They are grouped in to steps (also a fixed sequence). Each step can define Glob patterns which capsules and/or namespaces should match for the step to be executed. As an example:
+Plugin executions are defined as a fixed sequence of plugins and their configuration to be executed. They are grouped into steps (also a fixed sequence). Each step can define Glob patterns which capsules and/or namespaces should match for the step to be executed. As an example:
 ```yaml
 pipeline:
   steps:
@@ -56,5 +56,5 @@ The `config` of a plugin is a single string passed to the plugin which it will i
 The `rig-ops` CLI contains tooling for working with plugins. To install it, see [here](/operator-manual/cli). The plugin tooling includes
 - `rig-ops plugins list`: Shows a list of available plugins in the operator.
 - `rig-ops plugins list-steps`: Shows the steps the operator is configured to run.
-- `rig-ops plugins check`: Shows which steps are run for which namespace/capsules. This cam be nice if you have globbing logic in your pipeline config.
+- `rig-ops plugins check`: Shows which steps are run for which namespace/capsules. This can be nice if you have globbing logic in your pipeline config.
 - `rig-ops plugins dry-run`: Executes a dry-run of the plugin-pipeline on a given capsule, showing the output Kubernetes resources. It can use the operator configuration as is or you can supply modifications to the pipeline through flags to the command. This is nice for quick iteration on plugin configuration.
