@@ -336,9 +336,9 @@ type ClientGit struct {
 	Auths []GitAuth `json:"auths,omitempty"`
 
 	// GitHubAuths is authentication information for GitHub repositories
-	GitHubAuths []GitHubAuth `json:"gitHubAuths,omitempty"`
+	GitHubAuths []GitHub `json:"gitHubAuths,omitempty"`
 
-	GiLabAuths []GitLabAuth `json:"gitLabAuths,omitempty"`
+	GiLabAuths []GitLab `json:"gitLabAuths,omitempty"`
 
 	// Author used when creating commits.
 	Author GitAuthor `json:"author,omitempty"`
@@ -359,7 +359,7 @@ type GitAuth struct {
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds"`
 }
 
-// GitHubAuth contains authentication specifically for GitHub
+// GitHub contains authentication specifically for GitHub.
 // To enable pull requests on a GitHub repository, you must add GitHub authentication
 // using appID, installationID and privateKey for a GitHub app with read/write access to
 // pull requests.
@@ -367,25 +367,35 @@ type GitAuth struct {
 // if there is a GitAuth section with credentials for the given repository instead.
 // If you have GitHub app authentication for a GitHub app with read/write access to the repository,
 // you don't need a matching GitAuth section.
-type GitHubAuth struct {
-	// Organization is the GitHub organization to match
+type GitHub struct {
+	// Organization is the GitHub organization to match.
 	Organization string `json:"organization"`
 
 	// Repository matches the GitHub repository. If empty, matches all.
 	Repository string `json:"repository,omitempty"`
 
+	// Auth contains GitHub specific authentication configuration.
+	Auth GitHubAuth `json:"auth,omitempty"`
+
+	// Polling contains GitHub specific configuration.
+	Polling GitHubPolling `json:"polling,omitempty"`
+}
+
+type GitHubAuth struct {
 	// AppID is the app ID of the GitHub app
 	AppID int64 `json:"appID,omitempty"`
 
 	// InstallationID is the installation ID of the GitHub app
 	InstallationID int64 `json:"installationID,omitempty"`
 
-	// PrivateKey is a path to a PEM encoded SSH private key.
+	// PrivateKey is a path to a file containing a PEM encoded SSH private key.
 	PrivateKey string `json:"privateKey,omitempty"`
 
 	// PrivateKeyPassword is an optional password for the SSH private key.
 	PrivateKeyPassword string `json:"privateKeyPassword,omitempty"`
+}
 
+type GitHubPolling struct {
 	// WebHookSecret is the secret used to validate incoming webhooks.
 	WebhookSecret string `json:"webhookSecret,omitempty"`
 
@@ -394,11 +404,26 @@ type GitHubAuth struct {
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds,omitempty"`
 }
 
+type GitLab struct {
+	// Groups is a sequence of GitLab groups.
+	// The first is the main group and the rest a nesting of subgroups.
+	// If Project is empty, the configuration will match any
+	// GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix.
+	Groups []string `json:"groups,omitempty"`
+	// Project is the GitLab project of the repository. Can be empty for matching all project names.
+	Project string        `json:"project,omitempty"`
+	Auth    GitLabAuth    `json:"auth,omitempty"`
+	Polling GitLabPolling `json:"polling,omitempty"`
+}
+
 type GitLabAuth struct {
-	Groups        []string `json:"groups,omitempty"`
-	Project       string   `json:"project,omitempty"`
-	WebhookSecret string   `json:"webhookSecret,omitempty"`
-	Accesstoken   string   `json:"accessToken,omitempty"`
+	// AccessToken is an accessToken which is used to authenticate against the GitLab repository.
+	Accesstoken string `json:"accessToken,omitempty"`
+}
+
+type GitLabPolling struct {
+	// WebHookSecret is the secret used to validate incoming webhooks.
+	WebhookSecret string `json:"webhookSecret,omitempty"`
 	// If webHookSecret isn't set, pull the git repository at the set interval instead
 	// to fetch changes. Defaults to 3 mins if no value.
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds,omitempty"`
@@ -424,7 +449,7 @@ type HTTPSCredential struct {
 
 // SSHCredential specifies SSH credentials
 type SSHCredential struct {
-	// PrivateKey is a path to a PEM encoded SSH private key.
+	// PrivateKey is a path to a file containing a PEM encoded SSH private key.
 	PrivateKey string `json:"privateKey,omitempty"`
 
 	// PrivateKeyPassword is an optional password for the SSH private key.

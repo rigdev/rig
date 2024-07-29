@@ -114,8 +114,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `auths` _[GitAuth](#gitauth) array_ | Auths the git client can behave as. |
-| `gitHubAuths` _[GitHubAuth](#githubauth) array_ | GitHubAuths is authentication information for GitHub repositories |
-| `gitLabAuths` _[GitLabAuth](#gitlabauth) array_ |  |
+| `gitHubAuths` _[GitHub](#github) array_ | GitHubAuths is authentication information for GitHub repositories |
+| `gitLabAuths` _[GitLab](#gitlab) array_ |  |
 | `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits. |
 
 
@@ -369,25 +369,70 @@ _Appears in:_
 | `ssh` _[SSHCredential](#sshcredential)_ | SSH specifies SSH credentials. |
 
 
-### GitHubAuth
+### GitHub
 
 
 
-GitHubAuth contains authentication specifically for GitHub To enable pull requests on a GitHub repository, you must add GitHub authentication using appID, installationID and privateKey for a GitHub app with read/write access to pull requests. To have normal read/write access to a repository, you can forego GitHub app authentication if there is a GitAuth section with credentials for the given repository instead. If you have GitHub app authentication for a GitHub app with read/write access to the repository, you don't need a matching GitAuth section.
+GitHub contains authentication specifically for GitHub. To enable pull requests on a GitHub repository, you must add GitHub authentication using appID, installationID and privateKey for a GitHub app with read/write access to pull requests. To have normal read/write access to a repository, you can forego GitHub app authentication if there is a GitAuth section with credentials for the given repository instead. If you have GitHub app authentication for a GitHub app with read/write access to the repository, you don't need a matching GitAuth section.
 
 _Appears in:_
 - [ClientGit](#clientgit)
 
 | Field | Description |
 | --- | --- |
-| `organization` _string_ | Organization is the GitHub organization to match |
+| `organization` _string_ | Organization is the GitHub organization to match. |
 | `repository` _string_ | Repository matches the GitHub repository. If empty, matches all. |
+| `auth` _[GitHubAuth](#githubauth)_ | Auth contains GitHub specific authentication configuration. |
+| `polling` _[GitHubPolling](#githubpolling)_ | Polling contains GitHub specific configuration. |
+
+
+### GitHubAuth
+
+
+
+
+
+_Appears in:_
+- [GitHub](#github)
+
+| Field | Description |
+| --- | --- |
 | `appID` _integer_ | AppID is the app ID of the GitHub app |
 | `installationID` _integer_ | InstallationID is the installation ID of the GitHub app |
-| `privateKey` _string_ | PrivateKey is a path to a PEM encoded SSH private key. |
+| `privateKey` _string_ | PrivateKey is a path to a file containing a PEM encoded SSH private key. |
 | `privateKeyPassword` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
+
+
+### GitHubPolling
+
+
+
+
+
+_Appears in:_
+- [GitHub](#github)
+
+| Field | Description |
+| --- | --- |
 | `webhookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
 | `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead to fetch changes. Defaults to 3 mins if no value. |
+
+
+### GitLab
+
+
+
+
+
+_Appears in:_
+- [ClientGit](#clientgit)
+
+| Field | Description |
+| --- | --- |
+| `groups` _string array_ | Groups is a sequence of GitLab groups. The first is the main group and the rest a nesting of subgroups. If Project is empty, the configuration will match any GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix. |
+| `project` _string_ | Project is the GitLab project of the repository. Can be empty for matching all project names. |
+| `auth` _[GitLabAuth](#gitlabauth)_ |  |
+| `polling` _[GitLabPolling](#gitlabpolling)_ |  |
 
 
 ### GitLabAuth
@@ -397,14 +442,25 @@ _Appears in:_
 
 
 _Appears in:_
-- [ClientGit](#clientgit)
+- [GitLab](#gitlab)
 
 | Field | Description |
 | --- | --- |
-| `groups` _string array_ |  |
-| `project` _string_ |  |
-| `webhookSecret` _string_ |  |
-| `accessToken` _string_ |  |
+| `accessToken` _string_ | AccessToken is an accessToken which is used to authenticate against the GitLab repository. |
+
+
+### GitLabPolling
+
+
+
+
+
+_Appears in:_
+- [GitLab](#gitlab)
+
+| Field | Description |
+| --- | --- |
+| `webhookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
 | `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead to fetch changes. Defaults to 3 mins if no value. |
 
 
