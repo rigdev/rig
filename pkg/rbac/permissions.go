@@ -270,6 +270,14 @@ func GetDeveloperPermissions(projectID, environmentID string) []*role.Permission
 				Environment: environmentID,
 			},
 		},
+		{
+			Action: ActionCapsulePortForward,
+			Scope: &role.Scope{
+				Resource:    WithWildcard(ResourceCapsule),
+				Project:     projectID,
+				Environment: environmentID,
+			},
+		},
 	}...)
 }
 

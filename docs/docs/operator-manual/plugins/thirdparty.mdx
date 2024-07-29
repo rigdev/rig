@@ -123,7 +123,7 @@ To test it in a real Capsule reconcilliation, you'll need to have access to a ri
 ```bash
 rig dev kind create
 ```
-sets this up. If it's the first time, it will prompt you for creating an admin user (for this local rig instance). For the rig-operator to be able to access your plugin, it must be able to pull a container image mounting it (described above). One solution is to publish the image to a publi repository. Another is to load the image into the Kind cluster. The easiest way to do this in a way that ensure the rig-operator can access it, is to use Rig's `add image` functionality. Given a local container image `my-plugin`, running
+sets this up. If it's the first time, it will prompt you for creating an admin user (for this local rig instance). For the rig-operator to be able to access your plugin, it must be able to pull a container image mounting it (described above). One solution is to publish the image to a public repository. Another is to load the image into the Kind cluster. The easiest way to do this in a way that ensure the rig-operator can access it, is to use Rig's `add image` functionality. Given a local container image `my-plugin`, running
 `rig capsule image add --image my_plugin`
 This will upload the image into the cluster under a new name which will be printed, e.g.
 ```

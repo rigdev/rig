@@ -103,6 +103,8 @@ const (
 	ActionCapsuleDeployEnvironmentSources = "capsule:deploy:environmentsources"
 	// Container Settings - Vertical scaling, Environment variables, Command and Args
 	ActionCapsuleDeployAnnotations = "capsule:deploy:annotations"
+	// Port forwarding
+	ActionCapsulePortForward = "capsule:portfoward"
 )
 
 const (
@@ -152,6 +154,7 @@ var CapsuleActionMap = map[string]string{
 	capsuleconnect.ServiceGetEffectiveGitSettingsProcedure:  ActionCapsuleView,
 	capsuleconnect.ServiceListProposalsProcedure:            ActionCapsuleView,
 	capsuleconnect.ServiceListSetProposalsProcedure:         ActionCapsuleView,
+	capsuleconnect.ServicePortForwardProcedure:              ActionCapsulePortForward,
 }
 
 var UserActionMap = map[string]string{
