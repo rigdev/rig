@@ -9,6 +9,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
+	"github.com/rigdev/rig/pkg/ptr"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/proto"
@@ -21,11 +22,10 @@ type GitFlags struct {
 	CapsuleSetPath  string
 	CommitTemplate  string
 	Environments    string
-	Disable         bool
-	Enable          bool
 	PRTitleTemplate string
 	PRBodyTemplate  string
-	RequirePR       bool
+	RequirePR       string
+	Enable          string
 }
 
 var (
@@ -57,13 +57,35 @@ func (g *GitFlags) AddFlags(cmd *cobra.Command) {
 		&g.PRTitleTemplate, "pr-title", prTitleTemplateDefault, "The (templated) title to use for pull requests",
 	)
 	cmd.Flags().StringVar(&g.PRBodyTemplate, "pr-body", "", "The (templated) body to use for pull requests")
-	cmd.Flags().BoolVar(
-		&g.RequirePR, "require-pr", false, "Requires that a deploy to a capsule is done through a pull request.",
+	cmd.Flags().StringVar(
+		&g.RequirePR, "require-pr", "",
+		//nolint:lll
+		"If not set, will not change status of requiring pull requests. If the flag is 'y', 'Y', it will require pull requests. If 'n' or 'N', it will not require pull requests.",
 	)
-	cmd.Flags().BoolVar(&g.Disable, "disable", false, "disable git store")
+	cmd.Flags().StringVar(&g.Enable, "enable", "",
+		//nolint:lll
+		"If not set, the git store will keep its enabled/disabled status. If the flag is 'y', 'Y', it will enable git again if it was previously disabled. If 'n' or 'N', will disable git.",
+	)
 }
 
-func (g *GitFlags) FeedStore(store *model.GitStore, c *cobra.Command) bool {
+func parseStringBoolFlag(flagName string, cmd *cobra.Command) (*bool, error) {
+	if !cmd.Flags().Changed(flagName) {
+		return nil, nil
+	}
+	value, err := cmd.Flags().GetString(flagName)
+	if err != nil {
+		return nil, fmt.Errorf("unknown flag %s", flagName)
+	}
+	if value == "" || value == "y" || value == "Y" {
+		return ptr.New(true), nil
+	}
+	if value == "n" || value == "N" {
+		return ptr.New(false), nil
+	}
+	return nil, fmt.Errorf("invalid value for %s: %s", flagName, value)
+}
+
+func (g *GitFlags) FeedStore(store *model.GitStore, c *cobra.Command) (bool, error) {
 	updated := false
 	if g.Repository != "" {
 		store.Repository = g.Repository
@@ -107,14 +129,25 @@ func (g *GitFlags) FeedStore(store *model.GitStore, c *cobra.Command) bool {
 		updated = true
 	}
 
-	if g.Disable {
-		store.Disabled = g.Disable
-		updated = true
-	} else if updated {
-		store.Disabled = false
+	enable, err := parseStringBoolFlag("enable", c)
+	if err != nil {
+		return false, err
+	}
+	if enable != nil {
+		updated = updated || store.Disabled != !(*enable)
+		store.Disabled = !(*enable)
 	}
 
-	return updated
+	requirePR, err := parseStringBoolFlag("require-pr", c)
+	if err != nil {
+		return false, err
+	}
+	if requirePR != nil {
+		updated = updated || store.RequirePullRequest != *requirePR
+		store.RequirePullRequest = *requirePR
+	}
+
+	return updated, nil
 }
 
 func UpdateGit(
@@ -130,7 +163,10 @@ func UpdateGit(
 		gitStore = &model.GitStore{}
 	}
 	gitStore = proto.Clone(gitStore).(*model.GitStore)
-	updated := flags.FeedStore(gitStore, c)
+	updated, err := flags.FeedStore(gitStore, c)
+	if err != nil {
+		return nil, err
+	}
 	var missing string
 	if gitStore.GetRepository() == "" {
 		missing = "--repository"
