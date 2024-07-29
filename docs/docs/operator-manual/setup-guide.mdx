@@ -61,7 +61,7 @@ cluster, for the Platform to use. This is *not* recommended for production envir
 
 :::info Note
 Dashboard metrics require a metrics-server in the kubernetes cluster.
-While available in most kubernetes cluster, See here for instructions on how to install it, if missing: https://github.com/kubernetes-sigs/metrics-server
+While available in most kubernetes clusters, See here for instructions on how to install it, if missing: https://github.com/kubernetes-sigs/metrics-server
 :::
 
 ## Install using Terraform
@@ -118,5 +118,4 @@ defaults can be found here
 - [Operator values](https://github.com/rigdev/rig/blob/main/deploy/charts/rig-operator/values.yaml)
 - [Platform values](https://github.com/rigdev/rig/blob/main/deploy/charts/rig-platform/values.yaml)
 
-To overwrite a default value when deploying, use `--set FIELD=VALUE` flags when
-running `helm`.
+To overwrite a default value when deploying, either supply your own values filee using `--values` or use `--set FIELD=VALUE` flags whenrunning `helm`.
