@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
@@ -43,6 +44,7 @@ func (c *Cmd) loginWithRetry(
 	shouldPromptIdentifier := identifierStr == ""
 	shouldPromptPassword := password == ""
 	var identifier *model.UserIdentifier
+	count := 0
 	for {
 		var err error
 		if shouldPromptIdentifier {
@@ -89,6 +91,13 @@ func (c *Cmd) loginWithRetry(
 			fmt.Println("Wrong password")
 			continue
 		}
-		fmt.Println(err.Error())
+
+		count++
+		if count > 5 {
+			return nil, err
+		}
+
+		fmt.Println("login failed, will retry;", err.Error())
+		time.Sleep(1 * time.Second)
 	}
 }
