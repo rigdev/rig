@@ -64,16 +64,6 @@ func GetDefaultPipelineSteps(
 	pluginManager *plugin.Manager,
 	logger logr.Logger,
 ) ([]pipeline.Step[pipeline.CapsuleRequest], error) {
-	serviceAccountPlugin := service_account.Name
-	if cfg.Pipeline.ServiceAccountStep.Plugin != "" {
-		serviceAccountPlugin = cfg.Pipeline.ServiceAccountStep.Plugin
-	}
-	serviceAccountStep, err := NewCapsulePluginStep(execCtx, serviceAccountPlugin,
-		cfg.Pipeline.ServiceAccountStep.Config, pluginManager, logger)
-	if err != nil {
-		return nil, err
-	}
-
 	deploymentPlugin := deployment.Name
 	if cfg.Pipeline.DeploymentStep.Plugin != "" {
 		deploymentPlugin = cfg.Pipeline.DeploymentStep.Plugin
@@ -84,9 +74,19 @@ func GetDefaultPipelineSteps(
 		return nil, err
 	}
 
+	serviceAccountPlugin := service_account.Name
+	if cfg.Pipeline.ServiceAccountStep.Plugin != "" {
+		serviceAccountPlugin = cfg.Pipeline.ServiceAccountStep.Plugin
+	}
+	serviceAccountStep, err := NewCapsulePluginStep(execCtx, serviceAccountPlugin,
+		cfg.Pipeline.ServiceAccountStep.Config, pluginManager, logger)
+	if err != nil {
+		return nil, err
+	}
+
 	steps := []pipeline.Step[pipeline.CapsuleRequest]{
-		serviceAccountStep,
 		deploymentStep,
+		serviceAccountStep,
 	}
 
 	if cfg.Pipeline.VPAStep.Plugin != "" {
