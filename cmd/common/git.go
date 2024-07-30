@@ -29,8 +29,8 @@ type GitFlags struct {
 }
 
 var (
-	capsulePathDefault     = "{{ .Project }}/{{ .Capsule }}/{{ .Environment}}.yaml"
-	capsuleSetPathDefault  = "{{ .Project }}/{{ .Capsule }}/set.yaml"
+	capsulePathDefault = "{{ .Project }}/{{ .Capsule }}/{{ .Environment}}.yaml"
+	// capsuleSetPathDefault  = "{{ .Project }}/{{ .Capsule }}/set.yaml"
 	commitTemplateDefault  = "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"
 	prTitleTemplateDefault = "Updating {{ .Type }} {{ .Name }} on behalf of {{ .Author }}"
 )
@@ -44,6 +44,7 @@ func (g *GitFlags) AddFlags(cmd *cobra.Command) {
 	)
 	// cmd.Flags().StringVar(&g.CapsuleSetPath, "capsule-set-path",
 	// 	"",
+	//nolint:lll
 	// 	"The templated path to the file containing the capsule set spec. Git-backed capsule sets is enabled iff this is set."+
 	// 		" If you want to disable git-backed capsule set, pass an empty string (e.g. \"\")",
 	// )
