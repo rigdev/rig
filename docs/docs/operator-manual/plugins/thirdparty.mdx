@@ -80,7 +80,7 @@ The docker image must use an `alpine` golang image as base image.
 Custom plugins can be configured in the Helm values of the rig-operator. The `config.pipeline.customPlugins` is a list of references to container images which will be mounted into the rig-operator as init containers. Binaries copied into the `/plugins` folder are then accessible for the operator and can be referenced as plugin along the builtin `rigdev` plugins.
 
 Assuming you have a container image `my-container-image:v1` which supplies a plugin named `myorg.simple` it can configured as
-```yaml
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:
@@ -130,7 +130,7 @@ This will upload the image into the cluster under a new name which will be print
 Added new image: localhost:30000/library/my_plugin:latest@sha256:b998c9886735c030e094a191a4090cc340a6fccaaf222d7cdd92b6a0ec3f7db9
 ```
 You can deploy a version of the rig-operator to your kind cluster with your own Helm values file, enabling operator configuration. The following values file adds the plugins from the `my_plugin` image.
-```yaml 
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     customPlugins:

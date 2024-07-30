@@ -55,7 +55,7 @@ rig git status
 
 ### Platform Config
 When backing a capsule by a Git repository, that repository must be covered by an authentication configuration in the Platform Config's `client.git.auths` section. By default, the Platform will pull from the repository every 3 minutes, but this can be changed. We also support WebHook for GitHub and GitLab which lets the Platform use a push instead of a pull mechanism. A config example is shown below
-```yaml
+```yaml title="Helm values - Platform"
 rig:
   client:
     git:
@@ -79,16 +79,47 @@ rig:
           repository: myrepository2
           polling:
             webhookSecret: secret123
+        # Matches https://github.com/myorg/myrepository3.git, uses GitHub authentication and pulls every 60 seconds.
+        - organization: myorg
+          repository: myrepository3
+          auth:
+            appID: 1234
+            installationID: 12345
+            privateKey: /path/to/private/key/id_rsa
+          polling:
+            pullingIntervalSeconds: 60
       gitLabAuths
-        # Matches git@gitlab.com:mygroup/subgroup1/subgroup2/myproject.git and enables WebHook
+        # Matches git@gitlab.com:mygroup/subgroup1/subgroup2/myproject.git, uses GitLab authentication and enables WebHook.
         - groups:
             - mygroup
             - subgroup1
             - subgroup2
           project: myproject
+          auth:
+            accessToken: MY_ACCESS_TOKEN
           polling:
             webhookSecret: secret123
 ````
+
+
+### Provider Specific Configuration In Depth
+The provider specific configuration is split into two fields: `auth` and `polling`. Auth controls provider specific authentication and polling controls provider specific pull/push configuration.
+When computing the configuration for a repository, Rig first searches the provider specific configuration, choosing first that matches (if any). If the chosen provider specific configuration does not have
+either polling or authentication sat, it will provide the missing configuration from the first matching general git config (in `client.git.auths`).
+
+#### GitHub Authentication
+[Here](/api/config/v1alpha1#github) you can see the definition of our GitHub configuration. The Organization and Repository uniquely defines a GitHub repository. We support GitHub specific authentication using [GitHub Apps](https://docs.github.com/en/apps).
+You have to make a new GitHub App for either your organization or account. Go through `Settings` -> `Developer Settings` -> `GitHub Apps` -> `New GitHub App`. Give the App a name and HomePage URL (neither of which Rig uses but GitHub requires them). Under `Permissions` and `Repository Permissions`, you'll have to give the app Read/Write access to `Contents`.
+
+After creating the app, go back to the App overview page under `Developer Settings`. Click `Edit` for your newly created app, then Install App and choose your organization or user. After being installed, you can find the app under `Third-party Access` / `GitHub Apps`. Clicking `Configure` takes you to the installation page.
+The necessary authentication information for this app is an AppID, InstallationID and private key. 
+- The Installation ID can be found as the last section of the URL of the installation Configure page
+- From the Configure page, click `App Settings`. Here you can see the App ID
+- On the App Settins page, scroll down and find a `Generate a private key` button. Generating a private key will download a file containing the key.
+
+#### GitLab Authentication
+[Here](/api/config/v1alpha1#gitlab) you can see the definition of our GitLab configuration. A GitLab repository is uniquely defined by a sequence of groups, the first being the main group and the rest subgroups, and a project.
+GitLab specific authentication is done through an access token which can be added in the `Settings` -> `Access Token` page from the group page.
 
 ## Kubernetes Capsule
 
@@ -115,7 +146,7 @@ the rig-platform tied well into your existing GitOps workflow.
 In order to enable the git write back feature, set the following helm values
 when installing the rig-platform chart:
 
-```yaml
+```yaml title="Helm values - Platform"
 rig:
   cluster:
     git:
@@ -147,21 +178,3 @@ resources. The flux example is setup to include the `apps/demo` folder.
 - We currently only support configuring one repository, but we plan to lift the
   concept to rig-platform projects at some point.
 
-## Provider Specific Configuration In Depth
-The provider specific configuration is split into two fields: `auth` and `polling`. Auth controls provider specific authentication and polling controls provider specific pull/push configuration.
-When computing the configuration for a repository, Rig first searches the provider specific configuration, choosing first that matches (if any). If the chosen provider specific configuration does not have
-either polling or authentication sat, it will provide the missing configuration from the first matching general git config (in `client.git.auths`).
-
-### GitHub Authentication
-[Here](/api/config/v1alpha1#github) you can see the definition of our GitHub configuration. The Organization and Repository uniquely defines a GitHub repository. We support GitHub specific authentication using [GitHub Apps](https://docs.github.com/en/apps).
-You have to make a new GitHub App for either your organization or account. Go through `Settings` -> `Developer Settings` -> `GitHub Apps` -> `New GitHub App`. Give the App a name and HomePage URL (neither of which Rig uses but GitHub requires them). Under `Permissions` and `Repository Permissions`, you'll have to give the app Read/Write access to `Contents`.
-
-After creating the app, go back to the App overview page under `Developer Settings`. Click `Edit` for your newly created app, then Install App and choose your organization or user. After being installed, you can find the app under `Third-party Access` / `GitHub Apps`. Clicking `Configure` takes you to the installation page.
-The necessary authentication information for this app is an AppID, InstallationID and private key. 
-- The Installation ID can be found as the last section of the URL of the installation Configure page
-- From the Configure page, click `App Settings`. Here you can see the App ID
-- On the App Settins page, scroll down and find a `Generate a private key` button. Generating a private key will download a file containing the key.
-
-### GitLab Authentication
-[Here](/api/config/v1alpha1#gitlab) you can see the definition of our GitLab configuration. A GitLab repository is uniquely defined by a sequence of groups, the first being the main group and the rest subgroups, and a project.
-GitLab specific authentication is done through an access token which can be added in the `Settings` -> `Access Token` page from the group page.

@@ -6,7 +6,7 @@ The mapping between Routes and Ingress resources can be quite custom, as it depe
 Therefore, the Routes step of the rig operator is configurable as a plugin. We supply a builtin plugin [`rigdev.ingress_routes`](/operator-manual/plugins/capsulesteps/ingress_routes) which creates an Ingress resource for each Route and has some configuration for handling certificates, TLS and ingress class name.
 
 See [here](plugins) for a general introduction to plugins and how to configure them. The Routes step in the operator is configurable in the operator config under the [`RoutesStep`](/api/config/v1alpha1#routesstep) in the Operator Config. You can see an example here
-```yaml
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     routesStep:

@@ -8,7 +8,7 @@ The platform config contains a [`clusters`](/api/config/v1alpha1#cluster) sectio
 ## Token and Credentials
 
 If you configure the platform to use a cluster which is not the one in which it runs, the rig-operator running in the cluster must create an authentication token. This is set under the `rbac` section of the rig-operator's Helm values:
-```yaml
+```yaml title="Helm values - Operator"
 rbac:
   platform:
     # If true, a rig-platform service-account and secret will be created,
@@ -29,7 +29,7 @@ kubectl get secret/rig-platform-token -n rig-system -ojson | jq '.data."ca.crt"'
 
 Then in the `clusters` section of the rig-platform Helm values you can configure these values for the cluster
 
-```yaml
+```yaml title="Helm values - Platform"
 rig:
   clusters:
     my-other-cluster:

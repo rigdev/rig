@@ -9,7 +9,7 @@ Some load-balancers needs to address Services of type `NodePort`, e.g. the AWS L
 
 The `rigdev.object_template` plugin is an easy way to change this behavior:
 
-```yaml
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:
@@ -32,7 +32,7 @@ Adding Annotations to a Capsule is an easy way to customize for which Capsules a
 In this example, we're going to inject an `terminationGracePeriodSeconds: 100` if, and only if,
 the annotation `example.com/long-grace-period` is set to `true` on the Capsule.
 
-```yaml
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:
@@ -58,7 +58,7 @@ Injecting secrets from an init container is a 3 step process:
 2. Then, the init container must be added. This is where we can copy secrets into the newly created shared volume.
 3. Finally, a the volume is added to the main container and the secrets are available at startup.
 
-```yaml
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:

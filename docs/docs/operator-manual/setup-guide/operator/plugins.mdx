@@ -11,35 +11,36 @@ Rig supplies a list of builtin plugins you can see [here](/operator-manual/plugi
 
 ## Configuring Plugins
 Plugin executions are defined as a fixed sequence of plugins and their configuration to be executed. They are grouped into steps (also a fixed sequence). Each step can define Glob patterns which capsules and/or namespaces should match for the step to be executed. As an example:
-```yaml
-pipeline:
-  steps:
-    - plugins:
-        - name: rigdev.sidecar
-          config: ...
-        - name: rigdev.datadog
-          config: ...
-    - match:
-        namespaces:
-          - some-namespace
-      plugins:
-        - name: rigdev.placement
-          config: ...
-    - match:
-        namespaces:
-          - some-prefix*
-      plugins:
-        - name: rigdev.placement
-          config: ...
-    - match:
-        namespaces:
-          - some-prefix*
-        names:
-          - my-capsule1
-          - my-capsule2
-      plugins:
-        - name: rigdev.init_container
-          config: ...
+```yaml title="Helm values - Operator"
+config:
+  pipeline:
+    steps:
+      - plugins:
+          - name: rigdev.sidecar
+            config: ...
+          - name: rigdev.datadog
+            config: ...
+      - match:
+          namespaces:
+            - some-namespace
+        plugins:
+          - name: rigdev.placement
+            config: ...
+      - match:
+          namespaces:
+            - some-prefix*
+        plugins:
+          - name: rigdev.placement
+            config: ...
+      - match:
+          namespaces:
+            - some-prefix*
+          names:
+            - my-capsule1
+            - my-capsule2
+        plugins:
+          - name: rigdev.init_container
+            config: ...
 ```
 In this case, in instance of the rigdev.sidecar and rigdev.datadog plugin is executed for each capsule in all namespaces.
 

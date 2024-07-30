@@ -34,14 +34,15 @@ The better option is to use a managed database in the cluster environment you're
 already running in. It can also be a new database within an existing PostgreSQL instance.
 Add the following section to your `platform.yaml` file:
 
-```yaml
-client:
-  postgres:
-    database: "rig"  ## change if different database is used.
-    host: <host or ip>
-    user: <db user>
-    password: <db password>
-    # insecure: false  ## set only if DB connection is insecure
+```yaml title="Helm values - Platform"
+rig:
+  client:
+    postgres:
+      database: "rig"  ## change if different database is used.
+      host: <host or ip>
+      user: <db user>
+      password: <db password>
+      # insecure: false  ## set only if DB connection is insecure
 ```
 
 :::info Note
