@@ -3,9 +3,8 @@ The `rigdev.service_monitor` plugin spawns a Prometheus ServiceMonitor per capsu
 for use with a Prometheus Operator stack. The service monitor will monitor services with the same name as the capsule and will use the endpoint specified by the `path` and `portName` fields in the configuration.
 
 ## Example
-
-Config (in the context of the rig-operator Helm values):
-```
+Config:
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     serviceMonitorStep:
