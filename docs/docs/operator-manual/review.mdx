@@ -1,0 +1,17 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import ThemedImage from '@theme/ThemedImage';
+
+# Review Process
+
+In most places, comitting code has to go through a review process. Making infrastructure changes often has the same benefits. Rig supports this, making it possible to require a review on Capsule changes before initiating a rollout.
+
+We enable this through Git pull requests. For Capsules which are Git backed (see [here](/operator-manual/gitops) for a GitOps with Rig guide) you have the option to let Rig create a pull request on configuration changes. Instead of Rig immediately commiting changes to your Git repository, you can leverage your existing Git review workflows and safeguards.
+
+We support the creation of pull requests on GitHub and merge requests on GitLab. You need to have authentication enabled for the specific Git provider (GitHub or GitLab) for Rig to have permisssion to create pull requests. You can see the details of that [here](/operator-manual/gitops#authentication-in-depth).
+
+When doing a deploy through the Rig CLI, the deploy can be created as a pull request by setting the flag `--pr-branch <BRANCH_NAME>`. E.g. 
+```
+rig capsule deploy my-capsule --replicas 2 --pr-branch some-branch
+```
+would create a new pull request on the branch `some-branch` changing the replicas for the capsule to 2.

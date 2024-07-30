@@ -1,22 +1,111 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import ThemedImage from '@theme/ThemedImage';
+
 # GitOps
 
 GitOps has become a popular way of managing changes to kubernetes cluster
-resources. What gitops is and all the advantages it brings is out of scope 
+resources. GitOps is and all the advantages it brings is out of scope 
 of this article. If you want to know more about it, you can read this 
 excellent 1-pager: https://www.gitops.tech/.
 
-## Flux
+The Rig Capsule is a two-stage object consisting of Platform Capsule and a derived Kubernetes Capsule. See [here](/operator-manual/crd-operator) for more information. This also means we have two mechanisms for GitOps: One for the Platform Capsule and one for the Kubernetes Capsule.
+
+## Platform Capsule
+The Rig Platform can serve as a GitOps CD tool for the Platform Capsule. This means you can store Platform Capsule specs in your Git repositories and the Platform will translate them to Kubernetes Capsules and apply them in the proper clusters.
+For any given (Capsule, Environment) tuple, the Source Of Truth for the capsule can either be the Rig Platform's own database or an external Git Repository.
+
+If the Source Of Truth is a Git repository, any committed change to the capsule's file will result in a [Rollout](/platform/rollouts) and subsequent Kubernetes resource creation/update. Likewise, any rollout to a Git backed capsule will first result in Git commit.
+
+Whether a capsule is git-backend and by what repository can be configured on a global, project or capsule level. A Git configuration for a project will overwrite any (if any) git global git configuration, and likewise will a git configuration on a capsule level overwrite any (if any) configuration on the project or global level. If a capsule (or project) doesn't have an explicit git configuration, it will inherit its Project (or global) configuration.
+
+Currently, the Platform will only consider Capsule specs in a Git repository if a corresponding Capsule has been created through the Platform and is configured to be Git backed by the given repository.
+
+Git backing can be configured using the Rig CLI
+<Tabs>
+
+<TabItem value="Global" label="Global">
+```bash
+# Follow the interactive guide for 'Git store'
+rig settings update
+```
+</TabItem>
+
+<TabItem value="Project" label="Project">
+```bash
+# Follow the interactive guide for 'Git store'
+rig project update
+```
+</TabItem>
+
+
+<TabItem value="Capsule" label="Capsule">
+```bash
+# Follow the interactive guide for 'Git store'
+rig capsule update
+```
+</TabItem>
+
+</Tabs>
+
+To debug the Platform's Git watching, run 
+```bash
+rig git status
+```
+
+### Platform Config
+When backing a capsule by a Git repository, that repository must be covered by an authentication configuration in the Platform Config's `client.git.auths` section. By default, the Platform will pull from the repository every 3 minutes, but this can be changed. We also support WebHook for GitHub and GitLab which lets the Platform use a push instead of a pull mechanism. A config example is shown below
+```yaml
+rig:
+  client:
+    git:
+      author:
+        email: rigbot@myorg.com    
+      auths:
+        # Will pull every 20 seconds
+        - url: git@github.com:myorg/myrepository.git
+          pullingInterval: 20s
+          credentials:
+            ssh:
+              privateKey: /path/to/private/key/id_rsa
+        # Will use GitHub webhook
+        - url: git@github.com:myorg/myrepository2.git
+          credentials:
+            ssh:
+              privateKey: /path/to/private/key/id_rsa
+      gitHubAuths:
+        # Matches git@github.com:myorg/myrepository2.git and enables WebHook
+        - organization: myorg
+          repository: myrepository2
+          polling:
+            webhookSecret: secret123
+      gitLabAuths
+        # Matches git@gitlab.com:mygroup/subgroup1/subgroup2/myproject.git and enables WebHook
+        - groups:
+            - mygroup
+            - subgroup1
+            - subgroup2
+          project: myproject
+          polling:
+            webhookSecret: secret123
+````
+
+## Kubernetes Capsule
+
+When the Platform executes a rollout it writes resources to the Kubernetes cluster which can be done through GitOps. This means that instead of writing directly to Kubernetes, the Platform will push a Git commit with the Kubernetes Capsule resource and let a GitOps agent apply the change to the cluster.
+
+### Flux
 
 We have prepared a small demo repository which show cases how rig can be
 deployed using Flux. Head over to Github to explore the repo:
 https://github.com/rigdev/flux-demo
 
-## ArgoCD
+### ArgoCD
 
 We are working on an equivalent example as we have for flux with regards to how
 to setup rig in a GitOps setting.
 
-## GitOps for rig-platform resource changes
+### GitOps for rig-platform resource changes
 
 The rig platform has experimental support for committing the changes it does to
 Kubernetes resources to a git repository, instead of actually doing the changes
@@ -57,3 +146,22 @@ resources. The flux example is setup to include the `apps/demo` folder.
   that they can take part in a regular git approval flow.
 - We currently only support configuring one repository, but we plan to lift the
   concept to rig-platform projects at some point.
+
+## Provider Specific Configuration In Depth
+The provider specific configuration is split into two fields: `auth` and `polling`. Auth controls provider specific authentication and polling controls provider specific pull/push configuration.
+When computing the configuration for a repository, Rig first searches the provider specific configuration, choosing first that matches (if any). If the chosen provider specific configuration does not have
+either polling or authentication sat, it will provide the missing configuration from the first matching general git config (in `client.git.auths`).
+
+### GitHub Authentication
+[Here](/api/config/v1alpha1#github) you can see the definition of our GitHub configuration. The Organization and Repository uniquely defines a GitHub repository. We support GitHub specific authentication using [GitHub Apps](https://docs.github.com/en/apps).
+You have to make a new GitHub App for either your organization or account. Go through `Settings` -> `Developer Settings` -> `GitHub Apps` -> `New GitHub App`. Give the App a name and HomePage URL (neither of which Rig uses but GitHub requires them). Under `Permissions` and `Repository Permissions`, you'll have to give the app Read/Write access to `Contents`.
+
+After creating the app, go back to the App overview page under `Developer Settings`. Click `Edit` for your newly created app, then Install App and choose your organization or user. After being installed, you can find the app under `Third-party Access` / `GitHub Apps`. Clicking `Configure` takes you to the installation page.
+The necessary authentication information for this app is an AppID, InstallationID and private key. 
+- The Installation ID can be found as the last section of the URL of the installation Configure page
+- From the Configure page, click `App Settings`. Here you can see the App ID
+- On the App Settins page, scroll down and find a `Generate a private key` button. Generating a private key will download a file containing the key.
+
+### GitLab Authentication
+[Here](/api/config/v1alpha1#gitlab) you can see the definition of our GitLab configuration. A GitLab repository is uniquely defined by a sequence of groups, the first being the main group and the rest subgroups, and a project.
+GitLab specific authentication is done through an access token which can be added in the `Settings` -> `Access Token` page from the group page.

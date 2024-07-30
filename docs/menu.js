@@ -358,6 +358,15 @@ const sidebars = {
         sidebar_icon: "SiGit",
       },
     },
+    {
+      type: "doc",
+      id: "operator-manual/review",
+      label: "Review Process",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiCheckSquare",
+      },
+    },
     //collapsed: true,
     //items: [
     //  {
@@ -567,6 +576,12 @@ const sidebars = {
           type: "doc",
           id: "api/platform-api",
           label: "Platform API Reference",
+          className: "docpage-sidebar-item",
+        },
+        {
+          type: "doc",
+          id: "api/platformv1",
+          label: "platform.rig.dev/v1",
           className: "docpage-sidebar-item",
         },
         {
