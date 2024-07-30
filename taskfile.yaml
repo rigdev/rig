@@ -169,10 +169,12 @@ tasks:
       - pkg/api/config/v1alpha1/**/*
       - pkg/api/v1alpha1/**/*
       - pkg/api/v1alpha2/**/*
+      - pkg/api/platform/v1/**/*
     generates:
       - docs/docs/api/config/v1alpha1.md
       - docs/docs/api/v1alpha1.md
       - docs/docs/api/v1alpha2.md
+      - docs/docs/api/platform/v1.md
     cmds:
       - |
         ./tools/bin/crd-ref-docs --renderer markdown \
@@ -192,6 +194,12 @@ tasks:
           --templates-dir ./docs/crd-ref-docs/templates \
           --source-path ./pkg/api/v1alpha2 \
           --output-path ./docs/docs/api/v1alpha2.md
+      - |
+        ./tools/bin/crd-ref-docs --renderer markdown \
+          --config ./docs/crd-ref-docs/platform.yaml \
+          --templates-dir ./docs/crd-ref-docs/templates \
+          --source-path ./pkg/api/platform/v1 \
+          --output-path ./docs/docs/api/platformv1.md
 
   docs-gen-builtin-plugins:
     desc: "📚 Generate builtin plugin docs"

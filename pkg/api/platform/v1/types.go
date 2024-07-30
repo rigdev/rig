@@ -45,7 +45,9 @@ type ProjEnvCapsuleBase struct {
 }
 
 type EnvironmentSource struct {
-	Name string                `json:"name" protobuf:"1"`
+	// Name is the name of the kubernetes object containing the environment source.
+	Name string `json:"name" protobuf:"1"`
+	// Kind is the kind of source, either ConfigMap or Secret.
 	Kind EnvironmentSourceKind `json:"kind" protobuf:"2"`
 }
 
@@ -119,6 +121,7 @@ type CapsuleSpec struct {
 	// based on ConfigMaps or Secrets.
 	Files []File `json:"files" protobuf:"7" patchMergeKey:"path" patchStrategy:"merge"`
 
+	// Env defines the environment variables set in the Capsule
 	Env EnvironmentVariables `json:"env" protobuf:"12"`
 
 	// Scale specifies the scaling of the Capsule.
@@ -130,8 +133,12 @@ type CapsuleSpec struct {
 	AutoAddRigServiceAccounts bool `json:"autoAddRigServiceAccounts" protobuf:"13"`
 }
 
+// EnvironmentVariables defines the environment variables injected into a Capsule.
 type EnvironmentVariables struct {
-	Raw     map[string]string   `json:"raw" protobuf:"1"`
+	// Raw is a list of environment variables as key-value pairs.
+	Raw map[string]string `json:"raw" protobuf:"1"`
+	// Sources is a list of source files which will be injected as environment variables.
+	// They can be references to either ConfigMaps or Secrets.
 	Sources []EnvironmentSource `json:"sources" protobuf:"2"`
 }
 
