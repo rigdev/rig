@@ -111,6 +111,7 @@ func (s *service) DryRun(
 			return nil, err
 		} else {
 			capsuleSpec.Status = currentSpec.Status
+			capsuleSpec.UID = currentSpec.GetUID()
 		}
 	}
 
