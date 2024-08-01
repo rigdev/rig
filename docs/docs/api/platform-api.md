@@ -4198,6 +4198,21 @@ The actual log message
 
 
 
+<a name="model-BookmarkingConfiguration"></a>
+
+### BookmarkingConfiguration
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| dont_bookmark | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="model-Fingerprint"></a>
 
 ### Fingerprint
@@ -4296,6 +4311,7 @@ The actual log message
 | updated_by | [Author](#model-Author) |  |  |
 | fingerprint | [Fingerprint](#model-Fingerprint) |  |  |
 | git_change | [GitChange](#model-GitChange) |  |  |
+| bookmarking | [BookmarkingConfiguration](#model-BookmarkingConfiguration) |  |  |
 
 
 

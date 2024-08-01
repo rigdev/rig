@@ -12,6 +12,7 @@ message RevisionMetadata {
   Author updated_by = 3;
   Fingerprint fingerprint = 4;
   GitChange git_change = 5;
+  BookmarkingConfiguration bookmarking = 6;
 }
 
 message Fingerprint {
@@ -51,4 +52,8 @@ message Revisions {
   repeated model.RevisionMetadata environments = 6;
   repeated model.RevisionMetadata capsule_sets = 7;
   repeated model.RevisionMetadata capsules = 8;
+}
+
+message BookmarkingConfiguration {
+  bool dont_bookmark = 1;
 }
