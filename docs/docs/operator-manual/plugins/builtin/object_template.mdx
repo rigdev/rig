@@ -12,8 +12,8 @@ as its templating context where `.current` refers to the current version of the 
 If the name is empty, it defaults to the capsule name. If it is '*' it will execute the object template on all objects of the given Group and Kind. For each object, `.current` will refer to that specific object when templating.
 
 ## Example
-Config (in context of the rig-operator Helm values):
-```
+Config:
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:

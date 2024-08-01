@@ -9,8 +9,8 @@ The config can be templated with standard Go templating and has
 as its templating context.
 
 ## Example
-Config (in context of the rig-operator Helm values):
-```
+Config:
+```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:
@@ -29,7 +29,6 @@ The resulting `Deployment` resource of the Capsule
 ```
 kind: Deployment
 metadata:
-  ...
   labels:
 		tags.datadoghq.com/env:     my-env,
 		tags.datadoghq.com/service: my-service,

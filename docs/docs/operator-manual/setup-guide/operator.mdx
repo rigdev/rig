@@ -37,7 +37,7 @@ but is simply a YAML file with configuration parameters.
 To configure the operator to generate access for a Rig Platform deployed *outside*
 cluster, a ServiceAccount with a Secret (token) can easily be configured:
 
-```yaml
+```yaml title="Helm values - Operator"
 rbac:
   platform:
     create_token: true
@@ -55,7 +55,7 @@ kubectl get -n rig-system secret/rig-platform-token -o='jsonpath={.data.ca\.crt}
 To configure the operator to produce Service resources with ServiceType `NodePort` instead of `ClusterIP`,
 the following operator will do that for us:
 
-```yaml
+```yaml title="Helm values - Operator"
 config:
   service:
     type: NodePort
