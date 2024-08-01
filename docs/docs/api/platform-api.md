@@ -4792,9 +4792,25 @@ Different states a step can be in.
 
 
 
-<a name="api-v1-capsule-ChangeLog"></a>
+<a name="api-v1-capsule-Changelog"></a>
 
-### ChangeLog
+### Changelog
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| changes | [Changelog.Change](#api-v1-capsule-Changelog-Change) | repeated |  |
+| message | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-Changelog-Change"></a>
+
+### Changelog.Change
 
 
 
@@ -4839,7 +4855,7 @@ The rollout model.
 | status | [rollout.Status](#api-v1-capsule-rollout-Status) |  | The rollout status. |
 | spec | [platform.v1.CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
 | revisions | [model.Revisions](#model-Revisions) |  |  |
-| change_log | [ChangeLog](#api-v1-capsule-ChangeLog) | repeated |  |
+| changelog | [Changelog](#api-v1-capsule-Changelog) |  |  |
 
 
 
