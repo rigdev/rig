@@ -53,6 +53,17 @@ To debug the Platform's Git watching, run
 rig git status
 ```
 
+:::info Caution
+Be careful when changing the backing of existing Capsules to a Git repository.
+If the repository does not already contain a file of the Capsule, the Capsule will have its
+configuration cleaned and be stopped.
+If the repository already contains a Capsule file from a commit which hasn't already been deployed by Rig,
+it will deploy the file to the Capsule.
+
+It is safest to not change the backing of a Capsule once it has been created. This can be achieved by e.g.
+setting the backing of a project and/or environment only once.
+:::
+
 ### Platform Config
 When backing a capsule by a Git repository, that repository must be covered by an authentication configuration in the Platform Config's `client.git.auths` section. By default, the Platform will pull from the repository every 3 minutes, but this can be changed. We also support WebHook for GitHub and GitLab which lets the Platform use a push instead of a pull mechanism. A config example is shown below
 ```yaml title="Helm values - Platform"
