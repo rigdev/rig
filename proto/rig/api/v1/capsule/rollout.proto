@@ -20,6 +20,7 @@ message Rollout {
   api.v1.capsule.rollout.Status status = 4;
   platform.v1.CapsuleSpec spec = 5;
   model.Revisions revisions = 6;
+  Changelog changelog = 7;
 }
 
 enum EventType {
@@ -52,3 +53,11 @@ message ConfigFile {
   google.protobuf.Timestamp updated_at = 4;
   bool is_secret = 5;
 }
+
+message Changelog {
+  message Change {
+    string message = 1;
+  }
+  repeated Change changes = 1;
+}
+
