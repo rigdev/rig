@@ -505,6 +505,42 @@ func Test_Compare(t *testing.T) {
 				"Added arg (at index 1)",
 			},
 		},
+		{
+			Name: "change config file",
+			From: &platformv1.CapsuleSpec{
+				Files: []*platformv1.File{{
+					Path:    "/file.yaml",
+					String_: "my content 1",
+				}},
+			},
+			To: &platformv1.CapsuleSpec{
+				Files: []*platformv1.File{{
+					Path:    "/file.yaml",
+					String_: "my content 2",
+				}},
+			},
+			Changes: []string{
+				"Changed file.string (with path /file.yaml) from 'my content 1' to 'my content 2'",
+			},
+		},
+		{
+			Name: "change config file with multiline content",
+			From: &platformv1.CapsuleSpec{
+				Files: []*platformv1.File{{
+					Path:    "/file.yaml",
+					String_: "my\ncontent 1",
+				}},
+			},
+			To: &platformv1.CapsuleSpec{
+				Files: []*platformv1.File{{
+					Path:    "/file.yaml",
+					String_: "my\ncontent 2",
+				}},
+			},
+			Changes: []string{
+				"Changed file.string (with path /file.yaml)",
+			},
+		},
 	}
 
 	for _, test := range tests {
