@@ -53,11 +53,28 @@ func (c Change) String() string {
 	case RemovedOperation:
 		description = fmt.Sprintf("Removed %s", pathDescription(c.FieldPath))
 	case ModifiedOperation:
-		description = fmt.Sprintf(
-			"Changed %s from '%v' to '%v'", pathDescription(c.FieldPath), c.From.AsString, c.To.AsString)
+		if isContentComplex(c.From.AsString) || isContentComplex(c.To.AsString) {
+			description = fmt.Sprintf(
+				"Changed %s", pathDescription(c.FieldPath))
+		} else {
+			description = fmt.Sprintf(
+				"Changed %s from '%v' to '%v'", pathDescription(c.FieldPath), c.From.AsString, c.To.AsString)
+		}
 	}
 
 	return description
+}
+
+func isContentComplex(str string) bool {
+	if strings.Contains(str, "\n") {
+		return true
+	}
+
+	if len(str) > 200 {
+		return true
+	}
+
+	return false
 }
 
 var _indexRegexp = regexp.MustCompile(`^\d+$`)
