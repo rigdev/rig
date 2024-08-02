@@ -34,23 +34,28 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatusInfo {
 
 	status.Properties["Hosts"] = strings.Join(hosts, ", ")
 
-	ipCondition := &apipipeline.ObjectCondition{
-		Name:    "LoadBalancer IP",
+	lbCondition := &apipipeline.ObjectCondition{
+		Name:    "LoadBalancer",
 		State:   apipipeline.ObjectState_OBJECT_STATE_PENDING,
-		Message: "Waiting for IP assignment",
+		Message: "Waiting for IP/Hostname assignment",
 	}
 
 	for _, lb := range ingress.Status.LoadBalancer.Ingress {
-		if lb.IP != "" {
-			ipCondition.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
-			ipCondition.Message = fmt.Sprintf("IP Assigned '%s'", lb.IP)
+		switch {
+		case lb.IP != "":
+			lbCondition.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
+			lbCondition.Message = fmt.Sprintf("IP assigned '%s'", lb.IP)
 			status.Properties["IP"] = lb.IP
+		case lb.Hostname != "":
+			lbCondition.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
+			lbCondition.Message = "Hostname assigned"
+			status.Properties["Hostname"] = lb.Hostname
 		}
 	}
 
 	parts := strings.Split(ingress.GetName(), "-")
 	routeID := parts[len(parts)-1]
-	status.Conditions = append(status.Conditions, ipCondition)
+	status.Conditions = append(status.Conditions, lbCondition)
 	status.PlatformStatus = append(status.PlatformStatus, &apipipeline.PlatformObjectStatus{
 		Name: routeID,
 		Kind: &apipipeline.PlatformObjectStatus_Route{

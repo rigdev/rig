@@ -78,3 +78,10 @@ Create the name of the config secret
 {{- define "rig-platform.secretName" -}}
 {{- default (include "rig-platform.fullname" .) .Values.secretName }}
 {{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "rig-platform.serviceAccountName" -}}
+{{- default (include "rig-platform.fullname" .) .Values.serviceAccount.name }}
+{{- end }}

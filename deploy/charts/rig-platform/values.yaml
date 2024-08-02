@@ -83,7 +83,7 @@ rig:
       #       accessToken: TOKEN
       #     polling:
       #       webhookSecret: secret123!
-        
+
       author:
         name: ""
         email: ""
@@ -123,14 +123,13 @@ rig:
   #   password: ""
   #   email: ""
 
-
 # Name of secret containing configuration for rig-sever. Set this if you use a
 # special mechanism for generating secrets. If left unset, we will create the
 # secret. If `useEnvForSecrets` is true we will use the secret as environment
 # variables, otherwise we will mount the key `config.yaml` as a full
 # rig-platform config file.
 secretName: ""
-  
+
 image:
   repository: ghcr.io/rigdev/rig-platform
   pullPolicy: IfNotPresent
@@ -214,3 +213,7 @@ postgres:
 # variables instead of a config file.
 useEnvForSecrets: false
 
+serviceAccount:
+  # The name of the service account to use.
+  # If not set, a name is generated using the fullname template
+  name: ""

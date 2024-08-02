@@ -253,10 +253,9 @@ func (p *Plugin) createDeployment(
 					Labels:      p.getPodLabels(current, req),
 				},
 				Spec: v1.PodSpec{
-					Containers:         []v1.Container{c},
-					ServiceAccountName: req.Capsule().Name,
-					Volumes:            volumes,
-					NodeSelector:       req.Capsule().Spec.NodeSelector,
+					Containers:   []v1.Container{c},
+					Volumes:      volumes,
+					NodeSelector: req.Capsule().Spec.NodeSelector,
 				},
 			},
 		},
