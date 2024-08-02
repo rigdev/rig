@@ -9,7 +9,7 @@ Configuration for the deployment plugin
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name of the service-account to generated. Supports templating, e.g. "{{ .capsule.metadata.name }}-svcacc" |
+| `name` _string_ | Name of the service-account to generated. Supports templating, e.g. "\{\{ .capsule.metadata.name \}\}-svcacc" |
 
 
 
