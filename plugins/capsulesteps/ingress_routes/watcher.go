@@ -48,7 +48,7 @@ func toIngressStatus(ingress *netv1.Ingress) *apipipeline.ObjectStatusInfo {
 			status.Properties["IP"] = lb.IP
 		case lb.Hostname != "":
 			lbCondition.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
-			lbCondition.Message = fmt.Sprintf("Hostname assigned")
+			lbCondition.Message = "Hostname assigned"
 			status.Properties["Hostname"] = lb.Hostname
 		}
 	}
