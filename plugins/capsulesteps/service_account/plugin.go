@@ -22,7 +22,7 @@ const (
 // +kubebuilder:object:root=true
 type Config struct {
 	// Name of the service-account to generated. Supports templating, e.g.
-	//	"\{\{ .capsule.metadata.name \}\}-svcacc"
+	//	`{{ .capsule.metadata.name }}-svcacc`
 	Name string `json:"name"`
 }
 
