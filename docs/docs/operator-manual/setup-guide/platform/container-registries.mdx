@@ -13,7 +13,7 @@ When a Container Repository is private, authentication for the Container Registr
 
 This is done by adding the credentials of the registry to the platform configuration.
 
-For Container Registries registered in the Rig Platform, if configured in the cluster-info, image-pull-secrets will automatically be generated for the Capsules that uses images from these registries.
+For Container Registries registered in the Rig Platform, [image-pull-secrets](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line) will automatically be generated for the Capsules that uses images from these registries if configured so for the cluster.
 
 ### Example
 

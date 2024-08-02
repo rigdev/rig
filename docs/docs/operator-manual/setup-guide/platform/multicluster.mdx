@@ -46,3 +46,28 @@ rig:
 ## GitOps
 
 GitOps can be configured on a per-cluster level, thus one cluster can run without GitOps where the platform directly applies resources and in another cluster the platform applies through GitOps. 
+
+```yaml title="Helm values - Platform"
+rig:
+  client:
+    git:
+      auths:
+        - url: https://github.com/myorg/repository
+          credentials:
+            https:
+              username: username
+              password: password
+
+  clusters:
+    # Writes to K8s using GitOps
+    prod:
+      kind: k8s
+      url: k8s.example.com
+      git:
+        url: https://github.com/myorg/repository
+        branch: main
+    # Writes directly to K8s, no GitOps
+    other-cluster:
+      kind: k8s
+      url: k8s.example2.com
+```

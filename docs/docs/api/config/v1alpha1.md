@@ -373,7 +373,7 @@ _Appears in:_
 
 
 
-GitHub contains authentication specifically for GitHub. To enable pull requests on a GitHub repository, you must add GitHub authentication using appID, installationID and privateKey for a GitHub app with read/write access to pull requests. To have normal read/write access to a repository, you can forego GitHub app authentication if there is a GitAuth section with credentials for the given repository instead. If you have GitHub app authentication for a GitHub app with read/write access to the repository, you don't need a matching GitAuth section.
+GitHub contains configuration specifically for GitHub repositories. To enable pull requests on a GitHub repository, you must add GitHub authentication using appID, installationID and privateKey for a GitHub app with read/write access to pull requests. To have normal read/write access to a repository, you can forego GitHub app authentication if there is a GitAuth section with credentials for the given repository instead. If you have GitHub app authentication for a GitHub app with read/write access to the repository, you don't need a matching GitAuth section.
 
 _Appears in:_
 - [ClientGit](#clientgit)
@@ -390,7 +390,7 @@ _Appears in:_
 
 
 
-
+GitHubAuth contains authentication information specifically for a GitHub repository. Authentication is done using GitHub apps. See https://docs.rig.dev/operator-manual/gitops#github-authentication for a guide on how to set it up.
 
 _Appears in:_
 - [GitHub](#github)
@@ -407,7 +407,7 @@ _Appears in:_
 
 
 
-
+GitHubPolling defines webhook/pulling configuration for a GitHub repository.
 
 _Appears in:_
 - [GitHub](#github)
@@ -422,7 +422,7 @@ _Appears in:_
 
 
 
-
+GitLab contains configuration specifically for GitLab repositories. To enable pull requests on a GitLab repository, you must add GitLab authentication using an access token. To have normal read/write access to a repository, you can forego GitLab access tokens if there is a GitAuth section with credentials for the given repository instead. If you have GitLab authentication for a repository, you don't need a matching GitAuth section.
 
 _Appears in:_
 - [ClientGit](#clientgit)
@@ -431,15 +431,15 @@ _Appears in:_
 | --- | --- |
 | `groups` _string array_ | Groups is a sequence of GitLab groups. The first is the main group and the rest a nesting of subgroups. If Project is empty, the configuration will match any GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix. |
 | `project` _string_ | Project is the GitLab project of the repository. Can be empty for matching all project names. |
-| `auth` _[GitLabAuth](#gitlabauth)_ |  |
-| `polling` _[GitLabPolling](#gitlabpolling)_ |  |
+| `auth` _[GitLabAuth](#gitlabauth)_ | Auth contains GitLab specific authentication configuration. |
+| `polling` _[GitLabPolling](#gitlabpolling)_ | Polling contains GitLab specific configuration. |
 
 
 ### GitLabAuth
 
 
 
-
+GitLabAuth contains authentication information specifically for a GitLab repository. Authentication is done using an access token. See https://docs.rig.dev/operator-manual/gitops#gitlab-authentication for a guide on how to set it up.
 
 _Appears in:_
 - [GitLab](#gitlab)
@@ -453,7 +453,7 @@ _Appears in:_
 
 
 
-
+GitLabPolling defines webhook/pulling configuration for a GitLab repository.
 
 _Appears in:_
 - [GitLab](#gitlab)

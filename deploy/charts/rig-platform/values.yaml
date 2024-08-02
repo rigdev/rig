@@ -1,3 +1,136 @@
+# Rig holds configuration for the rig server. This is used for generating the
+# rig-server config file. This configuration will be merged with any
+# configuration found in the secret denoted by `secretName`. For detailed
+# information about individual options, see the reference documentation at
+# https://docs.rig.dev/api/config/v1alpha1#platformconfig.
+rig:
+  auth:
+    requireVerification: false
+    allowRegister: false
+    sendWelcomeEmail: false
+    secret: shhhdonotshare
+    certificateFile: ""
+    certificateKeyFile: ""
+    sso:
+      oidcProviders: {}
+      # each key is considered a provider ID
+      # oidc1:
+      #   name: "My OIDC Provider"
+      #   issuerURL: "https://accounts.google.com
+      #   clientID: my-client-id
+      #   clientSecret: my-client-secret
+      #   allowedDomains:
+      #     - mydomain.com
+      #   groupsClaim: groups
+      #   disableJITGroups: false
+      #   groupMapping:
+      #     OIDCProvidedGroup: MyRigGroup
+
+  telemetryEnabled: true
+
+  client:
+    postgres:
+      host: ""
+      insecure: false
+      user: postgres
+      password: postgres
+      database: rig
+    mailjets: {}
+    # each key is considered a mailjet ID
+    # mailjet1:
+    #   apiKey: ""
+    #   secretKey: ""
+    smtps: {}
+    # each key is considered an smtp ID
+    # smtp1:
+    #   host: ""
+    #   port: 587
+    #   username: ""
+    #   password: ""
+    operator:
+      baseUrl: http://rig-operator:9000
+    slack: {}
+    # each key is considered a slack workspace
+    # slack1:
+    #   token: ""
+    git:
+      auths: []
+      # - url: ""
+      #   urlPrefix: ""
+      #   credentials:
+      #     https:
+      #       username: ""
+      #       password: ""
+      #     ssh:
+      #       privateKey: ""
+      #       privateKeyPassword: ""
+      # gitHubAuths:
+      #   - organization: my-org
+      #     repository: my-repo
+      #     auth:
+      #       appID: 1234
+      #       installationID: 1234
+      #       privateKey: /path/to/key
+      #       privateKeyPassword: password
+      #     polling:
+      #       webhookSecret: secret123!
+      # gitLabAuths:
+      #   - groups:
+      #       - mygroup
+      #       - subgroup
+      #     project: myproject
+      #     auth:
+      #       accessToken: TOKEN
+      #     polling:
+      #       webhookSecret: secret123!
+        
+      author:
+        name: ""
+        email: ""
+
+  repository:
+    store: postgres
+    secret: ""
+
+  email:
+    id: ""
+    from: ""
+
+  logging:
+    devMode: false
+    level: info
+
+  notification:
+    projects: []
+    environments: []
+
+  clusters:
+    {}
+    # prod:
+    #   type: k8s
+    #   devRegistry:
+    #     host: ""
+    #     clusterHost: ""
+    #   git:
+    #     url: ""
+    #     branch: ""
+    #     pathPrefix: ""
+
+  dockerRegistries: {}
+  # each key is considered a registry host
+  # registry1:
+  #   username: ""
+  #   password: ""
+  #   email: ""
+
+
+# Name of secret containing configuration for rig-sever. Set this if you use a
+# special mechanism for generating secrets. If left unset, we will create the
+# secret. If `useEnvForSecrets` is true we will use the secret as environment
+# variables, otherwise we will mount the key `config.yaml` as a full
+# rig-platform config file.
+secretName: ""
+  
 image:
   repository: ghcr.io/rigdev/rig-platform
   pullPolicy: IfNotPresent
@@ -81,114 +214,3 @@ postgres:
 # variables instead of a config file.
 useEnvForSecrets: false
 
-# Name of secret containing configuration for rig-sever. Set this if you use a
-# special mechanism for generating secrets. If left unset, we will create the
-# secret. If `useEnvForSecrets` is true we will use the secret as environment
-# variables, otherwise we will mount the key `config.yaml` as a full
-# rig-platform config file.
-secretName: ""
-
-# Rig holds configuration for the rig server. This is used for generating the
-# rig-server config file. This configuration will be merged with any
-# configuration found in the secret denoted by `secretName`. For detailed
-# information about individual options, see the reference documentation at
-# https://docs.rig.dev/api/config/v1alpha1#platformconfig.
-rig:
-  auth:
-    requireVerification: false
-    allowRegister: false
-    sendWelcomeEmail: false
-    secret: shhhdonotshare
-    certificateFile: ""
-    certificateKeyFile: ""
-    sso:
-      oidcProviders: {}
-      # each key is considered a provider ID
-      # oidc1:
-      #   name: "My OIDC Provider"
-      #   issuerURL: "https://accounts.google.com
-      #   clientID: my-client-id
-      #   clientSecret: my-client-secret
-      #   allowedDomains:
-      #     - mydomain.com
-      #   groupsClaim: groups
-      #   disableJITGroups: false
-      #   groupMapping:
-      #     OIDCProvidedGroup: MyRigGroup
-
-  telemetryEnabled: true
-
-  client:
-    postgres:
-      host: ""
-      insecure: false
-      user: postgres
-      password: postgres
-      database: rig
-    mailjets: {}
-    # each key is considered a mailjet ID
-    # mailjet1:
-    #   apiKey: ""
-    #   secretKey: ""
-    smtps: {}
-    # each key is considered an smtp ID
-    # smtp1:
-    #   host: ""
-    #   port: 587
-    #   username: ""
-    #   password: ""
-    operator:
-      baseUrl: http://rig-operator:9000
-    slack: {}
-    # each key is considered a slack workspace
-    # slack1:
-    #   token: ""
-    git:
-      auths: []
-      # - url: ""
-      #   urlPrefix: ""
-      #   credentials:
-      #     https:
-      #       username: ""
-      #       password: ""
-      #     ssh:
-      #       privateKey: ""
-      #       privateKeyPassword: ""
-      author:
-        name: ""
-        email: ""
-
-  repository:
-    store: postgres
-    secret: ""
-
-  email:
-    id: ""
-    from: ""
-
-  logging:
-    devMode: false
-    level: info
-
-  notification:
-    projects: []
-    environments: []
-
-  clusters:
-    {}
-    # prod:
-    #   type: k8s
-    #   devRegistry:
-    #     host: ""
-    #     clusterHost: ""
-    #   git:
-    #     url: ""
-    #     branch: ""
-    #     pathPrefix: ""
-
-  dockerRegistries: {}
-  # each key is considered a registry host
-  # registry1:
-  #   username: ""
-  #   password: ""
-  #   email: ""

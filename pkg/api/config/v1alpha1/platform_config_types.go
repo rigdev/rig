@@ -309,6 +309,7 @@ type ClusterGit struct {
 
 	// PathPrefixes path to commit to in git repository
 	PathPrefixes PathPrefixes `json:"pathPrefixes,omitempty"`
+
 	// Templates used for commit messages.
 	Templates GitTemplates `json:"templates,omitempty"`
 
@@ -359,7 +360,7 @@ type GitAuth struct {
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds"`
 }
 
-// GitHub contains authentication specifically for GitHub.
+// GitHub contains configuration specifically for GitHub repositories.
 // To enable pull requests on a GitHub repository, you must add GitHub authentication
 // using appID, installationID and privateKey for a GitHub app with read/write access to
 // pull requests.
@@ -381,6 +382,9 @@ type GitHub struct {
 	Polling GitHubPolling `json:"polling,omitempty"`
 }
 
+// GitHubAuth contains authentication information specifically for a GitHub repository.
+// Authentication is done using GitHub apps. See https://docs.rig.dev/operator-manual/gitops#github-authentication
+// for a guide on how to set it up.
 type GitHubAuth struct {
 	// AppID is the app ID of the GitHub app
 	AppID int64 `json:"appID,omitempty"`
@@ -395,6 +399,7 @@ type GitHubAuth struct {
 	PrivateKeyPassword string `json:"privateKeyPassword,omitempty"`
 }
 
+// GitHubPolling defines webhook/pulling configuration for a GitHub repository.
 type GitHubPolling struct {
 	// WebHookSecret is the secret used to validate incoming webhooks.
 	WebhookSecret string `json:"webhookSecret,omitempty"`
@@ -404,26 +409,42 @@ type GitHubPolling struct {
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds,omitempty"`
 }
 
+// GitLab contains configuration specifically for GitLab repositories.
+// To enable pull requests on a GitLab repository, you must add GitLab authentication
+// using an access token.
+// To have normal read/write access to a repository, you can forego GitLab access tokens
+// if there is a GitAuth section with credentials for the given repository instead.
+// If you have GitLab authentication for a repository, you don't need a matching GitAuth section.
 type GitLab struct {
 	// Groups is a sequence of GitLab groups.
 	// The first is the main group and the rest a nesting of subgroups.
 	// If Project is empty, the configuration will match any
 	// GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix.
 	Groups []string `json:"groups,omitempty"`
+
 	// Project is the GitLab project of the repository. Can be empty for matching all project names.
-	Project string        `json:"project,omitempty"`
-	Auth    GitLabAuth    `json:"auth,omitempty"`
+	Project string `json:"project,omitempty"`
+
+	// Auth contains GitLab specific authentication configuration.
+	Auth GitLabAuth `json:"auth,omitempty"`
+
+	// Polling contains GitLab specific configuration.
 	Polling GitLabPolling `json:"polling,omitempty"`
 }
 
+// GitLabAuth contains authentication information specifically for a GitLab repository.
+// Authentication is done using an access token. See https://docs.rig.dev/operator-manual/gitops#gitlab-authentication
+// for a guide on how to set it up.
 type GitLabAuth struct {
 	// AccessToken is an accessToken which is used to authenticate against the GitLab repository.
 	Accesstoken string `json:"accessToken,omitempty"`
 }
 
+// GitLabPolling defines webhook/pulling configuration for a GitLab repository.
 type GitLabPolling struct {
 	// WebHookSecret is the secret used to validate incoming webhooks.
 	WebhookSecret string `json:"webhookSecret,omitempty"`
+
 	// If webHookSecret isn't set, pull the git repository at the set interval instead
 	// to fetch changes. Defaults to 3 mins if no value.
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds,omitempty"`
