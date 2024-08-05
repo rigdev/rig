@@ -16,36 +16,35 @@ import (
 )
 
 func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) error {
-	capsuleID, err := c.getCapsuleID(ctx, args)
-	if err != nil {
-		return err
-	}
-
 	currentRolloutIDs, err := parseEnvRollouts(currentEnvRollouts)
 	if err != nil {
 		return err
 	}
 
-	changes, err := c.getChanges(cmd, args)
+	changes, capsuleName, projectID, _, err := c.getChanges(cmd, args)
+	if err != nil {
+		return err
+	}
+
+	capsuleID, err := c.getCapsuleID(ctx, capsuleName, args)
 	if err != nil {
 		return err
 	}
 
 	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
 		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
-			ProjectId: c.Scope.GetCurrentContext().GetProject(),
+			ProjectId: projectID,
 			CapsuleId: capsuleID,
 		}),
 	)
 	if err != nil {
-		fmt.Println("git oof")
 		return err
 	}
 	if respGit.Msg.GetGit().GetCapsuleSetPath() != "" && prBranchName != "" {
 		resp, err := c.Rig.Capsule().ProposeSetRollout(ctx, connect.NewRequest(&capsule.ProposeSetRolloutRequest{
 			CapsuleId:  capsuleID,
 			Changes:    changes,
-			ProjectId:  c.Scope.GetCurrentContext().GetProject(),
+			ProjectId:  projectID,
 			BranchName: prBranchName,
 		}))
 		if err != nil {
@@ -61,7 +60,7 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 	resp, err := c.Rig.Capsule().DeploySet(ctx, connect.NewRequest(&capsule.DeploySetRequest{
 		CapsuleId:          capsuleID,
 		Changes:            changes,
-		ProjectId:          c.Scope.GetCurrentContext().GetProject(),
+		ProjectId:          projectID,
 		CurrentRolloutIds:  currentRolloutIDs,
 		CurrentFingerprint: parseFingerprint(currentFingerprint),
 	}))
@@ -76,7 +75,7 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 				BaseInput: capsule_cmd.BaseInput{
 					Ctx:           ctx,
 					Rig:           c.Rig,
-					ProjectID:     c.Scope.GetCurrentContext().GetProject(),
+					ProjectID:     projectID,
 					EnvironmentID: env,
 					CapsuleID:     capsuleID,
 				},
