@@ -78,6 +78,10 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			common.MaxArgsCompletionFilter(1)),
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 		RunE:              cli.CtxWrap(cmd.deploy),
+		Annotations: map[string]string{
+			auth.OmitEnvironment: "",
+			auth.OmitProject:     "",
+		},
 		Long: `Deploy a number of changes to a Capsule.
 
 All the changes given will be deployed as one rollout, then waiting for the rollout to complete.

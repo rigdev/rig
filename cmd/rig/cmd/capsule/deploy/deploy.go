@@ -57,20 +57,45 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		return errors.InvalidArgumentErrorf("cannot give both --fingerprint and --current-rollout")
 	}
 
-	capsuleName, err := c.getCapsuleID(ctx, args)
+	changes, capsuleID, projectID, environmentID, err := c.getChanges(cmd, args)
 	if err != nil {
 		return err
 	}
 
-	changes, err := c.getChanges(cmd, args)
+	if projectID == "" {
+		projectID = c.Scope.GetCurrentContext().GetProject()
+	}
+	if environmentID == "" {
+		environmentID = c.Scope.GetCurrentContext().GetEnvironment()
+	}
+	capsuleName, err := c.getCapsuleID(ctx, capsuleID, args)
 	if err != nil {
+		return err
+	}
+
+	if _, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
+		Msg: &capsule.GetRequest{
+			CapsuleId: capsuleName,
+			ProjectId: projectID,
+		},
+	}); errors.IsNotFound(err) {
+		fmt.Printf("Capsule `%s` doesn't exist, creating Capsule\n", capsuleName)
+		if _, err := c.Rig.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
+			Msg: &capsule.CreateRequest{
+				Name:      capsuleName,
+				ProjectId: projectID,
+			},
+		}); err != nil {
+			return err
+		}
+	} else if err != nil {
 		return err
 	}
 
 	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
 		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
-			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
-			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
+			ProjectId:     projectID,
+			EnvironmentId: environmentID,
 			CapsuleId:     capsuleName,
 		}),
 	)
@@ -83,8 +108,8 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		resp, err := c.Rig.Capsule().ProposeRollout(ctx, connect.NewRequest(&capsule.ProposeRolloutRequest{
 			CapsuleId:     capsuleName,
 			Changes:       changes,
-			ProjectId:     c.Scope.GetCurrentContext().GetProject(),
-			EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
+			ProjectId:     projectID,
+			EnvironmentId: environmentID,
 			BranchName:    prBranchName,
 		}))
 		if err != nil {
@@ -108,8 +133,8 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 						Limit:      1,
 						Descending: true,
 					},
-					ProjectId:     c.Scope.GetCurrentContext().GetProject(),
-					EnvironmentId: c.Scope.GetCurrentContext().GetEnvironment(),
+					ProjectId:     projectID,
+					EnvironmentId: environmentID,
 					CapsuleId:     capsuleName,
 				},
 			})
@@ -126,8 +151,8 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	baseInput := capsule_cmd.BaseInput{
 		Ctx:           ctx,
 		Rig:           c.Rig,
-		ProjectID:     c.Scope.GetCurrentContext().GetProject(),
-		EnvironmentID: c.Scope.GetCurrentContext().GetEnvironment(),
+		ProjectID:     projectID,
+		EnvironmentID: environmentID,
 		CapsuleID:     capsuleName,
 	}
 
@@ -160,7 +185,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	return capsule_cmd.DeployAndWait(input)
 }
 
-func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, error) {
+func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, string, string, string, error) {
 	if file != "" {
 		if environmentVariables != nil ||
 			removeEnvironmentVariables != nil ||
@@ -173,21 +198,21 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 			removeConfigFiles != nil ||
 			networkInterfaces != nil ||
 			removeNetworkInterfaces != nil {
-			return nil, errors.InvalidArgumentErrorf("cannot supply both --file and another configuration flag")
+			return nil, "", "", "", errors.InvalidArgumentErrorf("cannot supply both --file and another configuration flag")
 		}
 		bytes, err := os.ReadFile(file)
 		if err != nil {
-			return nil, err
+			return nil, "", "", "", err
 		}
 		spec, err := v1.YAMLToCapsuleProto(bytes)
 		if err != nil {
-			return nil, err
+			return nil, "", "", "", err
 		}
 		return []*capsule.Change{{
 			Field: &capsule.Change_Spec{
 				Spec: spec.GetSpec(),
 			},
-		}}, nil
+		}}, spec.GetName(), spec.GetProject(), spec.GetEnvironment(), nil
 	}
 
 	var changes []*capsule.Change
@@ -234,7 +259,7 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 	for _, value := range removeEnvironmentSources {
 		kind, name, err := parseEnvironmentSource(value)
 		if err != nil {
-			return nil, err
+			return nil, "", "", "", err
 		}
 		changes = append(changes, &capsule.Change{
 			Field: &capsule.Change_RemoveEnvironmentSource{
@@ -248,7 +273,7 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 	for _, value := range environmentSources {
 		kind, name, err := parseEnvironmentSource(value)
 		if err != nil {
-			return nil, err
+			return nil, "", "", "", err
 		}
 		changes = append(changes, &capsule.Change{
 			Field: &capsule.Change_SetEnvironmentSource{
@@ -275,17 +300,17 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 	for _, file := range networkInterfaces {
 		bs, err := os.ReadFile(file)
 		if err != nil {
-			return nil, errors.InvalidArgumentErrorf("errors reading network interface: %v", err)
+			return nil, "", "", "", errors.InvalidArgumentErrorf("errors reading network interface: %v", err)
 		}
 
 		raw, err := yaml.YAMLToJSON(bs)
 		if err != nil {
-			return nil, err
+			return nil, "", "", "", err
 		}
 
 		ci := &capsule.Interface{}
 		if err := protojson.Unmarshal(raw, ci); err != nil {
-			return nil, err
+			return nil, "", "", "", err
 		}
 
 		changes = append(changes, &capsule.Change{
@@ -325,31 +350,31 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 			} else if opt == "secret" {
 				secret = true
 			} else {
-				return nil, errors.InvalidArgumentErrorf("invalid config-file argument: %v", configFile)
+				return nil, "", "", "", errors.InvalidArgumentErrorf("invalid config-file argument: %v", configFile)
 			}
 		}
 
 		if !path.IsAbs(target) {
-			return nil, errors.InvalidArgumentErrorf("config-file path is not absolute: %v", target)
+			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file path is not absolute: %v", target)
 		}
 
 		if path.Clean(target) != target {
-			return nil, errors.InvalidArgumentErrorf(
+			return nil, "", "", "", errors.InvalidArgumentErrorf(
 				"config-file path is not clean: %v should be %s", target, path.Clean(target),
 			)
 		}
 
 		if strings.HasSuffix(target, "/") {
-			return nil, errors.InvalidArgumentErrorf("config-file path should not end with a '/': %v", target)
+			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file path should not end with a '/': %v", target)
 		}
 
 		bs, err := os.ReadFile(source)
 		if err != nil {
-			return nil, err
+			return nil, "", "", "", err
 		}
 
 		if !utf8.Valid(bs) {
-			return nil, errors.InvalidArgumentErrorf("source file is not valid UTF-8: %v", source)
+			return nil, "", "", "", errors.InvalidArgumentErrorf("source file is not valid UTF-8: %v", source)
 		}
 
 		changes = append(changes, &capsule.Change{
@@ -366,7 +391,7 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 	// Replicas.
 	if cmd.Flag("replicas").Changed {
 		if replicas < 0 {
-			return nil, errors.InvalidArgumentErrorf("number of replicas cannot be negative: %v", replicas)
+			return nil, "", "", "", errors.InvalidArgumentErrorf("number of replicas cannot be negative: %v", replicas)
 		}
 
 		changes = append(changes, &capsule.Change{
@@ -401,10 +426,10 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 	}
 
 	if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
-		return nil, err
+		return nil, "", "", "", err
 	}
 
-	return changes, nil
+	return changes, "", "", "", nil
 }
 
 func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) {
@@ -857,8 +882,7 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	return res.Msg.GetImageId(), nil
 }
 
-func (c *Cmd) getCapsuleID(ctx context.Context, args []string) (string, error) {
-	capsuleName := ""
+func (c *Cmd) getCapsuleID(ctx context.Context, capsuleName string, args []string) (string, error) {
 	if len(args) > 0 {
 		capsuleName = args[0]
 	}
