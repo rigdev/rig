@@ -51,7 +51,7 @@ type PlatformConfig struct {
 	// Clusters the platform has access to.
 	Clusters map[string]Cluster `json:"clusters,omitempty"`
 
-	// DockerRegistries holds configuration for multiple docker registries. The key is the host of the registry
+	// DockerRegistries holds configuration for multiple docker registries. The key is the host-prefix of the registry
 	DockerRegistries map[string]DockerRegistryCredentials `json:"dockerRegistries,omitempty"`
 }
 
@@ -513,6 +513,13 @@ type DockerRegistryCredentials struct {
 	Username string `json:"username,omitempty"`
 	// Password for the docker registry.
 	Password string `json:"password,omitempty"`
+	// Script (shell) to execute that should echo the credentials.
+	// The output is expected to be a single line (with new-line termination) of format `<username>:<password>`.
+	Script string `json:"script,omitempty"`
+	// Expire is the maximum duration a credential will be cached for, before it's recycled.
+	// If a cached credential is rejected before this time, it may be renewed before this duration is expired.
+	// Default is `12h`.
+	Expire metav1.Duration `json:"expire,omitempty"`
 }
 
 // ClusterType is a cluster type.
@@ -659,5 +666,4 @@ func (cfg *PlatformConfig) Migrate() {
 			}
 		}
 	}
-
 }

@@ -291,6 +291,8 @@ _Appears in:_
 | --- | --- |
 | `username` _string_ | Username for the docker registry. |
 | `password` _string_ | Password for the docker registry. |
+| `script` _string_ | Script (shell) to execute that should echo the credentials. The output is expected to be a single line (with new-line termination) of format `<username>:<password>`. |
+| `expire` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#duration-v1-meta)_ | Expire is the maximum duration a credential will be cached for, before it's recycled. If a cached credential is rejected before this time, it may be renewed before this duration is expired. Default is `12h`. |
 
 
 ### Email
@@ -616,7 +618,7 @@ PlatformConfig is the Schema for the platform config API
 | `email` _[Email](#email)_ | Email holds the default configuration for sending emails. Either using mailjet or using SMTP. |
 | `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
 | `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
-| `dockerRegistries` _object (keys:string, values:[DockerRegistryCredentials](#dockerregistrycredentials))_ | DockerRegistries holds configuration for multiple docker registries. The key is the host of the registry |
+| `dockerRegistries` _object (keys:string, values:[DockerRegistryCredentials](#dockerregistrycredentials))_ | DockerRegistries holds configuration for multiple docker registries. The key is the host-prefix of the registry |
 
 
 ### Plugin
