@@ -73,10 +73,17 @@ rig:
       expire: 30m
 ```
 
-## Pull-secret generation
+## Pull-pull secret generation
 
-For Container Registries registered in the Rig Platform, [image-pull-secrets](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line) will automatically be generated for the Capsules that uses images from these registries if configured so for the individual clusters.
+By default, the clusters are individually responsible for creating [image-pull-secrets](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line) for the Kubernetes cluster.
 
+However, if registry credentials are configured in the Rig Platform, image-pull secrets can be automatically generated when needed by enabling it, as shown below.
+
+:::note
+Using generation of image-pull secretes is discouraged when
+* Using GitOps, as this would put plain-text credential in the git repository.
+* Using expirable credentials, as this could result in credential expiration when pods are being preempted.
+:::
 
 ### Example
 
