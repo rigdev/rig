@@ -60,7 +60,7 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 	var updates []*project.Update
 	for {
 		i, _, err := c.Prompter.Select("Select the setting to update (CTRL + C to cancel)",
-			[]string{"Git store", "Notifiers", "Done"})
+			[]string{"Git store", "Notifiers", "Promotion Pipelines", "Done"})
 		if err != nil {
 			if common.ErrIsAborted(err) {
 				return nil
@@ -98,6 +98,19 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 				},
 			})
 		case 2:
+			if err := c.updatePromotionPipelines(ctx, p.GetPipeline()); err != nil {
+				if common.ErrIsAborted(err) {
+					continue
+				}
+				return err
+			}
+
+			updates = append(updates, &project.Update{
+				Field: &project.Update_SetPipelines{
+					SetPipelines: p.GetPipeline(),
+				},
+			})
+		case 3:
 			done = true
 		}
 		if done {
@@ -149,6 +162,46 @@ func (c *Cmd) updateNotifiers(ctx context.Context, p *project.NotificationNotifi
 		}
 
 		p.Notifiers = notifiers
+	}
+
+	return nil
+}
+
+func (c *Cmd) updatePromotionPipelines(ctx context.Context, p *project.Pipelines) error {
+	if p == nil {
+		p = &project.Pipelines{}
+	}
+
+	enableDisableStr := "disable global pipelines"
+	if p.GetDisabled() {
+		enableDisableStr = "enable global pipelines"
+	}
+
+	i, _, err := c.Prompter.Select("Select the field to update (CTRL + c to cancel)", []string{
+		enableDisableStr,
+		"Update Pipelines",
+	})
+	if err != nil {
+		return err
+	}
+
+	switch i {
+	case 0:
+		p.Disabled = !p.GetDisabled()
+	case 1:
+		envsResp, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
+			ProjectFilter: c.Scope.GetCurrentContext().GetProject(),
+		}))
+		if err != nil {
+			return err
+		}
+
+		pipelines, err := common.PromptPipelines(c.Prompter, p.GetPipelines(), envsResp.Msg.GetEnvironments())
+		if err != nil {
+			return err
+		}
+
+		p.Pipelines = pipelines
 	}
 
 	return nil
