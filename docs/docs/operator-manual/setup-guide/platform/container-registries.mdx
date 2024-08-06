@@ -4,8 +4,10 @@ import TabItem from "@theme/TabItem";
 
 # Container Registries
 
+The Rig platform has support for validating Container Images against registries, extracting digests for safe rollbacks and even generation of pull-secrets for Kubernetes.
+
 By default, the Rig Platform can use Container Images from any public Container Repositories.
-For example, when creating a new Build using the repository `nginx`, the Rig Platform will be able to resolve this at registry `index.docker.io`.
+For example, when creating a new Build using the repository `nginx`, the Rig Platform will be able to resolve this at the registry `index.docker.io`.
 
 ## Private Repositories
 
@@ -13,7 +15,75 @@ When a Container Repository is private, authentication for the Container Registr
 
 This is done by adding the credentials of the registry to the platform configuration.
 
-For Container Registries registered in the Rig Platform, [image-pull-secrets](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line) will automatically be generated for the Capsules that uses images from these registries if configured so for the cluster.
+For each registry configured, there are 2 types of configuration;
+
+1. **Username/Password**: This is useful when you have a long-lived credential that does not require 2FA, e.g. a GitHub PAT or GitLab Access Token.
+  Here the `username` and `password` values are to be provided:
+    ```yaml title="Helm values - Platform"
+    rig:
+      dockerRegistries:
+        index.docker.io:
+          username: <registry-username>
+          password: <registry-password>
+    ```
+2. **Script execution**:
+    This allows custom scripts to be executed, that can extract credentials from the environment. This is especially useful when Workload Identity Federation is used.
+    The `script` field should contain the full script and will be run in the context of the Platform container. Tools like `aws`, `wget` and `curl` are available to the script.
+    Additionally, an `expire` field can be given to hint when a credential would become expired; the default is `12h`.
+    ```yaml title="Helm values - Platform"
+    rig:
+      dockerRegistries:
+        index.docker.io:
+          script: |
+            USERNAME="my-username"
+            PASSWORD="my-password"
+            echo "$USERNAME:$PASSWORD"
+          expire: 1h
+    ```
+    The `script` provided should echo a single line of the format `<username>:<password>`. Anything else will result in an invalid credential and the error being printed in the log output.
+
+When the credentials are used, the credential with the longest prefix will be used, e.g. for the repository `registry.gitlab.com/rigdev/foobar` and credentials are provided for `registry.gitlab.com` and `registry.gitlab.com/rigdev`, the latter will be used.
+
+### Example - AWS Workload Identity Federation
+
+AWS support Workload Identity Federation as explained [here](https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html#service-accounts-iam). When configured, access to AWS Elastic Container Registry (ECR) can
+be delegated to the `rig-platform` Kubernetes Service Account. With that in place, the `aws` tool can be used to extract the service account credentials, as shown below.
+
+```yaml title="Helm values - Platform"
+rig:
+  dockerRegistries:
+    XXXXXXXXXXXX.dkr.ecr.us-west-2.amazonaws.com:
+      script: |
+        aws ecr --region "us-west-2" get-authorization-token --output text --query 'authorizationData[].authorizationToken' | base64 -d
+      expire: 12h
+```
+
+### Example - Google Workload Identity Federation
+
+Google supports Workload Identity Federation as explained [here](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity). When configured, access to the Artifact Registry can
+be delegated to the `rig-platform` Kubernetes Service Account. With that in place, an access token can be fetched for the pod, as shown below.
+
+```yaml title="Helm values - Platform"
+rig:
+  dockerRegistries:
+    us-docker.pkg.dev:
+      script: |
+        ACCESS_TOKEN=$(wget --header 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token -q -O - | grep -Eo '"access_token":.*?[^\\]",' | cut -d '"' -f 4)
+        echo "oauth2accesstoken:$ACCESS_TOKEN"
+      expire: 30m
+```
+
+## Pull-pull secret generation
+
+By default, the clusters are individually responsible for creating [image-pull-secrets](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line) for the Kubernetes cluster.
+
+However, if registry credentials are configured in the Rig Platform, image-pull secrets can be automatically generated when needed by enabling it, as shown below.
+
+:::note
+Using generation of image-pull secretes is discouraged when
+* Using GitOps, as this would put plain-text credential in the git repository.
+* Using expirable credentials, as this could result in credential expiration when pods are being preempted.
+:::
 
 ### Example
 
