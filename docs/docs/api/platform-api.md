@@ -52,6 +52,7 @@
 
 
 
+
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -92,6 +93,11 @@
 | /api.v1.capsule.Service/GetRolloutOfRevisions | [GetRolloutOfRevisionsRequest](#api-v1-capsule-GetRolloutOfRevisionsRequest) | [GetRolloutOfRevisionsResponse](#api-v1-capsule-GetRolloutOfRevisionsResponse) |  |
 | /api.v1.capsule.Service/WatchStatus | [WatchStatusRequest](#api-v1-capsule-WatchStatusRequest) | [WatchStatusResponse](#api-v1-capsule-WatchStatusResponse) stream | Stream the status of a capsule. |
 | /api.v1.capsule.Service/GetEffectiveGitSettings | [GetEffectiveGitSettingsRequest](#api-v1-capsule-GetEffectiveGitSettingsRequest) | [GetEffectiveGitSettingsResponse](#api-v1-capsule-GetEffectiveGitSettingsResponse) |  |
+| /api.v1.capsule.Service/StartPipeline | [StartPipelineRequest](#api-v1-capsule-StartPipelineRequest) | [StartPipelineResponse](#api-v1-capsule-StartPipelineResponse) | Will initiate the pipeline, from the initial environment and it's current rollout. |
+| /api.v1.capsule.Service/GetPipelineStatus | [GetPipelineStatusRequest](#api-v1-capsule-GetPipelineStatusRequest) | [GetPipelineStatusResponse](#api-v1-capsule-GetPipelineStatusResponse) |  |
+| /api.v1.capsule.Service/ProgressPipeline | [ProgressPipelineRequest](#api-v1-capsule-ProgressPipelineRequest) | [ProgressPipelineResponse](#api-v1-capsule-ProgressPipelineResponse) | Progress the pipeline to the next environment. |
+| /api.v1.capsule.Service/AbortPipeline | [AbortPipelineRequest](#api-v1-capsule-AbortPipelineRequest) | [AbortPipelineResponse](#api-v1-capsule-AbortPipelineResponse) | Abort the pipeline execution. This will stop the pipeline from any further promotions. |
+| /api.v1.capsule.Service/ListPipelineStatuses | [ListPipelineStatusesRequest](#api-v1-capsule-ListPipelineStatusesRequest) | [ListPipelineStatusesResponse](#api-v1-capsule-ListPipelineStatusesResponse) |  |
 
 
 
@@ -4192,6 +4198,86 @@ The actual log message
 
 
 
+<a name="api_v1_capsule_pipeline_status-proto"></a>
+
+## api/v1/capsule/pipeline/status.proto
+
+
+
+<a name="api-v1-capsule-pipeline-PhaseStatus"></a>
+
+### PhaseStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  |  |
+| state | [PhaseState](#api-v1-capsule-pipeline-PhaseState) |  |  |
+| rollout_id | [uint64](#uint64) |  |  |
+| message | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-pipeline-Status"></a>
+
+### Status
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pipeline_name | [string](#string) |  | The name of the pipeline. |
+| capsule_id | [string](#string) |  | The capsule that is executing the pipeline. |
+| execution_id | [uint64](#uint64) |  | The ID of the pipeline execution |
+| state | [State](#api-v1-capsule-pipeline-State) |  | The overall state of the pipeline execution. |
+| phase_statuses | [PhaseStatus](#api-v1-capsule-pipeline-PhaseStatus) | repeated | The statuses of the phases in the pipeline. |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the pipeline was started. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the pipeline was last updated. |
+
+
+
+
+
+
+
+
+<a name="api-v1-capsule-pipeline-PhaseState"></a>
+
+### PhaseState
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PHASE_STATE_UNSPECIFIED | 0 | The state is unspecified. |
+| PHASE_STATE_NOT_READY | 1 | The phase is not ready for promotion |
+| PHASE_STATE_READY | 2 | The phase is ready for promotion |
+| PHASE_STATE_PROMOTED | 3 | The phase is promoted |
+
+
+
+<a name="api-v1-capsule-pipeline-State"></a>
+
+### State
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STATE_UNSPECIFIED | 0 | The state is unspecified. |
+| STATE_RUNNING | 1 | The pipeline has started. |
+| STATE_ABORTED | 2 | The pipeline is aborted. |
+| STATE_COMPLETED | 3 | The pipeline is completed. |
+
+
+
+
+
+
+
+
 <a name="model_revision-proto"></a>
 
 ## model/revision.proto
@@ -5261,6 +5347,36 @@ Scrypt hashing instance.
 
 
 
+<a name="api-v1-capsule-AbortPipelineRequest"></a>
+
+### AbortPipelineRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| execution_id | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-AbortPipelineResponse"></a>
+
+### AbortPipelineResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-AbortRolloutRequest"></a>
 
 ### AbortRolloutRequest
@@ -5805,6 +5921,36 @@ Response to getting job executions.
 
 
 
+<a name="api-v1-capsule-GetPipelineStatusRequest"></a>
+
+### GetPipelineStatusRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| execution_id | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetPipelineStatusResponse"></a>
+
+### GetPipelineStatusResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-GetRequest"></a>
 
 ### GetRequest
@@ -6112,6 +6258,40 @@ List instances response.
 
 
 
+<a name="api-v1-capsule-ListPipelineStatusesRequest"></a>
+
+### ListPipelineStatusesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pagination | [model.Pagination](#model-Pagination) |  |  |
+| project_filter | [string](#string) |  | Only include pipelines that are run in the given project. |
+| capsule_filter | [string](#string) |  | Only include pipelines that are run with the given capsule. |
+| states_filter | [pipeline.State](#api-v1-capsule-pipeline-State) | repeated | Only include pipelines that are in one of the given states. |
+| name_filter | [string](#string) |  | Only include pipelines that have the given name. |
+
+
+
+
+
+
+<a name="api-v1-capsule-ListPipelineStatusesResponse"></a>
+
+### ListPipelineStatusesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| statuses | [pipeline.Status](#api-v1-capsule-pipeline-Status) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-ListProposalsRequest"></a>
 
 ### ListProposalsRequest
@@ -6353,6 +6533,38 @@ The response of a capsule.Logs RPC
 
 
 
+<a name="api-v1-capsule-ProgressPipelineRequest"></a>
+
+### ProgressPipelineRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| execution_id | [uint64](#uint64) |  |  |
+| dry_run | [bool](#bool) |  | If true, the progression will not be executed, but instead a breakdown of changes will be returned |
+
+
+
+
+
+
+<a name="api-v1-capsule-ProgressPipelineResponse"></a>
+
+### ProgressPipelineResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
+| outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. Only populated if dry-run is used. |
+
+
+
+
+
+
 <a name="api-v1-capsule-ProposeRolloutRequest"></a>
 
 ### ProposeRolloutRequest
@@ -6449,6 +6661,38 @@ RestartInstanceRequest restarts a single instance.
 
 ### RestartInstanceResponse
 RestartInstanceResponse is an empty response.
+
+
+
+
+
+
+<a name="api-v1-capsule-StartPipelineRequest"></a>
+
+### StartPipelineRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| pipeline_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-StartPipelineResponse"></a>
+
+### StartPipelineResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
 
 
 
@@ -7989,7 +8233,7 @@ The top most model that capsules etc belong to.
 | installation_id | [string](#string) |  | The installation id of the project. |
 | git_store | [model.GitStore](#model-GitStore) |  |  |
 | notifiers | [NotificationNotifiers](#api-v1-project-NotificationNotifiers) |  | The notifiers for the project. |
-| pipeline | [Pipelines](#api-v1-project-Pipelines) |  | Environment pipeline for the project |
+| pipelines | [Pipelines](#api-v1-project-Pipelines) |  | Environment pipelines for the project |
 
 
 

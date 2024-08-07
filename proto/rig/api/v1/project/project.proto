@@ -20,8 +20,8 @@ message Project {
   model.GitStore git_store = 6;
   // The notifiers for the project.
   NotificationNotifiers notifiers = 7;
-  // Environment pipeline for the project
-  Pipelines pipeline = 8;
+  // Environment pipelines for the project
+  Pipelines pipelines = 8;
 }
 
 // Update msg for a project.
