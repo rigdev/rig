@@ -6,6 +6,7 @@ import "api/v1/project/project.proto";
 import "model/common.proto";
 import "model/git.proto";
 import "model/metrics.proto";
+import "model/pipeline.proto";
 
 // The service to manage your projects.
 service Service {
@@ -29,6 +30,8 @@ service Service {
       returns (GetCustomObjectMetricsResponse) {}
   rpc GetEffectiveGitSettings(GetEffectiveGitSettingsRequest)
       returns (GetEffectiveGitSettingsResponse) {}
+  rpc GetEffectivePipelineSettings(GetEffectivePipelineSettingsRequest)
+      returns (GetEffectivePipelineSettingsResponse) {}
 }
 
 // The request to create a project.
@@ -156,4 +159,12 @@ message GetEffectiveGitSettingsRequest {
 
 message GetEffectiveGitSettingsResponse {
   model.GitStore git = 1;
+}
+
+message GetEffectivePipelineSettingsRequest {
+  string project_id = 1;
+}
+
+message GetEffectivePipelineSettingsResponse {
+  repeated model.Pipeline pipelines = 1;
 }

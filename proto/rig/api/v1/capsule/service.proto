@@ -155,6 +155,8 @@ message ProgressPipelineResponse {
   // Breakdown of the changes that this deploy would make to the system.
   // Only populated if dry-run is used.
   DeployOutcome outcome = 2;
+  // The capsule revision created.
+  Revision revision = 3;
 }
 
 message GetPipelineStatusRequest {

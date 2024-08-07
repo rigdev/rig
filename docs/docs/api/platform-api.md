@@ -205,6 +205,7 @@
 | /api.v1.project.Service/GetObjectsByKind | [GetObjectsByKindRequest](#api-v1-project-GetObjectsByKindRequest) | [GetObjectsByKindResponse](#api-v1-project-GetObjectsByKindResponse) | Returns all objects of a given kind. |
 | /api.v1.project.Service/GetCustomObjectMetrics | [GetCustomObjectMetricsRequest](#api-v1-project-GetCustomObjectMetricsRequest) | [GetCustomObjectMetricsResponse](#api-v1-project-GetCustomObjectMetricsResponse) | Returns all metrics of a given custom object. |
 | /api.v1.project.Service/GetEffectiveGitSettings | [GetEffectiveGitSettingsRequest](#api-v1-project-GetEffectiveGitSettingsRequest) | [GetEffectiveGitSettingsResponse](#api-v1-project-GetEffectiveGitSettingsResponse) |  |
+| /api.v1.project.Service/GetEffectivePipelineSettings | [GetEffectivePipelineSettingsRequest](#api-v1-project-GetEffectivePipelineSettingsRequest) | [GetEffectivePipelineSettingsResponse](#api-v1-project-GetEffectivePipelineSettingsResponse) |  |
 
 
 
@@ -6559,6 +6560,7 @@ The response of a capsule.Logs RPC
 | ----- | ---- | ----- | ----------- |
 | status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
 | outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. Only populated if dry-run is used. |
+| revision | [Revision](#api-v1-capsule-Revision) |  | The capsule revision created. |
 
 
 
@@ -8413,6 +8415,36 @@ Response for getting custom metrics for a project and environment.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | git | [model.GitStore](#model-GitStore) |  |  |
+
+
+
+
+
+
+<a name="api-v1-project-GetEffectivePipelineSettingsRequest"></a>
+
+### GetEffectivePipelineSettingsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-project-GetEffectivePipelineSettingsResponse"></a>
+
+### GetEffectivePipelineSettingsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pipelines | [model.Pipeline](#model-Pipeline) | repeated |  |
 
 
 
