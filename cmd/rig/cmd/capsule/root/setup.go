@@ -11,6 +11,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/image"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/instance"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/jobs"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule/pipeline"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/rollout"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
@@ -302,6 +303,7 @@ forwarded traffic.
 	instance.Setup(capsuleCmd, s)
 	rollout.Setup(capsuleCmd, s)
 	jobs.Setup(capsuleCmd, s)
+	pipeline.Setup(capsuleCmd, s)
 }
 
 func (c *Cmd) completions(

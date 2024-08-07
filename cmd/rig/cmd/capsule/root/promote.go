@@ -62,7 +62,11 @@ func (c *Cmd) promote(ctx context.Context, cmd *cobra.Command, args []string) er
 	fromSpec := fromRollout.GetSpec()
 
 	toRollout, err := c.getLatestRollout(ctx, capsuleID, toEnvID, c.Scope.GetCurrentContext().GetProject())
-	if err != nil {
+	if errors.IsNotFound(err) {
+		toRollout = &capsule.Rollout{
+			Spec: &platformv1.CapsuleSpec{},
+		}
+	} else if err != nil {
 		return err
 	}
 	toSpec := toRollout.GetSpec()
@@ -339,5 +343,5 @@ func (c *Cmd) getLatestRollout(
 		return rollout, nil
 	}
 
-	return nil, errors.NotFoundErrorf("no rollout for capsule")
+	return nil, errors.NotFoundErrorf(fmt.Sprintf("no rollout for capsule %s in environment %s", capsuleID, environmentID))
 }

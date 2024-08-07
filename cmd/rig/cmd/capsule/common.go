@@ -352,23 +352,7 @@ func DeployDry(input DeployDryInput) error {
 	}
 	outcome := resp.Msg.GetOutcome()
 
-	var out DryOutput
-	out.PlatformCapsule = resp.Msg.GetRevision().GetSpec()
-
-	for _, o := range outcome.GetPlatformObjects() {
-		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), input.Scheme)
-		if err != nil {
-			return err
-		}
-		out.DirectKubernetes = append(out.DirectKubernetes, co)
-	}
-	for _, o := range outcome.GetKubernetesObjects() {
-		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), input.Scheme)
-		if err != nil {
-			return err
-		}
-		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
-	}
+	out := ProcessDryRunOutput(outcome, resp.Msg.GetRevision().GetSpec(), input.Scheme)
 
 	if !input.IsInteractive {
 		outputType := flags.Flags.OutputType
@@ -378,24 +362,37 @@ func DeployDry(input DeployDryInput) error {
 		return common.FormatPrint(out, outputType)
 	}
 
-	return promptDryOutput(input.Ctx, out, outcome)
+	return PromptDryOutput(input.Ctx, out, outcome)
 }
 
-func promptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.DeployOutcome) error {
+func ProcessDryRunOutput(outcome *capsule.DeployOutcome, spec *platformv1.Capsule, scheme *runtime.Scheme) DryOutput {
+	out := DryOutput{
+		PlatformCapsule: spec,
+	}
+	for _, o := range outcome.GetPlatformObjects() {
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
+		if err != nil {
+			return DryOutput{}
+		}
+		out.DirectKubernetes = append(out.DirectKubernetes, co)
+	}
+	for _, o := range outcome.GetKubernetesObjects() {
+		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
+		if err != nil {
+			return DryOutput{}
+		}
+		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
+	}
+
+	return out
+}
+
+func PromptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.DeployOutcome) error {
 	listView := tview.NewList().ShowSecondaryText(false)
 	listView.SetBorder(true).
 		SetTitle("Resources (Return to view)")
 
-	capsuleYamlBytes, err := yaml.Marshal(out.PlatformCapsule)
-	if err != nil {
-		return err
-	}
-
-	capsuleYaml := string(capsuleYamlBytes)
-
-	listView.AddItem("[::b]Platform Capsule", "", 0, nil)
-	content := []string{capsuleYaml}
-
+	var content []string
 	if out.PlatformCapsule != nil {
 		capsuleYamlBytes, err := yaml.Marshal(out.PlatformCapsule)
 		if err != nil {
@@ -417,11 +414,11 @@ func promptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.Deploy
 	}
 
 	textView := tview.NewTextView()
-	textView.SetTitle(fmt.Sprintf("%s (ESC to continue and CTRL+C to cancel)", "Capsule Diff"))
+	textView.SetTitle(fmt.Sprintf("%s (ESC or CTRL+C to cancel)", "Capsule Diff"))
 	textView.SetBorder(true)
 	textView.SetDynamicColors(true)
 	textView.SetWrap(true)
-	textView.SetText(capsuleYaml)
+	textView.SetText(content[0])
 	textView.SetBackgroundColor(tcell.ColorNone)
 
 	errChan := make(chan error)
@@ -437,9 +434,7 @@ func promptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.Deploy
 		switch event.Key() {
 		case tcell.KeyEnter:
 			textView.SetText(content[listView.GetCurrentItem()])
-		case tcell.KeyEsc:
-			cancel()
-		case tcell.KeyCtrlC:
+		case tcell.KeyEsc, tcell.KeyCtrlC:
 			cancel()
 		}
 		return event
