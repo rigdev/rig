@@ -2,9 +2,12 @@ package capsule
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -13,6 +16,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	"github.com/rigdev/rig-go-api/api/v1/capsule/capsuleconnect"
 	api_rollout "github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/model"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
@@ -26,8 +30,10 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/rivo/tview"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/runtime"
+	"nhooyr.io/websocket"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -784,7 +790,6 @@ func getRollout(
 
 func PortForward(
 	ctx context.Context,
-	rig rig.Client,
 	rCtx *cmdconfig.Context,
 	capsuleID, instanceID string,
 	localPort uint32,
@@ -796,12 +801,11 @@ func PortForward(
 		return err
 	}
 
-	return PortForwardOnListener(ctx, rig, rCtx, capsuleID, instanceID, l, remotePort, verbose)
+	return PortForwardOnListener(ctx, rCtx, capsuleID, instanceID, l, remotePort, verbose)
 }
 
 func PortForwardOnListener(
 	ctx context.Context,
-	rig rig.Client,
 	rCtx *cmdconfig.Context,
 	capsuleID, instanceID string,
 	l net.Listener,
@@ -823,7 +827,7 @@ func PortForwardOnListener(
 		}
 
 		go func() {
-			err := runPortForwardForPort(ctx, rig, rCtx, capsuleID, instanceID, conn, remotePort, verbose)
+			err := runPortForwardForPort(ctx, rCtx, capsuleID, instanceID, conn, remotePort, verbose)
 			if errors.IsNotFound(err) {
 				fmt.Printf("[rig] instance '%s' no longer available: %v\n", instanceID, err)
 				os.Exit(1)
@@ -838,7 +842,6 @@ func PortForwardOnListener(
 
 func runPortForwardForPort(
 	ctx context.Context,
-	rig rig.Client,
 	rCtx *cmdconfig.Context,
 	capsuleID, instanceID string,
 	conn net.Conn,
@@ -850,8 +853,15 @@ func runPortForwardForPort(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	pf := rig.Capsule().PortForward(ctx)
-	if err := pf.Send(&capsule.PortForwardRequest{
+	pf, err := newWebSocketStream[*capsule.PortForwardRequest, *capsule.PortForwardResponse](
+		ctx, rCtx, capsuleconnect.ServicePortForwardProcedure)
+	if err != nil {
+		return err
+	}
+
+	defer pf.close()
+
+	if err := pf.send(ctx, &capsule.PortForwardRequest{
 		Request: &capsule.PortForwardRequest_Start_{
 			Start: &capsule.PortForwardRequest_Start{
 				ProjectId:     rCtx.GetProject(),
@@ -870,7 +880,7 @@ func runPortForwardForPort(
 			buff := make([]byte, 32*1024)
 			n, err := conn.Read(buff)
 			if err == io.EOF {
-				if err := pf.Send(&capsule.PortForwardRequest{Request: &capsule.PortForwardRequest_Close_{
+				if err := pf.send(ctx, &capsule.PortForwardRequest{Request: &capsule.PortForwardRequest_Close_{
 					Close: &capsule.PortForwardRequest_Close{},
 				}}); err != nil {
 					cancel()
@@ -885,7 +895,7 @@ func runPortForwardForPort(
 				return
 			}
 
-			if err := pf.Send(&capsule.PortForwardRequest{Request: &capsule.PortForwardRequest_Data{
+			if err := pf.send(ctx, &capsule.PortForwardRequest{Request: &capsule.PortForwardRequest_Data{
 				Data: buff[:n],
 			}}); err != nil {
 				cancel()
@@ -898,7 +908,8 @@ func runPortForwardForPort(
 	}()
 
 	for {
-		res, err := pf.Receive()
+		res := &capsule.PortForwardResponse{}
+		err := pf.receive(ctx, res)
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
@@ -914,6 +925,74 @@ func runPortForwardForPort(
 			return nil
 		}
 	}
+}
+
+type webSocketStream[Request proto.Message, Response proto.Message] struct {
+	conn *websocket.Conn
+}
+
+func (s *webSocketStream[Request, Response]) send(ctx context.Context, message Request) error {
+	bs, err := proto.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	frame := make([]byte, len(bs)+5)
+	binary.BigEndian.PutUint32(frame[1:], uint32(len(bs)))
+
+	copy(frame[5:], bs)
+	return s.conn.Write(ctx, websocket.MessageBinary, frame)
+}
+
+func (s *webSocketStream[Request, Response]) receive(ctx context.Context, message Response) error {
+	_, bs, err := s.conn.Read(ctx)
+	if err != nil {
+		return err
+	}
+
+	if len(bs) < 5 {
+		return fmt.Errorf("invalid proto/websocket frame")
+	}
+
+	if bs[0]&2 != 0 {
+		var end struct {
+			Error *struct {
+				Code    connect.Code
+				Message string
+			}
+		}
+		if err := json.Unmarshal(bs[5:], &end); err != nil {
+			return err
+		}
+
+		if end.Error != nil {
+			return errors.NewError(end.Error.Code, errors.New(end.Error.Message))
+		}
+
+		return io.EOF
+	}
+
+	return proto.Unmarshal(bs[5:], message)
+}
+
+func (s *webSocketStream[Request, Response]) close() {
+	_ = s.conn.CloseNow()
+}
+
+func newWebSocketStream[Request proto.Message, Response proto.Message](
+	ctx context.Context, rCtx *cmdconfig.Context, path string,
+) (*webSocketStream[Request, Response], error) {
+	url := rCtx.GetService().Server + path + "?content-type=proto"
+	ws, _, err := websocket.Dial(ctx, url, &websocket.DialOptions{
+		HTTPHeader: http.Header{
+			"Authorization": []string{"Bearer " + rCtx.GetAuth().AccessToken},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &webSocketStream[Request, Response]{conn: ws}, nil
 }
 
 type TargetContext interface {
