@@ -60,6 +60,7 @@ require (
 	k8s.io/client-go v0.30.0
 	k8s.io/metrics v0.30.0
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
+	nhooyr.io/websocket v1.8.11
 	sigs.k8s.io/controller-runtime v0.18.2
 	sigs.k8s.io/kind v0.22.0
 	sigs.k8s.io/kustomize/kyaml v0.16.0

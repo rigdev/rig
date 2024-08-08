@@ -175,7 +175,7 @@ func (c *Cmd) createHostTunnel(ctx context.Context, cfg *platformv1.HostCapsule)
 	}()
 
 	return capsule_cmd.PortForwardOnListener(
-		ctx, c.Rig, c.Scope.GetCurrentContext(), capsuleName, instanceID, l, cfg.GetNetwork().GetTunnelPort(), true)
+		ctx, c.Scope.GetCurrentContext(), capsuleName, instanceID, l, cfg.GetNetwork().GetTunnelPort(), true)
 }
 
 type hostListener struct {

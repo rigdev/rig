@@ -105,7 +105,7 @@ outer:
 
 		go func() {
 			errChan <- capsule_cmd.PortForwardOnListener(
-				ctx, remoteClient, remoteCtx, capsuleName, instanceID, l, port, true)
+				ctx, remoteCtx, capsuleName, instanceID, l, port, true)
 		}()
 	}
 
