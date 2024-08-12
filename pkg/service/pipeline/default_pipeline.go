@@ -69,7 +69,7 @@ func GetDefaultPipelineSteps(
 		deploymentPlugin = cfg.Pipeline.DeploymentStep.Plugin
 	}
 	deploymentStep, err := NewCapsulePluginStep(execCtx, deploymentPlugin,
-		cfg.Pipeline.DeploymentStep.Config, pluginManager, logger)
+		cfg.Pipeline.DeploymentStep.Config, pluginManager, logger, true)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,12 @@ func GetDefaultPipelineSteps(
 		serviceAccountPlugin = cfg.Pipeline.ServiceAccountStep.Plugin
 	}
 	serviceAccountStep, err := NewCapsulePluginStep(execCtx, serviceAccountPlugin,
-		cfg.Pipeline.ServiceAccountStep.Config, pluginManager, logger)
+		cfg.Pipeline.ServiceAccountStep.Config, pluginManager, logger, false)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceAccountPlatformStep, err := NewRigPlatformCapsulePluginStep(execCtx, service_account.Name, pluginManager, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -87,11 +92,12 @@ func GetDefaultPipelineSteps(
 	steps := []pipeline.Step[pipeline.CapsuleRequest]{
 		deploymentStep,
 		serviceAccountStep,
+		serviceAccountPlatformStep,
 	}
 
 	if cfg.Pipeline.VPAStep.Plugin != "" {
 		vpaStep, err := NewCapsulePluginStep(execCtx, cfg.Pipeline.VPAStep.Plugin,
-			cfg.Pipeline.VPAStep.Config, pluginManager, logger)
+			cfg.Pipeline.VPAStep.Config, pluginManager, logger, true)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +107,7 @@ func GetDefaultPipelineSteps(
 
 	if cfg.Pipeline.RoutesStep.Plugin != "" {
 		routesStep, err := NewCapsulePluginStep(execCtx, cfg.Pipeline.RoutesStep.Plugin,
-			cfg.Pipeline.RoutesStep.Config, pluginManager, logger)
+			cfg.Pipeline.RoutesStep.Config, pluginManager, logger, true)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +120,7 @@ func GetDefaultPipelineSteps(
 		cronJobsPlugin = cfg.Pipeline.CronJobsStep.Plugin
 	}
 	cronjobStep, err := NewCapsulePluginStep(execCtx, cronJobsPlugin,
-		cfg.Pipeline.CronJobsStep.Config, pluginManager, logger)
+		cfg.Pipeline.CronJobsStep.Config, pluginManager, logger, true)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +130,7 @@ func GetDefaultPipelineSteps(
 
 	if cfg.Pipeline.ServiceMonitorStep.Plugin != "" {
 		serviceMonitorStep, err := NewCapsulePluginStep(execCtx, cfg.Pipeline.ServiceMonitorStep.Plugin,
-			cfg.Pipeline.ServiceMonitorStep.Config, pluginManager, logger)
+			cfg.Pipeline.ServiceMonitorStep.Config, pluginManager, logger, true)
 		if err != nil {
 			return nil, err
 		}
@@ -140,15 +146,43 @@ func NewCapsulePluginStep(
 	pluginName, pluginConfig string,
 	pluginManager *plugin.Manager,
 	logger logr.Logger,
+	enableForPlatform bool,
 ) (pipeline.Step[pipeline.CapsuleRequest], error) {
 	pluginStep, err := pluginManager.NewStep(
 		execCtx,
 		v1alpha1.Step{
-			EnableForPlatform: true,
+			EnableForPlatform: enableForPlatform,
 			Plugins: []v1alpha1.Plugin{
 				{
 					Name:   pluginName,
 					Config: pluginConfig,
+				},
+			},
+		}, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return pluginStep, nil
+}
+
+func NewRigPlatformCapsulePluginStep(
+	execCtx plugin.ExecutionContext,
+	pluginName string,
+	pluginManager *plugin.Manager,
+	logger logr.Logger,
+) (pipeline.Step[pipeline.CapsuleRequest], error) {
+	pluginStep, err := pluginManager.NewStep(
+		execCtx,
+		v1alpha1.Step{
+			Match: v1alpha1.CapsuleMatch{
+				Namespaces:        []string{"rig-system"},
+				Names:             []string{"rig-platform"},
+				EnableForPlatform: true,
+			},
+			Plugins: []v1alpha1.Plugin{
+				{
+					Name: pluginName,
 				},
 			},
 		}, logger)
