@@ -84,7 +84,8 @@ func GetDefaultPipelineSteps(
 		return nil, err
 	}
 
-	serviceAccountPlatformStep, err := NewRigPlatformCapsulePluginStep(execCtx, service_account.Name, pluginManager, logger)
+	serviceAccountPlatformStep, err := NewRigPlatformCapsulePluginStep(
+		execCtx, service_account.Name, pluginManager, logger)
 	if err != nil {
 		return nil, err
 	}
