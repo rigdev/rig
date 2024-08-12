@@ -78,8 +78,8 @@ func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hc
 }
 
 func (s *Plugin) createServiceAccount(
-	req pipeline.CapsuleRequest, name string, annotations map[string]string
-	) *corev1.ServiceAccount {
+	req pipeline.CapsuleRequest, name string, annotations map[string]string,
+) *corev1.ServiceAccount {
 	sa := &corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ServiceAccount",
