@@ -537,7 +537,7 @@ func WaitForRollout(input WaitForRolloutInput) error {
 		return err
 	}
 
-	return nil
+	return fmt.Errorf("rollback started")
 }
 
 func WaitForRolloutIteration(input WaitForRolloutInput, state *WaitForRolloutState) (bool, error) {
