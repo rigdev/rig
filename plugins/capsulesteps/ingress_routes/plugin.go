@@ -52,6 +52,7 @@ type Config struct {
 
 type Plugin struct {
 	configBytes []byte
+	config      Config
 }
 
 func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
@@ -59,6 +60,12 @@ func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
 		return err
 	}
 	p.configBytes = req.Config
+
+	if len(p.configBytes) > 0 {
+		if err := plugin.LoadYAMLConfig(p.configBytes, &p.config); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -73,7 +80,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 	}
 
 	if capsuleHasIngress(req) {
-		if !ingressIsSupported(config) {
+		if !ingressIsSupported(p.config) {
 			return errors.New("ingress is not supported. Either disable TLS or set a cluster issuer")
 		}
 
