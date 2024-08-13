@@ -148,20 +148,22 @@ func onCertificateRequestUpdated(
 	return status
 }
 
-func onIngressUpdated(
+func (p *Plugin) onIngressUpdated(
 	obj client.Object,
 	events []*corev1.Event,
 	objectWatcher plugin.ObjectWatcher,
 ) *apipipeline.ObjectStatusInfo {
 	ingress := obj.(*netv1.Ingress)
 
-	objectWatcher.WatchSecondaryByLabels(labels.Set{
-		pipeline.LabelOwnedByCapsule: ingress.GetLabels()[pipeline.LabelOwnedByCapsule],
-	}.AsSelector(), &cmv1.Certificate{}, onCertificateUpdated)
+	if !p.config.DisableTLS {
+		objectWatcher.WatchSecondaryByLabels(labels.Set{
+			pipeline.LabelOwnedByCapsule: ingress.GetLabels()[pipeline.LabelOwnedByCapsule],
+		}.AsSelector(), &cmv1.Certificate{}, onCertificateUpdated)
+	}
 
 	return toIngressStatus(ingress)
 }
 
 func (p *Plugin) WatchObjectStatus(ctx context.Context, watcher plugin.CapsuleWatcher) error {
-	return watcher.WatchPrimary(ctx, &netv1.Ingress{}, onIngressUpdated)
+	return watcher.WatchPrimary(ctx, &netv1.Ingress{}, p.onIngressUpdated)
 }
