@@ -155,6 +155,11 @@ var CapsuleActionMap = map[string]string{
 	capsuleconnect.ServiceListProposalsProcedure:            ActionCapsuleView,
 	capsuleconnect.ServiceListSetProposalsProcedure:         ActionCapsuleView,
 	capsuleconnect.ServicePortForwardProcedure:              ActionCapsulePortForward,
+	capsuleconnect.ServiceListPipelineStatusesProcedure:     ActionCapsuleView,
+	capsuleconnect.ServiceGetPipelineStatusProcedure:        ActionCapsuleView,
+	capsuleconnect.ServiceAbortPipelineProcedure:            ActionCapsuleDeploy,
+	capsuleconnect.ServiceProgressPipelineProcedure:         ActionCapsuleDeploy,
+	capsuleconnect.ServiceStartPipelineProcedure:            ActionCapsuleDeploy,
 }
 
 var UserActionMap = map[string]string{
@@ -186,15 +191,16 @@ var ServiceAccountActionMap = map[string]string{
 }
 
 var ProjectActionMap = map[string]string{
-	projectconnect.ServiceCreateProcedure:                  ActionProjectEdit,
-	projectconnect.ServiceDeleteProcedure:                  ActionProjectEdit,
-	projectconnect.ServiceGetProcedure:                     ActionProjectView,
-	projectconnect.ServiceGetCustomObjectMetricsProcedure:  ActionProjectView,
-	projectconnect.ServiceGetObjectsByKindProcedure:        ActionProjectView,
-	projectconnect.ServiceListProcedure:                    ActionProjectView,
-	projectconnect.ServicePublicKeyProcedure:               ActionProjectView,
-	projectconnect.ServiceUpdateProcedure:                  ActionProjectEdit,
-	projectconnect.ServiceGetEffectiveGitSettingsProcedure: ActionProjectEdit,
+	projectconnect.ServiceCreateProcedure:                       ActionProjectEdit,
+	projectconnect.ServiceDeleteProcedure:                       ActionProjectEdit,
+	projectconnect.ServiceGetProcedure:                          ActionProjectView,
+	projectconnect.ServiceGetCustomObjectMetricsProcedure:       ActionProjectView,
+	projectconnect.ServiceGetObjectsByKindProcedure:             ActionProjectView,
+	projectconnect.ServiceListProcedure:                         ActionProjectView,
+	projectconnect.ServicePublicKeyProcedure:                    ActionProjectView,
+	projectconnect.ServiceGetEffectiveGitSettingsProcedure:      ActionProjectView,
+	projectconnect.ServiceGetEffectivePipelineSettingsProcedure: ActionProjectView,
+	projectconnect.ServiceUpdateProcedure:                       ActionProjectEdit,
 }
 
 var ClusterActionMap = map[string]string{
