@@ -5,6 +5,7 @@ package service_account
 
 import (
 	"context"
+	"maps"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/controller/plugin"
@@ -24,6 +25,13 @@ type Config struct {
 	// Name of the service-account to generated. Supports templating, e.g.
 	//	`{{ .capsule.metadata.name }}-svcacc`
 	Name string `json:"name"`
+
+	// UseExisting will, if enabled, skip the creation of the service-account but
+	// instead assume one is already configured.
+	UseExisting bool `json:"useExisting"`
+
+	// Annotations to be added to all service accounts created.
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type Plugin struct {
@@ -52,9 +60,11 @@ func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hc
 		name = req.Capsule().Name
 	}
 
-	sa := p.createServiceAccount(req, name)
-	if err := req.Set(sa); err != nil {
-		return err
+	if !config.UseExisting {
+		sa := p.createServiceAccount(req, name, config.Annotations)
+		if err := req.Set(sa); err != nil {
+			return err
+		}
 	}
 
 	deploy := &appsv1.Deployment{}
@@ -67,15 +77,18 @@ func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hc
 	return req.Set(deploy)
 }
 
-func (s *Plugin) createServiceAccount(req pipeline.CapsuleRequest, name string) *corev1.ServiceAccount {
+func (s *Plugin) createServiceAccount(
+	req pipeline.CapsuleRequest, name string, annotations map[string]string,
+) *corev1.ServiceAccount {
 	sa := &corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ServiceAccount",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: req.Capsule().Namespace,
+			Name:        name,
+			Namespace:   req.Capsule().Namespace,
+			Annotations: maps.Clone(annotations),
 		},
 	}
 
