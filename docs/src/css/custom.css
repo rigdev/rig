@@ -242,3 +242,8 @@ html[data-theme="dark"] .header-github-link:before {
 .card {
   text-decoration: unset;
 }
+
+.navbar__inner {
+  margin: 0 auto;
+  max-width: var(--doc-content-width);
+}

@@ -1,20 +1,20 @@
 .docMainContainer {
   display: flex;
-  width: 100%;
+  max-width: var(--doc-content-width);
 }
 
-@media (min-width: 997px) {
+@media (min-width: 1400px) {
   .docMainContainer {
     flex-grow: 1;
-    max-width: calc(100% - var(--doc-sidebar-width));
+    width: calc(var(--doc-content-width) - var(--doc-sidebar-width));
   }
 
   .docMainContainerEnhanced {
-    max-width: calc(100% - var(--doc-sidebar-hidden-width));
+    width: calc(var(--doc-content-width) - var(--doc-sidebar-hidden-width));
   }
 
   .docItemWrapperEnhanced {
-    max-width: calc(
+    width: calc(
       var(--ifm-container-width) + var(--doc-sidebar-width)
     ) !important;
   }

@@ -2,7 +2,7 @@ import React from 'react';
 import {translate} from '@docusaurus/Translate';
 import IconArrow from '@theme/Icon/Arrow';
 import styles from './styles.module.css';
-export default function DocPageLayoutSidebarExpandButton({toggleSidebar}) {
+export default function DocRootLayoutSidebarExpandButton({toggleSidebar}) {
   return (
     <div
       className={styles.expandButton}

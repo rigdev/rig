@@ -14,21 +14,25 @@
     "write-heading-ids": "docusaurus write-heading-ids"
   },
   "dependencies": {
-    "@docusaurus/core": "^3.2.0",
-    "@docusaurus/plugin-content-docs": "^3.2.0",
-    "@docusaurus/plugin-google-gtag": "^3.2.0",
-    "@docusaurus/plugin-google-tag-manager": "^3.2.0",
-    "@docusaurus/preset-classic": "^3.2.0",
-    "@docusaurus/theme-common": "^3.2.0",
+    "@docusaurus/core": "^3.5.2",
+    "@docusaurus/plugin-content-docs": "^3.5.2",
+    "@docusaurus/plugin-google-gtag": "^3.5.2",
+    "@docusaurus/plugin-google-tag-manager": "^3.5.2",
+    "@docusaurus/preset-classic": "^3.5.2",
+    "@docusaurus/theme-common": "^3.5.2",
     "prism-react-renderer": "^2.3.1",
-    "react-icons": "^5.0.1",
+    "react-icons": "^5.3.0",
     "react-modal-image": "^2.6.0",
     "react-transition-group": "^4.4.5",
-    "react-uuid": "^2.0.0"
+    "react-uuid": "^2.0.0",
+    "react": "^18.0.0",
+    "@mdx-js/react": "^3.0.0",
+    "react-dom": "^18.0.0",
+    "clsx": "^2.0.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "^3.2.0",
-    "prettier": "3.0.3"
+    "@docusaurus/module-type-aliases": "^3.5.2",
+    "prettier": "3.3.3"
   },
   "browserslist": {
     "production": [

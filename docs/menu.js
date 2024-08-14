@@ -25,6 +25,12 @@ const sidebars = {
 
   homepage: [
     {
+      type: "html",
+      value: "Overview",
+      className: "homepage-sidebar-divider",
+    },
+
+    {
       type: "category",
       label: "Getting Started",
       className: "homepage-sidebar-item",
@@ -557,6 +563,31 @@ const sidebars = {
         }
       ],
     },
+    /*
+    {
+      type: "html",
+      value: "Cloud Providers",
+      className: "homepage-sidebar-divider",
+    },
+    {
+      type: "doc",
+      id: "additional-links",
+      label: "Google Kubernetes Engine",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiLink",
+      },
+    },
+    {
+      type: "doc",
+      id: "additional-links",
+      label: "AWS EKS",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiLink",
+      },
+    },
+*/
     {
       type: "html",
       value: "Additional Resources",
