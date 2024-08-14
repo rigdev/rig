@@ -4,11 +4,11 @@ import TabItem from "@theme/TabItem";
 
 # Container Settings
 
-All the configuration of how a Container is executed within a Capsule, is managed from the Settings page.
+All the configuration of how a Container is executed within a Capsule, is managed in the [configration modal](capsules#configuring-a-capsule).
 
-## Environment Variables
+## Environment Variables & Environment Sources
 
-Basic environment variables can be added to the Capsule.
+Basic environment variables can be added to the Capsule or alternatively they can be sourced from an existing config map or secret using environment sources.
 
 <Tabs>
   <TabItem value="dashboard" label="Dashboard">
@@ -25,4 +25,25 @@ Basic environment variables can be added to the Capsule.
   </TabItem>
 </Tabs>
 
-When Saved, the environment is deployed to the Capsule.
+When deployed, the environment is deployed to the Capsule.
+
+## Command & Arguments
+
+The command and arguments of the container can be found in the advanced tab. The command is the executable that is run when the container starts, and the arguments are the parameters passed to the command.
+
+<Tabs>
+  <TabItem value="dashboard" label="Dashboard">
+    <ThemedImage
+      alt="Environment Variables settings"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/container-settings/advanced.png",
+        dark: "/img/dashboard/platform/container-settings/advanced.png",
+      }}
+    />
+  </TabItem>
+</Tabs>
+
+

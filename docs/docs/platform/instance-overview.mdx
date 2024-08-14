@@ -1,6 +1,11 @@
+import ThemedImage from "@theme/ThemedImage";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
 # Instance Overview
 
-Rig offers inspection into the state and control of each instance of your capsule. In particular Rig enables 
+In addition to the at-a-glance overview of the instances at the [Capsule Overview](capsules#capsule-overview),
+Rig offers inspection into the state and control of each instance of your capsule - even terminated ones. In particular Rig enables 
 - Rich instance state overview
 - Log inspection
 - Remote (interactive) shell execution
@@ -8,4 +13,65 @@ Rig offers inspection into the state and control of each instance of your capsul
 
 The Rig dashboard shows an overview of the instance state and lifecycle
 
-![Instance Status Page](/img/platform/instance_status.png)
+<Tabs>
+  <TabItem value="overview" label="Overview">
+    <ThemedImage
+      alt="Instance Overview"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/instance/overview.png",
+        dark: "/img/dashboard/platform/instance/overview.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="Terminated" label="Termianted">
+    <ThemedImage
+      alt="Terminated Instance Overview"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/instance/terminated-overview.png",
+        dark: "/img/dashboard/platform/instance/terminated-overview.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="Status" label="Status">
+    <ThemedImage
+      alt="Instance Status"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/instance/status.png",
+        dark: "/img/dashboard/platform/instance/status.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="logs" label="Logs">
+    <ThemedImage
+      alt="Instance Status"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/instance/logs.png",
+        dark: "/img/dashboard/platform/instance/logs.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="shell" label="Shell">
+    <ThemedImage
+      alt="Instance Shell"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/instance/shell.png",
+        dark: "/img/dashboard/platform/instance/shell.png",
+      }}
+    />
+  </TabItem>
+</Tabs>

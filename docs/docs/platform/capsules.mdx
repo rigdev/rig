@@ -1,0 +1,104 @@
+---
+sidebar_position: 1
+hide_table_of_contents: false
+hide_title: true
+---
+import ThemedImage from "@theme/ThemedImage";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+<br />
+
+![Capsules](/img/banners/capsules-banner.png "Capsules")
+
+Rig comes with a deployment engine that wraps resources in what we call _Capsules_. This is our top level abstraction, and the main way you will interact with Rig.
+Each capsule specifies (in most cases) a single service, and handles the creation and configuration of the kubernetes reasources needed to deploy and run it.
+
+In short, a capsule contains:
+- _Images_ as an immutable references of container images.
+- Kubernetes resources, such as deployments, services, config maps, secrets etc. used to run the capsule.
+- A complete history of changes made to the capsule, and the ability to rollback to any previous state.
+- An event log of the state of capsules and the their instances.
+- An autoscaler to ensure that the capsule is scaled to the required number of replicas.
+- Cron jobs executed on the capsule.
+
+To see the complete specification of a capsule, see the [Capsule Spec](/operator-manual/crd-operator).
+
+## Capsule Overview
+For each capsule, Rig platform provides a simple and intuitive overview of all the resources belonging to the capsule, 
+the status of these, and how they compare with the configuration of the capsule. This enables you to quickly get a grasp of the state of the capsule, and identify any issues.
+
+<Tabs>
+  <TabItem value="dashboard" label="Dashboard">
+    <ThemedImage
+      alt="Capsule Status Overview"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/capsule-status/capsule-status.png",
+        dark: "/img/dashboard/platform/capsule-status/capsule-status.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="CLI" label="CLI">
+    <ThemedImage
+      alt="Capsule Status Overview"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/cli/capsule/capsule-status.png",
+        dark: "/img/cli/capsule/capsule-status.png",
+      }}
+    />
+  </TabItem>
+</Tabs>
+
+## Configuring a Capsule
+To configure a capsule, simply press the `Configure` button in the capsule overview. This will open the capsule configuration modal, 
+in which you can edit all the properties of the capsule. Any changes made can be validated by inspecting the resulting changes made 
+to the underlying _Platform_ and _Kubernetes_ resources. The changes are only applied to the capsule when you press the `Deploy Now`
+button which results in a [Rollout](/platform/rollouts).
+
+<Tabs>
+  <TabItem value="dashboard" label="Dashboard">
+    <ThemedImage
+      alt="Capsule Configure Overview"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/capsule-config/config-overview.png",
+        dark: "/img/dashboard/platform/capsule-config/config-overview.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="Platform Diff" label="Platform Diff">
+    <ThemedImage
+      alt="Platform Diff"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/capsule-config/platform-diff.png",
+        dark: "/img/dashboard/platform/capsule-config/platform-diff.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="K8s Diff" label="K8s Diff">
+    <ThemedImage
+      alt="K8s Diff"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/capsule-config/kubernetes-diff.png",
+        dark: "/img/dashboard/platform/capsule-config/kubernetes-diff.png",
+      }}
+    />
+  </TabItem>
+</Tabs>
+
+
+
