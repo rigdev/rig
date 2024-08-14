@@ -1,10 +1,9 @@
 import React from 'react';
 import clsx from 'clsx';
 import {ThemeClassNames} from '@docusaurus/theme-common';
-import {useDoc} from '@docusaurus/theme-common/internal';
+import {useDoc} from '@docusaurus/plugin-content-docs/client';
 import Heading from '@theme/Heading';
 import MDXContent from '@theme/MDXContent';
-
 /**
  Title can be declared inside md content or declared through
  front matter and added manually. To make both cases consistent,
@@ -33,11 +32,7 @@ export default function DocItemContent({children}) {
           <Heading as="h1">{syntheticTitle}</Heading>
         </header>
       )}
-      <MDXContent>
-          <div className='docOverview'>
-            {children}
-          </div>
-      </MDXContent>
+      <MDXContent>{children}</MDXContent>
     </div>
   );
 }

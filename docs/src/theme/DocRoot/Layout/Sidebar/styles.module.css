@@ -1,5 +1,6 @@
 :root {
   --doc-sidebar-width: 300px;
+  --doc-content-width: 1400px;
   --doc-sidebar-hidden-width: 30px;
 }
 

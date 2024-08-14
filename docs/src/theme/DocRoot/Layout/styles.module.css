@@ -1,10 +1,10 @@
-.docPage {
+.docRoot {
   display: flex;
   width: 100%;
-  flex: 1 0;
 }
 
 .docsWrapper {
-  display: flex;
+  display: inline-block;
   flex: 1 0 auto;
+  margin: 0 auto;
 }
