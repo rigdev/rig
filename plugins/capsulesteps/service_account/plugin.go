@@ -9,10 +9,12 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/rigdev/rig/pkg/controller/plugin"
+	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -27,7 +29,7 @@ type Config struct {
 	Name string `json:"name"`
 
 	// UseExisting will, if enabled, skip the creation of the service-account but
-	// instead assume one is already configured.
+	// instead use an existing one, if it exists.
 	UseExisting bool `json:"useExisting"`
 
 	// Annotations to be added to all service accounts created.
@@ -60,11 +62,27 @@ func (p *Plugin) Run(ctx context.Context, req pipeline.CapsuleRequest, logger hc
 		name = req.Capsule().Name
 	}
 
-	if !config.UseExisting {
-		sa := p.createServiceAccount(req, name, config.Annotations)
+	var sa *corev1.ServiceAccount
+	if config.UseExisting {
+		sa = &corev1.ServiceAccount{}
+		if err := errors.FromK8sClient(req.Reader().Get(ctx, types.NamespacedName{
+			Namespace: req.Capsule().Namespace,
+			Name:      name,
+		}, sa)); errors.IsNotFound(err) {
+			sa = nil
+		} else if err != nil {
+			return err
+		}
+	} else {
+		sa = p.createServiceAccount(req, name, config.Annotations)
+
 		if err := req.Set(sa); err != nil {
 			return err
 		}
+	}
+
+	if sa == nil {
+		return nil
 	}
 
 	deploy := &appsv1.Deployment{}
