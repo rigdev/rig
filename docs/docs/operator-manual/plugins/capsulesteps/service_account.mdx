@@ -10,7 +10,7 @@ Configuration for the deployment plugin
 | Field | Description |
 | --- | --- |
 | `name` _string_ | Name of the service-account to generated. Supports templating, e.g. `{{ .capsule.metadata.name }}-svcacc` |
-| `useExisting` _boolean_ | UseExisting will, if enabled, skip the creation of the service-account but instead assume one is already configured. |
+| `useExisting` _boolean_ | UseExisting will, if enabled, skip the creation of the service-account but instead use an existing one, if it exists. |
 | `annotations` _object (keys:string, values:string)_ | Annotations to be added to all service accounts created. |
 
 
