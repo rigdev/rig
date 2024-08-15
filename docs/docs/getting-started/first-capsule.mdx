@@ -1,12 +1,8 @@
-# Deploy your first capsule
+# Deploy your First Capsule
 
-Now that you have a configured Rig platform up and running, and you have installed the CLI, you are ready to deploy your first capsule. This will be a short introduction to capsules, and how to deploy a containerized application to Rig using the CLI.
-
-## What is a capsule?
-
-In Rig a capsule encapsulates (😉) a collection of resources on Rig, that is used to manage and run an application.
-Capsules contain images, which hold information on how to deploy the application: which container image to use, git repository, etc.
-Capsules then contain rollouts, which are deployments of a image to a specific environment and network network configuration. Rollouts are immutable and are used to manage the lifecycle of the application. This means that when the deployed image is updated, the number of replicas is changed or when a different environment or network configuration is used, a new rollout is automatically created.
+Now that you have a configured Rig platform up and running, and you have installed the CLI, you are ready to deploy your first capsule. 
+This will be a short introruction on how to deploy a containerized application to Rig using the CLI. 
+Please refer to the [Capsules Page](../../platform/capsules), if you wish to dive deeper into the concept of capsules and how to interact with them in the dashboard.
 
 ## Deploy Nginx in a Rig Capsule Using the CLI
 
@@ -15,80 +11,51 @@ This guide will take you through the process of deploying an Nginx Server to Rig
 ### Create a capsule
 
 ```bash
-rig capsule create -c nginx-capsule
+rig capsule create nginx-capsule
 ```
 
 This will create an empty capsule called `nginx-capsule` with no additional resources. We can verify that the capsule was created by running:
 
-```bash
-rig capsule get
-```
+### Add and deploy an image
 
-This will list all capsules in the current project, where you should see the capsule you just created.
-
-### Create a image
-
-Next, we need to create a image with the Nginx image for the capsule. This is done using the following command:
+Next, we need to add and deploy the Nginx image to the capsule. This is done using the following command:
 
 ```bash
-rig capsule -c nginx-capsule image add --image nginx:latest
+rig deploy nginx-capsule --image nginx:latest
 ```
 
 Note that if you are on an arm chip, you should the arm version of the image, 'arm64v8/nginx:latest'.
 
-From the command, we should see an output similar to: `Added new image: <image-id>`
+This will add the nginx image to the capsule, and immediately deploy it in a rollout, for which we can follow the progress in the terminal.
 
-We can verify that the image was created by running:
-
-```bash
-rig capsule -c nginx-capsule image get
-```
-
-This will list all images for the capsule, where you should see the image you just created.
-
-### Deploy the image
-
-Now that we have a image, we can deploy it in the nginx-capsule. This is done using the command:
+If you wish to add images without deploying them making them available for future use, you can use the following command:
 
 ```bash
-rig capsule -c nginx-capsule deploy --image-id <image-id>
+rig capsule image add nginx-capsule --image nginx:latest
 ```
 
-Where `<image-id>` is the id of the image you just created. This will create a rollout for the image, and deploy it with the default configuration. We can verify that the rollout was create by running:
+This will simply save a reference of the image digest in the capsule.
+
+If you wish to dive deeper in the the status of the capsule, you can run:
 
 ```bash
-rig capsule -c nginx-capsule rollout get
+rig capsule status nginx-capsule -v
 ```
 
-This will list all rollouts for the capsule, where you should see one for the deployment you just initiated.
-
-if you run Rig in Kubernetes, you can run
-
-```bash
-kubectl get pods -n <project-id>
-```
-
-to see the Nginx pod running.
-
-We can also shortcut the creation of image and deployment by simply supplying the deploy command with the same image. This wil automatically create a corresponding image and deploy it. This can be done by running:
-
-```bash
-rig capsule -c nginx-capsule deploy -i nginx:latest
-```
+which will give you a detailed overview of the capsule and all its running resources.
 
 ### Scale the capsule
 
-Now that we have a running deployment, we can scale the number of replicas. This is done using the command:
+Now that we have a running capsule, we can scale for example scaling the number of replicas. This is also done using the deploy command:
 
 ```bash
-rig capsule -c nginx-capsule scale horizontal --replicas 3
+rig deploy nginx-capsule --replicas 3
 ```
 
-This will create a new rollout with the updated number of replicas. In order to verify this, you can run the previous commands to see the new changes reflected in the rollout and the pods/containers.
+This will create a new rollout with the updated number of replicas. In order to verify this, you can run the previous commands to see the new changes reflected in the capsule status.
 
 ### Set Static Content
-
-Instead of the default content, we can mount a config file to the container. This is done by creating an `index.html` file with some content, for example:
+Instead of the default content, we can mount a config file in the capsule. This is done by creating an `index.html` file with some content, for example:
 
 ```html
 <html>
@@ -99,42 +66,46 @@ Instead of the default content, we can mount a config file to the container. Thi
 ```
 
 and then running the following command:
-
 ```bash
-rig capsule -c nginx-capsule mount set --src index.html --dst /usr/share/nginx/html/index.html
+rig deploy nginx-capsule --set-config-file path=/usr/share/nginx/html/index.html,src=index.html
 ```
+where path is the path in the container and src is the path to the file on your local machine.
 
 ### Configure the network
 
-In order to expose the Nginx server to the public internet, we need to configure the network. This is done by creating a `network.yaml` file, for example with the following content:
+In order for the Nginx server to receive traffic, we need to configure the network. This is done by creating a `network.yaml` file, for example with the following content:
 
 ```yaml
-interfaces:
-  - name: http
-    port: 80
-    public:
-      enabled: true
-      method:
-        load_balancer:
-          port: 8081
+name: http
+port: 80
 ```
 
 and then running the following command:
 
 ```bash
-rig capsule -c nginx-capsule network configure network.yaml
+rig deploy nginx-capsule --set-network-interface network.yaml
 ```
 
-This will create a new rollout with the updated network configuration. Now open your favorite browser and navigate to [http://localhost:8081](http://localhost:8081) to see the Nginx server running. Well done, you have created and deployed and exposed your first capsule to Rig! 🎉
+This will create a new rollout with the updated network configuration.
+
+### Access the Nginx server
+
+Now, the capsule nginx server can only receive traffic from inside the cluster. We can however easily port-forward also using the rig-cli:
+
+```bash
+rig capsule port-forward nginx-capsule 8080:http
+```
+
+
+Now open your favorite browser and navigate to [http://localhost:8080](http://localhost:8080) to see the Nginx server running. Well done, you have created, deployed and exposed your first capsule using Rig! 🎉
 
 ### Shortcut
 
-The above guide executed every step of the process in each command explicitly. However, the CLI provides a shortcut for created, deploying and configuring the capsule in one command. This above could be achieved by running the following command:
+The above guide executed every step of the process in each command explicitly. All the flags, can however be combined, and if you deploy to a non-existing capsule,
+the capsule will be created automatically. This means that the process above can be shortened to:
 
 ```bash
-rig capsule create -c nginx-capsule --interactive
+rig deploy nginx-capsule -i nginx -r 3 --set-network-interface network.yaml --set-config-file path=/usr/share/nginx/html/index.html,src=index.html
 ```
 
-Which will take you through the process of creating a capsule, adding an image, configuring the network, setting the number of replicas and then deploying the capsule.
-
-## Deploy Nginx in a Rig Capsule using the Dashboard
+Which will create a new capsule, add the image, scale it to 3 replicas, set the network interface and mount the config file.

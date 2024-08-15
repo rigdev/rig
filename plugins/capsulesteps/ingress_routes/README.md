@@ -18,6 +18,14 @@ config:
           my-annotation: "my-value"
 ```
 
+## ALB Ingress Controller
+If using The ALB Ingress Controller with `target-type=instance`, an additional service with the suffix `alb` is automatically created. This is done as the traffic is routed to NodePorts and then proxied to the pods. `instance` is The default type, but can be changed to `ip` if the annotation `alb.ingress.kubernetes.io/target-type: ip` is set.
+
+## Nginx Ingress Controller
+When using the Nginx Ingress Controller, it is possible to use rewrite-targets. This is done by setting the annotation `nginx.ingress.kubernetes.io/rewrite-target: /` to the desired URI.
+
+If the path-type is set to `RegularExpression`, the annotation `nginx.ingress.kubernetes.io/use-regex: "true"` is automatically set.
+
 ## Config
 
 
