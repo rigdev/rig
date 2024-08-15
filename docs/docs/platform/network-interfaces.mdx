@@ -1,30 +1,63 @@
+import ThemedImage from "@theme/ThemedImage";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
 # Network Interfaces
 
 A container can expose multiple ports, each of them allowing a unique set of traffic. To expose these ports into Kubernetes, a Network Interface must be created - one per port.
 
-The Network Interface allows for configuring additional behavior, such as if the network should be publicly available and health checks.
+The Network Interface allows for configuring additional behavior, such as if the network should be publicly available through Routes and liveness and readiness checks.
 
-## Public Interface
+<Tabs>
+  <TabItem value="dashboard" label="Dashboard">
+    <ThemedImage
+      alt="Configure Network interfaces Dashboard"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/network/interface-and-healthchecks.png",
+        dark: "/img/dashboard/platform/network/interface-and-healthchecks.png",
+      }}
+    />
+  </TabItem>
+</Tabs>
 
-If a Network Interface is marked as public, external traffic will be routed to the interface, and thus the container port configured.
+## Routes
 
-When exposing an interface to the internet, it's important to consider how the external traffic is processed, as exposing interfaces publicly can result in security issues.
+To make the network interface publicly available, the interface must have a Route attached to it. A Route is simply an interface that specifies how the network interface should be exposed to the outside world
+and can be implemented using [plugins](/operator-manual/setup-guide/operator/plugins). A default [Route-Plugin](/operator-manual/setup-guide/operator/networking) is provided, which exposes the interface using an Ingress.
 
-There are two ways in Kubernetes to expose Network Interfaces, either as a Load Balancer or as an Ingress.
+To configure a _Route_ simply press `Add Host`, and specify the hostname that the interface should be exposed on.
+Additionally one or more paths can be specified, which will be matched against incoming requests. These can either be exact, prefix or regexp matches.
 
-### Ingress
-
-An Ingress is a _managed_ load balancer, that accepts HTTPS traffic only. When configuring, one thus has to select which DNS host address the interface should be exposed as.
-
-The Ingress handles the termination of the TLS connection, meaning the request is forwarded to the interface as plain HTTP traffic.
+<Tabs>
+  <TabItem value="Host" label="Host">
+    <ThemedImage
+      alt="Configure Route Hosts"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/network/edit-host.png",
+        dark: "/img/dashboard/platform/network/edit-host.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="Paths" label="Paths">
+    <ThemedImage
+      alt="Configure Route Paths"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/network/edit-path.png",
+        dark: "/img/dashboard/platform/network/edit-path.png",
+      }}
+    />
+  </TabItem>
+</Tabs>
 
 :::info Prerequisites
-Make sure you have an Ingress and Certificate manager configured.
+Make sure you have the [Route-Plugin](/operator-manual/setup-guide/operator/networking) configured in the operator.
 :::
-
-### Load Balancer
-
-A Load Balancer is a raw TCP forwarding of traffic, to the interface. This means it can support any protocol running on top of TCP.
-It also means that the Capsule itself must deal with encryption, security and certificates, depending on the protocol being implemented.
-
-Using a Load Balancer is disencouraged in favor of an Ingress, when the HTTPS protocol is used.

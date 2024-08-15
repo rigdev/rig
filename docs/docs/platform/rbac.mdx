@@ -1,3 +1,5 @@
+import ThemedImage from "@theme/ThemedImage";
+
 # Role Based Access Control
 
 For granular access control, Rig offers Role Based Access Control (RBAC), with four predefined roles,
@@ -13,19 +15,38 @@ For a more detailed view of the permissions for each role, see the [Role Permiss
 
 ## Manage Users
 
-To manage users, you must be logged in as an Owner or an Admin, navigate to the 'Settings'-tab, and then click the 'Team'-page.
+To manage users, you must be logged in as an Owner or an Admin, navigate to the outermost Settings-tab, and then click the 'Team'-page.
 
 ### Add user
 
 To add a user, click the '+ Add member'-button, and enter the email address, a temporary password, and the role you want to assign to the user.
 
-![Dashboard Add Member](/img/rbac/add-member.png)
+
+<ThemedImage
+  alt="Dashboard Service Account Image"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/dashboard/platform/rbac/add-member.png",
+    dark: "/img/dashboard/platform/rbac/add-member.png",
+  }}
+/>
 
 ### Assign role
 
 To add a different role to an existing user, simply open the dropdown on the user and select the role you want to assign.
 
-![Dashboard Assign Role](/img/rbac/assign-role.png)
+<ThemedImage
+  alt="Dashboard Service Account Image"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/dashboard/platform/rbac/assign-role.png",
+    dark: "/img/dashboard/platform/rbac/assign-role.png",
+  }}
+/>
 
 
 ## Role Permissions

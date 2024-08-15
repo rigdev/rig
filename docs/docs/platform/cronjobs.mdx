@@ -1,3 +1,8 @@
+import ThemedImage from "@theme/ThemedImage";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+
 # Cron Jobs
 You can attach [cron jobs](https://en.wikipedia.org/wiki/Cron) to a capsule to execute jobs at a user-defined schedule. We support two different kinds of jobs, *bash jobs* and *http jobs*. A bash job spins up a new instance of your capsule whenever it needs to execute a job, runs a job-defined command and then stops the instance. These are good for longer running jobs.
 
@@ -9,15 +14,51 @@ A bash job will be retried if the instance exits with a non-zero exit code and a
 
 You can also specify a max total duration. This limits how long a job execution can live (including all retries) until being terminated. If no max duration is specified, a job execution can potentially run indefinitely if it never exits. In this case, multiple job executions for the same job can run concurrently.
 
-## CLI
-Jobs can be added through the CLI running
-```bash
-rig capsule jobs add
-```
-and a history of past executions seen running
-```
-rig capsule jobs executions
-```
+
+## Adding an Viewing Jobs
+
+Jobs can be added either through the CLI or the Dashboard
+<Tabs>
+  <TabItem value="dashboard" label="Dashboard">
+     <ThemedImage
+      alt="Environment Variables settings"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/cronjobs/create.png",
+        dark: "/img/dashboard/platform/cronjobs/create.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+    ```bash
+    rig capsule jobs add
+    ```
+  </TabItem>
+</Tabs>
+
+and a history of past executions can be viewed
+
+<Tabs>
+  <TabItem value="dashboard" label="Dashboard">
+     <ThemedImage
+      alt="Environment Variables settings"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/dashboard/platform/cronjobs/list-executions.png",
+        dark: "/img/dashboard/platform/cronjobs/list-executions.png",
+      }}
+    />
+  </TabItem>
+  <TabItem value="cli" label="CLI">
+    ```bash
+    rig capsule jobs add
+    ```
+  </TabItem>
+</Tabs>
 
 ## Under The Hood
 Under the hood, the Rig operator spawns Kubernetes [CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/) which in turn spawns [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/). For bash jobs, the spawned Job is an instance of your Capsule, and for HTTP jobs it's a lightweight pod using curl to make a request to your capsule. 

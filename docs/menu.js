@@ -77,7 +77,7 @@ const sidebars = {
     {
       type: "doc",
       label: "Capsules",
-      id: "capsules",
+      id: "platform/capsules",
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "BiCapsule",
