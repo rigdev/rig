@@ -87,7 +87,7 @@ const sidebars = {
         id: "guides",
       },
       customProps: {
-        sidebar_icon: "BiBeer",
+        sidebar_icon: "BiCoffee",
       },
       collapsed: false,
       items: [
@@ -96,6 +96,9 @@ const sidebars = {
           id: "guides/argocd",
           label: "GitOps using Argo CD",
           className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "SiArgo",
+          },
         },
 
       ],
