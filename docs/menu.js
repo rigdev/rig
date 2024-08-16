@@ -70,6 +70,42 @@ const sidebars = {
       ],
     },
     {
+      type: "doc",
+      id: "overview/architecture",
+      label: "Architecture",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiSolidLayout",
+      },
+    },
+    {
+      type: "category",
+      label: "Guides",
+      className: "homepage-sidebar-item",
+      link: {
+        type: "doc",
+        id: "guides",
+      },
+      customProps: {
+        sidebar_icon: "BiCoffee",
+      },
+      collapsed: false,
+      items: [
+        {
+          type: "doc",
+          id: "guides/argocd",
+          label: "GitOps using Argo CD",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "SiArgo",
+          },
+        },
+
+      ],
+    },
+
+
+    {
       type: "html",
       value: "Platform",
       className: "homepage-sidebar-divider",
@@ -327,15 +363,6 @@ const sidebars = {
           },
         },
       ],
-    },
-    {
-      type: "doc",
-      id: "operator-manual/architecture",
-      label: "Architecture",
-      className: "homepage-sidebar-item",
-      customProps: {
-        sidebar_icon: "BiSolidLayout",
-      },
     },
     {
       type: "doc",

@@ -1,0 +1,36 @@
+import ThemedImage from "@theme/ThemedImage";
+
+# Architecture
+
+Rig is a very customizable platform, that allows for a wide range of integrations. At the top, the _Rig Platform_ is connecting together high-level components such as CLI/Dashboard, CI/CD and other tooling, with the individual clusters.
+
+<ThemedImage
+  alt="Rig Platform Architecture"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/overview/platform_architecture_bg.svg",
+    dark: "/img/overview/platform_architecture_bg.svg",
+  }}
+/>
+
+Most of these integrations are configured directly in the Platform, either in the Dashboard/CLI or in the Helm configuration file.
+
+## Clusters Architecture
+
+For each cluster connected to the Rig Platform, the _Rig Operator_ must be installed. This is in charge of applying Capsules, running plugins and watching object status on behalf of the Platform.
+
+The plugins are run in the context of the Rig Operator, and allows for easy customization of the Capsule implementation, without the need for Helm. Additionally, the _online_ nature of the Rig Operator means
+that plugins are also continuously observing the Kubernetes Objects and Events for any state change.
+
+<ThemedImage
+  alt="Rig Cluster Architecture"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/overview/cluster_architecture.svg",
+    dark: "/img/overview/cluster_architecture.svg",
+  }}
+/>

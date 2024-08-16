@@ -1,0 +1,126 @@
+import ThemedImage from "@theme/ThemedImage";
+
+# GitOps using Argo CD
+
+When it comes to GitOps, Argo CD is an established approach for consuming Kubernetes objects from a Git repository.
+
+This guide is using the following repository as reference: https://github.com/rigdev/argocd-demo
+
+## Configuring Rig
+
+The Rig Platform will by default apply the Kubernetes objects directly through the Kubernetes API. However, for a GitOps setup, this behavior can be changed.
+The first step is thus to follow the guide [here](/operator-manual/gitops#gitops-for-rig-platform-resource-changes) to write the changes to your Git repository instead of Kubernetes directly.
+
+When configuring the cluster, here is an example of using our GitHub repository:
+
+```yaml title="Helm values - Platform"
+rig:
+  clusters:
+    my-cluster:
+      git:
+        url: https://github.com/rigdev/argocd-demo
+        branch: main
+        path_prefix: "apps/{{ .Cluster.Name }}/{{ .Project.Name }}/{{ .Capsule.Name }}/"
+```
+
+The `path_prefix` is a template for where Capsule-specific resources will be located - this will be important later when configuring Argo CD.
+
+:::info
+It's recommended to include the cluster-name in the `path_prefix` path, to allow your repository to be consumed by multiple cluster.
+:::
+
+## Setup Repo in Argo CD
+
+In Argo CD, using either the Dashboard, CLI or Kubernetes resources directly, configure you repository. It's recommended to configured it with GitHub webhooks, to accelerate
+the time from making changes until Argo CD picks them up. Without webhooks, the default delay is 3 minutes.
+
+<ThemedImage
+  alt="Configure Repo in Argo"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/guides/argo_repo.png",
+    dark: "/img/guides/argo_repo.png",
+  }}
+/>
+
+## Create Rig Application
+
+Next is to create an Application in Argo CD. The Application should be a "directory" type, that can consume raw Kubernetes manifests from a directory - in this case a directory in our repository.
+
+<ThemedImage
+  alt="Configure Application in Argo"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/guides/argo_new_app.png",
+    dark: "/img/guides/argo_new_app.png",
+  }}
+/>
+
+:::info
+It's also possible to utilize the Kustomize Application type, as described [here](https://argo-cd.readthedocs.io/en/stable/user-guide/kustomize/).
+:::
+
+The raw Application should look similar to this:
+
+```yaml title="Argo CD Application"
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rig
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  source:
+    path: apps/
+    repoURL: https://github.com/rigdev/argocd-demo.git
+    targetRevision: HEAD
+    directory:
+      recurse: true
+      include: '*'
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+```
+
+The path we are interested in, should match our `path_prefix` from above. Anything within this subpath will be included, and in our case that would
+indeed be anything designated `my-cluster` cluster.
+
+A few additional notes:
+- `recurse` enables recursive mode, which means all .yaml files in all sub-folders will be consumed.
+- `prune` is required to ensure Argo CD deletes resources, as they are deleted by the Rig Platform.
+
+
+With that in place, the Application should now be able to sync the repository and apply our Capsule resources.
+
+<ThemedImage
+  alt="Application Sync Status in Argo"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/guides/argo_sync.png",
+    dark: "/img/guides/argo_sync.png",
+  }}
+/>
+
+
+## Deploying from Rig
+
+As seen in the video below, changes to a Capsule are now stored in a git repository, that Argo CD are picking up and applying for you.
+
+
+<ThemedImage
+  alt="Application Sync Status in Argo"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/guides/argo_rig_deploy.gif",
+    dark: "/img/guides/argo_rig_deploy.gif",
+  }}
+/>
