@@ -88,7 +88,7 @@ spec:
 ```
 
 The path we are interested in, should match our `path_prefix` from above. Anything within this subpath will be included, and in our case that would
-indeed be anything designated the `my-cluster` cluster.
+indeed be anything designated `my-cluster` cluster.
 
 A few additional notes:
 - `recurse` enables recursive mode, which means all .yaml files in all sub-folders will be consumed.
@@ -105,5 +105,22 @@ With that in place, the Application should now be able to sync the repository an
   sources={{
     light: "/img/guides/argo_sync.png",
     dark: "/img/guides/argo_sync.png",
+  }}
+/>
+
+
+## Deploying from Rig
+
+As seen in the video below, changes to a Capsule are now stored in a git repository, that Argo CD are picking up and applying for you.
+
+
+<ThemedImage
+  alt="Application Sync Status in Argo"
+  customProps={{
+    zoom: true,
+  }}
+  sources={{
+    light: "/img/guides/argo_rig_deploy.gif",
+    dark: "/img/guides/argo_rig_deploy.gif",
   }}
 />
