@@ -19,10 +19,10 @@ Most of these integrations are configured directly in the Platform, either in th
 
 ## Clusters Architecture
 
-For each cluster connected to the Rig Platform, the _Rig Operator_ must be installed. This is in charge of apply Capsules, running plugins and watching object status on behalf of the Platform.
+For each cluster connected to the Rig Platform, the _Rig Operator_ must be installed. This is in charge of applying Capsules, running plugins and watching object status on behalf of the Platform.
 
 The plugins are run in the context of the Rig Operator, and allows for easy customization of the Capsule implementation, without the need for Helm. Additionally, the _online_ nature of the Rig Operator means
-that plugins are also continuously observe the Kubernetes Objects and Events for any state change.
+that plugins are also continuously observing the Kubernetes Objects and Events for any state change.
 
 <ThemedImage
   alt="Rig Cluster Architecture"
