@@ -118,7 +118,8 @@ dockerRegistries:
 {{- range $host, $registry := .dockerRegistries }}
   {{ $host | quote }}:
     username: {{ $registry.username | quote }}
-    email: {{ $registry.email | quote}}
+    script: {{ $registry.script | quote}}
+    expire: {{ $registry.expire | quote}}
 {{- end }}
 {{- end}}
 

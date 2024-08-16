@@ -121,7 +121,8 @@ rig:
   # registry1:
   #   username: ""
   #   password: ""
-  #   email: ""
+  #   script: ""
+  #   expire: ""
 
 # Name of secret containing configuration for rig-sever. Set this if you use a
 # special mechanism for generating secrets. If left unset, we will create the
