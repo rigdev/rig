@@ -215,6 +215,8 @@ postgres:
 useEnvForSecrets: false
 
 serviceAccount:
+  # If the service-account should be created or if it's already available in the cluster.
+  create: true
   # The name of the service account to use.
   # If not set, a name is generated using the fullname template
   name: ""
