@@ -20,7 +20,7 @@ rig:
       git:
         url: https://github.com/rigdev/argocd-demo
         branch: main
-        path_prefix: apps/{{ .Cluster.Name }}/{{ .Project.Name }}/{{ .Capsule.Name }}/
+        path_prefix: "apps/{{ .Cluster.Name }}/{{ .Project.Name }}/{{ .Capsule.Name }}/"
 ```
 
 The `path_prefix` is a template for where Capsule-specific resources will be located - this will be important later when configuring Argo CD.
@@ -59,6 +59,10 @@ Next is to create an Application in Argo CD. The Application should be a "direct
     dark: "/img/guides/argo_new_app.png",
   }}
 />
+
+:::info
+It's also possible to utilize the Kustomize Application type, as described [here](https://argo-cd.readthedocs.io/en/stable/user-guide/kustomize/).
+:::
 
 The raw Application should look similar to this:
 
