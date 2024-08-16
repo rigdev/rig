@@ -58,11 +58,11 @@ const config = {
   ],
   presets: [
     [
-      'classic',
+      '@docusaurus/preset-classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          sidebarPath: require.resolve('./menu.js'),
+          sidebarPath: './menu.js',
           // Please change this to your repo.
           editUrl: 'https://github.com/rigdev/rig/edit/main/docs/',
           showLastUpdateTime: true,
