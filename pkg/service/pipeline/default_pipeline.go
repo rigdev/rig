@@ -14,6 +14,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+const (
+	_serviceAccountPlatformConfig = `
+useExisting: true
+`
+)
+
 func (s *service) initializePipeline() error {
 	execCtx := plugin.NewExecutionContext(context.Background())
 
@@ -85,7 +91,7 @@ func GetDefaultPipelineSteps(
 	}
 
 	serviceAccountPlatformStep, err := NewRigPlatformCapsulePluginStep(
-		execCtx, service_account.Name, pluginManager, logger)
+		execCtx, service_account.Name, _serviceAccountPlatformConfig, pluginManager, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -170,6 +176,7 @@ func NewCapsulePluginStep(
 func NewRigPlatformCapsulePluginStep(
 	execCtx plugin.ExecutionContext,
 	pluginName string,
+	pluginConfig string,
 	pluginManager *plugin.Manager,
 	logger logr.Logger,
 ) (pipeline.Step[pipeline.CapsuleRequest], error) {
@@ -183,7 +190,8 @@ func NewRigPlatformCapsulePluginStep(
 			},
 			Plugins: []v1alpha1.Plugin{
 				{
-					Name: pluginName,
+					Name:   pluginName,
+					Config: pluginConfig,
 				},
 			},
 		}, logger)
