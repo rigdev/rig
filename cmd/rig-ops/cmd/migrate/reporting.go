@@ -6,8 +6,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/homeport/dyff/pkg/dyff"
+	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
-	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
 	"golang.org/x/exp/maps"
@@ -86,43 +86,35 @@ func (r *ReportSet) getDiffingReport(orig, proposal client.Object) (*dyff.Report
 // marshall the platform resources into kubernetes resources, and then compare them to the existing k8s resources
 func (c *Cmd) processPlatformOutput(
 	migratedResources *Resources,
-	platformResources map[string]string,
-) (*v1alpha2.Capsule, []*pipeline.Object, error) {
-	var capsule *v1alpha2.Capsule
-	objects := make([]*pipeline.Object, 0, len(platformResources))
-	for _, resource := range platformResources {
-		proposal, err := obj.DecodeAny([]byte(resource), c.Scheme)
+	outcome *capsule.DeployOutcome,
+) error {
+	for _, resource := range outcome.GetPlatformObjects() {
+		proposal, err := obj.DecodeAny([]byte(resource.GetContentYaml()), c.Scheme)
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 
 		if err := migratedResources.AddObject(proposal.GetObjectKind().GroupVersionKind().Kind,
-			proposal.GetName(),
+			resource.GetName(),
 			proposal); err != nil {
-			return nil, nil, err
-		}
-
-		if proposal.GetObjectKind().GroupVersionKind().Kind == "Capsule" {
-			capsule = &v1alpha2.Capsule{}
-			if err = obj.Decode([]byte(resource), capsule); err != nil {
-				return nil, nil, err
-			}
-		} else {
-			object := &pipeline.Object{
-				Gvk: &pipeline.GVK{
-					Group:   proposal.GetObjectKind().GroupVersionKind().Group,
-					Version: proposal.GetObjectKind().GroupVersionKind().Version,
-					Kind:    proposal.GetObjectKind().GroupVersionKind().Kind,
-				},
-				Name:    proposal.GetName(),
-				Content: resource,
-			}
-
-			objects = append(objects, object)
+			return err
 		}
 	}
 
-	return capsule, objects, nil
+	for _, out := range outcome.GetKubernetesObjects() {
+		proposal, err := obj.DecodeAny([]byte(out.GetContentYaml()), c.Scheme)
+		if err != nil {
+			return fmt.Errorf("error decoding object from operator: %v", err)
+		}
+
+		if err := migratedResources.AddObject(proposal.GetObjectKind().GroupVersionKind().Kind,
+			out.GetName(),
+			proposal); err != nil {
+			return fmt.Errorf("error adding 'migrated' object': %v", err)
+		}
+	}
+
+	return nil
 }
 
 func ProcessOperatorOutput(

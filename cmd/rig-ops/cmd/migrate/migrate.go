@@ -8,21 +8,19 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
-	"github.com/rigdev/rig-go-api/model"
-	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
-	"github.com/rigdev/rig-go-sdk"
+	rigAutoscalingv2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
+	"github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
-	"github.com/rigdev/rig/pkg/api/v1alpha2"
+	v1alpha2pkg "github.com/rigdev/rig/pkg/api/v1alpha2"
 	rerrors "github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/obj"
 	envmapping "github.com/rigdev/rig/plugins/builtin/env_mapping"
 	"github.com/rigdev/rig/plugins/capsulesteps/deployment"
 	"github.com/rigdev/rig/plugins/capsulesteps/ingress_routes"
@@ -30,24 +28,20 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Migration struct {
 	currentResources  *Resources
 	migratedResources *Resources
-	capsule           *v1alpha2.Capsule
-	changes           []*capsule.Change
+	capsuleSpec       *platformv1.CapsuleSpec
+	capsuleName       string
 	warnings          map[string][]*Warning
 	containerIndex    int
 	operatorConfig    *v1alpha1.OperatorConfig
@@ -56,13 +50,9 @@ type Migration struct {
 
 func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	// TODO Move rig.Client into FX as well
-	var rc rig.Client
-	var err error
-	if !skipPlatform || apply {
-		rc, err = base.NewRigClient(ctx, afero.NewOsFs(), c.Prompter)
-		if err != nil {
-			return err
-		}
+	rc, err := base.NewRigClient(ctx, afero.NewOsFs(), c.Prompter)
+	if err != nil {
+		return err
 	}
 
 	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
@@ -73,21 +63,13 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	migration := &Migration{
 		currentResources:  NewResources(),
 		migratedResources: NewResources(),
-		warnings:          map[string][]*Warning{},
-		changes:           []*capsule.Change{},
-		operatorConfig:    cfg,
+		capsuleSpec: &platformv1.CapsuleSpec{
+			Annotations: map[string]string{},
+		},
+		warnings:       map[string][]*Warning{},
+		operatorConfig: cfg,
 	}
-
-	for key, value := range annotations {
-		migration.changes = append(migration.changes, &capsule.Change{
-			Field: &capsule.Change_SetAnnotation{
-				SetAnnotation: &capsule.Change_KeyValue{
-					Name:  key,
-					Value: value,
-				},
-			},
-		})
-	}
+	maps.Copy(migration.capsuleSpec.Annotations, annotations)
 
 	if err := c.getDeployment(ctx, migration); err != nil || migration.currentResources.Deployment == nil {
 		return err
@@ -152,71 +134,27 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	currentTree := migration.currentResources.CreateOverview("Current Resources")
 	deployRequest := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
-			CapsuleId:     migration.capsule.Name,
+			CapsuleId:     migration.capsuleName,
 			ProjectId:     base.Flags.Project,
 			EnvironmentId: base.Flags.Environment,
 			Message:       "Migrated from kubernetes deployment",
+			Changes: []*capsule.Change{
+				{
+					Field: &capsule.Change_Spec{
+						Spec: migration.capsuleSpec,
+					},
+				},
+			},
 			DryRun:        true,
-			Changes:       migration.changes,
 			ForceOverride: true,
 		},
 	}
-	platformObjects := []*pipeline.Object{}
-	if !skipPlatform {
-		deployResp, err := rc.Capsule().Deploy(ctx, deployRequest)
-		if err != nil {
-			return err
-		}
-
-		platformResources := deployResp.Msg.GetResourceYaml()
-		migration.capsule, platformObjects, err = c.processPlatformOutput(migration.migratedResources, platformResources)
-		if err != nil {
-			return fmt.Errorf("error performing dry-run on platform: %v", err)
-		}
-	}
-
-	// Add "fake" CapsuleSpec status field, to inject current objects into the Pipeline.
-	capsuleSpec := migration.capsule.DeepCopy()
-	capsuleSpec.Status = &v1alpha2.CapsuleStatus{}
-	for _, res := range migration.currentResources.All() {
-		capsuleSpec.Status.OwnedResources = append(capsuleSpec.Status.OwnedResources, v1alpha2.OwnedResource{
-			Ref: &corev1.TypedLocalObjectReference{
-				APIGroup: ptr.To(res.GetObjectKind().GroupVersionKind().Group),
-				Kind:     res.GetObjectKind().GroupVersionKind().Kind,
-				Name:     res.GetName(),
-			},
-		})
-	}
-
-	capsuleSpecYAML, err := obj.Encode(capsuleSpec, c.Scheme)
+	deployResp, err := rc.Capsule().Deploy(ctx, deployRequest)
 	if err != nil {
 		return err
 	}
-
-	request := &pipeline.DryRunRequest{
-		Namespace:         base.Flags.Project,
-		Capsule:           migration.capsule.Name,
-		CapsuleSpec:       string(capsuleSpecYAML),
-		AdditionalObjects: platformObjects,
-		Force:             true,
-	}
-
-	if base.Flags.OperatorConfig != "" {
-		cfgBytes, err := yaml.Marshal(migration.operatorConfig)
-		if err != nil {
-			return err
-		}
-
-		request.OperatorConfig = string(cfgBytes)
-	}
-
-	resp, err := c.OperatorClient.Pipeline.DryRun(ctx, connect.NewRequest(request))
-	if err != nil {
-		return fmt.Errorf("error performing dry-run on operator: %v", err)
-	}
-
-	if err := ProcessOperatorOutput(migration.migratedResources, resp.Msg.OutputObjects, c.Scheme); err != nil {
-		return err
+	if err = c.processPlatformOutput(migration.migratedResources, deployResp.Msg.GetOutcome()); err != nil {
+		return fmt.Errorf("error performing dry-run on platform: %v", err)
 	}
 
 	migratedTree := migration.migratedResources.CreateOverview("New Resources")
@@ -255,16 +193,6 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	change := &capsule.Change{
-		Field: &capsule.Change_AddImage_{
-			AddImage: &capsule.Change_AddImage{
-				Image: migration.capsule.Spec.Image,
-			},
-		},
-	}
-
-	deployRequest.Msg.ProjectId = base.Flags.Project
-	deployRequest.Msg.Changes = append(deployRequest.Msg.Changes, change)
 	deployRequest.Msg.DryRun = false
 	if _, err = rc.Capsule().Deploy(ctx, deployRequest); err != nil {
 		return err
@@ -276,25 +204,25 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 }
 
 func (c *Cmd) setCapsulename(migration *Migration) error {
-	migration.capsule.Name = migration.currentResources.Deployment.Name
+	migration.capsuleName = migration.currentResources.Deployment.Name
 	switch nameOrigin {
 	case CapsuleName(""):
 		if migration.currentResources.Service != nil {
-			migration.capsule.Name = migration.currentResources.Service.Name
+			migration.capsuleName = migration.currentResources.Service.Name
 		}
 	case CapsuleNameDeployment:
 	case CapsuleNameService:
 		if migration.currentResources.Service == nil {
 			return rerrors.FailedPreconditionErrorf("No services found to inherit name from")
 		}
-		migration.capsule.Name = migration.currentResources.Service.Name
+		migration.capsuleName = migration.currentResources.Service.Name
 	case CapsuleNameInput:
 		inputName, err := c.Prompter.Input("Enter the name for the capsule", common.ValidateSystemNameOpt)
 		if err != nil {
 			return err
 		}
 
-		migration.capsule.Name = inputName
+		migration.capsuleName = inputName
 	}
 
 	return nil
@@ -425,7 +353,7 @@ func (c *Cmd) getDeployment(ctx context.Context, migration *Migration) error {
 			return err
 		}
 
-		capsule := &v1alpha2.Capsule{}
+		capsule := &v1alpha2pkg.Capsule{}
 		err := c.K8sReader.Get(ctx, client.ObjectKey{
 			Name:      deployment.GetObjectMeta().GetLabels()["rig.dev/owned-by-capsule"],
 			Namespace: deployment.GetNamespace(),
@@ -444,14 +372,6 @@ func (c *Cmd) getDeployment(ctx context.Context, migration *Migration) error {
 	if err := migration.currentResources.AddObject("Deployment", deployment.GetName(), deployment); err != nil {
 		return err
 	}
-
-	migration.capsule = &v1alpha2.Capsule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace:   migration.currentResources.Deployment.Namespace,
-			Annotations: map[string]string{},
-		},
-	}
-	maps.Copy(migration.capsule.Annotations, annotations)
 
 	return nil
 }
@@ -477,7 +397,6 @@ func (c *Cmd) migrateDeployment(
 	ctx context.Context,
 	migration *Migration,
 ) error {
-	changes := []*capsule.Change{}
 	var err error
 	migration.containerIndex = 0
 	if containers := migration.currentResources.Deployment.Spec.Template.Spec.Containers; len(containers) > 1 {
@@ -506,36 +425,26 @@ func (c *Cmd) migrateDeployment(
 
 	container := migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex]
 
-	migration.capsule.Spec = v1alpha2.CapsuleSpec{
-		Image: container.Image,
-		Scale: v1alpha2.CapsuleScale{
-			Vertical: &v1alpha2.VerticalScale{
-				CPU:    &v1alpha2.ResourceLimits{},
-				Memory: &v1alpha2.ResourceLimits{},
-			},
-			Horizontal: v1alpha2.HorizontalScale{
-				Instances: v1alpha2.Instances{
-					Min: uint32(*migration.currentResources.Deployment.Spec.Replicas),
-				},
+	migration.capsuleSpec.Image = container.Image
+	migration.capsuleSpec.Scale = &platformv1.Scale{
+		Vertical: &v1alpha2.VerticalScale{
+			Cpu:    &v1alpha2.ResourceLimits{},
+			Memory: &v1alpha2.ResourceLimits{},
+		},
+		Horizontal: &platformv1.HorizontalScale{
+			Instances: &v1alpha2.Instances{
+				Min: uint32(*migration.currentResources.Deployment.Spec.Replicas),
 			},
 		},
 	}
 
-	containerSettings := &capsule.ContainerSettings{
-		Resources: &capsule.Resources{
-			Requests: &capsule.ResourceList{},
-			Limits:   &capsule.ResourceList{},
-		},
-	}
-	cpu, memory := migration.capsule.Spec.Scale.Vertical.CPU, migration.capsule.Spec.Scale.Vertical.Memory
+	cpu, memory := migration.capsuleSpec.Scale.Vertical.Cpu, migration.capsuleSpec.Scale.Vertical.Memory
 	for key, request := range container.Resources.Requests {
 		switch key {
 		case corev1.ResourceCPU:
-			cpu.Request = &request
-			containerSettings.Resources.Requests.CpuMillis = uint32(request.MilliValue())
+			cpu.Request = request.String()
 		case corev1.ResourceMemory:
-			memory.Request = &request
-			containerSettings.Resources.Requests.MemoryBytes = uint64(request.Value())
+			memory.Request = request.String()
 		default:
 			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
 				Kind:    "Deployment",
@@ -549,11 +458,9 @@ func (c *Cmd) migrateDeployment(
 	for key, limit := range container.Resources.Limits {
 		switch key {
 		case corev1.ResourceCPU:
-			cpu.Limit = &limit
-			containerSettings.Resources.Limits.CpuMillis = uint32(limit.MilliValue())
+			cpu.Limit = limit.String()
 		case corev1.ResourceMemory:
-			memory.Limit = &limit
-			containerSettings.Resources.Limits.MemoryBytes = uint64(limit.Value())
+			memory.Limit = limit.String()
 		default:
 			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
 				Kind:    "Deployment",
@@ -565,13 +472,11 @@ func (c *Cmd) migrateDeployment(
 	}
 
 	if len(container.Command) > 0 {
-		migration.capsule.Spec.Command = container.Command[0]
-		migration.capsule.Spec.Args = container.Command[1:]
-		containerSettings.Command = migration.capsule.Spec.Command
+		migration.capsuleSpec.Command = container.Command[0]
+		migration.capsuleSpec.Args = container.Command[1:]
 	}
 
-	migration.capsule.Spec.Args = append(migration.capsule.Spec.Args, container.Args...)
-	containerSettings.Args = migration.capsule.Spec.Args
+	migration.capsuleSpec.Args = append(migration.capsuleSpec.Args, container.Args...)
 
 	// Check if the deployment has a service account, and if so add it to the current resources
 	if migration.currentResources.Deployment.Spec.Template.Spec.ServiceAccountName != "" {
@@ -596,26 +501,6 @@ func (c *Cmd) migrateDeployment(
 		}
 	}
 
-	changes = append(changes, []*capsule.Change{
-		{
-			Field: &capsule.Change_ImageId{
-				ImageId: migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex].Image,
-			},
-		},
-		{
-			Field: &capsule.Change_Replicas{
-				Replicas: uint32(*migration.currentResources.Deployment.Spec.Replicas),
-			},
-		},
-		{
-			Field: &capsule.Change_ContainerSettings{
-				ContainerSettings: containerSettings,
-			},
-		},
-	}...)
-
-	migration.changes = append(migration.changes, changes...)
-
 	return nil
 }
 
@@ -627,7 +512,6 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 		return onCCListError(err, "HorizontalPodAutoscaler", base.Flags.Namespace)
 	}
 
-	var changes []*capsule.Change
 	for _, hpa := range hpaList.Items {
 		found := false
 		if hpa.Spec.ScaleTargetRef.Name == migration.currentResources.Deployment.Name {
@@ -636,14 +520,9 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 				return err
 			}
 
-			horizontalScale := &capsule.HorizontalScale{
-				MaxReplicas: uint32(hpa.Spec.MaxReplicas),
-				MinReplicas: uint32(*hpa.Spec.MinReplicas),
-			}
-
-			specHorizontalScale := v1alpha2.HorizontalScale{
-				Instances: v1alpha2.Instances{
-					Max: ptr.To(uint32(hpa.Spec.MaxReplicas)),
+			specHorizontalScale := &platformv1.HorizontalScale{
+				Instances: &v1alpha2.Instances{
+					Max: uint32(hpa.Spec.MaxReplicas),
 					Min: uint32(*hpa.Spec.MinReplicas),
 				},
 			}
@@ -654,11 +533,8 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 						case corev1.ResourceCPU:
 							switch metric.Resource.Target.Type {
 							case autoscalingv2.UtilizationMetricType:
-								specHorizontalScale.CPUTarget = &v1alpha2.CPUTarget{
-									Utilization: ptr.To(uint32(*metric.Resource.Target.AverageUtilization)),
-								}
-								horizontalScale.CpuTarget = &capsule.CPUTarget{
-									AverageUtilizationPercentage: uint32(*metric.Resource.Target.AverageUtilization),
+								specHorizontalScale.CpuTarget = &v1alpha2.CPUTarget{
+									Utilization: uint32(*metric.Resource.Target.AverageUtilization),
 								}
 							default:
 								migration.warnings["HorizontalPodAutoscaler"] = append(migration.warnings["HorizontalPodAutoscaler"], &Warning{
@@ -680,33 +556,21 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 					}
 					if metric.Object != nil {
 						var warning *Warning
-
-						customMetric := &capsule.CustomMetric{
-							Metric: &capsule.CustomMetric_Object{
-								Object: &capsule.ObjectMetric{
-									MetricName: metric.Object.Metric.Name,
-									ObjectReference: &model.ObjectReference{
-										Kind:       metric.Object.DescribedObject.Kind,
-										Name:       metric.Object.DescribedObject.Name,
-										ApiVersion: metric.Object.DescribedObject.APIVersion,
-									},
-								},
-							},
-						}
-
-						objectMetric := v1alpha2.CustomMetric{
+						objectMetric := &v1alpha2.CustomMetric{
 							ObjectMetric: &v1alpha2.ObjectMetric{
-								MetricName:      metric.Object.Metric.Name,
-								DescribedObject: metric.Object.DescribedObject,
+								MetricName: metric.Object.Metric.Name,
+								ObjectReference: &rigAutoscalingv2.CrossVersionObjectReference{
+									ApiVersion: metric.Object.DescribedObject.APIVersion,
+									Kind:       metric.Object.DescribedObject.Kind,
+									Name:       metric.Object.DescribedObject.Name,
+								},
 							},
 						}
 						switch metric.Object.Target.Type {
 						case autoscalingv2.AverageValueMetricType:
 							objectMetric.ObjectMetric.AverageValue = metric.Object.Target.AverageValue.String()
-							customMetric.GetObject().AverageValue = metric.Object.Target.AverageValue.String()
 						case autoscalingv2.ValueMetricType:
 							objectMetric.ObjectMetric.Value = metric.Object.Target.Value.String()
-							customMetric.GetObject().Value = metric.Object.Target.Value.String()
 						default:
 							warning = &Warning{
 								Kind:    "HorizontalPodAutoscaler",
@@ -716,8 +580,7 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 							}
 						}
 						if warning == nil {
-							specHorizontalScale.CustomMetrics = append(migration.capsule.Spec.Scale.Horizontal.CustomMetrics, objectMetric)
-							horizontalScale.CustomMetrics = append(horizontalScale.CustomMetrics, customMetric)
+							specHorizontalScale.CustomMetrics = append(migration.capsuleSpec.Scale.Horizontal.CustomMetrics, objectMetric)
 						} else {
 							migration.warnings["HorizontalPodAutoscaler"] = append(migration.warnings["HorizontalPodAutoscaler"], warning)
 						}
@@ -725,24 +588,15 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 
 					if metric.Pods != nil {
 						var warning *Warning
-						podMetric := v1alpha2.CustomMetric{
+						podMetric := &v1alpha2.CustomMetric{
 							InstanceMetric: &v1alpha2.InstanceMetric{
 								MetricName: metric.Pods.Metric.Name,
-							},
-						}
-
-						customMetric := &capsule.CustomMetric{
-							Metric: &capsule.CustomMetric_Instance{
-								Instance: &capsule.InstanceMetric{
-									MetricName: metric.Pods.Metric.Name,
-								},
 							},
 						}
 
 						switch metric.Pods.Target.Type {
 						case autoscalingv2.AverageValueMetricType:
 							podMetric.InstanceMetric.AverageValue = metric.Pods.Target.AverageValue.String()
-							customMetric.GetInstance().AverageValue = metric.Pods.Target.AverageValue.String()
 						default:
 							warning = &Warning{
 								Kind:    "HorizontalPodAutoscaler",
@@ -753,21 +607,15 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 						}
 
 						if warning == nil {
-							specHorizontalScale.CustomMetrics = append(migration.capsule.Spec.Scale.Horizontal.CustomMetrics, podMetric)
-							horizontalScale.CustomMetrics = append(horizontalScale.CustomMetrics, customMetric)
+							specHorizontalScale.CustomMetrics = append(migration.capsuleSpec.Scale.Horizontal.CustomMetrics, podMetric)
 						} else {
 							migration.warnings["HorizontalPodAutoscaler"] = append(migration.warnings["HorizontalPodAutoscaler"], warning)
 						}
 					}
 				}
 			}
-			if specHorizontalScale.CPUTarget != nil || len(specHorizontalScale.CustomMetrics) > 0 {
-				migration.capsule.Spec.Scale.Horizontal = specHorizontalScale
-				changes = append(changes, &capsule.Change{
-					Field: &capsule.Change_HorizontalScale{
-						HorizontalScale: horizontalScale,
-					},
-				})
+			if specHorizontalScale.CpuTarget != nil || len(specHorizontalScale.CustomMetrics) > 0 {
+				migration.capsuleSpec.Scale.Horizontal = specHorizontalScale
 			}
 			found = true
 		}
@@ -776,14 +624,10 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 		}
 	}
 
-	migration.changes = append(migration.changes, changes...)
-
 	return nil
 }
 
 func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) error {
-	changes := []*capsule.Change{}
-
 	configMapMappings := map[string]map[string]string{}
 	secretMappings := map[string]map[string]string{}
 
@@ -793,17 +637,14 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 		return nil
 	}
 
+	migration.capsuleSpec.Env = &platformv1.EnvironmentVariables{
+		Raw: map[string]string{},
+	}
+
 	for _, envVar := range env {
 		switch {
 		case envVar.Value != "":
-			changes = append(changes, &capsule.Change{
-				Field: &capsule.Change_SetEnvironmentVariable{
-					SetEnvironmentVariable: &capsule.Change_KeyValue{
-						Name:  envVar.Name,
-						Value: envVar.Value,
-					},
-				},
-			})
+			migration.capsuleSpec.Env.Raw[envVar.Name] = envVar.Value
 
 		case envVar.ValueFrom != nil:
 			from := envVar.ValueFrom
@@ -839,14 +680,7 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 					return err
 				}
 
-				migration.changes = append(migration.changes, &capsule.Change{
-					Field: &capsule.Change_SetEnvironmentVariable{
-						SetEnvironmentVariable: &capsule.Change_KeyValue{
-							Name:  envVar.Name,
-							Value: configMap.Data[cfgMap.Key],
-						},
-					},
-				})
+				migration.capsuleSpec.Env.Raw[envVar.Name] = configMap.Data[cfgMap.Key]
 
 				// TODO(anders): Add under flag?
 				// if !slices.Contains(migration.plugins, "rigdev.env_mapping") {
@@ -920,29 +754,17 @@ func (c *Cmd) migrateEnvironment(ctx context.Context, migration *Migration) erro
 			return err
 		}
 
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_SetAnnotation{
-				SetAnnotation: &capsule.Change_KeyValue{
-					Name:  envmapping.AnnotationEnvMapping,
-					Value: string(annotationValueJSON),
-				},
-			},
-		})
+		migration.capsuleSpec.Annotations[envmapping.AnnotationEnvMapping] = string(annotationValueJSON)
 	}
-
-	migration.changes = append(migration.changes, changes...)
 
 	return nil
 }
 
 func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migration) error {
-	var changes []*capsule.Change
 	container := migration.currentResources.Deployment.Spec.
 		Template.Spec.Containers[migration.containerIndex]
 	// Migrate Environment Sources
-	var envReferences []v1alpha2.EnvReference
 	for _, source := range container.EnvFrom {
-		var environmentSource *capsule.EnvironmentSource
 		switch {
 		case source.ConfigMapRef != nil:
 			configMap := &corev1.ConfigMap{}
@@ -972,65 +794,31 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 			}
 
 			if keepEnvConfigMaps {
-				envReferences = append(envReferences, v1alpha2.EnvReference{
+				migration.capsuleSpec.Env.Sources = append(migration.capsuleSpec.Env.Sources, &platformv1.EnvironmentSource{
+					Name: source.ConfigMapRef.Name,
 					Kind: "ConfigMap",
-					Name: source.ConfigMapRef.Name,
 				})
-
-				environmentSource = &capsule.EnvironmentSource{
-					Kind: capsule.EnvironmentSource_KIND_CONFIG_MAP,
-					Name: source.ConfigMapRef.Name,
-				}
 
 				if err := migration.migratedResources.AddObject("ConfigMap", source.ConfigMapRef.Name, configMap); err != nil {
 					return err
 				}
 			} else {
 				for key, value := range configMap.Data {
-					changes = append(changes, &capsule.Change{
-						Field: &capsule.Change_SetEnvironmentVariable{
-							SetEnvironmentVariable: &capsule.Change_KeyValue{
-								Name:  key,
-								Value: value,
-							},
-						},
-					})
+					migration.capsuleSpec.Env.Raw[key] = value
 				}
 			}
 		case source.SecretRef != nil:
-			envReferences = append(envReferences, v1alpha2.EnvReference{
+			migration.capsuleSpec.Env.Sources = append(migration.capsuleSpec.Env.GetSources(), &platformv1.EnvironmentSource{
 				Kind: "Secret",
 				Name: source.SecretRef.Name,
 			})
-
-			environmentSource = &capsule.EnvironmentSource{
-				Kind: capsule.EnvironmentSource_KIND_SECRET,
-				Name: source.SecretRef.Name,
-			}
-		}
-
-		if environmentSource != nil {
-			changes = append(changes, &capsule.Change{
-				Field: &capsule.Change_SetEnvironmentSource{
-					SetEnvironmentSource: environmentSource,
-				},
-			})
-		}
-	}
-
-	if len(envReferences) > 0 {
-		migration.capsule.Spec.Env = v1alpha2.Env{
-			From: envReferences,
 		}
 	}
 
 	// Migrate ConfigMap and Secret files
-	var files []v1alpha2.File
 	var emptyPaths []string
 	for _, volume := range migration.currentResources.Deployment.Spec.Template.Spec.Volumes {
-		var file v1alpha2.File
-		var configFile *capsule.Change_ConfigFile
-
+		var file *platformv1.File
 		var path string
 		for _, volumeMount := range container.VolumeMounts {
 			if volumeMount.Name == volume.Name {
@@ -1051,9 +839,14 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 			})
 			continue
 		}
+
 		switch {
 		// If Volume is a ConfigMap
 		case volume.ConfigMap != nil:
+			file = &platformv1.File{
+				Path:     path,
+				AsSecret: false,
+			}
 			configMap := &corev1.ConfigMap{}
 			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      volume.ConfigMap.Name,
@@ -1068,16 +861,11 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 				return err
 			}
 
-			configFile = &capsule.Change_ConfigFile{
-				Path:     path,
-				IsSecret: false,
-			}
-
 			if len(volume.ConfigMap.Items) == 1 {
 				if len(configMap.BinaryData) > 0 {
-					configFile.Content = configMap.BinaryData[volume.ConfigMap.Items[0].Key]
+					file.Bytes = configMap.BinaryData[volume.ConfigMap.Items[0].Key]
 				} else if len(configMap.Data) > 0 {
-					configFile.Content = []byte(configMap.Data[volume.ConfigMap.Items[0].Key])
+					file.String_ = configMap.Data[volume.ConfigMap.Items[0].Key]
 				}
 			} else {
 				migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
@@ -1089,17 +877,12 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 				})
 				continue
 			}
-
-			file = v1alpha2.File{
-				Ref: &v1alpha2.FileContentReference{
-					Kind: "ConfigMap",
-					Name: volume.ConfigMap.Name,
-					Key:  "content",
-				},
-				Path: path,
-			}
-			// If Volume is a Secret
+		// If Volume is a Secret
 		case volume.Secret != nil:
+			file = &platformv1.File{
+				Path:     path,
+				AsSecret: true,
+			}
 			secret := &corev1.Secret{}
 			err := c.K8sReader.Get(ctx, client.ObjectKey{
 				Name:      volume.Secret.SecretName,
@@ -1113,25 +896,11 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 				return err
 			}
 
-			file = v1alpha2.File{
-				Ref: &v1alpha2.FileContentReference{
-					Kind: "Secret",
-					Name: volume.Secret.SecretName,
-					Key:  "content",
-				},
-				Path: path,
-			}
-
-			configFile = &capsule.Change_ConfigFile{
-				Path:     path,
-				IsSecret: true,
-			}
-
 			if len(volume.Secret.Items) == 1 {
 				if len(secret.Data) > 0 {
-					configFile.Content = secret.Data[volume.Secret.Items[0].Key]
+					file.Bytes = secret.Data[volume.Secret.Items[0].Key]
 				} else if len(secret.StringData) > 0 {
-					configFile.Content = []byte(secret.StringData[volume.Secret.Items[0].Key])
+					file.String_ = secret.StringData[volume.Secret.Items[0].Key]
 				}
 			} else {
 				migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
@@ -1142,7 +911,6 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 					Warning: "Volume does not have exactly one item. Cannot migrate files",
 				})
 			}
-
 		case volume.EmptyDir != nil:
 			for _, v := range container.VolumeMounts {
 				if v.Name == volume.Name {
@@ -1150,7 +918,6 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 					break
 				}
 			}
-
 		default:
 			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
 				Kind: "Deployment",
@@ -1161,22 +928,14 @@ func (c *Cmd) migrateConfigFilesAndSecrets(ctx context.Context, migration *Migra
 			})
 		}
 
-		if file.Path != "" && file.Ref != nil {
-			files = append(files, file)
-			changes = append(changes, &capsule.Change{
-				Field: &capsule.Change_SetConfigFile{
-					SetConfigFile: configFile,
-				},
-			})
+		if file != nil {
+			migration.capsuleSpec.Files = append(migration.capsuleSpec.Files, file)
 		}
 	}
 
 	if len(emptyPaths) > 0 {
-		migration.capsule.Annotations[deployment.AnnotationEmptyDirs] = strings.Join(emptyPaths, ",")
+		migration.capsuleSpec.Annotations[deployment.AnnotationEmptyDirs] = strings.Join(emptyPaths, ",")
 	}
-
-	migration.capsule.Spec.Files = files
-	migration.changes = append(migration.changes, changes...)
 
 	return nil
 }
@@ -1238,9 +997,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 		})
 	}
 
-	interfaces := make([]v1alpha2.CapsuleInterface, 0, len(container.Ports))
-	capsuleInterfaces := make([]*capsule.Interface, 0, len(container.Ports))
-	changes := []*capsule.Change{}
+	interfaces := make([]*v1alpha2.CapsuleInterface, 0, len(container.Ports))
 
 	ingresses := &netv1.IngressList{}
 	err := c.K8sReader.List(ctx, ingresses, client.InNamespace(migration.currentResources.Deployment.GetNamespace()))
@@ -1249,22 +1006,15 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	}
 
 	for _, port := range container.Ports {
-		i := v1alpha2.CapsuleInterface{
+		i := &v1alpha2.CapsuleInterface{
 			Name: port.Name,
 			Port: port.ContainerPort,
 		}
 
-		ci := &capsule.Interface{
-			Name: port.Name,
-			Port: uint32(port.ContainerPort),
-		}
-
-		routes := []v1alpha2.HostRoute{}
-		capsuleRoutes := []*capsule.HostRoute{}
+		routes := []*v1alpha2.HostRoute{}
 		for _, ingress := range ingresses.Items {
 			ingress := ingress
-			routePaths := []v1alpha2.HTTPPathRoute{}
-			capsuleRoutePaths := []*capsule.HTTPPathRoute{}
+			routePaths := []*v1alpha2.HTTPPathRoute{}
 
 			annotations := maps.Clone(ingress.Annotations)
 			delete(annotations, "kubernetes.io/ingress.class")
@@ -1284,28 +1034,20 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					return err
 				}
 
-				var pathType v1alpha2.PathMatchType
-				var capsulePathType capsule.PathMatchType
+				var pathType string
 				switch *path.PathType {
 				case netv1.PathTypeImplementationSpecific:
 					// TODO(ajohnsen): This is actually per path.
 					annotations[ingress_routes.AnnotationImplementationSpecificPathType] = "true"
 				case netv1.PathTypePrefix:
-					pathType = v1alpha2.PathPrefix
-					capsulePathType = capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX
+					pathType = "PathPrefix"
 				case netv1.PathTypeExact:
-					pathType = v1alpha2.Exact
-					capsulePathType = capsule.PathMatchType_PATH_MATCH_TYPE_EXACT
+					pathType = "Exact"
 				}
 
-				routePaths = append(routePaths, v1alpha2.HTTPPathRoute{
+				routePaths = append(routePaths, &v1alpha2.HTTPPathRoute{
 					Path:  path.Path,
 					Match: pathType,
-				})
-
-				capsuleRoutePaths = append(capsuleRoutePaths, &capsule.HTTPPathRoute{
-					Path:  path.Path,
-					Match: capsulePathType,
 				})
 			}
 
@@ -1325,82 +1067,51 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					continue
 				}
 
-				routes = append(routes, v1alpha2.HostRoute{
-					ID:   ingress.GetName(),
-					Host: ingress.Spec.Rules[0].Host,
-					RouteOptions: v1alpha2.RouteOptions{
-						Annotations: annotations,
-					},
-					Paths: routePaths,
-				})
-			}
-
-			if len(capsuleRoutePaths) > 0 {
-				capsuleRoutes = append(capsuleRoutes, &capsule.HostRoute{
-					Id:   ingress.GetName(),
-					Host: ingress.Spec.Rules[0].Host,
-					Options: &capsule.RouteOptions{
-						Annotations: annotations,
-					},
-					Paths: capsuleRoutePaths,
+				routes = append(routes, &v1alpha2.HostRoute{
+					Id:          ingress.GetName(),
+					Host:        ingress.Spec.Rules[0].Host,
+					Annotations: annotations,
+					Paths:       routePaths,
 				})
 			}
 		}
 
 		i.Routes = routes
-		ci.Routes = capsuleRoutes
 
 		if livenessProbe != nil {
-			i.Liveness, ci.Liveness, err = migrateProbe(livenessProbe, port)
+			i.Liveness, err = migrateProbe(livenessProbe, port)
 			if err == nil {
 				livenessProbe = nil
 			}
 		}
 
 		if readinessProbe != nil {
-			i.Readiness, ci.Readiness, err = migrateProbe(readinessProbe, port)
+			i.Readiness, err = migrateProbe(readinessProbe, port)
 			if err == nil {
 				readinessProbe = nil
 			}
 		}
 
-		capsuleInterfaces = append(capsuleInterfaces, ci)
 		interfaces = append(interfaces, i)
 	}
 
 	if len(interfaces) > 0 {
-		migration.capsule.Spec.Interfaces = interfaces
-		changes = []*capsule.Change{
-			{
-				Field: &capsule.Change_Network{
-					Network: &capsule.Network{
-						Interfaces: capsuleInterfaces,
-					},
-				},
-			},
-		}
+		migration.capsuleSpec.Interfaces = interfaces
 	}
-
-	migration.changes = append(migration.changes, changes...)
 
 	return nil
 }
 
 func migrateProbe(probe *corev1.Probe,
 	port corev1.ContainerPort,
-) (*v1alpha2.InterfaceProbe, *capsule.InterfaceProbe, error) {
+) (*v1alpha2.InterfaceProbe, error) {
 	TCPAndCorrectPort := probe.TCPSocket != nil &&
 		(probe.TCPSocket.Port.StrVal == port.Name || probe.TCPSocket.Port.IntVal == port.ContainerPort)
 	if TCPAndCorrectPort {
 		if probe.TCPSocket.Port.StrVal == port.Name || probe.TCPSocket.Port.IntVal == port.ContainerPort {
 			return &v1alpha2.InterfaceProbe{
-					TCP: true,
-				},
-				&capsule.InterfaceProbe{
-					Kind: &capsule.InterfaceProbe_Tcp{
-						Tcp: &capsule.InterfaceProbe_TCP{},
-					},
-				}, nil
+				Tcp: true,
+			}, nil
 		}
 	}
 
@@ -1408,15 +1119,8 @@ func migrateProbe(probe *corev1.Probe,
 		(probe.HTTPGet.Port.StrVal == port.Name || probe.HTTPGet.Port.IntVal == port.ContainerPort)
 	if HTTPAndCorrectPort {
 		return &v1alpha2.InterfaceProbe{
-				Path: probe.HTTPGet.Path,
-			},
-			&capsule.InterfaceProbe{
-				Kind: &capsule.InterfaceProbe_Http{
-					Http: &capsule.InterfaceProbe_HTTP{
-						Path: probe.HTTPGet.Path,
-					},
-				},
-			}, nil
+			Path: probe.HTTPGet.Path,
+		}, nil
 	}
 
 	GRPCAndCorrectPort := probe.GRPC != nil && probe.GRPC.Port == port.ContainerPort
@@ -1427,19 +1131,13 @@ func migrateProbe(probe *corev1.Probe,
 		}
 
 		return &v1alpha2.InterfaceProbe{
-				GRPC: &v1alpha2.InterfaceGRPCProbe{
-					Service: service,
-				},
-			}, &capsule.InterfaceProbe{
-				Kind: &capsule.InterfaceProbe_Grpc{
-					Grpc: &capsule.InterfaceProbe_GRPC{
-						Service: service,
-					},
-				},
-			}, nil
+			Grpc: &v1alpha2.InterfaceGRPCProbe{
+				Service: service,
+			},
+		}, nil
 	}
 
-	return nil, nil, rerrors.InvalidArgumentErrorf("Probe for port %s is not supported", port.Name)
+	return nil, rerrors.InvalidArgumentErrorf("Probe for port %s is not supported", port.Name)
 }
 
 func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
@@ -1471,8 +1169,7 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 		})
 	}
 
-	migratedCronJobs := make([]v1alpha2.CronJob, 0, len(cronJobs))
-	changes := []*capsule.Change{}
+	migratedCronJobs := make([]*v1alpha2.CronJob, 0, len(cronJobs))
 	for {
 		i, err := c.Prompter.TableSelect("\nSelect a job to migrate or CTRL+C to continue",
 			jobTitles, headers, common.SelectEnableFilterOpt, common.SelectDontShowResultOpt)
@@ -1482,18 +1179,13 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 
 		cronJob := cronJobs[i]
 
-		migratedCronJob, addCronjob, err := c.migrateCronJob(migration, cronJob)
+		migratedCronJob, err := c.migrateCronJob(migration, cronJob)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_AddCronJob{
-				AddCronJob: addCronjob,
-			},
-		})
-		migration.capsule.Spec.CronJobs = append(migratedCronJobs, *migratedCronJob)
+		migration.capsuleSpec.CronJobs = append(migratedCronJobs, migratedCronJob)
 		if err := migration.currentResources.AddObject("CronJob", cronJob.Name, &cronJob); err != nil {
 			return err
 		}
@@ -1503,33 +1195,24 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 		cronJobs = append(cronJobs[:i], cronJobs[i+1:]...)
 	}
 
-	migration.changes = append(migration.changes, changes...)
-
 	return nil
 }
 
 func (c *Cmd) migrateCronJob(
 	migration *Migration,
 	cronJob batchv1.CronJob,
-) (*v1alpha2.CronJob, *capsule.CronJob, error) {
+) (*v1alpha2.CronJob, error) {
 	migrated := &v1alpha2.CronJob{
 		Name:     cronJob.Name,
 		Schedule: cronJob.Spec.Schedule,
 	}
 
-	capsuleCronjob := &capsule.CronJob{
-		JobName:  cronJob.Name,
-		Schedule: cronJob.Spec.Schedule,
-	}
-
 	if cronJob.Spec.JobTemplate.Spec.BackoffLimit != nil {
-		migrated.MaxRetries = ptr.To(uint(*cronJob.Spec.JobTemplate.Spec.BackoffLimit))
-		capsuleCronjob.MaxRetries = *cronJob.Spec.JobTemplate.Spec.BackoffLimit
+		migrated.MaxRetries = uint64(*cronJob.Spec.JobTemplate.Spec.BackoffLimit)
 	}
 
 	if cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds != nil {
-		migrated.TimeoutSeconds = ptr.To(uint(*cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds))
-		capsuleCronjob.Timeout = durationpb.New(time.Duration(*cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds))
+		migrated.TimeoutSeconds = uint64(*cronJob.Spec.JobTemplate.Spec.ActiveDeadlineSeconds)
 	}
 
 	if len(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers) > 1 {
@@ -1551,13 +1234,6 @@ func (c *Cmd) migrateCronJob(
 			Command: cmd,
 			Args:    args,
 		}
-
-		capsuleCronjob.JobType = &capsule.CronJob_Command{
-			Command: &capsule.JobCommand{
-				Command: cmd,
-				Args:    args,
-			},
-		}
 	} else if keepGoing, err := c.Prompter.Confirm(`The cronjob does not fit the deployment image.
 		Do you want to continue with a curl based cronjob?`, false); keepGoing && err == nil {
 		fmt.Printf("Scanning for cronjob %s to a curl based cronjob\n", cronJob.Name)
@@ -1569,42 +1245,34 @@ func (c *Cmd) migrateCronJob(
 			common.InputDefaultOpt(fmt.Sprintf("http://%s:[PORT]/[PATH]?[PARAMS1]&[PARAM2]",
 				migration.currentResources.Deployment.Name)))
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		// parse url and get port and path
 		url, err := url.Parse(urlString)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
-		portInt, err := strconv.ParseUint(url.Port(), 10, 16)
+		portInt, err := strconv.ParseUint(url.Port(), 10, 32)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		port := uint16(portInt)
+		port := uint32(portInt)
 
 		queryParams := make(map[string]string)
 		for key, values := range url.Query() {
 			queryParams[key] = values[0]
 		}
 
-		migrated.URL = &v1alpha2.URL{
+		migrated.Url = &v1alpha2.URL{
 			Port:            port,
 			Path:            url.Path,
 			QueryParameters: queryParams,
 		}
-
-		capsuleCronjob.JobType = &capsule.CronJob_Url{
-			Url: &capsule.JobURL{
-				Port:            uint64(port),
-				Path:            url.Path,
-				QueryParameters: queryParams,
-			},
-		}
 	}
 
-	return migrated, capsuleCronjob, nil
+	return migrated, nil
 }
 
 func onCCGetError(err error, kind, name, namespace string) error {

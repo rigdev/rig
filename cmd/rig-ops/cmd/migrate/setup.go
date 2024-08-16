@@ -15,7 +15,6 @@ const (
 )
 
 var (
-	skipPlatform      bool
 	apply             bool
 	deploymentName    string
 	annotations       map[string]string
@@ -48,23 +47,12 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		RunE:              cli.CtxWrap(cmd.migrate),
 	}
 
-	migrate.Flags().BoolVar(&skipPlatform,
-		"skip-platform",
-		false,
-		`Do not perform a platform dryrun to compare to k8s resources from rig-platform. Instead just compare the
-resources created from a capsulespec
-		If false:
-			- The rig platform must be running
-			- A valid rig-cli config and context must be set either according to defaults or through flags
-			- Valid access- and refresh tokens must be provided in the context. Otherwise a login is prompted.`,
-	)
-	migrate.Flags().StringVarP(&base.Flags.Namespace, "namespace", "n", "", "The k8s namespace to migrate from")
+	migrate.Flags().StringVarP(&base.Flags.Environment, "environment", "e", "", "The environment to migrate to")
 	migrate.Flags().StringVarP(&base.Flags.Project, "project", "p", "", "The project to migrate to")
 	migrate.Flags().Var(&nameOrigin, "name-origin",
 		"From where to inherit the name of the capsule. One of `service,deployment,input`."+
 			" Default is service, if one exists, otherwise deployment.")
 	migrate.Flags().BoolVarP(&apply, "apply", "a", false, "Apply the capsule to the rig platform")
-	migrate.MarkFlagsMutuallyExclusive("apply", "skip-platform")
 	migrate.Flags().StringVar(&deploymentName, "deployment", "",
 		"The deployment to migrate. If not set, a list of deployments will be prompted for.")
 	migrate.Flags().StringToStringVarP(
