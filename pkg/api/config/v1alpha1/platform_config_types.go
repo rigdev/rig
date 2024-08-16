@@ -519,7 +519,7 @@ type DockerRegistryCredentials struct {
 	// Expire is the maximum duration a credential will be cached for, before it's recycled.
 	// If a cached credential is rejected before this time, it may be renewed before this duration is expired.
 	// Default is `12h`.
-	Expire metav1.Duration `json:"expire,omitempty"`
+	Expire *metav1.Duration `json:"expire,omitempty"`
 }
 
 // ClusterType is a cluster type.

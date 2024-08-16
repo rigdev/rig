@@ -54,7 +54,8 @@ rig:
   dockerRegistries:
     XXXXXXXXXXXX.dkr.ecr.us-west-2.amazonaws.com:
       script: |
-        aws ecr --region "us-west-2" get-authorization-token --output text --query 'authorizationData[].authorizationToken' | base64 -d
+        AUTHORIZATION_TOKEN=$(aws ecr --region "eu-west-1" get-authorization-token --output text --query 'authorizationData[].authorizationToken')
+        echo "$AUTHORIZATION_TOKEN" | base64 -d
       expire: 12h
 ```
 
