@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
@@ -18,15 +19,16 @@ import (
 )
 
 type Resources struct {
-	Deployment     *appsv1.Deployment
-	ServiceAccount *corev1.ServiceAccount
-	Capsule        *v1alpha2.Capsule
-	HPA            *autoscalingv2.HorizontalPodAutoscaler
-	Service        *corev1.Service
-	ConfigMaps     map[string]*corev1.ConfigMap
-	Secrets        map[string]*corev1.Secret
-	Ingresses      map[string]*netv1.Ingress
-	CronJobs       map[string]*batchv1.CronJob
+	Deployment      *appsv1.Deployment
+	ServiceAccount  *corev1.ServiceAccount
+	PlatformCapsule *platformv1.Capsule
+	K8sCapsule      *v1alpha2.Capsule
+	HPA             *autoscalingv2.HorizontalPodAutoscaler
+	Service         *corev1.Service
+	ConfigMaps      map[string]*corev1.ConfigMap
+	Secrets         map[string]*corev1.Secret
+	Ingresses       map[string]*netv1.Ingress
+	CronJobs        map[string]*batchv1.CronJob
 }
 
 func NewResources() *Resources {
@@ -92,8 +94,8 @@ func (r *Resources) getObject(kind, name string) client.Object {
 			return sa
 		}
 	case "Capsule":
-		if ca := r.Capsule; ca != nil {
-			r.Capsule = nil
+		if ca := r.K8sCapsule; ca != nil {
+			r.K8sCapsule = nil
 			ca.Status = nil
 			return ca
 		}
@@ -113,9 +115,9 @@ func (r *Resources) CreateOverview(title string) *tview.TreeView {
 
 	var root *tview.TreeNode
 	var deploymentRoot *tview.TreeNode
-	if r.Capsule != nil {
-		root = tview.NewTreeNode(fmt.Sprintf("Capsule/%s", r.Capsule.GetName())).SetSelectable(false)
-		deploymentRoot = add(root, "Deployment", r.Capsule.GetName())
+	if r.K8sCapsule != nil {
+		root = tview.NewTreeNode(fmt.Sprintf("Capsule/%s", r.K8sCapsule.GetName())).SetSelectable(false)
+		deploymentRoot = add(root, "Deployment", r.K8sCapsule.GetName())
 	} else {
 		root = tview.NewTreeNode(fmt.Sprintf("Deployment/%s", r.Deployment.GetName()))
 		deploymentRoot = root
@@ -196,9 +198,9 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 		}
 	}
 
-	if r.Capsule != nil {
-		originalCapsule := other.getObject("Capsule", r.Capsule.Name)
-		if err := reportSet.AddReport(originalCapsule, r.Capsule, ""); err != nil {
+	if r.K8sCapsule != nil {
+		originalCapsule := other.getObject("Capsule", r.K8sCapsule.Name)
+		if err := reportSet.AddReport(originalCapsule, r.K8sCapsule, ""); err != nil {
 			return nil, err
 		}
 	}
@@ -252,7 +254,7 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 	for _, ingress := range r.Ingresses {
 		name := ingress.GetName()
 		parts := strings.SplitN(ingress.GetName(), "-", 2)
-		if parts[0] == r.Capsule.Name {
+		if parts[0] == r.K8sCapsule.Name {
 			name = parts[1]
 		}
 
@@ -270,7 +272,7 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 	for _, cronJob := range r.CronJobs {
 		name := cronJob.Name
 		parts := strings.SplitN(name, "-", 2)
-		if r.Capsule != nil && parts[0] == r.Capsule.Name {
+		if r.K8sCapsule != nil && parts[0] == r.K8sCapsule.Name {
 			name = parts[1]
 		}
 
@@ -372,7 +374,7 @@ func (r *Resources) AddObject(kind, name string, object client.Object) error {
 		s.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind(kind))
 		r.ServiceAccount = s
 	case "Capsule":
-		if r.Capsule != nil {
+		if r.K8sCapsule != nil {
 			return errors.AlreadyExistsErrorf("capsule already set in current resources")
 		}
 		ca, err := convertResource[*v1alpha2.Capsule](object, kind)
@@ -380,7 +382,7 @@ func (r *Resources) AddObject(kind, name string, object client.Object) error {
 			return err
 		}
 		ca.SetGroupVersionKind(v1alpha2.GroupVersion.WithKind(kind))
-		r.Capsule = ca
+		r.K8sCapsule = ca
 	default:
 		return errors.InvalidArgumentErrorf("unexpected kind '%s' to current resources", kind)
 	}

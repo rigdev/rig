@@ -26,7 +26,8 @@ func (c *Cmd) getPlugins(ctx context.Context, migration *Migration) error {
 		if err != nil {
 			return err
 		}
-		if !matcher.Match(migration.capsule.Namespace, migration.capsule.Name, migration.capsule.Annotations) {
+		if !matcher.Match(migration.currentResources.Deployment.Namespace,
+			migration.capsuleName, migration.capsuleSpec.Annotations) {
 			continue
 		}
 
