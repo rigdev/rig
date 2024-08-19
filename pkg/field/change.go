@@ -57,8 +57,24 @@ func (c Change) String() string {
 			description = fmt.Sprintf(
 				"Changed %s", pathDescription(c.FieldPath))
 		} else {
+
+			from := c.From.AsString
+			to := c.To.AsString
+			i := 0
+			for i < len(c.From.AsString) && i < len(c.To.AsString) &&
+				c.From.AsString[i] == c.To.AsString[i] {
+				i++
+			}
+
+			if len(from) > i+8 {
+				from = from[:i+8] + "..."
+			}
+			if len(to) > i+8 {
+				to = to[:i+8] + "..."
+			}
+
 			description = fmt.Sprintf(
-				"Changed %s from '%v' to '%v'", pathDescription(c.FieldPath), c.From.AsString, c.To.AsString)
+				"Changed %s from '%v' to '%v'", pathDescription(c.FieldPath), from, to)
 		}
 	}
 

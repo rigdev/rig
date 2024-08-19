@@ -1043,3 +1043,37 @@ func Test_Compare_Exact(t *testing.T) {
 		})
 	}
 }
+
+func Test_Compare_Truncate(t *testing.T) {
+	tests := []struct {
+		name    string
+		from    *platformv1.CapsuleSpec
+		to      *platformv1.CapsuleSpec
+		changes []string
+	}{
+		{
+			name: "truncate long image",
+			from: &platformv1.CapsuleSpec{
+				Image: "ghcr.io/rigdev/hub:b9ceda5ab61188a11e5858647efdbdf42398f2f8",
+			},
+			to: &platformv1.CapsuleSpec{
+				Image: "ghcr.io/rigdev/hub:c85867126a6085552745a325be301c9aa8c3a0c4",
+			},
+			changes: []string{
+				"Changed image from 'ghcr.io/rigdev/hub:b9ceda5a...' to 'ghcr.io/rigdev/hub:c8586712...'",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			diff, err := Compare(test.from, test.to, SpecKeys...)
+			require.NoError(t, err)
+			var changes []string
+			for _, c := range diff.Changes {
+				changes = append(changes, c.String())
+			}
+			require.Equal(t, test.changes, changes)
+		})
+	}
+}
