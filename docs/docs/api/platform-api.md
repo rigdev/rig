@@ -206,6 +206,7 @@
 | /api.v1.project.Service/GetCustomObjectMetrics | [GetCustomObjectMetricsRequest](#api-v1-project-GetCustomObjectMetricsRequest) | [GetCustomObjectMetricsResponse](#api-v1-project-GetCustomObjectMetricsResponse) | Returns all metrics of a given custom object. |
 | /api.v1.project.Service/GetEffectiveGitSettings | [GetEffectiveGitSettingsRequest](#api-v1-project-GetEffectiveGitSettingsRequest) | [GetEffectiveGitSettingsResponse](#api-v1-project-GetEffectiveGitSettingsResponse) |  |
 | /api.v1.project.Service/GetEffectivePipelineSettings | [GetEffectivePipelineSettingsRequest](#api-v1-project-GetEffectivePipelineSettingsRequest) | [GetEffectivePipelineSettingsResponse](#api-v1-project-GetEffectivePipelineSettingsResponse) |  |
+| /api.v1.project.Service/GetEffectiveNotificationSettings | [GetEffectiveNotificationSettingsRequest](#api-v1-project-GetEffectiveNotificationSettingsRequest) | [GetEffectiveNotificationSettingsResponse](#api-v1-project-GetEffectiveNotificationSettingsResponse) |  |
 
 
 
@@ -8415,6 +8416,36 @@ Response for getting custom metrics for a project and environment.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | git | [model.GitStore](#model-GitStore) |  |  |
+
+
+
+
+
+
+<a name="api-v1-project-GetEffectiveNotificationSettingsRequest"></a>
+
+### GetEffectiveNotificationSettingsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-project-GetEffectiveNotificationSettingsResponse"></a>
+
+### GetEffectiveNotificationSettingsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| notifiers | [model.NotificationNotifier](#model-NotificationNotifier) | repeated |  |
 
 
 
