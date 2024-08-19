@@ -161,8 +161,12 @@ func (s *Service) AuthEnvironment(ctx context.Context, interactive bool) error {
 func (s *Service) AuthUser(ctx context.Context, interactive bool) error {
 	user := s.scope.GetCurrentContext().GetAuth().UserID
 	if !uuid.UUID(user).IsNil() && user != "" {
-		return nil
+		_, err := s.rig.Authentication().Get(ctx, connect.NewRequest(&authentication.GetRequest{}))
+		if err == nil {
+			return nil
+		}
 	}
+
 	if !interactive {
 		return errors.UnauthenticatedErrorf("Login to continue")
 	}
