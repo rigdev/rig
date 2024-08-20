@@ -234,6 +234,7 @@ func (s *SetupContext) addRigClientInvokes(cmd *cobra.Command) {
 			}),
 		)
 	}
+
 	if _, ok := annotations[auth.OmitProject]; !ok {
 		s.authOptions = append(s.authOptions,
 			fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
@@ -241,6 +242,7 @@ func (s *SetupContext) addRigClientInvokes(cmd *cobra.Command) {
 			}),
 		)
 	}
+
 	if _, ok := annotations[auth.OmitEnvironment]; !ok {
 		s.authOptions = append(s.authOptions,
 			fx.Invoke(func(ctx context.Context, s *auth.Service, interactive scope.Interactive) error {
