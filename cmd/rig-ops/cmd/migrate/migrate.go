@@ -21,6 +21,7 @@ import (
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	v1alpha2pkg "github.com/rigdev/rig/pkg/api/v1alpha2"
 	rerrors "github.com/rigdev/rig/pkg/errors"
+	"github.com/rigdev/rig/pkg/roclient"
 	envmapping "github.com/rigdev/rig/plugins/builtin/env_mapping"
 	"github.com/rigdev/rig/plugins/capsulesteps/deployment"
 	"github.com/rigdev/rig/plugins/capsulesteps/ingress_routes"
@@ -28,12 +29,16 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/engine"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -48,11 +53,20 @@ type Migration struct {
 	plugins           []string
 }
 
-func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
+func (c *Cmd) migrateK8s(ctx context.Context, _ *cobra.Command, _ []string) error {
 	// TODO Move rig.Client into FX as well
 	rc, err := base.NewRigClient(ctx, afero.NewOsFs(), c.Prompter)
 	if err != nil {
 		return err
+	}
+
+	if helmDir != "" {
+		reader, err := createHelmReader(c.Scheme, helmDir, valuesFile)
+		if err != nil {
+			return err
+		}
+
+		c.K8sReader = reader
 	}
 
 	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
@@ -124,7 +138,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	color.Green(" ✓")
 
 	fmt.Print("Scanning for Cronjobs...")
-	if err := c.migrateCronJobs(ctx, migration); err != nil && err.Error() != promptAborted {
+	if err := c.migrateCronJobs(ctx, migration); err != nil && err.Error() != common.AbortedErrMsg {
 		fmt.Print("Scanning for Cronjobs...")
 		color.Red(" ✗")
 		return err
@@ -314,6 +328,10 @@ func (c *Cmd) promptDeploymentSelect(ctx context.Context) (*appsv1.Deployment, e
 	err := c.K8sReader.List(ctx, deployments, client.InNamespace(base.Flags.Namespace))
 	if err != nil {
 		return nil, onCCListError(err, "Deployment", base.Flags.Namespace)
+	}
+
+	if len(deployments.Items) == 1 {
+		return &deployments.Items[0], nil
 	}
 
 	headers := []string{"NAME", "NAMESPACE", "READY", "UP-TO-DATE", "AVAILABLE", "AGE"}
@@ -1281,4 +1299,68 @@ func onCCGetError(err error, kind, name, namespace string) error {
 
 func onCCListError(err error, kind, namespace string) error {
 	return errors.Wrapf(err, "Error listing %s in namespace %s", kind, namespace)
+}
+
+func createHelmReader(scheme *runtime.Scheme, helmDir, valuesFile string) (client.Reader, error) {
+	chart, err := loader.Load(helmDir)
+	if err != nil {
+		return nil, err
+	}
+
+	notesIndex := -1
+	for i, t := range chart.Templates {
+		if strings.Contains(t.Name, "NOTES.txt") {
+			notesIndex = i
+			break
+		}
+	}
+
+	if notesIndex != -1 {
+		chart.Templates = append(chart.Templates[:notesIndex], chart.Templates[notesIndex+1:]...)
+	}
+
+	vals := chart.Values
+	if valuesFile != "" {
+		fileValues, err := chartutil.ReadValuesFile(valuesFile)
+		if err != nil {
+			return nil, err
+		}
+
+		vals = chartutil.CoalesceTables(chart.Values, fileValues)
+	}
+
+	releaseOpts := chartutil.ReleaseOptions{
+		Name:      "migrate",
+		Namespace: "migrate",
+		Revision:  1,
+		IsInstall: true,
+	}
+	valuesToRender, err := chartutil.ToRenderValues(chart, vals, releaseOpts, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := base.GetRestConfig()
+	if err != nil {
+		return nil, err
+	}
+	eng := engine.New(cfg)
+	out, err := eng.Render(chart, valuesToRender)
+	if err != nil {
+		return nil, err
+	}
+
+	objs, err := ProcessHelmOutput(out, scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	reader := roclient.NewReader(scheme)
+	for _, obj := range objs {
+		if err := reader.AddObject(obj); err != nil {
+			return nil, err
+		}
+	}
+
+	return reader, nil
 }

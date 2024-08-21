@@ -3,6 +3,7 @@ package migrate
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/homeport/dyff/pkg/dyff"
@@ -136,6 +137,27 @@ func ProcessOperatorOutput(
 	}
 
 	return nil
+}
+
+func ProcessHelmOutput(
+	helmOutput map[string]string,
+	scheme *runtime.Scheme,
+) ([]client.Object, error) {
+	var objects []client.Object
+	for _, yaml := range helmOutput {
+		str := strings.TrimSpace(yaml)
+		if str == "" {
+			continue
+		}
+		proposal, err := obj.DecodeAny([]byte(yaml), scheme)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding object from helm: %v", err)
+		}
+
+		objects = append(objects, proposal)
+	}
+
+	return objects, nil
 }
 
 func getWarningsView(warnings []*Warning) *tview.TextView {

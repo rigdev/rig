@@ -384,7 +384,7 @@ func (r *Resources) AddObject(kind, name string, object client.Object) error {
 		ca.SetGroupVersionKind(v1alpha2.GroupVersion.WithKind(kind))
 		r.K8sCapsule = ca
 	default:
-		return errors.InvalidArgumentErrorf("unexpected kind '%s' to current resources", kind)
+		return nil
 	}
 
 	return nil
