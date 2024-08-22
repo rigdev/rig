@@ -193,7 +193,7 @@ func (c *Cmd) interactiveDiff(dryRun *pipeline.DryRunResponse) error {
 		warnings[k] = nil
 	}
 
-	return migrate.PromptDiffingChanges(reports, warnings, overview, migratedOverview, c.Prompter)
+	return migrate.PromptDiffingChanges(reports, warnings, overview, migratedOverview, nil, c.Prompter)
 }
 
 func readPlugin(path string) (v1alpha1.Step, error) {

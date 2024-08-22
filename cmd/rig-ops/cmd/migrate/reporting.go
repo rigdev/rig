@@ -9,6 +9,8 @@ import (
 	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
+	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
 	"golang.org/x/exp/maps"
@@ -195,6 +197,31 @@ func showOverview(
 		AddItem(currentOverview, 0, 0, 10, 1, 0, 0, false).
 		AddItem(migratedOverview, 0, 1, 10, 1, 0, 0, false)
 	app := tview.NewApplication().SetRoot(grid, true)
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyESC {
+			app.Stop()
+		}
+		return event
+	})
+
+	return app.Run()
+}
+
+func showCapsule(capsule *platformv1.Capsule) error {
+	capsuleYaml, err := common.Format(capsule, common.OutputTypeYAML)
+	if err != nil {
+		return err
+	}
+
+	text := tview.NewTextView()
+	text.SetTitle("Platform Capsule (ESC to exit)")
+	text.SetBorder(true)
+	text.SetDynamicColors(true)
+	text.SetWrap(true)
+	text.SetText(capsuleYaml)
+	text.SetBackgroundColor(tcell.ColorNone)
+
+	app := tview.NewApplication().SetRoot(text, true)
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyESC {
 			app.Stop()

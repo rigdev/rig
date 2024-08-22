@@ -306,6 +306,7 @@ func (r *Resources) AddObject(kind, name string, object client.Object) error {
 		if r.HPA != nil {
 			return errors.AlreadyExistsErrorf("horizontal pod autoscaler already set in current resources")
 		}
+
 		hpa, err := convertResource[*autoscalingv2.HorizontalPodAutoscaler](object, kind)
 		if err != nil {
 			return err

@@ -21,7 +21,6 @@ import (
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	v1alpha2pkg "github.com/rigdev/rig/pkg/api/v1alpha2"
 	rerrors "github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/roclient"
 	envmapping "github.com/rigdev/rig/plugins/builtin/env_mapping"
 	"github.com/rigdev/rig/plugins/capsulesteps/deployment"
 	"github.com/rigdev/rig/plugins/capsulesteps/ingress_routes"
@@ -29,16 +28,12 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/chartutil"
-	"helm.sh/helm/v3/pkg/engine"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -53,7 +48,7 @@ type Migration struct {
 	plugins           []string
 }
 
-func (c *Cmd) migrateK8s(ctx context.Context, _ *cobra.Command, _ []string) error {
+func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	// TODO Move rig.Client into FX as well
 	rc, err := base.NewRigClient(ctx, afero.NewOsFs(), c.Prompter)
 	if err != nil {
@@ -61,7 +56,7 @@ func (c *Cmd) migrateK8s(ctx context.Context, _ *cobra.Command, _ []string) erro
 	}
 
 	if helmDir != "" {
-		reader, err := createHelmReader(c.Scheme, helmDir, valuesFile)
+		reader, err := createHelmReader(c.Scheme, helmDir, valuesFiles)
 		if err != nil {
 			return err
 		}
@@ -171,6 +166,10 @@ func (c *Cmd) migrateK8s(ctx context.Context, _ *cobra.Command, _ []string) erro
 		return fmt.Errorf("error performing dry-run on platform: %v", err)
 	}
 
+	if deployResp.Msg.GetOutcome().GetKubernetesError() != "" {
+		return errors.New("Kubernetes Error: " + deployResp.Msg.GetOutcome().GetKubernetesError())
+	}
+
 	migratedTree := migration.migratedResources.CreateOverview("New Resources")
 
 	reports, err := migration.migratedResources.Compare(migration.currentResources, c.Scheme)
@@ -178,11 +177,29 @@ func (c *Cmd) migrateK8s(ctx context.Context, _ *cobra.Command, _ []string) erro
 		return err
 	}
 
+	platformCapsule := &platformv1.Capsule{
+		Kind:        "Capsule",
+		ApiVersion:  "platform.rig.dev/v1",
+		Name:        migration.capsuleName,
+		Project:     base.Flags.Project,
+		Environment: base.Flags.Environment,
+		Spec:        migration.capsuleSpec,
+	}
+
 	if err := PromptDiffingChanges(reports,
 		migration.warnings,
 		currentTree,
-		migratedTree, c.Prompter); err != nil && err.Error() != promptAborted {
+		migratedTree,
+		platformCapsule,
+		c.Prompter); err != nil && err.Error() != promptAborted {
 		return err
+	}
+
+	// Export the capsule to a file if export is set
+	if export != "" {
+		if err := exportCapsule(platformCapsule, export); err != nil {
+			return err
+		}
 	}
 
 	if !apply {
@@ -247,9 +264,14 @@ func PromptDiffingChanges(
 	warnings map[string][]*Warning,
 	currentOverview *tview.TreeView,
 	migratedOverview *tview.TreeView,
+	platformCapsule *platformv1.Capsule,
 	prompter common.Prompter,
 ) error {
 	choices := []string{"Overview"}
+
+	if platformCapsule != nil {
+		choices = append(choices, "Platform Capsule")
+	}
 
 	for kind := range reports.reports {
 		choices = append(choices, kind)
@@ -282,6 +304,11 @@ func PromptDiffingChanges(
 		switch kind {
 		case "Overview":
 			if err := showOverview(currentOverview, migratedOverview); err != nil {
+				return err
+			}
+			continue
+		case "Platform Capsule":
+			if err := showCapsule(platformCapsule); err != nil {
 				return err
 			}
 			continue
@@ -445,47 +472,54 @@ func (c *Cmd) migrateDeployment(
 
 	migration.capsuleSpec.Image = container.Image
 	migration.capsuleSpec.Scale = &platformv1.Scale{
-		Vertical: &v1alpha2.VerticalScale{
-			Cpu:    &v1alpha2.ResourceLimits{},
-			Memory: &v1alpha2.ResourceLimits{},
-		},
 		Horizontal: &platformv1.HorizontalScale{
 			Instances: &v1alpha2.Instances{
-				Min: uint32(*migration.currentResources.Deployment.Spec.Replicas),
+				Min: 1,
 			},
 		},
 	}
 
-	cpu, memory := migration.capsuleSpec.Scale.Vertical.Cpu, migration.capsuleSpec.Scale.Vertical.Memory
-	for key, request := range container.Resources.Requests {
-		switch key {
-		case corev1.ResourceCPU:
-			cpu.Request = request.String()
-		case corev1.ResourceMemory:
-			memory.Request = request.String()
-		default:
-			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
-				Kind:    "Deployment",
-				Name:    migration.currentResources.Deployment.Name,
-				Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.requests", container.Name),
-				Warning: fmt.Sprintf("Request of %s:%v is not supported by capsule", key, request.Value()),
-			})
-		}
+	if migration.currentResources.Deployment.Spec.Replicas != nil {
+		migration.capsuleSpec.Scale.Horizontal.Instances.Min = uint32(*migration.currentResources.Deployment.Spec.Replicas)
 	}
 
-	for key, limit := range container.Resources.Limits {
-		switch key {
-		case corev1.ResourceCPU:
-			cpu.Limit = limit.String()
-		case corev1.ResourceMemory:
-			memory.Limit = limit.String()
-		default:
-			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
-				Kind:    "Deployment",
-				Name:    migration.currentResources.Deployment.Name,
-				Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.limit", container.Name),
-				Warning: fmt.Sprintf("Limit of %s:%v is not supported by capsule", key, limit.Value()),
-			})
+	if len(container.Resources.Requests) > 0 || len(container.Resources.Limits) > 0 {
+		migration.capsuleSpec.Scale.Vertical = &v1alpha2.VerticalScale{
+			Cpu:    &v1alpha2.ResourceLimits{},
+			Memory: &v1alpha2.ResourceLimits{},
+		}
+
+		cpu, memory := migration.capsuleSpec.Scale.Vertical.Cpu, migration.capsuleSpec.Scale.Vertical.Memory
+		for key, request := range container.Resources.Requests {
+			switch key {
+			case corev1.ResourceCPU:
+				cpu.Request = request.String()
+			case corev1.ResourceMemory:
+				memory.Request = request.String()
+			default:
+				migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+					Kind:    "Deployment",
+					Name:    migration.currentResources.Deployment.Name,
+					Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.requests", container.Name),
+					Warning: fmt.Sprintf("Request of %s:%v is not supported by capsule", key, request.Value()),
+				})
+			}
+		}
+
+		for key, limit := range container.Resources.Limits {
+			switch key {
+			case corev1.ResourceCPU:
+				cpu.Limit = limit.String()
+			case corev1.ResourceMemory:
+				memory.Limit = limit.String()
+			default:
+				migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+					Kind:    "Deployment",
+					Name:    migration.currentResources.Deployment.Name,
+					Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.limit", container.Name),
+					Warning: fmt.Sprintf("Limit of %s:%v is not supported by capsule", key, limit.Value()),
+				})
+			}
 		}
 	}
 
@@ -536,6 +570,15 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 			hpa := hpa
 			if err := migration.currentResources.AddObject("HorizontalPodAutoscaler", hpa.Name, &hpa); err != nil {
 				return err
+			}
+
+			if hpa.TypeMeta.APIVersion != "autoscaling/v2" {
+				migration.warnings["HorizontalPodAutoscaler"] = append(migration.warnings["HorizontalPodAutoscaler"], &Warning{
+					Kind:    "HorizontalPodAutoscaler",
+					Name:    hpa.Name,
+					Field:   "apiVersion",
+					Warning: "Only autoscaling/v2 API version is supported",
+				})
 			}
 
 			specHorizontalScale := &platformv1.HorizontalScale{
@@ -1002,7 +1045,6 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	container := migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex]
 	livenessProbe := container.LivenessProbe
 	readinessProbe := container.ReadinessProbe
-
 	ingressEnabled := migration.operatorConfig.Pipeline.RoutesStep.Plugin != ""
 
 	if container.StartupProbe != nil {
@@ -1035,6 +1077,10 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 			routePaths := []*v1alpha2.HTTPPathRoute{}
 
 			annotations := maps.Clone(ingress.Annotations)
+			if annotations == nil {
+				annotations = map[string]string{}
+			}
+
 			delete(annotations, "kubernetes.io/ingress.class")
 			delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
 
@@ -1299,68 +1345,4 @@ func onCCGetError(err error, kind, name, namespace string) error {
 
 func onCCListError(err error, kind, namespace string) error {
 	return errors.Wrapf(err, "Error listing %s in namespace %s", kind, namespace)
-}
-
-func createHelmReader(scheme *runtime.Scheme, helmDir, valuesFile string) (client.Reader, error) {
-	chart, err := loader.Load(helmDir)
-	if err != nil {
-		return nil, err
-	}
-
-	notesIndex := -1
-	for i, t := range chart.Templates {
-		if strings.Contains(t.Name, "NOTES.txt") {
-			notesIndex = i
-			break
-		}
-	}
-
-	if notesIndex != -1 {
-		chart.Templates = append(chart.Templates[:notesIndex], chart.Templates[notesIndex+1:]...)
-	}
-
-	vals := chart.Values
-	if valuesFile != "" {
-		fileValues, err := chartutil.ReadValuesFile(valuesFile)
-		if err != nil {
-			return nil, err
-		}
-
-		vals = chartutil.CoalesceTables(chart.Values, fileValues)
-	}
-
-	releaseOpts := chartutil.ReleaseOptions{
-		Name:      "migrate",
-		Namespace: "migrate",
-		Revision:  1,
-		IsInstall: true,
-	}
-	valuesToRender, err := chartutil.ToRenderValues(chart, vals, releaseOpts, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg, err := base.GetRestConfig()
-	if err != nil {
-		return nil, err
-	}
-	eng := engine.New(cfg)
-	out, err := eng.Render(chart, valuesToRender)
-	if err != nil {
-		return nil, err
-	}
-
-	objs, err := ProcessHelmOutput(out, scheme)
-	if err != nil {
-		return nil, err
-	}
-
-	reader := roclient.NewReader(scheme)
-	for _, obj := range objs {
-		if err := reader.AddObject(obj); err != nil {
-			return nil, err
-		}
-	}
-
-	return reader, nil
 }
