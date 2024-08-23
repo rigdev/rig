@@ -1,0 +1,365 @@
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# Helm Charts to Rig Capsules
+
+Helm is by now a well established tool for defining your your Kubernetes manifest through a templated abstraction.
+Most of us can however agree, that Helm Charts quickly become too complex and difficult to maintain. 
+Few developers dare enter the world of Helm templating, and even fewer dare to touch the Helm Chart of another developer.
+To the rescue comes Rig - With a fixed abstraction layer that standardizes the way developers deploy to, and interact with, Kubernetes,
+developers can focus on the application logic instead of getting lost in yaml files.
+
+But you have already spent countless hours on you Helm Charts, and you don't want to throw them away? We get that,
+so we have made it easy to convert your Helm Charts to Rig Capsules, and get you up and running in no time.
+
+In this guide, we will walk through the process of converting the (almost) default nginx helm chart to a Capsule, to be used with Rig.
+Additionally, we will show you how to deploy the Capsule to your Rig Platform.
+
+The rig-ops CLI, will render the Helm Chart, and base the Capsule on the resulting Kubernetes manifest and perform the migration similar to the approach in the 
+[onboarding](/operator-manual/onboarding) section.
+
+:::info Prerequisites
+To follow along with this guide, you need to have following:
+- [rig CLI Installed](/getting-started/cli-install)
+- [rig-ops CLI installed](/operator-manual/cli)
+- Rig Platform and Operator Running either in [KIND](/getting-started/platform-installation) or in a [real K8s environment](/operator-manual/setup-guide)
+:::
+
+## Helm Chart
+As stated, the Helm Chart used in this guide is almost the default nginx chart, and contains (mostly) the following files:
+
+<Tabs>
+    <TabItem value="values" label="values.yaml">
+```yaml
+# Default values for nginx-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "nginx-chart"
+
+service:
+  type: ClusterIP
+  port: 80
+
+configMap:
+  key: "key"
+  value: "Welcome to the nginx chart"
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+```
+  </TabItem>
+  <TabItem value="deployment" label="deployment.yaml">
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nginx-chart.fullname" . }}
+  labels:
+    {{- include "nginx-chart.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "nginx-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nginx-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "nginx-chart.serviceAccountName" . }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "nginx-chart.fullname" . }}
+            defaultMode: 420
+            items:
+              - key: {{ .Values.configMap.key }}
+                path: index.html
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
+
+```
+  </TabItem>
+  <TabItem value="configmap" label="configmap.yaml">
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nginx-chart.fullname" . }}
+  labels:
+    {{- include "nginx-chart.labels" . | nindent 4 }}
+data:
+    {{ .Values.configMap.key }}: {{ .Values.configMap.value }}
+```
+  </TabItem>
+  <TabItem value="hpa" label="hpa.yaml">
+```yaml
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "nginx-chart.fullname" . }}
+  labels:
+    {{- include "nginx-chart.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "nginx-chart.fullname" . }}
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}
+```
+  </TabItem>
+  <TabItem value="service" label="service.yaml">
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nginx-chart.fullname" . }}
+  labels:
+    {{- include "nginx-chart.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "nginx-chart.selectorLabels" . | nindent 4 }}
+```
+  </TabItem>
+  <TabItem value="serviceaccount" label="serviceaccount.yaml">
+```yaml
+{{- if .Values.serviceAccount.create -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "nginx-chart.serviceAccountName" . }}
+  labels:
+    {{- include "nginx-chart.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+```
+  </TabItem>
+  <TabItem value="helpers" label="helpers_.tpl">
+```yaml
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "nginx-chart.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "nginx-chart.fullname" -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "nginx-chart.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "nginx-chart.labels" -}}
+helm.sh/chart: {{ include "nginx-chart.chart" . }}
+{{ include "nginx-chart.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "nginx-chart.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "nginx-chart.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "nginx-chart.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "nginx-chart.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
+```
+  </TabItem>
+</Tabs>
+
+## Migration
+
+To migrate the Helm Chart to a Capsule, we will use the [migrate](/operator-manual/onboarding) command 
+from the [rig-ops CLI](/operator-manual/cli).
+
+By specifying the Helm Chart directory, the `migrate` command renders the Helm Chart, 
+and uses the resulting Kubernetes manifest as the base for the Capsule.
+
+```bash
+rig-ops migrate --helm-dir ./nginx-chart
+```
+
+By default, the the values in the Helm Chart are used, but you can override them by specifying the `--values-file` flag.
+
+```bash
+rig-ops migrate --helm-dir ./nginx-chart --values-file ./other-values.yaml
+```
+
+This will go through the flow described in the [onboarding guide](/operator-manual/onboarding), and at the end
+you will be presented with a `Platform Capsule` and a diff of the k8s resources.
+
+### Capsule
+In the end, the resulting Capsule file should look something like this:
+
+```yaml title="nginx-capsule.yaml"
+apiVersion: platform.rig.dev/v1
+environment: prod
+kind: Capsule
+name: migrate-nginx-chart
+project: test
+spec:
+  files:
+  - path: /usr/share/nginx/html/index.html
+    string: Welcome to the nginx chart
+  image: nginx:1.16.0
+  interfaces:
+  - liveness:
+      path: /
+    name: http
+    port: 80
+    readiness:
+      path: /
+  scale:
+    horizontal:
+      cpuTarget:
+        utilization: 80
+      instances:
+        max: 100
+        min: 1
+```
+
+## Deploying the Capsule
+It is either possible to directly deploy the result of the `migration` command,
+or to save the Capsule to a file, adjust it, and deploy it later.
+
+```bash
+rig-ops migrate --helm-dir ./nginx-chart --values-file ./other-values.yaml --apply
+```
+
+```bash
+rig-ops migrate --helm-dir ./nginx-chart --values-file ./other-values.yaml --export ./nginx-capsule.yaml
+rig deploy -f ./nginx-capsule.yaml
+```
+
+
+
+
+
+
+
