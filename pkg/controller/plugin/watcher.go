@@ -686,6 +686,10 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 			Parent:    ow.parent,
 		}
 
+		if !co.GetDeletionTimestamp().IsZero() {
+			status.DeletionAt = timestamppb.New(co.GetDeletionTimestamp().Time)
+		}
+
 		f.cw.updated(status)
 
 		if !res.deadline.IsZero() {

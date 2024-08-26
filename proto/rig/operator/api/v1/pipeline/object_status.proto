@@ -24,6 +24,7 @@ message ObjectStatus {
   // The createdTimestamp from the kubernetes object.
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp updated_at = 3;
+  google.protobuf.Timestamp deletion_at = 6;
   ObjectRef parent = 4;
 }
 
