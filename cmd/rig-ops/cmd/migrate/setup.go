@@ -19,6 +19,9 @@ var (
 	deploymentName    string
 	annotations       map[string]string
 	keepEnvConfigMaps bool
+	valuesFiles       []string
+	helmDir           string
+	export            string
 )
 
 var nameOrigin CapsuleName
@@ -42,9 +45,9 @@ func initCmd(c Cmd) {
 func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	migrate := &cobra.Command{
 		Use:               "migrate",
-		Short:             "Migrate you kubernetes deployments to Rig Capsules",
-		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
+		Short:             "Migrate your kubernetes deployments to Rig Capsules",
 		RunE:              cli.CtxWrap(cmd.migrate),
+		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
 	migrate.Flags().StringVarP(&base.Flags.Environment, "environment", "e", "", "The environment to migrate to")
@@ -66,6 +69,13 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			"By default, ConfigMaps are read and added to the Capsule. Changing this behavior is useful "+
 			"if an external tool is generating the ConfigMaps.",
 	)
+
+	migrate.Flags().StringSliceVar(&valuesFiles, "values-file", []string{},
+		"Paths to additional values files to use for the helm chart."+
+			"Each path is separated by a comma. The values are merged in the order they are provided")
+	migrate.Flags().StringVar(&helmDir, "helm-dir", "", "Path to a Helm chart directory. "+
+		"If set, the Helm chart will be rendered, and the resulting k8s resources will form the base of the migration")
+	migrate.Flags().StringVar(&export, "export", "", "Export the Capsule to the given file path")
 
 	parent.AddCommand(migrate)
 }

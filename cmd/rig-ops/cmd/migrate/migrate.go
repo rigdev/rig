@@ -55,6 +55,15 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if helmDir != "" {
+		reader, err := createHelmReader(c.Scheme, helmDir, valuesFiles)
+		if err != nil {
+			return err
+		}
+
+		c.K8sReader = reader
+	}
+
 	cfg, err := base.GetOperatorConfig(ctx, c.OperatorClient, c.Scheme)
 	if err != nil {
 		return err
@@ -124,7 +133,7 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	color.Green(" ✓")
 
 	fmt.Print("Scanning for Cronjobs...")
-	if err := c.migrateCronJobs(ctx, migration); err != nil && err.Error() != promptAborted {
+	if err := c.migrateCronJobs(ctx, migration); err != nil && err.Error() != common.AbortedErrMsg {
 		fmt.Print("Scanning for Cronjobs...")
 		color.Red(" ✗")
 		return err
@@ -157,6 +166,10 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return fmt.Errorf("error performing dry-run on platform: %v", err)
 	}
 
+	if deployResp.Msg.GetOutcome().GetKubernetesError() != "" {
+		return errors.New("Kubernetes Error: " + deployResp.Msg.GetOutcome().GetKubernetesError())
+	}
+
 	migratedTree := migration.migratedResources.CreateOverview("New Resources")
 
 	reports, err := migration.migratedResources.Compare(migration.currentResources, c.Scheme)
@@ -164,11 +177,29 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	platformCapsule := &platformv1.Capsule{
+		Kind:        "Capsule",
+		ApiVersion:  "platform.rig.dev/v1",
+		Name:        migration.capsuleName,
+		Project:     base.Flags.Project,
+		Environment: base.Flags.Environment,
+		Spec:        migration.capsuleSpec,
+	}
+
 	if err := PromptDiffingChanges(reports,
 		migration.warnings,
 		currentTree,
-		migratedTree, c.Prompter); err != nil && err.Error() != promptAborted {
+		migratedTree,
+		platformCapsule,
+		c.Prompter); err != nil && err.Error() != promptAborted {
 		return err
+	}
+
+	// Export the capsule to a file if export is set
+	if export != "" {
+		if err := exportCapsule(platformCapsule, export); err != nil {
+			return err
+		}
 	}
 
 	if !apply {
@@ -233,9 +264,14 @@ func PromptDiffingChanges(
 	warnings map[string][]*Warning,
 	currentOverview *tview.TreeView,
 	migratedOverview *tview.TreeView,
+	platformCapsule *platformv1.Capsule,
 	prompter common.Prompter,
 ) error {
 	choices := []string{"Overview"}
+
+	if platformCapsule != nil {
+		choices = append(choices, "Platform Capsule")
+	}
 
 	for kind := range reports.reports {
 		choices = append(choices, kind)
@@ -268,6 +304,11 @@ func PromptDiffingChanges(
 		switch kind {
 		case "Overview":
 			if err := showOverview(currentOverview, migratedOverview); err != nil {
+				return err
+			}
+			continue
+		case "Platform Capsule":
+			if err := showCapsule(platformCapsule); err != nil {
 				return err
 			}
 			continue
@@ -314,6 +355,10 @@ func (c *Cmd) promptDeploymentSelect(ctx context.Context) (*appsv1.Deployment, e
 	err := c.K8sReader.List(ctx, deployments, client.InNamespace(base.Flags.Namespace))
 	if err != nil {
 		return nil, onCCListError(err, "Deployment", base.Flags.Namespace)
+	}
+
+	if len(deployments.Items) == 1 {
+		return &deployments.Items[0], nil
 	}
 
 	headers := []string{"NAME", "NAMESPACE", "READY", "UP-TO-DATE", "AVAILABLE", "AGE"}
@@ -427,47 +472,54 @@ func (c *Cmd) migrateDeployment(
 
 	migration.capsuleSpec.Image = container.Image
 	migration.capsuleSpec.Scale = &platformv1.Scale{
-		Vertical: &v1alpha2.VerticalScale{
-			Cpu:    &v1alpha2.ResourceLimits{},
-			Memory: &v1alpha2.ResourceLimits{},
-		},
 		Horizontal: &platformv1.HorizontalScale{
 			Instances: &v1alpha2.Instances{
-				Min: uint32(*migration.currentResources.Deployment.Spec.Replicas),
+				Min: 1,
 			},
 		},
 	}
 
-	cpu, memory := migration.capsuleSpec.Scale.Vertical.Cpu, migration.capsuleSpec.Scale.Vertical.Memory
-	for key, request := range container.Resources.Requests {
-		switch key {
-		case corev1.ResourceCPU:
-			cpu.Request = request.String()
-		case corev1.ResourceMemory:
-			memory.Request = request.String()
-		default:
-			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
-				Kind:    "Deployment",
-				Name:    migration.currentResources.Deployment.Name,
-				Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.requests", container.Name),
-				Warning: fmt.Sprintf("Request of %s:%v is not supported by capsule", key, request.Value()),
-			})
-		}
+	if migration.currentResources.Deployment.Spec.Replicas != nil {
+		migration.capsuleSpec.Scale.Horizontal.Instances.Min = uint32(*migration.currentResources.Deployment.Spec.Replicas)
 	}
 
-	for key, limit := range container.Resources.Limits {
-		switch key {
-		case corev1.ResourceCPU:
-			cpu.Limit = limit.String()
-		case corev1.ResourceMemory:
-			memory.Limit = limit.String()
-		default:
-			migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
-				Kind:    "Deployment",
-				Name:    migration.currentResources.Deployment.Name,
-				Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.limit", container.Name),
-				Warning: fmt.Sprintf("Limit of %s:%v is not supported by capsule", key, limit.Value()),
-			})
+	if len(container.Resources.Requests) > 0 || len(container.Resources.Limits) > 0 {
+		migration.capsuleSpec.Scale.Vertical = &v1alpha2.VerticalScale{
+			Cpu:    &v1alpha2.ResourceLimits{},
+			Memory: &v1alpha2.ResourceLimits{},
+		}
+
+		cpu, memory := migration.capsuleSpec.Scale.Vertical.Cpu, migration.capsuleSpec.Scale.Vertical.Memory
+		for key, request := range container.Resources.Requests {
+			switch key {
+			case corev1.ResourceCPU:
+				cpu.Request = request.String()
+			case corev1.ResourceMemory:
+				memory.Request = request.String()
+			default:
+				migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+					Kind:    "Deployment",
+					Name:    migration.currentResources.Deployment.Name,
+					Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.requests", container.Name),
+					Warning: fmt.Sprintf("Request of %s:%v is not supported by capsule", key, request.Value()),
+				})
+			}
+		}
+
+		for key, limit := range container.Resources.Limits {
+			switch key {
+			case corev1.ResourceCPU:
+				cpu.Limit = limit.String()
+			case corev1.ResourceMemory:
+				memory.Limit = limit.String()
+			default:
+				migration.warnings["Deployment"] = append(migration.warnings["Deployment"], &Warning{
+					Kind:    "Deployment",
+					Name:    migration.currentResources.Deployment.Name,
+					Field:   fmt.Sprintf("spec.template.spec.containers.%s.resources.limit", container.Name),
+					Warning: fmt.Sprintf("Limit of %s:%v is not supported by capsule", key, limit.Value()),
+				})
+			}
 		}
 	}
 
@@ -518,6 +570,15 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 			hpa := hpa
 			if err := migration.currentResources.AddObject("HorizontalPodAutoscaler", hpa.Name, &hpa); err != nil {
 				return err
+			}
+
+			if hpa.TypeMeta.APIVersion != "autoscaling/v2" {
+				migration.warnings["HorizontalPodAutoscaler"] = append(migration.warnings["HorizontalPodAutoscaler"], &Warning{
+					Kind:    "HorizontalPodAutoscaler",
+					Name:    hpa.Name,
+					Field:   "apiVersion",
+					Warning: "Only autoscaling/v2 API version is supported",
+				})
 			}
 
 			specHorizontalScale := &platformv1.HorizontalScale{
@@ -984,7 +1045,6 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	container := migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex]
 	livenessProbe := container.LivenessProbe
 	readinessProbe := container.ReadinessProbe
-
 	ingressEnabled := migration.operatorConfig.Pipeline.RoutesStep.Plugin != ""
 
 	if container.StartupProbe != nil {
@@ -1017,6 +1077,10 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 			routePaths := []*v1alpha2.HTTPPathRoute{}
 
 			annotations := maps.Clone(ingress.Annotations)
+			if annotations == nil {
+				annotations = map[string]string{}
+			}
+
 			delete(annotations, "kubernetes.io/ingress.class")
 			delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
 

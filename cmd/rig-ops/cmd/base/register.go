@@ -56,11 +56,10 @@ func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func NewKubernetesClient() (client.Client, *rest.Config, error) {
-	// use the current context in kubeconfig
+func GetRestConfig() (*rest.Config, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", Flags.KubeConfig)
 	if err != nil {
-		return nil, config, err
+		return config, err
 	}
 
 	if Flags.KubeContext != "" {
@@ -70,8 +69,18 @@ func NewKubernetesClient() (client.Client, *rest.Config, error) {
 				CurrentContext: Flags.KubeContext,
 			}).ClientConfig()
 		if err != nil {
-			return nil, config, err
+			return config, err
 		}
+	}
+
+	return config, nil
+}
+
+func NewKubernetesClient() (client.Client, *rest.Config, error) {
+	// use the current context in kubeconfig
+	config, err := GetRestConfig()
+	if err != nil {
+		return nil, config, err
 	}
 
 	cc, err := client.New(config, client.Options{
@@ -81,11 +90,11 @@ func NewKubernetesClient() (client.Client, *rest.Config, error) {
 }
 
 func NewKubernetesReader(cc client.Client) (client.Reader, error) {
-	if Flags.KubeFile == "" {
-		return cc, nil
+	if Flags.KubeFile != "" {
+		return roclient.NewReaderFromFile(Flags.KubeFile, cc.Scheme())
 	}
 
-	return roclient.NewReaderFromFile(Flags.KubeFile, cc.Scheme())
+	return cc, nil
 }
 
 func NewRigClient(ctx context.Context, fs afero.Fs, prompter common.Prompter) (rig.Client, error) {
