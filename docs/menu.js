@@ -100,7 +100,15 @@ const sidebars = {
             sidebar_icon: "SiArgo",
           },
         },
-
+        {
+          type: "doc",
+          id: "guides/helm",
+          label: "Helm Charts to Rig Capsules",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "SiHelm",
+          },
+        },
       ],
     },
 
