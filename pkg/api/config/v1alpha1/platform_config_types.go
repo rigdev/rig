@@ -392,7 +392,7 @@ type GitHubAuth struct {
 	// InstallationID is the installation ID of the GitHub app
 	InstallationID int64 `json:"installationID,omitempty"`
 
-	// PrivateKey is a path to a file containing a PEM encoded SSH private key.
+	// PrivateKey is a PEM encoded SSH private key.
 	PrivateKey string `json:"privateKey,omitempty"`
 
 	// PrivateKeyPassword is an optional password for the SSH private key.
@@ -470,7 +470,7 @@ type HTTPSCredential struct {
 
 // SSHCredential specifies SSH credentials
 type SSHCredential struct {
-	// PrivateKey is a path to a file containing a PEM encoded SSH private key.
+	// PrivateKey is a PEM encoded SSH private key.
 	PrivateKey string `json:"privateKey,omitempty"`
 
 	// PrivateKeyPassword is an optional password for the SSH private key.

@@ -78,12 +78,12 @@ rig:
           pullingInterval: 20s
           credentials:
             ssh:
-              privateKey: /path/to/private/key/id_rsa
+              private_key: <pem-encoded-private-key>
         # Will use GitHub webhook
         - url: git@github.com:myorg/myrepository2.git
           credentials:
             ssh:
-              privateKey: /path/to/private/key/id_rsa
+              private_key: <pem-encoded-private-key>
       gitHubAuths:
         # Matches git@github.com:myorg/myrepository2.git and enables WebHook
         - organization: myorg
