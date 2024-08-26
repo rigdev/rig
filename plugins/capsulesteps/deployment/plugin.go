@@ -681,6 +681,10 @@ func (p *Plugin) shouldCreateHPA(req pipeline.CapsuleRequest) (bool, error) {
 
 func (p *Plugin) createHPA(req pipeline.CapsuleRequest) (*autoscalingv2.HorizontalPodAutoscaler, bool, error) {
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "HorizontalPodAutoscaler",
+			APIVersion: "autoscaling/v2",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Capsule().Name,
 			Namespace: req.Capsule().Namespace,
