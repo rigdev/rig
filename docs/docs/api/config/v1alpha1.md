@@ -401,7 +401,7 @@ _Appears in:_
 | --- | --- |
 | `appID` _integer_ | AppID is the app ID of the GitHub app |
 | `installationID` _integer_ | InstallationID is the installation ID of the GitHub app |
-| `privateKey` _string_ | PrivateKey is a path to a file containing a PEM encoded SSH private key. |
+| `privateKey` _string_ | PrivateKey is a PEM encoded SSH private key. |
 | `privateKeyPassword` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
 
 
