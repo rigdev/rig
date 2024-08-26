@@ -196,7 +196,7 @@ func (p *Plugin) createDeployment(
 	// terminated within seconds), the kube-nodes may not be aware of the termination yet and may
 	// still forward traffic to this pod. As a remedy, it's recommended to delay shutdown by 5-10
 	// seconds.
-	// This is accomplishable by applying a 7-second sleep in a preStop hook as follow.
+	// This is accomplished by applying a 7-second sleep in a preStop hook as follow.
 	// To avoid unneeded hooks, we only do it if the Capsule has any network interfaces associated
 	// to it.
 	// Note: Not all system may have the sleep command. In that case, a Kubernetes event may be raised
