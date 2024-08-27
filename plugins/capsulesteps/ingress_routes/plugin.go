@@ -73,7 +73,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 	var config Config
 	var err error
 	if len(p.configBytes) > 0 {
-		config, err = plugin.ParseTemplatedConfig[Config](p.configBytes, req, plugin.CapsuleStep[Config])
+		config, err = plugin.ParseCapsuleTemplatedConfig[Config](p.configBytes, req)
 		if err != nil {
 			return err
 		}

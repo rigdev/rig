@@ -98,6 +98,9 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 			return err
 		}
 		spec = string(bytes)
+		if err := obj.Decode([]byte(spec), &capsule); err != nil {
+			return err
+		}
 	} else {
 		capsuleList := v1alpha2.CapsuleList{}
 		if err := c.K8s.List(ctx, &capsuleList); err != nil {

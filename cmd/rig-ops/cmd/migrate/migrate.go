@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -68,12 +69,14 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-
 	migration := &Migration{
 		currentResources:  NewResources(),
 		migratedResources: NewResources(),
 		capsuleSpec: &platformv1.CapsuleSpec{
 			Annotations: map[string]string{},
+			Env: &platformv1.EnvironmentVariables{
+				Raw: map[string]string{},
+			},
 		},
 		warnings:       map[string][]*Warning{},
 		operatorConfig: cfg,
@@ -158,6 +161,14 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 			ForceOverride: true,
 		},
 	}
+	if base.Flags.OperatorConfig != "" {
+		bytes, err := os.ReadFile(base.Flags.OperatorConfig)
+		if err != nil {
+			return err
+		}
+		deployRequest.Msg.OperatorConfig = string(bytes)
+	}
+
 	deployResp, err := rc.Capsule().Deploy(ctx, deployRequest)
 	if err != nil {
 		return err
@@ -238,15 +249,28 @@ func (c *Cmd) setCapsulename(migration *Migration) error {
 	migration.capsuleName = migration.currentResources.Deployment.Name
 	switch nameOrigin {
 	case CapsuleName(""):
-		if migration.currentResources.Service != nil {
-			migration.capsuleName = migration.currentResources.Service.Name
+		if len(migration.currentResources.Services) == 1 {
+			for name := range migration.currentResources.Services {
+				migration.capsuleName = name
+			}
 		}
 	case CapsuleNameDeployment:
 	case CapsuleNameService:
-		if migration.currentResources.Service == nil {
+		if len(migration.currentResources.Services) == 0 {
 			return rerrors.FailedPreconditionErrorf("No services found to inherit name from")
+		} else if len(migration.currentResources.Services) == 1 {
+			for name := range migration.currentResources.Services {
+				migration.capsuleName = name
+			}
+		} else {
+			_, name, err := c.Prompter.Select(
+				"Which service to inherit the name for", maps.Keys(migration.currentResources.Services),
+			)
+			if err != nil {
+				return err
+			}
+			migration.capsuleName = name
 		}
-		migration.capsuleName = migration.currentResources.Service.Name
 	case CapsuleNameInput:
 		inputName, err := c.Prompter.Input("Enter the name for the capsule", common.ValidateSystemNameOpt)
 		if err != nil {
@@ -1020,9 +1044,15 @@ func (c *Cmd) getService(ctx context.Context, migration *Migration) error {
 
 		if match {
 			service := service
-			if err := migration.currentResources.AddObject("Service", service.GetName(), &service); err != nil &&
-				rerrors.IsAlreadyExists(err) {
-				if service.Name != migration.currentResources.Service.Name {
+			if len(migration.currentResources.Services) > 0 {
+				hasDifferentService := false
+				for name := range migration.currentResources.Services {
+					if name != service.Name {
+						hasDifferentService = true
+						break
+					}
+				}
+				if hasDifferentService {
 					migration.warnings["Service"] = append(migration.warnings["Service"], &Warning{
 						Kind:    "Service",
 						Name:    migration.currentResources.Deployment.Name,
@@ -1030,7 +1060,8 @@ func (c *Cmd) getService(ctx context.Context, migration *Migration) error {
 					})
 				}
 				continue
-			} else if err != nil {
+			}
+			if err := migration.currentResources.AddObject("Service", service.GetName(), &service); err != nil {
 				return err
 			}
 		}
@@ -1065,6 +1096,12 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 		return onCCListError(err, "Ingress", migration.currentResources.Deployment.GetNamespace())
 	}
 
+	var serviceName string
+	// There should only be one service
+	for name := range migration.currentResources.Services {
+		serviceName = name
+		break
+	}
 	for _, port := range container.Ports {
 		i := &v1alpha2.CapsuleInterface{
 			Name: port.Name,
@@ -1085,13 +1122,15 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 			delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
 
 			for _, path := range ingress.Spec.Rules[0].HTTP.Paths {
-				if path.Backend.Service.Name != migration.currentResources.Service.Name {
+				if path.Backend.Service.Name != serviceName {
 					continue
 				}
 
-				if path.Backend.Service.Port.Name != port.Name && path.Backend.Service.Port.Number != port.ContainerPort {
-					continue
-				}
+				// nolint:lll
+				// TODO What if the port is not the same but the service names match above. Then the ingress would still send traffic to the service
+				// if path.Backend.Service.Port.Name != port.Name && path.Backend.Service.Port.Number != port.ContainerPort {
+				// 	continue
+				// }
 
 				if err := migration.currentResources.AddObject("Ingress", ingress.GetName(), &ingress); err != nil &&
 					!rerrors.IsAlreadyExists(err) {

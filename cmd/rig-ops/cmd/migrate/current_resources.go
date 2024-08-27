@@ -24,7 +24,7 @@ type Resources struct {
 	PlatformCapsule *platformv1.Capsule
 	K8sCapsule      *v1alpha2.Capsule
 	HPA             *autoscalingv2.HorizontalPodAutoscaler
-	Service         *corev1.Service
+	Services        map[string]*corev1.Service
 	ConfigMaps      map[string]*corev1.ConfigMap
 	Secrets         map[string]*corev1.Secret
 	Ingresses       map[string]*netv1.Ingress
@@ -37,6 +37,7 @@ func NewResources() *Resources {
 		Secrets:    map[string]*corev1.Secret{},
 		Ingresses:  map[string]*netv1.Ingress{},
 		CronJobs:   map[string]*batchv1.CronJob{},
+		Services:   map[string]*corev1.Service{},
 	}
 }
 
@@ -45,8 +46,8 @@ func (r *Resources) All() []client.Object {
 	if r.Deployment != nil {
 		res = append(res, r.Deployment)
 	}
-	if r.Service != nil {
-		res = append(res, r.Service)
+	for _, s := range r.Services {
+		res = append(res, s)
 	}
 	return res
 }
@@ -74,8 +75,8 @@ func (r *Resources) getObject(kind, name string) client.Object {
 			return s
 		}
 	case "Service":
-		if s := r.Service; s != nil {
-			r.Service = nil
+		if s, ok := r.Services[name]; ok {
+			delete(r.Services, name)
 			return s
 		}
 	case "Ingress":
@@ -142,14 +143,13 @@ func (r *Resources) CreateOverview(title string) *tview.TreeView {
 		add(deploymentRoot, "Secret", s.GetName())
 	}
 
-	if r.Service != nil {
-		serviceNode := add(deploymentRoot, "Service", r.Service.GetName())
-
+	for _, s := range r.Services {
+		serviceNode := add(deploymentRoot, "Service", s.GetName())
 		for _, i := range r.Ingresses {
 			ingress := i
 			added := false
 			for _, p := range i.Spec.Rules[0].HTTP.Paths {
-				if p.Backend.Service.Name != r.Service.GetName() || added {
+				if p.Backend.Service.Name != s.GetName() || added {
 					continue
 				}
 
@@ -157,7 +157,6 @@ func (r *Resources) CreateOverview(title string) *tview.TreeView {
 				added = true
 			}
 		}
-
 	}
 
 	tree.Box.
@@ -191,16 +190,16 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 		}
 	}
 
-	if r.Service != nil {
-		originalService := other.getObject("Service", r.Service.Name)
-		if err := reportSet.AddReport(originalService, r.Service, ""); err != nil {
+	if r.K8sCapsule != nil {
+		originalCapsule := other.getObject("Capsule", r.K8sCapsule.Name)
+		if err := reportSet.AddReport(originalCapsule, r.K8sCapsule, ""); err != nil {
 			return nil, err
 		}
 	}
 
-	if r.K8sCapsule != nil {
-		originalCapsule := other.getObject("Capsule", r.K8sCapsule.Name)
-		if err := reportSet.AddReport(originalCapsule, r.K8sCapsule, ""); err != nil {
+	for _, s := range r.Services {
+		originalService := other.getObject("Service", s.Name)
+		if err := reportSet.AddReport(originalService, s, s.Name); err != nil {
 			return nil, err
 		}
 	}
@@ -215,15 +214,8 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 			i := strings.LastIndex(name, "/")
 			name = name[:i] + "." + name[i+1:]
 		}
-
 		originalConfigMap := other.getObject("ConfigMap", name)
-
-		reportName := configMap.Name
-		if originalConfigMap != nil {
-			reportName = fmt.Sprintf("%s -> %s", originalConfigMap.GetName(), configMap.Name)
-		}
-
-		if err := reportSet.AddReport(originalConfigMap, configMap, reportName); err != nil {
+		if err := compareObject(reportSet, originalConfigMap, configMap); err != nil {
 			return nil, err
 		}
 	}
@@ -238,15 +230,8 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 			i := strings.LastIndex(name, "/")
 			name = name[:i] + "." + name[i+1:]
 		}
-
 		originalSecret := other.getObject("Secret", name)
-
-		reportName := secret.Name
-		if originalSecret != nil {
-			reportName = fmt.Sprintf("%s -> %s", originalSecret.GetName(), secret.Name)
-		}
-
-		if err := reportSet.AddReport(originalSecret, secret, reportName); err != nil {
+		if err := compareObject(reportSet, originalSecret, secret); err != nil {
 			return nil, err
 		}
 	}
@@ -257,14 +242,8 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 		if parts[0] == r.K8sCapsule.Name {
 			name = parts[1]
 		}
-
 		originalIngress := other.getObject("Ingress", name)
-
-		reportName := ingress.GetName()
-		if originalIngress != nil {
-			reportName = fmt.Sprintf("%s -> %s", name, ingress.GetName())
-		}
-		if err := reportSet.AddReport(originalIngress, ingress, reportName); err != nil {
+		if err := compareObject(reportSet, originalIngress, ingress); err != nil {
 			return nil, err
 		}
 	}
@@ -275,19 +254,24 @@ func (r *Resources) Compare(other *Resources, scheme *runtime.Scheme) (*ReportSe
 		if r.K8sCapsule != nil && parts[0] == r.K8sCapsule.Name {
 			name = parts[1]
 		}
-
 		originalCronJob := other.getObject("CronJob", name)
-
-		reportName := cronJob.Name
-		if originalCronJob != nil {
-			reportName = fmt.Sprintf("%s -> %s", originalCronJob.GetName(), cronJob.Name)
-		}
-		if err := reportSet.AddReport(originalCronJob, cronJob, reportName); err != nil {
+		if err := compareObject(reportSet, originalCronJob, cronJob); err != nil {
 			return nil, err
 		}
 	}
 
 	return reportSet, nil
+}
+
+func compareObject(reportSet *ReportSet, original client.Object, proposal client.Object) error {
+	reportName := proposal.GetName()
+	if original != nil {
+		reportName = fmt.Sprintf("%s -> %s", original.GetName(), proposal.GetName())
+	}
+	if err := reportSet.AddReport(original, proposal, reportName); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *Resources) AddObject(kind, name string, object client.Object) error {
@@ -315,7 +299,7 @@ func (r *Resources) AddObject(kind, name string, object client.Object) error {
 		r.HPA = hpa
 
 	case "Service":
-		if r.Service != nil {
+		if _, ok := r.Services[name]; ok {
 			return errors.AlreadyExistsErrorf("service '%s' already set in current resources", name)
 		}
 		s, err := convertResource[*corev1.Service](object, kind)
@@ -323,7 +307,7 @@ func (r *Resources) AddObject(kind, name string, object client.Object) error {
 			return err
 		}
 		s.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind(kind))
-		r.Service = s
+		r.Services[name] = s
 	case "ConfigMap":
 		if _, ok := r.ConfigMaps[name]; ok {
 			return errors.AlreadyExistsErrorf("config map '%s' already set in current resources", name)
@@ -448,13 +432,14 @@ func (r *Resources) ToYAML(scheme *runtime.Scheme) (map[string]map[string]string
 		}
 	}
 
-	if r.Service != nil {
-		res["Service"] = map[string]string{}
-		res["Service"][r.Service.Name], err = toYamlString(r.Service, scheme)
+	if len(r.Services) > 0 {
+		res["Services"] = map[string]string{}
+	}
+	for _, s := range r.Services {
+		res["Service"][s.Name], err = toYamlString(s, scheme)
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	if len(r.Ingresses) > 0 {
