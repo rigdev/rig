@@ -206,7 +206,7 @@ func (p *Plugin) createDeployment(
 		lc = &v1.Lifecycle{
 			PreStop: &v1.LifecycleHandler{
 				Exec: &v1.ExecAction{
-					Command: []string{"sleep", "7"},
+					Command: []string{"sleep", "10"},
 				},
 			},
 		}
