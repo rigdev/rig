@@ -1,0 +1,129 @@
+# Customising Podspecs - A Guide on Plugins
+
+While Rig provides Capsules as an abstraction that suits most usecases, you might find youself
+wanting that last little bit of control to fit your service definition perfectly. This is where
+[Plugins](/operator-manual/plugins) come in. For more information on plugins, check out the 
+[Operator Setup guide](/operator-manual/setup-guide/operator/plugins), and the catalog for [built-in plugins](/operator-manual/plugins/builtin).
+
+## Customising Podspecs
+In this guide, we will use an array of plugins to inject secrets from an init container.
+Furthermore, we will make this injection conditional based on the presence of a specific annotation on the capsule.
+
+### Prerequisites
+- A running Rig platform
+- The Rig CLI installed
+
+### Create a new capsule
+First we need to create the capsule that we are going to work on:
+```bash 
+rig deploy my-capsule -i nginx
+```
+
+### Build the secret docker-image
+We need a docker image with the secrets that we want to inject. This image should have the secrets in a file at `/my/secrets/file`.
+```Dockerfile
+FROM alpine
+WORKDIR /my/secrets
+RUN echo "my-secret" > file
+```
+
+If you wish to use this particular image, it is available at `picklerig/top-secret:latest`.
+
+### Configure the plugins.
+For this to work, we need 3 components:
+- A plugin that creates an empty volume shared by the main container and the init container. 
+    For this we will use the [object-template](/operator-manual/plugins/builtin/object_template) plugin.
+- A plugin that creates the init-container. For this we will naturally use the [init-container](/operator-manual/plugins/builtin/init_container) plugin.
+- A plugin that mounts the shared volume in the main container. For this, we will again use the [object-template](/operator-manual/plugins/builtin/object_template) plugin.
+
+We configure these plugins in the [operator-config](/api/config/v1alpha1#operatorconfig). 
+As the plugins are configured on operator-level, they will run for all capsules that are reconciled by that 
+operator, which in turn means that they are cluster specific. 
+
+```yaml title="Helm values - Operator"
+config:
+  pipeline:
+    steps:
+      - plugins:
+            # Set up the secret volume.
+          - name: rigdev.object_template
+            config: |
+              group: apps
+              kind: Deployment
+              object: |
+                spec:
+                  template:
+                    spec:
+                      volumes:
+                      - name: secrets-volume
+                        emptyDir: { }
+
+            # Start and copy secrets into the volume.
+          - name: rigdev.init_container
+            config: |
+              # The container to inject.
+              container:
+                name: secrets-init
+                # Replace this with your docker image.
+                image: picklerig/top-secret:latest
+                command:
+                  - sh
+                args:
+                  - -c
+                  - "cp /my/secrets/file /secrets/"
+                volumeMounts:
+                  - mountPath: /secrets/
+                    name: secrets-volume
+
+            # Add the volume to the main container
+          - name: rigdev.object_template
+            config: |
+              group: apps
+              kind: Deployment
+              object: |
+                spec:
+                  template:
+                    spec:
+                      containers:
+                      - name: {{ .capsule.metadata.name }}
+                        volumeMounts:
+                        - mountPath: /secrets/
+                          name: secrets-volume
+```
+
+These three plugins are now configured to run in sequence for each capsule that is reconciled by the operator.
+
+### Conditional injection
+What if we only want to inject the secrets in some capsules? We can use the `match` field in the 
+operator-config to filter which capsules the plugins are run for. In this case, we are going to match
+on the precense of an annotation `inject-secrets: ""`.
+
+```yaml title="Helm values - Operator"
+config:
+  pipeline:
+    steps:
+      - match:
+          annotations:
+            - inject-secrets: ""
+      - plugins:
+        ...
+```
+
+This also means, that we have to add the annotation to the capsule in the previous step:
+```bash
+rig deploy my-capsule --set-annotation inject-secrets=""
+```
+
+### Verify the result
+To verify that the plugins are working as expected, we can view the secrets in the main container:
+```bash
+rig capsule instance exec my-capsule my-capsule-55d66dd45f-sfljf -- cat secrets/file
+```
+
+
+
+
+
+
+
+

@@ -118,6 +118,15 @@ const sidebars = {
             sidebar_icon: "SiYaml",
           },
         },
+        {
+          type: "doc",
+          id: "guides/customising-podspecs",
+          label: "Customising PodSpecs",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "BiInjection",
+          },
+        },
       ],
     },
 
