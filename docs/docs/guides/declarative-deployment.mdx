@@ -1,0 +1,58 @@
+# Declarative Deployment
+
+Since a Capsule can be described declaratively, it is, similarly to `kubectl apply`,
+possible to deploy a capsule using a yaml file describing it.
+
+For example, we can create a `my-capsule.yaml`, describing an nginx capsule, mounted with an 
+index.html file for static content, a network interface to provide readiness and liveness 
+checks and to expose port 80, and a scale configuration for resources and replica count.
+
+```yaml title="my-capsule.yaml"
+apiVersion: platform.rig.dev/v1
+kind: Capsule
+environment: prod
+name: my-capsule
+project: acme
+spec:
+  files:
+  - path: /usr/share/nginx/html/index.html
+    string: |
+     <html>
+       <body>
+         <h1>Hello World!</h1>
+       </body>
+     </html>
+  image: nginx:latest
+  interfaces:
+  - name: http
+    port: 80
+    readiness:
+      path: /
+    liveness:
+      path: /
+  scale:
+    horizontal:
+      instances:
+        min: 2
+    vertical:
+      cpu:
+        request: 200m
+      memory:
+        request: 256Mi
+```
+Notice the project and environment and name fields, which are used to identify and place the capsule in Rig.
+
+It can then be deployed using the following command:
+
+```bash
+rig deploy -f my-capsule.yaml
+```
+
+This will initiate a new rollout in Rig, deploying the described capsule.
+
+If the capsule already exists, the rollout will consist of the changes from the current capsule to the desired capsule.
+If the capsule does not already exist it will first be created, and then the rollout will consists of all 
+the properties described in capsule spec.
+
+The full list of fields that can be used in the Capsule yaml file can be found 
+in the [Capsule API Reference](/api/platformv1/#capsule).

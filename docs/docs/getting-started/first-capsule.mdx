@@ -99,7 +99,7 @@ rig capsule port-forward nginx-capsule 8080:http
 
 Now open your favorite browser and navigate to [http://localhost:8080](http://localhost:8080) to see the Nginx server running. Well done, you have created, deployed and exposed your first capsule using Rig! 🎉
 
-### Shortcut
+## Shortcut
 
 The above guide executed every step of the process in each command explicitly. All the flags, can however be combined, and if you deploy to a non-existing capsule,
 the capsule will be created automatically. This means that the process above can be shortened to:
@@ -109,3 +109,4 @@ rig deploy nginx-capsule -i nginx -r 3 --set-network-interface network.yaml --se
 ```
 
 Which will create a new capsule, add the image, scale it to 3 replicas, set the network interface and mount the config file.
+

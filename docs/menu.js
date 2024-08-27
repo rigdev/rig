@@ -93,6 +93,15 @@ const sidebars = {
       items: [
         {
           type: "doc",
+          id: "guides/helm",
+          label: "Helm Charts to Rig Capsules",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "SiHelm",
+          },
+        },
+        {
+          type: "doc",
           id: "guides/argocd",
           label: "GitOps using Argo CD",
           className: "docpage-sidebar-item",
@@ -102,11 +111,11 @@ const sidebars = {
         },
         {
           type: "doc",
-          id: "guides/helm",
-          label: "Helm Charts to Rig Capsules",
+          id: "guides/declarative-deployment",
+          label: "Declarative Deployment",
           className: "docpage-sidebar-item",
           customProps: {
-            sidebar_icon: "SiHelm",
+            sidebar_icon: "SiYaml",
           },
         },
       ],
