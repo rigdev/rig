@@ -190,6 +190,28 @@ func (p *Plugin) createDeployment(
 		})
 	}
 
+	// As described in "Kubernetes in Action" by Marko Lukša, and elaborated here:
+	// https://blog.gruntwork.io/delaying-shutdown-to-wait-for-pod-deletion-propagation-445f779a8304
+	// there is a race in Kubernetes where a immediately terminated Pod (e.g. graceful shutdown
+	// terminated within seconds), the kube-nodes may not be aware of the termination yet and may
+	// still forward traffic to this pod. As a remedy, it's recommended to delay shutdown by 5-10
+	// seconds.
+	// This is accomplished by applying a 10-second sleep in a preStop hook as follow.
+	// To avoid unneeded hooks, we only do it if the Capsule has any network interfaces associated
+	// to it.
+	// Note: Not all system may have the sleep command. In that case, a Kubernetes event may be raised
+	// but the overall result is a no-op.
+	var lc *v1.Lifecycle
+	if len(req.Capsule().Spec.Interfaces) > 0 {
+		lc = &v1.Lifecycle{
+			PreStop: &v1.LifecycleHandler{
+				Exec: &v1.ExecAction{
+					Command: []string{"sleep", "10"},
+				},
+			},
+		}
+	}
+
 	c := v1.Container{
 		Name:    req.Capsule().Name,
 		Image:   req.Capsule().Spec.Image,
@@ -203,6 +225,7 @@ func (p *Plugin) createDeployment(
 		VolumeMounts: volumeMounts,
 		Resources:    makeResourceRequirements(req.Capsule()),
 		Args:         req.Capsule().Spec.Args,
+		Lifecycle:    lc,
 	}
 
 	if req.Capsule().Spec.Command != "" {
