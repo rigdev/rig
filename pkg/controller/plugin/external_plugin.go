@@ -307,13 +307,6 @@ type requestServer struct {
 	req pipeline.CapsuleRequest
 }
 
-func toGK(gvk *apiplugin.GVK) schema.GroupKind {
-	return schema.GroupKind{
-		Group: gvk.GetGroup(),
-		Kind:  gvk.GetKind(),
-	}
-}
-
 func toGVK(gvk *apiplugin.GVK) schema.GroupVersionKind {
 	return schema.GroupVersionKind{
 		Group:   gvk.GetGroup(),
@@ -326,16 +319,16 @@ func (s requestServer) GetObject(
 	_ context.Context,
 	req *apiplugin.GetObjectRequest,
 ) (*apiplugin.GetObjectResponse, error) {
-	gk := toGK(req.GetGvk())
+	gvk := toGVK(req.GetGvk())
 
 	var co client.Object
 	var err error
 	if req.GetCurrent() {
-		if co, err = s.req.GetExisting(gk, req.GetName()); err != nil {
+		if co, err = s.req.GetExisting(gvk, req.GetName()); err != nil {
 			return nil, err
 		}
 	} else {
-		if co, err = s.req.GetNew(gk, req.GetName()); err != nil {
+		if co, err = s.req.GetNew(gvk, req.GetName()); err != nil {
 			return nil, err
 		}
 	}
@@ -379,7 +372,7 @@ func (s requestServer) Delete(
 	_ context.Context,
 	req *apiplugin.DeleteObjectRequest,
 ) (*apiplugin.DeleteObjectResponse, error) {
-	if err := s.req.Delete(toGK(req.GetGvk()), req.GetName()); err != nil {
+	if err := s.req.Delete(toGVK(req.GetGvk()), req.GetName()); err != nil {
 		return nil, err
 	}
 
@@ -415,11 +408,11 @@ func (s requestServer) ListObjects(
 	var objects []client.Object
 	var err error
 	if req.GetCurrent() {
-		if objects, err = s.req.ListExisting(toGK(req.GetGvk())); err != nil {
+		if objects, err = s.req.ListExisting(toGVK(req.GetGvk())); err != nil {
 			return nil, err
 		}
 	} else {
-		if objects, err = s.req.ListNew(toGK(req.GetGvk())); err != nil {
+		if objects, err = s.req.ListNew(toGVK(req.GetGvk())); err != nil {
 			return nil, err
 		}
 	}

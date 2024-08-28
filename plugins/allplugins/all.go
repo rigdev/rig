@@ -7,6 +7,7 @@ import (
 	envmapping "github.com/rigdev/rig/plugins/builtin/env_mapping"
 	googlesqlproxy "github.com/rigdev/rig/plugins/builtin/google_cloud_sql_auth_proxy"
 	initcontainer "github.com/rigdev/rig/plugins/builtin/init_container"
+	objectcreate "github.com/rigdev/rig/plugins/builtin/object_create"
 	objecttemplate "github.com/rigdev/rig/plugins/builtin/object_template"
 	"github.com/rigdev/rig/plugins/builtin/placement"
 	"github.com/rigdev/rig/plugins/builtin/sidecar"
@@ -33,4 +34,5 @@ var Plugins = map[string]plugin.Plugin{
 	service_account.Name: &service_account.Plugin{},
 	service_monitor.Name: &service_monitor.Plugin{},
 	vpa.Name:             &vpa.Plugin{},
+	objectcreate.Name:    &objectcreate.Plugin{},
 }

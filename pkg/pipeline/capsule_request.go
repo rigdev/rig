@@ -149,10 +149,13 @@ func (r *capsuleRequest) Capsule() *v1alpha2.Capsule {
 	return r.capsule.DeepCopy()
 }
 
-func (r *capsuleRequest) GetKey(gk schema.GroupKind, name string) (ObjectKey, error) {
-	gvk, err := r.vm.FromGroupKind(gk)
+func (r *capsuleRequest) GetKey(gvk schema.GroupVersionKind, name string) (ObjectKey, error) {
+	gvk2, err := r.vm.FromGroupKind(gvk.GroupKind())
 	if err != nil {
-		return ObjectKey{}, err
+		if gvk.Version == "" {
+			return ObjectKey{}, err
+		}
+		gvk2 = gvk
 	}
 
 	if name == "" {
@@ -160,7 +163,7 @@ func (r *capsuleRequest) GetKey(gk schema.GroupKind, name string) (ObjectKey, er
 	}
 
 	return ObjectKey{
-		GroupVersionKind: gvk,
+		GroupVersionKind: gvk2,
 		ObjectKey: types.NamespacedName{
 			Namespace: r.capsule.Namespace,
 			Name:      name,

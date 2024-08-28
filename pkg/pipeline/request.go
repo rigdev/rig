@@ -27,11 +27,11 @@ type Request interface {
 	Reader() client.Reader
 	// GetExisting populates 'obj' with a copy of the corresponding object owned by the capsule currently present in the cluster.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	GetExisting(gk schema.GroupKind, name string) (client.Object, error)
+	GetExisting(gvk schema.GroupVersionKind, name string) (client.Object, error)
 	GetExistingInto(obj client.Object) error
 	// GetNew populates 'obj' with a copy of the corresponding object owned by the capsule about to be applied.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	GetNew(gk schema.GroupKind, name string) (client.Object, error)
+	GetNew(gvk schema.GroupVersionKind, name string) (client.Object, error)
 	GetNewInto(obj client.Object) error
 	// Set updates the object recorded to be applied.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
@@ -42,13 +42,13 @@ type Request interface {
 	// If an object of the given type and name is present in the cluster, calling req.GetExisting(obj) succeeds
 	// as calls to Delete (or Set) will only be applied to the cluster at the very end of the reconcilliation.
 	// If the name of 'obj' isn't set, it defaults to the Capsule name.
-	Delete(gk schema.GroupKind, name string) error
+	Delete(gvk schema.GroupVersionKind, name string) error
 	// ListExisting returns a list with a copy of the objects of the corresponding type owned by the capsule and currently present in the cluster.
 	// If you want a slice of typed objects, use the generic free-standing ListExisting function.
-	ListExisting(gk schema.GroupKind) ([]client.Object, error)
+	ListExisting(gvk schema.GroupVersionKind) ([]client.Object, error)
 	// ListNew returns a list with a copy of the objects of the corresponding type owned by the capsule and about to be applied.
 	// If you want a slice of typed objects, use the generic free-standing ListNew function.
-	ListNew(gk schema.GroupKind) ([]client.Object, error)
+	ListNew(gvk schema.GroupVersionKind) ([]client.Object, error)
 }
 
 func ListExisting[T client.Object](r Request, obj T) ([]T, error) {
@@ -57,7 +57,7 @@ func ListExisting[T client.Object](r Request, obj T) ([]T, error) {
 		return nil, err
 	}
 
-	objects, err := r.ListExisting(gvks[0].GroupKind())
+	objects, err := r.ListExisting(gvks[0])
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func ListNew[T client.Object](r Request, obj T) ([]T, error) {
 		return nil, err
 	}
 
-	objects, err := r.ListNew(gvks[0].GroupKind())
+	objects, err := r.ListNew(gvks[0])
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ type RequestStrategies interface {
 	Prepare()
 	OwnedLabel() string
 
-	GetKey(gk schema.GroupKind, name string) (ObjectKey, error)
+	GetKey(gvk schema.GroupVersionKind, name string) (ObjectKey, error)
 }
 
 type RequestBase struct {
@@ -166,8 +166,8 @@ func (r *RequestBase) Reader() client.Reader {
 	return r.reader
 }
 
-func (r *RequestBase) GetExisting(gk schema.GroupKind, name string) (client.Object, error) {
-	key, err := r.Strategies.GetKey(gk, name)
+func (r *RequestBase) GetExisting(gvk schema.GroupVersionKind, name string) (client.Object, error) {
+	key, err := r.Strategies.GetKey(gvk, name)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (r *RequestBase) GetExistingInto(obj client.Object) error {
 		return err
 	}
 
-	res, err := r.GetExisting(gvk.GroupKind(), obj.GetName())
+	res, err := r.GetExisting(gvk, obj.GetName())
 	if err != nil {
 		return err
 	}
@@ -198,8 +198,8 @@ func (r *RequestBase) GetExistingInto(obj client.Object) error {
 	return r.scheme.Convert(res, obj, nil)
 }
 
-func (r *RequestBase) GetNew(gk schema.GroupKind, name string) (client.Object, error) {
-	key, err := r.Strategies.GetKey(gk, name)
+func (r *RequestBase) GetNew(gvk schema.GroupVersionKind, name string) (client.Object, error) {
+	key, err := r.Strategies.GetKey(gvk, name)
 	if err != nil {
 		return nil, err
 	}
@@ -222,12 +222,16 @@ func (r *RequestBase) GetNewInto(obj client.Object) error {
 		return err
 	}
 
-	res, err := r.GetNew(gvk.GroupKind(), obj.GetName())
+	res, err := r.GetNew(gvk, obj.GetName())
 	if err != nil {
 		return err
 	}
 
-	return r.scheme.Convert(res, obj, nil)
+	if err := r.scheme.Convert(res, obj, nil); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *RequestBase) Set(obj client.Object) error {
@@ -236,7 +240,7 @@ func (r *RequestBase) Set(obj client.Object) error {
 		return err
 	}
 
-	key, err := r.Strategies.GetKey(gvk.GroupKind(), obj.GetName())
+	key, err := r.Strategies.GetKey(gvk, obj.GetName())
 	if err != nil {
 		return err
 	}
@@ -253,8 +257,8 @@ func (r *RequestBase) Set(obj client.Object) error {
 	return nil
 }
 
-func (r *RequestBase) Delete(gk schema.GroupKind, name string) error {
-	key, err := r.Strategies.GetKey(gk, name)
+func (r *RequestBase) Delete(gvk schema.GroupVersionKind, name string) error {
+	key, err := r.Strategies.GetKey(gvk, name)
 	if err != nil {
 		return err
 	}
@@ -267,8 +271,8 @@ func (r *RequestBase) Delete(gk schema.GroupKind, name string) error {
 	return nil
 }
 
-func (r *RequestBase) ListExisting(gk schema.GroupKind) ([]client.Object, error) {
-	gvk, err := r.getGVK(gk)
+func (r *RequestBase) ListExisting(gvk schema.GroupVersionKind) ([]client.Object, error) {
+	gvk, err := r.getGVK(gvk)
 	if err != nil {
 		r.logger.Error(err, "invalid object list type")
 		return nil, err
@@ -286,8 +290,8 @@ func (r *RequestBase) ListExisting(gk schema.GroupKind) ([]client.Object, error)
 	return res, nil
 }
 
-func (r *RequestBase) ListNew(gk schema.GroupKind) ([]client.Object, error) {
-	gvk, err := r.getGVK(gk)
+func (r *RequestBase) ListNew(gvk schema.GroupVersionKind) ([]client.Object, error) {
+	gvk, err := r.getGVK(gvk)
 	if err != nil {
 		r.logger.Error(err, "invalid object list type")
 		return nil, err
@@ -587,15 +591,24 @@ func (r *RequestBase) PrepareRequest() *Result {
 	return result
 }
 
-func (r *RequestBase) getGVK(gk schema.GroupKind) (schema.GroupVersionKind, error) {
-	return r.vm.FromGroupKind(gk)
+func (r *RequestBase) getGVK(gvk schema.GroupVersionKind) (schema.GroupVersionKind, error) {
+	gvk2, err := r.vm.FromGroupKind(gvk.GroupKind())
+	if err != nil {
+		if gvk.Version == "" {
+			return schema.GroupVersionKind{}, err
+		}
+		gvk2 = gvk
+	}
+	return gvk2, nil
 }
 
 func getGVK(obj runtime.Object, scheme *runtime.Scheme) (schema.GroupVersionKind, error) {
 	gvks, _, err := scheme.ObjectKinds(obj)
 	if err != nil {
-		return schema.GroupVersionKind{}, err
+		if obj.GetObjectKind().GroupVersionKind().Version == "" {
+			return schema.GroupVersionKind{}, err
+		}
+		return obj.GetObjectKind().GroupVersionKind(), nil
 	}
-
 	return gvks[0], nil
 }

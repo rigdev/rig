@@ -153,4 +153,22 @@ rules:
   - patch
   - update
   - watch
+{{- range .Values.rbac.rules }}
+- apiGroups:
+  {{- range .apiGroups }}
+  - {{ .  }}
+  {{ end -}}
+  resources:
+  {{- range .resources }}
+  - {{ .  }}
+  {{ end -}}
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+{{ end }}
 {{- end -}}

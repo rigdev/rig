@@ -49,7 +49,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 		name = req.Capsule().Name
 	}
 
-	object, err := req.GetNew(schema.GroupKind{Group: config.Group, Kind: config.Kind}, name)
+	object, err := req.GetNew(schema.GroupVersionKind{Group: config.Group, Kind: config.Kind}, name)
 	if err != nil {
 		return err
 	}

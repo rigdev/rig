@@ -301,9 +301,6 @@ func (s *testSuite) Test_has_context_but_none_chosen() {
 	s.expectEnvList(newEnv("prod"))
 	s.expectProjList(newProject("project"))
 
-	s.rig.Auth().EXPECT().Get(mock.Anything, connect.NewRequest(&authentication.GetRequest{})).
-		Return(connect.NewResponse(&authentication.GetResponse{}), nil).Once()
-
 	s.Require().NoError(s.run(true, []string{"noop", "cmd2"}))
 }
 
@@ -331,9 +328,6 @@ func (s *testSuite) Test_has_full_context() {
 	})
 	s.expectProjList(newProject("project"))
 	s.expectEnvList(newEnv("prod"))
-
-	s.rig.Auth().EXPECT().Get(mock.Anything, connect.NewRequest(&authentication.GetRequest{})).
-		Return(connect.NewResponse(&authentication.GetResponse{}), nil).Once()
 
 	s.Require().NoError(s.run(true, []string{"noop", "cmd2"}))
 }
@@ -423,9 +417,6 @@ func (s *testSuite) Test_no_prompting_with_context_flag() {
 	s.expectProjList(newProject("project"))
 	s.expectEnvList(newEnv("env"))
 
-	s.rig.Auth().EXPECT().Get(mock.Anything, connect.NewRequest(&authentication.GetRequest{})).
-		Return(connect.NewResponse(&authentication.GetResponse{}), nil).Once()
-
 	s.Require().NoError(s.run(true, []string{"noop", "cmd2", "--context", "context_name"}))
 }
 
@@ -497,8 +488,6 @@ func (s *testSuite) Test_capsule_create_config_no_env() {
 		CurrentContextName: "context",
 	})
 	s.expectProjList(newProject("project"))
-	s.rig.Auth().EXPECT().Get(mock.Anything, connect.NewRequest(&authentication.GetRequest{})).
-		Return(connect.NewResponse(&authentication.GetResponse{}), nil)
 
 	s.rig.Capsule().EXPECT().Create(mock.Anything, connect.NewRequest(&capsule.CreateRequest{
 		Name:      "my-capsule",

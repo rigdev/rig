@@ -330,7 +330,7 @@ object: |
 	}
 	require.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))
 
-	objs, err := req.ListNew(appsv1.SchemeGroupVersion.WithKind("Deployment").GroupKind())
+	objs, err := req.ListNew(appsv1.SchemeGroupVersion.WithKind("Deployment"))
 	require.NoError(t, err)
 	deployments, err := pipeline.ListConvert[*appsv1.Deployment](objs)
 	require.NoError(t, err)

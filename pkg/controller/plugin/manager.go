@@ -88,6 +88,7 @@ var allPlugins = []string{
 	"rigdev.env_mapping",
 	"rigdev.google_cloud_sql_auth_proxy",
 	"rigdev.init_container",
+	"rigdev.object_create",
 	"rigdev.object_template",
 	"rigdev.placement",
 	"rigdev.sidecar",
