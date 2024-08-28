@@ -3,7 +3,9 @@ package cmdconfig
 import (
 	"os"
 	"path"
+	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/pkg/errors"
@@ -45,6 +47,14 @@ func (c *Context) GetAuth() *Auth {
 }
 
 func (c *Context) SetAuth(a *Auth) {
+	if a != nil {
+		if isTokenExpired(a.AccessToken) {
+			a.AccessToken = ""
+		}
+		if isTokenExpired(a.RefreshToken) {
+			a.RefreshToken = ""
+		}
+	}
 	c.auth = a
 }
 
@@ -329,4 +339,22 @@ func NewEmptyConfig(fs afero.Fs, p common.Prompter) (*Config, error) {
 		fs:       fs,
 		filePath: filePath,
 	}, nil
+}
+
+func isTokenExpired(token string) bool {
+	c := jwt.StandardClaims{}
+	p := jwt.Parser{
+		SkipClaimsValidation: true,
+	}
+
+	_, _, err := p.ParseUnverified(token, &c)
+	if err != nil {
+		return true
+	}
+
+	if !c.VerifyExpiresAt(time.Now().Add(30*time.Second).Unix(), true) {
+		return true
+	}
+
+	return false
 }
