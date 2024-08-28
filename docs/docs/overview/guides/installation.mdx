@@ -1,0 +1,66 @@
+import CodeBlock from '@theme/CodeBlock';
+import {
+RIG_PLATFORM_CHART_VERSION,
+RIG_OPERATOR_CHART_VERSION
+} from "../../../src/constants/versions"
+
+# Installing Rig in a Kubernetes Cluster
+Rig consists of two components which together gives the full experience of
+Rig.dev.
+
+- **rig-operator**: our open source components which provide higher level APIs in
+  kubernetes, which encapsulate multiple low level resources in a single CRD.
+- **rig-platform**: our paid product which further builds on the primitives
+  provided by rig-operator.
+
+## Kubernetes Cluster Installation
+:::info Prerequisites
+Make sure that you have a running Kubernetes cluster, and that you have [Helm](https://helm.sh/docs/intro/install/) installed.
+:::
+
+For a quick installation in an existing Kubernetes cluster, you can follow the
+steps here.
+
+1. Install the Rig Operator:
+<CodeBlock language="bash">
+  {`helm upgrade --install rig-operator rig-operator \\
+    --repo https://charts.rig.dev \\
+    --version ${RIG_OPERATOR_CHART_VERSION} \\
+    --namespace rig-system \\
+    --create-namespace`}
+</CodeBlock>
+2. Install the Rig Platform:
+<CodeBlock language="bash">
+{`helm upgrade --install rig-platform rig-platform \\
+    --repo https://charts.rig.dev \\
+    --version ${RIG_PLATFORM_CHART_VERSION} \\
+    --namespace rig-system \\
+    --create-namespace \\
+    --set postgres.enabled=true`}
+</CodeBlock>
+3. Bootstrap your first user and project by running:
+```bash
+kubectl exec -it -n rig-system deploy/rig-platform -- rig-admin init
+```
+4. Access the dashboard at [http://localhost:4747](http://localhost:4747) after starting port-forwarding:
+```bash
+kubectl port-forward -n rig-system service/rig-platform 4747
+```
+
+:::info Note
+As part of the quick installation, a small PostgresSQL instance is installed in your
+cluster, for the Platform to use. This is *not* recommended for production environments.
+:::
+
+:::info Note
+Dashboard metrics require a metrics-server in the kubernetes cluster.
+While available in most kubernetes clusters, See here for instructions on how to install it, if missing: https://github.com/kubernetes-sigs/metrics-server
+:::
+
+For a more in-depth guide, see the [Operator](/operator-manual/setup-guide/operator) and [Platform](/operator-manual/setup-guide/platform) sections.
+
+
+
+
+
+

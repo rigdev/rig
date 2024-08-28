@@ -19,7 +19,6 @@ while still leveraging Kubernetes's reliability, portability, and scalability.
 The developer-friendly deployment engine simplifies the process of rolling out, managing, debugging and scaling applications.
 The platform includes a Dashboard, CLI, and CI/CD hooks, as well as numerous ways of integrating with existing pipelines, such as GitOps.
 
-<hr class="solid" />
 
 # Getting Started
 
@@ -27,10 +26,10 @@ The platform includes a Dashboard, CLI, and CI/CD hooks, as well as numerous way
   items={[
     {
       type: "block",
-      href: "/getting-started",
-      label: "Run Rig on your machine",
+      href: "/overview/guides/getting-started",
+      label: "Get Started Using Rig as a Developer",
       description:
-        "Rig enhances Local Development by running directly on your machine using KIND.",
+        "Quickly get the ins and outs of Rig, from installing the CLI to deploying your first Capsule.",
       customProps: {
         col: "col--6",
       },
@@ -38,7 +37,7 @@ The platform includes a Dashboard, CLI, and CI/CD hooks, as well as numerous way
     },
     {
       type: "block",
-      href: "/operator-manual/setup-guide",
+      href: "/overview/guides/installation",
       label: "Install Rig in a Kubernetes cluster",
       description:
         "Install Rig in your own Kubernetes cluster, allowing you to run Capsules in a matter of minutes",
@@ -50,7 +49,58 @@ The platform includes a Dashboard, CLI, and CI/CD hooks, as well as numerous way
   ]}
 />
 
-<hr class="solid" />
+# Guides
+
+<DocCardList
+  
+  items={[
+    {
+      type: "block",
+      href: "/overview/guides/helm",
+      label: "Helm Charts to Rig Capsules",
+      description:
+        "Migrate your Helm Charts to Rig Capsules, with the help of the rig-ops cli.",
+      customProps: {
+        col: "col--6",
+      },
+      cover: "/img/banners/helm-migration.png",
+    },
+    {
+      type: "block",
+      href: "/overview/guides/argocd",
+      label: "GitOps using Argo CD",
+      description:
+        "Configure your cluster to use Argo CD for applying Capsules.",
+      customProps: {
+        col: "col--6",
+      },
+      cover: "/img/banners/rig-argo.png",
+    },
+    {
+      type: "link",
+      href: "/overview/guides/declarative-deployment",
+      label: "Declarative Deployment",
+      description:
+        "Deploy declaratively to create or update using a yaml file describing the capsule.",
+      customProps: {
+        icon: "SiYaml",
+        col: "col--2",
+      },
+    },
+    {
+      type: "link",
+      href: "/overview/guides/customising-podspecs",
+      label: "Customising PodSpecs - A Guide on Plugins",
+      description:
+        "Use an array of plugins to inject secrets from an init container into a capsule.",
+      customProps: {
+        icon: "SiYaml",
+        col: "col--2",
+      },
+    },
+  ]}
+/>
+
 
 # Explore Rig
 
