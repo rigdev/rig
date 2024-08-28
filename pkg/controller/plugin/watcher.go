@@ -198,7 +198,7 @@ func (w *watcher) watchPrimary(
 		subWatchers: map[string]*objectWatch{},
 	}
 
-	w.startWatch(f, objType, nil)
+	w.startWatch(f, objType)
 
 	go func() {
 		w.objectSyncing.Wait()
@@ -212,12 +212,12 @@ func (w *watcher) watchPrimary(
 	return nil
 }
 
-func (w *watcher) startWatch(f *objectWatch, objType client.Object, parent *apipipeline.ObjectRef) {
+func (w *watcher) startWatch(f *objectWatch, objType client.Object) {
 	w.lock.Lock()
 
 	ow, ok := w.objectWatchers[f.key.watcherKey]
 	if !ok {
-		ow = newObjectWatcher(w, f.key.watcherKey.namespace, objType, w.cc, parent, w.logger)
+		ow = newObjectWatcher(w, f.key.watcherKey.namespace, objType, w.cc, w.logger)
 		w.objectWatchers[f.key.watcherKey] = ow
 	}
 
@@ -271,6 +271,7 @@ func (k objectWatchKey) matches(obj client.Object) bool {
 
 type objectWatch struct {
 	key         objectWatchKey
+	parent      *apipipeline.ObjectRef
 	cb          WatchCallback
 	cw          *capsuleWatcher
 	subWatchers map[string]*objectWatch
@@ -331,7 +332,6 @@ type objectWatcher struct {
 	eventCtrl  cache.Controller
 
 	namespace string
-	parent    *apipipeline.ObjectRef
 
 	lock sync.Mutex
 
@@ -346,7 +346,6 @@ func newObjectWatcher(
 	namespace string,
 	obj client.Object,
 	cc client.WithWatch,
-	parent *apipipeline.ObjectRef,
 	logger hclog.Logger,
 ) *objectWatcher {
 	gvks, _, err := cc.Scheme().ObjectKinds(obj)
@@ -369,7 +368,6 @@ func newObjectWatcher(
 		gvkList:   gvkList,
 		logger:    logger,
 		namespace: namespace,
-		parent:    parent,
 		filters:   map[*objectWatch]struct{}{},
 		objects:   map[string]*queueObj{},
 		queue:     newPriorityHeap(func(a, b *queueObj) bool { return a.deadline.Before(b.deadline) }),
@@ -683,7 +681,7 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 			Info:      info,
 			CreatedAt: timestamppb.New(co.GetCreationTimestamp().Time),
 			UpdatedAt: timestamppb.Now(),
-			Parent:    ow.parent,
+			Parent:    f.parent,
 		}
 
 		if !co.GetDeletionTimestamp().IsZero() {
@@ -711,13 +709,14 @@ func (ow *objectWatcher) handleForFilter(co client.Object, f *objectWatch, remov
 		if _, ok := f.subWatchers[key]; !ok {
 			sf := &objectWatch{
 				key:         w.key,
+				parent:      ref,
 				cb:          w.cb,
 				cw:          f.cw,
 				subWatchers: map[string]*objectWatch{},
 			}
 
 			f.subWatchers[key] = sf
-			go ow.w.startWatch(sf, w.objType, ref)
+			go ow.w.startWatch(sf, w.objType)
 		}
 	}
 
