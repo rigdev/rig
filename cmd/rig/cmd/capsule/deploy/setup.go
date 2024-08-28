@@ -81,6 +81,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		Annotations: map[string]string{
 			auth.OmitEnvironment: "",
 			auth.OmitProject:     "",
+			auth.OmitCapsule:     "",
 		},
 		Long: `Deploy a number of changes to a Capsule.
 

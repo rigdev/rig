@@ -5569,6 +5569,7 @@ rollout.
 | current_rollout_id | [uint64](#uint64) |  | If not zero, this will constrain the rollout only to be created if the currently running rollout matches this identifier. If this check fails, the request will return an `Aborted` error. |
 | current_fingerprint | [model.Fingerprint](#model-Fingerprint) |  | If set, this will constrain the rollout only to be created if the current latest capsule fingerprint matches the given. Cannot be used together with `current_rollout_id` |
 | force_override | [bool](#bool) |  | By default, existing objects will be kept in favor of overriding them. To force the override of resources, set this flag to true. An example of this use-case is a migration step, where resource created by a previous toolchain e.g. based on Helm charts, are to be replaced and instead be created by the Rig operator. While the override is irreversible, this flag is not "sticky" and must be set by each deploy that should use this behavior. |
+| operator_config | [string](#string) |  | Only allowed with dry_run = true. Will use this config for the operator instead of the config running in the cluster. |
 
 
 

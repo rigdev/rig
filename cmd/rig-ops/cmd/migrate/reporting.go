@@ -3,6 +3,7 @@ package migrate
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -14,6 +15,7 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rivo/tview"
 	"golang.org/x/exp/maps"
+	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -146,17 +148,31 @@ func ProcessHelmOutput(
 	scheme *runtime.Scheme,
 ) ([]client.Object, error) {
 	var objects []client.Object
-	for _, yaml := range helmOutput {
-		str := strings.TrimSpace(yaml)
-		if str == "" {
-			continue
-		}
-		proposal, err := obj.DecodeAny([]byte(yaml), scheme)
-		if err != nil {
-			return nil, fmt.Errorf("error decoding object from helm: %v", err)
+	for _, yml := range helmOutput {
+		decoder := yaml.NewDecoder(bytes.NewBufferString(yml))
+		for {
+			out := map[string]any{}
+			err := decoder.Decode(&out)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+			bs, err := yaml.Marshal(out)
+			if err != nil {
+				return nil, err
+			}
+			if strings.TrimSpace(string(bs)) == "" {
+				continue
+			}
+			proposal, err := obj.DecodeAny(bs, scheme)
+			if err != nil {
+				return nil, fmt.Errorf("error decoding object from helm: %v", err)
+			}
+
+			objects = append(objects, proposal)
 		}
 
-		objects = append(objects, proposal)
 	}
 
 	return objects, nil
