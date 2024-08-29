@@ -29,7 +29,8 @@ To make the network interface publicly available, the interface must have a Rout
 and can be implemented using [plugins](/operator-manual/setup-guide/operator/plugins). A default [Route-Plugin](/operator-manual/setup-guide/operator/networking) is provided, which exposes the interface using an Ingress.
 
 To configure a _Route_ simply press `Add Host`, and specify the hostname that the interface should be exposed on.
-Additionally one or more paths can be specified, which will be matched against incoming requests. These can either be exact, prefix or regexp matches.
+Additionally one or more paths must be specified, which will be matched against incoming requests. These can either be exact, prefix or regexp matches.
+Lastly, routes can have annotations, which in the case of the default Route-Plugin, translates into annotations on the Ingress resource.
 
 <Tabs>
   <TabItem value="Host" label="Host">

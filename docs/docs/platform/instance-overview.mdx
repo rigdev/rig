@@ -11,8 +11,8 @@ Rig offers inspection into the state and control of each instance of your capsul
 - Remote (interactive) shell execution
 - Restarting of instances
 
-The Rig dashboard shows an overview of the instance state and lifecycle
-
+## Instance Overview
+The Rig dashboard shows an overview of the instance state and lifecycle.
 <Tabs>
   <TabItem value="overview" label="Overview">
     <ThemedImage
@@ -38,40 +38,99 @@ The Rig dashboard shows an overview of the instance state and lifecycle
       }}
     />
   </TabItem>
-  <TabItem value="Status" label="Status">
+  <TabItem value="cli" label="CLI">
+      ```bash
+      rig capsule instance list <capsule-name>
+
+      # For terminated instances
+      rig capsule instance list <capsule-name> --exclude-existing --include-deleted
+      ```
+    </TabItem>
+</Tabs>
+
+##  Instance Status
+A more detailed view of the lifecycle and status of a single instance.
+
+<Tabs>
+  <TabItem value='status' label="Status">
     <ThemedImage
-      alt="Instance Status"
-      customProps={{
-        zoom: true,
-      }}
-      sources={{
-        light: "/img/dashboard/platform/instance/status.png",
-        dark: "/img/dashboard/platform/instance/status.png",
-      }}
+          alt="Instance Status"
+          customProps={{
+            zoom: true,
+          }}
+          sources={{
+            light: "/img/dashboard/platform/instance/status.png",
+            dark: "/img/dashboard/platform/instance/status.png",
+          }}
     />
   </TabItem>
+  <TabItem value="cli" label="CLI">
+      ```bash
+      rig capsule instance get <capsule-name> <instance-id>
+      ```
+    </TabItem>
+</Tabs>
+
+## Logs
+The logs of instances can either be viewed collectively or individually.
+
+<Tabs>
   <TabItem value="logs" label="Logs">
     <ThemedImage
-      alt="Instance Status"
-      customProps={{
-        zoom: true,
-      }}
-      sources={{
-        light: "/img/dashboard/platform/instance/logs.png",
-        dark: "/img/dashboard/platform/instance/logs.png",
-      }}
+          alt="Single Logs"
+          customProps={{
+            zoom: true,
+          }}
+          sources={{
+            light: "/img/dashboard/platform/instance/logs.png",
+            dark: "/img/dashboard/platform/instance/logs.png",
+          }}
     />
   </TabItem>
+  <TabItem value="collective" label="Collective logs">
+      <ThemedImage
+          alt="Logs"
+          customProps={{
+            zoom: true,
+          }}
+          sources={{
+            light: "/img/dashboard/platform/instance/collective-logs.png",
+            dark: "/img/dashboard/platform/instance/collective-logs.png",
+          }}
+      />
+    </TabItem>
+    <TabItem value="cli" label="CLI">
+      ```bash
+      # Collective logs
+      rig capsule logs <capsule-name>
+
+      # Single isntance logs
+      rig capsule instance logs <capsule-name> <instance-id>
+
+      # follow logs
+      rig capsule instance logs <capsule-name> <instance-id> --follow
+      ```
+    </TabItem>
+</Tabs>
+
+## Shell
+The Rig dashboard offers a remote shell to the instances. This is particularly useful for interacting with tooling within an image, debugging or inspecting the state of instances.
+<Tabs>
   <TabItem value="shell" label="Shell">
     <ThemedImage
-      alt="Instance Shell"
-      customProps={{
-        zoom: true,
-      }}
-      sources={{
-        light: "/img/dashboard/platform/instance/shell.png",
-        dark: "/img/dashboard/platform/instance/shell.png",
-      }}
+          alt="Instance Shell"
+          customProps={{
+            zoom: true,
+          }}
+          sources={{
+            light: "/img/dashboard/platform/instance/shell.png",
+            dark: "/img/dashboard/platform/instance/shell.png",
+          }}
     />
   </TabItem>
+  <TabItem value="cli" label="CLI">
+      ```bash
+      rig capsule instance exec <capsule-name> <instance-id> -- echo 'in a shell'
+      ```
+    </TabItem>
 </Tabs>

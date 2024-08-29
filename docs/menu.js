@@ -125,17 +125,8 @@ const sidebars = {
     },
     {
       type: "doc",
-      id: "platform/images",
-      label: "Images",
-      className: "homepage-sidebar-item",
-      customProps: {
-        sidebar_icon: "BiBox",
-      },
-    },
-    {
-      type: "doc",
-      id: "platform/rollouts",
-      label: "Rollouts",
+      id: "platform/rollouts-and-rollbacks",
+      label: "Rollouts & Rollbacks",
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "TbPlayerTrackNextFilled",
@@ -379,8 +370,8 @@ const sidebars = {
     },
     {
       type: "doc",
-      id: "operator-manual/onboarding",
-      label: "Live Onboarding",
+      id: "operator-manual/migration",
+      label: "Live Migration",
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "BiTask",
