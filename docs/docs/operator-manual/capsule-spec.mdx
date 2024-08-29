@@ -1,0 +1,244 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import ThemedImage from '@theme/ThemedImage';
+
+# Complete Capsule Spec
+You can find a documentation of the Platform Capsule and Kubernetes Capsule [here](/api). The following is a comprehensive example of both the Platform Capsule and Kubernetes Capsule spec.
+
+<Tabs>
+
+<TabItem value="Platform v1" label="platform.rig.dev/v1">
+```yaml
+apiVersion: platform.rig.dev/v1
+kind: Capsule
+name: my-capsule
+project: myproject
+environment: prod
+spec:
+  annotations:
+    key: value
+  args:
+    - arg1
+    - arg2
+  command: ./somecommand
+  files:
+    - path: /etc/config.yaml
+      string: "contents of file"
+    - path: /etc/config2.yaml
+      string: "contents of secret"
+      asSecret: true
+  env:
+    raw:
+      ENV_VAR: value
+    sources:
+    - name: envvars-configmap
+      kind: ConfigMap
+    - name: envvars-secret
+      kind: Secret
+  image: nginx:latest
+  interfaces:
+    - name: http
+      port: 4747
+      liveness:
+        path: /healthz
+    - name: ready
+      port: 4748
+      readiness:
+        tcp: true
+    - name: ingress
+      port: 5678
+      routes:
+        id: id1
+        host: http://www.example.com
+        paths:
+        - path: /some/path
+          match: PathPrefix
+        - path: /some/other/path
+          match: Exact
+        annotations:
+          key: value
+  scale:
+    horizontal:
+      cpuTarget:
+        utilization: 80
+      instances:
+        max: 5
+        min: 2
+      customMetrics:
+        - instanceMetric:
+            metricName: some-metric
+            averageValue: 10
+        - objectMetric:
+            metricName: some-metric
+            describedObject:
+              kind: Service
+              name: some-service
+            value: 3
+    vertical:
+      cpu:
+        request: 2.5
+        limit: 5
+      memory:
+        request: 500M
+        limit: 2G
+      gpu:
+        request: 1
+        limit: 2
+  cronJobs:
+    - name: some-bash-job
+      schedule: 30 12 * * *
+      command:
+        command: ./cmd 
+        args: ['arg1', 'arg2']
+      maxRetries: 3
+      timeoutSeconds: 600
+    - name: some-http-job
+      schedule: 1/10 * * * *
+      url:
+        port: 1234
+        path: /some/path
+        queryParameters:
+          key1: value1
+          key2: value2
+      timeoutSeconds: 60
+```
+</TabItem>
+<TabItem value="K8s v1alpha2" label="K8s v1alpha2">
+
+```yaml
+apiVersion: rig.dev/v1alpha2
+kind: Capsule
+metadata:
+  name: my-capsule
+  namespace: myproject-prod
+spec:
+  args:
+    - arg1
+    - arg2
+  command: ./somecommand
+  files:
+    - path: /etc/config.yaml
+      ref:
+        key: config.yaml
+        kind: ConfigMap
+        name: config
+    - path: /etc/config2.yaml
+      ref:
+        key: config.yaml
+        kind: Secret
+        name: config
+  image: nginx:latest
+  env:
+    disableAutomatic: false
+    from:
+    - kind: ConfigMap
+      name: envvars-configmap
+    - kind: Secret
+      name: envvars-secret
+  interfaces:
+    - name: http
+      port: 4747
+      liveness:
+        path: /healthz
+    - name: ready
+      port: 4748
+      readiness:
+        tcp: true
+    - name: ingress
+      port: 5678
+      routes:
+        id: id1
+        host: http://www.example.com
+        paths:
+        - path: /some/path
+          match: PathPrefix
+        - path: /some/other/path
+          match: Exact
+        annotations:
+          key: value
+  scale:
+    horizontal:
+      cpuTarget:
+        utilization: 80
+      instances:
+        max: 5
+        min: 2
+      customMetrics:
+        - instanceMetric:
+            metricName: some-metric
+            averageValue: 10
+        - objectMetric:
+            metricName: some-metric
+            describedObject:
+              kind: Service
+              name: some-service
+            value: 3
+    vertical:
+      cpu:
+        request: 2.5
+        limit: 5
+      memory:
+        request: 500M
+        limit: 2G
+      gpu:
+        request: 1
+        limit: 2
+  cronJobs:
+    - name: some-bash-job
+      schedule: 30 12 * * *
+      command:
+        command: ./cmd 
+        args: ['arg1', 'arg2']
+      maxRetries: 3
+      timeoutSeconds: 600
+    - name: some-http-job
+      schedule: 1/10 * * * *
+      url:
+        port: 1234
+        path: /some/path
+        queryParameters:
+          key1: value1
+          key2: value2
+      timeoutSeconds: 60
+```
+</TabItem>
+<TabItem value="K8s v1alpha1" label="K8s v1alpha1">
+
+```yaml
+apiVersion: rig.dev/v1alpha1
+kind: Capsule
+metadata:
+  name: my-capsule
+  namespace: default
+spec:
+  image: nginx:latest
+  command: ./somecommand
+  args:
+    - arg1
+    - arg2
+  files:
+    - path: /etc/config.yaml
+      secret:
+        key: config.yaml
+        name: config
+  horizontalScale:
+    cpuTarget:
+      averageUtilizationPercentage: 80
+    minReplicas: 2
+    maxReplicas: 5
+  interfaces:
+    - name: http
+      port: 4747
+      public:
+        loadBalancer:
+          nodePort: 30047
+          port: 4747
+    - name: ingress
+      port: 5678
+      public:
+        ingress:
+          host: http://www.example.com
+  serviceAccountName: name
+```
+</TabItem>
+</Tabs>
