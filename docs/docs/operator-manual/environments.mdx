@@ -13,8 +13,8 @@ Each environment has its own configuration of a given Capsule. Capsule A can e.g
     zoom: false,
   }}
   sources={{
-    light: "/img/operator-manual/environment-topology.svg",
-    dark: "/img/operator-manual/environment-topology-dark.svg",
+    light: "/img/operator-manual/environment/topology.png",
+    dark: "/img/operator-manual/environment/topology.png",
   }}
 />
 
@@ -46,6 +46,10 @@ rig env create my-environment my-cluster \
 
 This example will suffix all namespaces with the environment, allowing multiple environments in a single
 cluster.
+
+the following template variables are available:
+- `.Project.Name`: The name of the project
+- `.Environment.Name`: The name of the environment
 
 ## Deleting environments
 
@@ -103,8 +107,8 @@ any mix and match of environments and clusters are possible:
     zoom: false,
   }}
   sources={{
-    light: "/img/operator-manual/environment-cluster.svg",
-    dark: "/img/operator-manual/environment-cluster-dark.svg",
+    light: "/img/operator-manual/environment/multi-cluster.png",
+    dark: "/img/operator-manual/environment/multi-cluster.png",
   }}
 />
 
