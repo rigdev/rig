@@ -436,13 +436,23 @@ const sidebars = {
     //   },
     // },
     {
-      type: "doc",
-      id: "operator-manual/crd-operator",
-      label: "CRD & Operator",
+      type: "category",
+      label: "Declarative Capsule Spec",
+      link: { type: "doc", id: "operator-manual/crd-operator"},
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "BiDna",
       },
+      collapsed: false,
+      items: [
+        {
+          type: "doc",
+          id: "operator-manual/capsule-spec",
+          label: "Full Capsule Spec",
+          className: "homepage-sidebar-item",
+          customProps: { sidebar_icon: "BiNote" },
+        },
+      ],
     },
     {
       type: "doc",
