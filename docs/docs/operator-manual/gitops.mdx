@@ -15,7 +15,7 @@ The Rig Capsule is a two-stage object consisting of Platform Capsule and a deriv
 The Rig Platform can serve as a GitOps CD tool for the Platform Capsule. This means you can store Platform Capsule specs in your Git repositories and the Platform will translate them to Kubernetes Capsules and apply them in the proper clusters.
 For any given (Capsule, Environment) tuple, the Source Of Truth for the capsule can either be the Rig Platform's own database or an external Git Repository.
 
-If the Source Of Truth is a Git repository, any committed change to the capsule's file will result in a [Rollout](/platform/rollouts) and subsequent Kubernetes resource creation/update. Likewise, any rollout to a Git backed capsule will first result in Git commit.
+If the Source Of Truth is a Git repository, any committed change to the capsule's file will result in a [Rollout](/platform/rollouts-and-rollbacks) and subsequent Kubernetes resource creation/update. Likewise, any rollout to a Git backed capsule will first result in Git commit.
 
 Whether a capsule is git-backend and by what repository can be configured on a global, project or capsule level. A Git configuration for a project will overwrite any (if any) git global git configuration, and likewise will a git configuration on a capsule level overwrite any (if any) configuration on the project or global level. If a capsule (or project) doesn't have an explicit git configuration, it will inherit its Project (or global) configuration.
 

@@ -1,18 +1,18 @@
-# Live Onboarding
+# Migration
 
 import ThemedImage from "@theme/ThemedImage";
 
-Onboarding existing Deployments running in Kubernetes is very simple using the `rig-ops migrate` command.
+Migrating existing Deployments running in Kubernetes is very simple using the `rig-ops migrate` command.
 
-The tool is built to ensure the onboarding is happening in-place and *without incurring any downtime*, even from existing toolchains that
+The tool is built to ensure that the migration is happening in-place and *without incurring any downtime*, even from existing toolchains that
 is built upon Helm or similar.
-Read more about this [here](/operator-manual/onboarding#applying-changes).
+Read more about this [here](/operator-manual/migration#applying-changes).
 
 The tool works by scanning your targeted cluster for running deployments and finds all resources associated with them; Services, Ingresses, ConfigMaps, etc.
 
 The command uses a mix of the Rig Platform and the in-cluster running Rig Operator to compute *dry run* versions of a Capsule, that in
 turn is compared to the running resources. Using this feedback, it's trivial to adjust the `migrate` parameters and cluster configuration
-to allow a seamless onboarding.
+to allow a seamless migration.
 
 :::info Download `rig-ops` CLI
 Go to [rig-ops](/operator-manual/cli) for instructions on how to install the `rig-ops` CLI, that contains the `migrate` command.
@@ -20,13 +20,13 @@ Go to [rig-ops](/operator-manual/cli) for instructions on how to install the `ri
 
 ## Selecting a deployment
 
-First step is to select a deployment to onboard. When running `rig-ops migrate` without any arguments, the tool will query the Cluster and show the list of deployments that can be onboarded:
+First step is to select a deployment to migrate. When running `rig-ops migrate` without any arguments, the tool will query the Cluster and show the list of deployments that can be migrated:
 
 <ThemedImage
   alt="Select Deployment"
   sources={{
-    light: "/img/operator-manual/onboard-deployments.png",
-    dark: "/img/operator-manual/onboard-deployments.png",
+    light: "/img/operator-manual/migrate-deployments.png",
+    dark: "/img/operator-manual/migrate-deployments.png",
   }}
 />
 
@@ -37,8 +37,8 @@ The next step allows the user to navigate the changes and validate that the to-b
 <ThemedImage
   alt="Capsule breakdown"
   sources={{
-    light: "/img/operator-manual/onboard-parts.png",
-    dark: "/img/operator-manual/onboard-parts.png",
+    light: "/img/operator-manual/migrate-parts.png",
+    dark: "/img/operator-manual/migrate-parts.png",
   }}
 />
 
@@ -50,8 +50,8 @@ That means the output is 1:1 identical with what would happen if the change were
 <ThemedImage
   alt="Apply changes"
   sources={{
-    light: "/img/operator-manual/onboard-diff.png",
-    dark: "/img/operator-manual/onboard-diff.png",
+    light: "/img/operator-manual/migrate-diff.png",
+    dark: "/img/operator-manual/migrate-diff.png",
   }}
 />
 
@@ -67,8 +67,8 @@ the new configuration.
 <ThemedImage
   alt="Apply changes"
   sources={{
-    light: "/img/operator-manual/onboard-apply.png",
-    dark: "/img/operator-manual/onboard-apply.png",
+    light: "/img/operator-manual/migrate-apply.png",
+    dark: "/img/operator-manual/migrate-apply.png",
   }}
 />
 
@@ -77,15 +77,15 @@ objects that was previously managed by e.g. Helm resources, will now be managed 
 are handled in Kubernetes, this also means Helm will abort if used instead and thus ensuring the two systems won't compete against each
 other.
 
-This also has another side-effect; the onboarding is happening seamless and will have no impact on uptime.
+This also has another side-effect; the migration is happening seamless and will have no impact on uptime.
 
-:::info Live onboarding
-Live onboarding is a key feature in adopting the Rig Platform. It is however still advised to:
+:::info Live migration
+Live migration is a key feature in adopting the Rig Platform. It is however still advised to:
 
 1. Carefully review the diffs in the `rig-ops migrate` tool
-2. Try onboarding in a non-production environment
+2. Try migrating in a non-production environment
 
-before moving forward with the actual onboarding.
+before moving forward with the actual migration.
 :::
 
 ## Offline execution
@@ -99,7 +99,7 @@ A good example is the following flow:
     ```bash
     kubectl get deployment,service,horizontalpodautoscaler.autoscaling,ingress,cronjob.batch -A -o yaml > objects.yaml
     ```
-2. With a non-production cluster (e.g. KinD running on the local machine), run the onboarding against the production objects:
+2. With a non-production cluster (e.g. KinD running on the local machine), run the migration against the production objects:
     ```bash
     rig-ops migrate -f objects.yaml
     ```
