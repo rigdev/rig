@@ -52,7 +52,6 @@
 
 
 
-
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -1564,13 +1563,13 @@ A reference to a kubernetes object.
 
 
 
-<a name="v1alpha2_generated-proto"></a>
+<a name="platform_v1_generated-proto"></a>
 
-## v1alpha2/generated.proto
+## platform/v1/generated.proto
 
 
 
-<a name="v1alpha2-CPUTarget"></a>
+<a name="platform-v1-CPUTarget"></a>
 
 ### CPUTarget
 
@@ -1582,419 +1581,6 @@ A reference to a kubernetes object.
 
 
 
-
-
-
-<a name="v1alpha2-CapsuleInterface"></a>
-
-### CapsuleInterface
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| port | [int32](#int32) |  |  |
-| liveness | [InterfaceProbe](#v1alpha2-InterfaceProbe) |  |  |
-| readiness | [InterfaceProbe](#v1alpha2-InterfaceProbe) |  |  |
-| public | [CapsulePublicInterface](#v1alpha2-CapsulePublicInterface) |  |  |
-| routes | [HostRoute](#v1alpha2-HostRoute) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsuleInterfaceIngress"></a>
-
-### CapsuleInterfaceIngress
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| host | [string](#string) |  |  |
-| paths | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsuleInterfaceLoadBalancer"></a>
-
-### CapsuleInterfaceLoadBalancer
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| port | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsulePublicInterface"></a>
-
-### CapsulePublicInterface
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| ingress | [CapsuleInterfaceIngress](#v1alpha2-CapsuleInterfaceIngress) |  |  |
-| loadBalancer | [CapsuleInterfaceLoadBalancer](#v1alpha2-CapsuleInterfaceLoadBalancer) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CapsuleScale"></a>
-
-### CapsuleScale
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| horizontal | [HorizontalScale](#v1alpha2-HorizontalScale) |  |  |
-| vertical | [VerticalScale](#v1alpha2-VerticalScale) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CronJob"></a>
-
-### CronJob
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| schedule | [string](#string) |  |  |
-| url | [URL](#v1alpha2-URL) |  |  |
-| command | [JobCommand](#v1alpha2-JobCommand) |  |  |
-| maxRetries | [uint64](#uint64) |  |  |
-| timeoutSeconds | [uint64](#uint64) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-CustomMetric"></a>
-
-### CustomMetric
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| instanceMetric | [InstanceMetric](#v1alpha2-InstanceMetric) |  |  |
-| objectMetric | [ObjectMetric](#v1alpha2-ObjectMetric) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-HTTPPathRoute"></a>
-
-### HTTPPathRoute
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  |  |
-| match | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-HorizontalScale"></a>
-
-### HorizontalScale
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| instances | [Instances](#v1alpha2-Instances) |  |  |
-| cpuTarget | [CPUTarget](#v1alpha2-CPUTarget) |  |  |
-| customMetrics | [CustomMetric](#v1alpha2-CustomMetric) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-HostRoute"></a>
-
-### HostRoute
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| host | [string](#string) |  |  |
-| paths | [HTTPPathRoute](#v1alpha2-HTTPPathRoute) | repeated |  |
-| annotations | [HostRoute.AnnotationsEntry](#v1alpha2-HostRoute-AnnotationsEntry) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-HostRoute-AnnotationsEntry"></a>
-
-### HostRoute.AnnotationsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-InstanceMetric"></a>
-
-### InstanceMetric
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metricName | [string](#string) |  |  |
-| matchLabels | [InstanceMetric.MatchLabelsEntry](#v1alpha2-InstanceMetric-MatchLabelsEntry) | repeated |  |
-| averageValue | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-InstanceMetric-MatchLabelsEntry"></a>
-
-### InstanceMetric.MatchLabelsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-Instances"></a>
-
-### Instances
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| min | [uint32](#uint32) |  |  |
-| max | [uint32](#uint32) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-InterfaceGRPCProbe"></a>
-
-### InterfaceGRPCProbe
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| service | [string](#string) |  |  |
-| enabled | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-InterfaceProbe"></a>
-
-### InterfaceProbe
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  |  |
-| tcp | [bool](#bool) |  |  |
-| grpc | [InterfaceGRPCProbe](#v1alpha2-InterfaceGRPCProbe) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-JobCommand"></a>
-
-### JobCommand
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| command | [string](#string) |  |  |
-| args | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-ObjectMetric"></a>
-
-### ObjectMetric
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metricName | [string](#string) |  |  |
-| matchLabels | [ObjectMetric.MatchLabelsEntry](#v1alpha2-ObjectMetric-MatchLabelsEntry) | repeated |  |
-| averageValue | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-| objectReference | [k8s.io.api.autoscaling.v2.CrossVersionObjectReference](#k8s-io-api-autoscaling-v2-CrossVersionObjectReference) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-ObjectMetric-MatchLabelsEntry"></a>
-
-### ObjectMetric.MatchLabelsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-ResourceLimits"></a>
-
-### ResourceLimits
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| request | [string](#string) |  |  |
-| limit | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-ResourceRequest"></a>
-
-### ResourceRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| request | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-URL"></a>
-
-### URL
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| port | [uint32](#uint32) |  |  |
-| path | [string](#string) |  |  |
-| queryParameters | [URL.QueryParametersEntry](#v1alpha2-URL-QueryParametersEntry) | repeated |  |
-
-
-
-
-
-
-<a name="v1alpha2-URL-QueryParametersEntry"></a>
-
-### URL.QueryParametersEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="v1alpha2-VerticalScale"></a>
-
-### VerticalScale
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| cpu | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
-| memory | [ResourceLimits](#v1alpha2-ResourceLimits) |  |  |
-| gpu | [ResourceRequest](#v1alpha2-ResourceRequest) |  |  |
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="platform_v1_generated-proto"></a>
-
-## platform/v1/generated.proto
 
 
 
@@ -2012,6 +1598,25 @@ A reference to a kubernetes object.
 | project | [string](#string) |  |  |
 | environment | [string](#string) |  |  |
 | spec | [CapsuleSpec](#platform-v1-CapsuleSpec) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CapsuleInterface"></a>
+
+### CapsuleInterface
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| port | [int32](#int32) |  |  |
+| liveness | [InterfaceProbe](#platform-v1-InterfaceProbe) |  |  |
+| readiness | [InterfaceProbe](#platform-v1-InterfaceProbe) |  |  |
+| routes | [HostRoute](#platform-v1-HostRoute) | repeated |  |
 
 
 
@@ -2069,11 +1674,11 @@ A reference to a kubernetes object.
 | image | [string](#string) |  |  |
 | command | [string](#string) |  |  |
 | args | [string](#string) | repeated |  |
-| interfaces | [v1alpha2.CapsuleInterface](#v1alpha2-CapsuleInterface) | repeated |  |
+| interfaces | [CapsuleInterface](#platform-v1-CapsuleInterface) | repeated |  |
 | files | [File](#platform-v1-File) | repeated |  |
 | env | [EnvironmentVariables](#platform-v1-EnvironmentVariables) |  |  |
 | scale | [Scale](#platform-v1-Scale) |  |  |
-| cronJobs | [v1alpha2.CronJob](#v1alpha2-CronJob) | repeated |  |
+| cronJobs | [CronJob](#platform-v1-CronJob) | repeated |  |
 | autoAddRigServiceAccounts | [bool](#bool) |  |  |
 
 
@@ -2091,6 +1696,42 @@ A reference to a kubernetes object.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CronJob"></a>
+
+### CronJob
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| schedule | [string](#string) |  |  |
+| url | [URL](#platform-v1-URL) |  |  |
+| command | [JobCommand](#platform-v1-JobCommand) |  |  |
+| maxRetries | [uint64](#uint64) |  |  |
+| timeoutSeconds | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CustomMetric"></a>
+
+### CustomMetric
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| instanceMetric | [InstanceMetric](#platform-v1-InstanceMetric) |  |  |
+| objectMetric | [ObjectMetric](#platform-v1-ObjectMetric) |  |  |
 
 
 
@@ -2187,6 +1828,22 @@ A reference to a kubernetes object.
 
 
 
+<a name="platform-v1-HTTPPathRoute"></a>
+
+### HTTPPathRoute
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| match | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-HorizontalScale"></a>
 
 ### HorizontalScale
@@ -2197,9 +1854,9 @@ A reference to a kubernetes object.
 | ----- | ---- | ----- | ----------- |
 | min | [uint32](#uint32) |  |  |
 | max | [uint32](#uint32) |  |  |
-| instances | [v1alpha2.Instances](#v1alpha2-Instances) |  |  |
-| cpuTarget | [v1alpha2.CPUTarget](#v1alpha2-CPUTarget) |  |  |
-| customMetrics | [v1alpha2.CustomMetric](#v1alpha2-CustomMetric) | repeated |  |
+| instances | [Instances](#platform-v1-Instances) |  |  |
+| cpuTarget | [CPUTarget](#platform-v1-CPUTarget) |  |  |
+| customMetrics | [CustomMetric](#platform-v1-CustomMetric) | repeated |  |
 
 
 
@@ -2243,6 +1900,105 @@ A reference to a kubernetes object.
 
 
 
+<a name="platform-v1-HostRoute"></a>
+
+### HostRoute
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| host | [string](#string) |  |  |
+| paths | [HTTPPathRoute](#platform-v1-HTTPPathRoute) | repeated |  |
+| annotations | [HostRoute.AnnotationsEntry](#platform-v1-HostRoute-AnnotationsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-HostRoute-AnnotationsEntry"></a>
+
+### HostRoute.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-InstanceMetric"></a>
+
+### InstanceMetric
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metricName | [string](#string) |  |  |
+| matchLabels | [InstanceMetric.MatchLabelsEntry](#platform-v1-InstanceMetric-MatchLabelsEntry) | repeated |  |
+| averageValue | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-InstanceMetric-MatchLabelsEntry"></a>
+
+### InstanceMetric.MatchLabelsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-Instances"></a>
+
+### Instances
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| min | [uint32](#uint32) |  |  |
+| max | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-InterfaceGRPCProbe"></a>
+
+### InterfaceGRPCProbe
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| service | [string](#string) |  |  |
+| enabled | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-InterfaceOptions"></a>
 
 ### InterfaceOptions
@@ -2264,6 +2020,74 @@ A reference to a kubernetes object.
 <a name="platform-v1-InterfaceOptions-HeadersEntry"></a>
 
 ### InterfaceOptions.HeadersEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-InterfaceProbe"></a>
+
+### InterfaceProbe
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| tcp | [bool](#bool) |  |  |
+| grpc | [InterfaceGRPCProbe](#platform-v1-InterfaceGRPCProbe) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-JobCommand"></a>
+
+### JobCommand
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| command | [string](#string) |  |  |
+| args | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-ObjectMetric"></a>
+
+### ObjectMetric
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metricName | [string](#string) |  |  |
+| matchLabels | [ObjectMetric.MatchLabelsEntry](#platform-v1-ObjectMetric-MatchLabelsEntry) | repeated |  |
+| averageValue | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+| objectReference | [k8s.io.api.autoscaling.v2.CrossVersionObjectReference](#k8s-io-api-autoscaling-v2-CrossVersionObjectReference) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-ObjectMetric-MatchLabelsEntry"></a>
+
+### ObjectMetric.MatchLabelsEntry
 
 
 
@@ -2328,6 +2152,37 @@ A reference to a kubernetes object.
 
 
 
+<a name="platform-v1-ResourceLimits"></a>
+
+### ResourceLimits
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [string](#string) |  |  |
+| limit | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-ResourceRequest"></a>
+
+### ResourceRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-Scale"></a>
 
 ### Scale
@@ -2337,7 +2192,57 @@ A reference to a kubernetes object.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | horizontal | [HorizontalScale](#platform-v1-HorizontalScale) |  |  |
-| vertical | [v1alpha2.VerticalScale](#v1alpha2-VerticalScale) |  |  |
+| vertical | [VerticalScale](#platform-v1-VerticalScale) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-URL"></a>
+
+### URL
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| port | [uint32](#uint32) |  |  |
+| path | [string](#string) |  |  |
+| queryParameters | [URL.QueryParametersEntry](#platform-v1-URL-QueryParametersEntry) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-URL-QueryParametersEntry"></a>
+
+### URL.QueryParametersEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-VerticalScale"></a>
+
+### VerticalScale
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cpu | [ResourceLimits](#platform-v1-ResourceLimits) |  |  |
+| memory | [ResourceLimits](#platform-v1-ResourceLimits) |  |  |
+| gpu | [ResourceRequest](#platform-v1-ResourceRequest) |  |  |
 
 
 

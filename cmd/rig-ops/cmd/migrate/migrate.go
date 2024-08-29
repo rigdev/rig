@@ -16,7 +16,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	rigAutoscalingv2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	"github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -497,7 +496,7 @@ func (c *Cmd) migrateDeployment(
 	migration.capsuleSpec.Image = container.Image
 	migration.capsuleSpec.Scale = &platformv1.Scale{
 		Horizontal: &platformv1.HorizontalScale{
-			Instances: &v1alpha2.Instances{
+			Instances: &platformv1.Instances{
 				Min: 1,
 			},
 		},
@@ -508,9 +507,9 @@ func (c *Cmd) migrateDeployment(
 	}
 
 	if len(container.Resources.Requests) > 0 || len(container.Resources.Limits) > 0 {
-		migration.capsuleSpec.Scale.Vertical = &v1alpha2.VerticalScale{
-			Cpu:    &v1alpha2.ResourceLimits{},
-			Memory: &v1alpha2.ResourceLimits{},
+		migration.capsuleSpec.Scale.Vertical = &platformv1.VerticalScale{
+			Cpu:    &platformv1.ResourceLimits{},
+			Memory: &platformv1.ResourceLimits{},
 		}
 
 		cpu, memory := migration.capsuleSpec.Scale.Vertical.Cpu, migration.capsuleSpec.Scale.Vertical.Memory
@@ -606,7 +605,7 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 			}
 
 			specHorizontalScale := &platformv1.HorizontalScale{
-				Instances: &v1alpha2.Instances{
+				Instances: &platformv1.Instances{
 					Max: uint32(hpa.Spec.MaxReplicas),
 					Min: uint32(*hpa.Spec.MinReplicas),
 				},
@@ -618,7 +617,7 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 						case corev1.ResourceCPU:
 							switch metric.Resource.Target.Type {
 							case autoscalingv2.UtilizationMetricType:
-								specHorizontalScale.CpuTarget = &v1alpha2.CPUTarget{
+								specHorizontalScale.CpuTarget = &platformv1.CPUTarget{
 									Utilization: uint32(*metric.Resource.Target.AverageUtilization),
 								}
 							default:
@@ -641,8 +640,8 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 					}
 					if metric.Object != nil {
 						var warning *Warning
-						objectMetric := &v1alpha2.CustomMetric{
-							ObjectMetric: &v1alpha2.ObjectMetric{
+						objectMetric := &platformv1.CustomMetric{
+							ObjectMetric: &platformv1.ObjectMetric{
 								MetricName: metric.Object.Metric.Name,
 								ObjectReference: &rigAutoscalingv2.CrossVersionObjectReference{
 									ApiVersion: metric.Object.DescribedObject.APIVersion,
@@ -673,8 +672,8 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 
 					if metric.Pods != nil {
 						var warning *Warning
-						podMetric := &v1alpha2.CustomMetric{
-							InstanceMetric: &v1alpha2.InstanceMetric{
+						podMetric := &platformv1.CustomMetric{
+							InstanceMetric: &platformv1.InstanceMetric{
 								MetricName: metric.Pods.Metric.Name,
 							},
 						}
@@ -1088,7 +1087,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 		})
 	}
 
-	interfaces := make([]*v1alpha2.CapsuleInterface, 0, len(container.Ports))
+	interfaces := make([]*platformv1.CapsuleInterface, 0, len(container.Ports))
 
 	ingresses := &netv1.IngressList{}
 	err := c.K8sReader.List(ctx, ingresses, client.InNamespace(migration.currentResources.Deployment.GetNamespace()))
@@ -1103,15 +1102,15 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 		break
 	}
 	for _, port := range container.Ports {
-		i := &v1alpha2.CapsuleInterface{
+		i := &platformv1.CapsuleInterface{
 			Name: port.Name,
 			Port: port.ContainerPort,
 		}
 
-		routes := []*v1alpha2.HostRoute{}
+		routes := []*platformv1.HostRoute{}
 		for _, ingress := range ingresses.Items {
 			ingress := ingress
-			routePaths := []*v1alpha2.HTTPPathRoute{}
+			routePaths := []*platformv1.HTTPPathRoute{}
 
 			annotations := maps.Clone(ingress.Annotations)
 			if annotations == nil {
@@ -1148,7 +1147,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					pathType = "Exact"
 				}
 
-				routePaths = append(routePaths, &v1alpha2.HTTPPathRoute{
+				routePaths = append(routePaths, &platformv1.HTTPPathRoute{
 					Path:  path.Path,
 					Match: pathType,
 				})
@@ -1170,7 +1169,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 					continue
 				}
 
-				routes = append(routes, &v1alpha2.HostRoute{
+				routes = append(routes, &platformv1.HostRoute{
 					Id:          ingress.GetName(),
 					Host:        ingress.Spec.Rules[0].Host,
 					Annotations: annotations,
@@ -1207,12 +1206,12 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 
 func migrateProbe(probe *corev1.Probe,
 	port corev1.ContainerPort,
-) (*v1alpha2.InterfaceProbe, error) {
+) (*platformv1.InterfaceProbe, error) {
 	TCPAndCorrectPort := probe.TCPSocket != nil &&
 		(probe.TCPSocket.Port.StrVal == port.Name || probe.TCPSocket.Port.IntVal == port.ContainerPort)
 	if TCPAndCorrectPort {
 		if probe.TCPSocket.Port.StrVal == port.Name || probe.TCPSocket.Port.IntVal == port.ContainerPort {
-			return &v1alpha2.InterfaceProbe{
+			return &platformv1.InterfaceProbe{
 				Tcp: true,
 			}, nil
 		}
@@ -1221,7 +1220,7 @@ func migrateProbe(probe *corev1.Probe,
 	HTTPAndCorrectPort := probe.HTTPGet != nil &&
 		(probe.HTTPGet.Port.StrVal == port.Name || probe.HTTPGet.Port.IntVal == port.ContainerPort)
 	if HTTPAndCorrectPort {
-		return &v1alpha2.InterfaceProbe{
+		return &platformv1.InterfaceProbe{
 			Path: probe.HTTPGet.Path,
 		}, nil
 	}
@@ -1233,8 +1232,8 @@ func migrateProbe(probe *corev1.Probe,
 			service = *probe.GRPC.Service
 		}
 
-		return &v1alpha2.InterfaceProbe{
-			Grpc: &v1alpha2.InterfaceGRPCProbe{
+		return &platformv1.InterfaceProbe{
+			Grpc: &platformv1.InterfaceGRPCProbe{
 				Service: service,
 			},
 		}, nil
@@ -1272,7 +1271,7 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 		})
 	}
 
-	migratedCronJobs := make([]*v1alpha2.CronJob, 0, len(cronJobs))
+	migratedCronJobs := make([]*platformv1.CronJob, 0, len(cronJobs))
 	for {
 		i, err := c.Prompter.TableSelect("\nSelect a job to migrate or CTRL+C to continue",
 			jobTitles, headers, common.SelectEnableFilterOpt, common.SelectDontShowResultOpt)
@@ -1304,8 +1303,8 @@ func (c *Cmd) migrateCronJobs(ctx context.Context, migration *Migration) error {
 func (c *Cmd) migrateCronJob(
 	migration *Migration,
 	cronJob batchv1.CronJob,
-) (*v1alpha2.CronJob, error) {
-	migrated := &v1alpha2.CronJob{
+) (*platformv1.CronJob, error) {
+	migrated := &platformv1.CronJob{
 		Name:     cronJob.Name,
 		Schedule: cronJob.Spec.Schedule,
 	}
@@ -1333,7 +1332,7 @@ func (c *Cmd) migrateCronJob(
 		args := append(cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[migration.containerIndex].Command[1:],
 			cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers[migration.containerIndex].Args...)
 
-		migrated.Command = &v1alpha2.JobCommand{
+		migrated.Command = &platformv1.JobCommand{
 			Command: cmd,
 			Args:    args,
 		}
@@ -1368,7 +1367,7 @@ func (c *Cmd) migrateCronJob(
 			queryParams[key] = values[0]
 		}
 
-		migrated.Url = &v1alpha2.URL{
+		migrated.Url = &platformv1.URL{
 			Port:            port,
 			Path:            url.Path,
 			QueryParameters: queryParams,

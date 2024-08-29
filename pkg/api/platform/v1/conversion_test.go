@@ -8,7 +8,6 @@ import (
 	v2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
 	"github.com/rigdev/rig-go-api/model"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	"github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -156,12 +155,12 @@ var (
 		Image:      "image",
 		Command:    "cmd",
 		Args:       []string{"arg1", "arg2"},
-		Interfaces: []*v1alpha2.CapsuleInterface{
+		Interfaces: []*platformv1.CapsuleInterface{
 			{
 				Name: "port1",
 				Port: 1234,
-				Liveness: &v1alpha2.InterfaceProbe{
-					Grpc: &v1alpha2.InterfaceGRPCProbe{
+				Liveness: &platformv1.InterfaceProbe{
+					Grpc: &platformv1.InterfaceGRPCProbe{
 						Service: "service",
 					},
 				},
@@ -169,20 +168,20 @@ var (
 			{
 				Name: "port2",
 				Port: 1235,
-				Readiness: &v1alpha2.InterfaceProbe{
+				Readiness: &platformv1.InterfaceProbe{
 					Path: "path",
 				},
 			},
 			{
 				Name: "port3",
 				Port: 1236,
-				Liveness: &v1alpha2.InterfaceProbe{
+				Liveness: &platformv1.InterfaceProbe{
 					Tcp: true,
 				},
-				Routes: []*v1alpha2.HostRoute{{
+				Routes: []*platformv1.HostRoute{{
 					Id:   "id",
 					Host: "host",
-					Paths: []*v1alpha2.HTTPPathRoute{{
+					Paths: []*platformv1.HTTPPathRoute{{
 						Path:  "path2",
 						Match: "Exact",
 					}},
@@ -196,19 +195,19 @@ var (
 			Horizontal: &platformv1.HorizontalScale{
 				Min: 2,
 				Max: 5,
-				CpuTarget: &v1alpha2.CPUTarget{
+				CpuTarget: &platformv1.CPUTarget{
 					Utilization: 50,
 				},
-				CustomMetrics: []*v1alpha2.CustomMetric{
+				CustomMetrics: []*platformv1.CustomMetric{
 					{
-						InstanceMetric: &v1alpha2.InstanceMetric{
+						InstanceMetric: &platformv1.InstanceMetric{
 							MetricName:   "metric",
 							MatchLabels:  map[string]string{"label": "value"},
 							AverageValue: "5",
 						},
 					},
 					{
-						ObjectMetric: &v1alpha2.ObjectMetric{
+						ObjectMetric: &platformv1.ObjectMetric{
 							MetricName:   "metric2",
 							MatchLabels:  map[string]string{"label2": "value2"},
 							AverageValue: "1",
@@ -222,15 +221,15 @@ var (
 					},
 				},
 			},
-			Vertical: &v1alpha2.VerticalScale{
-				Cpu: &v1alpha2.ResourceLimits{
+			Vertical: &platformv1.VerticalScale{
+				Cpu: &platformv1.ResourceLimits{
 					Request: "0.1",
 					Limit:   "0.2",
 				},
-				Memory: &v1alpha2.ResourceLimits{
+				Memory: &platformv1.ResourceLimits{
 					Request: "1000000",
 				},
-				Gpu: &v1alpha2.ResourceRequest{
+				Gpu: &platformv1.ResourceRequest{
 					Request: "2",
 				},
 			},
@@ -255,11 +254,11 @@ var (
 			},
 		},
 
-		CronJobs: []*v1alpha2.CronJob{
+		CronJobs: []*platformv1.CronJob{
 			{
 				Name:     "job",
 				Schedule: "* * * * *",
-				Command: &v1alpha2.JobCommand{
+				Command: &platformv1.JobCommand{
 					Command: "cmd",
 					Args:    []string{"arg"},
 				},
@@ -431,11 +430,11 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 		{
 			name: "interface patch",
 			patch: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "interface1",
 						Port: 1001,
-						Liveness: &v1alpha2.InterfaceProbe{
+						Liveness: &platformv1.InterfaceProbe{
 							Path: "some-path",
 							Tcp:  true,
 						},
@@ -447,11 +446,11 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				},
 			},
 			into: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "interface1",
 						Port: 1001,
-						Readiness: &v1alpha2.InterfaceProbe{
+						Readiness: &platformv1.InterfaceProbe{
 							Path: "other-path",
 							Tcp:  true,
 						},
@@ -463,15 +462,15 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				},
 			},
 			expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "interface1",
 						Port: 1001,
-						Liveness: &v1alpha2.InterfaceProbe{
+						Liveness: &platformv1.InterfaceProbe{
 							Path: "some-path",
 							Tcp:  true,
 						},
-						Readiness: &v1alpha2.InterfaceProbe{
+						Readiness: &platformv1.InterfaceProbe{
 							Path: "other-path",
 							Tcp:  true,
 						},
@@ -494,17 +493,17 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					Horizontal: &platformv1.HorizontalScale{
 						Min: 2,
 						Max: 4,
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName:   "some-metric",
 									AverageValue: "1",
 								},
 							},
 						},
 					},
-					Vertical: &v1alpha2.VerticalScale{
-						Cpu: &v1alpha2.ResourceLimits{
+					Vertical: &platformv1.VerticalScale{
+						Cpu: &platformv1.ResourceLimits{
 							Request: "1",
 						},
 					},
@@ -515,17 +514,17 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					Horizontal: &platformv1.HorizontalScale{
 						Min: 1,
 						Max: 1,
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName:   "some-other-metric",
 									AverageValue: "2",
 								},
 							},
 						},
 					},
-					Vertical: &v1alpha2.VerticalScale{
-						Memory: &v1alpha2.ResourceLimits{
+					Vertical: &platformv1.VerticalScale{
+						Memory: &platformv1.ResourceLimits{
 							Request: "100M",
 						},
 					},
@@ -536,20 +535,20 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					Horizontal: &platformv1.HorizontalScale{
 						Min: 2,
 						Max: 4,
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName:   "some-metric",
 									AverageValue: "1",
 								},
 							},
 						},
 					},
-					Vertical: &v1alpha2.VerticalScale{
-						Cpu: &v1alpha2.ResourceLimits{
+					Vertical: &platformv1.VerticalScale{
+						Cpu: &platformv1.ResourceLimits{
 							Request: "1",
 						},
-						Memory: &v1alpha2.ResourceLimits{
+						Memory: &platformv1.ResourceLimits{
 							Request: "100M",
 						},
 					},

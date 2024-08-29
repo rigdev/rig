@@ -14,9 +14,7 @@ import (
 	v2 "github.com/rigdev/rig-go-api/k8s.io/api/autoscaling/v2"
 	"github.com/rigdev/rig-go-api/model"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	"github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/rigdev/rig/cmd/common"
-	types_v1alpha2 "github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/obj"
 	"google.golang.org/protobuf/proto"
@@ -70,12 +68,12 @@ func RolloutConfigToCapsuleSpec(rc *capsule.RolloutConfig) (*platformv1.CapsuleS
 	return spec, nil
 }
 
-func CronJobConversion(j *capsule.CronJob) *v1alpha2.CronJob {
+func CronJobConversion(j *capsule.CronJob) *platformv1.CronJob {
 	var timeoutSeconds uint64
 	if t := j.GetTimeout(); t != nil {
 		timeoutSeconds = uint64(t.AsDuration().Seconds())
 	}
-	job := &v1alpha2.CronJob{
+	job := &platformv1.CronJob{
 		Name:           j.GetJobName(),
 		Schedule:       j.GetSchedule(),
 		MaxRetries:     uint64(j.GetMaxRetries()),
@@ -83,12 +81,12 @@ func CronJobConversion(j *capsule.CronJob) *v1alpha2.CronJob {
 	}
 	switch v := j.GetJobType().(type) {
 	case *capsule.CronJob_Command:
-		job.Command = &v1alpha2.JobCommand{
+		job.Command = &platformv1.JobCommand{
 			Command: v.Command.GetCommand(),
 			Args:    v.Command.GetArgs(),
 		}
 	case *capsule.CronJob_Url:
-		job.Url = &v1alpha2.URL{
+		job.Url = &platformv1.URL{
 			Port:            uint32(v.Url.GetPort()),
 			Path:            v.Url.GetPath(),
 			QueryParameters: v.Url.GetQueryParameters(),
@@ -103,15 +101,15 @@ func HorizontalScaleConversion(horizontal *capsule.HorizontalScale, replicas uin
 	}
 
 	if horizontal.GetCpuTarget().GetAverageUtilizationPercentage() > 0 {
-		res.CpuTarget = &v1alpha2.CPUTarget{
+		res.CpuTarget = &platformv1.CPUTarget{
 			Utilization: horizontal.GetCpuTarget().GetAverageUtilizationPercentage(),
 		}
 	}
 
 	for _, m := range horizontal.GetCustomMetrics() {
-		var metric v1alpha2.CustomMetric
+		var metric platformv1.CustomMetric
 		if obj := m.GetObject(); obj != nil {
-			metric.ObjectMetric = &v1alpha2.ObjectMetric{
+			metric.ObjectMetric = &platformv1.ObjectMetric{
 				MetricName:   obj.MetricName,
 				MatchLabels:  obj.MatchLabels,
 				AverageValue: obj.AverageValue,
@@ -123,7 +121,7 @@ func HorizontalScaleConversion(horizontal *capsule.HorizontalScale, replicas uin
 				},
 			}
 		} else if instance := m.GetInstance(); instance != nil {
-			metric.InstanceMetric = &v1alpha2.InstanceMetric{
+			metric.InstanceMetric = &platformv1.InstanceMetric{
 				MetricName:   instance.MetricName,
 				MatchLabels:  instance.MatchLabels,
 				AverageValue: instance.AverageValue,
@@ -200,8 +198,8 @@ func EnvironmentSourceSpecConversion(source *platformv1.EnvironmentSource) *caps
 	return ref
 }
 
-func InterfaceConversion(i *capsule.Interface) (*v1alpha2.CapsuleInterface, error) {
-	capIf := &v1alpha2.CapsuleInterface{
+func InterfaceConversion(i *capsule.Interface) (*platformv1.CapsuleInterface, error) {
+	capIf := &platformv1.CapsuleInterface{
 		Name: i.GetName(),
 		Port: int32(i.GetPort()),
 	}
@@ -210,13 +208,13 @@ func InterfaceConversion(i *capsule.Interface) (*v1alpha2.CapsuleInterface, erro
 	if i.GetPublic().GetEnabled() {
 		switch v := i.GetPublic().GetMethod().GetKind().(type) {
 		case *capsule.RoutingMethod_Ingress_:
-			route := &v1alpha2.HostRoute{
+			route := &platformv1.HostRoute{
 				Host: v.Ingress.GetHost(),
 			}
 			for _, p := range v.Ingress.GetPaths() {
-				route.Paths = append(route.Paths, &v1alpha2.HTTPPathRoute{
+				route.Paths = append(route.Paths, &platformv1.HTTPPathRoute{
 					Path:  p,
-					Match: string(types_v1alpha2.PathPrefix),
+					Match: string(PathPrefix),
 				})
 			}
 
@@ -225,25 +223,25 @@ func InterfaceConversion(i *capsule.Interface) (*v1alpha2.CapsuleInterface, erro
 	}
 
 	for _, r := range i.GetRoutes() {
-		route := &v1alpha2.HostRoute{
+		route := &platformv1.HostRoute{
 			Id:          r.GetId(),
 			Host:        r.GetHost(),
 			Annotations: r.GetOptions().GetAnnotations(),
 		}
 
 		for _, p := range r.GetPaths() {
-			path := &v1alpha2.HTTPPathRoute{
+			path := &platformv1.HTTPPathRoute{
 				Path: p.GetPath(),
 			}
 
 			switch p.Match {
 			case capsule.PathMatchType_PATH_MATCH_TYPE_EXACT:
-				path.Match = string(types_v1alpha2.Exact)
+				path.Match = string(Exact)
 			case capsule.PathMatchType_PATH_MATCH_TYPE_REGULAR_EXPRESSION:
-				path.Match = string(types_v1alpha2.RegularExpression)
+				path.Match = string(RegularExpression)
 			case capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX,
 				capsule.PathMatchType_PATH_MATCH_TYPE_UNSPECIFIED:
-				path.Match = string(types_v1alpha2.PathPrefix)
+				path.Match = string(PathPrefix)
 			default:
 				return nil, errors.InvalidArgumentErrorf("invalid path match type '%v'", p.Match)
 			}
@@ -266,21 +264,21 @@ func InterfaceConversion(i *capsule.Interface) (*v1alpha2.CapsuleInterface, erro
 	return capIf, nil
 }
 
-func getInterfaceProbe(p *capsule.InterfaceProbe) (*v1alpha2.InterfaceProbe, error) {
+func getInterfaceProbe(p *capsule.InterfaceProbe) (*platformv1.InterfaceProbe, error) {
 	switch v := p.GetKind().(type) {
 	case nil:
 		return nil, nil
 	case *capsule.InterfaceProbe_Http:
-		return &v1alpha2.InterfaceProbe{
+		return &platformv1.InterfaceProbe{
 			Path: v.Http.GetPath(),
 		}, nil
 	case *capsule.InterfaceProbe_Tcp:
-		return &v1alpha2.InterfaceProbe{
+		return &platformv1.InterfaceProbe{
 			Tcp: true,
 		}, nil
 	case *capsule.InterfaceProbe_Grpc:
-		return &v1alpha2.InterfaceProbe{
-			Grpc: &v1alpha2.InterfaceGRPCProbe{
+		return &platformv1.InterfaceProbe{
+			Grpc: &platformv1.InterfaceGRPCProbe{
 				Service: v.Grpc.GetService(),
 			},
 		}, nil
@@ -293,10 +291,10 @@ func makeVerticalScale(
 	requests *capsule.ResourceList,
 	limits *capsule.ResourceList,
 	gpuLimits *capsule.GpuLimits,
-) *v1alpha2.VerticalScale {
-	vs := &v1alpha2.VerticalScale{
-		Cpu:    &v1alpha2.ResourceLimits{},
-		Memory: &v1alpha2.ResourceLimits{},
+) *platformv1.VerticalScale {
+	vs := &platformv1.VerticalScale{
+		Cpu:    &platformv1.ResourceLimits{},
+		Memory: &platformv1.ResourceLimits{},
 	}
 
 	if cpu := limits.GetCpuMillis(); cpu > 0 {
@@ -315,7 +313,7 @@ func makeVerticalScale(
 
 	if gpuLimits != nil {
 		if gpu := gpuLimits.GetCount(); gpu > 0 {
-			vs.Gpu = &v1alpha2.ResourceRequest{
+			vs.Gpu = &platformv1.ResourceRequest{
 				Request: fmt.Sprintf("%v", gpu),
 			}
 		}
@@ -383,7 +381,7 @@ func makeEnvironmentSources(spec []*platformv1.EnvironmentSource) []*capsule.Env
 	return res
 }
 
-func makeResources(vertical *v1alpha2.VerticalScale) (*capsule.Resources, error) {
+func makeResources(vertical *platformv1.VerticalScale) (*capsule.Resources, error) {
 	res := &capsule.Resources{
 		Requests:  &capsule.ResourceList{},
 		Limits:    &capsule.ResourceList{},
@@ -416,7 +414,7 @@ func makeResources(vertical *v1alpha2.VerticalScale) (*capsule.Resources, error)
 	return res, nil
 }
 
-func parseLimits(r *v1alpha2.ResourceLimits) (float64, float64, error) {
+func parseLimits(r *platformv1.ResourceLimits) (float64, float64, error) {
 	var req, limit float64
 	if s := r.GetRequest(); s != "" {
 		qq, err := k8sresource.ParseQuantity(s)
@@ -507,7 +505,7 @@ func ConfigFileSpecConversion(c *platformv1.File) *capsule.ConfigFile {
 	return f
 }
 
-func makeCronJobs(cronJobs []*v1alpha2.CronJob) []*capsule.CronJob {
+func makeCronJobs(cronJobs []*platformv1.CronJob) []*capsule.CronJob {
 	var res []*capsule.CronJob
 
 	for _, j := range cronJobs {
@@ -517,7 +515,7 @@ func makeCronJobs(cronJobs []*v1alpha2.CronJob) []*capsule.CronJob {
 	return res
 }
 
-func CronJobSpecConversion(j *v1alpha2.CronJob) *capsule.CronJob {
+func CronJobSpecConversion(j *platformv1.CronJob) *capsule.CronJob {
 	job := &capsule.CronJob{
 		JobName:    j.GetName(),
 		Schedule:   j.GetSchedule(),
@@ -547,7 +545,7 @@ func CronJobSpecConversion(j *v1alpha2.CronJob) *capsule.CronJob {
 	return job
 }
 
-func makeNetworks(spec []*v1alpha2.CapsuleInterface) *capsule.Network {
+func makeNetworks(spec []*platformv1.CapsuleInterface) *capsule.Network {
 	res := &capsule.Network{}
 	for _, i := range spec {
 		res.Interfaces = append(res.Interfaces, InterfaceSpecConversion(i))
@@ -555,7 +553,7 @@ func makeNetworks(spec []*v1alpha2.CapsuleInterface) *capsule.Network {
 	return res
 }
 
-func InterfaceSpecConversion(i *v1alpha2.CapsuleInterface) *capsule.Interface {
+func InterfaceSpecConversion(i *platformv1.CapsuleInterface) *capsule.Interface {
 	ii := &capsule.Interface{
 		Port:      uint32(i.GetPort()),
 		Name:      i.GetName(),
@@ -572,7 +570,7 @@ func InterfaceSpecConversion(i *v1alpha2.CapsuleInterface) *capsule.Interface {
 	return ii
 }
 
-func makeInterfaceProbe(probe *v1alpha2.InterfaceProbe) *capsule.InterfaceProbe {
+func makeInterfaceProbe(probe *platformv1.InterfaceProbe) *capsule.InterfaceProbe {
 	if probe == nil {
 		return nil
 	}
@@ -601,7 +599,7 @@ func makeInterfaceProbe(probe *v1alpha2.InterfaceProbe) *capsule.InterfaceProbe 
 	return r
 }
 
-func makeHostRoute(route *v1alpha2.HostRoute) *capsule.HostRoute {
+func makeHostRoute(route *platformv1.HostRoute) *capsule.HostRoute {
 	res := &capsule.HostRoute{
 		Host: route.GetHost(),
 		Options: &capsule.RouteOptions{
@@ -614,11 +612,11 @@ func makeHostRoute(route *v1alpha2.HostRoute) *capsule.HostRoute {
 			Path: p.GetPath(),
 		}
 		switch p.GetMatch() {
-		case string(types_v1alpha2.Exact):
+		case string(Exact):
 			pp.Match = capsule.PathMatchType_PATH_MATCH_TYPE_EXACT
-		case string(types_v1alpha2.PathPrefix):
+		case string(PathPrefix):
 			pp.Match = capsule.PathMatchType_PATH_MATCH_TYPE_PATH_PREFIX
-		case string(types_v1alpha2.RegularExpression):
+		case string(RegularExpression):
 			pp.Match = capsule.PathMatchType_PATH_MATCH_TYPE_REGULAR_EXPRESSION
 		}
 		res.Paths = append(res.Paths, pp)
@@ -716,7 +714,7 @@ func ChangesFromSpecPair(curSpec, newSpec *platformv1.CapsuleSpec) ([]*capsule.C
 		}
 	}
 
-	ints := map[string]*v1alpha2.CapsuleInterface{}
+	ints := map[string]*platformv1.CapsuleInterface{}
 	for _, i := range curSpec.GetInterfaces() {
 		ints[i.GetName()] = i
 	}
@@ -756,7 +754,7 @@ func ChangesFromSpecPair(curSpec, newSpec *platformv1.CapsuleSpec) ([]*capsule.C
 		})
 	}
 
-	c := map[string]*v1alpha2.CronJob{}
+	c := map[string]*platformv1.CronJob{}
 	for _, cc := range curSpec.GetCronJobs() {
 		c[cc.GetName()] = cc
 	}
