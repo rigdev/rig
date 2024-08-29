@@ -584,6 +584,12 @@ const sidebars = {
             },
             {
               type: "doc",
+              id: "operator-manual/plugins/builtin/object_create",
+              label: "Object Create",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
               id: "operator-manual/plugins/builtin/placement",
               label: "Placement",
               className: "homepage-sidebar-item",

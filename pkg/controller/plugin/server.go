@@ -199,16 +199,9 @@ func fromGVK(gvk schema.GroupVersionKind) *apiplugin.GVK {
 	}
 }
 
-func fromGK(gk schema.GroupKind) *apiplugin.GVK {
-	return &apiplugin.GVK{
-		Group: gk.Group,
-		Kind:  gk.Kind,
-	}
-}
-
-func (c *capsuleRequestClient) get(gk schema.GroupKind, name string, current bool) (client.Object, error) {
+func (c *capsuleRequestClient) get(gvk schema.GroupVersionKind, name string, current bool) (client.Object, error) {
 	res, err := c.client.GetObject(c.ctx, &apiplugin.GetObjectRequest{
-		Gvk:     fromGK(gk),
+		Gvk:     fromGVK(gvk),
 		Name:    name,
 		Current: current,
 	})
@@ -216,12 +209,15 @@ func (c *capsuleRequestClient) get(gk schema.GroupKind, name string, current boo
 		return nil, err
 	}
 
-	gvk, err := c.vm.FromGroupKind(gk)
+	gvk2, err := c.vm.FromGroupKind(gvk.GroupKind())
 	if err != nil {
-		return nil, err
+		if gvk.Version == "" {
+			return nil, err
+		}
+		gvk2 = gvk
 	}
 
-	co := obj.New(gvk, c.scheme)
+	co := obj.New(gvk2, c.scheme)
 
 	if err := obj.DecodeInto(res.GetObject(), co, c.scheme); err != nil {
 		return nil, err
@@ -230,21 +226,24 @@ func (c *capsuleRequestClient) get(gk schema.GroupKind, name string, current boo
 	return co, nil
 }
 
-func (c *capsuleRequestClient) list(gk schema.GroupKind, current bool) ([]client.Object, error) {
+func (c *capsuleRequestClient) list(gvk schema.GroupVersionKind, current bool) ([]client.Object, error) {
 	response, err := c.client.ListObjects(c.ctx, &apiplugin.ListObjectsRequest{
-		Gvk:     fromGK(gk),
+		Gvk:     fromGVK(gvk),
 		Current: current,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	gvk, err := c.vm.FromGroupKind(gk)
+	gvk2, err := c.vm.FromGroupKind(gvk.GroupKind())
 	if err != nil {
-		return nil, err
+		if gvk.Version == "" {
+			return nil, err
+		}
+		gvk2 = gvk
 	}
 
-	co := obj.New(gvk, c.scheme)
+	co := obj.New(gvk2, c.scheme)
 	var res []client.Object
 	for _, bytes := range response.GetObjects() {
 		obj, err := obj.DecodeIntoT(bytes, co, c.scheme)
@@ -257,8 +256,8 @@ func (c *capsuleRequestClient) list(gk schema.GroupKind, current bool) ([]client
 	return res, nil
 }
 
-func (c *capsuleRequestClient) GetExisting(gk schema.GroupKind, name string) (client.Object, error) {
-	return c.get(gk, name, true)
+func (c *capsuleRequestClient) GetExisting(gvk schema.GroupVersionKind, name string) (client.Object, error) {
+	return c.get(gvk, name, true)
 }
 
 func (c *capsuleRequestClient) GetExistingInto(obj client.Object) error {
@@ -267,7 +266,7 @@ func (c *capsuleRequestClient) GetExistingInto(obj client.Object) error {
 		return err
 	}
 
-	res, err := c.get(gvk.GroupKind(), obj.GetName(), true)
+	res, err := c.get(gvk, obj.GetName(), true)
 	if err != nil {
 		return err
 	}
@@ -275,8 +274,8 @@ func (c *capsuleRequestClient) GetExistingInto(obj client.Object) error {
 	return c.scheme.Convert(res, obj, nil)
 }
 
-func (c *capsuleRequestClient) GetNew(gk schema.GroupKind, name string) (client.Object, error) {
-	return c.get(gk, name, false)
+func (c *capsuleRequestClient) GetNew(gvk schema.GroupVersionKind, name string) (client.Object, error) {
+	return c.get(gvk, name, false)
 }
 
 func (c *capsuleRequestClient) GetNewInto(obj client.Object) error {
@@ -285,20 +284,24 @@ func (c *capsuleRequestClient) GetNewInto(obj client.Object) error {
 		return err
 	}
 
-	res, err := c.get(gvk.GroupKind(), obj.GetName(), false)
+	res, err := c.get(gvk, obj.GetName(), false)
 	if err != nil {
 		return err
 	}
 
-	return c.scheme.Convert(res, obj, nil)
+	if err := c.scheme.Convert(res, obj, nil); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (c *capsuleRequestClient) ListExisting(gk schema.GroupKind) ([]client.Object, error) {
-	return c.list(gk, true)
+func (c *capsuleRequestClient) ListExisting(gvk schema.GroupVersionKind) ([]client.Object, error) {
+	return c.list(gvk, true)
 }
 
-func (c *capsuleRequestClient) ListNew(gk schema.GroupKind) ([]client.Object, error) {
-	return c.list(gk, false)
+func (c *capsuleRequestClient) ListNew(gvk schema.GroupVersionKind) ([]client.Object, error) {
+	return c.list(gvk, false)
 }
 
 func (c *capsuleRequestClient) Set(co client.Object) error {
@@ -330,9 +333,9 @@ func (c *capsuleRequestClient) getGVKAndBytes(o client.Object) (schema.GroupVers
 	return gvk, bs, nil
 }
 
-func (c *capsuleRequestClient) Delete(gk schema.GroupKind, name string) error {
+func (c *capsuleRequestClient) Delete(gvk schema.GroupVersionKind, name string) error {
 	if _, err := c.client.DeleteObject(c.ctx, &apiplugin.DeleteObjectRequest{
-		Gvk:  fromGK(gk),
+		Gvk:  fromGVK(gvk),
 		Name: name,
 	}); err != nil {
 		return err

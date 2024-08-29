@@ -37,7 +37,7 @@ func preparePipelineTest(t *testing.T, options pipelineTestOpts) (
 		gvks, _, err := s.ObjectKinds(obj)
 		require.NoError(t, err)
 
-		key, err := c.GetKey(gvks[0].GroupKind(), obj.GetName())
+		key, err := c.GetKey(gvks[0], obj.GetName())
 		require.NoError(t, err)
 		c.existingObjects[key] = obj
 	}

@@ -19,6 +19,7 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -142,8 +143,8 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 
 	var objects []any
 	for _, o := range dryRun.Msg.GetOutputObjects() {
-		object, err := obj.DecodeAny([]byte(o.GetObject().GetContent()), c.Scheme)
-		if err != nil {
+		object := &unstructured.Unstructured{}
+		if err := obj.DecodeInto([]byte(o.GetObject().GetContent()), object, c.Scheme); err != nil {
 			return err
 		}
 		objects = append(objects, object)

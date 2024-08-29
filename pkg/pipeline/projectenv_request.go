@@ -59,8 +59,8 @@ func (p *projectEnvRequest) ProjectEnvironment() *v1alpha2.ProjectEnvironment {
 	return p.projectEnv.DeepCopy()
 }
 
-func (p *projectEnvRequest) GetKey(gk schema.GroupKind, name string) (ObjectKey, error) {
-	gvk, err := p.getGVK(gk)
+func (p *projectEnvRequest) GetKey(gvk schema.GroupVersionKind, name string) (ObjectKey, error) {
+	gvk, err := p.getGVK(gvk)
 	if err != nil {
 		return ObjectKey{}, err
 	}

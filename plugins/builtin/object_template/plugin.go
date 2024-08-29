@@ -49,7 +49,7 @@ func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Log
 		return err
 	}
 
-	gk := schema.GroupKind{
+	gk := schema.GroupVersionKind{
 		Group: config.Group,
 		Kind:  config.Kind,
 	}
