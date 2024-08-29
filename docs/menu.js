@@ -105,6 +105,15 @@ const sidebars = {
             sidebar_icon: "BiRocket",
           },
         },
+        {
+          type: "doc",
+          id: "overview/guides/ci-cd",
+          label: "CI/CD with Rig",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "TbRepeat",
+          },
+        },
       ],
     },
 
@@ -328,36 +337,13 @@ const sidebars = {
       ],
     },
     {
-      type: "category",
-      link: {
-        type: "doc",
-        id: "operator-manual/ci-cd",
-      },
+      type: "doc",
+      id: "operator-manual/ci-cd",
       label: "CI/CD",
       className: "homepage-sidebar-item",
       customProps: {
         sidebar_icon: "TbRepeat",
       },
-      items: [
-        {
-          type: "doc",
-          id: "operator-manual/ci-cd/github-actions",
-          label: "GitHub Actions",
-          className: "docpage-sidebar-item",
-          customProps: {
-            sidebar_icon: "TbBrandGithub",
-          },
-        },
-        {
-          type: "doc",
-          id: "operator-manual/ci-cd/gitlab-pipelines",
-          label: "GitLab CI/CD Pipelines",
-          className: "docpage-sidebar-item",
-          customProps: {
-            sidebar_icon: "TbBrandGitlab",
-          },
-        },
-      ],
     },
     {
       type: "doc",
