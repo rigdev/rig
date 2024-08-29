@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	"github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
@@ -21,7 +20,7 @@ func Test_Apply_Interfaces(t *testing.T) {
 		{
 			Name: "change interface port",
 			Base: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar",
 					Port: 80,
 				}},
@@ -36,7 +35,7 @@ func Test_Apply_Interfaces(t *testing.T) {
 				},
 			},
 			Expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar",
 					Port: 81,
 				}},
@@ -45,7 +44,7 @@ func Test_Apply_Interfaces(t *testing.T) {
 		{
 			Name: "change interface name",
 			Base: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar",
 					Port: 80,
 				}},
@@ -60,7 +59,7 @@ func Test_Apply_Interfaces(t *testing.T) {
 				},
 			},
 			Expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar-123",
 					Port: 80,
 				}},
@@ -69,7 +68,7 @@ func Test_Apply_Interfaces(t *testing.T) {
 		{
 			Name: "remove interface",
 			Base: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar",
 					Port: 80,
 				}},
@@ -81,7 +80,7 @@ func Test_Apply_Interfaces(t *testing.T) {
 				},
 			},
 			Expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{},
+				Interfaces: []*platformv1.CapsuleInterface{},
 			},
 		},
 		{
@@ -97,7 +96,7 @@ func Test_Apply_Interfaces(t *testing.T) {
 				},
 			},
 			Expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar",
 					Port: 80,
 				}},
@@ -123,7 +122,7 @@ func Test_Apply_Interfaces(t *testing.T) {
 				},
 			},
 			Expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
@@ -145,11 +144,11 @@ func Test_Apply_Routes(t *testing.T) {
 		{
 			Name: "change route host",
 			Base: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
-						Routes: []*v1alpha2.HostRoute{
+						Routes: []*platformv1.HostRoute{
 							{
 								Id:   "foobarid",
 								Host: "example.com",
@@ -174,11 +173,11 @@ func Test_Apply_Routes(t *testing.T) {
 				},
 			},
 			Expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
-						Routes: []*v1alpha2.HostRoute{
+						Routes: []*platformv1.HostRoute{
 							{
 								Id:   "foobarid",
 								Host: "example2.com",
@@ -191,11 +190,11 @@ func Test_Apply_Routes(t *testing.T) {
 		{
 			Name: "Remove route",
 			Base: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
-						Routes: []*v1alpha2.HostRoute{
+						Routes: []*platformv1.HostRoute{
 							{
 								Id:   "foobarid",
 								Host: "example.com",
@@ -220,11 +219,11 @@ func Test_Apply_Routes(t *testing.T) {
 				},
 			},
 			Expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name:   "foobar",
 						Port:   80,
-						Routes: []*v1alpha2.HostRoute{},
+						Routes: []*platformv1.HostRoute{},
 					},
 				},
 			},
@@ -232,7 +231,7 @@ func Test_Apply_Routes(t *testing.T) {
 		{
 			Name: "Add Route to existing interface",
 			Base: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
@@ -255,11 +254,11 @@ func Test_Apply_Routes(t *testing.T) {
 				},
 			},
 			Expected: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
-						Routes: []*v1alpha2.HostRoute{
+						Routes: []*platformv1.HostRoute{
 							{
 								Id:   "foobarid",
 								Host: "example.com",
@@ -539,12 +538,12 @@ func Test_Apply_Scale(t *testing.T) {
 					Horizontal: &platformv1.HorizontalScale{
 						Min: 2,
 						Max: 10,
-						CpuTarget: &v1alpha2.CPUTarget{
+						CpuTarget: &platformv1.CPUTarget{
 							Utilization: 80,
 						},
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName:   "metric1",
 									AverageValue: "10",
 								},
@@ -609,14 +608,14 @@ func Test_Apply_Scale(t *testing.T) {
 			Base: &platformv1.CapsuleSpec{
 				Scale: &platformv1.Scale{
 					Horizontal: &platformv1.HorizontalScale{
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName: "metric1",
 								},
 							},
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName: "metric2",
 								},
 							},
@@ -627,14 +626,14 @@ func Test_Apply_Scale(t *testing.T) {
 			Expected: &platformv1.CapsuleSpec{
 				Scale: &platformv1.Scale{
 					Horizontal: &platformv1.HorizontalScale{
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName: "metric1",
 								},
 							},
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName: "metric3",
 								},
 							},

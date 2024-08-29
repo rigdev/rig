@@ -10,7 +10,6 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	"github.com/rigdev/rig-go-api/v1alpha2"
 	"github.com/rigdev/rig-go-sdk"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/cli"
@@ -63,7 +62,7 @@ func (c *Cmd) remote(ctx context.Context, _ *cobra.Command, _ []string) error {
 		}
 	}
 
-	var capInterfaces []*v1alpha2.CapsuleInterface
+	var capInterfaces []*platformv1.CapsuleInterface
 
 outer:
 	for _, ifName := range interfaces {

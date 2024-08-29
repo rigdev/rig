@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
-	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
 )
@@ -41,7 +40,6 @@ var (
 		v1.Environment{},
 		v1.Project{},
 		v1.HostCapsule{},
-		v1alpha2.CapsuleScale{},
 	}
 )
 

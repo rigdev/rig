@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
-	"github.com/rigdev/rig-go-api/v1alpha2"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,13 +17,13 @@ func Test_Compare(t *testing.T) {
 		{
 			Name: "change interface name",
 			From: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar",
 					Port: 80,
 				}},
 			},
 			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar-123",
 					Port: 80,
 				}},
@@ -38,7 +36,7 @@ func Test_Compare(t *testing.T) {
 			Name: "add interface",
 			From: &platformv1.CapsuleSpec{},
 			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar-123",
 					Port: 80,
 				}},
@@ -51,7 +49,7 @@ func Test_Compare(t *testing.T) {
 			Name: "add multiple interface",
 			From: &platformv1.CapsuleSpec{},
 			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar-123",
 						Port: 80,
@@ -70,13 +68,13 @@ func Test_Compare(t *testing.T) {
 		{
 			Name: "change port",
 			From: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar",
 					Port: 80,
 				}},
 			},
 			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar",
 					Port: 81,
 				}},
@@ -89,7 +87,7 @@ func Test_Compare(t *testing.T) {
 		{
 			Name: "remove interface",
 			From: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{{
+				Interfaces: []*platformv1.CapsuleInterface{{
 					Name: "foobar-123",
 					Port: 80,
 				}},
@@ -102,7 +100,7 @@ func Test_Compare(t *testing.T) {
 		{
 			Name: "remove multiple interfaces",
 			From: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar-123",
 						Port: 80,
@@ -305,7 +303,7 @@ func Test_Compare(t *testing.T) {
 		{
 			Name: "Remove all cronjobs",
 			From: &platformv1.CapsuleSpec{
-				CronJobs: []*v1alpha2.CronJob{
+				CronJobs: []*platformv1.CronJob{
 					{
 						Name: "cronjob1",
 					},
@@ -324,7 +322,7 @@ func Test_Compare(t *testing.T) {
 			Name: "Add a cronjob",
 			From: &platformv1.CapsuleSpec{},
 			To: &platformv1.CapsuleSpec{
-				CronJobs: []*v1alpha2.CronJob{
+				CronJobs: []*platformv1.CronJob{
 					{
 						Name: "cronjob1",
 					},
@@ -337,7 +335,7 @@ func Test_Compare(t *testing.T) {
 		{
 			Name: "modify a cronjob",
 			From: &platformv1.CapsuleSpec{
-				CronJobs: []*v1alpha2.CronJob{
+				CronJobs: []*platformv1.CronJob{
 					{
 						Name:     "cronjob1",
 						Schedule: "0 0 * * *",
@@ -345,7 +343,7 @@ func Test_Compare(t *testing.T) {
 				},
 			},
 			To: &platformv1.CapsuleSpec{
-				CronJobs: []*v1alpha2.CronJob{
+				CronJobs: []*platformv1.CronJob{
 					{
 						Name:     "cronjob1",
 						Schedule: "0 5 * * *",
@@ -419,7 +417,7 @@ func Test_Compare(t *testing.T) {
 		{
 			Name: "Remove all cronjobs",
 			From: &platformv1.CapsuleSpec{
-				CronJobs: []*v1alpha2.CronJob{
+				CronJobs: []*platformv1.CronJob{
 					{
 						Name: "cronjob1",
 					},
@@ -438,7 +436,7 @@ func Test_Compare(t *testing.T) {
 			Name: "Add a cronjob",
 			From: &platformv1.CapsuleSpec{},
 			To: &platformv1.CapsuleSpec{
-				CronJobs: []*v1alpha2.CronJob{
+				CronJobs: []*platformv1.CronJob{
 					{
 						Name: "cronjob1",
 					},
@@ -451,7 +449,7 @@ func Test_Compare(t *testing.T) {
 		{
 			Name: "modify a cronjob",
 			From: &platformv1.CapsuleSpec{
-				CronJobs: []*v1alpha2.CronJob{
+				CronJobs: []*platformv1.CronJob{
 					{
 						Name:     "cronjob1",
 						Schedule: "0 0 * * *",
@@ -459,7 +457,7 @@ func Test_Compare(t *testing.T) {
 				},
 			},
 			To: &platformv1.CapsuleSpec{
-				CronJobs: []*v1alpha2.CronJob{
+				CronJobs: []*platformv1.CronJob{
 					{
 						Name:     "cronjob1",
 						Schedule: "0 5 * * *",
@@ -697,7 +695,7 @@ func Test_Compare_Exact(t *testing.T) {
 			Name: "add one interface from empty",
 			From: &platformv1.CapsuleSpec{},
 			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
@@ -723,11 +721,11 @@ func Test_Compare_Exact(t *testing.T) {
 		{
 			Name: "change route name",
 			From: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
-						Routes: []*v1alpha2.HostRoute{
+						Routes: []*platformv1.HostRoute{
 							{
 								Id:   "foobarid",
 								Host: "example.com",
@@ -737,11 +735,11 @@ func Test_Compare_Exact(t *testing.T) {
 				},
 			},
 			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
-						Routes: []*v1alpha2.HostRoute{
+						Routes: []*platformv1.HostRoute{
 							{
 								Id:   "foobarid",
 								Host: "example.org",
@@ -769,7 +767,7 @@ func Test_Compare_Exact(t *testing.T) {
 		{
 			Name: "Add route to existing interface",
 			From: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
@@ -777,11 +775,11 @@ func Test_Compare_Exact(t *testing.T) {
 				},
 			},
 			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
-						Routes: []*v1alpha2.HostRoute{
+						Routes: []*platformv1.HostRoute{
 							{
 								Id:   "foobarid",
 								Host: "example.org",
@@ -810,11 +808,11 @@ func Test_Compare_Exact(t *testing.T) {
 			Name: "Add interface with route",
 			From: &platformv1.CapsuleSpec{},
 			To: &platformv1.CapsuleSpec{
-				Interfaces: []*v1alpha2.CapsuleInterface{
+				Interfaces: []*platformv1.CapsuleInterface{
 					{
 						Name: "foobar",
 						Port: 80,
-						Routes: []*v1alpha2.HostRoute{
+						Routes: []*platformv1.HostRoute{
 							{
 								Id:   "foobarid",
 								Host: "example.org",
@@ -847,18 +845,18 @@ func Test_Compare_Exact(t *testing.T) {
 					Horizontal: &platformv1.HorizontalScale{
 						Min: 2,
 						Max: 5,
-						CpuTarget: &v1alpha2.CPUTarget{
+						CpuTarget: &platformv1.CPUTarget{
 							Utilization: 80,
 						},
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName:   "metric1",
 									AverageValue: "10",
 								},
 							},
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName:   "metric2",
 									AverageValue: "20",
 								},
@@ -940,14 +938,14 @@ func Test_Compare_Exact(t *testing.T) {
 			From: &platformv1.CapsuleSpec{
 				Scale: &platformv1.Scale{
 					Horizontal: &platformv1.HorizontalScale{
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName: "metric1",
 								},
 							},
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName: "metric2",
 								},
 							},
@@ -958,14 +956,14 @@ func Test_Compare_Exact(t *testing.T) {
 			To: &platformv1.CapsuleSpec{
 				Scale: &platformv1.Scale{
 					Horizontal: &platformv1.HorizontalScale{
-						CustomMetrics: []*v1alpha2.CustomMetric{
+						CustomMetrics: []*platformv1.CustomMetric{
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName: "metric1",
 								},
 							},
 							{
-								InstanceMetric: &v1alpha2.InstanceMetric{
+								InstanceMetric: &platformv1.InstanceMetric{
 									MetricName: "metric3",
 								},
 							},

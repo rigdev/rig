@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package platform.v1;
 
-import "v1alpha2/generated.proto";
+import "k8s.io/api/autoscaling/v2/generated.proto";
 
 message CapsuleSet {
   string kind = 1;
@@ -21,12 +21,43 @@ message CapsuleSpec {
   string image = 3;
   string command = 4;
   repeated string args = 5;
-  repeated v1alpha2.CapsuleInterface interfaces = 6;
+  repeated CapsuleInterface interfaces = 6;
   repeated File files = 7;
   EnvironmentVariables env = 12;
   Scale scale = 8;
-  repeated v1alpha2.CronJob cronJobs = 10;
+  repeated CronJob cronJobs = 10;
   bool autoAddRigServiceAccounts = 13;
+}
+
+message CapsuleInterface {
+  string name = 1;
+  int32 port = 2;
+  InterfaceProbe liveness = 3;
+  InterfaceProbe readiness = 4;
+  repeated HostRoute routes = 6;
+}
+
+message InterfaceProbe {
+  string path = 1;
+  bool tcp = 2;
+  InterfaceGRPCProbe grpc = 3;
+}
+
+message InterfaceGRPCProbe {
+  string service = 1;
+  bool enabled = 2;
+}
+
+message HostRoute {
+  string id = 1;
+  string host = 2;
+  repeated HTTPPathRoute paths = 3;
+  map<string, string> annotations = 4;
+}
+
+message HTTPPathRoute {
+  string path = 1;
+  string match = 2;
 }
 
 message File {
@@ -48,15 +79,78 @@ message EnvironmentSource {
 
 message Scale {
   HorizontalScale horizontal = 1;
-  v1alpha2.VerticalScale vertical = 2;
+  VerticalScale vertical = 2;
 }
 
 message HorizontalScale {
   uint32 min = 4;
   uint32 max = 5;
-  v1alpha2.Instances instances = 1;
-  v1alpha2.CPUTarget cpuTarget = 2;
-  repeated v1alpha2.CustomMetric customMetrics = 3;
+  Instances instances = 1;
+  CPUTarget cpuTarget = 2;
+  repeated CustomMetric customMetrics = 3;
+}
+
+message Instances {
+  uint32 min = 1;
+  uint32 max = 2;
+}
+
+message CPUTarget {
+  uint32 utilization = 1;
+}
+
+message CustomMetric {
+  InstanceMetric instanceMetric = 1;
+  ObjectMetric objectMetric = 2;
+}
+
+message InstanceMetric {
+  string metricName = 1;
+  map<string, string> matchLabels = 2;
+  string averageValue = 3;
+}
+
+message ObjectMetric {
+  string metricName = 1;
+  map<string, string> matchLabels = 2;
+  string averageValue = 3;
+  string value = 4;
+  k8s.io.api.autoscaling.v2.CrossVersionObjectReference objectReference = 5;
+}
+
+message VerticalScale {
+  ResourceLimits cpu = 1;
+  ResourceLimits memory = 2;
+  ResourceRequest gpu = 3;
+}
+
+message ResourceLimits {
+  string request = 1;
+  string limit = 2;
+}
+
+message ResourceRequest {
+  string request = 1;
+}
+
+message CronJob {
+  string name = 1;
+  string schedule = 2;
+  URL url = 3;
+  JobCommand command = 4;
+  uint64 maxRetries = 5;
+  uint64 timeoutSeconds = 6;
+}
+
+message URL {
+  uint32 port = 1;
+  string path = 2;
+  map<string, string> queryParameters = 3;
+}
+
+message JobCommand {
+  string command = 1;
+  repeated string args = 2;
 }
 
 message Capsule {

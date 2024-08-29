@@ -17,6 +17,20 @@ custom_edit_url: null
 
 
 
+### CPUTarget
+
+
+
+CPUTarget defines an autoscaler target for the CPU metric If empty, no autoscaling will be done
+
+_Appears in:_
+- [HorizontalScale](#horizontalscale)
+
+| Field | Description |
+| --- | --- |
+| `utilization` _integer_ | Utilization specifies the average CPU target. If the average exceeds this number new instances will be added. |
+
+
 ### Capsule
 
 
@@ -35,6 +49,24 @@ custom_edit_url: null
 | `project` _string_ | Project references an existing Project type with the given name Will throw an error (in the platform) if the Project does not exist |
 | `environment` _string_ | Environment references an existing Environment type with the given name Will throw an error (in the platform) if the Environment does not exist The environment also needs to be present in the parent Capsule |
 | `spec` _[CapsuleSpec](#capsulespec)_ |  |
+
+
+### CapsuleInterface
+
+
+
+CapsuleInterface defines an interface for a capsule
+
+_Appears in:_
+- [CapsuleSpec](#capsulespec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name specifies a descriptive name of the interface. |
+| `port` _integer_ | Port specifies what port the interface should have. |
+| `liveness` _[InterfaceProbe](#interfaceprobe)_ | Liveness specifies that this interface should be used for liveness probing. Only one of the Capsule interfaces can be used as liveness probe. |
+| `readiness` _[InterfaceProbe](#interfaceprobe)_ | Readiness specifies that this interface should be used for readiness probing. Only one of the Capsule interfaces can be used as readiness probe. |
+| `routes` _[HostRoute](#hostroute) array_ | Host routes that are mapped to this interface. |
 
 
 ### CapsuleSet
@@ -78,12 +110,46 @@ _Appears in:_
 | `image` _string_ | Image specifies what image the Capsule should run. |
 | `command` _string_ | Command is run as a command in the shell. If left unspecified, the container will run using what is specified as ENTRYPOINT in the Dockerfile. |
 | `args` _string array_ | Args is a list of arguments either passed to the Command or if Command is left empty the arguments will be passed to the ENTRYPOINT of the docker image. |
-| `interfaces` _CapsuleInterface array_ | Interfaces specifies the list of interfaces the the container should have. Specifying interfaces will create the corresponding kubernetes Services and Ingresses depending on how the interface is configured. nolint:lll |
+| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should have. Specifying interfaces will create the corresponding kubernetes Services and Ingresses depending on how the interface is configured. nolint:lll |
 | `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be based on ConfigMaps or Secrets. |
 | `env` _[EnvironmentVariables](#environmentvariables)_ | Env defines the environment variables set in the Capsule |
 | `scale` _[Scale](#scale)_ | Scale specifies the scaling of the Capsule. |
-| `cronJobs` _CronJob array_ |  |
+| `cronJobs` _[CronJob](#cronjob) array_ |  |
 | `autoAddRigServiceAccounts` _boolean_ | TODO Move to plugin |
+
+
+### CronJob
+
+
+
+
+
+_Appears in:_
+- [CapsuleSpec](#capsulespec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `schedule` _string_ |  |
+| `url` _[URL](#url)_ |  |
+| `command` _[JobCommand](#jobcommand)_ |  |
+| `maxRetries` _integer_ | Defaults to 6 |
+| `timeoutSeconds` _integer_ |  |
+
+
+### CustomMetric
+
+
+
+CustomMetric defines a custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on Exactly one of InstanceMetric and ObjectMetric must be provided
+
+_Appears in:_
+- [HorizontalScale](#horizontalscale)
+
+| Field | Description |
+| --- | --- |
+| `instanceMetric` _[InstanceMetric](#instancemetric)_ | InstanceMetric defines a custom instance-based metric (pod-metric in Kubernetes lingo) |
+| `objectMetric` _[ObjectMetric](#objectmetric)_ | ObjectMetric defines a custom object-based metric |
 
 
 ### Environment
@@ -170,6 +236,8 @@ _Appears in:_
 | `string` _string_ |  |
 
 
+
+
 ### HorizontalScale
 
 
@@ -185,7 +253,7 @@ _Appears in:_
 | `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to disable autoscaling. |
 | `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule instances. Deprecated; use `min` and `max` instead. |
 | `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
-| `customMetrics` _CustomMetric array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on |
+| `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on |
 
 
 ### HostCapsule
@@ -224,6 +292,41 @@ _Appears in:_
 | `tunnelPort` _integer_ | TunnelPort for which the proxy-capsule should listen on. This is automatically set by the tooling. |
 
 
+### HostRoute
+
+
+
+HostRoute is the configuration of a route to the network interface it's configured on.
+
+_Appears in:_
+- [CapsuleInterface](#capsuleinterface)
+
+| Field | Description |
+| --- | --- |
+| `id` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface. If this field is changed, it may result in downtime, as it is used to generate resources. |
+| `host` _string_ | Host of the route. This field is required and cannot be empty. |
+| `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are automatically matched. |
+
+
+
+
+### Instances
+
+
+
+Instances specifies the minimum and maximum amount of capsule instances.
+
+_Appears in:_
+- [HorizontalScale](#horizontalscale)
+
+| Field | Description |
+| --- | --- |
+| `min` _integer_ | Min specifies the minimum amount of instances to run. |
+| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to disable autoscaling. |
+
+
+
+
 ### InterfaceOptions
 
 
@@ -239,6 +342,50 @@ _Appears in:_
 | `allowOrigin` _string_ | AllowOrigin sets the `Access-Control-Allow-Origin` Header on responses to the provided value, allowing local by-pass of CORS rules. Ignored if TCP is enabled. |
 | `changeOrigin` _boolean_ | ChangeOrigin changes the Host header to match the given target. If not set, the Host header will be that of the original request. This does not impact the Origin header - use `Headers` to set that. Ignored if TCP is enabled. |
 | `headers` _object (keys:string, values:string)_ | Headers to set on the proxy-requests. Ignored if TCP is enabled. |
+
+
+### InterfaceProbe
+
+
+
+InterfaceProbe specifies an interface probe
+
+_Appears in:_
+- [CapsuleInterface](#capsuleinterface)
+
+| Field | Description |
+| --- | --- |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
+| `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
+| `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
+
+
+### JobCommand
+
+
+
+
+
+_Appears in:_
+- [CronJob](#cronjob)
+
+| Field | Description |
+| --- | --- |
+| `command` _string_ |  |
+| `args` _string array_ |  |
+
+
+
+
+### PathMatchType
+
+_Underlying type:_ _string_
+
+PathMatchType specifies the semantics of how HTTP paths should be compared.
+
+_Appears in:_
+- [HTTPPathRoute](#httppathroute)
+
 
 
 ### ProjEnvCapsuleBase
@@ -291,6 +438,39 @@ _Appears in:_
 | `options` _[InterfaceOptions](#interfaceoptions)_ | Options to further configure the proxying aspects of the interface. |
 
 
+### ResourceLimits
+
+_Underlying type:_ _[struct{Request *k8s.io/apimachinery/pkg/api/resource.Quantity "json:\"request,omitempty\" protobuf:\"1\""; Limit *k8s.io/apimachinery/pkg/api/resource.Quantity "json:\"limit,omitempty\" protobuf:\"2\""}](#struct{request-*k8sioapimachinerypkgapiresourcequantity-"json:\"request,omitempty\"-protobuf:\"1\"";-limit-*k8sioapimachinerypkgapiresourcequantity-"json:\"limit,omitempty\"-protobuf:\"2\""})_
+
+ResourceLimits specifies the request and limit of a resource.
+
+_Appears in:_
+- [VerticalScale](#verticalscale)
+
+
+
+### ResourceRequest
+
+_Underlying type:_ _[struct{Request k8s.io/apimachinery/pkg/api/resource.Quantity "json:\"request,omitempty\" protobuf:\"1\""}](#struct{request-k8sioapimachinerypkgapiresourcequantity-"json:\"request,omitempty\"-protobuf:\"1\""})_
+
+ResourceRequest specifies the request of a resource.
+
+_Appears in:_
+- [VerticalScale](#verticalscale)
+
+
+
+### RouteOptions
+
+_Underlying type:_ _[struct{Annotations map[string]string "json:\"annotations,omitempty\" protobuf:\"4\""}](#struct{annotations-map[string]string-"json:\"annotations,omitempty\"-protobuf:\"4\""})_
+
+Route options.
+
+_Appears in:_
+- [HostRoute](#hostroute)
+
+
+
 ### Scale
 
 
@@ -304,6 +484,38 @@ _Appears in:_
 | --- | --- |
 | `horizontal` _[HorizontalScale](#horizontalscale)_ | Horizontal specifies the horizontal scaling of the Capsule. |
 | `vertical` _[VerticalScale](#verticalscale)_ | Vertical specifies the vertical scaling of the Capsule. |
+
+
+### URL
+
+
+
+
+
+_Appears in:_
+- [CronJob](#cronjob)
+
+| Field | Description |
+| --- | --- |
+| `port` _integer_ |  |
+| `path` _string_ |  |
+| `queryParameters` _object (keys:string, values:string)_ |  |
+
+
+### VerticalScale
+
+
+
+VerticalScale specifies the vertical scaling of the Capsule.
+
+_Appears in:_
+- [Scale](#scale)
+
+| Field | Description |
+| --- | --- |
+| `cpu` _[ResourceLimits](#resourcelimits)_ | CPU specifies the CPU resource request and limit |
+| `memory` _[ResourceLimits](#resourcelimits)_ | Memory specifies the Memory resource request and limit |
+| `gpu` _[ResourceRequest](#resourcerequest)_ | GPU specifies the GPU resource request and limit |
 
 
 
