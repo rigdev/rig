@@ -59,3 +59,9 @@ The `rig-ops` CLI contains tooling for working with plugins. To install it, see 
 - `rig-ops plugins list-steps`: Shows the steps the operator is configured to run.
 - `rig-ops plugins check`: Shows which steps are run for which namespace/capsules. This can be nice if you have globbing logic in your pipeline config.
 - `rig-ops plugins dry-run`: Executes a dry-run of the plugin-pipeline on a given capsule, showing the output Kubernetes resources. It can use the operator configuration as is or you can supply modifications to the pipeline through flags to the command. This is nice for quick iteration on plugin configuration.
+
+
+## Plugin Pipeline
+The Operators reconciliation of a Capsule progresses in a series of steps. First, it executes the default Capsule steps which generates the standard set of resources from a Capsule (but doesn't apply them to the cluster). Then it executes the plugins defined in the `pipeline` section of the Operator config as described above. These also generate and modify the set of new resources (without applying them). After that it tries to apply the resources in a dry-run to the cluster. Only if that succeeds, does the Operator at last apply the set of new resources to the cluster. 
+
+<img src="/img/operator-manual/plugin_pipeline.png" alt="Plugin Pipeline"/>
