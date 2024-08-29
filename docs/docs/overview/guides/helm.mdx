@@ -16,7 +16,7 @@ In this guide, we will walk through the process of converting the (almost) defau
 Additionally, we will show you how to deploy the Capsule to your Rig Platform.
 
 The rig-ops CLI, will render the Helm Chart, and base the Capsule on the resulting Kubernetes manifest and perform the migration similar to the approach in the 
-[onboarding](/operator-manual/onboarding) section.
+[migration](/operator-manual/migration) section.
 
 :::info Prerequisites
 To follow along with this guide, you need to have following:
@@ -295,7 +295,7 @@ Create the name of the service account to use
 
 ## Migration
 
-To migrate the Helm Chart to a Capsule, we will use the [migrate](/operator-manual/onboarding) command 
+To migrate the Helm Chart to a Capsule, we will use the [migrate](/operator-manual/migration) command 
 from the [rig-ops CLI](/operator-manual/cli).
 
 By specifying the Helm Chart directory, the `migrate` command renders the Helm Chart, 
@@ -311,7 +311,7 @@ By default, the the values in the Helm Chart are used, but you can override them
 rig-ops migrate --helm-dir ./nginx-chart --values-file ./other-values.yaml
 ```
 
-This will go through the flow described in the [onboarding guide](/operator-manual/onboarding), and at the end
+This will go through the flow described in the [migration guide](/operator-manual/migration), and at the end
 you will be presented with a `Platform Capsule` and a diff of the k8s resources.
 
 ### Capsule
