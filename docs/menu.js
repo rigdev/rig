@@ -29,46 +29,6 @@ const sidebars = {
       value: "Overview",
       className: "homepage-sidebar-divider",
     },
-
-    {
-      type: "category",
-      label: "Getting Started",
-      className: "homepage-sidebar-item",
-      link: {
-        type: "doc",
-        id: "getting-started",
-      },
-      customProps: {
-        sidebar_icon: "BiRocket",
-      },
-      collapsed: true,
-      items: [
-        {
-          type: "doc",
-          id: "getting-started/cli-install",
-          label: "CLI Installation",
-          className: "docpage-sidebar-item",
-        },
-        {
-          type: "doc",
-          id: "getting-started/platform-installation",
-          label: "Platform Installation",
-          className: "docpage-sidebar-item",
-        },
-        {
-          type: "doc",
-          id: "getting-started/first-capsule",
-          label: "Your first Capsule",
-          className: "docpage-sidebar-item",
-        },
-        {
-          type: "doc",
-          id: "getting-started/next-steps",
-          label: "Next Steps",
-          className: "docpage-sidebar-item",
-        },
-      ],
-    },
     {
       type: "doc",
       id: "overview/architecture",
@@ -84,7 +44,7 @@ const sidebars = {
       className: "homepage-sidebar-item",
       link: {
         type: "doc",
-        id: "guides",
+        id: "overview/guides",
       },
       customProps: {
         sidebar_icon: "BiCoffee",
@@ -93,7 +53,7 @@ const sidebars = {
       items: [
         {
           type: "doc",
-          id: "guides/helm",
+          id: "overview/guides/helm",
           label: "Helm Charts to Rig Capsules",
           className: "docpage-sidebar-item",
           customProps: {
@@ -102,7 +62,16 @@ const sidebars = {
         },
         {
           type: "doc",
-          id: "guides/argocd",
+          id: "overview/guides/installation",
+          label: "Quick Installation",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "BiRocket",
+          },
+        },
+        {
+          type: "doc",
+          id: "overview/guides/argocd",
           label: "GitOps using Argo CD",
           className: "docpage-sidebar-item",
           customProps: {
@@ -111,7 +80,7 @@ const sidebars = {
         },
         {
           type: "doc",
-          id: "guides/declarative-deployment",
+          id: "overview/guides/declarative-deployment",
           label: "Declarative Deployment",
           className: "docpage-sidebar-item",
           customProps: {
@@ -120,11 +89,20 @@ const sidebars = {
         },
         {
           type: "doc",
-          id: "guides/customising-podspecs",
-          label: "Customising PodSpecs",
+          id: "overview/guides/customising-podspecs",
+          label: "Customising PodSpecs - A Guide on Plugins",
           className: "docpage-sidebar-item",
           customProps: {
             sidebar_icon: "BiInjection",
+          },
+        },
+        {
+          type: "doc",
+          id: "overview/guides/getting-started",
+          label: "Getting Started as a Developer",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "BiRocket",
           },
         },
       ],

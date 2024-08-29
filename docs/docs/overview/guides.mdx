@@ -9,7 +9,29 @@ The guides are a great way to explore the platform and be inspired by the many i
   items={[
     {
       type: "link",
-      href: "/guides/helm",
+      href: "/overview/guides/installation",
+      label: "Installing Rig",
+      description:
+        "Install Rig in your own Kubernetes cluster, allowing you to run Capsules in a matter of minutes",
+      customProps: {
+        icon: "BiRocket",
+        col: "col--4",
+      },
+    },
+    {
+      type: "link",
+      href: "/overview/guides/getting-started",
+      label: "Getting Started as a Developer",
+      description:
+        "From installing the CLI to deploying your first Capsule. Get the ins and outs of Rig.",
+      customProps: {
+        icon: "BiRocket",
+        col: "col--4",
+      },
+    },
+    {
+      type: "link",
+      href: "/overview/guides/helm",
       label: "Helm Charts to Rig Capsules",
       description:
         "Migrate your Helm Charts to Rig Capsules, with the help of the rig-ops cli.",
@@ -20,7 +42,7 @@ The guides are a great way to explore the platform and be inspired by the many i
     },
     {
       type: "link",
-      href: "/guides/argocd",
+      href: "/overview/guides/argocd",
       label: "GitOps using Argo CD",
       description:
         "Configure your cluster to use Argo CD for applying Capsules as part of your GitOps strategy.",
@@ -31,7 +53,7 @@ The guides are a great way to explore the platform and be inspired by the many i
     },
     {
       type: "link",
-      href: "/guides/declarative-deployment",
+      href: "/overview/guides/declarative-deployment",
       label: "Declarative Deployment",
       description:
         "Deploy declaratively using a yaml file describing the capsule.",
@@ -42,12 +64,12 @@ The guides are a great way to explore the platform and be inspired by the many i
     },
     {
       type: "link",
-      href: "/guides/customising-podspecs",
+      href: "/overview/guides/customising-podspecs",
       label: "Customising Podspecs - A Guide on Plugins",
       description:
         "Use an array of plugins to inject secrets from an init container into a capsule.",
       customProps: {
-        icon: "SiInjection",
+        icon: "BiInjection",
         col: "col--4",
       },
     },

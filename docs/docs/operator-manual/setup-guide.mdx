@@ -5,67 +5,9 @@ RIG_OPERATOR_CHART_VERSION
 import CodeBlock from '@theme/CodeBlock';
 
 # Setup guide
+For a quick installation in an existing Kubernetes cluster, you can follow the [installation guide](/overview/guides/installation).
 
-## Kubernetes Cluster Installation
-
-Rig shines when it gets to run in a real Kubernetes environment. It
-lowers the barrier of entry for engineers as they won't have to learn the
-complex APIs of Kubernetes.
-
-Rig consists of two components which together gives the full experience of
-Rig.dev.
-
-- **rig-operator**: our open source components which provide higher level APIs in
-  kubernetes, which encapsulate multiple low level resources in a single CRD.
-- **rig-platform**: our paid product which further builds on the primitives
-  provided by rig-operator.
-
-Each of these components have their own requirements and offer options for
-configuration to make it fit into your kubernetes cluster.
-
-## Quick Installation
-
-For a quick installation in an existing Kubernetes cluster, you can follow the
-steps here. For a more in-depth guide, see the next section.
-
-1. Install the Rig Operator:
-<CodeBlock language="bash">
-  {`helm upgrade --install rig-operator rig-operator \\
-    --repo https://charts.rig.dev \\
-    --version ${RIG_OPERATOR_CHART_VERSION} \\
-    --namespace rig-system \\
-    --create-namespace`}
-</CodeBlock>
-2. Install the Rig Platform:
-<CodeBlock language="bash">
-{`helm upgrade --install rig-platform rig-platform \\
-    --repo https://charts.rig.dev \\
-    --version ${RIG_PLATFORM_CHART_VERSION} \\
-    --namespace rig-system \\
-    --create-namespace \\
-    --set postgres.enabled=true`}
-</CodeBlock>
-3. Bootstrap your first user and project by running:
-  ```bash
-  kubectl exec -it -n rig-system deploy/rig-platform -- rig-admin init
-    ```
-4. Access the dashboard at [http://localhost:4747](http://localhost:4747) after starting port-forwarding:
-  ```bash
-  kubectl port-forward -n rig-system service/rig-platform 4747
-  ```
-
-:::info Note
-As part of the quick installation, a small PostgresSQL instance is installed in your
-cluster, for the Platform to use. This is *not* recommended for production environments.
-:::
-
-:::info Note
-Dashboard metrics require a metrics-server in the kubernetes cluster.
-While available in most kubernetes clusters, See here for instructions on how to install it, if missing: https://github.com/kubernetes-sigs/metrics-server
-:::
-
-## Install using Terraform
-
+## Install Using Terraform
 It is easy to install Rig with Terraform as well using Helm. The basic Terraform configuration for that is 
 
 <CodeBlock language="hcl">
@@ -96,7 +38,8 @@ resource "helm_release" "rig_platform" {
     value = "true"
   }
   depends_on = [helm_release.rig_operator]
-}`}
+}`
+}
 
 </CodeBlock>
 This contains just basic configuration for the rig-operator and rig-platform.
