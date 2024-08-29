@@ -111,11 +111,11 @@ rbac:
     # with a service-account token for external communication from a Rig Platform.
     create_token: false
     service_account: "rig-platform-token"
-  rules:
-  - apiGroups:
-    - argoproj.io
-    resources:
-    - applications
+  rules: []
+  # - apiGroups:
+  #   - argoproj.io
+  #   resources:
+  #   - applications
 
 # install rig CRDs, disable if you prefer having CRDs installed separately from
 # the operator.
