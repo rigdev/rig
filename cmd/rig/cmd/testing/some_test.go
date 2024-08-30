@@ -2,8 +2,10 @@ package testing
 
 import (
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/golang-jwt/jwt"
 	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
@@ -153,8 +155,8 @@ func (s *testSuite) expectLoginMail(email, password string, success bool) {
 	if success {
 		resp = connect.NewResponse(&authentication.LoginResponse{
 			Token: &authentication.Token{
-				AccessToken:  "access_token",
-				RefreshToken: "refresh_token",
+				AccessToken:  s.getValidToken(),
+				RefreshToken: s.getValidToken(),
 			},
 			UserId:   uuid,
 			UserInfo: &model.UserInfo{},
@@ -183,8 +185,8 @@ func (s *testSuite) expectLoginCredentials(clientID, clientSecret string, succes
 	if success {
 		resp = connect.NewResponse(&authentication.LoginResponse{
 			Token: &authentication.Token{
-				AccessToken:  "access_token",
-				RefreshToken: "refresh_token",
+				AccessToken:  s.getValidToken(),
+				RefreshToken: s.getValidToken(),
 			},
 			UserId:   uuid,
 			UserInfo: &model.UserInfo{},
@@ -292,8 +294,8 @@ func (s *testSuite) Test_has_context_but_none_chosen() {
 			Name: "ctx",
 			Auth: &cmdconfig.Auth{
 				UserID:       "user_id",
-				AccessToken:  "access_token",
-				RefreshToken: "refresh_token",
+				AccessToken:  s.getValidToken(),
+				RefreshToken: s.getValidToken(),
 			},
 		}},
 	})
@@ -320,8 +322,8 @@ func (s *testSuite) Test_has_full_context() {
 			Name: "ctx",
 			Auth: &cmdconfig.Auth{
 				UserID:       uuid,
-				AccessToken:  "access-token",
-				RefreshToken: "refresh-token",
+				AccessToken:  s.getValidToken(),
+				RefreshToken: s.getValidToken(),
 			},
 		}},
 		CurrentContextName: "ctx",
@@ -385,8 +387,8 @@ func (s *testSuite) Test_auth_activateServiceAccount_no_config() {
 			Name: "service-account",
 			Auth: &cmdconfig.Auth{
 				UserID:       "client_id",
-				AccessToken:  "access_token",
-				RefreshToken: "refresh_token",
+				AccessToken:  s.getValidToken(),
+				RefreshToken: s.getValidToken(),
 			},
 		}},
 		CurrentContextName: "service-account",
@@ -409,8 +411,8 @@ func (s *testSuite) Test_no_prompting_with_context_flag() {
 			Name: "context_name",
 			Auth: &cmdconfig.Auth{
 				UserID:       "client_id",
-				AccessToken:  "access_token",
-				RefreshToken: "refresh_token",
+				AccessToken:  s.getValidToken(),
+				RefreshToken: s.getValidToken(),
 			},
 		}},
 	})
@@ -481,8 +483,8 @@ func (s *testSuite) Test_capsule_create_config_no_env() {
 			Name: "context",
 			Auth: &cmdconfig.Auth{
 				UserID:       uuid,
-				AccessToken:  "access_token",
-				RefreshToken: "refresh_token",
+				AccessToken:  s.getValidToken(),
+				RefreshToken: s.getValidToken(),
 			},
 		}},
 		CurrentContextName: "context",
@@ -497,4 +499,13 @@ func (s *testSuite) Test_capsule_create_config_no_env() {
 	}), nil)
 
 	s.Require().NoError(s.run(true, []string{"capsule", "create", "my-capsule"}))
+}
+
+func (s *testSuite) getValidToken() string {
+	signedToken, err := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(10 * time.Minute).Unix(),
+	}).SignedString([]byte("key"))
+	s.Require().NoError(err)
+
+	return signedToken
 }

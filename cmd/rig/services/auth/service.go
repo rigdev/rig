@@ -159,13 +159,15 @@ func (s *Service) AuthEnvironment(ctx context.Context, interactive bool) error {
 }
 
 func (s *Service) AuthUser(ctx context.Context, interactive bool) error {
-	user := s.scope.GetCurrentContext().GetAuth().UserID
-	if !uuid.UUID(user).IsNil() && user != "" {
-		return nil
+	auth := s.scope.GetCurrentContext().GetAuth()
+	if auth != nil {
+		if auth.AccessToken != "" || auth.RefreshToken != "" {
+			return nil
+		}
 	}
 
 	if !interactive {
-		return errors.UnauthenticatedErrorf("Login to continue")
+		return errors.UnauthenticatedErrorf("login to continue")
 	}
 
 	loginBool, err := s.prompter.Confirm("You are not logged in. Would you like to login now?", true)
@@ -173,7 +175,7 @@ func (s *Service) AuthUser(ctx context.Context, interactive bool) error {
 		return err
 	}
 	if !loginBool {
-		return errors.UnauthenticatedErrorf("Login to continue")
+		return errors.UnauthenticatedErrorf("login to continue")
 	}
 	return s.login(ctx)
 }
