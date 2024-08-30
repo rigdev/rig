@@ -36,8 +36,12 @@ func Run(s *cli.SetupContext) error {
 		"kube-config", filepath.Join(homedir.HomeDir(), ".kube", "config"), "Path to your kubeconfig file")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.KubeContext,
 		"kube-context", "", "The context to use from your kubeconfig file. Default is the current context")
+	//nolint:lll
 	rootCmd.PersistentFlags().StringVarP(&base.Flags.KubeFile,
-		"kube-file", "f", "", "A file of resources to use instead of k8s, for reading resources")
+		"kube-file", "f", "", "A file of resources to use instead of k8s, for reading resources. Cannot be used with --kube-dir")
+	//nolint:lll
+	rootCmd.PersistentFlags().StringVarP(&base.Flags.KubeFile,
+		"kube-dir", "d", "", "A directory of resources to use instead of k8s, for reading resources. Cannot be used with --kube-file")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.RigContext,
 		"rig-context", "", "The context to use from your rigconfig file. Default is the current context")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.RigConfig, "rig-config", "", "Path to your rigconfig file")

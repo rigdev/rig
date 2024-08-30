@@ -73,8 +73,10 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	migrate.Flags().StringSliceVar(&valuesFiles, "values-file", []string{},
 		"Paths to additional values files to use for the helm chart."+
 			"Each path is separated by a comma. The values are merged in the order they are provided")
+	//nolint:lll
 	migrate.Flags().StringVar(&helmDir, "helm-dir", "", "Path to a Helm chart directory. "+
-		"If set, the Helm chart will be rendered, and the resulting k8s resources will form the base of the migration")
+		"If set, the Helm chart will be rendered, and the resulting k8s resources will form the base of the migration. Cannot be used with --dir")
+
 	migrate.Flags().StringVar(&export, "export", "", "Export the Capsule to the given file path")
 
 	parent.AddCommand(migrate)

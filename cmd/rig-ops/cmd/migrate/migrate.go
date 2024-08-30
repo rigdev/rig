@@ -55,12 +55,23 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if helmDir != "" && base.Flags.KubeDir != "" {
+		return fmt.Errorf("--helm-dir and --kube-dir cannot both be supplied")
+	}
+
 	if helmDir != "" {
 		reader, err := createHelmReader(c.Scheme, helmDir, valuesFiles)
 		if err != nil {
 			return err
 		}
+		c.K8sReader = reader
+	}
 
+	if base.Flags.KubeDir != "" {
+		reader, err := createRegularDirReader(c.Scheme, base.Flags.KubeDir)
+		if err != nil {
+			return err
+		}
 		c.K8sReader = reader
 	}
 

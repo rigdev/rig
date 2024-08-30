@@ -1,6 +1,9 @@
 package migrate
 
 import (
+	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
@@ -61,7 +64,46 @@ func createHelmReader(scheme *runtime.Scheme, helmDir string, valuesFiles []stri
 		return nil, err
 	}
 
-	objs, err := ProcessHelmOutput(out, scheme)
+	objs, err := ProcessYAMLFiles(out, scheme)
+	if err != nil {
+		return nil, err
+	}
+
+	reader := roclient.NewReader(scheme)
+	for _, obj := range objs {
+		if err := reader.AddObject(obj); err != nil {
+			return nil, err
+		}
+	}
+
+	return reader, nil
+}
+
+func createRegularDirReader(scheme *runtime.Scheme, dir string) (client.Reader, error) {
+	yamls := map[string]string{}
+
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(d.Name(), ".yaml") && !strings.HasSuffix(d.Name(), ".yml") {
+			return nil
+		}
+		bs, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		yamls[path] = string(bs)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	objs, err := ProcessYAMLFiles(yamls, scheme)
 	if err != nil {
 		return nil, err
 	}

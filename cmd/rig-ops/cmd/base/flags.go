@@ -11,6 +11,7 @@ type FlagsStruct struct {
 	Project        string
 	Environment    string
 	KubeFile       string
+	KubeDir        string
 	OperatorConfig string
 	OutputType     common.OutputType
 }
