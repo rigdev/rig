@@ -143,12 +143,12 @@ func ProcessOperatorOutput(
 	return nil
 }
 
-func ProcessHelmOutput(
-	helmOutput map[string]string,
+func ProcessYAMLFiles(
+	yamlFiles map[string]string,
 	scheme *runtime.Scheme,
 ) ([]client.Object, error) {
 	var objects []client.Object
-	for _, yml := range helmOutput {
+	for _, yml := range yamlFiles {
 		decoder := yaml.NewDecoder(bytes.NewBufferString(yml))
 		for {
 			out := map[string]any{}
