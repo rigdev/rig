@@ -346,7 +346,7 @@ func createAlbService(req pipeline.CapsuleRequest) error {
 	for _, inf := range req.Capsule().Spec.Interfaces {
 		albService.Spec.Ports = append(albService.Spec.Ports, v1.ServicePort{
 			Name:       inf.Name,
-			Port:       0,
+			Port:       inf.Port,
 			TargetPort: intstr.FromString(inf.Name),
 		})
 	}
