@@ -33,6 +33,7 @@ var (
 	removeAnnotations          []string
 	replicas                   int
 	configFiles                []string
+	configFileRefs             []string
 	removeConfigFiles          []string
 	networkInterfaces          []string
 	removeNetworkInterfaces    []string
@@ -233,6 +234,14 @@ func setupConfigurationFlags(c *cobra.Command) {
 			"`path=<container-path>,src=<file-path>,[options]`, where `file-path` must be a local file and `container-path` "+
 			"is an absolute path within the container. Options can be `secret`, which "+
 			"would create the resource as a Kubernetes Secret.",
+	)
+	c.Flags().StringArrayVar(
+		&configFileRefs, "set-config-file-ref", nil,
+		"config files referencing a kubernetes object to set in the capsule, adding if not already exists. "+
+			"Must be a mapping from `path=<container-path>,obj=<kind>/<name>/<key>`, "+
+			"where `kind` is either ConfigMap or Secret, "+
+			"`name` name of the kubernetes object and `key` the key of the object containing the data, "+
+			"`container-path` is an absolute path within the container.",
 	)
 	c.Flags().StringSliceVar(
 		&removeConfigFiles, "rm-config-file", nil, "config files to remove from the capsule. Must be an absolute path "+

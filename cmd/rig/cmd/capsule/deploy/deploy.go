@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -32,6 +33,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"sigs.k8s.io/yaml"
 )
+
+var fileRefRegExp = regexp.MustCompile("path=([^,]*),obj=(.*)/(.*)/(.*)")
 
 func parseEnvironmentSource(value string) (capsule.EnvironmentSource_Kind, string, error) {
 	var kind capsule.EnvironmentSource_Kind
@@ -353,21 +356,9 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 				return nil, "", "", "", errors.InvalidArgumentErrorf("invalid config-file argument: %v", configFile)
 			}
 		}
-
-		if !path.IsAbs(target) {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file path is not absolute: %v", target)
+		if err := validateConfigFilePath(target, "config-file"); err != nil {
+			return nil, "", "", "", err
 		}
-
-		if path.Clean(target) != target {
-			return nil, "", "", "", errors.InvalidArgumentErrorf(
-				"config-file path is not clean: %v should be %s", target, path.Clean(target),
-			)
-		}
-
-		if strings.HasSuffix(target, "/") {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file path should not end with a '/': %v", target)
-		}
-
 		bs, err := os.ReadFile(source)
 		if err != nil {
 			return nil, "", "", "", err
@@ -383,6 +374,35 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 					Content:  bs,
 					Path:     target,
 					IsSecret: secret,
+				},
+			},
+		})
+	}
+	for _, configFileRef := range configFileRefs {
+		matches := fileRefRegExp.FindStringSubmatch(configFileRef)
+		if len(matches) != 5 {
+			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file-ref does not match the format")
+		}
+
+		target, kind, name, key := matches[1], matches[2], matches[3], matches[4]
+		if kind != "Secret" && kind != "ConfigMap" {
+			return nil, "", "", "", errors.InvalidArgumentErrorf(
+				"config-file-ref kind must be either Secret or Configmap, was '%s'", kind,
+			)
+		}
+		if err := common.ValidateKubernetesName(name); err != nil {
+			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file-ref name '%s' was invalid: %w", name, err)
+		}
+		if err := validateConfigFilePath(target, "config-file-ref"); err != nil {
+			return nil, "", "", "", err
+		}
+		changes = append(changes, &capsule.Change{
+			Field: &capsule.Change_SetConfigFileRef{
+				SetConfigFileRef: &capsule.Change_ConfigFileRef{
+					Path: target,
+					Kind: kind,
+					Name: name,
+					Key:  key,
 				},
 			},
 		})
@@ -430,6 +450,21 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 	}
 
 	return changes, "", "", "", nil
+}
+
+func validateConfigFilePath(p string, s string) error {
+	if !path.IsAbs(p) {
+		return errors.InvalidArgumentErrorf("%s path is not absolute: %v", s, p)
+	}
+	if path.Clean(p) != p {
+		return errors.InvalidArgumentErrorf(
+			"%s path is not clean: %v should be %s", s, p, path.Clean(p),
+		)
+	}
+	if strings.HasSuffix(p, "/") {
+		return errors.InvalidArgumentErrorf("%s path should not end with a '/': %v", s, p)
+	}
+	return nil
 }
 
 func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) {
