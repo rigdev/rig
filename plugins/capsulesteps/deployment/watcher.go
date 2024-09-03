@@ -135,6 +135,7 @@ func makeRunningCondition(pod *corev1.Pod, container containerInfo, watcher plug
 		if readyCondition != nil && readyCondition.Status == v1.ConditionTrue {
 			ready.Message = "Instance ready for traffic"
 			ready.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
+			ready.UpdatedAt = timestamppb.New(readyCondition.LastTransitionTime.Time)
 		} else {
 			unhealthyEvent := getEventWithPrefix(container.events, "Unhealthy", "Readiness ")
 			if unhealthyEvent != nil {
