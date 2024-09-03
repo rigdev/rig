@@ -27,6 +27,7 @@ config:
       plugin: rigdev.ingress_routes
       config: |
         ingressClassName: alb
+		# The ALB handles TLS outside the cluster
         disableTLS: true
         annotations:
           alb.ingress.kubernetes.io/scheme: internet-facing
@@ -52,6 +53,7 @@ Besides that, enabling `ingress` will spin up an Ingress resource which will rec
 
 ```yaml title=Helm values - Platform""
 ingress:
+  host: ""
   enabled: true
 
 # Uncomment if you want to use the small, in-cluster development database
@@ -238,4 +240,46 @@ Now that we have the Platform up and running, we can create our first Capsule an
   </TabItem>
 </Tabs>
 
-You now have a basic setup on AWS EKS with Rig running and utilizing the Amazon Load Balancer.
+You now have a basic setup on AWS EKS with Rig running and utilizing the Amazon Load Balancer. From the AWS console you can see the loadbalancers created.
+
+<Tabs>
+  <TabItem value="aws1" label="1">
+    <ThemedImage
+      alt="1"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/guides/aws/aws1.png",
+        dark: "/img/guides/aws/aws1.png",
+      }}
+    />
+	<span style={{color: "white"}}>From the AWS console, search for **EC2**</span>
+  </TabItem>
+  <TabItem value="aws2" label="2">
+    <ThemedImage
+      alt="2"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/guides/aws/aws2.png",
+        dark: "/img/guides/aws/aws2.png",
+      }}
+    />
+	<span style={{color: "white"}}>From the EC2 dashboard, click **Load Balancers**</span>
+  </TabItem>
+  <TabItem value="aws3" label="3">
+    <ThemedImage
+      alt="3"
+      customProps={{
+        zoom: true,
+      }}
+      sources={{
+        light: "/img/guides/aws/aws3.png",
+        dark: "/img/guides/aws/aws3.png",
+      }}
+    />
+	<span style={{color: "white"}}>Then you should see a table with the load balancers for your cluster. In this case we have one for the Rig Dashboard and one for the Capsule.</span>
+  </TabItem>
+</Tabs>
