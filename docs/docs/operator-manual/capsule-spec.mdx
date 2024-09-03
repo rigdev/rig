@@ -27,6 +27,11 @@ spec:
     - path: /etc/config2.yaml
       string: "contents of secret"
       asSecret: true
+    - path: /etc/config3.yaml
+      ref:
+        kind: ConfigMap
+        name: myconfigmap
+        key: content
   env:
     raw:
       ENV_VAR: value

@@ -1822,6 +1822,24 @@ A reference to a kubernetes object.
 | asSecret | [bool](#bool) |  |  |
 | bytes | [bytes](#bytes) |  |  |
 | string | [string](#string) |  |  |
+| ref | [FileReference](#platform-v1-FileReference) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-FileReference"></a>
+
+### FileReference
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| key | [string](#string) |  |  |
 
 
 
