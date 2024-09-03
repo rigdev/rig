@@ -2309,6 +2309,7 @@ Change to a capsule that ultimately results in a new rollout.
 | container_settings | [ContainerSettings](#api-v1-capsule-ContainerSettings) |  | Container settings of the instances. |
 | auto_add_rig_service_accounts | [bool](#bool) |  | Automatically add a rig-service account. |
 | set_config_file | [Change.ConfigFile](#api-v1-capsule-Change-ConfigFile) |  | Set a config file - either update or add. |
+| set_config_file_ref | [Change.ConfigFileRef](#api-v1-capsule-Change-ConfigFileRef) |  | Set a config file ref - either update or add. |
 | remove_config_file | [string](#string) |  | Path of a config file to remove. |
 | horizontal_scale | [HorizontalScale](#api-v1-capsule-HorizontalScale) |  | Horizontal scaling settings. |
 | rollback | [Change.Rollback](#api-v1-capsule-Change-Rollback) |  | Rollback to a previous rollout. |
@@ -2405,6 +2406,24 @@ Config file change.
 | path | [string](#string) |  | Path of the file in the instance. |
 | content | [bytes](#bytes) |  | Content of the config file. |
 | is_secret | [bool](#bool) |  | True if the content is secret. |
+
+
+
+
+
+
+<a name="api-v1-capsule-Change-ConfigFileRef"></a>
+
+### Change.ConfigFileRef
+Config file ref change.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  | Path of the file in the instance. |
+| kind | [string](#string) |  | Kind of the object to inject as config file. Either ConfigMap or Secret. |
+| name | [string](#string) |  | Name of the object to inject as a config file. |
+| key | [string](#string) |  | Key of the data within the object contents. |
 
 
 
