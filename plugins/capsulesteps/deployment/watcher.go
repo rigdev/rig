@@ -126,21 +126,25 @@ func makeRunningCondition(pod *corev1.Pod, container containerInfo, watcher plug
 			State:   apipipeline.ObjectState_OBJECT_STATE_PENDING,
 		}
 
+		startedAt := pod.GetCreationTimestamp().Time
+		if container.status.State.Running != nil {
+			startedAt = container.status.State.Running.StartedAt.Time
+		}
+
 		readyCondition := getCondition(pod.Status.Conditions, "Ready")
-		var readyAt time.Time
 		if readyCondition != nil && readyCondition.Status == v1.ConditionTrue {
 			ready.Message = "Instance ready for traffic"
 			ready.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
-			readyAt = readyCondition.LastTransitionTime.Time
-		}
-
-		unhealthyEvent := getEventWithPrefix(container.events, "Unhealthy", "Readiness ")
-		if unhealthyEvent != nil {
-			ts := timestampFromEvent(unhealthyEvent)
-			if ts.AsTime().After(readyAt) {
-				ready.Message = unhealthyEvent.Message
-				ready.State = apipipeline.ObjectState_OBJECT_STATE_ERROR
-				ready.UpdatedAt = ts
+			ready.UpdatedAt = timestamppb.New(readyCondition.LastTransitionTime.Time)
+		} else {
+			unhealthyEvent := getEventWithPrefix(container.events, "Unhealthy", "Readiness ")
+			if unhealthyEvent != nil {
+				ts := timestampFromEvent(unhealthyEvent)
+				if ts.AsTime().After(startedAt) {
+					ready.Message = unhealthyEvent.Message
+					ready.State = apipipeline.ObjectState_OBJECT_STATE_ERROR
+					ready.UpdatedAt = ts
+				}
 			}
 		}
 
