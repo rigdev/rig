@@ -114,6 +114,15 @@ const sidebars = {
             sidebar_icon: "TbRepeat",
           },
         },
+        {
+          type: "doc",
+          id: "overview/guides/aws",
+          label: "Rig on AWS",
+          className: "docpage-sidebar-item",
+          customProps: {
+            sidebar_icon: "FaAws",
+          },
+        },
       ],
     },
 
