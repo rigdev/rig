@@ -23,3 +23,103 @@ page](https://github.com/rigdev/rig/releases/latest) to find yours.
 ## From source
 Installation from source requires the go toolchain to be installed.
 <CodeBlock language="bash">go install github.com/rigdev/rig/cmd/rig-ops@v{RIG_VERSION}</CodeBlock>
+
+## Usage
+The `rig-ops` CLI provides a couple of operational tools useful for an operator of Rig.
+
+### Plugins
+```
+rig-ops plugins --help
+
+Tooling for working with plugins in Rig
+
+Usage:
+  rig-ops plugins [command]
+
+Aliases:
+  plugins, mods
+
+Available Commands:
+  check       Check which plugins will be run on which capsules
+  dry-run     runs a dry-run of the operator on the given namespace and capsule (or provided capsule spec)
+  get         Gets the configuration for a single step given by index. If no index is given, it will prompt you to choose a step.
+  list        Lists the set of plugins available in the operator
+  list-steps  Lists the plugin steps currently configured in the operator
+```
+
+#### Examples:
+
+**check**
+```
+% rig-ops plugins check
+Namespace                  Capsule    StepIndex  
+myproject                  mycapsule  0          
+myproject                  mycapsule2 0          
+myproject-staging          mycapsule  0      
+myproject-staging          mycapsule  1 
+```
+
+**dry-run**
+```
+% rig-ops dry-run myproject mycapsule --operator-config config.yaml --output-path output.yaml
+```
+
+**get**
+```
+% rig-ops plugins get 0
+capsules: null
+namespaces: null
+plugins:
+- config:
+    annotations:
+      key: value
+  name: rigdev.annotations
+```
+
+**list**
+```
+% rig-ops plugins list                                 
+Type     Name                                
+Builtin  rigdev.annotations                  
+Builtin  rigdev.cron_jobs                    
+Builtin  rigdev.datadog                      
+Builtin  rigdev.deployment                   
+Builtin  rigdev.env_mapping                  
+Builtin  rigdev.google_cloud_sql_auth_proxy  
+Builtin  rigdev.ingress_routes               
+Builtin  rigdev.init_container               
+Builtin  rigdev.object_create                
+Builtin  rigdev.object_template              
+Builtin  rigdev.placement                    
+Builtin  rigdev.service_account              
+Builtin  rigdev.service_monitor              
+Builtin  rigdev.sidecar                      
+Builtin  rigdev.vpa  
+```
+
+### Migrate
+```
+% rig-ops migrate --help
+Migrate your kubernetes deployments to Rig Capsules
+
+Usage:
+  rig-ops migrate [flags]
+
+Flags:
+  -A, --annotation key=value                   annotations to add to the Capsule of the format key=value. Can for example be used to target migration with a specific plugin (default [])
+  -a, --apply                                  Apply the capsule to the rig platform
+      --deployment string                      The deployment to migrate. If not set, a list of deployments will be prompted for.
+  -e, --environment string                     The environment to migrate to
+      --export string                          Export the Capsule to the given file path
+      --helm-dir string                        Path to a Helm chart directory. If set, the Helm chart will be rendered, and the resulting k8s resources will form the base of the migration
+  -h, --help                                   help for migrate
+      --keep-env-config-maps                   Keep envFrom to ConfigMaps after migration. By default, ConfigMaps are read and added to the Capsule. Changing this behavior is useful if an external tool is generating the ConfigMaps.
+      --name-origin service,deployment,input   From where to inherit the name of the capsule. One of service,deployment,input. Default is service, if one exists, otherwise deployment.
+  -p, --project string                         The project to migrate to
+      --values-file strings                    Paths to additional values files to use for the helm chart.Each path is separated by a comma. The values are merged in the order they are provided
+```
+
+**Example**
+```
+rig-ops migrate -p myproject -e prod --deployment mydeployment --name-origin input --export output.yaml
+```

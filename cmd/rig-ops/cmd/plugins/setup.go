@@ -47,7 +47,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	pluginsCmd := &cobra.Command{
 		Use:               "plugins",
 		Aliases:           []string{"mods"},
-		Short:             "Migrate you kubernetes deployments to Rig Capsules",
+		Short:             "Tooling for working with plugins in Rig",
 		PersistentPreRunE: s.MakeInvokePreRunE(initCmd),
 	}
 
