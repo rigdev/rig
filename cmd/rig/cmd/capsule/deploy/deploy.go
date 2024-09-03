@@ -386,7 +386,9 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 
 		target, kind, name, key := matches[1], matches[2], matches[3], matches[4]
 		if kind != "Secret" && kind != "ConfigMap" {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file-ref kind must be either Secret or Configmap, was '%s'", kind)
+			return nil, "", "", "", errors.InvalidArgumentErrorf(
+				"config-file-ref kind must be either Secret or Configmap, was '%s'", kind,
+			)
 		}
 		if err := common.ValidateKubernetesName(name); err != nil {
 			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file-ref name '%s' was invalid: %w", name, err)

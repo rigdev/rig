@@ -238,7 +238,8 @@ func setupConfigurationFlags(c *cobra.Command) {
 	c.Flags().StringArrayVar(
 		&configFileRefs, "set-config-file-ref", nil,
 		"config files referencing a kubernetes object to set in the capsule, adding if not already exists. "+
-			"Must be a mapping from `path=<container-path>,obj=<kind>/<name>/<key>`, where `kind` is either ConfigMap or Secret, "+
+			"Must be a mapping from `path=<container-path>,obj=<kind>/<name>/<key>`, "+
+			"where `kind` is either ConfigMap or Secret, "+
 			"`name` name of the kubernetes object and `key` the key of the object containing the data, "+
 			"`container-path` is an absolute path within the container.",
 	)
