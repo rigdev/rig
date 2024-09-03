@@ -18,6 +18,18 @@ message Change {
     bool is_secret = 3;
   }
 
+  // Config file ref change.
+  message ConfigFileRef {
+    // Path of the file in the instance.
+    string path = 1;
+    // Kind of the object to inject as config file. Either ConfigMap or Secret.
+    string kind = 2;
+    // Name of the object to inject as a config file.
+    string name = 3;
+    // Key of the data within the object contents.
+    string key = 4;
+  }
+
   // Rollback change.
   message Rollback {
     // Rollout to roll back to.
@@ -74,6 +86,8 @@ message Change {
     bool auto_add_rig_service_accounts = 5;
     // Set a config file - either update or add.
     ConfigFile set_config_file = 6;
+    // Set a config file ref - either update or add.
+    ConfigFileRef set_config_file_ref = 25;
     // Path of a config file to remove.
     string remove_config_file = 7;
     // Horizontal scaling settings.

@@ -234,6 +234,23 @@ _Appears in:_
 | `asSecret` _boolean_ |  |
 | `bytes` _integer_ |  |
 | `string` _string_ |  |
+| `ref` _[FileReference](#filereference)_ |  |
+
+
+### FileReference
+
+
+
+FileReference defines the name of a k8s config resource and the key from which to retrieve the contents
+
+_Appears in:_
+- [File](#file)
+
+| Field | Description |
+| --- | --- |
+| `kind` _string_ | Kind of reference. Can be either ConfigMap or Secret. |
+| `name` _string_ | Name of reference. |
+| `key` _string_ | Key in reference which holds file contents. |
 
 
 

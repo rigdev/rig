@@ -149,11 +149,24 @@ type EnvironmentVariables struct {
 }
 
 type File struct {
-	Path     string  `json:"path,omitempty" protobuf:"1"`
-	AsSecret bool    `json:"asSecret,omitempty" protobuf:"3"`
-	Bytes    *[]byte `json:"bytes,omitempty" protobuf:"4"`
-	String   *string `json:"string,omitempty" protobuf:"5"`
-	// TODO Ref
+	Path     string         `json:"path,omitempty" protobuf:"1"`
+	AsSecret bool           `json:"asSecret,omitempty" protobuf:"3"`
+	Bytes    *[]byte        `json:"bytes,omitempty" protobuf:"4"`
+	String   *string        `json:"string,omitempty" protobuf:"5"`
+	Ref      *FileReference `json:"ref,omitempty" protobuf:"6"`
+}
+
+// FileReference defines the name of a k8s config resource and the key from which
+// to retrieve the contents
+type FileReference struct {
+	// Kind of reference. Can be either ConfigMap or Secret.
+	Kind string `json:"kind" protobuf:"1"`
+
+	// Name of reference.
+	Name string `json:"name" protobuf:"2"`
+
+	// Key in reference which holds file contents.
+	Key string `json:"key" protobuf:"3"`
 }
 
 type Scale struct {
