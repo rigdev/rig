@@ -391,7 +391,7 @@ func (s *K8sTestSuite) testInterface(ctx context.Context) {
 				Port: 80,
 				Liveness: &v1alpha2.InterfaceLivenessProbe{
 					Path:         "/foo",
-					StartupDelay: 50,
+					StartupDelay: 51,
 				},
 			},
 		}
@@ -432,7 +432,7 @@ func (s *K8sTestSuite) testInterface(ctx context.Context) {
 									},
 								},
 								PeriodSeconds:    5,
-								FailureThreshold: 10,
+								FailureThreshold: 11,
 							},
 						}},
 					},
