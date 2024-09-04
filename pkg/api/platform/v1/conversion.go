@@ -253,31 +253,54 @@ func InterfaceConversion(i *capsule.Interface) (*platformv1.CapsuleInterface, er
 	}
 
 	var err error
-	if capIf.Liveness, err = getInterfaceProbe(i.GetLiveness()); err != nil {
+	if capIf.Liveness, err = getInterfaceLivenessProbe(i.GetLiveness()); err != nil {
 		return nil, err
 	}
 
-	if capIf.Readiness, err = getInterfaceProbe(i.GetReadiness()); err != nil {
+	if capIf.Readiness, err = getInterfaceReadinessProbe(i.GetReadiness()); err != nil {
 		return nil, err
 	}
 
 	return capIf, nil
 }
 
-func getInterfaceProbe(p *capsule.InterfaceProbe) (*platformv1.InterfaceProbe, error) {
+func getInterfaceLivenessProbe(p *capsule.InterfaceProbe) (*platformv1.InterfaceLivenessProbe, error) {
 	switch v := p.GetKind().(type) {
 	case nil:
 		return nil, nil
 	case *capsule.InterfaceProbe_Http:
-		return &platformv1.InterfaceProbe{
+		return &platformv1.InterfaceLivenessProbe{
 			Path: v.Http.GetPath(),
 		}, nil
 	case *capsule.InterfaceProbe_Tcp:
-		return &platformv1.InterfaceProbe{
+		return &platformv1.InterfaceLivenessProbe{
 			Tcp: true,
 		}, nil
 	case *capsule.InterfaceProbe_Grpc:
-		return &platformv1.InterfaceProbe{
+		return &platformv1.InterfaceLivenessProbe{
+			Grpc: &platformv1.InterfaceGRPCProbe{
+				Service: v.Grpc.GetService(),
+			},
+		}, nil
+	default:
+		return nil, errors.InvalidArgumentErrorf("unknown interface probe '%v'", reflect.TypeOf(v))
+	}
+}
+
+func getInterfaceReadinessProbe(p *capsule.InterfaceProbe) (*platformv1.InterfaceReadinessProbe, error) {
+	switch v := p.GetKind().(type) {
+	case nil:
+		return nil, nil
+	case *capsule.InterfaceProbe_Http:
+		return &platformv1.InterfaceReadinessProbe{
+			Path: v.Http.GetPath(),
+		}, nil
+	case *capsule.InterfaceProbe_Tcp:
+		return &platformv1.InterfaceReadinessProbe{
+			Tcp: true,
+		}, nil
+	case *capsule.InterfaceProbe_Grpc:
+		return &platformv1.InterfaceReadinessProbe{
 			Grpc: &platformv1.InterfaceGRPCProbe{
 				Service: v.Grpc.GetService(),
 			},
@@ -557,8 +580,8 @@ func InterfaceSpecConversion(i *platformv1.CapsuleInterface) *capsule.Interface 
 	ii := &capsule.Interface{
 		Port:      uint32(i.GetPort()),
 		Name:      i.GetName(),
-		Liveness:  makeInterfaceProbe(i.GetLiveness()),
-		Readiness: makeInterfaceProbe(i.GetReadiness()),
+		Liveness:  makeInterfaceLivenessProbe(i.GetLiveness()),
+		Readiness: makeInterfaceReadinessProbe(i.GetReadiness()),
 		Routes:    []*capsule.HostRoute{},
 	}
 	for _, r := range i.GetRoutes() {
@@ -570,7 +593,36 @@ func InterfaceSpecConversion(i *platformv1.CapsuleInterface) *capsule.Interface 
 	return ii
 }
 
-func makeInterfaceProbe(probe *platformv1.InterfaceProbe) *capsule.InterfaceProbe {
+func makeInterfaceLivenessProbe(probe *platformv1.InterfaceLivenessProbe) *capsule.InterfaceProbe {
+	if probe == nil {
+		return nil
+	}
+
+	r := &capsule.InterfaceProbe{}
+	if path := probe.GetPath(); path != "" {
+		r.Kind = &capsule.InterfaceProbe_Http{
+			Http: &capsule.InterfaceProbe_HTTP{
+				Path: path,
+			},
+		}
+	} else if grpc := probe.GetGrpc(); grpc != nil {
+		r.Kind = &capsule.InterfaceProbe_Grpc{
+			Grpc: &capsule.InterfaceProbe_GRPC{
+				Service: grpc.GetService(),
+			},
+		}
+	} else if probe.GetTcp() {
+		r.Kind = &capsule.InterfaceProbe_Tcp{
+			Tcp: &capsule.InterfaceProbe_TCP{},
+		}
+	} else {
+		return nil
+	}
+
+	return r
+}
+
+func makeInterfaceReadinessProbe(probe *platformv1.InterfaceReadinessProbe) *capsule.InterfaceProbe {
 	if probe == nil {
 		return nil
 	}

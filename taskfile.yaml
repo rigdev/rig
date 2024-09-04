@@ -55,6 +55,7 @@ tasks:
 
   build-rig-proto-gen:
     desc: "🔨 proto-gen tool"
+    deps: [proto]
     env:
       CGO_ENABLED: "0"
     sources:
@@ -66,18 +67,20 @@ tasks:
 
   gen:
     desc: "🪄 Run code generation"
-    deps: [proto, manifests, generate-k8s, docs-gen, mocks]
+    deps: [proto, manifests, generate-k8s, docs-gen, mocks, proto-gen]
 
   proto-gen:
     desc: "Run proto-gen"
     deps:
       - build-rig-proto-gen
+      - proto
     sources:
       - pkg/api/**/*
     generates:
       - proto/rig/**/*
     cmds:
       - ./tools/bin/rig-proto-gen proto/rig
+      - task: proto
 
   proto:
     desc: "🪄 Run protobuf generation"

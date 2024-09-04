@@ -1086,6 +1086,7 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	container := migration.currentResources.Deployment.Spec.Template.Spec.Containers[migration.containerIndex]
 	livenessProbe := container.LivenessProbe
 	readinessProbe := container.ReadinessProbe
+	startupProbe := container.StartupProbe
 	ingressEnabled := migration.operatorConfig.Pipeline.RoutesStep.Plugin != ""
 
 	if container.StartupProbe != nil {
@@ -1192,14 +1193,18 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 		i.Routes = routes
 
 		if livenessProbe != nil {
-			i.Liveness, err = migrateProbe(livenessProbe, port)
+			i.Liveness, err = migrateLivenessProbe(livenessProbe, port)
 			if err == nil {
 				livenessProbe = nil
+				if startupProbe != nil && i.Liveness != nil {
+					i.Liveness.StartupDelay = uint32(startupProbe.FailureThreshold * startupProbe.PeriodSeconds)
+					startupProbe = nil
+				}
 			}
 		}
 
 		if readinessProbe != nil {
-			i.Readiness, err = migrateProbe(readinessProbe, port)
+			i.Readiness, err = migrateReadinessProbe(readinessProbe, port)
 			if err == nil {
 				readinessProbe = nil
 			}
@@ -1215,14 +1220,14 @@ func (c *Cmd) migrateServicesAndIngresses(ctx context.Context,
 	return nil
 }
 
-func migrateProbe(probe *corev1.Probe,
+func migrateLivenessProbe(probe *corev1.Probe,
 	port corev1.ContainerPort,
-) (*platformv1.InterfaceProbe, error) {
+) (*platformv1.InterfaceLivenessProbe, error) {
 	TCPAndCorrectPort := probe.TCPSocket != nil &&
 		(probe.TCPSocket.Port.StrVal == port.Name || probe.TCPSocket.Port.IntVal == port.ContainerPort)
 	if TCPAndCorrectPort {
 		if probe.TCPSocket.Port.StrVal == port.Name || probe.TCPSocket.Port.IntVal == port.ContainerPort {
-			return &platformv1.InterfaceProbe{
+			return &platformv1.InterfaceLivenessProbe{
 				Tcp: true,
 			}, nil
 		}
@@ -1231,7 +1236,7 @@ func migrateProbe(probe *corev1.Probe,
 	HTTPAndCorrectPort := probe.HTTPGet != nil &&
 		(probe.HTTPGet.Port.StrVal == port.Name || probe.HTTPGet.Port.IntVal == port.ContainerPort)
 	if HTTPAndCorrectPort {
-		return &platformv1.InterfaceProbe{
+		return &platformv1.InterfaceLivenessProbe{
 			Path: probe.HTTPGet.Path,
 		}, nil
 	}
@@ -1243,7 +1248,45 @@ func migrateProbe(probe *corev1.Probe,
 			service = *probe.GRPC.Service
 		}
 
-		return &platformv1.InterfaceProbe{
+		return &platformv1.InterfaceLivenessProbe{
+			Grpc: &platformv1.InterfaceGRPCProbe{
+				Service: service,
+			},
+		}, nil
+	}
+
+	return nil, rerrors.InvalidArgumentErrorf("Probe for port %s is not supported", port.Name)
+}
+
+func migrateReadinessProbe(probe *corev1.Probe,
+	port corev1.ContainerPort,
+) (*platformv1.InterfaceReadinessProbe, error) {
+	TCPAndCorrectPort := probe.TCPSocket != nil &&
+		(probe.TCPSocket.Port.StrVal == port.Name || probe.TCPSocket.Port.IntVal == port.ContainerPort)
+	if TCPAndCorrectPort {
+		if probe.TCPSocket.Port.StrVal == port.Name || probe.TCPSocket.Port.IntVal == port.ContainerPort {
+			return &platformv1.InterfaceReadinessProbe{
+				Tcp: true,
+			}, nil
+		}
+	}
+
+	HTTPAndCorrectPort := probe.HTTPGet != nil &&
+		(probe.HTTPGet.Port.StrVal == port.Name || probe.HTTPGet.Port.IntVal == port.ContainerPort)
+	if HTTPAndCorrectPort {
+		return &platformv1.InterfaceReadinessProbe{
+			Path: probe.HTTPGet.Path,
+		}, nil
+	}
+
+	GRPCAndCorrectPort := probe.GRPC != nil && probe.GRPC.Port == port.ContainerPort
+	if GRPCAndCorrectPort {
+		var service string
+		if probe.GRPC.Service != nil {
+			service = *probe.GRPC.Service
+		}
+
+		return &platformv1.InterfaceReadinessProbe{
 			Grpc: &platformv1.InterfaceGRPCProbe{
 				Service: service,
 			},
