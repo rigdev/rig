@@ -138,12 +138,12 @@ func TestValidateInterfaces(t *testing.T) {
 				{
 					Name:     "test1",
 					Port:     1,
-					Liveness: &InterfaceProbe{Path: "/health1"},
+					Liveness: &InterfaceLivenessProbe{Path: "/health1"},
 				},
 				{
 					Name:      "test2",
 					Port:      2,
-					Readiness: &InterfaceProbe{Path: "/health2"},
+					Readiness: &InterfaceReadinessProbe{Path: "/health2"},
 				},
 			},
 		},
@@ -153,22 +153,22 @@ func TestValidateInterfaces(t *testing.T) {
 				{
 					Name:      "test1",
 					Port:      1,
-					Liveness:  &InterfaceProbe{Path: "/health1"},
-					Readiness: &InterfaceProbe{Path: "/health1"},
+					Liveness:  &InterfaceLivenessProbe{Path: "/health1"},
+					Readiness: &InterfaceReadinessProbe{Path: "/health1"},
 				},
 				{
 					Name:      "test2",
 					Port:      2,
-					Liveness:  &InterfaceProbe{Path: "/health2"},
-					Readiness: &InterfaceProbe{Path: "/health2"},
+					Liveness:  &InterfaceLivenessProbe{Path: "/health2"},
+					Readiness: &InterfaceReadinessProbe{Path: "/health2"},
 				},
 			},
 			expectedErrs: field.ErrorList{
 				field.Duplicate(
-					infsPath.Index(1).Child("liveness"), &InterfaceProbe{Path: "/health2"},
+					infsPath.Index(1).Child("liveness"), &InterfaceLivenessProbe{Path: "/health2"},
 				),
 				field.Duplicate(
-					infsPath.Index(1).Child("readiness"), &InterfaceProbe{Path: "/health2"},
+					infsPath.Index(1).Child("readiness"), &InterfaceReadinessProbe{Path: "/health2"},
 				),
 			},
 		},
@@ -178,18 +178,18 @@ func TestValidateInterfaces(t *testing.T) {
 				{
 					Name:     "test1",
 					Port:     1,
-					Liveness: &InterfaceProbe{},
+					Liveness: &InterfaceLivenessProbe{},
 				},
 				{
 					Name:      "test2",
 					Port:      2,
-					Readiness: &InterfaceProbe{Path: "health2", TCP: true},
+					Readiness: &InterfaceReadinessProbe{Path: "health2", TCP: true},
 				},
 			},
 			expectedErrs: field.ErrorList{
 				field.Invalid(
 					infsPath.Index(0).Child("liveness"),
-					&InterfaceProbe{},
+					&InterfaceLivenessProbe{},
 					"interface probes must contain one of `path`, `tcp` or `grpc`",
 				),
 				field.Invalid(
@@ -197,7 +197,7 @@ func TestValidateInterfaces(t *testing.T) {
 				),
 				field.Invalid(
 					infsPath.Index(1).Child("readiness"),
-					&InterfaceProbe{Path: "health2", TCP: true},
+					&InterfaceReadinessProbe{Path: "health2", TCP: true},
 					"interface probes must contain only one of `path`, `tcp` or `grpc`",
 				),
 			},

@@ -64,8 +64,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name specifies a descriptive name of the interface. |
 | `port` _integer_ | Port specifies what port the interface should have. |
-| `liveness` _[InterfaceProbe](#interfaceprobe)_ | Liveness specifies that this interface should be used for liveness probing. Only one of the Capsule interfaces can be used as liveness probe. |
-| `readiness` _[InterfaceProbe](#interfaceprobe)_ | Readiness specifies that this interface should be used for readiness probing. Only one of the Capsule interfaces can be used as readiness probe. |
+| `liveness` _[InterfaceLivenessProbe](#interfacelivenessprobe)_ | Liveness specifies that this interface should be used for liveness probing. Only one of the Capsule interfaces can be used as liveness probe. |
+| `readiness` _[InterfaceReadinessProbe](#interfacereadinessprobe)_ | Readiness specifies that this interface should be used for readiness probing. Only one of the Capsule interfaces can be used as readiness probe. |
 | `routes` _[HostRoute](#hostroute) array_ | Host routes that are mapped to this interface. |
 
 
@@ -344,6 +344,23 @@ _Appears in:_
 
 
 
+### InterfaceLivenessProbe
+
+
+
+InterfaceLivenessProbe specifies an interface probe for liveness checks.
+
+_Appears in:_
+- [CapsuleInterface](#capsuleinterface)
+
+| Field | Description |
+| --- | --- |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
+| `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
+| `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
+| `startupDelay` _integer_ | For slow-starting containers, the startup delay allows liveness checks to fail for a set duration before restarting the instance. |
+
+
 ### InterfaceOptions
 
 
@@ -361,11 +378,11 @@ _Appears in:_
 | `headers` _object (keys:string, values:string)_ | Headers to set on the proxy-requests. Ignored if TCP is enabled. |
 
 
-### InterfaceProbe
+### InterfaceReadinessProbe
 
 
 
-InterfaceProbe specifies an interface probe
+InterfaceReadinessProbe specifies an interface probe for readiness checks.
 
 _Appears in:_
 - [CapsuleInterface](#capsuleinterface)
