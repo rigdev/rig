@@ -159,7 +159,7 @@ var (
 			{
 				Name: "port1",
 				Port: 1234,
-				Liveness: &platformv1.InterfaceProbe{
+				Liveness: &platformv1.InterfaceLivenessProbe{
 					Grpc: &platformv1.InterfaceGRPCProbe{
 						Service: "service",
 					},
@@ -168,14 +168,14 @@ var (
 			{
 				Name: "port2",
 				Port: 1235,
-				Readiness: &platformv1.InterfaceProbe{
+				Readiness: &platformv1.InterfaceReadinessProbe{
 					Path: "path",
 				},
 			},
 			{
 				Name: "port3",
 				Port: 1236,
-				Liveness: &platformv1.InterfaceProbe{
+				Liveness: &platformv1.InterfaceLivenessProbe{
 					Tcp: true,
 				},
 				Routes: []*platformv1.HostRoute{{
@@ -434,7 +434,7 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					{
 						Name: "interface1",
 						Port: 1001,
-						Liveness: &platformv1.InterfaceProbe{
+						Liveness: &platformv1.InterfaceLivenessProbe{
 							Path: "some-path",
 							Tcp:  true,
 						},
@@ -450,7 +450,7 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					{
 						Name: "interface1",
 						Port: 1001,
-						Readiness: &platformv1.InterfaceProbe{
+						Readiness: &platformv1.InterfaceReadinessProbe{
 							Path: "other-path",
 							Tcp:  true,
 						},
@@ -466,11 +466,11 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 					{
 						Name: "interface1",
 						Port: 1001,
-						Liveness: &platformv1.InterfaceProbe{
+						Liveness: &platformv1.InterfaceLivenessProbe{
 							Path: "some-path",
 							Tcp:  true,
 						},
-						Readiness: &platformv1.InterfaceProbe{
+						Readiness: &platformv1.InterfaceReadinessProbe{
 							Path: "other-path",
 							Tcp:  true,
 						},
