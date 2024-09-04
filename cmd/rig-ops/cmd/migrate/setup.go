@@ -22,6 +22,7 @@ var (
 	valuesFiles       []string
 	helmDir           string
 	export            string
+	skipDryRun        bool
 )
 
 var nameOrigin CapsuleName
@@ -78,6 +79,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		"If set, the Helm chart will be rendered, and the resulting k8s resources will form the base of the migration. Cannot be used with --dir")
 
 	migrate.Flags().StringVar(&export, "export", "", "Export the Capsule to the given file path")
+	migrate.Flags().BoolVar(&skipDryRun, "skip-dry-run", false, "Skips generating derived Capsule resources in a dry run.")
 
 	parent.AddCommand(migrate)
 }

@@ -40,7 +40,7 @@ func Run(s *cli.SetupContext) error {
 	rootCmd.PersistentFlags().StringVarP(&base.Flags.KubeFile,
 		"kube-file", "f", "", "A file of resources to use instead of k8s, for reading resources. Cannot be used with --kube-dir")
 	//nolint:lll
-	rootCmd.PersistentFlags().StringVarP(&base.Flags.KubeFile,
+	rootCmd.PersistentFlags().StringVarP(&base.Flags.KubeDir,
 		"kube-dir", "d", "", "A directory of resources to use instead of k8s, for reading resources. Cannot be used with --kube-file")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.RigContext,
 		"rig-context", "", "The context to use from your rigconfig file. Default is the current context")
