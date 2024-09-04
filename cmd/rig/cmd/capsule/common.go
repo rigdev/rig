@@ -498,12 +498,12 @@ type printer struct {
 }
 
 func (p printer) Println(a ...any) (n int, err error) {
-	fmt.Printf(p.prefix)
+	fmt.Print(p.prefix)
 	return fmt.Println(a...)
 }
 
 func (p printer) Printf(format string, a ...any) (int, error) {
-	fmt.Printf(p.prefix)
+	fmt.Print(p.prefix)
 	return fmt.Printf(format, a...)
 }
 

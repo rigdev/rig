@@ -232,7 +232,7 @@ func GetStepInfo(s interface{}) *rollout.StepInfo {
 		return nil
 	}
 	var info *rollout.StepInfo
-	msg.ProtoReflect().Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
+	msg.ProtoReflect().Range(func(_ protoreflect.FieldDescriptor, v protoreflect.Value) bool {
 		if getInfoStep, ok := v.Message().Interface().(getInfoStep); ok {
 			info = getInfoStep.GetInfo()
 			return false

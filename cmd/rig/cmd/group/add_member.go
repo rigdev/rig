@@ -17,11 +17,11 @@ func (c *Cmd) addMember(ctx context.Context, cmd *cobra.Command, args []string) 
 	var groupIDs []string
 	var err error
 	if len(args) == 0 {
-		userID, serviceAccountID, gIds, err := common.GetMember(ctx, c.Rig, c.Prompter)
+		userID, serviceAccountID, gIDs, err := common.GetMember(ctx, c.Rig, c.Prompter)
 		if err != nil {
 			return err
 		}
-		groupIDs = gIds
+		groupIDs = gIDs
 
 		if userID != "" {
 			memberID = &group.MemberID{

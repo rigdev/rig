@@ -117,7 +117,7 @@ Possible states are ongoing, completed, failed, terminated.`,
 	)
 
 	if err := executions.RegisterFlagCompletionFunc("states",
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			return []string{"ongoing", "completed", "failed", "terminated"}, cobra.ShellCompDirectiveDefault
 		}); err != nil {
 		fmt.Println(err)

@@ -164,7 +164,7 @@ func run(cmd *cobra.Command, _ []string) error {
 				mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 				srv := &http.Server{
-					BaseContext: func(l net.Listener) context.Context {
+					BaseContext: func(_ net.Listener) context.Context {
 						return ctx
 					},
 					Addr:              ":9000",

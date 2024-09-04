@@ -498,17 +498,17 @@ func ToHTTP(err error) int {
 func FromHTTP(status int, msg string) error {
 	switch status {
 	case http.StatusBadRequest:
-		return InvalidArgumentErrorf(msg)
+		return InvalidArgumentErrorf("%s", msg)
 	case http.StatusUnauthorized:
-		return UnauthenticatedErrorf(msg)
+		return UnauthenticatedErrorf("%s", msg)
 	case http.StatusForbidden:
-		return PermissionDeniedErrorf(msg)
+		return PermissionDeniedErrorf("%s", msg)
 	case http.StatusNotFound:
-		return UnimplementedErrorf(msg)
+		return UnimplementedErrorf("%s", msg)
 	case http.StatusConflict:
-		return AbortedErrorf(msg)
+		return AbortedErrorf("%s", msg)
 	default:
-		return InternalErrorf(msg)
+		return InternalErrorf("%s", msg)
 	}
 }
 
