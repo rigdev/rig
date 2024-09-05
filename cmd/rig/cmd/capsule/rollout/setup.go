@@ -106,7 +106,7 @@ func (c *Cmd) rolloutCompletions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var rolloutIds []string
+	var rolloutIDs []string
 
 	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
@@ -125,15 +125,15 @@ func (c *Cmd) rolloutCompletions(
 
 	for _, r := range resp.Msg.GetRollouts() {
 		if strings.HasPrefix(fmt.Sprint(r.GetRolloutId()), toComplete) {
-			rolloutIds = append(rolloutIds, formatRollout(r))
+			rolloutIDs = append(rolloutIDs, formatRollout(r))
 		}
 	}
 
-	if len(rolloutIds) == 0 {
+	if len(rolloutIDs) == 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return rolloutIds, cobra.ShellCompDirectiveDefault
+	return rolloutIDs, cobra.ShellCompDirectiveDefault
 }
 
 func formatRollout(r *capsule_api.Rollout) string {

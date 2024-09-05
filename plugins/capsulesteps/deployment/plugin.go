@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -307,7 +308,7 @@ func (p *Plugin) handleInterfaces(req pipeline.CapsuleRequest, deployment *appsv
 			})
 
 			if ni.Liveness != nil {
-				container.LivenessProbe = createProbe(ni.Liveness, ni.Port)
+				container.LivenessProbe, container.StartupProbe = createLivenessProbe(ni.Liveness, ni.Port)
 			}
 
 			if ni.Readiness != nil {
@@ -321,18 +322,37 @@ func (p *Plugin) handleInterfaces(req pipeline.CapsuleRequest, deployment *appsv
 	return nil
 }
 
-func createProbe(probe *v1alpha2.InterfaceProbe, port int32) *v1.Probe {
+func createLivenessProbe(probe *v1alpha2.InterfaceLivenessProbe, port int32) (*v1.Probe, *v1.Probe) {
+	liveness := createProbe(probe, port)
+	var startup *v1.Probe
+	if liveness != nil && probe.StartupDelay > 0 {
+		startup = &v1.Probe{
+			ProbeHandler:     liveness.ProbeHandler,
+			PeriodSeconds:    5,
+			FailureThreshold: int32(math.Ceil(float64(probe.StartupDelay) / 5)),
+		}
+	}
+	return liveness, startup
+}
+
+type interfaceProbe interface {
+	GetPath() string
+	GetTCP() bool
+	GetGRPC() *v1alpha2.InterfaceGRPCProbe
+}
+
+func createProbe(probe interfaceProbe, port int32) *v1.Probe {
 	switch {
-	case probe.Path != "":
+	case probe.GetPath() != "":
 		return &v1.Probe{
 			ProbeHandler: v1.ProbeHandler{
 				HTTPGet: &v1.HTTPGetAction{
-					Path: probe.Path,
+					Path: probe.GetPath(),
 					Port: intstr.FromInt32(port),
 				},
 			},
 		}
-	case probe.TCP:
+	case probe.GetTCP():
 		return &v1.Probe{
 			ProbeHandler: v1.ProbeHandler{
 				TCPSocket: &v1.TCPSocketAction{
@@ -340,11 +360,11 @@ func createProbe(probe *v1alpha2.InterfaceProbe, port int32) *v1.Probe {
 				},
 			},
 		}
-	case probe.GRPC != nil && probe.GRPC.Enabled:
+	case probe.GetGRPC() != nil && probe.GetGRPC().Enabled:
 		return &v1.Probe{
 			ProbeHandler: v1.ProbeHandler{
 				GRPC: &v1.GRPCAction{
-					Service: &probe.GRPC.Service,
+					Service: &probe.GetGRPC().Service,
 					Port:    port,
 				},
 			},

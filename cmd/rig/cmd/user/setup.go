@@ -87,7 +87,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	update.Flags().StringVarP(&value, "value", "v", "", "value to update the field with")
 	update.MarkFlagsRequiredTogether("field", "value")
 	update.SetHelpFunc(
-		func(cmd *cobra.Command, args []string) {
+		func(cmd *cobra.Command, _ []string) {
 			cmd.Printf(
 				("Usage:\n" +
 					"  rig user update [user-id | email] [flags] \n\n" +

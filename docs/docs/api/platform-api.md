@@ -1614,8 +1614,8 @@ A reference to a kubernetes object.
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | port | [int32](#int32) |  |  |
-| liveness | [InterfaceProbe](#platform-v1-InterfaceProbe) |  |  |
-| readiness | [InterfaceProbe](#platform-v1-InterfaceProbe) |  |  |
+| liveness | [InterfaceLivenessProbe](#platform-v1-InterfaceLivenessProbe) |  |  |
+| readiness | [InterfaceReadinessProbe](#platform-v1-InterfaceReadinessProbe) |  |  |
 | routes | [HostRoute](#platform-v1-HostRoute) | repeated |  |
 
 
@@ -2017,6 +2017,24 @@ A reference to a kubernetes object.
 
 
 
+<a name="platform-v1-InterfaceLivenessProbe"></a>
+
+### InterfaceLivenessProbe
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| tcp | [bool](#bool) |  |  |
+| grpc | [InterfaceGRPCProbe](#platform-v1-InterfaceGRPCProbe) |  |  |
+| startupDelay | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="platform-v1-InterfaceOptions"></a>
 
 ### InterfaceOptions
@@ -2051,9 +2069,9 @@ A reference to a kubernetes object.
 
 
 
-<a name="platform-v1-InterfaceProbe"></a>
+<a name="platform-v1-InterfaceReadinessProbe"></a>
 
-### InterfaceProbe
+### InterfaceReadinessProbe
 
 
 

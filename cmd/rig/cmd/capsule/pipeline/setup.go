@@ -235,18 +235,18 @@ func (c *Cmd) pipelineStatusCompletions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var pipelineStatusIds []string
+	var pipelineStatusIDs []string
 	for _, status := range resp.Msg.GetStatuses() {
 		if strings.HasPrefix(fmt.Sprint(status.GetExecutionId()), toComplete) {
-			pipelineStatusIds = append(pipelineStatusIds, formatPipelineStatus(status))
+			pipelineStatusIDs = append(pipelineStatusIDs, formatPipelineStatus(status))
 		}
 	}
 
-	if len(pipelineStatusIds) == 0 {
+	if len(pipelineStatusIDs) == 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return pipelineStatusIds, cobra.ShellCompDirectiveDefault
+	return pipelineStatusIDs, cobra.ShellCompDirectiveDefault
 }
 
 func formatPipelineStatus(status *pipeline_api.Status) string {

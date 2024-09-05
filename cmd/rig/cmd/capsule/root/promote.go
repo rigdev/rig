@@ -343,5 +343,5 @@ func (c *Cmd) getLatestRollout(
 		return rollout, nil
 	}
 
-	return nil, errors.NotFoundErrorf(fmt.Sprintf("no rollout for capsule %s in environment %s", capsuleID, environmentID))
+	return nil, errors.NotFoundErrorf("no rollout for capsule %s in environment %s", capsuleID, environmentID)
 }

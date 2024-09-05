@@ -391,12 +391,12 @@ type CapsuleInterface struct {
 	// Liveness specifies that this interface should be used for
 	// liveness probing. Only one of the Capsule interfaces can be
 	// used as liveness probe.
-	Liveness *InterfaceProbe `json:"liveness,omitempty" protobuf:"3"`
+	Liveness *InterfaceLivenessProbe `json:"liveness,omitempty" protobuf:"3"`
 
 	// Readiness specifies that this interface should be used for
 	// readiness probing. Only one of the Capsule interfaces can be
 	// used as readiness probe.
-	Readiness *InterfaceProbe `json:"readiness,omitempty" protobuf:"4"`
+	Readiness *InterfaceReadinessProbe `json:"readiness,omitempty" protobuf:"4"`
 
 	// Host routes that are mapped to this interface.
 	Routes []HostRoute `json:"routes,omitempty" protobuf:"6"`
@@ -484,8 +484,37 @@ func (r RouteOptions) ToK8s() v1alpha2.RouteOptions {
 	}
 }
 
-// InterfaceProbe specifies an interface probe
-type InterfaceProbe struct {
+// InterfaceLivenessProbe specifies an interface probe for liveness checks.
+type InterfaceLivenessProbe struct {
+	// Path is the HTTP path of the probe. Path is mutually
+	// exclusive with the TCP and GCRP fields.
+	Path string `json:"path,omitempty" protobuf:"1"`
+
+	// TCP specifies that this is a simple TCP listen probe.
+	TCP bool `json:"tcp,omitempty" protobuf:"2"`
+
+	// GRPC specifies that this is a GRCP probe.
+	GRPC *InterfaceGRPCProbe `json:"grpc,omitempty" protobuf:"3"`
+
+	// For slow-starting containers, the startup delay allows liveness
+	// checks to fail for a set duration before restarting the instance.
+	StartupDelay uint32 `json:"startupDelay,omitempty" protobuf:"4"`
+}
+
+func (i *InterfaceLivenessProbe) ToK8s() *v1alpha2.InterfaceLivenessProbe {
+	if i == nil {
+		return nil
+	}
+	return &v1alpha2.InterfaceLivenessProbe{
+		Path:         i.Path,
+		TCP:          i.TCP,
+		GRPC:         i.GRPC.ToK8s(),
+		StartupDelay: i.StartupDelay,
+	}
+}
+
+// InterfaceReadinessProbe specifies an interface probe for readiness checks.
+type InterfaceReadinessProbe struct {
 	// Path is the HTTP path of the probe. Path is mutually
 	// exclusive with the TCP and GCRP fields.
 	Path string `json:"path,omitempty" protobuf:"1"`
@@ -497,11 +526,11 @@ type InterfaceProbe struct {
 	GRPC *InterfaceGRPCProbe `json:"grpc,omitempty" protobuf:"3"`
 }
 
-func (i *InterfaceProbe) ToK8s() *v1alpha2.InterfaceProbe {
+func (i *InterfaceReadinessProbe) ToK8s() *v1alpha2.InterfaceReadinessProbe {
 	if i == nil {
 		return nil
 	}
-	return &v1alpha2.InterfaceProbe{
+	return &v1alpha2.InterfaceReadinessProbe{
 		Path: i.Path,
 		TCP:  i.TCP,
 		GRPC: i.GRPC.ToK8s(),

@@ -213,7 +213,7 @@ func (c *Cmd) instanceCompletions(
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	var instanceIds []string
+	var instanceIDs []string
 
 	if c.Scope.GetCurrentContext() == nil || c.Scope.GetCurrentContext().GetAuth() == nil {
 		return nil, cobra.ShellCompDirectiveError
@@ -232,15 +232,15 @@ func (c *Cmd) instanceCompletions(
 
 	for _, i := range resp.Msg.GetInstances() {
 		if strings.HasPrefix(fmt.Sprint(i.GetInstanceId()), toComplete) {
-			instanceIds = append(instanceIds, formatInstance(i))
+			instanceIDs = append(instanceIDs, formatInstance(i))
 		}
 	}
 
-	if len(instanceIds) == 0 {
+	if len(instanceIDs) == 0 {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return instanceIds, cobra.ShellCompDirectiveDefault
+	return instanceIDs, cobra.ShellCompDirectiveDefault
 }
 
 func formatInstance(i *capsule.Instance) string {

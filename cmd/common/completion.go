@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var BoolCompletions = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+var BoolCompletions = func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 	return []string{"true", "false"}, cobra.ShellCompDirectiveDefault
 }
 
@@ -16,7 +16,7 @@ var NilCompletions = func(_ *cobra.Command, _ []string, _ string) ([]string, cob
 
 func MaxArgsCompletionFilter(max int) CompletionFilter {
 	return func(
-		cmd *cobra.Command,
+		_ *cobra.Command,
 		args []string,
 		toComplete string,
 		current []string,
@@ -32,8 +32,8 @@ func MaxArgsCompletionFilter(max int) CompletionFilter {
 
 func AddValidArgsCompletionFilter(validArgs ...string) CompletionFilter {
 	return func(
-		cmd *cobra.Command,
-		args []string,
+		_ *cobra.Command,
+		_ []string,
 		toComplete string,
 		current []string,
 		directive cobra.ShellCompDirective,

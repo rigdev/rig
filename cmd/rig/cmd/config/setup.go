@@ -188,7 +188,7 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	editConfig.Flags().StringVarP(&field, "field", "f", "", "Field to edit")
 
 	if err := editConfig.RegisterFlagCompletionFunc("field",
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			options := []string{"name", "server"}
 			labels := []string{}
 			for _, option := range options {

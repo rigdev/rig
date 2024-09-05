@@ -143,7 +143,7 @@ func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
 				errs = append(errs, field.Duplicate(infPath.Child("liveness"), inf.Liveness))
 			}
 
-			errs = append(errs, inf.Liveness.validate(infPath.Child("liveness"))...)
+			errs = append(errs, validateProbe(inf.Liveness, infPath.Child("liveness"))...)
 
 			hasLiveness = true
 		}
@@ -153,7 +153,7 @@ func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
 				errs = append(errs, field.Duplicate(infPath.Child("readiness"), inf.Readiness))
 			}
 
-			errs = append(errs, inf.Readiness.validate(infPath.Child("readiness"))...)
+			errs = append(errs, validateProbe(inf.Readiness, infPath.Child("readiness"))...)
 
 			hasReadiness = true
 		}
@@ -162,20 +162,26 @@ func (r *Capsule) validateInterfaces() (admission.Warnings, field.ErrorList) {
 	return nil, errs
 }
 
-func (p *InterfaceProbe) validate(pPath *field.Path) field.ErrorList {
+type interfaceProbe interface {
+	GetPath() string
+	GetTCP() bool
+	GetGRPC() *InterfaceGRPCProbe
+}
+
+func validateProbe(p interfaceProbe, pPath *field.Path) field.ErrorList {
 	var errs field.ErrorList
 
 	c := 0
-	if p.Path != "" {
-		if !path.IsAbs(p.Path) {
-			errs = append(errs, field.Invalid(pPath.Child("path"), p.Path, "path must be an absolute path"))
+	if p.GetPath() != "" {
+		if !path.IsAbs(p.GetPath()) {
+			errs = append(errs, field.Invalid(pPath.Child("path"), p.GetPath(), "path must be an absolute path"))
 		}
 		c++
 	}
-	if p.GRPC != nil {
+	if p.GetGRPC() != nil {
 		c++
 	}
-	if p.TCP {
+	if p.GetTCP() {
 		c++
 	}
 	if c == 0 {

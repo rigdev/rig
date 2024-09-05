@@ -389,6 +389,10 @@ func (s *K8sTestSuite) testInterface(ctx context.Context) {
 			{
 				Name: "http",
 				Port: 80,
+				Liveness: &v1alpha2.InterfaceLivenessProbe{
+					Path:         "/foo",
+					StartupDelay: 51,
+				},
 			},
 		}
 	})
@@ -412,6 +416,24 @@ func (s *K8sTestSuite) testInterface(ctx context.Context) {
 								Name:          "http",
 								ContainerPort: 80,
 							}},
+							LivenessProbe: &v1.Probe{
+								ProbeHandler: v1.ProbeHandler{
+									HTTPGet: &v1.HTTPGetAction{
+										Path: "/foo",
+										Port: intstr.FromInt(80),
+									},
+								},
+							},
+							StartupProbe: &v1.Probe{
+								ProbeHandler: v1.ProbeHandler{
+									HTTPGet: &v1.HTTPGetAction{
+										Path: "/foo",
+										Port: intstr.FromInt(80),
+									},
+								},
+								PeriodSeconds:    5,
+								FailureThreshold: 11,
+							},
 						}},
 					},
 				},

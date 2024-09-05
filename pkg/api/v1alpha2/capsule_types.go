@@ -218,12 +218,12 @@ type CapsuleInterface struct {
 	// Liveness specifies that this interface should be used for
 	// liveness probing. Only one of the Capsule interfaces can be
 	// used as liveness probe.
-	Liveness *InterfaceProbe `json:"liveness,omitempty" protobuf:"3"`
+	Liveness *InterfaceLivenessProbe `json:"liveness,omitempty" protobuf:"3"`
 
 	// Readiness specifies that this interface should be used for
 	// readiness probing. Only one of the Capsule interfaces can be
 	// used as readiness probe.
-	Readiness *InterfaceProbe `json:"readiness,omitempty" protobuf:"4"`
+	Readiness *InterfaceReadinessProbe `json:"readiness,omitempty" protobuf:"4"`
 
 	// Public specifies if and how the interface should be published.
 	Public *CapsulePublicInterface `json:"public,omitempty" protobuf:"5"`
@@ -275,8 +275,29 @@ type RouteOptions struct {
 	Annotations map[string]string `json:"annotations,omitempty" protobuf:"4"`
 }
 
-// InterfaceProbe specifies an interface probe
-type InterfaceProbe struct {
+// InterfaceLivenessProbe specifies an interface probe for liveness checks.
+type InterfaceLivenessProbe struct {
+	// Path is the HTTP path of the probe. Path is mutually
+	// exclusive with the TCP and GCRP fields.
+	Path string `json:"path,omitempty" protobuf:"1"`
+
+	// TCP specifies that this is a simple TCP listen probe.
+	TCP bool `json:"tcp,omitempty" protobuf:"2"`
+
+	// GRPC specifies that this is a GRCP probe.
+	GRPC *InterfaceGRPCProbe `json:"grpc,omitempty" protobuf:"3"`
+
+	// For slow-starting containers, the startup delay allows liveness
+	// checks to fail for a set duration before restarting the instance.
+	StartupDelay uint32 `json:"startupDelay,omitempty" protobuf:"4"`
+}
+
+func (p InterfaceLivenessProbe) GetPath() string              { return p.Path }
+func (p InterfaceLivenessProbe) GetTCP() bool                 { return p.TCP }
+func (p InterfaceLivenessProbe) GetGRPC() *InterfaceGRPCProbe { return p.GRPC }
+
+// InterfaceReadinessProbe specifies an interface probe for readiness checks.
+type InterfaceReadinessProbe struct {
 	// Path is the HTTP path of the probe. Path is mutually
 	// exclusive with the TCP and GCRP fields.
 	Path string `json:"path,omitempty" protobuf:"1"`
@@ -287,6 +308,10 @@ type InterfaceProbe struct {
 	// GRPC specifies that this is a GRCP probe.
 	GRPC *InterfaceGRPCProbe `json:"grpc,omitempty" protobuf:"3"`
 }
+
+func (p InterfaceReadinessProbe) GetPath() string              { return p.Path }
+func (p InterfaceReadinessProbe) GetTCP() bool                 { return p.TCP }
+func (p InterfaceReadinessProbe) GetGRPC() *InterfaceGRPCProbe { return p.GRPC }
 
 // InterfaceGRPCProbe specifies a GRPC probe.
 type InterfaceGRPCProbe struct {

@@ -32,20 +32,27 @@ message CapsuleSpec {
 message CapsuleInterface {
   string name = 1;
   int32 port = 2;
-  InterfaceProbe liveness = 3;
-  InterfaceProbe readiness = 4;
+  InterfaceLivenessProbe liveness = 3;
+  InterfaceReadinessProbe readiness = 4;
   repeated HostRoute routes = 6;
 }
 
-message InterfaceProbe {
+message InterfaceLivenessProbe {
   string path = 1;
   bool tcp = 2;
   InterfaceGRPCProbe grpc = 3;
+  uint32 startupDelay = 4;
 }
 
 message InterfaceGRPCProbe {
   string service = 1;
   bool enabled = 2;
+}
+
+message InterfaceReadinessProbe {
+  string path = 1;
+  bool tcp = 2;
+  InterfaceGRPCProbe grpc = 3;
 }
 
 message HostRoute {
@@ -221,3 +228,4 @@ message InterfaceOptions {
   bool changeOrigin = 3;
   map<string, string> headers = 4;
 }
+
