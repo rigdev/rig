@@ -10,7 +10,7 @@ func main() {
 	plugin.StartPlugin("myorg.simple", &Plugin{})
 }
 ```
-where `*Plugin` implements the interface. The main method of the interface is 
+where `*Plugin` implements the interface. The main method of the interface is
 ```go
 Run(context.Context, CapsuleRequest, Logger) error
 ```
@@ -57,15 +57,15 @@ Every plugin needs a unique name. This name is used a couple places, the first t
 
 ## Packaging a plugin as a container image
 
-Once you're finished writing your plugin, it needs to be packaged in a container image so the rig-operator can ingest it. The container image simply needs to copy a binary of the plugin into the folder `/plugins` with then name of the binary exactly the same as the plugin name. E.g., for a plugin named `myorg.simple` the image must copy the binary into `/plugins/myorg.simple`. Here is an example `Dockerfile` 
+Once you're finished writing your plugin, it needs to be packaged in a container image so the rig-operator can ingest it. The container image simply needs to copy a binary of the plugin into the folder `/plugins` with then name of the binary exactly the same as the plugin name. E.g., for a plugin named `myorg.simple` the image must copy the binary into `/plugins/myorg.simple`. Here is an example `Dockerfile`
 
 ```docker
-FROM golang:1.21.1-alpine3.18
+FROM golang:1.23-alpine3.20
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY *.go ./
-RUN go build -o simple 
+RUN go build -o simple
 CMD cp simple /plugins/myorg.simple
 ```
 
@@ -99,16 +99,16 @@ rig-ops plugins list
 ```
 returns a list
 ```
-Type       Name                                  
-Builtin    rigdev.annotations                         
-Builtin    rigdev.datadog                             
-Builtin    rigdev.env_mapping                         
-Builtin    rigdev.google_cloud_sql_auth_proxy         
-Builtin    rigdev.ingress_routes                      
-Builtin    rigdev.init_container                      
-Builtin    rigdev.object_template                     
-Builtin    rigdev.placement                           
-Builtin    rigdev.sidecar 
+Type       Name
+Builtin    rigdev.annotations
+Builtin    rigdev.datadog
+Builtin    rigdev.env_mapping
+Builtin    rigdev.google_cloud_sql_auth_proxy
+Builtin    rigdev.ingress_routes
+Builtin    rigdev.init_container
+Builtin    rigdev.object_template
+Builtin    rigdev.placement
+Builtin    rigdev.sidecar
 Thirdparty myorg.simple
 ```
 
@@ -146,17 +146,17 @@ rig-ops plugins list
 ```
 should show the plugins supplied by the customPlugins image(s), e.g.
 ```
-Type        Name                                
-Builtin     rigdev.annotations                  
-Builtin     rigdev.datadog                      
-Builtin     rigdev.env_mapping                  
-Builtin     rigdev.google_cloud_sql_auth_proxy  
-Builtin     rigdev.ingress_routes               
-Builtin     rigdev.init_container               
-Builtin     rigdev.object_template              
-Builtin     rigdev.placement                    
-Builtin     rigdev.sidecar                      
-Thirdparty  myorg.simple  
+Type        Name
+Builtin     rigdev.annotations
+Builtin     rigdev.datadog
+Builtin     rigdev.env_mapping
+Builtin     rigdev.google_cloud_sql_auth_proxy
+Builtin     rigdev.ingress_routes
+Builtin     rigdev.init_container
+Builtin     rigdev.object_template
+Builtin     rigdev.placement
+Builtin     rigdev.sidecar
+Thirdparty  myorg.simple
 ```
 
 Now that your plugin is available to the operator, you can execute it in a few different ways.

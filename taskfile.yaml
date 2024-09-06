@@ -97,7 +97,7 @@ tasks:
       - docs/docs/api/platform-api.md
     cmds:
       - mkdir -p gen/go/rig
-      - printf "module github.com/rigdev/rig-go-api\n\ngo 1.20\n" > ./gen/go/rig/go.mod
+      - printf "module github.com/rigdev/rig-go-api\n\ngo 1.22\n" > ./gen/go/rig/go.mod
       - find . -path './gen/go/rig/*' -type f -name '*.go' -delete
       - ./tools/bin/buf generate proto/rig --template proto/buf.gen.yaml
       - cd gen/go/rig/; go get -u ./...

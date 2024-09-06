@@ -1,8 +1,6 @@
 module github.com/rigdev/rig
 
-go 1.22.1
-
-toolchain go1.22.2
+go 1.23
 
 require (
 	connectrpc.com/connect v1.16.2
