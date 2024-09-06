@@ -91,6 +91,7 @@ var allPlugins = []string{
 	"rigdev.object_template",
 	"rigdev.placement",
 	"rigdev.sidecar",
+	"rigdev.envvar_csi",
 }
 
 func NewManager(restCfg *rest.Config, opts ...ManagerOption) (*Manager, error) {
