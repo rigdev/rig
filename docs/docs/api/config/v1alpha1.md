@@ -333,7 +333,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `fields` _[JSONObjectSchema](#jsonobjectschema)_ | Extensions for typed annotations. JSONObjectExtensions is a JSON-Extensions of a subset of Specification Draft 4 (http://json-schema.org/). |
+| `values` _[ValueExtension](#valueextension) array_ | Extended values. JSONObjectExtensions is a JSON-Extensions of a subset of Specification Draft 4 (http://json-schema.org/). Instead of a map[string]JSONSchema, this leaves open the possibility of adding extra configuration per value e.g. RBAC stuff, dashboard rendering logic, ... |
 
 
 ### GitAuth
@@ -506,20 +506,6 @@ _Appears in:_
 
 
 
-### JSONObjectSchema
-
-
-
-
-
-_Appears in:_
-- [Extensions](#extensions)
-
-| Field | Description |
-| --- | --- |
-| `properties` _object (keys:string, values:[JSONSchema](#jsonschema))_ |  |
-
-
 ### JSONSchema
 
 
@@ -527,7 +513,7 @@ _Appears in:_
 JSONSchema is a JSON-Schema of a subset of Specification Draft 4 (http://json-schema.org/).
 
 _Appears in:_
-- [JSONObjectSchema](#jsonobjectschema)
+- [ValueExtension](#valueextension)
 
 | Field | Description |
 | --- | --- |
@@ -541,7 +527,7 @@ _Appears in:_
 | `exclusiveMinimum` _boolean_ |  |
 | `maxLength` _integer_ |  |
 | `minLength` _integer_ |  |
-| `enum` _string array_ |  |
+| `enum` _string array_ | Enums are annoying with our API doc generation. Properly, an Enum is a []any but our API doc generation cannot generate docs for 'any' Even if we would restrict Enums to all be of just one type, we still have the issue of having multiple type offerings for Enum E.g. EnumString []string EnumInt []int since to be compatible with JSONSchema both fields must map to an `enum` json field. |
 
 
 ### Logging
@@ -749,6 +735,21 @@ _Appears in:_
 | `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run. Deprecated, use Match.Namespaces. |
 | `capsules` _string array_ | If set, only execute the plugin on the capsules specified. Deprecated, use Match.CapsuleNames. |
 | `enableForPlatform` _boolean_ | If set, will enable the step for the Rig platform which is a Capsule as well Deprecated, use Match.EnableForPlatform. |
+
+
+### ValueExtension
+
+
+
+
+
+_Appears in:_
+- [Extensions](#extensions)
+
+| Field | Description |
+| --- | --- |
+| `key` _string_ |  |
+| `schema` _[JSONSchema](#jsonschema)_ |  |
 
 
 

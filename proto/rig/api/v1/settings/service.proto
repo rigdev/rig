@@ -80,5 +80,10 @@ message GetGitStoreStatusResponse {
 message GetExtensionsRequest {}
 
 message GetExtensionsResponse {
-  map<string, string> fields = 1;
+  repeated ValueExtension values = 1;
+}
+
+message ValueExtension {
+  string key = 1;
+  string schema = 2;
 }

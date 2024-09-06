@@ -60,8 +60,16 @@ type PlatformConfig struct {
 
 // Extensions contains typed extensions to the Capsule spec.
 type Extensions struct {
-	// Extensions for typed annotations. JSONObjectExtensions is a JSON-Extensions of a subset of Specification Draft 4 (http://json-schema.org/).
-	Fields JSONObjectSchema `json:"fields,omitempty"`
+	// Extended values. JSONObjectExtensions is a JSON-Extensions of a subset of Specification Draft 4 (http://json-schema.org/).
+	// Instead of a map[string]JSONSchema, this leaves open the possibility of adding extra configuration per value
+	// e.g. RBAC stuff, dashboard rendering logic, ...
+	Values []ValueExtension `json:"values,omitempty"`
+}
+
+type ValueExtension struct {
+	Key    string     `json:"key,omitempty"`
+	Schema JSONSchema `json:"schema,omitempty"`
+	// RBAC ValueRBAC `json:"rbac,omitempty"` perhaps
 }
 
 // Auth specifies authentication configuration.

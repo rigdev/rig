@@ -233,3 +233,4 @@ message InterfaceOptions {
   bool changeOrigin = 3;
   map<string, string> headers = 4;
 }
+

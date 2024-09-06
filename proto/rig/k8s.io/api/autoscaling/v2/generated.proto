@@ -7,3 +7,4 @@ message CrossVersionObjectReference {
   string name = 2;
   string apiVersion = 3;
 }
+

@@ -12,9 +12,12 @@ type JSONSchema struct {
 	ExclusiveMinimum bool     `json:"exclusiveMinimum,omitempty"`
 	MaxLength        *int64   `json:"maxLength,omitempty"`
 	MinLength        *int64   `json:"minLength,omitempty"`
-	Enum             []string `json:"enum,omitempty"`
-}
-
-type JSONObjectSchema struct {
-	Properties map[string]JSONSchema `json:"properties,omitempty"`
+	// Enums are annoying with our API doc generation.
+	// Properly, an Enum is a []any but our API doc generation cannot generate docs for 'any'
+	// Even if we would restrict Enums to all be of just one type, we still have the issue of having multiple type offerings for Enum
+	// E.g.
+	//   EnumString []string
+	//   EnumInt []int
+	// since to be compatible with JSONSchema both fields must map to an `enum` json field.
+	Enum []string `json:"enum,omitempty"`
 }

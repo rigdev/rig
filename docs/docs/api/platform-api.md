@@ -9654,23 +9654,7 @@ The plan for a rig installation
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| fields | [GetExtensionsResponse.FieldsEntry](#api-v1-settings-GetExtensionsResponse-FieldsEntry) | repeated |  |
-
-
-
-
-
-
-<a name="api-v1-settings-GetExtensionsResponse-FieldsEntry"></a>
-
-### GetExtensionsResponse.FieldsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| values | [ValueExtension](#api-v1-settings-ValueExtension) | repeated |  |
 
 
 
@@ -9839,6 +9823,22 @@ Response for getting the license information of the Rig installation.
 
 ### UpdateSettingsResponse
 
+
+
+
+
+
+
+<a name="api-v1-settings-ValueExtension"></a>
+
+### ValueExtension
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| schema | [string](#string) |  |  |
 
 
 
