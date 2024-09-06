@@ -137,6 +137,8 @@ type CapsuleSpec struct {
 
 	// TODO Move to plugin
 	AutoAddRigServiceAccounts bool `json:"autoAddRigServiceAccounts" protobuf:"13"`
+
+	Extensions Extensions `json:"extensions,omitempty" protobuf:"14"`
 }
 
 // EnvironmentVariables defines the environment variables injected into a Capsule.
@@ -613,6 +615,16 @@ func (j *JobCommand) ToK8s() *v1alpha2.JobCommand {
 	return &v1alpha2.JobCommand{
 		Command: j.Command,
 		Args:    slices.Clone(j.Args),
+	}
+}
+
+type Extensions struct {
+	Fields map[string]string `json:"fields,omitempty" protobuf:"1"`
+}
+
+func (e Extensions) ToK8s() v1alpha2.Extensions {
+	return v1alpha2.Extensions{
+		Fields: maps.Clone(e.Fields),
 	}
 }
 

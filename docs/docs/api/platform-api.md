@@ -284,6 +284,7 @@
 | /api.v1.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-settings-UpdateSettingsResponse) |  |
 | /api.v1.settings.Service/GetLicenseInfo | [GetLicenseInfoRequest](#api-v1-settings-GetLicenseInfoRequest) | [GetLicenseInfoResponse](#api-v1-settings-GetLicenseInfoResponse) |  |
 | /api.v1.settings.Service/GetGitStoreStatus | [GetGitStoreStatusRequest](#api-v1-settings-GetGitStoreStatusRequest) | [GetGitStoreStatusResponse](#api-v1-settings-GetGitStoreStatusResponse) |  |
+| /api.v1.settings.Service/GetExtensions | [GetExtensionsRequest](#api-v1-settings-GetExtensionsRequest) | [GetExtensionsResponse](#api-v1-settings-GetExtensionsResponse) |  |
 
 
 
@@ -1680,6 +1681,7 @@ A reference to a kubernetes object.
 | scale | [Scale](#platform-v1-Scale) |  |  |
 | cronJobs | [CronJob](#platform-v1-CronJob) | repeated |  |
 | autoAddRigServiceAccounts | [bool](#bool) |  |  |
+| extensions | [Extensions](#platform-v1-Extensions) |  |  |
 
 
 
@@ -1797,6 +1799,37 @@ A reference to a kubernetes object.
 <a name="platform-v1-EnvironmentVariables-RawEntry"></a>
 
 ### EnvironmentVariables.RawEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-Extensions"></a>
+
+### Extensions
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| fields | [Extensions.FieldsEntry](#platform-v1-Extensions-FieldsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="platform-v1-Extensions-FieldsEntry"></a>
+
+### Extensions.FieldsEntry
 
 
 
@@ -9597,6 +9630,47 @@ The plan for a rig installation
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | configuration | [Configuration](#api-v1-settings-Configuration) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GetExtensionsRequest"></a>
+
+### GetExtensionsRequest
+
+
+
+
+
+
+
+<a name="api-v1-settings-GetExtensionsResponse"></a>
+
+### GetExtensionsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| fields | [GetExtensionsResponse.FieldsEntry](#api-v1-settings-GetExtensionsResponse-FieldsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-settings-GetExtensionsResponse-FieldsEntry"></a>
+
+### GetExtensionsResponse.FieldsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

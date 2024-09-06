@@ -27,6 +27,7 @@ message CapsuleSpec {
   Scale scale = 8;
   repeated CronJob cronJobs = 10;
   bool autoAddRigServiceAccounts = 13;
+  Extensions extensions = 14;
 }
 
 message CapsuleInterface {
@@ -167,6 +168,10 @@ message JobCommand {
   repeated string args = 2;
 }
 
+message Extensions {
+  map<string, string> fields = 1;
+}
+
 message Capsule {
   string kind = 1;
   string apiVersion = 2;
@@ -228,4 +233,3 @@ message InterfaceOptions {
   bool changeOrigin = 3;
   map<string, string> headers = 4;
 }
-

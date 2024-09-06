@@ -116,6 +116,7 @@ _Appears in:_
 | `scale` _[Scale](#scale)_ | Scale specifies the scaling of the Capsule. |
 | `cronJobs` _[CronJob](#cronjob) array_ |  |
 | `autoAddRigServiceAccounts` _boolean_ | TODO Move to plugin |
+| `extensions` _[Extensions](#extensions)_ |  |
 
 
 ### CronJob
@@ -216,6 +217,20 @@ _Appears in:_
 | --- | --- |
 | `raw` _object (keys:string, values:string)_ | Raw is a list of environment variables as key-value pairs. |
 | `sources` _[EnvironmentSource](#environmentsource) array_ | Sources is a list of source files which will be injected as environment variables. They can be references to either ConfigMaps or Secrets. |
+
+
+### Extensions
+
+
+
+
+
+_Appears in:_
+- [CapsuleSpec](#capsulespec)
+
+| Field | Description |
+| --- | --- |
+| `fields` _object (keys:string, values:string)_ |  |
 
 
 ### File

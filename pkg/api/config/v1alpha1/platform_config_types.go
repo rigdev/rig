@@ -53,6 +53,15 @@ type PlatformConfig struct {
 
 	// DockerRegistries holds configuration for multiple docker registries. The key is the host-prefix of the registry
 	DockerRegistries map[string]DockerRegistryCredentials `json:"dockerRegistries,omitempty"`
+
+	// Extensions contains typed extensions to the Capsule spec.
+	Extensions Extensions `json:"extensions,omitempty"`
+}
+
+// Extensions contains typed extensions to the Capsule spec.
+type Extensions struct {
+	// Extensions for typed annotations. JSONObjectExtensions is a JSON-Extensions of a subset of Specification Draft 4 (http://json-schema.org/).
+	Fields JSONObjectSchema `json:"fields,omitempty"`
 }
 
 // Auth specifies authentication configuration.

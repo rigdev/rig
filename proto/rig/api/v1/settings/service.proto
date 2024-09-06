@@ -19,6 +19,8 @@ service Service {
   rpc GetLicenseInfo(GetLicenseInfoRequest) returns (GetLicenseInfoResponse) {}
   rpc GetGitStoreStatus(GetGitStoreStatusRequest)
       returns (GetGitStoreStatusResponse) {}
+
+  rpc GetExtensions(GetExtensionsRequest) returns (GetExtensionsResponse) {}
 }
 
 // Request to get the license information of the Rig installation.
@@ -73,4 +75,10 @@ message GetGitStoreStatusResponse {
   repeated CapsuleStatus capsules = 2;
   repeated CapsuleSetStatus capsule_sets = 4;
   repeated CallbackErr errors = 3;
+}
+
+message GetExtensionsRequest {}
+
+message GetExtensionsResponse {
+  map<string, string> fields = 1;
 }

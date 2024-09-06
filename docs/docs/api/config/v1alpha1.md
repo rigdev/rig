@@ -322,6 +322,20 @@ _Appears in:_
 
 
 
+### Extensions
+
+
+
+Extensions contains typed extensions to the Capsule spec.
+
+_Appears in:_
+- [PlatformConfig](#platformconfig)
+
+| Field | Description |
+| --- | --- |
+| `fields` _[JSONObjectSchema](#jsonobjectschema)_ | Extensions for typed annotations. JSONObjectExtensions is a JSON-Extensions of a subset of Specification Draft 4 (http://json-schema.org/). |
+
+
 ### GitAuth
 
 
@@ -492,6 +506,44 @@ _Appears in:_
 
 
 
+### JSONObjectSchema
+
+
+
+
+
+_Appears in:_
+- [Extensions](#extensions)
+
+| Field | Description |
+| --- | --- |
+| `properties` _object (keys:string, values:[JSONSchema](#jsonschema))_ |  |
+
+
+### JSONSchema
+
+
+
+JSONSchema is a JSON-Schema of a subset of Specification Draft 4 (http://json-schema.org/).
+
+_Appears in:_
+- [JSONObjectSchema](#jsonobjectschema)
+
+| Field | Description |
+| --- | --- |
+| `description` _string_ |  |
+| `type` _string_ |  |
+| `nullable` _boolean_ |  |
+| `format` _string_ |  |
+| `maximum` _float_ |  |
+| `exclusiveMaximum` _boolean_ |  |
+| `minimum` _float_ |  |
+| `exclusiveMinimum` _boolean_ |  |
+| `maxLength` _integer_ |  |
+| `minLength` _integer_ |  |
+| `enum` _string array_ |  |
+
+
 ### Logging
 
 
@@ -619,6 +671,7 @@ PlatformConfig is the Schema for the platform config API
 | `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
 | `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
 | `dockerRegistries` _object (keys:string, values:[DockerRegistryCredentials](#dockerregistrycredentials))_ | DockerRegistries holds configuration for multiple docker registries. The key is the host-prefix of the registry |
+| `extensions` _[Extensions](#extensions)_ | Extensions contains typed extensions to the Capsule spec. |
 
 
 ### Plugin

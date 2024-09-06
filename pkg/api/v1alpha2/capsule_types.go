@@ -42,6 +42,8 @@ type CapsuleSpec struct {
 	Env Env `json:"env,omitempty"`
 
 	CronJobs []CronJob `json:"cronJobs,omitempty"`
+
+	Extensions Extensions `json:"extensions,omitempty"`
 }
 
 type CronJob struct {
@@ -377,6 +379,10 @@ type FileContentReference struct {
 
 	// Key in reference which holds file contents.
 	Key string `json:"key"`
+}
+
+type Extensions struct {
+	Fields map[string]string `json:"fields,omitempty"`
 }
 
 // CapsuleStatus defines the observed state of Capsule

@@ -135,6 +135,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
 | `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
 | `cronJobs` _[CronJob](#cronjob) array_ |  |
+| `extensions` _[Extensions](#extensions)_ |  |
 
 
 ### CronJob
@@ -199,6 +200,20 @@ _Appears in:_
 | --- | --- |
 | `kind` _string_ | Kind is the resource kind of the env reference, must be ConfigMap or Secret. |
 | `name` _string_ | Name is the name of a ConfigMap or Secret in the same namespace as the Capsule. |
+
+
+### Extensions
+
+
+
+
+
+_Appears in:_
+- [CapsuleSpec](#capsulespec)
+
+| Field | Description |
+| --- | --- |
+| `fields` _object (keys:string, values:string)_ |  |
 
 
 ### File
