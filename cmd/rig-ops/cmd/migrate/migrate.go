@@ -153,6 +153,27 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	}
 	color.Green(" ✓")
 
+	platformCapsule := &platformv1.Capsule{
+		Kind:        "Capsule",
+		ApiVersion:  "platform.rig.dev/v1",
+		Name:        migration.capsuleName,
+		Project:     base.Flags.Project,
+		Environment: base.Flags.Environment,
+		Spec:        migration.capsuleSpec,
+	}
+
+	if skipDryRun {
+		// Export the capsule to a file if export is set
+		if export != "" {
+			if err := exportCapsule(platformCapsule, export); err != nil {
+				return err
+			}
+			return nil
+		}
+		fmt.Println("")
+		return common.FormatPrint(platformCapsule, common.OutputTypeYAML)
+	}
+
 	currentTree := migration.currentResources.CreateOverview("Current Resources")
 	deployRequest := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
@@ -196,15 +217,6 @@ func (c *Cmd) migrate(ctx context.Context, _ *cobra.Command, _ []string) error {
 	reports, err := migration.migratedResources.Compare(migration.currentResources, c.Scheme)
 	if err != nil {
 		return err
-	}
-
-	platformCapsule := &platformv1.Capsule{
-		Kind:        "Capsule",
-		ApiVersion:  "platform.rig.dev/v1",
-		Name:        migration.capsuleName,
-		Project:     base.Flags.Project,
-		Environment: base.Flags.Environment,
-		Spec:        migration.capsuleSpec,
 	}
 
 	if err := PromptDiffingChanges(reports,
