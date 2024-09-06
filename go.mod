@@ -2,8 +2,6 @@ module github.com/rigdev/rig
 
 go 1.23
 
-toolchain go1.22.2
-
 require (
 	connectrpc.com/connect v1.16.2
 	connectrpc.com/grpcreflect v1.2.0
