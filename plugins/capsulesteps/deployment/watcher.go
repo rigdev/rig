@@ -98,7 +98,16 @@ func makeRunningCondition(pod *corev1.Pod, container containerInfo, watcher plug
 			}
 		}
 
+		// Find most recent event between Unhealthy Liveness and Startup probes.
 		unhealthyEvent := getEventWithPrefix(container.events, "Unhealthy", "Liveness ")
+		unhealthyStartupEvent := getEventWithPrefix(container.events, "Unhealthy", "Startup ")
+		if unhealthyStartupEvent != nil {
+			if unhealthyEvent == nil ||
+				timestampFromEvent(unhealthyEvent).AsTime().Before(timestampFromEvent(unhealthyStartupEvent).AsTime()) {
+				unhealthyEvent = unhealthyStartupEvent
+			}
+		}
+
 		if unhealthyEvent != nil {
 			ts := timestampFromEvent(unhealthyEvent)
 			if container.status.State.Running != nil {

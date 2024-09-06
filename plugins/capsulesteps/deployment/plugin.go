@@ -328,8 +328,8 @@ func createLivenessProbe(probe *v1alpha2.InterfaceLivenessProbe, port int32) (*v
 	if liveness != nil && probe.StartupDelay > 0 {
 		startup = &v1.Probe{
 			ProbeHandler:     liveness.ProbeHandler,
-			PeriodSeconds:    5,
-			FailureThreshold: int32(math.Ceil(float64(probe.StartupDelay) / 5)),
+			PeriodSeconds:    10,
+			FailureThreshold: int32(math.Ceil(float64(probe.StartupDelay) / 10)),
 		}
 	}
 	return liveness, startup
