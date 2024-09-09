@@ -29,6 +29,16 @@ var (
 				t: "string",
 			},
 		},
+		{pkg: "encoding/json", name: "RawMessage"}: {
+			message: &protoMessage{
+				file: "google/protobuf/struct.proto",
+				pkg:  "google/protobuf",
+				name: "Struct",
+			},
+		},
+	}
+	existingProtoFile = map[string]struct{}{
+		"google/protobuf/struct.proto": struct{}{},
 	}
 	packageRewrites = map[string]string{
 		"github.com/rigdev/rig/pkg/api/v1alpha2":    "v1alpha2",
@@ -74,18 +84,20 @@ func run(_ *cobra.Command, args []string) error {
 	}
 
 	for _, pkg := range p.packages {
-		if pkg.name == "" {
-			continue
-		}
 		var b strings.Builder
-		pkg.compile(&b)
-		filePath := path.Join(outputDir, pkg.name, GENERATED_FILE_NAME)
-		fmt.Println("writing", filePath)
-		if err := os.MkdirAll(path.Dir(filePath), 0o777); err != nil {
-			return err
-		}
-		if err := os.WriteFile(filePath, []byte(strings.TrimSuffix(b.String(), "\n")), 0o777); err != nil {
-			return err
+		for _, file := range pkg.files {
+			if _, ok := existingProtoFile[file.name]; ok || pkg.name == "" {
+				continue
+			}
+			file.compile(&b)
+			p := path.Join(outputDir, file.name)
+			fmt.Println("writing", p, "name", file.name)
+			if err := os.MkdirAll(path.Dir(p), 0o777); err != nil {
+				return err
+			}
+			if err := os.WriteFile(p, []byte(strings.TrimSuffix(b.String(), "\n")), 0o777); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -111,62 +123,10 @@ type parser struct {
 
 func (p *parser) parse(values ...any) error {
 	for _, v := range values {
-		if err := p.parseMessage(reflect.TypeOf(v)); err != nil {
+		if _, _, err := p.parseType(reflect.TypeOf(v)); err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (p *parser) parseMessage(t reflect.Type) error {
-	if t.Kind() != reflect.Struct {
-		return nil
-	}
-
-	pkgName := rewritePackage(t.PkgPath())
-	if known, ok := knownMessages[messageType{
-		pkg:  pkgName,
-		name: t.Name(),
-	}]; ok {
-		if known.builtIn != nil {
-			return nil
-		} else if known.message != nil {
-			pkg := p.getPackage(pkgName)
-			msg := pkg.getMessage(t.Name())
-			msg.fields = known.message.fields
-		}
-
-		return nil
-	}
-
-	pkg := p.getPackage(pkgName)
-	msg := pkg.getMessage(t.Name())
-
-	for _, field := range extractFields(t) {
-		protoIdx, err := getProtoIndex(field)
-		if err != nil {
-			return fmt.Errorf("field %s on type %s had no wellformed proto index tag: %s", field.Name, t.Name(), err)
-		}
-		types, protoType, err := unravelType(field.Type)
-		if err != nil {
-			return err
-		}
-		for _, tt := range types {
-			pkgName := rewritePackage(tt.PkgPath())
-			if !p.hasMessage(pkgName, tt.Name()) {
-				if err := p.parseMessage(tt); err != nil {
-					return err
-				}
-			}
-			pkg.addImport(pkgName)
-		}
-		msg.fields = append(msg.fields, protoField{
-			t:    protoType,
-			name: jsonName(field),
-			idx:  protoIdx,
-		})
-	}
-
 	return nil
 }
 
@@ -228,132 +188,138 @@ func jsonName(field reflect.StructField) string {
 	return name
 }
 
-func unravelType(t reflect.Type) ([]reflect.Type, protoType, error) {
-	var repeated bool
-	var message *messageType
-	var builtIn *builtintType
-	var mapT *mapType
-	var types []reflect.Type
-	for {
-		done := false
-		switch t.Kind() {
-		case reflect.Chan:
-			fallthrough
-		case reflect.Func:
-			fallthrough
-		case reflect.Interface:
-			fallthrough
-		case reflect.Invalid:
-			fallthrough
-		case reflect.UnsafePointer:
-			return nil, protoType{}, fmt.Errorf("can't pass type %s", t.Name())
-		case reflect.Slice:
-			fallthrough
-		case reflect.Array:
-			if repeated {
-				return nil, protoType{}, fmt.Errorf("can't pass nested slice")
+func (p *parser) parseType(t reflect.Type) (protoType, []protoType, error) {
+	pt, pts, err := p.parseTypeInner(t)
+	if err != nil {
+		return protoType{}, nil, err
+	}
+	if err := pt.validate(); err != nil {
+		return protoType{}, nil, err
+	}
+	return pt, pts, nil
+}
+
+func (p *parser) parseTypeInner(t reflect.Type) (protoType, []protoType, error) {
+	pkgName := rewritePackage(t.PkgPath())
+	if known, ok := knownMessages[messageType{
+		pkg:  pkgName,
+		name: t.Name(),
+	}]; ok {
+		if known.builtIn != nil {
+			pt := protoType{
+				builtIn: known.builtIn,
 			}
-			repeated = true
-			t = t.Elem()
-		case reflect.Pointer:
-			t = t.Elem()
-		case reflect.Map:
-			keyT, keyType, err := unravelType(t.Key())
-			if err != nil {
-				return nil, protoType{}, err
-			}
-			if keyType.builtIn == nil {
-				return nil, protoType{}, fmt.Errorf("map key value must be integral or string")
-			}
-			valueT, valueType, err := unravelType(t.Elem())
-			if err != nil {
-				return nil, protoType{}, err
-			}
-			types = append(types, keyT...)
-			types = append(types, valueT...)
-			var mapVT mapValueType
-			if valueType.builtIn != nil {
-				mapVT = mapValueType{builtIn: valueType.builtIn}
-			} else if valueType.message != nil {
-				mapVT = mapValueType{message: valueType.message}
-			} else if valueType.repeated != nil {
-				if valueType.repeated.mapType != nil {
-					return nil, protoType{}, fmt.Errorf("map value cannot be a map")
-				}
-				mapVT = mapValueType{
-					builtIn:  valueType.repeated.builtIn,
-					message:  valueType.repeated.message,
-					repeated: true,
-				}
-			} else if valueType.mapType != nil {
-				return nil, protoType{}, fmt.Errorf("map value cannot be a map")
-			}
-			mapT = &mapType{
-				key:   *keyType.builtIn,
-				value: mapVT,
-			}
-			done = true
-		case reflect.Struct:
-			msg := messageType{
-				pkg:  rewritePackage(t.PkgPath()),
-				name: t.Name(),
-			}
-			if known, ok := knownMessages[msg]; ok {
-				if known.builtIn != nil {
-					builtIn = known.builtIn
-				} else if known.message != nil {
-					message = &messageType{
-						pkg:  known.message.pkg,
-						name: known.message.name,
-					}
-				}
-				done = true
-			} else {
-				message = &msg
-				types = append(types, t)
-			}
-			done = true
-		default:
-			builtIn = &builtintType{t: t.Kind().String()}
-			types = append(types, t)
-			done = true
-		}
-		if done {
-			break
+			return pt, nil, nil
+		} else if known.message != nil {
+			p.getPackage(known.message.pkg).getFile(known.message.file).getMessage(known.message.name)
+			return known.message.geType(), []protoType{known.message.geType()}, nil
 		}
 	}
 
-	var result protoType
-	if repeated {
-		result = protoType{
+	switch t.Kind() {
+	case reflect.Chan:
+		fallthrough
+	case reflect.Func:
+		fallthrough
+	case reflect.Interface:
+		fallthrough
+	case reflect.Invalid:
+		fallthrough
+	case reflect.UnsafePointer:
+		return protoType{}, nil, fmt.Errorf("can't pass type %s", t.Name())
+	case reflect.Slice:
+		fallthrough
+	case reflect.Array:
+		pt, pts, err := p.parseType(t.Elem())
+		if err != nil {
+			return protoType{}, nil, err
+		}
+		if pt.mapType != nil {
+			return protoType{}, nil, fmt.Errorf("cannot have slice map")
+		} else if pt.repeated != nil {
+			return protoType{}, nil, fmt.Errorf("cannot have slice of slice")
+		}
+		res := protoType{
 			repeated: &repeatedType{
-				builtIn: builtIn,
-				message: message,
-				mapType: mapT,
+				builtIn: pt.builtIn,
+				message: pt.message,
 			},
 		}
-	} else {
-		result = protoType{
-			builtIn: builtIn,
-			message: message,
-			mapType: mapT,
+		return res, pts, nil
+	case reflect.Pointer:
+		return p.parseType(t.Elem())
+	case reflect.Map:
+		keyType, keyDeps, err := p.parseType(t.Key())
+		if err != nil {
+			return protoType{}, nil, err
 		}
-	}
+		if keyType.builtIn == nil {
+			return protoType{}, nil, fmt.Errorf("map key value must be integral or string")
+		}
 
-	if err := result.validate(); err != nil {
-		return nil, protoType{}, err
-	}
+		valueType, valueDeps, err := p.parseType(t.Elem())
+		if err != nil {
+			return protoType{}, nil, err
+		}
+		if valueType.mapType != nil {
+			return protoType{}, nil, fmt.Errorf("map value cannot be a map")
+		}
+		if valueType.repeated != nil {
+			return protoType{}, nil, fmt.Errorf("map value cannot be repeated")
+		}
 
-	return types, result, nil
+		return protoType{
+			mapType: &mapType{
+				key: *keyType.builtIn,
+				value: mapValueType{
+					builtIn: valueType.builtIn,
+					message: valueType.message,
+				},
+			},
+		}, append(keyDeps, valueDeps...), nil
+	case reflect.Struct:
+		pkgName := rewritePackage(t.PkgPath())
+		if p.hasMessage(pkgName, t.Name()) {
+			msg := p.getPackage(pkgName).getMessage(t.Name())
+			return msg.geType(), []protoType{msg.geType()}, nil
+		}
+		pkg := p.getPackage(pkgName)
+		file := pkg.getFile(path.Join(pkgName, GENERATED_FILE_NAME))
+		msg := file.getMessage(t.Name())
+		for _, field := range extractFields(t) {
+			protoIdx, err := getProtoIndex(field)
+			if err != nil {
+				return protoType{}, nil, fmt.Errorf("field %s on type %s had no wellformed proto index tag: %s", field.Name, t.Name(), err)
+			}
+			pt, deps, err := p.parseType(field.Type)
+			if err != nil {
+				return protoType{}, nil, err
+			}
+			for _, tt := range deps {
+				if tt.message != nil {
+					file.addImport(tt.message.file)
+				}
+			}
+			msg.fields = append(msg.fields, protoField{
+				t:    pt,
+				name: jsonName(field),
+				idx:  protoIdx,
+			})
+		}
+		return msg.geType(), []protoType{msg.geType()}, nil
+	default:
+		return protoType{
+			builtIn: &builtintType{t: t.Kind().String()},
+		}, nil, nil
+	}
 }
 
 func (p *parser) getPackage(pkg string) *protoPackage {
 	pp, ok := p.packages[pkg]
 	if !ok {
 		pp = &protoPackage{
-			name:     pkg,
-			imports:  map[string]struct{}{},
-			messages: map[string]*protoMessage{},
+			name:  pkg,
+			files: map[string]*protoFile{},
 		}
 		p.packages[pkg] = pp
 	}
@@ -369,32 +335,58 @@ func (p *parser) getMessage(pkg string, name string) *protoMessage {
 }
 
 type protoPackage struct {
+	name  string
+	files map[string]*protoFile
+}
+
+type protoFile struct {
+	pkg          string
 	name         string
 	imports      map[string]struct{}
 	messages     map[string]*protoMessage
 	messageOrder []string
 }
 
+func (p *protoFile) getMessage(name string) *protoMessage {
+	m, ok := p.messages[name]
+	if !ok {
+		m = &protoMessage{
+			pkg:  p.pkg,
+			file: p.name,
+			name: name,
+		}
+		p.messages[name] = m
+		p.messageOrder = append(p.messageOrder, name)
+	}
+	return m
+}
+
 func (p *protoPackage) validate() error {
-	for _, m := range p.messages {
-		if err := m.validate(); err != nil {
-			return fmt.Errorf("message %s has errors: %q", m.name, err)
+	allMessages := map[string]struct{}{}
+	for _, f := range p.files {
+		for _, m := range f.messages {
+			if _, ok := allMessages[m.name]; ok {
+				return fmt.Errorf("message %s defined multiple times", m.name)
+			}
+			if err := m.validate(); err != nil {
+				return fmt.Errorf("message %s has errors: %q", m.name, err)
+			}
+			allMessages[m.name] = struct{}{}
 		}
 	}
-
 	return nil
 }
 
-func (p *protoPackage) compile(b *strings.Builder) {
+func (p *protoFile) compile(b *strings.Builder) {
 	b.WriteString("syntax = \"proto3\";\n")
 	b.WriteString("\n")
-	b.WriteString(fmt.Sprintf("package %s;\n", formatPkg(p.name)))
+	b.WriteString(fmt.Sprintf("package %s;\n", formatPkg(p.pkg)))
 	b.WriteString("\n")
 
 	imports := maps.Keys(p.imports)
 	slices.Sort(imports)
 	for _, imp := range imports {
-		b.WriteString(fmt.Sprintf("import \"%s/%s\";\n", imp, GENERATED_FILE_NAME))
+		b.WriteString(fmt.Sprintf("import \"%s\";\n", imp))
 	}
 	if len(p.imports) > 0 {
 		b.WriteString("\n")
@@ -407,34 +399,64 @@ func (p *protoPackage) compile(b *strings.Builder) {
 	}
 }
 
-func (p *protoPackage) getMessage(name string) *protoMessage {
-	m, ok := p.messages[name]
+func (p *protoPackage) getFile(name string) *protoFile {
+	f, ok := p.files[name]
 	if !ok {
-		m = &protoMessage{
-			pkg:  p.name,
-			name: name,
+		f = &protoFile{
+			pkg:      p.name,
+			name:     name,
+			imports:  map[string]struct{}{},
+			messages: map[string]*protoMessage{},
 		}
-		p.messages[name] = m
-		p.messageOrder = append(p.messageOrder, name)
+		p.files[name] = f
 	}
-	return m
+	return f
+}
+
+func (p *protoPackage) getMessage(name string) *protoMessage {
+	for _, f := range p.files {
+		if f.hasMessage(name) {
+			return f.getMessage(name)
+		}
+	}
+	return nil
 }
 
 func (p *protoPackage) hasMessage(name string) bool {
-	_, ok := p.messages[name]
-	return ok
+	for _, f := range p.files {
+		if f.hasMessage(name) {
+			return true
+		}
+	}
+	return false
 }
 
-func (p *protoPackage) addImport(path string) {
+func (p *protoFile) addImport(path string) {
 	if path != "" && path != p.name {
 		p.imports[path] = struct{}{}
 	}
 }
 
+func (p *protoFile) hasMessage(name string) bool {
+	_, ok := p.messages[name]
+	return ok
+}
+
 type protoMessage struct {
 	pkg    string
+	file   string
 	name   string
 	fields []protoField
+}
+
+func (p protoMessage) geType() protoType {
+	return protoType{
+		message: &messageType{
+			pkg:  p.pkg,
+			file: p.file,
+			name: p.name,
+		},
+	}
 }
 
 func (p protoMessage) validate() error {
@@ -549,6 +571,7 @@ func (b builtintType) compile(bb *strings.Builder) {
 
 type messageType struct {
 	pkg  string
+	file string
 	name string
 }
 
@@ -578,9 +601,8 @@ func (m mapType) compile(b *strings.Builder, curPkg string) {
 }
 
 type mapValueType struct {
-	builtIn  *builtintType
-	message  *messageType
-	repeated bool
+	builtIn *builtintType
+	message *messageType
 }
 
 func (m mapValueType) validate() error {
@@ -600,9 +622,6 @@ func (m mapValueType) validate() error {
 }
 
 func (m mapValueType) compile(b *strings.Builder, curPkg string) {
-	if m.repeated {
-		b.WriteString("repeated ")
-	}
 	if m.builtIn != nil {
 		m.builtIn.compile(b)
 	} else if m.message != nil {
@@ -613,7 +632,6 @@ func (m mapValueType) compile(b *strings.Builder, curPkg string) {
 type repeatedType struct {
 	builtIn *builtintType
 	message *messageType
-	mapType *mapType
 }
 
 func (r repeatedType) validate() error {
@@ -623,12 +641,6 @@ func (r repeatedType) validate() error {
 	}
 	if r.message != nil {
 		c++
-	}
-	if r.mapType != nil {
-		c++
-		if err := r.mapType.validate(); err != nil {
-			return err
-		}
 	}
 
 	if c != 1 {
@@ -649,8 +661,5 @@ func (r repeatedType) compile(b *strings.Builder, curPkg string) {
 	} else if r.message != nil {
 		b.WriteString("repeated ")
 		r.message.compile(b, curPkg)
-	} else if r.mapType != nil {
-		b.WriteString("repeated ")
-		r.mapType.compile(b, curPkg)
 	}
 }

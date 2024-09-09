@@ -5,6 +5,7 @@
 package v1
 
 import (
+	"encoding/json"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -159,6 +160,22 @@ func (in *CapsuleSpec) DeepCopyInto(out *CapsuleSpec) {
 		*out = make([]CronJob, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Extentions != nil {
+		in, out := &in.Extentions, &out.Extentions
+		*out = make(map[string]json.RawMessage, len(*in))
+		for key, val := range *in {
+			var outVal []byte
+			if val == nil {
+				(*out)[key] = nil
+			} else {
+				inVal := (*in)[key]
+				in, out := &inVal, &outVal
+				*out = make(json.RawMessage, len(*in))
+				copy(*out, *in)
+			}
+			(*out)[key] = outVal
 		}
 	}
 }

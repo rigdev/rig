@@ -1680,6 +1680,7 @@ A reference to a kubernetes object.
 | scale | [Scale](#platform-v1-Scale) |  |  |
 | cronJobs | [CronJob](#platform-v1-CronJob) | repeated |  |
 | autoAddRigServiceAccounts | [bool](#bool) |  |  |
+| extensions | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
 
 
 

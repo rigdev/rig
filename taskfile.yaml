@@ -150,6 +150,7 @@ tasks:
       - pkg/api/**/zz_generated.deepcopy.go
     cmds:
       - ./tools/bin/controller-gen object paths="./pkg/api/..."
+      - python3 ./scripts/crdcopy.py
 
   docs:
     desc: "📝 Run documentation site"

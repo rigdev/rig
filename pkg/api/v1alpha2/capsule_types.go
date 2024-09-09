@@ -1,6 +1,8 @@
 package v1alpha2
 
 import (
+	"encoding/json"
+
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -42,6 +44,11 @@ type CapsuleSpec struct {
 	Env Env `json:"env,omitempty"`
 
 	CronJobs []CronJob `json:"cronJobs,omitempty"`
+
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	Extensions map[string]json.RawMessage `json:"extensions,omitempty"`
 }
 
 type CronJob struct {

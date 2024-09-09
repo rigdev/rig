@@ -33,7 +33,7 @@ func YAMLToCapsuleSetProto(bytes []byte) (*platformv1.CapsuleSet, error) {
 
 func YAMLToSpecProto[T interface{ GetKind() string }](bs []byte, o T, expectedKind string) error {
 	if err := yaml.Unmarshal(bs, o, yaml.DisallowUnknownFields); err != nil {
-		return err
+		return fmt.Errorf("unmarshal: %s", err)
 	}
 	if o.GetKind() != "" && o.GetKind() != expectedKind {
 		return fmt.Errorf("kind was %s, not the expected %s", o.GetKind(), expectedKind)
