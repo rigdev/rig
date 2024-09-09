@@ -9347,6 +9347,23 @@ Platform wide static configuration.
 | client | [Client](#api-v1-settings-Client) |  |  |
 | docker_registries | [string](#string) | repeated |  |
 | default_email | [EmailClient](#api-v1-settings-EmailClient) |  |  |
+| capsule_extensions | [Configuration.CapsuleExtensionsEntry](#api-v1-settings-Configuration-CapsuleExtensionsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Configuration-CapsuleExtensionsEntry"></a>
+
+### Configuration.CapsuleExtensionsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [Extension](#api-v1-settings-Extension) |  |  |
 
 
 
@@ -9363,6 +9380,21 @@ Platform wide static configuration.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  |  |
 | type | [EmailType](#api-v1-settings-EmailType) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Extension"></a>
+
+### Extension
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| json_schema | [string](#string) |  | The schema of the extension, expressed as a json-schema (https://json-schema.org/). |
 
 
 

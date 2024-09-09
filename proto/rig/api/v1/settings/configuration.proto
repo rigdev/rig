@@ -7,6 +7,7 @@ message Configuration {
   Client client = 1;
   repeated string docker_registries = 2;
   EmailClient default_email = 3;
+  map<string, Extension> capsule_extensions = 4;
 }
 
 message Client {
@@ -39,4 +40,10 @@ message Git {
   string url = 1;
   // URLPrefix is a prefix-match for the repo urls this auth can be used for.
   string url_prefix = 2;
+}
+
+message Extension {
+  // The schema of the extension, expressed as a json-schema
+  // (https://json-schema.org/).
+  string json_schema = 1;
 }

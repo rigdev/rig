@@ -322,6 +322,20 @@ _Appears in:_
 
 
 
+### Extension
+
+
+
+Extension is a typed (through JSON Schema) expansion of a Platform resource, that allows extending the default customization.
+
+_Appears in:_
+- [PlatformConfig](#platformconfig)
+
+| Field | Description |
+| --- | --- |
+| `schema` _[JSONSchemaProps](#jsonschemaprops)_ | The schema of the extension, expressed as a json-schema (https://json-schema.org/). While the full syntax is supported, some features may be semantically disabled which would make the Platform not start or not process Rollouts. |
+
+
 ### GitAuth
 
 
@@ -619,6 +633,7 @@ PlatformConfig is the Schema for the platform config API
 | `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
 | `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
 | `dockerRegistries` _object (keys:string, values:[DockerRegistryCredentials](#dockerregistrycredentials))_ | DockerRegistries holds configuration for multiple docker registries. The key is the host-prefix of the registry |
+| `capsuleExtensions` _object (keys:string, values:[Extension](#extension))_ | CapsuleExtensions contains typed extensions to the Capsule spec. |
 
 
 ### Plugin

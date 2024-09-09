@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"go.uber.org/zap/zapcore"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -53,6 +54,19 @@ type PlatformConfig struct {
 
 	// DockerRegistries holds configuration for multiple docker registries. The key is the host-prefix of the registry
 	DockerRegistries map[string]DockerRegistryCredentials `json:"dockerRegistries,omitempty"`
+
+	// CapsuleExtensions contains typed extensions to the Capsule spec.
+	CapsuleExtensions map[string]Extension `json:"capsuleExtensions,omitempty"`
+}
+
+// Extension is a typed (through JSON Schema) expansion of a Platform resource,
+// that allows extending the default customization.
+type Extension struct {
+	// The schema of the extension, expressed as a json-schema
+	// (https://json-schema.org/). While the full syntax is supported,
+	// some features may be semantically disabled which would make the Platform
+	// not start or not process Rollouts.
+	Schema *apiextensionsv1.JSONSchemaProps `json:"schema,omitempty"`
 }
 
 // Auth specifies authentication configuration.
