@@ -119,8 +119,8 @@ tasks:
     cmds:
       - cmd: rm -fr gen/mocks
       - cmd: rm -fr gen/mocks_not_commited
-      - ./tools/bin/mockery
-      - ./tools/bin/mockery --config .mockery_uncommitted.yaml
+      - GODEBUG=gotypesalias=0 ./tools/bin/mockery
+      - GODEBUG=gotypesalias=0 ./tools/bin/mockery --config .mockery_uncommitted.yaml
 
   manifests:
     desc: "🪄 Run k8s manifests generation"

@@ -84,7 +84,7 @@ func run(_ *cobra.Command, args []string) error {
 		if err := os.MkdirAll(path.Dir(filePath), 0o777); err != nil {
 			return err
 		}
-		if err := os.WriteFile(filePath, []byte(b.String()), 0o777); err != nil {
+		if err := os.WriteFile(filePath, []byte(strings.TrimSuffix(b.String(), "\n")), 0o777); err != nil {
 			return err
 		}
 	}
