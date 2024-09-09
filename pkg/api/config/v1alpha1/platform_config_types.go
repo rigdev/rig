@@ -59,8 +59,8 @@ type PlatformConfig struct {
 	CapsuleExtensions map[string]Extension `json:"capsuleExtensions,omitempty"`
 }
 
-// Extension is an typed (through schema) expansion of an resource,
-// that allows assigned extended custom behavior through plugins.
+// Extension is a typed (through JSON Schema) expansion of a Platform resource,
+// that allows extending the default customization.
 type Extension struct {
 	// The schema of the extension, expressed as a json-schema
 	// (https://json-schema.org/). While the full syntax is supported,
