@@ -326,7 +326,7 @@ _Appears in:_
 
 
 
-Extension is an typed (through schema) expansion of an resource, that allows assigned extended custom behavior through plugins.
+Extension is a typed (through JSON Schema) expansion of a Platform resource, that allows extending the default customization.
 
 _Appears in:_
 - [PlatformConfig](#platformconfig)
