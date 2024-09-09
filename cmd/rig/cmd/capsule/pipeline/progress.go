@@ -43,7 +43,7 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 	}
 
 	if !dryRun {
-		cmd.Printf("pipeline execution %v progressed to phase %v", pipelineID,
+		cmd.Printf("pipeline execution %v progressed to phase %v \n", pipelineID,
 			resp.Msg.GetStatus().GetPhaseStatuses()[len(resp.Msg.GetStatus().GetPhaseStatuses())-1].GetEnvironmentId())
 		return nil
 	}

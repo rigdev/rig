@@ -19,8 +19,9 @@ import (
 func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 	listResp, err := c.Rig.Capsule().ListPipelineStatuses(ctx, connect.NewRequest(&capsule.ListPipelineStatusesRequest{
 		Pagination: &model.Pagination{
-			Offset: uint32(offset),
-			Limit:  uint32(limit),
+			Offset:     uint32(offset),
+			Limit:      uint32(limit),
+			Descending: true,
 		},
 		CapsuleFilter: capsule_cmd.CapsuleID,
 		ProjectFilter: c.Scope.GetCurrentContext().GetProject(),
@@ -63,6 +64,6 @@ func pipelineStatusToTableRow(s *pipeline_api.Status) []string {
 		currentPhaseStatus.GetEnvironmentId(),
 		currentPhaseStatus.GetState().String(),
 		fmt.Sprint(currentPhaseStatus.GetRolloutId()),
-		currentPhaseStatus.GetMessage(),
+		currentPhaseStatus.GetMessages()[len(currentPhaseStatus.GetMessages())-1].Message,
 	}
 }
