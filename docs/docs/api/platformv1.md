@@ -116,6 +116,7 @@ _Appears in:_
 | `scale` _[Scale](#scale)_ | Scale specifies the scaling of the Capsule. |
 | `cronJobs` _[CronJob](#cronjob) array_ |  |
 | `autoAddRigServiceAccounts` _boolean_ | TODO Move to plugin |
+| `extensions` _object (keys:string, values:RawMessage)_ | Extensions json.RawMessage `json:"extensions,omitempty" protobuf:"14"` |
 
 
 ### CronJob

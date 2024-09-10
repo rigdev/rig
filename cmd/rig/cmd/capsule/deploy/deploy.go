@@ -198,6 +198,7 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 			removeAnnotations != nil ||
 			cmd.Flag("replicas").Changed ||
 			configFiles != nil ||
+			configFileRefs != nil ||
 			removeConfigFiles != nil ||
 			networkInterfaces != nil ||
 			removeNetworkInterfaces != nil {
@@ -209,7 +210,7 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 		}
 		spec, err := v1.YAMLToCapsuleProto(bytes)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, "", "", "", fmt.Errorf("oof: %s", err)
 		}
 		return []*capsule.Change{{
 			Field: &capsule.Change_Spec{

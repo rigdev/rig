@@ -490,6 +490,9 @@ spec:
                       type: object
                     type: array
                 type: object
+              extensions:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
               files:
                 description: Files is a list of files to mount in the container. These
                   can either be based on ConfigMaps or Secrets.

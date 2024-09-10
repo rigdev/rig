@@ -3,6 +3,7 @@
 package v1
 
 import (
+	"encoding/json"
 	"maps"
 	"slices"
 
@@ -137,6 +138,12 @@ type CapsuleSpec struct {
 
 	// TODO Move to plugin
 	AutoAddRigServiceAccounts bool `json:"autoAddRigServiceAccounts" protobuf:"13"`
+
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Type=object
+	// Extensions json.RawMessage `json:"extensions,omitempty" protobuf:"14"`
+	Extentions map[string]json.RawMessage `json:"extensions,omitempty" protobuf:"14"`
 }
 
 // EnvironmentVariables defines the environment variables injected into a Capsule.

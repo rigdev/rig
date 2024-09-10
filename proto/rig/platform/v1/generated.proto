@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package platform.v1;
 
+import "google/protobuf/struct.proto";
 import "k8s.io/api/autoscaling/v2/generated.proto";
 
 message CapsuleSet {
@@ -27,6 +28,7 @@ message CapsuleSpec {
   Scale scale = 8;
   repeated CronJob cronJobs = 10;
   bool autoAddRigServiceAccounts = 13;
+  map<string, google.protobuf.Struct> extensions = 14;
 }
 
 message CapsuleInterface {
