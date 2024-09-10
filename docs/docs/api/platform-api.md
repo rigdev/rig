@@ -1680,7 +1680,7 @@ A reference to a kubernetes object.
 | scale | [Scale](#platform-v1-Scale) |  |  |
 | cronJobs | [CronJob](#platform-v1-CronJob) | repeated |  |
 | autoAddRigServiceAccounts | [bool](#bool) |  |  |
-| extensions | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
+| extensions | [CapsuleSpec.ExtensionsEntry](#platform-v1-CapsuleSpec-ExtensionsEntry) | repeated |  |
 
 
 
@@ -1697,6 +1697,22 @@ A reference to a kubernetes object.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="platform-v1-CapsuleSpec-ExtensionsEntry"></a>
+
+### CapsuleSpec.ExtensionsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
 
 
 
