@@ -4183,6 +4183,22 @@ The actual log message
 
 
 
+<a name="api-v1-capsule-pipeline-PhaseMessage"></a>
+
+### PhaseMessage
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [string](#string) |  |  |
+| timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-pipeline-PhaseStatus"></a>
 
 ### PhaseStatus
@@ -4194,7 +4210,7 @@ The actual log message
 | environment_id | [string](#string) |  |  |
 | state | [PhaseState](#api-v1-capsule-pipeline-PhaseState) |  |  |
 | rollout_id | [uint64](#uint64) |  |  |
-| message | [string](#string) |  |  |
+| messages | [PhaseMessage](#api-v1-capsule-pipeline-PhaseMessage) | repeated |  |
 
 
 
@@ -8078,6 +8094,22 @@ A docker image tag.
 
 
 
+<a name="model-FieldPrefixes"></a>
+
+### FieldPrefixes
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| inclusion | [bool](#bool) |  |  |
+| prefixes | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="model-Phase"></a>
 
 ### Phase
@@ -8087,7 +8119,7 @@ A docker image tag.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | environment_id | [string](#string) |  | Environment to promote to. The project must be active in this environment. |
-| fixed_fields | [string](#string) | repeated | Fixed fields, that are not changed upon promotion. |
+| field_prefixes | [FieldPrefixes](#model-FieldPrefixes) |  | Fields prefixes to either promote or not. |
 | triggers | [PromotionTrigger](#model-PromotionTrigger) | repeated | Promotion triggers. |
 
 
@@ -8122,33 +8154,8 @@ A docker image tag.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| manual | [PromotionTrigger.Manual](#model-PromotionTrigger-Manual) |  |  |
-| auto | [PromotionTrigger.Auto](#model-PromotionTrigger-Auto) |  |  |
-
-
-
-
-
-
-<a name="model-PromotionTrigger-Auto"></a>
-
-### PromotionTrigger.Auto
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
+| automatic | [bool](#bool) |  |  |
 | time_alive | [google.protobuf.Duration](#google-protobuf-Duration) |  |  |
-
-
-
-
-
-
-<a name="model-PromotionTrigger-Manual"></a>
-
-### PromotionTrigger.Manual
-
 
 
 
