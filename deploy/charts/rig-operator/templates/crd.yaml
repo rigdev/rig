@@ -491,6 +491,8 @@ spec:
                     type: array
                 type: object
               extensions:
+                description: Extensions are extra, typed fields defined by the platform
+                  for custom behaviour implemented through plugins
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               files:

@@ -135,7 +135,7 @@ _Appears in:_
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
 | `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
 | `cronJobs` _[CronJob](#cronjob) array_ |  |
-| `extensions` _object (keys:string, values:RawMessage)_ |  |
+| `extensions` _object (keys:string, values:RawMessage)_ | Extensions are extra, typed fields defined by the platform for custom behaviour implemented through plugins |
 
 
 ### CronJob

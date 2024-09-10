@@ -28,7 +28,7 @@ message CapsuleSpec {
   Scale scale = 8;
   repeated CronJob cronJobs = 10;
   bool autoAddRigServiceAccounts = 13;
-  map<string, google.protobuf.Struct> extentions = 14;
+  map<string, google.protobuf.Struct> extensions = 14;
 }
 
 message CapsuleInterface {
