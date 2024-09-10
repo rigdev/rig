@@ -140,6 +140,7 @@ tasks:
           output:rbac:dir=deploy/kustomize/rbac \
           output:webhook:dir=deploy/kustomize/webhook \
           output:crd:dir=deploy/kustomize/crd/bases
+      - python3 ./scripts/crdcopy.py
 
   generate-k8s:
     desc: "🪄 Run runtime.Object implementaion generation"
@@ -150,7 +151,6 @@ tasks:
       - pkg/api/**/zz_generated.deepcopy.go
     cmds:
       - ./tools/bin/controller-gen object paths="./pkg/api/..."
-      - python3 ./scripts/crdcopy.py
 
   docs:
     desc: "📝 Run documentation site"
