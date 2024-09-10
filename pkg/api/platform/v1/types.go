@@ -142,8 +142,8 @@ type CapsuleSpec struct {
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Type=object
-	// Extensions json.RawMessage `json:"extensions,omitempty" protobuf:"14"`
-	Extentions map[string]json.RawMessage `json:"extensions,omitempty" protobuf:"14"`
+	// Extentions json.RawMessage `json:"extensions,omitempty" protobuf:"14"`
+	Extentions map[string]json.RawMessage `json:"extentions,omitempty" protobuf:"14"`
 }
 
 // EnvironmentVariables defines the environment variables injected into a Capsule.

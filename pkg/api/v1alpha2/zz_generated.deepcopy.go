@@ -249,8 +249,8 @@ func (in *CapsuleSpec) DeepCopyInto(out *CapsuleSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Extensions != nil {
-		in, out := &in.Extensions, &out.Extensions
+	if in.Extentions != nil {
+		in, out := &in.Extentions, &out.Extentions
 		*out = make(map[string]json.RawMessage, len(*in))
 		for key, val := range *in {
 			var outVal []byte

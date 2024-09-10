@@ -48,7 +48,7 @@ type CapsuleSpec struct {
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Type=object
-	Extensions map[string]json.RawMessage `json:"extensions,omitempty"`
+	Extentions map[string]json.RawMessage `json:"extensions,omitempty"`
 }
 
 type CronJob struct {
