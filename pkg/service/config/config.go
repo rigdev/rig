@@ -10,212 +10,131 @@ import (
 
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/obj"
+	"github.com/spf13/afero"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
 const envPrefix = "RIG"
 
-type Service interface {
-	Operator() *v1alpha1.OperatorConfig
-	Platform() *v1alpha1.PlatformConfig
+func NewPlatformConfig(fs afero.Fs, scheme *runtime.Scheme, options ...Option) (*v1alpha1.PlatformConfig, error) {
+	builder := newConfigBuilder(fs, scheme, options...)
+	config, err := build(builder, v1alpha1.NewDefaultPlatform(), &v1alpha1.PlatformConfig{})
+	if err != nil {
+		return nil, err
+	}
+	config.Migrate()
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+	return config, nil
 }
 
-func NewService(scheme *runtime.Scheme, filePaths ...string) (Service, error) {
-	decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
-	return newServiceBuilder().
-		withDecoder(decoder).
-		withFiles(filePaths...).
-		withSerializer(obj.NewSerializer(scheme)).
-		build()
+func NewOperatorConfig(fs afero.Fs, scheme *runtime.Scheme, options ...Option) (*v1alpha1.OperatorConfig, error) {
+	builder := newConfigBuilder(fs, scheme, options...)
+	config, err := build(builder, (&v1alpha1.OperatorConfig{}).Default(), &v1alpha1.OperatorConfig{})
+	if err != nil {
+		return nil, err
+	}
+	return config.Default(), nil
 }
 
-func NewServiceWithContent(scheme *runtime.Scheme, content string) (Service, error) {
-	decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
-	return newServiceBuilder().
-		withDecoder(decoder).
-		withContents(content).
-		withSerializer(obj.NewSerializer(scheme)).
-		build()
+func newConfigBuilder(fs afero.Fs, scheme *runtime.Scheme, options ...Option) *configBuilder {
+	c := &configBuilder{
+		scheme:     scheme,
+		fs:         fs,
+		serializer: obj.NewSerializer(scheme),
+	}
+	for _, o := range options {
+		o(c)
+	}
+
+	return c
 }
 
-func NewServiceFromConfigs(op *v1alpha1.OperatorConfig, platform *v1alpha1.PlatformConfig) Service {
-	return &service{
-		oCFG: op,
-		pCFG: platform,
+type Option func(c *configBuilder)
+
+func WithFilePaths(paths ...string) Option {
+	return func(c *configBuilder) {
+		c.filePaths = paths
 	}
 }
 
-type service struct {
-	oCFG *v1alpha1.OperatorConfig
-	pCFG *v1alpha1.PlatformConfig
+func WithContent(content string) Option {
+	return func(c *configBuilder) {
+		c.content = content
+	}
 }
 
-func (s *service) Operator() *v1alpha1.OperatorConfig {
-	return s.oCFG
-}
-
-func (s *service) Platform() *v1alpha1.PlatformConfig {
-	return s.pCFG
-}
-
-type serviceBuilder struct {
-	oCFG       *v1alpha1.OperatorConfig
-	pCFG       *v1alpha1.PlatformConfig
-	decoder    runtime.Decoder
+type configBuilder struct {
+	scheme     *runtime.Scheme
+	fs         afero.Fs
 	serializer runtime.Serializer
 	filePaths  []string
 	content    string
 }
 
-func newServiceBuilder() *serviceBuilder {
-	return &serviceBuilder{
-		oCFG: (&v1alpha1.OperatorConfig{}).Default(),
-		pCFG: v1alpha1.NewDefaultPlatform(),
-	}
-}
-
-func (b *serviceBuilder) withDecoder(decoder runtime.Decoder) *serviceBuilder {
-	b.decoder = decoder
-	return b
-}
-
-func (b *serviceBuilder) withFiles(filePaths ...string) *serviceBuilder {
-	b.filePaths = append(b.filePaths, filePaths...)
-	return b
-}
-
-func (b *serviceBuilder) withContents(content string) *serviceBuilder {
-	b.content = content
-	return b
-}
-
-func (b *serviceBuilder) withSerializer(serializer runtime.Serializer) *serviceBuilder {
-	b.serializer = serializer
-	return b
-}
-
-func (b *serviceBuilder) build() (*service, error) {
-	for _, filePath := range b.filePaths {
-		data, err := os.ReadFile(filePath)
-		if err != nil {
-			return nil, fmt.Errorf("could not read config file: %w", err)
-		}
-
-		if err := b.decode(data); err != nil {
-			return nil, err
-		}
-	}
-
-	if b.content != "" {
-		if err := b.decode([]byte(b.content)); err != nil {
-			return nil, err
-		}
-	}
-
-	var oCFGFromEnv v1alpha1.OperatorConfig
-	if err := getCFGFromEnv(&oCFGFromEnv); err != nil {
-		return nil, err
-	}
+func build[T runtime.Object](c *configBuilder, defaults, emptyInit T) (T, error) {
+	var empty T
 	var err error
-	b.oCFG, err = obj.Merge(&oCFGFromEnv, b.oCFG, b.oCFG, b.serializer)
-	if err != nil {
-		return nil, fmt.Errorf("could not merge env config: %w", err)
+	result := defaults
+	for _, filePath := range c.filePaths {
+		data, err := afero.ReadFile(c.fs, filePath)
+		if err != nil {
+			return empty, err
+		}
+
+		result, err = merge(data, result, c.scheme, c.serializer)
+		if err != nil {
+			return empty, err
+		}
 	}
 
-	var pCFGFromEnv v1alpha1.PlatformConfig
-	if err := getCFGFromEnv(&pCFGFromEnv); err != nil {
-		return nil, err
+	if c.content != "" {
+		result, err = merge([]byte(c.content), result, c.scheme, c.serializer)
+		if err != nil {
+			return empty, err
+		}
 	}
 
-	b.pCFG, err = obj.Merge(&pCFGFromEnv, b.pCFG, b.pCFG, b.serializer)
-	if err != nil {
-		return nil, fmt.Errorf("could not merge env config: %w", err)
+	envPatch := emptyInit.DeepCopyObject()
+	if err := getCFGFromEnv(envPatch); err != nil {
+		return empty, err
 	}
-	b.pCFG.Migrate()
 
-	b.oCFG.Default()
-
-	return &service{oCFG: b.oCFG, pCFG: b.pCFG}, nil
+	return obj.Merge(envPatch, result, result, c.serializer)
 }
 
-func (b *serviceBuilder) decode(data []byte) error {
-	var err error
+func merge[T runtime.Object](data []byte, object T, scheme *runtime.Scheme, serializer runtime.Serializer) (T, error) {
+	var empty T
 
-	object, gvk, err := b.decoder.Decode(data, nil, nil)
+	// TODO Enforce no unknown fields!
+
+	patch, err := obj.DecodeAnyRuntime(data, scheme)
 	if err != nil {
-		return &ErrDecoding{err: err}
+		return empty, err
 	}
-
-	if gvk.Group != v1alpha1.GroupVersion.Group {
-		return &ErrUnsupportedGVK{gvk: gvk}
-	}
-
-	switch gvk.Kind {
-	case "OperatorConfig":
-		var decodedCFG *v1alpha1.OperatorConfig
-		switch gvk.Version {
-		case v1alpha1.GroupVersion.Version:
-			cfg, ok := object.(*v1alpha1.OperatorConfig)
-			if !ok {
-				return &ErrRuntimeObjectAssertion{
-					gvk:    gvk,
-					target: "OperatorConfig",
-				}
-			}
-			decodedCFG = cfg
-		default:
-			return fmt.Errorf("unsupport api version: %s", gvk.Version)
-		}
-		b.oCFG, err = obj.Merge(decodedCFG, b.oCFG, b.oCFG, b.serializer)
-		if err != nil {
-			return fmt.Errorf("could not merge operator config: %w", err)
-		}
-	case "PlatformConfig":
-		var decodedCFG *v1alpha1.PlatformConfig
-		switch gvk.Version {
-		case v1alpha1.GroupVersion.Version:
-			cfg, ok := object.(*v1alpha1.PlatformConfig)
-			if !ok {
-				return &ErrRuntimeObjectAssertion{
-					gvk:    gvk,
-					target: "PlatformConfig",
-				}
-			}
-			decodedCFG = cfg
-		default:
-			return fmt.Errorf("unsupported api version: %s", gvk.Version)
-		}
-		b.pCFG, err = obj.Merge(decodedCFG, b.pCFG, b.pCFG, b.serializer)
-		if err != nil {
-			return fmt.Errorf("could not merge platform config: %w", err)
-		}
-	default:
-		return fmt.Errorf("unsupported kind: %s", gvk.Kind)
-	}
-
-	return nil
+	res, err := obj.Merge(patch, object, object, serializer)
+	return res, err
 }
 
-func getCFGFromEnv(model interface{}) error {
-	data := make(map[string]interface{})
+func getCFGFromEnv(model any) error {
+	data := make(map[string]any)
 	constructJSONFromModelAndEnvs(model, &data)
 
 	jsonByte, err := json.Marshal(data)
 	if err != nil {
-		return fmt.Errorf("could not marshal json: %w", err)
+		return err
 	}
 
 	if err := json.Unmarshal(jsonByte, &model); err != nil {
-		return fmt.Errorf("could not unmarshal json: %w", err)
+		return err
 	}
 	return nil
 }
 
 // constructs a json format of the model, and then binds the values from envs
-func constructJSONFromModelAndEnvs(model interface{}, json *map[string]interface{}, parts ...string) {
+func constructJSONFromModelAndEnvs(model any, json *map[string]any, parts ...string) {
 	ifv := reflect.ValueOf(model)
 	if ifv.Kind() == reflect.Pointer {
 		ifv = ifv.Elem()
@@ -236,7 +155,7 @@ func constructJSONFromModelAndEnvs(model interface{}, json *map[string]interface
 				constructJSONFromModelAndEnvs(v.Interface(), json)
 				continue
 			}
-			subjson := make(map[string]interface{})
+			subjson := make(map[string]any)
 			constructJSONFromModelAndEnvs(v.Interface(), &subjson, append(parts, tv)...)
 			// check if subjson interface is empty
 			if len(subjson) != 0 {
@@ -253,7 +172,7 @@ func constructJSONFromModelAndEnvs(model interface{}, json *map[string]interface
 }
 
 // Fetches the environment value for the given field
-func getEnvValue(keyString string) interface{} {
+func getEnvValue(keyString string) any {
 	key := strings.ToUpper(keyString)
 	key = fmt.Sprintf("%s_%s", envPrefix, key)
 	stringVal := os.Getenv(key)
@@ -288,33 +207,4 @@ func getEnvValue(keyString string) interface{} {
 
 	// default is string
 	return stringVal
-}
-
-type ErrDecoding struct {
-	err error
-}
-
-func (err *ErrDecoding) Unwrap() error {
-	return err.err
-}
-
-func (err *ErrDecoding) Error() string {
-	return fmt.Sprintf("could not decode config: %s", err.err.Error())
-}
-
-type ErrUnsupportedGVK struct {
-	gvk *schema.GroupVersionKind
-}
-
-func (err *ErrUnsupportedGVK) Error() string {
-	return fmt.Sprintf("unsupported group version kind: %s", err.gvk.String())
-}
-
-type ErrRuntimeObjectAssertion struct {
-	gvk    *schema.GroupVersionKind
-	target string
-}
-
-func (err *ErrRuntimeObjectAssertion) Error() string {
-	return fmt.Sprintf("could not assert %s to %s", err.gvk.String(), err.target)
 }

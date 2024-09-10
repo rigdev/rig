@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"fmt"
 
+	"github.com/xeipuuv/gojsonschema"
 	"go.uber.org/zap/zapcore"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -629,6 +630,7 @@ func (cfg *PlatformConfig) Validate() error {
 
 	var errs field.ErrorList
 	errs = append(errs, cfg.Cluster.validate(field.NewPath("clusters"))...)
+	errs = append(errs, cfg.validateCapsuleExtensions(field.NewPath("capsuleExtensiosn"))...)
 
 	return errs.ToAggregate()
 }
@@ -641,6 +643,44 @@ func (g ClusterGit) validate(path *field.Path) field.ErrorList {
 	var errs field.ErrorList
 	if g.PathPrefix != "" && g.PathPrefixes != (PathPrefixes{}) {
 		return append(errs, field.Invalid(path, g, "can't set both `pathPrefix` and `pathPrefixes`"))
+	}
+
+	return errs
+}
+
+func (cfg *PlatformConfig) validateCapsuleExtensions(path *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	for k, v := range cfg.CapsuleExtensions {
+		if err := v.validate(path.Key(k)); err != nil {
+			errs = append(errs, err...)
+		}
+	}
+	return errs
+}
+
+func (e Extension) validate(path *field.Path) field.ErrorList {
+	var errs field.ErrorList
+
+	schemaPath := path.Child("schema")
+	if e.Schema.Type != "object" {
+		errs = append(errs, field.Invalid(
+			schemaPath.Child("type"), e.Schema.Type, "top level schema must be of type 'object'"),
+		)
+		return errs
+	}
+
+	for key, prop := range e.Schema.Properties {
+		if prop.Type == "object" || prop.Type == "array" {
+			errs = append(errs,
+				field.Invalid(
+					schemaPath.Child("properties").Key(key).Child("type"),
+					prop.Type, "complex child properties are not yet supported"),
+			)
+		}
+	}
+
+	if _, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(e.Schema)); err != nil {
+		errs = append(errs, field.Invalid(schemaPath, e.Schema, err.Error()))
 	}
 
 	return errs

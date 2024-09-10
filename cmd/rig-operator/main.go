@@ -30,6 +30,7 @@ import (
 	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/rigdev/rig/pkg/service/objectstatus"
 	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"golang.org/x/net/http2"
@@ -80,23 +81,21 @@ func run(cmd *cobra.Command, _ []string) error {
 		fx.Provide(
 			ctrl.GetConfigOrDie,
 			scheme.New,
-			func(cfg config.Service) logr.Logger {
-				log := log.New(cfg.Operator().DevModeEnabled)
+			func() afero.Fs {
+				return afero.NewOsFs()
+			},
+			func(cfg *v1alpha1.OperatorConfig) logr.Logger {
+				log := log.New(cfg.DevModeEnabled)
 				ctrl.SetLogger(log)
 				return log
 			},
-			func(scheme *runtime.Scheme) (config.Service, *v1alpha1.OperatorConfig, error) {
+			func(fs afero.Fs, scheme *runtime.Scheme) (*v1alpha1.OperatorConfig, error) {
 				cfgFile, err := cmd.Flags().GetString(flagConfigFile)
 				if err != nil {
-					return nil, nil, err
+					return nil, err
 				}
 
-				cfg, err := config.NewService(scheme, cfgFile)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				return cfg, cfg.Operator(), nil
+				return config.NewOperatorConfig(fs, scheme, config.WithFilePaths(cfgFile))
 			},
 			func(lc fx.Lifecycle, log logr.Logger) context.Context {
 				ctx, cancel := context.WithCancel(cmd.Context())

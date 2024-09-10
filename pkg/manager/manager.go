@@ -5,11 +5,11 @@ import (
 	"os"
 
 	"github.com/go-logr/logr"
+	cfg_v1alpha1 "github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/controller"
 	"github.com/rigdev/rig/pkg/service/capabilities"
-	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/rigdev/rig/pkg/service/objectstatus"
 	"github.com/rigdev/rig/pkg/service/pipeline"
 	"go.uber.org/fx"
@@ -30,7 +30,7 @@ func getEnvWithDefault(env, def string) string {
 }
 
 func New(
-	cfgS config.Service,
+	cfg *cfg_v1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
 	capabilitiesService capabilities.Service,
 	pipeline pipeline.Service,
@@ -39,8 +39,6 @@ func New(
 	logger logr.Logger,
 	lc fx.Lifecycle,
 ) (manager.Manager, error) {
-	cfg := cfgS.Operator()
-
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                        scheme,
 		Metrics:                       metricsserver.Options{BindAddress: ":8080"},
