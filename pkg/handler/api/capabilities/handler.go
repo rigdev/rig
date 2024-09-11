@@ -6,15 +6,15 @@ import (
 	connect "connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/obj"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
-	"github.com/rigdev/rig/pkg/service/config"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func NewHandler(
 	capabilities svccapabilities.Service,
-	cfg config.Service,
+	cfg *v1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
 ) capabilitiesconnect.ServiceHandler {
 	return &handler{
@@ -26,8 +26,8 @@ func NewHandler(
 
 type handler struct {
 	capabilities svccapabilities.Service
-	cfg          config.Service
 	scheme       *runtime.Scheme
+	cfg          *v1alpha1.OperatorConfig
 }
 
 // Get implements capabilitiesconnect.ServiceClient.
@@ -46,8 +46,7 @@ func (h *handler) GetConfig(
 	_ context.Context,
 	_ *connect.Request[capabilities.GetConfigRequest],
 ) (*connect.Response[capabilities.GetConfigResponse], error) {
-	cfg := h.cfg.Operator()
-	bytes, err := obj.Encode(cfg, h.scheme)
+	bytes, err := obj.Encode(h.cfg, h.scheme)
 	if err != nil {
 		return nil, err
 	}
