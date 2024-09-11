@@ -29,7 +29,9 @@ func (s *CapsuleExtensionStep) Apply(ctx context.Context, req pipeline.CapsuleRe
 	return nil
 }
 
-func (s *CapsuleExtensionStep) WatchObjectStatus(ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback) error {
+func (s *CapsuleExtensionStep) WatchObjectStatus(
+	ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback,
+) error {
 	// TODO: We want to opt out if not relevant for this capsule.
 	return s.step.WatchObjectStatus(ctx, namespace, capsule, callback)
 }
@@ -48,7 +50,9 @@ func NewCapsuleExtensionValidationStep(cfg *v1alpha1.OperatorConfig) *CapsuleExt
 	}
 }
 
-func (s *CapsuleExtensionValidationStep) Apply(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.Options) error {
+func (s *CapsuleExtensionValidationStep) Apply(
+	_ context.Context, req pipeline.CapsuleRequest, _ pipeline.Options,
+) error {
 	for name := range req.Capsule().Spec.Extensions {
 		if _, ok := s.cfg.Pipeline.CapsuleExtensions[name]; !ok {
 			return errors.UnimplementedErrorf("capsule extension '%s' not supported by cluster", name)
@@ -58,7 +62,9 @@ func (s *CapsuleExtensionValidationStep) Apply(ctx context.Context, req pipeline
 	return nil
 }
 
-func (s *CapsuleExtensionValidationStep) WatchObjectStatus(ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback) error {
+func (s *CapsuleExtensionValidationStep) WatchObjectStatus(
+	_ context.Context, _, _ string, _ pipeline.ObjectStatusCallback,
+) error {
 	return nil
 }
 
