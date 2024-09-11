@@ -45,6 +45,10 @@ func (p *Plugin) Initialize(_ plugin.InitializeRequest) error {
 	return nil
 }
 
+func (p *Plugin) ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) (string, error) {
+	return plugin.ParseCapsuleTemplatedConfigToString[Config](nil, req)
+}
+
 func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	value, ok := req.Capsule().Annotations[AnnotationEnvMapping]
 	if !ok {

@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
@@ -23,6 +24,11 @@ type Service interface {
 		namespace, capsuleName string,
 		spec *v1alpha2.Capsule,
 		opts ...pipeline.CapsuleRequestOption) (*pipeline.Result, error)
+	DryRunPluginConfig(ctx context.Context,
+		cfg *v1alpha1.OperatorConfig,
+		namespace, capsuleName string,
+		capsuleSpec *v1alpha2.Capsule,
+	) (pipeline.PluginConfigResult, error)
 }
 
 type PluginUsed struct {
@@ -91,6 +97,28 @@ func (s *service) DryRun(
 	capsuleSpec *v1alpha2.Capsule,
 	opts ...pipeline.CapsuleRequestOption,
 ) (*pipeline.Result, error) {
+	p, err := s.setupDryRunPipeline(ctx, cfg, namespace, capsuleName, capsuleSpec)
+	if err != nil {
+		return nil, err
+	}
+	return p.RunCapsule(ctx, capsuleSpec, s.client, append(opts, pipeline.WithDryRun())...)
+}
+
+func (s *service) DryRunPluginConfig(ctx context.Context,
+	cfg *v1alpha1.OperatorConfig,
+	namespace, capsuleName string,
+	capsuleSpec *v1alpha2.Capsule,
+) (pipeline.PluginConfigResult, error) {
+	p, err := s.setupDryRunPipeline(ctx, cfg, namespace, capsuleName, capsuleSpec)
+	if err != nil {
+		return pipeline.PluginConfigResult{}, err
+	}
+	return p.ComputeConfig(ctx, capsuleSpec, s.client)
+}
+
+func (s *service) setupDryRunPipeline(
+	ctx context.Context, cfg *v1alpha1.OperatorConfig, namespace, capsuleName string, capsuleSpec *v1alpha2.Capsule,
+) (*pipeline.CapsulePipeline, error) {
 	if capsuleSpec == nil {
 		capsuleSpec = &v1alpha2.Capsule{}
 		if err := errors.FromK8sClient(s.client.Get(ctx, types.NamespacedName{
@@ -136,8 +164,8 @@ func (s *service) DryRun(
 			p.AddStep(step)
 		}
 
-		for _, step := range cfg.Pipeline.Steps {
-			ps, err := s.pluginManager.NewStep(execCtx, step, s.logger)
+		for idx, step := range cfg.Pipeline.Steps {
+			ps, err := s.pluginManager.NewStep(execCtx, step, s.logger, customStepName(idx))
 			if err != nil {
 				return nil, err
 			}
@@ -146,6 +174,9 @@ func (s *service) DryRun(
 			defer ps.Stop(ctx)
 		}
 	}
+	return p, nil
+}
 
-	return p.RunCapsule(ctx, capsuleSpec, s.client, append(opts, pipeline.WithDryRun())...)
+func customStepName(idx int) string {
+	return fmt.Sprintf("customStep#%v", idx)
 }

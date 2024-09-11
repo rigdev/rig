@@ -10,6 +10,8 @@ service Service {
       returns (stream WatchObjectStatusResponse) {}
 
   rpc DryRun(DryRunRequest) returns (DryRunResponse) {}
+  rpc DryRunPluginConfig(DryRunPluginConfigRequest)
+      returns (DryRunPluginConfigResponse) {}
 }
 
 message WatchObjectStatusRequest {
@@ -58,4 +60,26 @@ message Object {
   GVK gvk = 1;
   string name = 2;
   string content = 3;
+}
+
+message DryRunPluginConfigRequest {
+  string namespace = 1;
+  string capsule = 2;
+  string operator_config = 3;
+  string capsule_spec = 4;
+}
+
+message DryRunPluginConfigResponse {
+  repeated StepConfig steps = 1;
+}
+
+message StepConfig {
+  string name = 1;
+  repeated PluginConfig plugins = 2;
+}
+
+message PluginConfig {
+  string name = 1;
+  string config = 2;
+  string err = 3;
 }

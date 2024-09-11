@@ -52,8 +52,8 @@ func CreateDefaultPipeline(
 		pipeline.AddStep(step)
 	}
 
-	for _, step := range cfg.Pipeline.Steps {
-		ps, err := pluginManager.NewStep(execCtx, step, logger)
+	for idx, step := range cfg.Pipeline.Steps {
+		ps, err := pluginManager.NewStep(execCtx, step, logger, customStepName(idx))
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +177,7 @@ func NewCapsulePluginStep(
 					Config: pluginConfig,
 				},
 			},
-		}, logger)
+		}, logger, pluginName)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func NewRigPlatformCapsulePluginStep(
 					Config: pluginConfig,
 				},
 			},
-		}, logger)
+		}, logger, pluginName)
 	if err != nil {
 		return nil, err
 	}

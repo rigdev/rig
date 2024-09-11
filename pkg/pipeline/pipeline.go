@@ -106,6 +106,23 @@ func (p *CapsulePipeline) RunCapsule(
 	return ExecuteRequest(ctx, req, p.steps, true, pipelineOptions)
 }
 
+func (p *CapsulePipeline) ComputeConfig(
+	ctx context.Context,
+	capsule *v1alpha2.Capsule,
+	client client.Client,
+) (PluginConfigResult, error) {
+	req := newCapsuleRequest(p, capsule, client, p.vm)
+	if err := req.GetBase().Strategies.LoadExistingObjects(ctx); err != nil {
+		return PluginConfigResult{}, err
+	}
+	var res PluginConfigResult
+	for _, step := range p.steps {
+		r := step.ComputeConfig(ctx, req)
+		res.Steps = append(res.Steps, r)
+	}
+	return res, nil
+}
+
 func (p *CapsulePipeline) DeleteCapsule(
 	ctx context.Context,
 	capsule *v1alpha2.Capsule,
@@ -130,6 +147,21 @@ type OutputObject struct {
 type Result struct {
 	InputObjects  []client.Object
 	OutputObjects []OutputObject
+}
+
+type PluginConfigResult struct {
+	Steps []StepConfigResult
+}
+
+type StepConfigResult struct {
+	Name    string
+	Plugins []PluginConfig
+}
+
+type PluginConfig struct {
+	Name   string
+	Config string
+	Err    string
 }
 
 // TODO This ExecuteableRequest type construction is a bit messy

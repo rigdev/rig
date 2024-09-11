@@ -20,6 +20,7 @@ type Step struct {
 	logger  logr.Logger
 	plugins []*pluginExecutor
 	matcher Matcher
+	name    string
 }
 
 func makeGlobs(strings []string) ([]glob.Glob, error) {
@@ -123,6 +124,31 @@ func (s *Step) PluginIDs() []uuid.UUID {
 		plugins = append(plugins, p.id)
 	}
 	return plugins
+}
+
+func (s *Step) ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest) pipeline.StepConfigResult {
+	res := pipeline.StepConfigResult{
+		Name: s.Name(),
+	}
+	for _, p := range s.plugins {
+		config, err := p.ComputeConfig(ctx, req)
+		if err != nil {
+			res.Plugins = append(res.Plugins, pipeline.PluginConfig{
+				Name: p.name,
+				Err:  err.Error(),
+			})
+		} else {
+			res.Plugins = append(res.Plugins, pipeline.PluginConfig{
+				Name:   p.name,
+				Config: config,
+			})
+		}
+	}
+	return res
+}
+
+func (s *Step) Name() string {
+	return s.name
 }
 
 type Matcher struct {

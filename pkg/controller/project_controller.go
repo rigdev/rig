@@ -109,3 +109,13 @@ func (s namespaceStep) WatchObjectStatus(
 func (s namespaceStep) PluginIDs() []uuid.UUID {
 	return nil
 }
+
+func (s namespaceStep) ComputeConfig(
+	_ context.Context, _ pipeline.ProjectEnvironmentRequest,
+) pipeline.StepConfigResult {
+	return pipeline.StepConfigResult{}
+}
+
+func (s namespaceStep) Name() string {
+	return "namespace"
+}

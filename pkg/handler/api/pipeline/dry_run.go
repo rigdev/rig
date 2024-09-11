@@ -114,3 +114,40 @@ func (h *handler) DryRun(
 
 	return connect.NewResponse(res), nil
 }
+
+func (h *handler) DryRunPluginConfig(
+	ctx context.Context,
+	req *connect.Request[apipipeline.DryRunPluginConfigRequest],
+) (*connect.Response[apipipeline.DryRunPluginConfigResponse], error) {
+	cfg, err := h.decodeOperatorConfig(req.Msg.GetOperatorConfig())
+	if err != nil {
+		return nil, err
+	}
+
+	var spec *v1alpha2.Capsule
+	if req.Msg.GetCapsuleSpec() != "" {
+		spec = &v1alpha2.Capsule{}
+		if err := obj.DecodeInto([]byte(req.Msg.GetCapsuleSpec()), spec, h.scheme); err != nil {
+			return nil, err
+		}
+	}
+	result, err := h.pipeline.DryRunPluginConfig(ctx, cfg, req.Msg.GetNamespace(), req.Msg.GetCapsule(), spec)
+	if err != nil {
+		return nil, err
+	}
+	resp := &apipipeline.DryRunPluginConfigResponse{}
+	for _, step := range result.Steps {
+		s := &apipipeline.StepConfig{
+			Name: step.Name,
+		}
+		for _, p := range step.Plugins {
+			s.Plugins = append(s.Plugins, &apipipeline.PluginConfig{
+				Name:   p.Name,
+				Config: p.Config,
+				Err:    p.Err,
+			})
+		}
+		resp.Steps = append(resp.Steps, s)
+	}
+	return connect.NewResponse(resp), nil
+}
