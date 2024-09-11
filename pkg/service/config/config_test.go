@@ -147,7 +147,7 @@ capsuleExtensions:
 			},
 			expected: nil,
 			expectedErr: errors.New(
-				"capsuleExtensiosn[key].schema.type: Invalid value: \"string\": top level schema must be of type 'object'",
+				"capsuleExtensions[key].schema.type: Invalid value: \"string\": top level schema must be of type 'object'",
 			),
 		},
 	}
