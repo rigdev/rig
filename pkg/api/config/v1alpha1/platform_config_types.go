@@ -630,7 +630,7 @@ func (cfg *PlatformConfig) Validate() error {
 
 	var errs field.ErrorList
 	errs = append(errs, cfg.Cluster.validate(field.NewPath("clusters"))...)
-	errs = append(errs, cfg.validateCapsuleExtensions(field.NewPath("capsuleExtensiosn"))...)
+	errs = append(errs, cfg.validateCapsuleExtensions(field.NewPath("capsuleExtensions"))...)
 
 	return errs.ToAggregate()
 }
