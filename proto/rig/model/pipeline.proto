@@ -20,17 +20,34 @@ message Phase {
   // Fields prefixes to either promote or not.
   FieldPrefixes field_prefixes = 2;
   // Promotion triggers.
-  repeated PromotionTrigger triggers = 3;
+  Triggers triggers = 3;
 }
 
 message FieldPrefixes {
+  // If true, only fields with the specified prefixes will be promoted
+  // If false, only fields without the specified prefixes will be promoted
   bool inclusion = 1;
   repeated string prefixes = 2;
 }
 
-message PromotionTrigger {
-  bool automatic = 1;
-  oneof condition {
-    google.protobuf.Duration time_alive = 2;
+message Triggers {
+  // The automatic trigger
+  Trigger automatic = 1;
+  // The manual trigger
+  Trigger manual = 2;
+}
+
+message Trigger {
+  // Condition that must be met for the trigger to fire.
+  message Condition {
+    oneof Condition {
+      google.protobuf.Duration time_alive = 1;
+    }
   }
+
+  // The conditions that must be met for the trigger to fire.
+  repeated Condition conditions = 1;
+  // If true, all conditions must be met for the trigger to fire. Otherwise only
+  // a single condition must be met.
+  bool require_all = 2;
 }
