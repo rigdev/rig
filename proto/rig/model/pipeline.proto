@@ -17,23 +17,20 @@ message Pipeline {
 message Phase {
   // Environment to promote to. The project must be active in this environment.
   string environment_id = 1;
-  // Fixed fields, that are not changed upon promotion.
-  repeated string fixed_fields = 2;
+  // Fields prefixes to either promote or not.
+  FieldPrefixes field_prefixes = 2;
   // Promotion triggers.
   repeated PromotionTrigger triggers = 3;
 }
 
+message FieldPrefixes {
+  bool inclusion = 1;
+  repeated string prefixes = 2;
+}
+
 message PromotionTrigger {
-  message Manual {}
-
-  message Auto {
-    oneof trigger {
-      google.protobuf.Duration time_alive = 1;
-    }
-  }
-
-  oneof trigger {
-    Manual manual = 1;
-    Auto auto = 2;
+  bool automatic = 1;
+  oneof condition {
+    google.protobuf.Duration time_alive = 2;
   }
 }

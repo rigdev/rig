@@ -25,7 +25,12 @@ message PhaseStatus {
   string environment_id = 1;
   PhaseState state = 2;
   uint64 rollout_id = 3;
-  string message = 4;
+  repeated PhaseMessage messages = 4;
+}
+
+message PhaseMessage {
+  string message = 1;
+  google.protobuf.Timestamp timestamp = 2;
 }
 
 enum State {
