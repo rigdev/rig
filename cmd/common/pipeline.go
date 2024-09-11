@@ -165,15 +165,21 @@ func updatePipeline(
 			for _, p := range pipeline.Phases {
 				var triggers []string
 				for _, t := range p.GetTriggers() {
-					switch v := t.GetTrigger().(type) {
-					case *model.PromotionTrigger_Auto_:
-						triggers = append(triggers, fmt.Sprintf("auto (%s)", v.Auto.GetTimeAlive().AsDuration().String()))
-					case *model.PromotionTrigger_Manual_:
-						triggers = append(triggers, "manual")
-					}
+					triggers = append(triggers, triggerToString(t))
 				}
+
+				fieldsString := ""
+				if len(p.GetFieldPrefixes().GetPrefixes()) > 0 {
+					fieldsString = "Excluded: "
+					if p.GetFieldPrefixes().GetInclusion() {
+						fieldsString = "Included: "
+					}
+
+					fieldsString += strings.Join(p.GetFieldPrefixes().GetPrefixes(), "/n")
+				}
+
 				rows = append(rows, []string{p.GetEnvironmentId(), strings.Join(triggers, "\n"),
-					strings.Join(p.GetFixedFields(), "\n")})
+					fieldsString})
 			}
 			i, err := prompter.TableSelect("Select the phase to update (CTRL + C to cancel)", rows, header)
 			if err != nil {
@@ -247,7 +253,7 @@ func updatePhase(
 
 			phase.Triggers = triggers
 		case 2:
-			fixedFields, err := updateFixedFields(prompter, phase.GetFixedFields())
+			fieldPrefixes, err := updateFieldPrefixes(prompter, phase.GetFieldPrefixes())
 			if err != nil {
 				if ErrIsAborted(err) {
 					continue
@@ -255,15 +261,24 @@ func updatePhase(
 				return nil, err
 			}
 
-			phase.FixedFields = fixedFields
+			phase.FieldPrefixes = fieldPrefixes
 		case 3:
 			return phase, nil
 		}
 	}
 }
 
-func updateFixedFields(prompter Prompter, fixedFields []string) ([]string, error) {
-	fields := append(fixedFields, "Add", "Remove", "Done")
+func updateFieldPrefixes(prompter Prompter, prefixes *model.FieldPrefixes) (*model.FieldPrefixes, error) {
+	if prefixes == nil {
+		prefixes = &model.FieldPrefixes{}
+	}
+	prefixes = proto.Clone(prefixes).(*model.FieldPrefixes)
+	inclusion := "Include Fields"
+	if prefixes.Inclusion {
+		inclusion = "Exclude Fields"
+	}
+
+	fields := append(prefixes.GetPrefixes(), inclusion, "Add", "Remove", "Done")
 	for {
 		i, _, err := prompter.Select("Select the field to update (CTRL + C to cancel)", fields)
 		if err != nil {
@@ -271,6 +286,14 @@ func updateFixedFields(prompter Prompter, fixedFields []string) ([]string, error
 		}
 
 		switch i {
+		case len(fields) - 4:
+			prefixes.Inclusion = !prefixes.Inclusion
+			inclusion := "Include Fields"
+			if prefixes.Inclusion {
+				inclusion = "Exclude Fields"
+			}
+
+			fields[len(fields)-4] = inclusion
 		case len(fields) - 3:
 			field, err := prompter.Input("Enter the fixed field", ValidateNonEmptyOpt)
 			if err != nil {
@@ -280,10 +303,10 @@ func updateFixedFields(prompter Prompter, fixedFields []string) ([]string, error
 				return nil, err
 			}
 
-			fixedFields = append(fixedFields, field)
-			fields = append(fields[:len(fields)-3], field, "Add", "Remove", "Done")
+			prefixes.Prefixes = append(prefixes.GetPrefixes(), field)
+			fields = append(fields[:len(fields)-4], field, "Add", "Remove", "Done")
 		case len(fields) - 2:
-			i, _, err := prompter.Select("Select the field to remove", fixedFields)
+			i, _, err := prompter.Select("Select the field to remove", prefixes.GetPrefixes())
 			if err != nil {
 				if ErrIsAborted(err) {
 					continue
@@ -291,11 +314,13 @@ func updateFixedFields(prompter Prompter, fixedFields []string) ([]string, error
 				return nil, err
 			}
 
-			fixedFields = append(fixedFields[:i], fixedFields[i+1:]...)
+			prefixes.Prefixes = append(prefixes.GetPrefixes()[:i], prefixes.GetPrefixes()[i+1:]...)
+			fields = append(fields[:len(fields)-4], "Add", "Remove", "Done")
 		case len(fields) - 1:
-			return fixedFields, nil
+			return prefixes, nil
 		default:
-			field, err := prompter.Input("Enter the fixed field", ValidateNonEmptyOpt, InputDefaultOpt(fixedFields[i]))
+			field, err := prompter.Input("Enter the fixed field", ValidateNonEmptyOpt,
+				InputDefaultOpt(prefixes.GetPrefixes()[i]))
 			if err != nil {
 				if ErrIsAborted(err) {
 					continue
@@ -303,7 +328,7 @@ func updateFixedFields(prompter Prompter, fixedFields []string) ([]string, error
 				return nil, err
 			}
 
-			fixedFields[i] = field
+			prefixes.Prefixes[i] = field
 		}
 	}
 }
@@ -322,13 +347,22 @@ func updateTriggers(prompter Prompter, triggers []*model.PromotionTrigger) ([]*m
 	}
 
 	triggerToRow := func(t *model.PromotionTrigger) []string {
-		switch v := t.GetTrigger().(type) {
-		case *model.PromotionTrigger_Auto_:
-			return []string{"Auto", v.Auto.GetTimeAlive().AsDuration().String()}
-		case *model.PromotionTrigger_Manual_:
-			return []string{"Manual", ""}
+		details := "None"
+		if t.GetCondition() != nil {
+			switch v := t.GetCondition().(type) {
+			case *model.PromotionTrigger_TimeAlive:
+				details = fmt.Sprintf("Time Alive: %s", v.TimeAlive.AsDuration().String())
+			default:
+				details = "Unknown"
+			}
 		}
-		return nil
+
+		triggerType := "Manual"
+		if t.GetAutomatic() {
+			triggerType = "Auto"
+		}
+
+		return []string{triggerType, details}
 	}
 
 	header := []string{"Type", "Details"}
@@ -402,31 +436,52 @@ func updateTrigger(prompter Prompter, trigger *model.PromotionTrigger) (*model.P
 		return nil, err
 	}
 
-	switch i {
-	case 0:
-		d, err := prompter.Input("Enter the time alive", ValidateDurationOpt,
-			InputDefaultOpt(trigger.GetAuto().GetTimeAlive().AsDuration().String()))
-		if err != nil {
-			return nil, err
-		}
+	if i == 0 {
+		trigger.Automatic = true
+	} else {
+		trigger.Automatic = false
+	}
 
-		dur, err := time.ParseDuration(d)
-		if err != nil {
-			return nil, err
-		}
+	hasCondition, err := prompter.Confirm("Is this trigger condition based?", false)
+	if err != nil {
+		return nil, err
+	}
 
-		trigger.Trigger = &model.PromotionTrigger_Auto_{
-			Auto: &model.PromotionTrigger_Auto{
-				Trigger: &model.PromotionTrigger_Auto_TimeAlive{
-					TimeAlive: durationpb.New(dur),
-				},
-			},
-		}
-	case 1:
-		trigger.Trigger = &model.PromotionTrigger_Manual_{
-			Manual: &model.PromotionTrigger_Manual{},
-		}
+	if !hasCondition {
+		trigger.Condition = nil
+		return trigger, nil
+	}
+
+	d, err := prompter.Input("Enter the time alive", ValidateDurationOpt,
+		InputDefaultOpt(trigger.GetTimeAlive().AsDuration().String()))
+	if err != nil {
+		return nil, err
+	}
+
+	dur, err := time.ParseDuration(d)
+	if err != nil {
+		return nil, err
+	}
+
+	trigger.Condition = &model.PromotionTrigger_TimeAlive{
+		TimeAlive: durationpb.New(dur),
 	}
 
 	return trigger, nil
+}
+
+func triggerToString(t *model.PromotionTrigger) string {
+	str := "manual"
+	if t.GetAutomatic() {
+		str = "auto"
+	}
+
+	if t.GetCondition() != nil {
+		switch v := t.GetCondition().(type) {
+		case *model.PromotionTrigger_TimeAlive:
+			str = str + fmt.Sprintf(" (%s)", v.TimeAlive.AsDuration().String())
+		}
+	}
+
+	return str
 }

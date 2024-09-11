@@ -11,6 +11,7 @@ import (
 	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	pipeline_api "github.com/rigdev/rig-go-api/api/v1/capsule/pipeline"
 	project_api "github.com/rigdev/rig-go-api/api/v1/project"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
@@ -194,26 +195,39 @@ func (c *Cmd) promptForPipelineID(ctx context.Context) (string, error) {
 	resp, err := c.Rig.Capsule().ListPipelineStatuses(ctx,
 		connect.NewRequest(&capsule_api.ListPipelineStatusesRequest{
 			ProjectFilter: c.Scope.GetCurrentContext().GetProject(),
+			Pagination: &model.Pagination{
+				Descending: true,
+			},
 		}))
 	if err != nil {
 		return "", err
 	}
 
-	var pipelineStatusIDs []string
-	for _, status := range resp.Msg.GetStatuses() {
-		pipelineStatusIDs = append(pipelineStatusIDs, fmt.Sprint(status.GetExecutionId()))
+	var rows [][]string
+	for _, pipeline := range resp.Msg.GetStatuses() {
+		rows = append(rows, []string{
+			fmt.Sprint(pipeline.GetExecutionId()),
+			pipeline.GetCapsuleId(),
+			pipeline.GetPipelineName(),
+			pipeline.GetState().String(),
+		})
 	}
 
-	if len(pipelineStatusIDs) == 0 {
+	if len(rows) == 0 {
 		return "", fmt.Errorf("no pipeline executions found")
 	}
 
-	_, pipelineStatusID, err := c.Prompter.Select("Pipeline ID", pipelineStatusIDs)
+	i, err := c.Prompter.TableSelect("Pipeline ID", rows, []string{
+		"ID",
+		"Capsule",
+		"Pipeline",
+		"State",
+	})
 	if err != nil {
 		return "", err
 	}
 
-	return pipelineStatusID, nil
+	return fmt.Sprint(resp.Msg.Statuses[i].GetExecutionId()), nil
 }
 
 func (c *Cmd) pipelineStatusCompletions(
@@ -230,6 +244,9 @@ func (c *Cmd) pipelineStatusCompletions(
 	resp, err := c.Rig.Capsule().ListPipelineStatuses(ctx,
 		connect.NewRequest(&capsule_api.ListPipelineStatusesRequest{
 			ProjectFilter: c.Scope.GetCurrentContext().GetProject(),
+			Pagination: &model.Pagination{
+				Descending: true,
+			},
 		}))
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
@@ -256,8 +273,8 @@ func formatPipelineStatus(status *pipeline_api.Status) string {
 	} else {
 		startedAt = time.Since(status.GetStartedAt().AsTime()).Truncate(time.Second).String()
 	}
-	return fmt.Sprintf("%d\t (State: %v, Started At: %v)",
-		status.GetExecutionId(), status.GetState(), startedAt)
+	return fmt.Sprintf("%d\t (Capsule: %s, Pipeline %s, State: %v, Started At: %v)",
+		status.GetExecutionId(), status.GetCapsuleId(), status.GetPipelineName(), status.GetState(), startedAt)
 }
 
 func (c *Cmd) pipelineNameCompletion(

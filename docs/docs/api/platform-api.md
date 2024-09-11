@@ -1680,7 +1680,7 @@ A reference to a kubernetes object.
 | scale | [Scale](#platform-v1-Scale) |  |  |
 | cronJobs | [CronJob](#platform-v1-CronJob) | repeated |  |
 | autoAddRigServiceAccounts | [bool](#bool) |  |  |
-| extentions | [CapsuleSpec.ExtentionsEntry](#platform-v1-CapsuleSpec-ExtentionsEntry) | repeated |  |
+| extensions | [CapsuleSpec.ExtensionsEntry](#platform-v1-CapsuleSpec-ExtensionsEntry) | repeated |  |
 
 
 
@@ -1703,9 +1703,9 @@ A reference to a kubernetes object.
 
 
 
-<a name="platform-v1-CapsuleSpec-ExtentionsEntry"></a>
+<a name="platform-v1-CapsuleSpec-ExtensionsEntry"></a>
 
-### CapsuleSpec.ExtentionsEntry
+### CapsuleSpec.ExtensionsEntry
 
 
 
