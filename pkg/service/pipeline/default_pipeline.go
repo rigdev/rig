@@ -145,6 +145,18 @@ func GetDefaultPipelineSteps(
 		steps = append(steps, serviceMonitorStep)
 	}
 
+	steps = append(steps, NewCapsuleExtensionValidationStep(cfg))
+	for name, capsuleStep := range cfg.Pipeline.CapsuleExtensions {
+		if capsuleStep.Plugin != "" {
+			step, err := NewCapsulePluginStep(execCtx, capsuleStep.Plugin, capsuleStep.Config, pluginManager, logger, false)
+			if err != nil {
+				return nil, err
+			}
+
+			steps = append(steps, NewCapsuleExtensionStep(name, step))
+		}
+	}
+
 	return steps, nil
 }
 

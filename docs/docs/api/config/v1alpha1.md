@@ -608,6 +608,7 @@ _Appears in:_
 | `serviceMonitorStep` _[CapsuleStep](#capsulestep)_ | How to handle the service monitor step of capsules in the cluster. If left empty, no service monitors will be created. rigdev.service_monitor plugin spawns a Prometheus ServiceMonitor per capsule for use with a Prometheus Operator stack. |
 | `steps` _[Step](#step) array_ | Steps to perform as part of running the operator. |
 | `customPlugins` _[CustomPlugin](#customplugin) array_ | CustomPlugins enables custom plugins to be injected into the operator. The plugins injected here can then be referenced in 'steps' |
+| `capsuleExtensions` _object (keys:string, values:[CapsuleStep](#capsulestep))_ | CapsuleExtensions supported by the Operator. Each extension supported should be configured in the map, with an additional plugin name. |
 
 
 ### PlatformConfig
