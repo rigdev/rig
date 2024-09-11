@@ -5055,6 +5055,7 @@ The rollout model.
 | isSecret | [bool](#bool) |  |  |
 | status | [api.v1.pipeline.ObjectStatus](#api-v1-pipeline-ObjectStatus) | repeated |  |
 | transition | [Transition](#api-v1-capsule-Transition) |  |  |
+| content | [bytes](#bytes) |  |  |
 
 
 

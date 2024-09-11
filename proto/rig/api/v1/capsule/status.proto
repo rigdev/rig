@@ -59,6 +59,7 @@ message ConfigFileStatus {
   bool isSecret = 2;
   repeated api.v1.pipeline.ObjectStatus status = 3;
   Transition transition = 4;
+  bytes content = 5;
 }
 
 message CronJobStatus {
