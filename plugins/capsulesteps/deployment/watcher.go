@@ -259,8 +259,8 @@ func makeImagePullingCondition(container containerInfo) {
 		}
 	}
 
-	container.platformStatus.Image = container.status.Image
-	container.subObj.Properties["Image"] = container.status.Image
+	container.platformStatus.Image = container.status.ImageID
+	container.subObj.Properties["Image"] = container.status.ImageID
 	container.subObj.Conditions = append(container.subObj.Conditions, cond)
 }
 
