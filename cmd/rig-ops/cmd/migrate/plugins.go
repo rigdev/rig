@@ -36,12 +36,12 @@ func (c *Cmd) getPlugins(ctx context.Context, migration *Migration) error {
 			for _, plugin := range resp.Msg.Plugins {
 				switch v := plugin.GetPlugin().(type) {
 				case *capabilities.GetPluginsResponse_Plugin_Builtin:
-					if v.Builtin.GetName() == p.Name {
-						plugins = append(plugins, p.Name)
+					if v.Builtin.GetName() == p.GetPlugin() {
+						plugins = append(plugins, p.GetPlugin())
 					}
 				case *capabilities.GetPluginsResponse_Plugin_ThirdParty:
-					if v.ThirdParty.Name == p.Name {
-						plugins = append(plugins, p.Name)
+					if v.ThirdParty.Name == p.GetPlugin() {
+						plugins = append(plugins, p.GetPlugin())
 					}
 				}
 			}

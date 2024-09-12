@@ -29,12 +29,12 @@ func (c *Cmd) listSteps(ctx context.Context, _ *cobra.Command, _ []string) error
 		}
 		for _, p := range s.Plugins {
 			plugin := pluginInfo{
-				Name: p.Name,
+				Name: p.GetPlugin(),
 			}
 			if showConfig {
 				plugin.Config = map[string]any{}
 				if err := yaml.Unmarshal([]byte(p.Config), &plugin.Config); err != nil {
-					return fmt.Errorf("plugin '%s' had malformed config: %q", p.Name, err)
+					return fmt.Errorf("plugin '%s' had malformed config: %q", p.GetPlugin(), err)
 				}
 			}
 			step.Plugins = append(step.Plugins, plugin)
@@ -112,7 +112,7 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, args []string) error {
 		for idx, s := range cfg.Pipeline.Steps {
 			var plugins []string
 			for _, p := range s.Plugins {
-				plugins = append(plugins, p.Name)
+				plugins = append(plugins, p.GetPlugin())
 			}
 			choices = append(choices, []string{strconv.Itoa(idx), strings.Join(plugins, ", ")})
 		}
@@ -141,7 +141,7 @@ func (c *Cmd) get(ctx context.Context, _ *cobra.Command, args []string) error {
 	}
 	for _, p := range s.Plugins {
 		plugin := pluginInfo{
-			Name: p.Name,
+			Name: p.GetPlugin(),
 		}
 		if err := yaml.Unmarshal([]byte(p.Config), &plugin.Config); err != nil {
 			return fmt.Errorf("plugin had malformed config: %q", err)

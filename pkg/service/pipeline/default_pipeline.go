@@ -173,7 +173,7 @@ func NewCapsulePluginStep(
 			EnableForPlatform: enableForPlatform,
 			Plugins: []v1alpha1.Plugin{
 				{
-					Name:   pluginName,
+					Plugin: pluginName,
 					Config: pluginConfig,
 				},
 			},
@@ -202,7 +202,7 @@ func NewRigPlatformCapsulePluginStep(
 			},
 			Plugins: []v1alpha1.Plugin{
 				{
-					Name:   pluginName,
+					Plugin: pluginName,
 					Config: pluginConfig,
 				},
 			},

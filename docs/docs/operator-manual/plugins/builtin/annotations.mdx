@@ -4,29 +4,34 @@ The annotations plugin can insert annotations and labels into a given object.
 If any of the given annotations or labels are already present in the object, they will be overwritten.
 
 The config can be templated with standard Go templating and has
+
 ```
 .capsule
 ```
+
 as its templating context.
 
 ## Example
+
 Config:
+
 ```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:
       - plugins:
-        - name: rigdev.annotations
-          config: |
-            annotations:
-              key1: value1
-            labels:
-              key2: value2
-            group: apps
-            kind: Deployment
+          - plugin: rigdev.annotations
+            config: |
+              annotations:
+                key1: value1
+              labels:
+                key2: value2
+              group: apps
+              kind: Deployment
 ```
 
 If the name of the capsule in the request context is `my-capsule` with corresponding `Deployment`
+
 ```
 apiVersion: apps/v1
 kind: Deployment
@@ -38,7 +43,9 @@ metadata:
     label: value
   ....
 ```
+
 The resulting config of the `Deployment` is
+
 ```
 apiVersion: apps/v1
 kind: Deployment
@@ -51,6 +58,7 @@ metadata:
     key2: value2
   ....
 ```
+
 ## Config
 
 

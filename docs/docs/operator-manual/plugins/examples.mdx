@@ -14,7 +14,7 @@ config:
   pipeline:
     steps:
       - plugins:
-          - name: rigdev.object_template
+          - plugin: rigdev.object_template
             config: |
               group: core
               kind: Service  # Match services
@@ -41,7 +41,7 @@ config:
           annotations:
             example.com/long-grace-period: "true"
         plugins:
-          - name: rigdev.object_template
+          - plugin: rigdev.object_template
             config: |
               group: apps
               kind: Deployment
@@ -66,7 +66,7 @@ config:
     steps:
       - plugins:
             # Set up the secret volume.
-          - name: rigdev.object_template
+          - plugin: rigdev.object_template
             config: |
               group: apps
               kind: Deployment
@@ -79,7 +79,7 @@ config:
                         emptyDir: { }
 
             # Start and copy secrets into the volume.
-          - name: rigdev.init_container
+          - plugin: rigdev.init_container
             config: |
               # The container to inject.
               container:
@@ -96,7 +96,7 @@ config:
                     name: secrets-volume
 
             # Add the volume to the main container
-          - name: rigdev.object_template
+          - plugin: rigdev.object_template
             config: |
               group: apps
               kind: Deployment

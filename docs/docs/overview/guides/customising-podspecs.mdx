@@ -2,7 +2,7 @@
 
 While Rig provides Capsules as an abstraction that suits most usecases, you might find youself
 wanting that last little bit of control to fit your service definition perfectly. This is where
-[Plugins](/operator-manual/plugins) come in. For more information on plugins, check out the 
+[Plugins](/operator-manual/plugins) come in. For more information on plugins, check out the
 [Operator Setup guide](/operator-manual/setup-guide/operator/plugins), and the catalog for [built-in plugins](/operator-manual/plugins/builtin).
 
 ## Customising Podspecs
@@ -15,7 +15,7 @@ Furthermore, we will make this injection conditional based on the presence of a 
 
 ### Create a new capsule
 First we need to create the capsule that we are going to work on:
-```bash 
+```bash
 rig deploy my-capsule -i nginx
 ```
 
@@ -31,14 +31,14 @@ If you wish to use this particular image, it is available at `picklerig/top-secr
 
 ### Configure the plugins.
 For this to work, we need 3 components:
-- A plugin that creates an empty volume shared by the main container and the init container. 
+- A plugin that creates an empty volume shared by the main container and the init container.
     For this we will use the [object-template](/operator-manual/plugins/builtin/object_template) plugin.
 - A plugin that creates the init-container. For this we will naturally use the [init-container](/operator-manual/plugins/builtin/init_container) plugin.
 - A plugin that mounts the shared volume in the main container. For this, we will again use the [object-template](/operator-manual/plugins/builtin/object_template) plugin.
 
-We configure these plugins in the [operator-config](/api/config/v1alpha1#operatorconfig). 
-As the plugins are configured on operator-level, they will run for all capsules that are reconciled by that 
-operator, which in turn means that they are cluster specific. 
+We configure these plugins in the [operator-config](/api/config/v1alpha1#operatorconfig).
+As the plugins are configured on operator-level, they will run for all capsules that are reconciled by that
+operator, which in turn means that they are cluster specific.
 
 ```yaml title="Helm values - Operator"
 config:
@@ -46,7 +46,7 @@ config:
     steps:
       - plugins:
             # Set up the secret volume.
-          - name: rigdev.object_template
+          - plugin: rigdev.object_template
             config: |
               group: apps
               kind: Deployment
@@ -59,7 +59,7 @@ config:
                         emptyDir: { }
 
             # Start and copy secrets into the volume.
-          - name: rigdev.init_container
+          - plugin: rigdev.init_container
             config: |
               # The container to inject.
               container:
@@ -76,7 +76,7 @@ config:
                     name: secrets-volume
 
             # Add the volume to the main container
-          - name: rigdev.object_template
+          - plugin: rigdev.object_template
             config: |
               group: apps
               kind: Deployment
@@ -94,7 +94,7 @@ config:
 These three plugins are now configured to run in sequence for each capsule that is reconciled by the operator.
 
 ### Conditional injection
-What if we only want to inject the secrets in some capsules? We can use the `match` field in the 
+What if we only want to inject the secrets in some capsules? We can use the `match` field in the
 operator-config to filter which capsules the plugins are run for. In this case, we are going to match
 on the precense of an annotation `inject-secrets: ""`.
 

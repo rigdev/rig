@@ -248,13 +248,13 @@ func (m *Manager) NewStep(
 	}()
 
 	for _, plugin := range step.Plugins {
-		info, ok := m.plugins[plugin.Name]
+		info, ok := m.plugins[plugin.GetPlugin()]
 		if !ok {
-			return nil, fmt.Errorf("plugin '%s' was unknown", plugin.Name)
+			return nil, fmt.Errorf("plugin '%s' was unknown", plugin.GetPlugin())
 		}
 		p, err := newPluginExecutor(
 			execCtx,
-			plugin.Name, step.Tag, plugin.Tag, plugin.Config, info.BinaryPath,
+			plugin.GetPlugin(), step.Tag, plugin.Tag, plugin.Config, info.BinaryPath,
 			info.Args,
 			logger,
 			m.restConfig,

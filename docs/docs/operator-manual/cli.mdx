@@ -52,11 +52,11 @@ Available Commands:
 **check**
 ```
 % rig-ops plugins check
-Namespace                  Capsule    StepIndex  
-myproject                  mycapsule  0          
-myproject                  mycapsule2 0          
-myproject-staging          mycapsule  0      
-myproject-staging          mycapsule  1 
+Namespace                  Capsule    StepIndex
+myproject                  mycapsule  0
+myproject                  mycapsule2 0
+myproject-staging          mycapsule  0
+myproject-staging          mycapsule  1
 ```
 
 **dry-run**
@@ -73,28 +73,28 @@ plugins:
 - config:
     annotations:
       key: value
-  name: rigdev.annotations
+  plugin: rigdev.annotations
 ```
 
 **list**
 ```
-% rig-ops plugins list                                 
-Type     Name                                
-Builtin  rigdev.annotations                  
-Builtin  rigdev.cron_jobs                    
-Builtin  rigdev.datadog                      
-Builtin  rigdev.deployment                   
-Builtin  rigdev.env_mapping                  
-Builtin  rigdev.google_cloud_sql_auth_proxy  
-Builtin  rigdev.ingress_routes               
-Builtin  rigdev.init_container               
-Builtin  rigdev.object_create                
-Builtin  rigdev.object_template              
-Builtin  rigdev.placement                    
-Builtin  rigdev.service_account              
-Builtin  rigdev.service_monitor              
-Builtin  rigdev.sidecar                      
-Builtin  rigdev.vpa  
+% rig-ops plugins list
+Type     Name
+Builtin  rigdev.annotations
+Builtin  rigdev.cron_jobs
+Builtin  rigdev.datadog
+Builtin  rigdev.deployment
+Builtin  rigdev.env_mapping
+Builtin  rigdev.google_cloud_sql_auth_proxy
+Builtin  rigdev.ingress_routes
+Builtin  rigdev.init_container
+Builtin  rigdev.object_create
+Builtin  rigdev.object_template
+Builtin  rigdev.placement
+Builtin  rigdev.service_account
+Builtin  rigdev.service_monitor
+Builtin  rigdev.sidecar
+Builtin  rigdev.vpa
 ```
 
 ### Migrate
