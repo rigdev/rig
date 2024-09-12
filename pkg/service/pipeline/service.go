@@ -109,9 +109,6 @@ func (s *service) DryRunPluginConfig(ctx context.Context,
 	namespace, capsuleName string,
 	capsuleSpec *v1alpha2.Capsule,
 ) (pipeline.PluginConfigResult, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	p, err := s.setupDryRunPipeline(ctx, cfg, namespace, capsuleName, capsuleSpec)
 	if err != nil {
 		return pipeline.PluginConfigResult{}, err
