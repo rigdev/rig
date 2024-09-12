@@ -120,5 +120,21 @@ The dry run will be executed with the resulting list of plugins.`,
 	}
 	pluginsCmd.AddCommand(list)
 
+	computeConfig := &cobra.Command{
+		Use: "compute-config",
+		//nolint:lll
+		Short: "Given an operator config and a capsule spec, computes the configuration generated for each plugin.",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) != 0 && len(args) != 2 {
+				return errors.New("takes exactly 0 or 2 arguments")
+			}
+			return nil
+		},
+		RunE: cli.CtxWrap(cmd.computeConfig),
+	}
+	//nolint:lll
+	computeConfig.Flags().StringVar(&specPath, "spec", "", "If given, will read the capsule spec at the path instead of using the capsule spec of an existing capsule from the platform")
+	pluginsCmd.AddCommand(computeConfig)
+
 	parent.AddCommand(pluginsCmd)
 }

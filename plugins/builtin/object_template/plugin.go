@@ -38,6 +38,10 @@ type Plugin struct {
 	configBytes []byte
 }
 
+func (p *Plugin) ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) (string, error) {
+	return plugin.ParseCapsuleTemplatedConfigToString[Config](p.configBytes, req)
+}
+
 func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
 	return nil
@@ -115,8 +119,10 @@ type objInput struct {
 func makeObjInputs(req pipeline.CapsuleRequest, originalConfigBytes []byte, objects []client.Object) ([]objInput, error) {
 	var res []objInput
 	for _, obj := range objects {
-		config, err := plugin.ParseTemplatedConfig[Config](originalConfigBytes, req, plugin.CapsuleStep, func(_ Config, _ pipeline.CapsuleRequest) (string, any, error) {
-			return "current", obj, nil
+		config, err := plugin.ParseTemplatedConfig[Config](originalConfigBytes, req, plugin.CapsuleStep, func(_ Config, _ pipeline.CapsuleRequest) (map[string]any, error) {
+			return map[string]any{
+				"current": obj,
+			}, nil
 		})
 		if err != nil {
 			return nil, err

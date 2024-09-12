@@ -234,7 +234,9 @@ func (m *Manager) GetPlugins() []Info {
 	return plugins
 }
 
-func (m *Manager) NewStep(execCtx ExecutionContext, step v1alpha1.Step, logger logr.Logger) (*Step, error) {
+func (m *Manager) NewStep(
+	execCtx ExecutionContext, step v1alpha1.Step, logger logr.Logger, name string,
+) (*Step, error) {
 	var err error
 	var ps []*pluginExecutor
 	defer func() {
@@ -274,6 +276,7 @@ func (m *Manager) NewStep(execCtx ExecutionContext, step v1alpha1.Step, logger l
 		logger:  logger,
 		plugins: ps,
 		matcher: matcher,
+		name:    name,
 	}, nil
 }
 

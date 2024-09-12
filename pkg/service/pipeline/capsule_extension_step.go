@@ -40,6 +40,16 @@ func (s *CapsuleExtensionStep) PluginIDs() []uuid.UUID {
 	return s.step.PluginIDs()
 }
 
+func (s *CapsuleExtensionStep) ComputeConfig(
+	ctx context.Context, req pipeline.CapsuleRequest,
+) pipeline.StepConfigResult {
+	return s.step.ComputeConfig(ctx, req)
+}
+
+func (s *CapsuleExtensionStep) Name() string {
+	return s.name
+}
+
 type CapsuleExtensionValidationStep struct {
 	cfg *v1alpha1.OperatorConfig
 }
@@ -70,4 +80,14 @@ func (s *CapsuleExtensionValidationStep) WatchObjectStatus(
 
 func (s *CapsuleExtensionValidationStep) PluginIDs() []uuid.UUID {
 	return nil
+}
+
+func (s *CapsuleExtensionValidationStep) Name() string {
+	return "extension_validation"
+}
+
+func (s *CapsuleExtensionValidationStep) ComputeConfig(
+	_ context.Context, _ pipeline.CapsuleRequest,
+) pipeline.StepConfigResult {
+	return pipeline.StepConfigResult{}
 }

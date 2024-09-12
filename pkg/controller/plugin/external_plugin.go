@@ -186,6 +186,12 @@ func (p *pluginExecutor) WatchObjectStatus(
 	return p.pluginClient.WatchObjectStatus(ctx, namespace, capsule, callback, p.id)
 }
 
+func (p *pluginExecutor) ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	return p.pluginClient.ComputeConfig(ctx, req)
+}
+
 type rigOperatorPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 	logger hclog.Logger
@@ -239,23 +245,10 @@ func (m *pluginClient) Initialize(ctx context.Context, pluginConfig, tag string,
 }
 
 func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.Options) error {
-	reqServer := &requestServer{req: req}
-	capsuleBytes, err := obj.Encode(req.Capsule(), req.Scheme())
+	s, brokerID, err := m.setupGRPCServer(req)
 	if err != nil {
 		return err
 	}
-
-	c := make(chan *grpc.Server)
-	serverFunc := func(opts []grpc.ServerOption) *grpc.Server {
-		s := grpc.NewServer(opts...)
-		apiplugin.RegisterRequestServiceServer(s, reqServer)
-		c <- s
-		return s
-	}
-
-	brokerID := m.broker.NextId()
-	go m.broker.AcceptAndServe(brokerID, serverFunc)
-	s := <-c
 	defer s.Stop()
 
 	var additionalObjects [][]byte
@@ -267,6 +260,10 @@ func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest, opt
 		additionalObjects = append(additionalObjects, bs)
 	}
 
+	capsuleBytes, err := obj.Encode(req.Capsule(), req.Scheme())
+	if err != nil {
+		return err
+	}
 	_, err = m.client.RunCapsule(ctx, &apiplugin.RunCapsuleRequest{
 		RunServer:         brokerID,
 		CapsuleObject:     capsuleBytes,
@@ -274,6 +271,21 @@ func (m *pluginClient) Run(ctx context.Context, req pipeline.CapsuleRequest, opt
 	})
 
 	return err
+}
+
+func (m *pluginClient) setupGRPCServer(req pipeline.CapsuleRequest) (*grpc.Server, uint32, error) {
+	reqServer := &requestServer{req: req}
+	c := make(chan *grpc.Server)
+	serverFunc := func(opts []grpc.ServerOption) *grpc.Server {
+		s := grpc.NewServer(opts...)
+		apiplugin.RegisterRequestServiceServer(s, reqServer)
+		c <- s
+		return s
+	}
+	brokerID := m.broker.NextId()
+	go m.broker.AcceptAndServe(brokerID, serverFunc)
+	s := <-c
+	return s, brokerID, nil
 }
 
 func (m *pluginClient) WatchObjectStatus(
@@ -299,6 +311,26 @@ func (m *pluginClient) WatchObjectStatus(
 
 		callback.UpdateStatus(namespace, capsule, pluginID, res.GetChange())
 	}
+}
+
+func (m *pluginClient) ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest) (string, error) {
+	s, brokerID, err := m.setupGRPCServer(req)
+	if err != nil {
+		return "", err
+	}
+	defer s.Stop()
+
+	capsuleBytes, err := obj.Encode(req.Capsule(), req.Scheme())
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := m.client.ComputeConfig(ctx, &apiplugin.ComputeConfigRequest{
+		RunServer:     brokerID,
+		CapsuleObject: capsuleBytes,
+	})
+
+	return resp.GetConfig(), err
 }
 
 type requestServer struct {

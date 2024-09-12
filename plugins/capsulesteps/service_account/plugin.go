@@ -42,6 +42,10 @@ type Plugin struct {
 	configBytes []byte
 }
 
+func (p *Plugin) ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) (string, error) {
+	return plugin.ParseCapsuleTemplatedConfigToString[Config](p.configBytes, req)
+}
+
 func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
 	p.configBytes = req.Config
 	return nil

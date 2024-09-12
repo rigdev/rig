@@ -17,7 +17,9 @@ type Options struct {
 }
 
 type Step[T Request] interface {
+	Name() string
 	Apply(ctx context.Context, req T, opts Options) error
 	WatchObjectStatus(ctx context.Context, namespace, capsule string, callback ObjectStatusCallback) error
+	ComputeConfig(ctx context.Context, req T) StepConfigResult
 	PluginIDs() []uuid.UUID
 }

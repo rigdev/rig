@@ -34,6 +34,10 @@ func (p *Plugin) Initialize(req plugin.InitializeRequest) error {
 	return nil
 }
 
+func (p *Plugin) ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) (string, error) {
+	return plugin.ParseCapsuleTemplatedConfigToString[Config](p.configBytes, req)
+}
+
 func (p *Plugin) Run(_ context.Context, req pipeline.CapsuleRequest, _ hclog.Logger) error {
 	config, err := plugin.ParseCapsuleTemplatedConfig[Config](p.configBytes, req)
 	if err != nil {

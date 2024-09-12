@@ -9,6 +9,7 @@ service PluginService {
   rpc RunCapsule(RunCapsuleRequest) returns (RunCapsuleResponse) {}
   rpc WatchObjectStatus(WatchObjectStatusRequest)
       returns (stream WatchObjectStatusResponse) {}
+  rpc ComputeConfig(ComputeConfigRequest) returns (ComputeConfigResponse) {}
 }
 
 service RequestService {
@@ -109,4 +110,14 @@ message RestConfig {
   string host = 1;
   string bearer_token = 2;
   bytes tls_config = 3;
+}
+
+message ComputeConfigRequest {
+  uint32 run_server = 1;
+  bytes capsule_object = 2;
+  repeated bytes additional_objects = 3;
+}
+
+message ComputeConfigResponse {
+  string config = 1;
 }
