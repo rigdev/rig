@@ -73,6 +73,8 @@ func CapsuleStep[T any](_ T, req pipeline.CapsuleRequest) (map[string]any, error
 		}
 		extensions[k] = vv
 	}
+	// Deep-copy before we manipulate the structure.
+	c = c.DeepCopy()
 	c.Spec.Extensions = nil
 	return map[string]any{
 		"capsule":           c,
