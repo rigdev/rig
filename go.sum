@@ -302,8 +302,8 @@ github.com/prometheus/common v0.53.0 h1:U2pL9w9nmJwJDa4qqLQ3ZaePJ6ZTwt7cMD3AG3+a
 github.com/prometheus/common v0.53.0/go.mod h1:BrxBKv3FWBIGXw89Mg1AeBq7FSyRzXWI3l3e7W3RN5U=
 github.com/prometheus/procfs v0.14.0 h1:Lw4VdGGoKEZilJsayHf0B+9YgLGREba2C6xr+Fdfq6s=
 github.com/prometheus/procfs v0.14.0/go.mod h1:XL+Iwz8k8ZabyZfMFHPiilCniixqQarAy5Mu67pHlNQ=
-github.com/rigdev/rig-go-api v0.0.0-20240911063651-90d87be8289c h1:kqt49g3nB1vgAE0bFIVJRtOLDTLWP40HPk4Mo98JyHg=
-github.com/rigdev/rig-go-api v0.0.0-20240911063651-90d87be8289c/go.mod h1:gKFtg1M8jX9Ejx29RslVllWtGpdomV0pNtCYUwbTIoQ=
+github.com/rigdev/rig-go-api v0.0.0-20240912093741-f27a73d5eed6 h1:NWNK514FRXVxUIaN/rbFJ25+z8ccr6bVcU+9qH7gc+0=
+github.com/rigdev/rig-go-api v0.0.0-20240912093741-f27a73d5eed6/go.mod h1:boVP47XBT/EkpqjVXkZCcF31Nw5RMRANwQuaVvgw9dM=
 github.com/rigdev/rig-go-sdk v0.0.0-20240612092526-69df8621bc22 h1:NFjBY/F42lcgqnqru+h1q3RrzRk645HUilCvbZD7exI=
 github.com/rigdev/rig-go-sdk v0.0.0-20240612092526-69df8621bc22/go.mod h1:bmASl5RyuOoEddGeaOxHB27W3KDI4sBxqfnR1cRTstY=
 github.com/rivo/tview v0.0.0-20240524063012-037df494fb76 h1:iqvDlgyjmqleATtFbA7c14djmPh2n4mCYUv7JlD/ruA=
@@ -509,8 +509,8 @@ google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094 h1:
 google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094/go.mod h1:fJ/e3If/Q67Mj99hin0hMhiNyCRmt6BQ2aWIJshUSJw=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 h1:pPJltXNxVzT4pK9yD8vR9X75DaWYYmLGMsEvBfFQZzQ=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1/go.mod h1:UqMtugtsSgubUsoxbuAoiCXvqvErP7Gf0so0mK9tHxU=
-google.golang.org/grpc v1.66.1 h1:hO5qAXR19+/Z44hmvIM4dQFMSYX9XcWsByfoxutBpAM=
-google.golang.org/grpc v1.66.1/go.mod h1:s3/l6xSSCURdVfAnL+TqCNMyTDAGN6+lZeVxnZR128Y=
+google.golang.org/grpc v1.66.2 h1:3QdXkuq3Bkh7w+ywLdLvM56cmGvQHUMZpiCzt6Rqaoo=
+google.golang.org/grpc v1.66.2/go.mod h1:s3/l6xSSCURdVfAnL+TqCNMyTDAGN6+lZeVxnZR128Y=
 google.golang.org/protobuf v1.34.2 h1:6xV6lTsCfpGD21XK49h7MhtcApnLqkfYgPcdHftf6hg=
 google.golang.org/protobuf v1.34.2/go.mod h1:qYOHts0dSfpeUzUFpOMr/WGzszTmLH+DiWniOlNbLDw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
