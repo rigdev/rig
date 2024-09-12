@@ -3,25 +3,31 @@
 The `rigdev.init_container` plugin adds an init container to the Capsule's deployment.
 
 The config can be templated with standard Go templating and has
+
 ```
 .capsule
 ```
+
 as its templating context.
 
 ## Example
+
 Config:
+
 ```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:
       - plugins:
-        - name: rigdev.init_container
-          config: |
-            container:
-              name: my-initcontainer
-              image: my-container-image:v1.1
+          - plugin: rigdev.init_container
+            config: |
+              container:
+                name: my-initcontainer
+                image: my-container-image:v1.1
 ```
+
 The resulting Deployment resource of the Capsule
+
 ```
 kind: Deployment
 ...
@@ -33,6 +39,7 @@ spec:
           image: my-container-image:v1.1
       ...
 ```
+
 ## Config
 
 

@@ -3,29 +3,34 @@
 The `rigdev.datadog` plugin adds Datadog specific tags to the Deployment and Pods of the capsule as requested [here](https://docs.datadoghq.com/tracing/trace_collection/library_injection_local/?tab=kubernetes). It can enable/disable the execution of the [Datadog Admission Controller](https://docs.datadoghq.com/containers/cluster_agent/admission_controller/?tab=operator) on the pods and sets the necessary library and unified service tags.
 
 The config can be templated with standard Go templating and has
+
 ```
 .capsule
 ```
+
 as its templating context.
 
 ## Example
+
 Config:
+
 ```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:
       - plugins:
-        - name: rigdev.datadog
-          config: |
-            libraryTag:
-              java: v1.31.0
-            unifiedServiceTags:
-              env: my-env
-              service: my-service
-              versin: my-version
+          - plugin: rigdev.datadog
+            config: |
+              libraryTag:
+                java: v1.31.0
+              unifiedServiceTags:
+                env: my-env
+                service: my-service
+                versin: my-version
 ```
 
 The resulting `Deployment` resource of the Capsule
+
 ```
 kind: Deployment
 metadata:
@@ -45,6 +50,7 @@ spec:
 				admission.datadoghq.com/java-lib.version: v1.31.0,
    ...
 ```
+
 ## Config
 
 

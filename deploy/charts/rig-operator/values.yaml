@@ -27,8 +27,8 @@ config:
     steps:
       []
       # - plugins:
-      #   - name: rigdev.env_mapping
-      #   - name: rigdev.object_template
+      #   - plugin: rigdev.env_mapping
+      #   - plugin: rigdev.object_template
       #     config: |
       #       group: apps
       #       kind: Deployment
@@ -40,19 +40,19 @@ config:
       #               - name: {{ .capsule.metadata.name }}
       #                 image: alpine
       #                 command: ['sh', '-c', 'echo "Hello from {{ .capsule.metadata.name }}!"']
-      #   - name: rigdev.sidecar
+      #   - plugin: rigdev.sidecar
       #     config: |
       #       container:
       #         name: foobar
       #         image: alpine
       #         command: ['sh', '-c', 'sleep 1000']
-      #   - name: rigdev.init_container
+      #   - plugin: rigdev.init_container
       #     config: |
       #       container:
       #         name: startup
       #         image: alpine
       #         command: ['sh', '-c', 'echo "Startup!"']
-      #   - name: rigdev.annotations
+      #   - plugin: rigdev.annotations
       #     config: |
       #       group: apps
       #       kind: Deployment
@@ -60,7 +60,7 @@ config:
       #         some-annotation: some-value
       #         templated-annotation: value-{{ .capsule.spec.image }}
       #         deleted-annotation: ""
-      #   - name: rigdev.datadog
+      #   - plugin: rigdev.datadog
       #     config: |
       #       libraryTag:
       #         java: latest

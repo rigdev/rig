@@ -5,22 +5,25 @@ It can modify the `nodeSelector` and `tolerations` fields of the deployment.
 It has a `requireTag` bool config value. If set to `true`, the plugin will only run on capsules `rigdev.placement/tag` annotation matches the `tag` of the placement plugin. This also means the `tag` must be set on the plugin if `requireTag` is true.
 
 ## Example
+
 Config:
+
 ```yaml title="Helm values - Operator"
 config:
   pipeline:
     steps:
       - plugins:
-        - name: rigdev.placement
-          config: |
-            nodeSelector:
-              key1: value1
-            tolerations:
-              - key: some-key
-                value: some-value
+          - plugin: rigdev.placement
+            config: |
+              nodeSelector:
+                key1: value1
+              tolerations:
+                - key: some-key
+                  value: some-value
 ```
 
 The `Deployment` resource of the Capsule
+
 ```
 kind: Deployment
 ...
@@ -34,7 +37,9 @@ spec:
           value: some-other-value
    ...
 ```
+
 The resulting config of the `Deployment` is
+
 ```
 kind: Deployment
 ...

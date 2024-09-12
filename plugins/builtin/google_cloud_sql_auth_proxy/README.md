@@ -4,37 +4,43 @@ The `rigdev.google_cloud_sql_auth_proxy` plugins injects a Google Cloud SQL auth
 It will append a container named `google-cloud-sql-proxy` running the `gcr.io/cloud-sql-connectors/cloud-sql-proxy` image to your deployment and set its arguments, environment variables and config files according the the configuration of this plugin.
 
 The config can be templated with standard Go templating and has
+
 ```
 .capsule
 ```
+
 as its templating context.
 
 ## Example
+
 Config:
+
 ```yaml title="Helm value - Operator"
 config:
   pipeline:
     steps:
       - plugins:
-        - name: rigdev.google_cloud_sql_auth_proxy
-          config: |
-            tag: 2.9  
-            args
-              - arg1
-              - arg2
-            envFromSource:
-              - kind: ConfigMap
-                name: my-configmap
-            envVars:
-              name: MY_ENV_VAR
-              value: some-value
-            resources:
-              cpu: 0.1
-              memory: 128M
-            instanceConnectionNames:
-              - instance-name
+          - plugin: rigdev.google_cloud_sql_auth_proxy
+            config: |
+              tag: 2.9
+              args
+                - arg1
+                - arg2
+              envFromSource:
+                - kind: ConfigMap
+                  name: my-configmap
+              envVars:
+                name: MY_ENV_VAR
+                value: some-value
+              resources:
+                cpu: 0.1
+                memory: 128M
+              instanceConnectionNames:
+                - instance-name
 ```
+
 Resulting Deployment
+
 ```
 kind: Deployment
 spec:
@@ -57,6 +63,7 @@ spec:
         runAsNonRoot: true
       restartPolicy: Always
 ```
+
 ## Config
 
 
