@@ -135,7 +135,7 @@ logging:
   {{- end }}
 
 {{- with .capsuleExtensions }}
-{{ toYaml . }}
+capsuleExtensions: {{ toYaml . | nindent 2 }}
 {{- end }}
 
 {{- end }}
