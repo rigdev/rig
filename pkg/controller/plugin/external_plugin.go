@@ -323,8 +323,11 @@ func (m *pluginClient) ComputeConfig(ctx context.Context, req pipeline.CapsuleRe
 		RunServer:     brokerID,
 		CapsuleObject: capsuleBytes,
 	})
+	if err != nil {
+		return "", err
+	}
 
-	return resp.GetConfig(), err
+	return resp.GetConfig(), nil
 }
 
 type requestServer struct {

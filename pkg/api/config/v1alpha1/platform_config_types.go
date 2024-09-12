@@ -662,6 +662,12 @@ func (e Extension) validate(path *field.Path) field.ErrorList {
 	var errs field.ErrorList
 
 	schemaPath := path.Child("schema")
+	if e.Schema == nil {
+		errs = append(errs, field.Invalid(
+			path, e, "value has no schema"),
+		)
+		return errs
+	}
 	if e.Schema.Type != "object" {
 		errs = append(errs, field.Invalid(
 			schemaPath.Child("type"), e.Schema.Type, "top level schema must be of type 'object'"),

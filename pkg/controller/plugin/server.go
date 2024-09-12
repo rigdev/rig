@@ -158,6 +158,48 @@ func (m *GRPCServer) WatchObjectStatus(
 	return nil
 }
 
+func (m *GRPCServer) ComputeConfig(
+	ctx context.Context,
+	req *apiplugin.ComputeConfigRequest,
+) (*apiplugin.ComputeConfigResponse, error) {
+	conn, err := m.broker.Dial(req.GetRunServer())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	capsule := &v1alpha2.Capsule{}
+	if err := obj.DecodeInto(req.CapsuleObject, capsule, m.scheme); err != nil {
+		return nil, err
+	}
+	if capsule.Annotations == nil {
+		capsule.Annotations = map[string]string{}
+	}
+	if capsule.Labels == nil {
+		capsule.Labels = map[string]string{}
+	}
+
+	reader := roclient.NewReader(m.scheme)
+
+	config, err := m.Impl.ComputeConfig(ctx, &capsuleRequestClient{
+		client:  apiplugin.NewRequestServiceClient(conn),
+		scheme:  m.scheme,
+		capsule: capsule,
+		logger:  m.logger,
+		ctx:     ctx,
+		cc:      m.cc,
+		vm:      m.vm,
+		cr:      roclient.NewLayeredReader(reader, m.cc),
+	}, m.logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiplugin.ComputeConfigResponse{
+		Config: config,
+	}, nil
+}
+
 type capsuleRequestClient struct {
 	client  apiplugin.RequestServiceClient
 	logger  hclog.Logger
@@ -372,6 +414,7 @@ type Plugin interface {
 	// of the plugin from the operator to the plugin itself.
 	Initialize(req InitializeRequest) error
 	WatchObjectStatus(ctx context.Context, watcher CapsuleWatcher) error
+	ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest, logger hclog.Logger) (string, error)
 }
 
 type NoWatchObjectStatus struct{}
