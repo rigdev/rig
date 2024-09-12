@@ -56,13 +56,6 @@ func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest, opts pipe
 	return nil
 }
 
-func (s *Step) Stop(ctx context.Context) {
-	for _, p := range s.plugins {
-		p.Stop(ctx)
-	}
-	s.plugins = nil
-}
-
 func (s *Step) WatchObjectStatus(
 	ctx context.Context,
 	namespace string,
