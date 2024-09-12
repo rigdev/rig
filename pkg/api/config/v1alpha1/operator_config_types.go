@@ -59,6 +59,9 @@ type Pipeline struct {
 	// CustomPlugins enables custom plugins to be injected into the
 	// operator. The plugins injected here can then be referenced in 'steps'
 	CustomPlugins []CustomPlugin `json:"customPlugins,omitempty"`
+	// CapsuleExtensions supported by the Operator. Each extension supported
+	// should be configured in the map, with an additional plugin name.
+	CapsuleExtensions map[string]CapsuleStep `json:"capsuleExtensions,omitempty"`
 }
 
 type CapsuleStep struct {
