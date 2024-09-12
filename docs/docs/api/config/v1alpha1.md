@@ -649,7 +649,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `tag` _string_ | Optional tag which is readable by plugin when executed |
-| `name` _string_ | Name of the plugin to run. |
+| `name` _string_ | Name of the plugin to run. Deprecated, use Plugin. |
+| `plugin` _string_ | Name of the plugin to run. |
 | `config` _string_ | Config is a string defining the plugin-specific configuration of the plugin. |
 
 

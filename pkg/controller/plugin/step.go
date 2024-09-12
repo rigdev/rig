@@ -47,7 +47,7 @@ func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest, opts pipe
 		}
 		s.logger.Info(
 			"running plugin",
-			"plugin", s.step.Plugins[i].Name, "capsule_id", c.Name, "namespace", c.Namespace, "tag", tag,
+			"plugin", s.step.Plugins[i].GetPlugin(), "capsule_id", c.Name, "namespace", c.Namespace, "tag", tag,
 		)
 		if err := p.Run(ctx, req, opts); err != nil {
 			return err

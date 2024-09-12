@@ -114,9 +114,20 @@ type Plugin struct {
 	// Optional tag which is readable by plugin when executed
 	Tag string `json:"tag,omitempty"`
 	// Name of the plugin to run.
+	// Deprecated, use Plugin.
 	Name string `json:"name,omitempty"`
+	// Name of the plugin to run.
+	Plugin string `json:"plugin,omitempty"`
 	// Config is a string defining the plugin-specific configuration of the plugin.
 	Config string `json:"config,omitempty"`
+}
+
+func (p Plugin) GetPlugin() string {
+	if p.Plugin != "" {
+		return p.Plugin
+	}
+
+	return p.Name
 }
 
 type VerticalPodAutoscaler struct {

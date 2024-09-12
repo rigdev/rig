@@ -91,7 +91,7 @@ portName: "metricsport"`,
 				{
 					Plugins: []configv1alpha1.Plugin{
 						{
-							Name: "rigdev.object_template",
+							Plugin: "rigdev.object_template",
 							Config: `
 group: "apps"
 kind: "Deployment"
@@ -101,7 +101,7 @@ object: |
 `,
 						},
 						{
-							Name: "rigdev.sidecar",
+							Plugin: "rigdev.sidecar",
 							Config: `
 container:
   image: nginx
@@ -109,7 +109,7 @@ container:
 `,
 						},
 						{
-							Name: "rigdev.init_container",
+							Plugin: "rigdev.init_container",
 							Config: `
 container:
   image: alpine
