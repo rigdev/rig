@@ -113,6 +113,7 @@ func (s *service) DryRunPluginConfig(ctx context.Context,
 	if err != nil {
 		return pipeline.PluginConfigResult{}, err
 	}
+
 	return p.ComputeConfig(ctx, capsuleSpec, s.client)
 }
 
@@ -152,7 +153,6 @@ func (s *service) setupDryRunPipeline(
 		p = s.GetDefaultPipeline()
 	} else {
 		execCtx := plugin.NewExecutionContext(ctx)
-		defer execCtx.Stop()
 
 		steps, err := GetDefaultPipelineSteps(execCtx, cfg, s.pluginManager, s.logger)
 		if err != nil {
@@ -171,7 +171,6 @@ func (s *service) setupDryRunPipeline(
 			}
 
 			p.AddStep(ps)
-			defer ps.Stop(ctx)
 		}
 	}
 	return p, nil

@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -239,13 +238,6 @@ func (m *Manager) NewStep(
 ) (*Step, error) {
 	var err error
 	var ps []*pluginExecutor
-	defer func() {
-		if err != nil {
-			for _, p := range ps {
-				p.Stop(context.Background())
-			}
-		}
-	}()
 
 	for _, plugin := range step.Plugins {
 		info, ok := m.plugins[plugin.GetPlugin()]

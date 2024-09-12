@@ -165,12 +165,6 @@ func (p *pluginExecutor) start(ctx context.Context, pluginConfig string, restCon
 	return p.pluginClient.Initialize(ctx, pluginConfig, p.tag, restConfig)
 }
 
-func (p *pluginExecutor) Stop(context.Context) {
-	if p.client != nil {
-		p.client.Kill()
-	}
-}
-
 func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest, opts pipeline.Options) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
