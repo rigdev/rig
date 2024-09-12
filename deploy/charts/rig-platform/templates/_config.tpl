@@ -134,6 +134,10 @@ logging:
   devMode: {{ .logging.devMode }}
   {{- end }}
 
+{{- with .capsuleExtensions }}
+{{ toYaml . }}
+{{- end }}
+
 {{- end }}
 {{- end -}}
 
