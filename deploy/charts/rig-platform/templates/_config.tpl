@@ -134,6 +134,10 @@ logging:
   devMode: {{ .logging.devMode }}
   {{- end }}
 
+{{- with .capsuleExtensions }}
+capsuleExtensions: {{ toYaml . | nindent 2 }}
+{{- end }}
+
 {{- end }}
 {{- end -}}
 
