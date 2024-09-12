@@ -34,7 +34,7 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 		return err
 	}
 
-	resp, err := c.Rig.Capsule().ProgressPipeline(ctx, connect.NewRequest(&capsule_api.ProgressPipelineRequest{
+	resp, err := c.Rig.Capsule().PromotePipeline(ctx, connect.NewRequest(&capsule_api.PromotePipelineRequest{
 		ExecutionId: pipelineID,
 		DryRun:      dryRun,
 	}))
