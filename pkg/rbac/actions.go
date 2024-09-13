@@ -158,7 +158,7 @@ var CapsuleActionMap = map[string]string{
 	capsuleconnect.ServiceListPipelineStatusesProcedure:     ActionCapsuleView,
 	capsuleconnect.ServiceGetPipelineStatusProcedure:        ActionCapsuleView,
 	capsuleconnect.ServiceAbortPipelineProcedure:            ActionCapsuleDeploy,
-	capsuleconnect.ServiceProgressPipelineProcedure:         ActionCapsuleDeploy,
+	capsuleconnect.ServicePromotePipelineProcedure:          ActionCapsuleDeploy,
 	capsuleconnect.ServiceStartPipelineProcedure:            ActionCapsuleDeploy,
 }
 
