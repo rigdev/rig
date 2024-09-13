@@ -12,6 +12,10 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
+// var conditionTypes = []string{
+// 	"Time Alive",
+// }
+
 func PromptPipelines(
 	prompter Prompter,
 	pipelines []*model.Pipeline,
@@ -160,12 +164,17 @@ func updatePipeline(
 			pipeline.Phases = append(pipeline.Phases, phase)
 			fields = slices.Insert(fields, len(fields)-3, fmt.Sprintf("Phase %s", phase.GetEnvironmentId()))
 		case len(fields) - 2:
-			header := []string{"Environment", "Triggers", "Fixed Fields"}
+			header := []string{"Environment", "Manual Trigger", "Auto Trigger", "Field Prefixes"}
 			rows := [][]string{}
 			for _, p := range pipeline.Phases {
-				var triggers []string
-				for _, t := range p.GetTriggers() {
-					triggers = append(triggers, triggerToString(t))
+				manualTrigger := "None"
+				if p.GetTriggers().GetManual() != nil {
+					manualTrigger = triggerToString(p.GetTriggers().GetManual())
+				}
+
+				autoTrigger := "None"
+				if p.GetTriggers().GetAutomatic() != nil {
+					autoTrigger = triggerToString(p.GetTriggers().GetAutomatic())
 				}
 
 				fieldsString := ""
@@ -178,8 +187,9 @@ func updatePipeline(
 					fieldsString += strings.Join(p.GetFieldPrefixes().GetPrefixes(), "/n")
 				}
 
-				rows = append(rows, []string{p.GetEnvironmentId(), strings.Join(triggers, "\n"),
-					fieldsString})
+				rows = append(rows, []string{
+					p.GetEnvironmentId(), manualTrigger, autoTrigger, fieldsString,
+				})
 			}
 			i, err := prompter.TableSelect("Select the phase to update (CTRL + C to cancel)", rows, header)
 			if err != nil {
@@ -333,60 +343,50 @@ func updateFieldPrefixes(prompter Prompter, prefixes *model.FieldPrefixes) (*mod
 	}
 }
 
-func updateTriggers(prompter Prompter, triggers []*model.PromotionTrigger) ([]*model.PromotionTrigger, error) {
-	if len(triggers) == 0 {
-		fmt.Println("No triggers configured - Let's configure one!")
-		t, err := updateTrigger(prompter, nil)
-		if err != nil {
-			return nil, err
+func updateTriggers(prompter Prompter, triggers *model.Triggers) (*model.Triggers, error) {
+	if triggers == nil {
+		triggers = &model.Triggers{}
+	}
+	triggers = proto.Clone(triggers).(*model.Triggers)
+
+	triggerToLabel := func(t *model.Trigger) string {
+		if t == nil {
+			return "None"
 		}
 
-		return []*model.PromotionTrigger{
-			t,
-		}, nil
-	}
-
-	triggerToRow := func(t *model.PromotionTrigger) []string {
-		details := "None"
-		if t.GetCondition() != nil {
+		var conditions []string
+		for _, t := range t.GetConditions() {
 			switch v := t.GetCondition().(type) {
-			case *model.PromotionTrigger_TimeAlive:
-				details = fmt.Sprintf("Time Alive: %s", v.TimeAlive.AsDuration().String())
-			default:
-				details = "Unknown"
+			case *model.Trigger_Condition_TimeAlive:
+				conditions = append(conditions, fmt.Sprintf("Time Alive: %s", v.TimeAlive.AsDuration().String()))
 			}
 		}
 
-		triggerType := "Manual"
-		if t.GetAutomatic() {
-			triggerType = "Auto"
+		triggerType := "one-of"
+		if t.GetRequireAll() {
+			triggerType = "all-of"
 		}
 
-		return []string{triggerType, details}
+		return fmt.Sprintf("%s (%s)", triggerType, strings.Join(conditions, ", "))
 	}
 
-	header := []string{"Type", "Details"}
-	var triggerRows [][]string
-	for _, t := range triggers {
-		triggerRows = append(triggerRows, triggerToRow(t))
+	triggerLabels := []string{
+		"Auto " + triggerToLabel(triggers.GetAutomatic()),
+		"Manual " + triggerToLabel(triggers.GetManual()),
+		"Done",
 	}
-	triggerRows = append(triggerRows, []string{"Add new trigger", ""})
-	triggerRows = append(triggerRows, []string{"Remove trigger", ""})
-	triggerRows = append(triggerRows, []string{"Done", ""})
 
 	for {
-		i, err := prompter.TableSelect("Select the trigger to update (CTRL + C to cancel)", triggerRows, header)
+		i, _, err := prompter.Select("Select the trigger to update (CTRL + C to cancel)", triggerLabels)
 		if err != nil {
 			return nil, err
 		}
 
 		switch i {
-		case len(triggerRows) - 1:
+		case 2:
 			return triggers, nil
-		case len(triggerRows) - 2:
-			// Remove trigger
-			i, err := prompter.TableSelect("Select the trigger to remove (CTRL + C to cancel)",
-				triggerRows[:len(triggerRows)-3], header)
+		case 1:
+			t, err := updateTrigger(prompter, triggers.GetManual())
 			if err != nil {
 				if ErrIsAborted(err) {
 					continue
@@ -394,11 +394,11 @@ func updateTriggers(prompter Prompter, triggers []*model.PromotionTrigger) ([]*m
 				return nil, err
 			}
 
-			triggerRows = append(triggerRows[:i], triggerRows[i+1:]...)
-			triggers = append(triggers[:i], triggers[i+1:]...)
-		case len(triggerRows) - 3:
+			triggers.Manual = t
+			triggerLabels[1] = "Manual " + triggerToLabel(t)
+		case 0:
 			// Add new trigger
-			t, err := updateTrigger(prompter, nil)
+			t, err := updateTrigger(prompter, triggers.GetAutomatic())
 			if err != nil {
 				if ErrIsAborted(err) {
 					continue
@@ -406,54 +406,134 @@ func updateTriggers(prompter Prompter, triggers []*model.PromotionTrigger) ([]*m
 				return nil, err
 			}
 
-			triggers = append(triggers, t)
-			triggerRows = slices.Insert(triggerRows, len(triggerRows)-3, triggerToRow(t))
-		default:
-			// Update trigger
-			t, err := updateTrigger(prompter, triggers[i])
-			if err != nil {
-				if ErrIsAborted(err) {
-					continue
-				}
-				return nil, err
-			}
-
-			triggers[i] = t
-			triggerRows[i] = triggerToRow(t)
+			triggers.Automatic = t
+			triggerLabels[0] = "Auto " + triggerToLabel(t)
 		}
 	}
 }
 
-func updateTrigger(prompter Prompter, trigger *model.PromotionTrigger) (*model.PromotionTrigger, error) {
+func updateTrigger(prompter Prompter, trigger *model.Trigger) (*model.Trigger, error) {
 	if trigger == nil {
-		trigger = &model.PromotionTrigger{}
+		trigger = &model.Trigger{}
 	}
-	trigger = proto.Clone(trigger).(*model.PromotionTrigger)
+	trigger = proto.Clone(trigger).(*model.Trigger)
 
-	types := []string{"Auto", "Manual"}
-	i, _, err := prompter.Select("Select the trigger type", types)
-	if err != nil {
-		return nil, err
-	}
-
-	if i == 0 {
-		trigger.Automatic = true
-	} else {
-		trigger.Automatic = false
+	require := "Require all conditions"
+	if trigger.GetRequireAll() {
+		require = "Require any condition"
 	}
 
-	hasCondition, err := prompter.Confirm("Is this trigger condition based?", false)
-	if err != nil {
-		return nil, err
+	fields := []string{
+		require,
+		"Conditions",
+		"Clear",
+		"Done",
 	}
 
-	if !hasCondition {
-		trigger.Condition = nil
-		return trigger, nil
+	for {
+		i, _, err := prompter.Select("Select the field to update (CTRL + C to cancel)", fields)
+		if err != nil {
+			return nil, err
+		}
+
+		switch i {
+		case 0:
+			trigger.RequireAll = !trigger.RequireAll
+			fields[0] = "Require all conditions"
+			if trigger.GetRequireAll() {
+				fields[0] = "Require any condition"
+			}
+		case 1:
+			conditions, err := updateConditions(prompter, trigger.GetConditions())
+			if err != nil {
+				if ErrIsAborted(err) {
+					continue
+				}
+				return nil, err
+			}
+
+			trigger.Conditions = conditions
+		case 2:
+			return nil, nil
+		case 3:
+			return trigger, nil
+		}
+	}
+}
+
+func updateConditions(prompter Prompter, conditions []*model.Trigger_Condition) ([]*model.Trigger_Condition, error) {
+	conditionToLabel := func(c *model.Trigger_Condition) string {
+		switch v := c.GetCondition().(type) {
+		case *model.Trigger_Condition_TimeAlive:
+			return fmt.Sprintf("Time Alive: %s", v.TimeAlive.AsDuration().String())
+		}
+
+		return "None"
 	}
 
+	conditionLabels := []string{}
+	for _, c := range conditions {
+		conditionLabels = append(conditionLabels, conditionToLabel(c))
+	}
+	conditionLabels = append(conditionLabels, "Add", "Remove", "Done")
+
+	for {
+		i, _, err := prompter.Select("Select the condition to update (CTRL + C to cancel)", conditionLabels)
+		if err != nil {
+			return nil, err
+		}
+
+		switch i {
+		case len(conditionLabels) - 3:
+			// When we have more, we should switch on types
+			c, err := updateTimeAliveCondition(prompter, nil)
+			if err != nil {
+				if ErrIsAborted(err) {
+					continue
+				}
+				return nil, err
+			}
+
+			conditions = append(conditions, c)
+
+			conditionLabels = slices.Insert(conditionLabels,
+				len(conditionLabels)-3, conditionToLabel(conditions[len(conditions)-1]))
+		case len(conditionLabels) - 2:
+			i, _, err := prompter.Select("Select the condition to remove", conditionLabels[:len(conditionLabels)-3])
+			if err != nil {
+				if ErrIsAborted(err) {
+					continue
+				}
+				return nil, err
+			}
+
+			conditions = append(conditions[:i], conditions[i+1:]...)
+			conditionLabels = append(conditionLabels[:i], conditionLabels[i+1:]...)
+		case len(conditionLabels) - 1:
+			return conditions, nil
+		default:
+			c, err := updateTimeAliveCondition(prompter, conditions[i])
+			if err != nil {
+				if ErrIsAborted(err) {
+					continue
+				}
+				return nil, err
+			}
+
+			conditions[i] = c
+			conditionLabels[i] = conditionToLabel(c)
+		}
+	}
+}
+
+func updateTimeAliveCondition(prompter Prompter, c *model.Trigger_Condition) (*model.Trigger_Condition, error) {
+	if c == nil {
+		c = &model.Trigger_Condition{}
+	}
+
+	c = proto.Clone(c).(*model.Trigger_Condition)
 	d, err := prompter.Input("Enter the time alive", ValidateDurationOpt,
-		InputDefaultOpt(trigger.GetTimeAlive().AsDuration().String()))
+		InputDefaultOpt(c.GetTimeAlive().AsDuration().String()))
 	if err != nil {
 		return nil, err
 	}
@@ -463,25 +543,27 @@ func updateTrigger(prompter Prompter, trigger *model.PromotionTrigger) (*model.P
 		return nil, err
 	}
 
-	trigger.Condition = &model.PromotionTrigger_TimeAlive{
+	c.Condition = &model.Trigger_Condition_TimeAlive{
 		TimeAlive: durationpb.New(dur),
 	}
 
-	return trigger, nil
+	return c, nil
 }
 
-func triggerToString(t *model.PromotionTrigger) string {
-	str := "manual"
-	if t.GetAutomatic() {
-		str = "auto"
+func triggerToString(t *model.Trigger) string {
+	require := "one-of"
+	if t.GetRequireAll() {
+		require = "all-of"
 	}
 
-	if t.GetCondition() != nil {
-		switch v := t.GetCondition().(type) {
-		case *model.PromotionTrigger_TimeAlive:
-			str = str + fmt.Sprintf(" (%s)", v.TimeAlive.AsDuration().String())
+	conditions := []string{}
+
+	for _, c := range t.GetConditions() {
+		switch v := c.GetCondition().(type) {
+		case *model.Trigger_Condition_TimeAlive:
+			conditions = append(conditions, fmt.Sprintf("Time Alive (%s)", v.TimeAlive.AsDuration().String()))
 		}
 	}
 
-	return str
+	return fmt.Sprintf("%s: %s)", require, strings.Join(conditions, ", "))
 }

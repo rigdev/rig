@@ -94,7 +94,7 @@
 | /api.v1.capsule.Service/GetEffectiveGitSettings | [GetEffectiveGitSettingsRequest](#api-v1-capsule-GetEffectiveGitSettingsRequest) | [GetEffectiveGitSettingsResponse](#api-v1-capsule-GetEffectiveGitSettingsResponse) |  |
 | /api.v1.capsule.Service/StartPipeline | [StartPipelineRequest](#api-v1-capsule-StartPipelineRequest) | [StartPipelineResponse](#api-v1-capsule-StartPipelineResponse) | Will initiate the pipeline, from the initial environment and it's current rollout. |
 | /api.v1.capsule.Service/GetPipelineStatus | [GetPipelineStatusRequest](#api-v1-capsule-GetPipelineStatusRequest) | [GetPipelineStatusResponse](#api-v1-capsule-GetPipelineStatusResponse) |  |
-| /api.v1.capsule.Service/ProgressPipeline | [ProgressPipelineRequest](#api-v1-capsule-ProgressPipelineRequest) | [ProgressPipelineResponse](#api-v1-capsule-ProgressPipelineResponse) | Progress the pipeline to the next environment. |
+| /api.v1.capsule.Service/PromotePipeline | [PromotePipelineRequest](#api-v1-capsule-PromotePipelineRequest) | [PromotePipelineResponse](#api-v1-capsule-PromotePipelineResponse) | Progress the pipeline to the next environment. |
 | /api.v1.capsule.Service/AbortPipeline | [AbortPipelineRequest](#api-v1-capsule-AbortPipelineRequest) | [AbortPipelineResponse](#api-v1-capsule-AbortPipelineResponse) | Abort the pipeline execution. This will stop the pipeline from any further promotions. |
 | /api.v1.capsule.Service/ListPipelineStatuses | [ListPipelineStatusesRequest](#api-v1-capsule-ListPipelineStatusesRequest) | [ListPipelineStatusesResponse](#api-v1-capsule-ListPipelineStatusesResponse) |  |
 
@@ -6530,9 +6530,9 @@ The response of a capsule.Logs RPC
 
 
 
-<a name="api-v1-capsule-ProgressPipelineRequest"></a>
+<a name="api-v1-capsule-PromotePipelineRequest"></a>
 
-### ProgressPipelineRequest
+### PromotePipelineRequest
 
 
 
@@ -6540,15 +6540,16 @@ The response of a capsule.Logs RPC
 | ----- | ---- | ----- | ----------- |
 | execution_id | [uint64](#uint64) |  |  |
 | dry_run | [bool](#bool) |  | If true, the progression will not be executed, but instead a breakdown of changes will be returned |
+| field_changes | [FieldChange](#api-v1-capsule-FieldChange) | repeated | additional changes to include in the manual promotion |
 
 
 
 
 
 
-<a name="api-v1-capsule-ProgressPipelineResponse"></a>
+<a name="api-v1-capsule-PromotePipelineResponse"></a>
 
-### ProgressPipelineResponse
+### PromotePipelineResponse
 
 
 
@@ -8103,7 +8104,7 @@ A docker image tag.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| inclusion | [bool](#bool) |  |  |
+| inclusion | [bool](#bool) |  | If true, only fields with the specified prefixes will be promoted If false, only fields without the specified prefixes will be promoted |
 | prefixes | [string](#string) | repeated |  |
 
 
@@ -8121,7 +8122,7 @@ A docker image tag.
 | ----- | ---- | ----- | ----------- |
 | environment_id | [string](#string) |  | Environment to promote to. The project must be active in this environment. |
 | field_prefixes | [FieldPrefixes](#model-FieldPrefixes) |  | Fields prefixes to either promote or not. |
-| triggers | [PromotionTrigger](#model-PromotionTrigger) | repeated | Promotion triggers. |
+| triggers | [Triggers](#model-Triggers) |  | Promotion triggers. |
 
 
 
@@ -8147,16 +8148,47 @@ A docker image tag.
 
 
 
-<a name="model-PromotionTrigger"></a>
+<a name="model-Trigger"></a>
 
-### PromotionTrigger
+### Trigger
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| automatic | [bool](#bool) |  |  |
+| conditions | [Trigger.Condition](#model-Trigger-Condition) | repeated | The conditions that must be met for the trigger to fire. |
+| require_all | [bool](#bool) |  | If true, all conditions must be met for the trigger to fire. Otherwise only a single condition must be met. |
+
+
+
+
+
+
+<a name="model-Trigger-Condition"></a>
+
+### Trigger.Condition
+Condition that must be met for the trigger to fire.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
 | time_alive | [google.protobuf.Duration](#google-protobuf-Duration) |  |  |
+
+
+
+
+
+
+<a name="model-Triggers"></a>
+
+### Triggers
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| automatic | [Trigger](#model-Trigger) |  | The automatic trigger |
+| manual | [Trigger](#model-Trigger) |  | The manual trigger |
 
 
 
