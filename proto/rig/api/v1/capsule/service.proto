@@ -110,8 +110,8 @@ service Service {
   rpc GetPipelineStatus(GetPipelineStatusRequest)
       returns (GetPipelineStatusResponse) {}
   // Progress the pipeline to the next environment.
-  rpc ProgressPipeline(ProgressPipelineRequest)
-      returns (ProgressPipelineResponse) {}
+  rpc PromotePipeline(PromotePipelineRequest)
+      returns (PromotePipelineResponse) {}
   // Abort the pipeline execution. This will stop the pipeline from any further
   // promotions.
   rpc AbortPipeline(AbortPipelineRequest) returns (AbortPipelineResponse) {}
@@ -143,14 +143,16 @@ message AbortPipelineResponse {
   api.v1.capsule.pipeline.Status status = 1;
 }
 
-message ProgressPipelineRequest {
+message PromotePipelineRequest {
   uint64 execution_id = 1;
   // If true, the progression will not be executed, but instead a
   // breakdown of changes will be returned
   bool dry_run = 2;
+  // additional changes to include in the manual promotion
+  repeated api.v1.capsule.FieldChange field_changes = 3;
 }
 
-message ProgressPipelineResponse {
+message PromotePipelineResponse {
   api.v1.capsule.pipeline.Status status = 1;
   // Breakdown of the changes that this deploy would make to the system.
   // Only populated if dry-run is used.
