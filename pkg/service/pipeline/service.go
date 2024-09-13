@@ -97,7 +97,7 @@ func (s *service) DryRun(
 	capsuleSpec *v1alpha2.Capsule,
 	opts ...pipeline.CapsuleRequestOption,
 ) (*pipeline.Result, error) {
-	p, err := s.setupDryRunPipeline(ctx, cfg, namespace, capsuleName, capsuleSpec)
+	p, capsuleSpec, err := s.setupDryRunPipeline(ctx, cfg, namespace, capsuleName, capsuleSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (s *service) DryRunPluginConfig(ctx context.Context,
 	namespace, capsuleName string,
 	capsuleSpec *v1alpha2.Capsule,
 ) (pipeline.PluginConfigResult, error) {
-	p, err := s.setupDryRunPipeline(ctx, cfg, namespace, capsuleName, capsuleSpec)
+	p, capsuleSpec, err := s.setupDryRunPipeline(ctx, cfg, namespace, capsuleName, capsuleSpec)
 	if err != nil {
 		return pipeline.PluginConfigResult{}, err
 	}
@@ -119,14 +119,14 @@ func (s *service) DryRunPluginConfig(ctx context.Context,
 
 func (s *service) setupDryRunPipeline(
 	ctx context.Context, cfg *v1alpha1.OperatorConfig, namespace, capsuleName string, capsuleSpec *v1alpha2.Capsule,
-) (*pipeline.CapsulePipeline, error) {
+) (*pipeline.CapsulePipeline, *v1alpha2.Capsule, error) {
 	if capsuleSpec == nil {
 		capsuleSpec = &v1alpha2.Capsule{}
 		if err := errors.FromK8sClient(s.client.Get(ctx, types.NamespacedName{
 			Namespace: namespace,
 			Name:      capsuleName,
 		}, capsuleSpec)); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	} else {
 		// Load existing status object.
@@ -137,7 +137,7 @@ func (s *service) setupDryRunPipeline(
 		}, currentSpec)); errors.IsNotFound(err) {
 			// Noop.
 		} else if err != nil {
-			return nil, err
+			return nil, nil, err
 		} else {
 			capsuleSpec.Status = currentSpec.Status
 			capsuleSpec.UID = currentSpec.GetUID()
@@ -156,7 +156,7 @@ func (s *service) setupDryRunPipeline(
 
 		steps, err := GetDefaultPipelineSteps(execCtx, cfg, s.pluginManager, s.logger)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		p = pipeline.NewCapsulePipeline(cfg, scheme.New(), s.vm, s.logger)
@@ -167,13 +167,13 @@ func (s *service) setupDryRunPipeline(
 		for idx, step := range cfg.Pipeline.Steps {
 			ps, err := s.pluginManager.NewStep(execCtx, step, s.logger, customStepName(idx))
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			p.AddStep(ps)
 		}
 	}
-	return p, nil
+	return p, capsuleSpec, nil
 }
 
 func customStepName(idx int) string {
