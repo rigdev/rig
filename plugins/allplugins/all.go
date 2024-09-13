@@ -5,6 +5,7 @@ import (
 	"github.com/rigdev/rig/plugins/builtin/annotations"
 	"github.com/rigdev/rig/plugins/builtin/datadog"
 	envmapping "github.com/rigdev/rig/plugins/builtin/env_mapping"
+	envvarcsi "github.com/rigdev/rig/plugins/builtin/envvar_csi"
 	googlesqlproxy "github.com/rigdev/rig/plugins/builtin/google_cloud_sql_auth_proxy"
 	initcontainer "github.com/rigdev/rig/plugins/builtin/init_container"
 	objectcreate "github.com/rigdev/rig/plugins/builtin/object_create"
@@ -35,4 +36,5 @@ var Plugins = map[string]plugin.Plugin{
 	service_monitor.Name: &service_monitor.Plugin{},
 	vpa.Name:             &vpa.Plugin{},
 	objectcreate.Name:    &objectcreate.Plugin{},
+	envvarcsi.Name:       &envvarcsi.Plugin{},
 }
