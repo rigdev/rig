@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/obj"
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -107,7 +108,21 @@ func GetOperatorConfig(
 		if err != nil {
 			return nil, err
 		}
+		helm := helmValues{}
+		if err := yaml.Unmarshal(bytes, &helm); err != nil {
+			return nil, err
+		}
+		if len(helm.Config) > 0 {
+			bytes, err = yaml.Marshal(helm.Config)
+			if err != nil {
+				return nil, err
+			}
+		}
 		cfgYAML = string(bytes)
 	}
 	return obj.DecodeIntoT([]byte(cfgYAML), &v1alpha1.OperatorConfig{}, scheme)
+}
+
+type helmValues struct {
+	Config map[string]any `json:"config,omitempty"`
 }
