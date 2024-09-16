@@ -160,6 +160,7 @@ var CapsuleActionMap = map[string]string{
 	capsuleconnect.ServiceAbortPipelineProcedure:            ActionCapsuleDeploy,
 	capsuleconnect.ServicePromotePipelineProcedure:          ActionCapsuleDeploy,
 	capsuleconnect.ServiceStartPipelineProcedure:            ActionCapsuleDeploy,
+	capsuleconnect.ServiceGetProposalsEnabledProcedure:      ActionCapsuleView,
 }
 
 var UserActionMap = map[string]string{

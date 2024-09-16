@@ -247,7 +247,10 @@ forwarded traffic.
 			common.MaxArgsCompletionFilter(1)),
 		RunE: cli.CtxWrap(cmd.update),
 	}
-	capsuleCmd.AddCommand(capsuleUpdate)
+	// TODO Add once we have implemented the backend
+	if false {
+		capsuleCmd.AddCommand(capsuleUpdate)
+	}
 
 	capsuleListProposal := &cobra.Command{
 		Use:   "list-proposals",

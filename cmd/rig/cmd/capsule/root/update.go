@@ -61,7 +61,7 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 					SetGitStore: cc.GitStore,
 				},
 			})
-		case 2:
+		case 1:
 			done = true
 		}
 		if done {
