@@ -63,6 +63,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.18.2
 	sigs.k8s.io/kind v0.22.0
 	sigs.k8s.io/kustomize/kyaml v0.16.0
+	sigs.k8s.io/secrets-store-csi-driver v1.4.5
 	sigs.k8s.io/yaml v1.4.0
 )
 

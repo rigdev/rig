@@ -71,6 +71,7 @@
 | /api.v1.capsule.Service/ProposeSetRollout | [ProposeSetRolloutRequest](#api-v1-capsule-ProposeSetRolloutRequest) | [ProposeSetRolloutResponse](#api-v1-capsule-ProposeSetRolloutResponse) |  |
 | /api.v1.capsule.Service/ListProposals | [ListProposalsRequest](#api-v1-capsule-ListProposalsRequest) | [ListProposalsResponse](#api-v1-capsule-ListProposalsResponse) |  |
 | /api.v1.capsule.Service/ListSetProposals | [ListSetProposalsRequest](#api-v1-capsule-ListSetProposalsRequest) | [ListSetProposalsResponse](#api-v1-capsule-ListSetProposalsResponse) |  |
+| /api.v1.capsule.Service/GetProposalsEnabled | [GetProposalsEnabledRequest](#api-v1-capsule-GetProposalsEnabledRequest) | [GetProposalsEnabledResponse](#api-v1-capsule-GetProposalsEnabledResponse) |  |
 | /api.v1.capsule.Service/ListInstances | [ListInstancesRequest](#api-v1-capsule-ListInstancesRequest) | [ListInstancesResponse](#api-v1-capsule-ListInstancesResponse) | Lists all instances for the capsule. |
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
 | /api.v1.capsule.Service/GetRollout | [GetRolloutRequest](#api-v1-capsule-GetRolloutRequest) | [GetRolloutResponse](#api-v1-capsule-GetRolloutResponse) | Get a single rollout by ID. |
@@ -5942,6 +5943,38 @@ Response to getting job executions.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetProposalsEnabledRequest"></a>
+
+### GetProposalsEnabledRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-GetProposalsEnabledResponse"></a>
+
+### GetProposalsEnabledResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
 
 
 
