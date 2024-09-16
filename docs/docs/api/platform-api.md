@@ -71,6 +71,7 @@
 | /api.v1.capsule.Service/ProposeSetRollout | [ProposeSetRolloutRequest](#api-v1-capsule-ProposeSetRolloutRequest) | [ProposeSetRolloutResponse](#api-v1-capsule-ProposeSetRolloutResponse) |  |
 | /api.v1.capsule.Service/ListProposals | [ListProposalsRequest](#api-v1-capsule-ListProposalsRequest) | [ListProposalsResponse](#api-v1-capsule-ListProposalsResponse) |  |
 | /api.v1.capsule.Service/ListSetProposals | [ListSetProposalsRequest](#api-v1-capsule-ListSetProposalsRequest) | [ListSetProposalsResponse](#api-v1-capsule-ListSetProposalsResponse) |  |
+| /api.v1.capsule.Service/ProposalsEnabled | [ProposalsEnabledRequest](#api-v1-capsule-ProposalsEnabledRequest) | [ProposalsEnabledResponse](#api-v1-capsule-ProposalsEnabledResponse) |  |
 | /api.v1.capsule.Service/ListInstances | [ListInstancesRequest](#api-v1-capsule-ListInstancesRequest) | [ListInstancesResponse](#api-v1-capsule-ListInstancesResponse) | Lists all instances for the capsule. |
 | /api.v1.capsule.Service/RestartInstance | [RestartInstanceRequest](#api-v1-capsule-RestartInstanceRequest) | [RestartInstanceResponse](#api-v1-capsule-RestartInstanceResponse) | Restart a single capsule instance. |
 | /api.v1.capsule.Service/GetRollout | [GetRolloutRequest](#api-v1-capsule-GetRolloutRequest) | [GetRolloutResponse](#api-v1-capsule-GetRolloutResponse) | Get a single rollout by ID. |
@@ -6558,6 +6559,38 @@ The response of a capsule.Logs RPC
 | status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
 | outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. Only populated if dry-run is used. |
 | revision | [Revision](#api-v1-capsule-Revision) |  | The capsule revision created. |
+
+
+
+
+
+
+<a name="api-v1-capsule-ProposalsEnabledRequest"></a>
+
+### ProposalsEnabledRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-capsule-ProposalsEnabledResponse"></a>
+
+### ProposalsEnabledResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
 
 
 
