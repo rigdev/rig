@@ -29,17 +29,6 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 		return err
 	}
 
-	if pluginConfig != "" {
-		bytes, err := os.ReadFile(pluginConfig)
-		if err != nil {
-			return err
-		}
-		cfg.Pipeline.Steps = nil // Is this necessary?
-		if err := yaml.Unmarshal(bytes, &cfg.Pipeline); err != nil {
-			return err
-		}
-	}
-
 	for _, r := range replaces {
 		idx, path, err := parseReplace(r)
 		if err != nil {

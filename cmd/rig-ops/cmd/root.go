@@ -47,7 +47,8 @@ func Run(s *cli.SetupContext) error {
 	rootCmd.PersistentFlags().StringVar(&base.Flags.RigConfig, "rig-config", "", "Path to your rigconfig file")
 	rootCmd.PersistentFlags().StringVar(&base.Flags.OperatorConfig, "operator-config", "",
 		"If given, will read the config file at the path and use that as an operator config. "+
-			"If empty, will use the operator config of the running operator.")
+			"If empty, will use the operator config of the running operator. "+
+			"The format can be both a Helm values file or the config.rig.dev OperatorConfig type.")
 	rootCmd.PersistentFlags().VarP(&base.Flags.OutputType, "output", "o", "output type. One of json,yaml,pretty.")
 
 	version.Setup(rootCmd, s, "")
