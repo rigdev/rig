@@ -169,12 +169,14 @@ func UpdateGit(
 		return nil, err
 	}
 	var missing string
-	if gitStore.GetRepository() == "" {
-		missing = "--repository"
-	} else if gitStore.GetBranch() == "" {
-		missing = "--branch"
-	} else if gitStore.GetEnvironments() == nil {
-		missing = "--environments"
+	if !gitStore.GetDisabled() {
+		if gitStore.GetRepository() == "" {
+			missing = "--repository"
+		} else if gitStore.GetBranch() == "" {
+			missing = "--branch"
+		} else if gitStore.GetEnvironments() == nil {
+			missing = "--environments"
+		}
 	}
 
 	if !isInteractive {
