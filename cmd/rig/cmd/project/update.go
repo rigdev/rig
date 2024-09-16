@@ -7,7 +7,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/api/v1/project"
-	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
@@ -41,14 +40,6 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 		return err
 	}
 	p := resp.Msg.GetProject()
-
-	resp2, err := c.Rig.Project().GetEffectiveGitSettings(ctx, connect.NewRequest(&project.GetEffectiveGitSettingsRequest{
-		ProjectId: projectID,
-	}))
-	if err != nil {
-		return err
-	}
-	p.GitStore = resp2.Msg.GetGit()
 
 	envResp, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
 		ProjectFilter: p.GetProjectId(),
@@ -208,20 +199,18 @@ func (c *Cmd) updatePromotionPipelines(ctx context.Context, p *project.Pipelines
 }
 
 func (c *Cmd) updateGit(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	var gitStore *model.GitStore
-	if resp, err := c.Rig.Project().GetEffectiveGitSettings(
-		ctx, connect.NewRequest(&project.GetEffectiveGitSettingsRequest{
-			ProjectId: c.Scope.GetCurrentContext().GetProject(),
-		})); errors.IsNotFound(err) {
-	} else if err != nil {
+	resp, err := c.Rig.Project().Get(ctx, connect.NewRequest(&project.GetRequest{
+		ProjectId: c.Scope.GetCurrentContext().GetProject(),
+	}))
+	if err != nil {
 		return err
-	} else {
-		gitStore = resp.Msg.GetGit()
 	}
-	var err error
-	if gitStore, err = common.UpdateGit(
-		ctx, c.Rig, gitFlags, c.Scope.IsInteractive(), c.Prompter, gitStore, cmd,
-	); err != nil {
+
+	gitStore, err := common.UpdateGit(
+		ctx, c.Rig, gitFlags, c.Scope.IsInteractive(),
+		c.Prompter, resp.Msg.GetProject().GetGitStore(), cmd,
+	)
+	if err != nil {
 		return err
 	}
 
