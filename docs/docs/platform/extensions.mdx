@@ -1,0 +1,91 @@
+import ThemedImage from "@theme/ThemedImage";
+
+# Capsule Extensions
+
+The Rig Platform offers Capsule Extensions as a way to expand on the Capsule Spec, by introducing company-specific features.
+
+Extensions are defined as part of the Platform configuration and defines a schema for how the fields of the
+extensions are to be used. The Dashboard and CLI then adds functionality to configure the extensions for the
+Capsules individually, and passes the validated extension input to the Clusters.
+
+Each Cluster can then implement the extensions using [Plugins](/operator-manual/plugins/).
+
+<ThemedImage
+  alt="Capsule Extensions"
+  sources={{
+    light: "/img/platform/capsule-extensions-arch.svg",
+    dark: "/img/platform/capsule-extensions-arch.svg",
+  }}
+/>
+
+
+## Configuring a Capsule Extension
+
+The Capsule Extension consists of a name and an associated schema, in the form of a [JSON Schema](https://json-schema.org/).
+
+The schema should include the fields that the user can control along with the type. The UI then generates UI components
+to make it easy to toggle and configure the extensions. Additionally, a `raw` tab is available where the user-input
+can be given directly.
+
+The following is an example of an extension named `terminationGracePeriod`, with an associated integer property named `seconds`.
+
+```yaml title="Helm values - Platform"
+rig:
+  capsuleExtensions:
+    terminationGracePeriod:
+      schema:
+        title: "Termination Grace Period"
+        description: |
+          The termination grace can be used to shorten or extends
+          the default grace-period when the container is terminated.
+        type: object
+        properties:
+          seconds:
+            description: "The duration, in seconds, of the grace period."
+            type: integer
+            minimum: 10
+            maximum: 60
+```
+
+The Dashboard then renders the extensions fields, making it easy for the developers to configured the extensions for the
+Capsules:
+
+<ThemedImage
+  alt="Capsule Extensions"
+  sources={{
+    light: "/img/platform/capsule-extensions-ui.png",
+    dark: "/img/platform/capsule-extensions-ui.png",
+  }}
+/>
+
+### Restrictions
+
+The following restrictions are enforced on the schema:
+
+* The top-level property must be an Object.
+* No nested Object or Array properties.
+* All Objects have the `additionalProperties` set to `false`.
+
+
+## Cluster implementation
+
+Within each cluster, the implementation of Capsule Extensions is given as a plugin configuration of the Operator.
+
+The following is an implementation of the above Capsule Extensions, using the [`rigdev.object_template`](/operator-manual/plugins/builtin/object_template) plugin.
+
+
+```yaml title="Helm values - Operator"
+config:
+  pipeline:
+    capsuleExtensions:
+      terminationGracePeriod:
+        plugin: rigdev.object_template
+        config: |
+          group: apps
+          kind: Deployment
+          object: |
+            spec:
+              template:
+                spec:
+                  terminationGracePeriodSeconds: {{ .capsuleExtensions.terminationGracePeriod.seconds }}
+```

@@ -211,6 +211,15 @@ const sidebars = {
     },
     {
       type: "doc",
+      id: "platform/extensions",
+      label: "Capsule Extensions",
+      className: "homepage-sidebar-item",
+      customProps: {
+        sidebar_icon: "BiSolidAddToQueue",
+      },
+    },
+    {
+      type: "doc",
       id: "platform/instance-overview",
       label: "Instance Overview",
       className: "homepage-sidebar-item",
