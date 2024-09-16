@@ -47,6 +47,8 @@ service Service {
   rpc ListProposals(ListProposalsRequest) returns (ListProposalsResponse) {}
   rpc ListSetProposals(ListSetProposalsRequest)
       returns (ListSetProposalsResponse) {}
+  rpc GetProposalsEnabled(GetProposalsEnabledRequest)
+      returns (GetProposalsEnabledResponse) {}
   // Lists all instances for the capsule.
   rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse) {}
   // Restart a single capsule instance.
@@ -937,4 +939,14 @@ message GetEffectiveGitSettingsRequest {
 message GetEffectiveGitSettingsResponse {
   model.GitStore git = 1;
   bool environment_enabled = 2;
+}
+
+message GetProposalsEnabledRequest {
+  string project_id = 1;
+  string environment_id = 2;
+  string capsule_id = 3;
+}
+
+message GetProposalsEnabledResponse {
+  bool enabled = 1;
 }
