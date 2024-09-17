@@ -19,6 +19,7 @@ var (
 	printConfig      bool
 	remoteContext    string
 	interfaces       []string
+	proxyTag         string
 )
 
 type Cmd struct {
@@ -74,6 +75,10 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	host.Flags().BoolVar(
 		&printConfig,
 		"print", false, "Print the HostCapsule configuration file as configured and exit.",
+	)
+	host.Flags().StringVar(
+		&proxyTag,
+		"tag", "latest", "Specify the image tag of rig-proxy to use.",
 	)
 
 	dev.AddCommand(host)

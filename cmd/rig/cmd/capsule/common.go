@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -977,8 +978,14 @@ func (s *webSocketStream[Request, Response]) close() {
 func newWebSocketStream[Request proto.Message, Response proto.Message](
 	ctx context.Context, rCtx *cmdconfig.Context, path string,
 ) (*webSocketStream[Request, Response], error) {
-	url := rCtx.GetService().Server + path + "?content-type=proto"
-	ws, _, err := websocket.Dial(ctx, url, &websocket.DialOptions{
+	uri, err := url.Parse(rCtx.GetService().Server)
+	if err != nil {
+		return nil, err
+	}
+
+	uri.Path = path
+	uri.RawQuery = "content-type=proto"
+	ws, _, err := websocket.Dial(ctx, uri.String(), &websocket.DialOptions{
 		HTTPHeader: http.Header{
 			"Authorization": []string{"Bearer " + rCtx.GetAuth().AccessToken},
 		},
