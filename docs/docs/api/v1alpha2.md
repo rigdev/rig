@@ -18,14 +18,15 @@ Package v1alpha2 contains API Schema definitions for the v1alpha2 API group
 
 
 
-CPUTarget defines an autoscaler target for the CPU metric If empty, no autoscaling will be done
+CPUTarget defines an autoscaler target for the CPU metric
+If empty, no autoscaling will be done
 
 _Appears in:_
 - [HorizontalScale](#horizontalscale)
 
 | Field | Description |
 | --- | --- |
-| `utilization` _integer_ | Utilization specifies the average CPU target. If the average exceeds this number new instances will be added. |
+| `utilization` _integer_ | Utilization specifies the average CPU target. If the average<br /><br />exceeds this number new instances will be added. |
 
 
 ### Capsule
@@ -57,8 +58,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name specifies a descriptive name of the interface. |
 | `port` _integer_ | Port specifies what port the interface should have. |
-| `liveness` _[InterfaceLivenessProbe](#interfacelivenessprobe)_ | Liveness specifies that this interface should be used for liveness probing. Only one of the Capsule interfaces can be used as liveness probe. |
-| `readiness` _[InterfaceReadinessProbe](#interfacereadinessprobe)_ | Readiness specifies that this interface should be used for readiness probing. Only one of the Capsule interfaces can be used as readiness probe. |
+| `liveness` _[InterfaceLivenessProbe](#interfacelivenessprobe)_ | Liveness specifies that this interface should be used for<br /><br />liveness probing. Only one of the Capsule interfaces can be<br /><br />used as liveness probe. |
+| `readiness` _[InterfaceReadinessProbe](#interfacereadinessprobe)_ | Readiness specifies that this interface should be used for<br /><br />readiness probing. Only one of the Capsule interfaces can be<br /><br />used as readiness probe. |
 | `public` _[CapsulePublicInterface](#capsulepublicinterface)_ | Public specifies if and how the interface should be published. |
 | `routes` _[HostRoute](#hostroute) array_ | Host routes that are mapped to this interface. |
 
@@ -67,7 +68,8 @@ _Appears in:_
 
 _Underlying type:_ _[struct{Host string "json:\"host\" protobuf:\"1\""; Paths []string "json:\"paths,omitempty\" protobuf:\"2\""}](#struct{host-string-"json:\"host\"-protobuf:\"1\"";-paths-[]string-"json:\"paths,omitempty\"-protobuf:\"2\""})_
 
-CapsuleInterfaceIngress defines that the interface should be exposed as http ingress
+CapsuleInterfaceIngress defines that the interface should be exposed as http
+ingress
 
 _Appears in:_
 - [CapsulePublicInterface](#capsulepublicinterface)
@@ -78,7 +80,8 @@ _Appears in:_
 
 _Underlying type:_ _[struct{Port int32 "json:\"port\" protobuf:\"1\""}](#struct{port-int32-"json:\"port\"-protobuf:\"1\""})_
 
-CapsuleInterfaceLoadBalancer defines that the interface should be exposed as a L4 loadbalancer
+CapsuleInterfaceLoadBalancer defines that the interface should be exposed as
+a L4 loadbalancer
 
 _Appears in:_
 - [CapsulePublicInterface](#capsulepublicinterface)
@@ -96,8 +99,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ | Ingress specifies that this interface should be exposed through an Ingress resource. The Ingress field is mutually exclusive with the LoadBalancer field. |
-| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a LoadBalancer Service. The LoadBalancer field is mutually exclusive with the Ingress field. |
+| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ | Ingress specifies that this interface should be exposed through an<br /><br />Ingress resource. The Ingress field is mutually exclusive with the<br /><br />LoadBalancer field. |
+| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a<br /><br />LoadBalancer Service. The LoadBalancer field is mutually exclusive with<br /><br />the Ingress field. |
 
 
 ### CapsuleScale
@@ -127,13 +130,13 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `image` _string_ | Image specifies what image the Capsule should run. |
-| `command` _string_ | Command is run as a command in the shell. If left unspecified, the container will run using what is specified as ENTRYPOINT in the Dockerfile. |
-| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command is left empty the arguments will be passed to the ENTRYPOINT of the docker image. |
-| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should have. Specifying interfaces will create the corresponding kubernetes Services and Ingresses depending on how the interface is configured. |
-| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be based on ConfigMaps or Secrets. |
+| `command` _string_ | Command is run as a command in the shell. If left unspecified, the<br /><br />container will run using what is specified as ENTRYPOINT in the<br /><br />Dockerfile. |
+| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command<br /><br />is left empty the arguments will be passed to the ENTRYPOINT of the<br /><br />docker image. |
+| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should<br /><br />have. Specifying interfaces will create the corresponding kubernetes<br /><br />Services and Ingresses depending on how the interface is configured. |
+| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be<br /><br />based on ConfigMaps or Secrets. |
 | `scale` _[CapsuleScale](#capsulescale)_ | Scale specifies the scaling of the Capsule. |
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
-| `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain environment variables. |
+| `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain<br /><br />environment variables. |
 | `cronJobs` _[CronJob](#cronjob) array_ |  |
 | `extensions` _object (keys:string, values:RawMessage)_ | Extensions are extra, typed fields defined by the platform for custom behaviour implemented through plugins |
 
@@ -161,7 +164,9 @@ _Appears in:_
 
 
 
-CustomMetric defines a custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on Exactly one of InstanceMetric and ObjectMetric must be provided
+CustomMetric defines a custom metrics emitted by the custom.metrics.k8s.io API
+which the autoscaler should scale on
+Exactly one of InstanceMetric and ObjectMetric must be provided
 
 _Appears in:_
 - [HorizontalScale](#horizontalscale)
@@ -176,15 +181,16 @@ _Appears in:_
 
 
 
-Env defines what secrets and configmaps should be used for environment variables in the capsule.
+Env defines what secrets and configmaps should be used for environment
+variables in the capsule.
 
 _Appears in:_
 - [CapsuleSpec](#capsulespec)
 
 | Field | Description |
 | --- | --- |
-| `disable_automatic` _boolean_ | DisableAutomatic sets wether the capsule should disable automatically use of existing secrets and configmaps which share the same name as the capsule as environment variables. |
-| `from` _[EnvReference](#envreference) array_ | From holds a list of references to secrets and configmaps which should be mounted as environment variables. |
+| `disable_automatic` _boolean_ | DisableAutomatic sets wether the capsule should disable automatically use<br /><br />of existing secrets and configmaps which share the same name as the capsule<br /><br />as environment variables. |
+| `from` _[EnvReference](#envreference) array_ | From holds a list of references to secrets and configmaps which should<br /><br />be mounted as environment variables. |
 
 
 ### EnvReference
@@ -214,14 +220,15 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `ref` _[FileContentReference](#filecontentreference)_ | Ref specifies a reference to a ConfigMap or Secret key which holds the contents of the file. |
-| `path` _string_ | Path specifies the full path where the File should be mounted including the file name. |
+| `path` _string_ | Path specifies the full path where the File should be mounted including<br /><br />the file name. |
 
 
 ### FileContentReference
 
 
 
-FileContentRef defines the name of a config resource and the key from which to retrieve the contents
+FileContentRef defines the name of a config resource and the key from which
+to retrieve the contents
 
 _Appears in:_
 - [File](#file)
@@ -248,33 +255,36 @@ _Appears in:_
 
 
 
-HorizontalScale defines the policy for the number of replicas of the capsule It can both be configured with autoscaling and with a static number of replicas
+HorizontalScale defines the policy for the number of replicas of
+the capsule It can both be configured with autoscaling and with a
+static number of replicas
 
 _Appears in:_
 - [CapsuleScale](#capsulescale)
 
 | Field | Description |
 | --- | --- |
-| `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule instances. |
-| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
-| `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on |
+| `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule<br /><br />instances. |
+| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU<br /><br />utilization. |
+| `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API<br /><br />which the autoscaler should scale on |
 
 
 ### HostRoute
 
 
 
-HostRoute is the configuration of a route to the network interface it's configured on.
+HostRoute is the configuration of a route to the network interface
+it's configured on.
 
 _Appears in:_
 - [CapsuleInterface](#capsuleinterface)
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface. If this field is changed, it may result in downtime, as it is used to generate resources. |
+| `id` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface.<br /><br />If this field is changed, it may result in downtime, as it is used to generate resources. |
 | `host` _string_ | Host of the route. This field is required and cannot be empty. |
-| `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are automatically matched. |
-| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration that allows custom plugins to add non-standard behavior. |
+| `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are<br /><br />automatically matched. |
+| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration<br /><br />that allows custom plugins to add non-standard behavior. |
 
 
 ### InstanceMetric
@@ -292,7 +302,8 @@ _Appears in:_
 
 
 
-Instances specifies the minimum and maximum amount of capsule instances.
+Instances specifies the minimum and maximum amount of capsule
+instances.
 
 _Appears in:_
 - [HorizontalScale](#horizontalscale)
@@ -300,7 +311,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `min` _integer_ | Min specifies the minimum amount of instances to run. |
-| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to disable autoscaling. |
+| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to<br /><br />disable autoscaling. |
 
 
 ### InterfaceGRPCProbe
@@ -326,10 +337,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually<br /><br />exclusive with the TCP and GCRP fields. |
 | `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
-| `startupDelay` _integer_ | For slow-starting containers, the startup delay allows liveness checks to fail for a set duration before restarting the instance. |
+| `startupDelay` _integer_ | For slow-starting containers, the startup delay allows liveness<br /><br />checks to fail for a set duration before restarting the instance. |
 
 
 ### InterfaceReadinessProbe
@@ -343,7 +354,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually<br /><br />exclusive with the TCP and GCRP fields. |
 | `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
 
@@ -482,7 +493,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration that allows custom plugins to add non-standard behavior. |
+| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration<br /><br />that allows custom plugins to add non-standard behavior. |
 
 
 ### URL
