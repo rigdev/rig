@@ -27,6 +27,10 @@ func Test_Plugin(t *testing.T) {
 			name:   "set nothing",
 			config: "dontAddEnabledAnnotation: true",
 			expected: &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Deployment",
+					APIVersion: "apps/v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:    map[string]string{},
 					Name:      name,
@@ -56,6 +60,10 @@ unifiedServiceTags:
   service: {{ .capsule.metadata.name }}
   version: version`,
 			expected: &appsv1.Deployment{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Deployment",
+					APIVersion: "apps/v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
 					Namespace: namespace,

@@ -397,7 +397,7 @@ func (s requestServer) SetObject(
 	return &apiplugin.SetObjectResponse{}, nil
 }
 
-func (s requestServer) Delete(
+func (s requestServer) DeleteObject(
 	_ context.Context,
 	req *apiplugin.DeleteObjectRequest,
 ) (*apiplugin.DeleteObjectResponse, error) {

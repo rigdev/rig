@@ -292,6 +292,7 @@ func (c *capsuleRequestClient) list(gvk schema.GroupVersionKind, current bool) (
 		if err != nil {
 			return nil, err
 		}
+		obj.GetObjectKind().SetGroupVersionKind(gvk)
 		res = append(res, obj)
 	}
 
@@ -334,6 +335,8 @@ func (c *capsuleRequestClient) GetNewInto(obj client.Object) error {
 	if err := c.scheme.Convert(res, obj, nil); err != nil {
 		return err
 	}
+
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
 
 	return nil
 }

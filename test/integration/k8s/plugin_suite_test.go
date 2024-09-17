@@ -147,7 +147,7 @@ container:
 		Lifecycle:           lc,
 	}
 
-	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
+	require.NoError(t, capsuleReconciler.SetupWithManager(manager, "capsule_plugin"))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {

@@ -87,7 +87,7 @@ type Step struct {
 	// Deprecated, use Match.Namespaces.
 	Namespaces []string `json:"namespaces,omitempty"`
 	// If set, only execute the plugin on the capsules specified.
-	// Deprecated, use Match.CapsuleNames.
+	// Deprecated, use Match.Names.
 	Capsules []string `json:"capsules,omitempty"`
 	// If set, will enable the step for the Rig platform which is a Capsule as well
 	// Deprecated, use Match.EnableForPlatform.

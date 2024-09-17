@@ -92,6 +92,7 @@ var allPlugins = []string{
 	"rigdev.placement",
 	"rigdev.sidecar",
 	"rigdev.envvar_csi",
+	"rigdev.argo_rollout",
 }
 
 func NewManager(restCfg *rest.Config, opts ...ManagerOption) (*Manager, error) {

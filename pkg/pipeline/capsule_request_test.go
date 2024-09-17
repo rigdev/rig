@@ -132,7 +132,7 @@ func Test_ListNew(t *testing.T) {
 	services, err := ListNew(c, &corev1.Service{})
 	require.NoError(t, err)
 	require.Equal(t, []*corev1.Service{
-		{ObjectMeta: metav1.ObjectMeta{Name: "service1"}},
-		{ObjectMeta: metav1.ObjectMeta{Name: "service2"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "service1"}, TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Service"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "service2"}, TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Service"}},
 	}, services)
 }

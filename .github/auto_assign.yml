@@ -8,7 +8,7 @@ addAssignees: true
 reviewers:
   - andersjohnsen
   - Munklinde96
-  - blacksails
+  - MatiasFrank
 
 # A list of keywords to be skipped the process that add reviewers if pull requests include it
 skipKeywords:

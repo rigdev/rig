@@ -63,7 +63,7 @@ func New(
 		Lifecycle:           lc,
 	}
 
-	if err := cr.SetupWithManager(mgr); err != nil {
+	if err := cr.SetupWithManager(mgr, ""); err != nil {
 		return nil, err
 	}
 
