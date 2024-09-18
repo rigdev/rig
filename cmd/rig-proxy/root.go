@@ -17,8 +17,12 @@ var verbose = false
 func createRootCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "rig-proxy",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			core := zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), zapcore.AddSync(os.Stderr), zapcore.DebugLevel)
+		RunE: func(_ *cobra.Command, _ []string) error {
+			core := zapcore.NewCore(
+				zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+				zapcore.AddSync(os.Stderr),
+				zapcore.DebugLevel,
+			)
 			logger := zap.New(core)
 
 			p := tunnel.New(logger)
@@ -57,24 +61,4 @@ func createRootCMD() *cobra.Command {
 	cmd.AddCommand(build.VersionCommand())
 
 	return cmd
-}
-
-type proxyConfig struct {
-	ForwardRules []forwardRule `yaml:"forwardRules"`
-	ReverseRules []reverseRule `yaml:"reverseRules"`
-	TunnelPort   uint32        `yaml:"tunnelPort"`
-}
-
-type forwardRule struct {
-	Type        string `yaml:"type"`
-	Port        uint32 `yaml:"port"`
-	Target      string `yaml:"target"`
-	AllowOrigin string `yaml:"allowOrigin"`
-	targetName  string
-	targetPort  uint32
-}
-
-type reverseRule struct {
-	Port   uint32 `yaml:"port"`
-	Target string `yaml:"target"`
 }

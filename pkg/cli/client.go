@@ -91,11 +91,13 @@ type configSessionManager struct {
 func (s *configSessionManager) GetAccessToken() string {
 	accessToken := s.ctx.GetAuth().AccessToken
 	if accessToken == "" && s.ctx.GetAuth().RefreshToken != "" {
-		res, err := s.noAuthClient.Authentication().RefreshToken(context.Background(), &connect.Request[authentication.RefreshTokenRequest]{
-			Msg: &authentication.RefreshTokenRequest{
-				RefreshToken: s.ctx.GetAuth().RefreshToken,
-			},
-		})
+		res, err := s.noAuthClient.Authentication().RefreshToken(
+			context.Background(),
+			&connect.Request[authentication.RefreshTokenRequest]{
+				Msg: &authentication.RefreshTokenRequest{
+					RefreshToken: s.ctx.GetAuth().RefreshToken,
+				},
+			})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error refreshing auth token: %v\n", err)
 			fmt.Fprintf(os.Stderr, "run `rig auth login` to reconnect\n")

@@ -67,7 +67,11 @@ func (t *tunnelScope) Write(tunnelID uint64, data []byte) error {
 func (t *tunnelScope) Close(tunnelID uint64, err error) {
 	logger := t.h.logger.With(zap.Uint64("tunnel_id", tunnelID))
 	if err != nil {
-		logger.Warn("socket closed with error", zap.Stringer("code", errors.CodeOf(err)), zap.String("message", errors.MessageOf(err)))
+		logger.Warn(
+			"socket closed with error",
+			zap.Stringer("code", errors.CodeOf(err)),
+			zap.String("message", errors.MessageOf(err)),
+		)
 	} else {
 		logger.Info("socket closed")
 	}
@@ -162,7 +166,11 @@ func (h *tunnelHandler) Tunnel(stream api_tunnel.Service_TunnelServer) error {
 					return
 				}
 
-				h.logger.Info("new incoming request", zap.Stringer("local", conn.LocalAddr()), zap.Stringer("remote", conn.RemoteAddr()))
+				h.logger.Info(
+					"new incoming request",
+					zap.Stringer("local", conn.LocalAddr()),
+					zap.Stringer("remote", conn.RemoteAddr()),
+				)
 
 				if err := tunnel.HandleInbound(stream.Context(), t, conn, uint32(port)); err != nil {
 					h.logger.Error("error initializing reverse tunnel", zap.Error(err))
