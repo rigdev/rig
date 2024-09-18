@@ -81,6 +81,10 @@ func (c *Cmd) createHostTunnel(ctx context.Context, cfg *platformv1.HostCapsule)
 	}
 
 	_, outcome, err := capsule_cmd.DryRun(deployInput)
+	if err != nil {
+		return err
+	}
+
 	if len(outcome.FieldChanges) == 0 {
 		fmt.Println("Capsule already configured as host-proxy, skipping deploy")
 	} else {
