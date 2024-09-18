@@ -290,6 +290,29 @@ func printInstanceID(instanceID string, out *os.File) error {
 	return nil
 }
 
+func DryRun(input DeployInput) (*capsule.Revision, *capsule.DeployOutcome, error) {
+	req := &connect.Request[capsule.DeployRequest]{
+		Msg: &capsule.DeployRequest{
+			CapsuleId:          input.CapsuleID,
+			Changes:            input.Changes,
+			Force:              input.ForceDeploy,
+			ProjectId:          input.ProjectID,
+			EnvironmentId:      input.EnvironmentID,
+			DryRun:             true,
+			CurrentRolloutId:   input.CurrentRolloutID,
+			ForceOverride:      input.ForceOverride,
+			CurrentFingerprint: input.CurrentFingerprint,
+		},
+	}
+
+	res, err := input.Rig.Capsule().Deploy(input.Ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return res.Msg.GetRevision(), res.Msg.GetOutcome(), nil
+}
+
 func Deploy(input DeployInput) (*capsule.Revision, error) {
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{

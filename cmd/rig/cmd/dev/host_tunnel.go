@@ -31,12 +31,17 @@ func (c *Cmd) createHostTunnel(ctx context.Context, cfg *platformv1.HostCapsule)
 		return err
 	}
 
-	spec := platformv1.CapsuleSpec{
+	spec := &platformv1.CapsuleSpec{
 		Image: "ghcr.io/rigdev/rig-proxy:" + proxyTag,
 		Files: []*platformv1.File{
 			{
 				Path:    "/capsule.yaml",
 				String_: string(bs),
+			},
+		},
+		Scale: &platformv1.Scale{
+			Horizontal: &platformv1.HorizontalScale{
+				Min: 1,
 			},
 		},
 	}
@@ -62,35 +67,40 @@ func (c *Cmd) createHostTunnel(ctx context.Context, cfg *platformv1.HostCapsule)
 		EnvironmentID: cfg.GetEnvironment(),
 		CapsuleID:     cfg.GetName(),
 	}
-
 	deployInput := capsule_cmd.DeployInput{
 		BaseInput: baseInput,
 		Changes: []*capsule.Change{
 			{
 				Field: &capsule.Change_Spec{
-					Spec: &spec,
+					Spec: spec,
 				},
 			},
 		},
 		ForceDeploy: true,
 	}
-	revision, err := capsule_cmd.Deploy(
-		deployInput,
-	)
-	if err != nil {
-		return err
-	}
 
-	waitInput := capsule_cmd.WaitForRolloutInput{
-		RollbackInput: capsule_cmd.RollbackInput{
-			BaseInput: baseInput,
-		},
-		Fingerprints: &model.Fingerprints{
-			Capsule: revision.GetMetadata().GetFingerprint(),
-		},
-	}
-	if err := capsule_cmd.WaitForRollout(waitInput); err != nil {
-		return err
+	_, outcome, err := capsule_cmd.DryRun(deployInput)
+	if len(outcome.FieldChanges) == 0 {
+		fmt.Println("Capsule already configured as host-proxy, skipping deploy")
+	} else {
+		fmt.Println("Deploying Capsule as a host-proxy...")
+
+		revision, err := capsule_cmd.Deploy(deployInput)
+		if err != nil {
+			return err
+		}
+
+		waitInput := capsule_cmd.WaitForRolloutInput{
+			RollbackInput: capsule_cmd.RollbackInput{
+				BaseInput: baseInput,
+			},
+			Fingerprints: &model.Fingerprints{
+				Capsule: revision.GetMetadata().GetFingerprint(),
+			},
+		}
+		if err := capsule_cmd.WaitForRollout(waitInput); err != nil {
+			return err
+		}
 	}
 
 	instanceID := ""
