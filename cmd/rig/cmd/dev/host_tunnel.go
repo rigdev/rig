@@ -31,44 +31,34 @@ func (c *Cmd) createHostTunnel(ctx context.Context, cfg *platformv1.HostCapsule)
 		return err
 	}
 
-	var changes []*capsule.Change
-	changes = append(changes, &capsule.Change{
-		Field: &capsule.Change_SetConfigFile{
-			SetConfigFile: &capsule.Change_ConfigFile{
+	spec := &platformv1.CapsuleSpec{
+		Image: "ghcr.io/rigdev/rig-proxy:" + proxyTag,
+		Files: []*platformv1.File{
+			{
 				Path:    "/capsule.yaml",
-				Content: bs,
+				String_: string(bs),
 			},
 		},
-	})
-
-	var interfaces []*capsule.Interface
-	for _, capIf := range cfg.GetNetwork().GetCapsuleInterfaces() {
-		interfaces = append(interfaces, &capsule.Interface{
-			Port: capIf.Port,
-			Name: fmt.Sprintf("forward-%d", capIf.Port),
-		})
+		Scale: &platformv1.Scale{
+			Horizontal: &platformv1.HorizontalScale{
+				Min: 1,
+			},
+		},
 	}
 
 	if cfg.GetNetwork().GetTunnelPort() != 0 {
-		interfaces = append(interfaces, &capsule.Interface{
-			Port: cfg.GetNetwork().GetTunnelPort(),
+		spec.Interfaces = append(spec.Interfaces, &platformv1.CapsuleInterface{
+			Port: int32(cfg.GetNetwork().GetTunnelPort()),
 			Name: "host-tunnel",
 		})
 	}
 
-	changes = append(changes, &capsule.Change{
-		Field: &capsule.Change_Network{
-			Network: &capsule.Network{
-				Interfaces: interfaces,
-			},
-		},
-	})
-
-	changes = append(changes, &capsule.Change{Field: &capsule.Change_AddImage_{
-		AddImage: &capsule.Change_AddImage{
-			Image: "ghcr.io/rigdev/rig-proxy:dev",
-		},
-	}})
+	for _, capIf := range cfg.GetNetwork().GetCapsuleInterfaces() {
+		spec.Interfaces = append(spec.Interfaces, &platformv1.CapsuleInterface{
+			Port: int32(capIf.GetPort()),
+			Name: fmt.Sprintf("forward-%d", capIf.Port),
+		})
+	}
 
 	baseInput := capsule_cmd.BaseInput{
 		Ctx:           ctx,
@@ -77,29 +67,45 @@ func (c *Cmd) createHostTunnel(ctx context.Context, cfg *platformv1.HostCapsule)
 		EnvironmentID: cfg.GetEnvironment(),
 		CapsuleID:     cfg.GetName(),
 	}
-
 	deployInput := capsule_cmd.DeployInput{
-		BaseInput:   baseInput,
-		Changes:     changes,
+		BaseInput: baseInput,
+		Changes: []*capsule.Change{
+			{
+				Field: &capsule.Change_Spec{
+					Spec: spec,
+				},
+			},
+		},
 		ForceDeploy: true,
+		Message:     "Configuring Capsule as Host-Proxy",
 	}
-	revision, err := capsule_cmd.Deploy(
-		deployInput,
-	)
+
+	_, outcome, err := capsule_cmd.DryRun(deployInput)
 	if err != nil {
 		return err
 	}
 
-	waitInput := capsule_cmd.WaitForRolloutInput{
-		RollbackInput: capsule_cmd.RollbackInput{
-			BaseInput: baseInput,
-		},
-		Fingerprints: &model.Fingerprints{
-			Capsule: revision.GetMetadata().GetFingerprint(),
-		},
-	}
-	if err := capsule_cmd.WaitForRollout(waitInput); err != nil {
-		return err
+	if len(outcome.FieldChanges) == 0 {
+		fmt.Println("Capsule already configured as host-proxy, skipping deploy")
+	} else {
+		fmt.Println("Deploying Capsule as a host-proxy...")
+
+		revision, err := capsule_cmd.Deploy(deployInput)
+		if err != nil {
+			return err
+		}
+
+		waitInput := capsule_cmd.WaitForRolloutInput{
+			RollbackInput: capsule_cmd.RollbackInput{
+				BaseInput: baseInput,
+			},
+			Fingerprints: &model.Fingerprints{
+				Capsule: revision.GetMetadata().GetFingerprint(),
+			},
+		}
+		if err := capsule_cmd.WaitForRollout(waitInput); err != nil {
+			return err
+		}
 	}
 
 	instanceID := ""

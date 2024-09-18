@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -62,6 +63,7 @@ type DeployInput struct {
 	ForceOverride      bool
 	CurrentRolloutID   uint64
 	CurrentFingerprint *model.Fingerprint
+	Message            string
 }
 
 type DeployAndWaitInput struct {
@@ -289,6 +291,30 @@ func printInstanceID(instanceID string, out *os.File) error {
 	return nil
 }
 
+func DryRun(input DeployInput) (*capsule.Revision, *capsule.DeployOutcome, error) {
+	req := &connect.Request[capsule.DeployRequest]{
+		Msg: &capsule.DeployRequest{
+			CapsuleId:          input.CapsuleID,
+			Changes:            input.Changes,
+			Force:              input.ForceDeploy,
+			ProjectId:          input.ProjectID,
+			EnvironmentId:      input.EnvironmentID,
+			DryRun:             true,
+			CurrentRolloutId:   input.CurrentRolloutID,
+			ForceOverride:      input.ForceOverride,
+			CurrentFingerprint: input.CurrentFingerprint,
+			Message:            input.Message,
+		},
+	}
+
+	res, err := input.Rig.Capsule().Deploy(input.Ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return res.Msg.GetRevision(), res.Msg.GetOutcome(), nil
+}
+
 func Deploy(input DeployInput) (*capsule.Revision, error) {
 	req := &connect.Request[capsule.DeployRequest]{
 		Msg: &capsule.DeployRequest{
@@ -301,6 +327,7 @@ func Deploy(input DeployInput) (*capsule.Revision, error) {
 			CurrentRolloutId:   input.CurrentRolloutID,
 			ForceOverride:      input.ForceOverride,
 			CurrentFingerprint: input.CurrentFingerprint,
+			Message:            input.Message,
 		},
 	}
 
@@ -977,8 +1004,14 @@ func (s *webSocketStream[Request, Response]) close() {
 func newWebSocketStream[Request proto.Message, Response proto.Message](
 	ctx context.Context, rCtx *cmdconfig.Context, path string,
 ) (*webSocketStream[Request, Response], error) {
-	url := rCtx.GetService().Server + path + "?content-type=proto"
-	ws, _, err := websocket.Dial(ctx, url, &websocket.DialOptions{
+	uri, err := url.Parse(rCtx.GetService().Server)
+	if err != nil {
+		return nil, err
+	}
+
+	uri.Path = path
+	uri.RawQuery = "content-type=proto"
+	ws, _, err := websocket.Dial(ctx, uri.String(), &websocket.DialOptions{
 		HTTPHeader: http.Header{
 			"Authorization": []string{"Bearer " + rCtx.GetAuth().AccessToken},
 		},

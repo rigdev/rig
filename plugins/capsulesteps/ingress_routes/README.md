@@ -35,9 +35,9 @@ Configuration for the ingress_routes plugin
 | Field | Description |
 | --- | --- |
 | `clusterIssuer` _string_ | ClusterIssuer to use for issueing ingress certificates |
-| `createCertificateResources` _boolean_ | CreateCertificateResources specifies wether to create Certificate<br /><br />resources. If this is not enabled we will use ingress annotations. This<br /><br />is handy in environments where the ingress-shim isn't enabled. |
-| `ingressClassName` _string_ | ClassName specifies the default ingress class to use for all ingress<br /><br />resources created. |
-| `disableTLS` _boolean_ | DisableTLS for ingress resources generated. This is useful if a 3rd-party component<br /><br />is handling the HTTPS TLS termination and certificates. |
+| `createCertificateResources` _boolean_ | CreateCertificateResources specifies wether to create Certificate<br />resources. If this is not enabled we will use ingress annotations. This<br />is handy in environments where the ingress-shim isn't enabled. |
+| `ingressClassName` _string_ | ClassName specifies the default ingress class to use for all ingress<br />resources created. |
+| `disableTLS` _boolean_ | DisableTLS for ingress resources generated. This is useful if a 3rd-party component<br />is handling the HTTPS TLS termination and certificates. |
 | `annotations` _object (keys:string, values:string)_ | Annotations to be added to all ingress resources created. |
 
 

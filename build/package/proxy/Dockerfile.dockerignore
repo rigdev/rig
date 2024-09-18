@@ -1,0 +1,15 @@
+*
+!/docs/api-ref-docs/templates/service.tmpl
+!/go.mod
+!/go.sum
+!/go.work
+!/go.work.sum
+!/taskfile.yaml
+!/tools/go.mod
+!/tools/go.sum
+!/tools/taskfile.yaml
+!/proto
+!/cmd
+!/pkg
+!/internal
+!/plugins

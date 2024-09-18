@@ -55,7 +55,7 @@ Configuration for the object_template plugin
 | `object` _string_ | The yaml to apply to the object. The yaml can be templated. |
 | `group` _string_ | Group to match, for which objects to apply the patch to. |
 | `kind` _string_ | Kind to match, for which objects to apply the patch to. |
-| `name` _string_ | Name of the object to match. Default to Capsule-name. If '*' will execute the object template<br /><br />on all objects of the given group and kind. |
+| `name` _string_ | Name of the object to match. Default to Capsule-name. If '*' will execute the object template<br />on all objects of the given group and kind. |
 
 
 

@@ -26,7 +26,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `utilization` _integer_ | Utilization specifies the average CPU target. If the average<br /><br />exceeds this number new instances will be added. |
+| `utilization` _integer_ | Utilization specifies the average CPU target. If the average<br />exceeds this number new instances will be added. |
 
 
 ### Capsule
@@ -58,15 +58,15 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name specifies a descriptive name of the interface. |
 | `port` _integer_ | Port specifies what port the interface should have. |
-| `liveness` _[InterfaceLivenessProbe](#interfacelivenessprobe)_ | Liveness specifies that this interface should be used for<br /><br />liveness probing. Only one of the Capsule interfaces can be<br /><br />used as liveness probe. |
-| `readiness` _[InterfaceReadinessProbe](#interfacereadinessprobe)_ | Readiness specifies that this interface should be used for<br /><br />readiness probing. Only one of the Capsule interfaces can be<br /><br />used as readiness probe. |
+| `liveness` _[InterfaceLivenessProbe](#interfacelivenessprobe)_ | Liveness specifies that this interface should be used for<br />liveness probing. Only one of the Capsule interfaces can be<br />used as liveness probe. |
+| `readiness` _[InterfaceReadinessProbe](#interfacereadinessprobe)_ | Readiness specifies that this interface should be used for<br />readiness probing. Only one of the Capsule interfaces can be<br />used as readiness probe. |
 | `public` _[CapsulePublicInterface](#capsulepublicinterface)_ | Public specifies if and how the interface should be published. |
 | `routes` _[HostRoute](#hostroute) array_ | Host routes that are mapped to this interface. |
 
 
 ### CapsuleInterfaceIngress
 
-_Underlying type:_ _[struct{Host string "json:\"host\" protobuf:\"1\""; Paths []string "json:\"paths,omitempty\" protobuf:\"2\""}](#struct{host-string-"json:\"host\"-protobuf:\"1\"";-paths-[]string-"json:\"paths,omitempty\"-protobuf:\"2\""})_
+
 
 CapsuleInterfaceIngress defines that the interface should be exposed as http
 ingress
@@ -74,11 +74,15 @@ ingress
 _Appears in:_
 - [CapsulePublicInterface](#capsulepublicinterface)
 
+| Field | Description |
+| --- | --- |
+| `host` _string_ | Host specifies the DNS name of the Ingress resource. |
+| `paths` _string array_ | Paths specifies a list of paths. In order for a request to<br />hit the ingress at least one of these must match the request. |
 
 
 ### CapsuleInterfaceLoadBalancer
 
-_Underlying type:_ _[struct{Port int32 "json:\"port\" protobuf:\"1\""}](#struct{port-int32-"json:\"port\"-protobuf:\"1\""})_
+
 
 CapsuleInterfaceLoadBalancer defines that the interface should be exposed as
 a L4 loadbalancer
@@ -86,6 +90,9 @@ a L4 loadbalancer
 _Appears in:_
 - [CapsulePublicInterface](#capsulepublicinterface)
 
+| Field | Description |
+| --- | --- |
+| `port` _integer_ | Port is the external port on the LoadBalancer |
 
 
 ### CapsulePublicInterface
@@ -99,8 +106,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ | Ingress specifies that this interface should be exposed through an<br /><br />Ingress resource. The Ingress field is mutually exclusive with the<br /><br />LoadBalancer field. |
-| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a<br /><br />LoadBalancer Service. The LoadBalancer field is mutually exclusive with<br /><br />the Ingress field. |
+| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ | Ingress specifies that this interface should be exposed through an<br />Ingress resource. The Ingress field is mutually exclusive with the<br />LoadBalancer field. |
+| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a<br />LoadBalancer Service. The LoadBalancer field is mutually exclusive with<br />the Ingress field. |
 
 
 ### CapsuleScale
@@ -130,13 +137,13 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `image` _string_ | Image specifies what image the Capsule should run. |
-| `command` _string_ | Command is run as a command in the shell. If left unspecified, the<br /><br />container will run using what is specified as ENTRYPOINT in the<br /><br />Dockerfile. |
-| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command<br /><br />is left empty the arguments will be passed to the ENTRYPOINT of the<br /><br />docker image. |
-| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should<br /><br />have. Specifying interfaces will create the corresponding kubernetes<br /><br />Services and Ingresses depending on how the interface is configured. |
-| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be<br /><br />based on ConfigMaps or Secrets. |
+| `command` _string_ | Command is run as a command in the shell. If left unspecified, the<br />container will run using what is specified as ENTRYPOINT in the<br />Dockerfile. |
+| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command<br />is left empty the arguments will be passed to the ENTRYPOINT of the<br />docker image. |
+| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should<br />have. Specifying interfaces will create the corresponding kubernetes<br />Services and Ingresses depending on how the interface is configured. |
+| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be<br />based on ConfigMaps or Secrets. |
 | `scale` _[CapsuleScale](#capsulescale)_ | Scale specifies the scaling of the Capsule. |
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
-| `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain<br /><br />environment variables. |
+| `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain<br />environment variables. |
 | `cronJobs` _[CronJob](#cronjob) array_ |  |
 | `extensions` _object (keys:string, values:RawMessage)_ | Extensions are extra, typed fields defined by the platform for custom behaviour implemented through plugins |
 
@@ -189,8 +196,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `disable_automatic` _boolean_ | DisableAutomatic sets wether the capsule should disable automatically use<br /><br />of existing secrets and configmaps which share the same name as the capsule<br /><br />as environment variables. |
-| `from` _[EnvReference](#envreference) array_ | From holds a list of references to secrets and configmaps which should<br /><br />be mounted as environment variables. |
+| `disable_automatic` _boolean_ | DisableAutomatic sets wether the capsule should disable automatically use<br />of existing secrets and configmaps which share the same name as the capsule<br />as environment variables. |
+| `from` _[EnvReference](#envreference) array_ | From holds a list of references to secrets and configmaps which should<br />be mounted as environment variables. |
 
 
 ### EnvReference
@@ -220,7 +227,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `ref` _[FileContentReference](#filecontentreference)_ | Ref specifies a reference to a ConfigMap or Secret key which holds the contents of the file. |
-| `path` _string_ | Path specifies the full path where the File should be mounted including<br /><br />the file name. |
+| `path` _string_ | Path specifies the full path where the File should be mounted including<br />the file name. |
 
 
 ### FileContentReference
@@ -242,13 +249,17 @@ _Appears in:_
 
 ### HTTPPathRoute
 
-_Underlying type:_ _[struct{Path string "json:\"path\" protobuf:\"1\""; Match PathMatchType "json:\"match,omitempty\" protobuf:\"2\""}](#struct{path-string-"json:\"path\"-protobuf:\"1\"";-match-pathmatchtype-"json:\"match,omitempty\"-protobuf:\"2\""})_
+
 
 A HTTP path routing.
 
 _Appears in:_
 - [HostRoute](#hostroute)
 
+| Field | Description |
+| --- | --- |
+| `path` _string_ | Path of the route. |
+| `match` _[PathMatchType](#pathmatchtype)_ | The method of matching. By default, `PathPrefix` is used. |
 
 
 ### HorizontalScale
@@ -264,9 +275,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule<br /><br />instances. |
-| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU<br /><br />utilization. |
-| `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API<br /><br />which the autoscaler should scale on |
+| `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule<br />instances. |
+| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU<br />utilization. |
+| `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API<br />which the autoscaler should scale on |
 
 
 ### HostRoute
@@ -281,21 +292,26 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface.<br /><br />If this field is changed, it may result in downtime, as it is used to generate resources. |
+| `id` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface.<br />If this field is changed, it may result in downtime, as it is used to generate resources. |
 | `host` _string_ | Host of the route. This field is required and cannot be empty. |
-| `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are<br /><br />automatically matched. |
-| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration<br /><br />that allows custom plugins to add non-standard behavior. |
+| `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are<br />automatically matched. |
+| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration<br />that allows custom plugins to add non-standard behavior. |
 
 
 ### InstanceMetric
 
-_Underlying type:_ _[struct{MetricName string "json:\"metricName\" protobuf:\"1\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\" protobuf:\"2\""; AverageValue string "json:\"averageValue\" protobuf:\"3\""}](#struct{metricname-string-"json:\"metricname\"-protobuf:\"1\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"-protobuf:\"2\"";-averagevalue-string-"json:\"averagevalue\"-protobuf:\"3\""})_
+
 
 InstanceMetric defines a custom instance-based metric (pod-metric in Kubernetes lingo)
 
 _Appears in:_
 - [CustomMetric](#custommetric)
 
+| Field | Description |
+| --- | --- |
+| `metricName` _string_ | MetricName is the name of the metric |
+| `matchLabels` _object (keys:string, values:string)_ | MatchLabels is a set of key, value pairs which filters the metric series |
+| `averageValue` _string_ | AverageValue defines the average value across all instances which the autoscaler scales towards |
 
 
 ### Instances
@@ -311,12 +327,12 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `min` _integer_ | Min specifies the minimum amount of instances to run. |
-| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to<br /><br />disable autoscaling. |
+| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to<br />disable autoscaling. |
 
 
 ### InterfaceGRPCProbe
 
-_Underlying type:_ _[struct{Service string "json:\"service\" protobuf:\"1\""; Enabled bool "json:\"enabled,omitempty\" protobuf:\"2\""}](#struct{service-string-"json:\"service\"-protobuf:\"1\"";-enabled-bool-"json:\"enabled,omitempty\"-protobuf:\"2\""})_
+
 
 InterfaceGRPCProbe specifies a GRPC probe.
 
@@ -324,6 +340,10 @@ _Appears in:_
 - [InterfaceLivenessProbe](#interfacelivenessprobe)
 - [InterfaceReadinessProbe](#interfacereadinessprobe)
 
+| Field | Description |
+| --- | --- |
+| `service` _string_ | Service specifies the gRPC health probe service to probe. This is a<br />used as service name as per standard gRPC health/v1. |
+| `enabled` _boolean_ | Enabled controls if the gRPC health check is activated. |
 
 
 ### InterfaceLivenessProbe
@@ -337,10 +357,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ | Path is the HTTP path of the probe. Path is mutually<br /><br />exclusive with the TCP and GCRP fields. |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually<br />exclusive with the TCP and GCRP fields. |
 | `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
-| `startupDelay` _integer_ | For slow-starting containers, the startup delay allows liveness<br /><br />checks to fail for a set duration before restarting the instance. |
+| `startupDelay` _integer_ | For slow-starting containers, the startup delay allows liveness<br />checks to fail for a set duration before restarting the instance. |
 
 
 ### InterfaceReadinessProbe
@@ -354,7 +374,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ | Path is the HTTP path of the probe. Path is mutually<br /><br />exclusive with the TCP and GCRP fields. |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually<br />exclusive with the TCP and GCRP fields. |
 | `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
 
@@ -376,13 +396,20 @@ _Appears in:_
 
 ### ObjectMetric
 
-_Underlying type:_ _[struct{MetricName string "json:\"metricName\" protobuf:\"1\""; MatchLabels map[string]string "json:\"matchLabels,omitempty\" protobuf:\"2\""; AverageValue string "json:\"averageValue,omitempty\" protobuf:\"3\""; Value string "json:\"value,omitempty\" protobuf:\"4\""; DescribedObject k8s.io/api/autoscaling/v2.CrossVersionObjectReference "json:\"objectReference\" protobuf:\"5\""}](#struct{metricname-string-"json:\"metricname\"-protobuf:\"1\"";-matchlabels-map[string]string-"json:\"matchlabels,omitempty\"-protobuf:\"2\"";-averagevalue-string-"json:\"averagevalue,omitempty\"-protobuf:\"3\"";-value-string-"json:\"value,omitempty\"-protobuf:\"4\"";-describedobject-k8sioapiautoscalingv2crossversionobjectreference-"json:\"objectreference\"-protobuf:\"5\""})_
+
 
 ObjectMetric defines a custom object metric for the autoscaler
 
 _Appears in:_
 - [CustomMetric](#custommetric)
 
+| Field | Description |
+| --- | --- |
+| `metricName` _string_ | MetricName is the name of the metric |
+| `matchLabels` _object (keys:string, values:string)_ | MatchLabels is a set of key, value pairs which filters the metric series |
+| `averageValue` _string_ | AverageValue scales the number of instances towards making the value returned by the metric<br />divided by the number of instances reach AverageValue<br />Exactly one of 'Value' and 'AverageValue' must be set |
+| `value` _string_ | Value scales the number of instances towards making the value returned by the metric 'Value'<br />Exactly one of 'Value' and 'AverageValue' must be set |
+| `objectReference` _[CrossVersionObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#crossversionobjectreference-v2-autoscaling)_ | DescribedObject is a reference to the object in the same namespace which is described by the metric |
 
 
 ### OwnedGlobalResource
@@ -400,6 +427,15 @@ _Appears in:_
 | `state` _string_ |  |
 | `message` _string_ |  |
 
+
+### PathMatchType
+
+_Underlying type:_ _string_
+
+PathMatchType specifies the semantics of how HTTP paths should be compared.
+
+_Appears in:_
+- [HTTPPathRoute](#httppathroute)
 
 
 
@@ -464,8 +500,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `request` _[Quantity](#quantity)_ | Request specifies the resource request. |
-| `limit` _[Quantity](#quantity)_ | Limit specifies the resource limit. |
+| `request` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Request specifies the resource request. |
+| `limit` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Limit specifies the resource limit. |
 
 
 ### ResourceRequest
@@ -479,7 +515,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `request` _[Quantity](#quantity)_ | Request specifies the request of a resource. |
+| `request` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Request specifies the request of a resource. |
 
 
 ### RouteOptions
@@ -493,7 +529,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration<br /><br />that allows custom plugins to add non-standard behavior. |
+| `annotations` _object (keys:string, values:string)_ | Annotations of the route option. This can be plugin-specific configuration<br />that allows custom plugins to add non-standard behavior. |
 
 
 ### URL
@@ -512,20 +548,6 @@ _Appears in:_
 | `queryParameters` _object (keys:string, values:string)_ |  |
 
 
-### UsedResource
-
-
-
-
-
-_Appears in:_
-- [CapsuleStatus](#capsulestatus)
-
-| Field | Description |
-| --- | --- |
-| `ref` _[TypedLocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#typedlocalobjectreference-v1-core)_ |  |
-| `state` _string_ |  |
-| `message` _string_ |  |
 
 
 ### VerticalScale

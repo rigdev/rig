@@ -55,7 +55,10 @@ func parseInterface(arg string) (*platformv1.ProxyInterface, error) {
 }
 
 func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
-	cfg := &platformv1.HostCapsule{}
+	cfg := &platformv1.HostCapsule{
+		Project:     c.Scope.GetCurrentContext().GetProject(),
+		Environment: c.Scope.GetCurrentContext().GetEnvironment(),
+	}
 
 	if cmd.Flags().Changed("path") {
 		bs, err := os.ReadFile(filePath)
@@ -92,6 +95,10 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 
 		capsuleName = name
 	}
+
+	cfg.Environment = flags.Flags.Environment
+	cfg.Project = flags.Flags.Project
+	cfg.Name = capsuleName
 
 	if cfg.GetNetwork() == nil {
 		cfg.Network = &platformv1.HostNetwork{}

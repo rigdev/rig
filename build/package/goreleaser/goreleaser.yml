@@ -49,6 +49,23 @@ builds:
       - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
       - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
       - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
+  - id: rig-proxy
+    binary: rig-proxy
+    main: ./cmd/rig-proxy
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/rigdev/rig/pkg/build.version={{ .Version }}
+      - -X github.com/rigdev/rig/pkg/build.commit={{ .Commit }}
+      - -X github.com/rigdev/rig/pkg/build.date={{ .Date }}
 
 archives:
   - id: rig
@@ -69,6 +86,18 @@ archives:
       - rig-ops
     name_template: >-
       rig-ops_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+  - id: rig-proxy
+    format: tar.gz
+    builds:
+      - rig-proxy
+    name_template: >-
+      rig-proxy_
       {{- .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
@@ -110,7 +139,6 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
-
   - image_templates:
       - "ghcr.io/rigdev/rig:{{ .Version }}-amd64"
     goarch: amd64
@@ -122,6 +150,20 @@ dockers:
       - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
     goarch: arm64
     dockerfile: build/package/goreleaser/rig.Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
+  - image_templates:
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-amd64"
+    goarch: amd64
+    dockerfile: build/package/goreleaser/rig-proxy.Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-arm64"
+    goarch: arm64
+    dockerfile: build/package/goreleaser/rig-proxy.Dockerfile
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
@@ -161,6 +203,23 @@ docker_manifests:
       - "ghcr.io/rigdev/rig:{{ .Version }}-amd64"
       - "ghcr.io/rigdev/rig:{{ .Version }}-arm64"
 
+  - name_template: "ghcr.io/rigdev/rig-proxy:latest"
+    image_templates:
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-proxy:{{ .Major }}"
+    image_templates:
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-proxy:{{ .Major }}.{{ .Minor }}"
+    image_templates:
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/rigdev/rig-proxy:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-amd64"
+      - "ghcr.io/rigdev/rig-proxy:{{ .Version }}-arm64"
+
 changelog:
   sort: asc
   filters:
@@ -199,3 +258,4 @@ release:
     ## Docker Images
     - `ghcr.io/rigdev/rig-operator:{{ .Version }}`
     - `ghcr.io/rigdev/rig:{{ .Version }}`
+    - `ghcr.io/rigdev/rig-proxy:{{ .Version }}`

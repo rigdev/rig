@@ -24,7 +24,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `averageUtilizationPercentage` _integer_ | AverageUtilizationPercentage sets the utilization which when exceeded<br /><br />will trigger autoscaling. |
+| `averageUtilizationPercentage` _integer_ | AverageUtilizationPercentage sets the utilization which when exceeded<br />will trigger autoscaling. |
 
 
 ### Capsule
@@ -61,7 +61,7 @@ _Appears in:_
 
 ### CapsuleInterfaceIngress
 
-_Underlying type:_ _[struct{Host string "json:\"host\""}](#struct{host-string-"json:\"host\""})_
+
 
 CapsuleInterfaceIngress defines that the interface should be exposed as http
 ingress
@@ -69,11 +69,14 @@ ingress
 _Appears in:_
 - [CapsulePublicInterface](#capsulepublicinterface)
 
+| Field | Description |
+| --- | --- |
+| `host` _string_ | Host specifies the DNS name of the Ingress resource |
 
 
 ### CapsuleInterfaceLoadBalancer
 
-_Underlying type:_ _[struct{Port int32 "json:\"port\""; NodePort int32 "json:\"nodePort,omitempty\""}](#struct{port-int32-"json:\"port\"";-nodeport-int32-"json:\"nodeport,omitempty\""})_
+
 
 CapsuleInterfaceLoadBalancer defines that the interface should be exposed as
 a L4 loadbalancer
@@ -81,6 +84,10 @@ a L4 loadbalancer
 _Appears in:_
 - [CapsulePublicInterface](#capsulepublicinterface)
 
+| Field | Description |
+| --- | --- |
+| `port` _integer_ | Port is the external port on the LoadBalancer |
+| `nodePort` _integer_ | NodePort specifies a NodePort that the Service will use instead of<br />acting as a LoadBalancer. |
 
 
 ### CapsulePublicInterface
@@ -94,8 +101,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ | Ingress specifies that this interface should be exposed through an<br /><br />Ingress resource. The Ingress field is mutually exclusive with the<br /><br />LoadBalancer field. |
-| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a<br /><br />LoadBalancer Service. The LoadBalancer field is mutually exclusive with<br /><br />the Ingress field. |
+| `ingress` _[CapsuleInterfaceIngress](#capsuleinterfaceingress)_ | Ingress specifies that this interface should be exposed through an<br />Ingress resource. The Ingress field is mutually exclusive with the<br />LoadBalancer field. |
+| `loadBalancer` _[CapsuleInterfaceLoadBalancer](#capsuleinterfaceloadbalancer)_ | LoadBalancer specifies that this interface should be exposed through a<br />LoadBalancer Service. The LoadBalancer field is mutually exclusive with<br />the Ingress field. |
 
 
 ### CapsuleSpec
@@ -111,15 +118,15 @@ _Appears in:_
 | --- | --- |
 | `replicas` _integer_ | Replicas specifies how many replicas the Capsule should have. |
 | `image` _string_ | Image specifies what image the Capsule should run. |
-| `command` _string_ | Command is run as a command in the shell. If left unspecified, the<br /><br />container will run using what is specified as ENTRYPOINT in the<br /><br />Dockerfile. |
-| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command<br /><br />is left empty the arguments will be passed to the ENTRYPOINT of the<br /><br />docker image. |
-| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should<br /><br />have. Specifying interfaces will create the corresponding kubernetes<br /><br />Services and Ingresses depending on how the interface is configured. |
-| `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain<br /><br />environment variables. |
-| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be<br /><br />based on ConfigMaps or Secrets. |
+| `command` _string_ | Command is run as a command in the shell. If left unspecified, the<br />container will run using what is specified as ENTRYPOINT in the<br />Dockerfile. |
+| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command<br />is left empty the arguments will be passed to the ENTRYPOINT of the<br />docker image. |
+| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should<br />have. Specifying interfaces will create the corresponding kubernetes<br />Services and Ingresses depending on how the interface is configured. |
+| `env` _[Env](#env)_ | Env specifies configuration for how the container should obtain<br />environment variables. |
+| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be<br />based on ConfigMaps or Secrets. |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources describes what resources the Capsule should have access to. |
-| `imagePullSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | ImagePullSecret is a reference to a secret holding docker credentials<br /><br />for the registry of the image. |
+| `imagePullSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | ImagePullSecret is a reference to a secret holding docker credentials<br />for the registry of the image. |
 | `horizontalScale` _[HorizontalScale](#horizontalscale)_ | HorizontalScale describes how the Capsule should scale out |
-| `serviceAccountName` _string_ | ServiceAccountName specifies the name of an existing ServiceAccount<br /><br />which the Capsule should run as. |
+| `serviceAccountName` _string_ | ServiceAccountName specifies the name of an existing ServiceAccount<br />which the Capsule should run as. |
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is a selector for what nodes the Capsule should live on. |
 
 
@@ -135,8 +142,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `automatic` _boolean_ | Automatic sets wether the capsule should automatically use existing<br /><br />secrets and configmaps which share the same name as the capsule as<br /><br />environment variables. |
-| `from` _[EnvSource](#envsource) array_ | From holds a list of references to secrets and configmaps which should<br /><br />be mounted as environment variables. |
+| `automatic` _boolean_ | Automatic sets wether the capsule should automatically use existing<br />secrets and configmaps which share the same name as the capsule as<br />environment variables. |
+| `from` _[EnvSource](#envsource) array_ | From holds a list of references to secrets and configmaps which should<br />be mounted as environment variables. |
 
 
 ### EnvSource
@@ -165,9 +172,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ | Path specifies the full path where the File should be mounted including<br /><br />the file name. |
-| `configMap` _[FileContentRef](#filecontentref)_ | ConfigMap specifies that this file is based on a key in a ConfigMap. The<br /><br />ConfigMap field is mutually exclusive with Secret. |
-| `secret` _[FileContentRef](#filecontentref)_ | Secret specifies that this file is based on a key in a Secret. The<br /><br />Secret field is mutually exclusive with ConfigMap. |
+| `path` _string_ | Path specifies the full path where the File should be mounted including<br />the file name. |
+| `configMap` _[FileContentRef](#filecontentref)_ | ConfigMap specifies that this file is based on a key in a ConfigMap. The<br />ConfigMap field is mutually exclusive with Secret. |
+| `secret` _[FileContentRef](#filecontentref)_ | Secret specifies that this file is based on a key in a Secret. The<br />Secret field is mutually exclusive with ConfigMap. |
 
 
 ### FileContentRef
@@ -198,9 +205,9 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `minReplicas` _integer_ | MinReplicas is the minimum amount of replicas that the Capsule should<br /><br />have. |
-| `maxReplicas` _integer_ | MaxReplicas is the maximum amount of replicas that the Capsule should<br /><br />have. |
-| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU<br /><br />utilization. |
+| `minReplicas` _integer_ | MinReplicas is the minimum amount of replicas that the Capsule should<br />have. |
+| `maxReplicas` _integer_ | MaxReplicas is the maximum amount of replicas that the Capsule should<br />have. |
+| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU<br />utilization. |
 
 
 

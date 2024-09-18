@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"connectrpc.com/connect"
+	"github.com/rigdev/rig-go-api/api/v1/authentication"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -16,7 +17,6 @@ import (
 func GetClientOptions(cfg *cmdconfig.Config, ctx *cmdconfig.Context) ([]rig.Option, error) {
 	options := []rig.Option{
 		rig.WithInterceptors(&userAgentInterceptor{}),
-		rig.WithSessionManager(&configSessionManager{cfg: cfg, ctx: ctx}),
 	}
 
 	if flags.Flags.BasicAuth {
@@ -33,6 +33,15 @@ func GetClientOptions(cfg *cmdconfig.Config, ctx *cmdconfig.Context) ([]rig.Opti
 	}
 
 	options = append(options, rig.WithHost(host))
+
+	noAuthClient := rig.NewClient(options...)
+
+	options = append(options, rig.WithSessionManager(&configSessionManager{
+		cfg:          cfg,
+		ctx:          ctx,
+		noAuthClient: noAuthClient,
+	}))
+
 	return options, nil
 }
 
@@ -74,11 +83,29 @@ func (i *userAgentInterceptor) setUserAgent(h http.Header) {
 }
 
 type configSessionManager struct {
-	cfg *cmdconfig.Config
-	ctx *cmdconfig.Context
+	cfg          *cmdconfig.Config
+	ctx          *cmdconfig.Context
+	noAuthClient rig.Client
 }
 
 func (s *configSessionManager) GetAccessToken() string {
+	accessToken := s.ctx.GetAuth().AccessToken
+	if accessToken == "" && s.ctx.GetAuth().RefreshToken != "" {
+		res, err := s.noAuthClient.Authentication().RefreshToken(
+			context.Background(),
+			&connect.Request[authentication.RefreshTokenRequest]{
+				Msg: &authentication.RefreshTokenRequest{
+					RefreshToken: s.ctx.GetAuth().RefreshToken,
+				},
+			})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error refreshing auth token: %v\n", err)
+			fmt.Fprintf(os.Stderr, "run `rig auth login` to reconnect\n")
+		} else {
+			s.SetAccessToken(res.Msg.GetToken().GetAccessToken(), res.Msg.GetToken().GetRefreshToken())
+		}
+	}
+
 	return s.ctx.GetAuth().AccessToken
 }
 

@@ -43,3 +43,13 @@ jobs:
           push: true
           tags: |
             ghcr.io/rigdev/rig:main
+
+      - name: Build and push rig-proxy
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./build/package/proxy/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/rigdev/rig-proxy:main
