@@ -262,6 +262,8 @@ tasks:
   test:
     desc: "✅ Run unit tests"
     deps: [tools:gotestsum, proto, mocks]
+    env:
+      CGO_ENABLED: "1"
     cmds:
       - |
         ./tools/bin/gotestsum \
@@ -285,6 +287,7 @@ tasks:
     env:
       RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
       GOEXPERIMENT: nocoverageredesign
+      CGO_ENABLED: "1"
     cmds:
       - |
         export KUBEBUILDER_ASSETS="`./tools/bin/setup-envtest use 1.28.0 --bin-dir "{{ .ROOT_DIR }}/tools/bin" -p path`"
@@ -309,6 +312,7 @@ tasks:
       ]
     env:
       RIG_PLUGIN_DIR: "{{ .ROOT_DIR }}/bin/plugin"
+      CGO_ENABLED: "1"
     cmds:
       - mkdir -p output/test-integration
       - |
