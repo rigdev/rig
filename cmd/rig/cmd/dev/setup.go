@@ -105,6 +105,10 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		"capsule", "c", "", "Name of capsule to forward.",
 	)
 	remote.MarkFlagsOneRequired("remote-context")
+	remote.Flags().StringVar(
+		&proxyTag,
+		"tag", "latest", "Specify the image tag of rig-proxy to use.",
+	)
 
 	dev.AddCommand(remote)
 
