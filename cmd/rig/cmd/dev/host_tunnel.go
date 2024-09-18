@@ -77,6 +77,7 @@ func (c *Cmd) createHostTunnel(ctx context.Context, cfg *platformv1.HostCapsule)
 			},
 		},
 		ForceDeploy: true,
+		Message:     "Configuring Capsule as Host-Proxy",
 	}
 
 	_, outcome, err := capsule_cmd.DryRun(deployInput)

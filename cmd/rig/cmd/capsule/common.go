@@ -63,6 +63,7 @@ type DeployInput struct {
 	ForceOverride      bool
 	CurrentRolloutID   uint64
 	CurrentFingerprint *model.Fingerprint
+	Message            string
 }
 
 type DeployAndWaitInput struct {
@@ -302,6 +303,7 @@ func DryRun(input DeployInput) (*capsule.Revision, *capsule.DeployOutcome, error
 			CurrentRolloutId:   input.CurrentRolloutID,
 			ForceOverride:      input.ForceOverride,
 			CurrentFingerprint: input.CurrentFingerprint,
+			Message:            input.Message,
 		},
 	}
 
@@ -325,6 +327,7 @@ func Deploy(input DeployInput) (*capsule.Revision, error) {
 			CurrentRolloutId:   input.CurrentRolloutID,
 			ForceOverride:      input.ForceOverride,
 			CurrentFingerprint: input.CurrentFingerprint,
+			Message:            input.Message,
 		},
 	}
 
