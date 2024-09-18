@@ -21,14 +21,15 @@ custom_edit_url: null
 
 
 
-CPUTarget defines an autoscaler target for the CPU metric If empty, no autoscaling will be done
+CPUTarget defines an autoscaler target for the CPU metric
+If empty, no autoscaling will be done
 
 _Appears in:_
 - [HorizontalScale](#horizontalscale)
 
 | Field | Description |
 | --- | --- |
-| `utilization` _integer_ | Utilization specifies the average CPU target. If the average exceeds this number new instances will be added. |
+| `utilization` _integer_ | Utilization specifies the average CPU target. If the average<br /><br />exceeds this number new instances will be added. |
 
 
 ### Capsule
@@ -43,11 +44,11 @@ _Appears in:_
 | --- | --- |
 | `apiVersion` _string_ | `rig.platform/v1`
 | `kind` _string_ | `Capsule`
-| `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
-| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
-| `name` _string_ | Name,Project,Environment is unique Project,Name referes to an existing Capsule type with the given name and project Will throw an error (in the platform) if the Capsule does not exist |
-| `project` _string_ | Project references an existing Project type with the given name Will throw an error (in the platform) if the Project does not exist |
-| `environment` _string_ | Environment references an existing Environment type with the given name Will throw an error (in the platform) if the Environment does not exist The environment also needs to be present in the parent Capsule |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br /><br />Servers may infer this from the endpoint the client submits requests to.<br /><br />Cannot be updated.<br /><br />In CamelCase.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br /><br />Servers should convert recognized schemas to the latest internal value, and<br /><br />may reject unrecognized values.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `name` _string_ | Name,Project,Environment is unique<br /><br />Project,Name referes to an existing Capsule type with the given name and project<br /><br />Will throw an error (in the platform) if the Capsule does not exist |
+| `project` _string_ | Project references an existing Project type with the given name<br /><br />Will throw an error (in the platform) if the Project does not exist |
+| `environment` _string_ | Environment references an existing Environment type with the given name<br /><br />Will throw an error (in the platform) if the Environment does not exist<br /><br />The environment also needs to be present in the parent Capsule |
 | `spec` _[CapsuleSpec](#capsulespec)_ |  |
 
 
@@ -64,8 +65,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name specifies a descriptive name of the interface. |
 | `port` _integer_ | Port specifies what port the interface should have. |
-| `liveness` _[InterfaceLivenessProbe](#interfacelivenessprobe)_ | Liveness specifies that this interface should be used for liveness probing. Only one of the Capsule interfaces can be used as liveness probe. |
-| `readiness` _[InterfaceReadinessProbe](#interfacereadinessprobe)_ | Readiness specifies that this interface should be used for readiness probing. Only one of the Capsule interfaces can be used as readiness probe. |
+| `liveness` _[InterfaceLivenessProbe](#interfacelivenessprobe)_ | Liveness specifies that this interface should be used for<br /><br />liveness probing. Only one of the Capsule interfaces can be<br /><br />used as liveness probe. |
+| `readiness` _[InterfaceReadinessProbe](#interfacereadinessprobe)_ | Readiness specifies that this interface should be used for<br /><br />readiness probing. Only one of the Capsule interfaces can be<br /><br />used as readiness probe. |
 | `routes` _[HostRoute](#hostroute) array_ | Host routes that are mapped to this interface. |
 
 
@@ -81,10 +82,10 @@ _Appears in:_
 | --- | --- |
 | `apiVersion` _string_ | `rig.platform/v1`
 | `kind` _string_ | `CapsuleSet`
-| `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
-| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br /><br />Servers may infer this from the endpoint the client submits requests to.<br /><br />Cannot be updated.<br /><br />In CamelCase.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br /><br />Servers should convert recognized schemas to the latest internal value, and<br /><br />may reject unrecognized values.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
 | `name` _string_ | Name,Project is unique |
-| `project` _string_ | Project references an existing Project type with the given name Will throw an error (in the platform) if the Project does not exist |
+| `project` _string_ | Project references an existing Project type with the given name<br /><br />Will throw an error (in the platform) if the Project does not exist |
 | `spec` _[CapsuleSpec](#capsulespec)_ | Capsule-level defaults |
 | `environments` _object (keys:string, values:[CapsuleSpec](#capsulespec))_ |  |
 | `environmentRefs` _string array_ |  |
@@ -104,18 +105,18 @@ _Appears in:_
 | --- | --- |
 | `apiVersion` _string_ | `rig.platform/v1`
 | `kind` _string_ | `CapsuleSpec`
-| `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
-| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br /><br />Servers may infer this from the endpoint the client submits requests to.<br /><br />Cannot be updated.<br /><br />In CamelCase.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br /><br />Servers should convert recognized schemas to the latest internal value, and<br /><br />may reject unrecognized values.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
 | `annotations` _object (keys:string, values:string)_ |  |
 | `image` _string_ | Image specifies what image the Capsule should run. |
-| `command` _string_ | Command is run as a command in the shell. If left unspecified, the container will run using what is specified as ENTRYPOINT in the Dockerfile. |
-| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command is left empty the arguments will be passed to the ENTRYPOINT of the docker image. |
-| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should have. Specifying interfaces will create the corresponding kubernetes Services and Ingresses depending on how the interface is configured. nolint:lll |
-| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be based on ConfigMaps or Secrets. |
+| `command` _string_ | Command is run as a command in the shell. If left unspecified, the<br /><br />container will run using what is specified as ENTRYPOINT in the<br /><br />Dockerfile. |
+| `args` _string array_ | Args is a list of arguments either passed to the Command or if Command<br /><br />is left empty the arguments will be passed to the ENTRYPOINT of the<br /><br />docker image. |
+| `interfaces` _[CapsuleInterface](#capsuleinterface) array_ | Interfaces specifies the list of interfaces the the container should<br /><br />have. Specifying interfaces will create the corresponding kubernetes<br /><br />Services and Ingresses depending on how the interface is configured.<br /><br />nolint:lll |
+| `files` _[File](#file) array_ | Files is a list of files to mount in the container. These can either be<br /><br />based on ConfigMaps or Secrets. |
 | `env` _[EnvironmentVariables](#environmentvariables)_ | Env defines the environment variables set in the Capsule |
 | `scale` _[Scale](#scale)_ | Scale specifies the scaling of the Capsule. |
 | `cronJobs` _[CronJob](#cronjob) array_ |  |
-| `autoAddRigServiceAccounts` _boolean_ | TODO Move to plugin |
+| `autoAddRigServiceAccounts` _boolean_ |  |
 | `extensions` _object (keys:string, values:RawMessage)_ | Extensions are extra, typed fields defined by the platform for custom behaviour implemented through plugins |
 
 
@@ -142,7 +143,9 @@ _Appears in:_
 
 
 
-CustomMetric defines a custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on Exactly one of InstanceMetric and ObjectMetric must be provided
+CustomMetric defines a custom metrics emitted by the custom.metrics.k8s.io API
+which the autoscaler should scale on
+Exactly one of InstanceMetric and ObjectMetric must be provided
 
 _Appears in:_
 - [HorizontalScale](#horizontalscale)
@@ -165,8 +168,8 @@ _Appears in:_
 | --- | --- |
 | `apiVersion` _string_ | `rig.platform/v1`
 | `kind` _string_ | `Environment`
-| `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
-| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br /><br />Servers may infer this from the endpoint the client submits requests to.<br /><br />Cannot be updated.<br /><br />In CamelCase.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br /><br />Servers should convert recognized schemas to the latest internal value, and<br /><br />may reject unrecognized values.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
 | `name` _string_ | Name is unique |
 | `namespaceTemplate` _string_ |  |
 | `operatorVersion` _string_ |  |
@@ -216,7 +219,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `raw` _object (keys:string, values:string)_ | Raw is a list of environment variables as key-value pairs. |
-| `sources` _[EnvironmentSource](#environmentsource) array_ | Sources is a list of source files which will be injected as environment variables. They can be references to either ConfigMaps or Secrets. |
+| `sources` _[EnvironmentSource](#environmentsource) array_ | Sources is a list of source files which will be injected as environment variables.<br /><br />They can be references to either ConfigMaps or Secrets. |
 
 
 ### File
@@ -242,7 +245,8 @@ _Appears in:_
 
 
 
-FileReference defines the name of a k8s config resource and the key from which to retrieve the contents
+FileReference defines the name of a k8s config resource and the key from which
+to retrieve the contents
 
 _Appears in:_
 - [File](#file)
@@ -260,7 +264,9 @@ _Appears in:_
 
 
 
-HorizontalScale defines the policy for the number of replicas of the capsule It can both be configured with autoscaling and with a static number of replicas
+HorizontalScale defines the policy for the number of replicas of
+the capsule It can both be configured with autoscaling and with a
+static number of replicas
 
 _Appears in:_
 - [Scale](#scale)
@@ -268,10 +274,10 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `min` _integer_ | Min specifies the minimum amount of instances to run. |
-| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to disable autoscaling. |
-| `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule instances. Deprecated; use `min` and `max` instead. |
-| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU utilization. |
-| `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API which the autoscaler should scale on |
+| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to<br /><br />disable autoscaling. |
+| `instances` _[Instances](#instances)_ | Instances specifies minimum and maximum amount of Capsule<br /><br />instances.<br /><br />Deprecated; use `min` and `max` instead. |
+| `cpuTarget` _[CPUTarget](#cputarget)_ | CPUTarget specifies that this Capsule should be scaled using CPU<br /><br />utilization. |
+| `customMetrics` _[CustomMetric](#custommetric) array_ | CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API<br /><br />which the autoscaler should scale on |
 
 
 ### HostCapsule
@@ -286,12 +292,12 @@ _Appears in:_
 | --- | --- |
 | `apiVersion` _string_ | `rig.platform/v1`
 | `kind` _string_ | `HostCapsule`
-| `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
-| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
-| `name` _string_ | Name,Project,Environment is unique Project,Name referes to an existing Capsule type with the given name and project Will throw an error (in the platform) if the Capsule does not exist |
-| `project` _string_ | Project references an existing Project type with the given name Will throw an error (in the platform) if the Project does not exist |
-| `environment` _string_ | Environment references an existing Environment type with the given name Will throw an error (in the platform) if the Environment does not exist The environment also needs to be present in the parent Capsule |
-| `network` _[HostNetwork](#hostnetwork)_ | Network mapping between the host network and the Kubernetes cluster network. When activated, traffic between the two networks will be tunneled according to the rules specified here. |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br /><br />Servers may infer this from the endpoint the client submits requests to.<br /><br />Cannot be updated.<br /><br />In CamelCase.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br /><br />Servers should convert recognized schemas to the latest internal value, and<br /><br />may reject unrecognized values.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `name` _string_ | Name,Project,Environment is unique<br /><br />Project,Name referes to an existing Capsule type with the given name and project<br /><br />Will throw an error (in the platform) if the Capsule does not exist |
+| `project` _string_ | Project references an existing Project type with the given name<br /><br />Will throw an error (in the platform) if the Project does not exist |
+| `environment` _string_ | Environment references an existing Environment type with the given name<br /><br />Will throw an error (in the platform) if the Environment does not exist<br /><br />The environment also needs to be present in the parent Capsule |
+| `network` _[HostNetwork](#hostnetwork)_ | Network mapping between the host network and the Kubernetes cluster network. When activated,<br /><br />traffic between the two networks will be tunneled according to the rules specified here. |
 
 
 ### HostNetwork
@@ -305,8 +311,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `hostInterfaces` _[ProxyInterface](#proxyinterface) array_ | HostInterfaces are interfaces activated on the local machine (the host) and forwarded to the Kubernetes cluster capsules. |
-| `capsuleInterfaces` _[ProxyInterface](#proxyinterface) array_ | CapsuleInterfaces are interfaces activated on the Capsule within the Kubernetes cluster and forwarded to the local machine (the host). The traffic is directed to a single target, e.g. `localhost:8080`. |
+| `hostInterfaces` _[ProxyInterface](#proxyinterface) array_ | HostInterfaces are interfaces activated on the local machine (the host) and forwarded<br /><br />to the Kubernetes cluster capsules. |
+| `capsuleInterfaces` _[ProxyInterface](#proxyinterface) array_ | CapsuleInterfaces are interfaces activated on the Capsule within the Kubernetes cluster<br /><br />and forwarded to the local machine (the host). The traffic is directed to a single target,<br /><br />e.g. `localhost:8080`. |
 | `tunnelPort` _integer_ | TunnelPort for which the proxy-capsule should listen on. This is automatically set by the tooling. |
 
 
@@ -314,16 +320,17 @@ _Appears in:_
 
 
 
-HostRoute is the configuration of a route to the network interface it's configured on.
+HostRoute is the configuration of a route to the network interface
+it's configured on.
 
 _Appears in:_
 - [CapsuleInterface](#capsuleinterface)
 
 | Field | Description |
 | --- | --- |
-| `id` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface. If this field is changed, it may result in downtime, as it is used to generate resources. |
+| `id` _string_ | ID of the route. This field is required and cannot be empty, and must be unique for the interface.<br /><br />If this field is changed, it may result in downtime, as it is used to generate resources. |
 | `host` _string_ | Host of the route. This field is required and cannot be empty. |
-| `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are automatically matched. |
+| `paths` _[HTTPPathRoute](#httppathroute) array_ | HTTP paths of the host that maps to the interface. If empty, all paths are<br /><br />automatically matched. |
 
 
 
@@ -332,7 +339,8 @@ _Appears in:_
 
 
 
-Instances specifies the minimum and maximum amount of capsule instances.
+Instances specifies the minimum and maximum amount of capsule
+instances.
 
 _Appears in:_
 - [HorizontalScale](#horizontalscale)
@@ -340,7 +348,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `min` _integer_ | Min specifies the minimum amount of instances to run. |
-| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to disable autoscaling. |
+| `max` _integer_ | Max specifies the maximum amount of instances to run. Omit to<br /><br />disable autoscaling. |
 
 
 
@@ -356,10 +364,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually<br /><br />exclusive with the TCP and GCRP fields. |
 | `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
-| `startupDelay` _integer_ | For slow-starting containers, the startup delay allows liveness checks to fail for a set duration before restarting the instance. |
+| `startupDelay` _integer_ | For slow-starting containers, the startup delay allows liveness<br /><br />checks to fail for a set duration before restarting the instance. |
 
 
 ### InterfaceOptions
@@ -374,9 +382,9 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `tcp` _boolean_ | TCP enables layer-4 proxying in favor of layer-7 HTTP proxying. |
-| `allowOrigin` _string_ | AllowOrigin sets the `Access-Control-Allow-Origin` Header on responses to the provided value, allowing local by-pass of CORS rules. Ignored if TCP is enabled. |
-| `changeOrigin` _boolean_ | ChangeOrigin changes the Host header to match the given target. If not set, the Host header will be that of the original request. This does not impact the Origin header - use `Headers` to set that. Ignored if TCP is enabled. |
-| `headers` _object (keys:string, values:string)_ | Headers to set on the proxy-requests. Ignored if TCP is enabled. |
+| `allowOrigin` _string_ | AllowOrigin sets the `Access-Control-Allow-Origin` Header on responses to<br /><br />the provided value, allowing local by-pass of CORS rules.<br /><br />Ignored if TCP is enabled. |
+| `changeOrigin` _boolean_ | ChangeOrigin changes the Host header to match the given target. If not set,<br /><br />the Host header will be that of the original request.<br /><br />This does not impact the Origin header - use `Headers` to set that.<br /><br />Ignored if TCP is enabled. |
+| `headers` _object (keys:string, values:string)_ | Headers to set on the proxy-requests.<br /><br />Ignored if TCP is enabled. |
 
 
 ### InterfaceReadinessProbe
@@ -390,7 +398,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `path` _string_ | Path is the HTTP path of the probe. Path is mutually exclusive with the TCP and GCRP fields. |
+| `path` _string_ | Path is the HTTP path of the probe. Path is mutually<br /><br />exclusive with the TCP and GCRP fields. |
 | `tcp` _boolean_ | TCP specifies that this is a simple TCP listen probe. |
 | `grpc` _[InterfaceGRPCProbe](#interfacegrpcprobe)_ | GRPC specifies that this is a GRCP probe. |
 
@@ -451,8 +459,8 @@ _Appears in:_
 | --- | --- |
 | `apiVersion` _string_ | `rig.platform/v1`
 | `kind` _string_ | `Project`
-| `kind` _string_ | Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
-| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
+| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br /><br />Servers may infer this from the endpoint the client submits requests to.<br /><br />Cannot be updated.<br /><br />In CamelCase.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
+| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br /><br />Servers should convert recognized schemas to the latest internal value, and<br /><br />may reject unrecognized values.<br /><br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
 | `name` _string_ | Name is unique |
 | `spec` _[ProjEnvCapsuleBase](#projenvcapsulebase)_ | Project level defaults |
 

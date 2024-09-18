@@ -42,14 +42,19 @@ spec:
         description: Capsule is the Schema for the capsules API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -66,29 +71,34 @@ spec:
             description: Spec holds the specification of the Capsule.
             properties:
               args:
-                description: Args is a list of arguments either passed to the Command
-                  or if Command is left empty the arguments will be passed to the
-                  ENTRYPOINT of the docker image.
+                description: |-
+                  Args is a list of arguments either passed to the Command or if Command
+                  is left empty the arguments will be passed to the ENTRYPOINT of the
+                  docker image.
                 items:
                   type: string
                 type: array
               command:
-                description: Command is run as a command in the shell. If left unspecified,
-                  the container will run using what is specified as ENTRYPOINT in
-                  the Dockerfile.
+                description: |-
+                  Command is run as a command in the shell. If left unspecified, the
+                  container will run using what is specified as ENTRYPOINT in the
+                  Dockerfile.
                 type: string
               env:
-                description: Env specifies configuration for how the container should
-                  obtain environment variables.
+                description: |-
+                  Env specifies configuration for how the container should obtain
+                  environment variables.
                 properties:
                   automatic:
-                    description: Automatic sets wether the capsule should automatically
-                      use existing secrets and configmaps which share the same name
-                      as the capsule as environment variables.
+                    description: |-
+                      Automatic sets wether the capsule should automatically use existing
+                      secrets and configmaps which share the same name as the capsule as
+                      environment variables.
                     type: boolean
                   from:
-                    description: From holds a list of references to secrets and configmaps
-                      which should be mounted as environment variables.
+                    description: |-
+                      From holds a list of references to secrets and configmaps which should
+                      be mounted as environment variables.
                     items:
                       description: EnvSource holds a reference to either a ConfigMap
                         or a Secret
@@ -105,16 +115,17 @@ spec:
                     type: array
                 type: object
               files:
-                description: Files is a list of files to mount in the container. These
-                  can either be based on ConfigMaps or Secrets.
+                description: |-
+                  Files is a list of files to mount in the container. These can either be
+                  based on ConfigMaps or Secrets.
                 items:
                   description: File defines a mounted file and where to retrieve the
                     contents from
                   properties:
                     configMap:
-                      description: ConfigMap specifies that this file is based on
-                        a key in a ConfigMap. The ConfigMap field is mutually exclusive
-                        with Secret.
+                      description: |-
+                        ConfigMap specifies that this file is based on a key in a ConfigMap. The
+                        ConfigMap field is mutually exclusive with Secret.
                       properties:
                         key:
                           description: Key specifies the key holding the file contents.
@@ -127,12 +138,14 @@ spec:
                       - name
                       type: object
                     path:
-                      description: Path specifies the full path where the File should
-                        be mounted including the file name.
+                      description: |-
+                        Path specifies the full path where the File should be mounted including
+                        the file name.
                       type: string
                     secret:
-                      description: Secret specifies that this file is based on a key
-                        in a Secret. The Secret field is mutually exclusive with ConfigMap.
+                      description: |-
+                        Secret specifies that this file is based on a key in a Secret. The
+                        Secret field is mutually exclusive with ConfigMap.
                       properties:
                         key:
                           description: Key specifies the key holding the file contents.
@@ -153,12 +166,14 @@ spec:
                   out
                 properties:
                   cpuTarget:
-                    description: CPUTarget specifies that this Capsule should be scaled
-                      using CPU utilization.
+                    description: |-
+                      CPUTarget specifies that this Capsule should be scaled using CPU
+                      utilization.
                     properties:
                       averageUtilizationPercentage:
-                        description: AverageUtilizationPercentage sets the utilization
-                          which when exceeded will trigger autoscaling.
+                        description: |-
+                          AverageUtilizationPercentage sets the utilization which when exceeded
+                          will trigger autoscaling.
                         format: int32
                         maximum: 100
                         minimum: 0
@@ -167,13 +182,15 @@ spec:
                     - averageUtilizationPercentage
                     type: object
                   maxReplicas:
-                    description: MaxReplicas is the maximum amount of replicas that
-                      the Capsule should have.
+                    description: |-
+                      MaxReplicas is the maximum amount of replicas that the Capsule should
+                      have.
                     format: int32
                     type: integer
                   minReplicas:
-                    description: MinReplicas is the minimum amount of replicas that
-                      the Capsule should have.
+                    description: |-
+                      MinReplicas is the minimum amount of replicas that the Capsule should
+                      have.
                     format: int32
                     type: integer
                 type: object
@@ -181,26 +198,26 @@ spec:
                 description: Image specifies what image the Capsule should run.
                 type: string
               imagePullSecret:
-                description: ImagePullSecret is a reference to a secret holding docker
-                  credentials for the registry of the image.
+                description: |-
+                  ImagePullSecret is a reference to a secret holding docker credentials
+                  for the registry of the image.
                 properties:
                   name:
                     default: ""
-                    description: 'Name of the referent. This field is effectively
-                      required, but due to backwards compatibility is allowed to be
-                      empty. Instances of this type with an empty value here are almost
-                      certainly wrong. TODO: Add other useful fields. apiVersion,
-                      kind, uid? More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                      TODO: Drop `kubebuilder:default` when controller-gen doesn''t
-                      need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.'
+                    description: |-
+                      Name of the referent.
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
               interfaces:
-                description: Interfaces specifies the list of interfaces the the container
-                  should have. Specifying interfaces will create the corresponding
-                  kubernetes Services and Ingresses depending on how the interface
-                  is configured.
+                description: |-
+                  Interfaces specifies the list of interfaces the the container should
+                  have. Specifying interfaces will create the corresponding kubernetes
+                  Services and Ingresses depending on how the interface is configured.
                 items:
                   description: CapsuleInterface defines an interface for a capsule
                   properties:
@@ -218,9 +235,10 @@ spec:
                         be published.
                       properties:
                         ingress:
-                          description: Ingress specifies that this interface should
-                            be exposed through an Ingress resource. The Ingress field
-                            is mutually exclusive with the LoadBalancer field.
+                          description: |-
+                            Ingress specifies that this interface should be exposed through an
+                            Ingress resource. The Ingress field is mutually exclusive with the
+                            LoadBalancer field.
                           properties:
                             host:
                               description: Host specifies the DNS name of the Ingress
@@ -230,14 +248,15 @@ spec:
                           - host
                           type: object
                         loadBalancer:
-                          description: LoadBalancer specifies that this interface
-                            should be exposed through a LoadBalancer Service. The
-                            LoadBalancer field is mutually exclusive with the Ingress
-                            field.
+                          description: |-
+                            LoadBalancer specifies that this interface should be exposed through a
+                            LoadBalancer Service. The LoadBalancer field is mutually exclusive with
+                            the Ingress field.
                           properties:
                             nodePort:
-                              description: NodePort specifies a NodePort that the
-                                Service will use instead of acting as a LoadBalancer.
+                              description: |-
+                                NodePort specifies a NodePort that the Service will use instead of
+                                acting as a LoadBalancer.
                               format: int32
                               type: integer
                             port:
@@ -271,18 +290,22 @@ spec:
                   have access to.
                 properties:
                   claims:
-                    description: "Claims lists the names of resources, defined in
-                      spec.resourceClaims, that are used by this container. \n This
-                      is an alpha field and requires enabling the DynamicResourceAllocation
-                      feature gate. \n This field is immutable. It can only be set
-                      for containers."
+                    description: |-
+                      Claims lists the names of resources, defined in spec.resourceClaims,
+                      that are used by this container.
+
+                      This is an alpha field and requires enabling the
+                      DynamicResourceAllocation feature gate.
+
+                      This field is immutable. It can only be set for containers.
                     items:
                       description: ResourceClaim references one entry in PodSpec.ResourceClaims.
                       properties:
                         name:
-                          description: Name must match the name of one entry in pod.spec.resourceClaims
-                            of the Pod where this field is used. It makes that resource
-                            available inside a container.
+                          description: |-
+                            Name must match the name of one entry in pod.spec.resourceClaims of
+                            the Pod where this field is used. It makes that resource available
+                            inside a container.
                           type: string
                       required:
                       - name
@@ -298,8 +321,9 @@ spec:
                       - type: string
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
-                    description: 'Limits describes the maximum amount of compute resources
-                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    description: |-
+                      Limits describes the maximum amount of compute resources allowed.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                     type: object
                   requests:
                     additionalProperties:
@@ -308,16 +332,17 @@ spec:
                       - type: string
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
-                    description: 'Requests describes the minimum amount of compute
-                      resources required. If Requests is omitted for a container,
-                      it defaults to Limits if that is explicitly specified, otherwise
-                      to an implementation-defined value. Requests cannot exceed Limits.
-                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    description: |-
+                      Requests describes the minimum amount of compute resources required.
+                      If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                      otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                     type: object
                 type: object
               serviceAccountName:
-                description: ServiceAccountName specifies the name of an existing
-                  ServiceAccount which the Capsule should run as.
+                description: |-
+                  ServiceAccountName specifies the name of an existing ServiceAccount
+                  which the Capsule should run as.
                 type: string
             required:
             - image
@@ -344,15 +369,15 @@ spec:
                     message:
                       type: string
                     ref:
-                      description: TypedLocalObjectReference contains enough information
-                        to let you locate the typed referenced object inside the same
-                        namespace.
+                      description: |-
+                        TypedLocalObjectReference contains enough information to let you locate the
+                        typed referenced object inside the same namespace.
                       properties:
                         apiGroup:
-                          description: APIGroup is the group for the resource being
-                            referenced. If APIGroup is not specified, the specified
-                            Kind must be in the core API group. For any other third-party
-                            types, APIGroup is required.
+                          description: |-
+                            APIGroup is the group for the resource being referenced.
+                            If APIGroup is not specified, the specified Kind must be in the core API group.
+                            For any other third-party types, APIGroup is required.
                           type: string
                         kind:
                           description: Kind is the type of resource being referenced
@@ -392,14 +417,19 @@ spec:
         description: Capsule is the Schema for the capsules API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -407,16 +437,18 @@ spec:
             description: Spec holds the specification of the Capsule.
             properties:
               args:
-                description: Args is a list of arguments either passed to the Command
-                  or if Command is left empty the arguments will be passed to the
-                  ENTRYPOINT of the docker image.
+                description: |-
+                  Args is a list of arguments either passed to the Command or if Command
+                  is left empty the arguments will be passed to the ENTRYPOINT of the
+                  docker image.
                 items:
                   type: string
                 type: array
               command:
-                description: Command is run as a command in the shell. If left unspecified,
-                  the container will run using what is specified as ENTRYPOINT in
-                  the Dockerfile.
+                description: |-
+                  Command is run as a command in the shell. If left unspecified, the
+                  container will run using what is specified as ENTRYPOINT in the
+                  Dockerfile.
                 type: string
               cronJobs:
                 items:
@@ -461,17 +493,20 @@ spec:
                   type: object
                 type: array
               env:
-                description: Env specifies configuration for how the container should
-                  obtain environment variables.
+                description: |-
+                  Env specifies configuration for how the container should obtain
+                  environment variables.
                 properties:
                   disable_automatic:
-                    description: DisableAutomatic sets wether the capsule should disable
-                      automatically use of existing secrets and configmaps which share
-                      the same name as the capsule as environment variables.
+                    description: |-
+                      DisableAutomatic sets wether the capsule should disable automatically use
+                      of existing secrets and configmaps which share the same name as the capsule
+                      as environment variables.
                     type: boolean
                   from:
-                    description: From holds a list of references to secrets and configmaps
-                      which should be mounted as environment variables.
+                    description: |-
+                      From holds a list of references to secrets and configmaps which should
+                      be mounted as environment variables.
                     items:
                       description: EnvSource holds a reference to either a ConfigMap
                         or a Secret
@@ -496,15 +531,17 @@ spec:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
               files:
-                description: Files is a list of files to mount in the container. These
-                  can either be based on ConfigMaps or Secrets.
+                description: |-
+                  Files is a list of files to mount in the container. These can either be
+                  based on ConfigMaps or Secrets.
                 items:
                   description: File defines a mounted file and where to retrieve the
                     contents from
                   properties:
                     path:
-                      description: Path specifies the full path where the File should
-                        be mounted including the file name.
+                      description: |-
+                        Path specifies the full path where the File should be mounted including
+                        the file name.
                       type: string
                     ref:
                       description: Ref specifies a reference to a ConfigMap or Secret
@@ -533,17 +570,18 @@ spec:
                 description: Image specifies what image the Capsule should run.
                 type: string
               interfaces:
-                description: Interfaces specifies the list of interfaces the the container
-                  should have. Specifying interfaces will create the corresponding
-                  kubernetes Services and Ingresses depending on how the interface
-                  is configured.
+                description: |-
+                  Interfaces specifies the list of interfaces the the container should
+                  have. Specifying interfaces will create the corresponding kubernetes
+                  Services and Ingresses depending on how the interface is configured.
                 items:
                   description: CapsuleInterface defines an interface for a capsule
                   properties:
                     liveness:
-                      description: Liveness specifies that this interface should be
-                        used for liveness probing. Only one of the Capsule interfaces
-                        can be used as liveness probe.
+                      description: |-
+                        Liveness specifies that this interface should be used for
+                        liveness probing. Only one of the Capsule interfaces can be
+                        used as liveness probe.
                       properties:
                         grpc:
                           description: GRPC specifies that this is a GRCP probe.
@@ -553,21 +591,22 @@ spec:
                                 is activated.
                               type: boolean
                             service:
-                              description: Service specifies the gRPC health probe
-                                service to probe. This is a used as service name as
-                                per standard gRPC health/v1.
+                              description: |-
+                                Service specifies the gRPC health probe service to probe. This is a
+                                used as service name as per standard gRPC health/v1.
                               type: string
                           required:
                           - service
                           type: object
                         path:
-                          description: Path is the HTTP path of the probe. Path is
-                            mutually exclusive with the TCP and GCRP fields.
+                          description: |-
+                            Path is the HTTP path of the probe. Path is mutually
+                            exclusive with the TCP and GCRP fields.
                           type: string
                         startupDelay:
-                          description: For slow-starting containers, the startup delay
-                            allows liveness checks to fail for a set duration before
-                            restarting the instance.
+                          description: |-
+                            For slow-starting containers, the startup delay allows liveness
+                            checks to fail for a set duration before restarting the instance.
                           format: int32
                           type: integer
                         tcp:
@@ -589,18 +628,19 @@ spec:
                         be published.
                       properties:
                         ingress:
-                          description: Ingress specifies that this interface should
-                            be exposed through an Ingress resource. The Ingress field
-                            is mutually exclusive with the LoadBalancer field.
+                          description: |-
+                            Ingress specifies that this interface should be exposed through an
+                            Ingress resource. The Ingress field is mutually exclusive with the
+                            LoadBalancer field.
                           properties:
                             host:
                               description: Host specifies the DNS name of the Ingress
                                 resource.
                               type: string
                             paths:
-                              description: Paths specifies a list of paths. In order
-                                for a request to hit the ingress at least one of these
-                                must match the request.
+                              description: |-
+                                Paths specifies a list of paths. In order for a request to
+                                hit the ingress at least one of these must match the request.
                               items:
                                 type: string
                               type: array
@@ -608,10 +648,10 @@ spec:
                           - host
                           type: object
                         loadBalancer:
-                          description: LoadBalancer specifies that this interface
-                            should be exposed through a LoadBalancer Service. The
-                            LoadBalancer field is mutually exclusive with the Ingress
-                            field.
+                          description: |-
+                            LoadBalancer specifies that this interface should be exposed through a
+                            LoadBalancer Service. The LoadBalancer field is mutually exclusive with
+                            the Ingress field.
                           properties:
                             port:
                               description: Port is the external port on the LoadBalancer
@@ -624,9 +664,10 @@ spec:
                           type: object
                       type: object
                     readiness:
-                      description: Readiness specifies that this interface should
-                        be used for readiness probing. Only one of the Capsule interfaces
-                        can be used as readiness probe.
+                      description: |-
+                        Readiness specifies that this interface should be used for
+                        readiness probing. Only one of the Capsule interfaces can be
+                        used as readiness probe.
                       properties:
                         grpc:
                           description: GRPC specifies that this is a GRCP probe.
@@ -636,16 +677,17 @@ spec:
                                 is activated.
                               type: boolean
                             service:
-                              description: Service specifies the gRPC health probe
-                                service to probe. This is a used as service name as
-                                per standard gRPC health/v1.
+                              description: |-
+                                Service specifies the gRPC health probe service to probe. This is a
+                                used as service name as per standard gRPC health/v1.
                               type: string
                           required:
                           - service
                           type: object
                         path:
-                          description: Path is the HTTP path of the probe. Path is
-                            mutually exclusive with the TCP and GCRP fields.
+                          description: |-
+                            Path is the HTTP path of the probe. Path is mutually
+                            exclusive with the TCP and GCRP fields.
                           type: string
                         tcp:
                           description: TCP specifies that this is a simple TCP listen
@@ -655,29 +697,30 @@ spec:
                     routes:
                       description: Host routes that are mapped to this interface.
                       items:
-                        description: HostRoute is the configuration of a route to
-                          the network interface it's configured on.
+                        description: |-
+                          HostRoute is the configuration of a route to the network interface
+                          it's configured on.
                         properties:
                           annotations:
                             additionalProperties:
                               type: string
-                            description: Annotations of the route option. This can
-                              be plugin-specific configuration that allows custom
-                              plugins to add non-standard behavior.
+                            description: |-
+                              Annotations of the route option. This can be plugin-specific configuration
+                              that allows custom plugins to add non-standard behavior.
                             type: object
                           host:
                             description: Host of the route. This field is required
                               and cannot be empty.
                             type: string
                           id:
-                            description: ID of the route. This field is required and
-                              cannot be empty, and must be unique for the interface.
-                              If this field is changed, it may result in downtime,
-                              as it is used to generate resources.
+                            description: |-
+                              ID of the route. This field is required and cannot be empty, and must be unique for the interface.
+                              If this field is changed, it may result in downtime, as it is used to generate resources.
                             type: string
                           paths:
-                            description: HTTP paths of the host that maps to the interface.
-                              If empty, all paths are automatically matched.
+                            description: |-
+                              HTTP paths of the host that maps to the interface. If empty, all paths are
+                              automatically matched.
                             items:
                               description: A HTTP path routing.
                               properties:
@@ -720,27 +763,28 @@ spec:
                       Capsule.
                     properties:
                       cpuTarget:
-                        description: CPUTarget specifies that this Capsule should
-                          be scaled using CPU utilization.
+                        description: |-
+                          CPUTarget specifies that this Capsule should be scaled using CPU
+                          utilization.
                         properties:
                           utilization:
-                            description: Utilization specifies the average CPU target.
-                              If the average exceeds this number new instances will
-                              be added.
+                            description: |-
+                              Utilization specifies the average CPU target. If the average
+                              exceeds this number new instances will be added.
                             format: int32
                             maximum: 100
                             minimum: 1
                             type: integer
                         type: object
                       customMetrics:
-                        description: CustomMetrics specifies custom metrics emitted
-                          by the custom.metrics.k8s.io API which the autoscaler should
-                          scale on
+                        description: |-
+                          CustomMetrics specifies custom metrics emitted by the custom.metrics.k8s.io API
+                          which the autoscaler should scale on
                         items:
-                          description: CustomMetric defines a custom metrics emitted
-                            by the custom.metrics.k8s.io API which the autoscaler
-                            should scale on Exactly one of InstanceMetric and ObjectMetric
-                            must be provided
+                          description: |-
+                            CustomMetric defines a custom metrics emitted by the custom.metrics.k8s.io API
+                            which the autoscaler should scale on
+                            Exactly one of InstanceMetric and ObjectMetric must be provided
                           properties:
                             instanceMetric:
                               description: InstanceMetric defines a custom instance-based
@@ -769,11 +813,10 @@ spec:
                                 metric
                               properties:
                                 averageValue:
-                                  description: AverageValue scales the number of instances
-                                    towards making the value returned by the metric
+                                  description: |-
+                                    AverageValue scales the number of instances towards making the value returned by the metric
                                     divided by the number of instances reach AverageValue
-                                    Exactly one of 'Value' and 'AverageValue' must
-                                    be set
+                                    Exactly one of 'Value' and 'AverageValue' must be set
                                   type: string
                                 matchLabels:
                                   additionalProperties:
@@ -806,10 +849,9 @@ spec:
                                   - name
                                   type: object
                                 value:
-                                  description: Value scales the number of instances
-                                    towards making the value returned by the metric
-                                    'Value' Exactly one of 'Value' and 'AverageValue'
-                                    must be set
+                                  description: |-
+                                    Value scales the number of instances towards making the value returned by the metric 'Value'
+                                    Exactly one of 'Value' and 'AverageValue' must be set
                                   type: string
                               required:
                               - metricName
@@ -818,12 +860,14 @@ spec:
                           type: object
                         type: array
                       instances:
-                        description: Instances specifies minimum and maximum amount
-                          of Capsule instances.
+                        description: |-
+                          Instances specifies minimum and maximum amount of Capsule
+                          instances.
                         properties:
                           max:
-                            description: Max specifies the maximum amount of instances
-                              to run. Omit to disable autoscaling.
+                            description: |-
+                              Max specifies the maximum amount of instances to run. Omit to
+                              disable autoscaling.
                             format: int32
                             type: integer
                           min:
@@ -919,15 +963,15 @@ spec:
                     message:
                       type: string
                     ref:
-                      description: TypedLocalObjectReference contains enough information
-                        to let you locate the typed referenced object inside the same
-                        namespace.
+                      description: |-
+                        TypedLocalObjectReference contains enough information to let you locate the
+                        typed referenced object inside the same namespace.
                       properties:
                         apiGroup:
-                          description: APIGroup is the group for the resource being
-                            referenced. If APIGroup is not specified, the specified
-                            Kind must be in the core API group. For any other third-party
-                            types, APIGroup is required.
+                          description: |-
+                            APIGroup is the group for the resource being referenced.
+                            If APIGroup is not specified, the specified Kind must be in the core API group.
+                            For any other third-party types, APIGroup is required.
                           type: string
                         kind:
                           description: Kind is the type of resource being referenced
@@ -963,15 +1007,15 @@ spec:
                     message:
                       type: string
                     ref:
-                      description: TypedLocalObjectReference contains enough information
-                        to let you locate the typed referenced object inside the same
-                        namespace.
+                      description: |-
+                        TypedLocalObjectReference contains enough information to let you locate the
+                        typed referenced object inside the same namespace.
                       properties:
                         apiGroup:
-                          description: APIGroup is the group for the resource being
-                            referenced. If APIGroup is not specified, the specified
-                            Kind must be in the core API group. For any other third-party
-                            types, APIGroup is required.
+                          description: |-
+                            APIGroup is the group for the resource being referenced.
+                            If APIGroup is not specified, the specified Kind must be in the core API group.
+                            For any other third-party types, APIGroup is required.
                           type: string
                         kind:
                           description: Kind is the type of resource being referenced
