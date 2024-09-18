@@ -5,7 +5,7 @@ go 1.23
 require (
 	connectrpc.com/connect v1.16.0
 	github.com/bufbuild/buf v1.30.1
-	github.com/elastic/crd-ref-docs v0.0.10
+	github.com/elastic/crd-ref-docs v0.1.0
 	github.com/golangci/golangci-lint v1.60.1
 	github.com/goreleaser/goreleaser v1.19.2
 	github.com/pseudomuto/protoc-gen-doc v1.5.1

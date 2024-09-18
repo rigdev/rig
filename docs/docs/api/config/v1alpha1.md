@@ -25,13 +25,13 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `secret` _string_ | Secret specifies a secret which will be used for jwt signatures. |
-| `certificateFile` _string_ | CertificateFile specifies a path to a PEM encoded certificate file which<br /><br />will be used for validating jwt signatures. |
-| `certificateKeyFile` _string_ | CertificateKeyFile specifies a path to a PEM encoded certificate key<br /><br />which will be used for jwt signatures. |
-| `disablePasswords` _boolean_ | DisablePasswords disables password authentication. This makes sense if<br /><br />you want to require SSO, as login method. |
+| `certificateFile` _string_ | CertificateFile specifies a path to a PEM encoded certificate file which<br />will be used for validating jwt signatures. |
+| `certificateKeyFile` _string_ | CertificateKeyFile specifies a path to a PEM encoded certificate key<br />which will be used for jwt signatures. |
+| `disablePasswords` _boolean_ | DisablePasswords disables password authentication. This makes sense if<br />you want to require SSO, as login method. |
 | `sso` _[SSO](#sso)_ | SSO specifies single sign on configuration. |
 | `allowRegister` _boolean_ | AllowRegister specifies if users are allowed to register new accounts. |
 | `requireVerification` _boolean_ | IsVerified specifies if users are required to verify their email address. |
-| `sendWelcomeEmail` _boolean_ | SendWelcomeEmail specifies if a welcome email should be sent to new users.<br /><br />This will use the default email config |
+| `sendWelcomeEmail` _boolean_ | SendWelcomeEmail specifies if a welcome email should be sent to new users.<br />This will use the default email config |
 
 
 ### CapsuleMatch
@@ -62,7 +62,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `plugin` _string_ | The plugin to use for handling the capsule step.<br /><br />fx. "rigdev.ingress_routes" for routesStep will create an ingress resource per route.<br /><br />fx. "rigdev.deployment" for deploymentStep will use the default deployment plugin. |
+| `plugin` _string_ | The plugin to use for handling the capsule step.<br />fx. "rigdev.ingress_routes" for routesStep will create an ingress resource per route.<br />fx. "rigdev.deployment" for deploymentStep will use the default deployment plugin. |
 | `config` _string_ | Config is a string defining the plugin-specific configuration of the plugin. |
 
 
@@ -79,12 +79,12 @@ _Appears in:_
 | --- | --- |
 | `postgres` _[ClientPostgres](#clientpostgres)_ | Postgres holds configuration for the postgres client. |
 | `docker` _[ClientDocker](#clientdocker)_ | Docker sets the host for the Docker client. |
-| `mailjet` _[ClientMailjet](#clientmailjet)_ | Deprecated: use 'client.mailjets' instead.<br /><br />Mailjet sets the API key and secret for the Mailjet client. |
-| `mailjets` _object (keys:string, values:[ClientMailjet](#clientmailjet))_ | Mailjets holds configuration for multiple mailjet clients.<br /><br />The key is the id of the client, which should be unique across Mailjet and SMTP clients. |
-| `smtp` _[ClientSMTP](#clientsmtp)_ | Deprecated: use 'client.smtps' instead.<br /><br />SMTP sets the host, port, username and password for the SMTP client. |
-| `smtps` _object (keys:string, values:[ClientSMTP](#clientsmtp))_ | SMTPs holds configuration for muliple SMTP clients.<br /><br />The key is the id of the client, which should be unique across Mailjet and SMTP clients. |
+| `mailjet` _[ClientMailjet](#clientmailjet)_ | Deprecated: use 'client.mailjets' instead.<br />Mailjet sets the API key and secret for the Mailjet client. |
+| `mailjets` _object (keys:string, values:[ClientMailjet](#clientmailjet))_ | Mailjets holds configuration for multiple mailjet clients.<br />The key is the id of the client, which should be unique across Mailjet and SMTP clients. |
+| `smtp` _[ClientSMTP](#clientsmtp)_ | Deprecated: use 'client.smtps' instead.<br />SMTP sets the host, port, username and password for the SMTP client. |
+| `smtps` _object (keys:string, values:[ClientSMTP](#clientsmtp))_ | SMTPs holds configuration for muliple SMTP clients.<br />The key is the id of the client, which should be unique across Mailjet and SMTP clients. |
 | `operator` _[ClientOperator](#clientoperator)_ | Operator sets the base url for the Operator client. |
-| `slack` _object (keys:string, values:[ClientSlack](#clientslack))_ | Slack holds configuration for sending slack messages. The key is the id of the client.<br /><br />For example the workspace in which the app is installed |
+| `slack` _object (keys:string, values:[ClientSlack](#clientslack))_ | Slack holds configuration for sending slack messages. The key is the id of the client.<br />For example the workspace in which the app is installed |
 | `git` _[ClientGit](#clientgit)_ | Git client configuration for communicating with multiple repositories. |
 
 
@@ -211,7 +211,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `url` _string_ | URL to communicate to the cluster. If set, a Token and CertificateAuthority should<br /><br />be provided as well.<br /><br />If not set, the cluster is interpreted to be the cluster in which the platform runs. |
+| `url` _string_ | URL to communicate to the cluster. If set, a Token and CertificateAuthority should<br />be provided as well.<br />If not set, the cluster is interpreted to be the cluster in which the platform runs. |
 | `token` _string_ | Token for communicating with the cluster. Available through a service-account's secret. |
 | `certificateAuthority` _string_ | Certificate authority for communicating with the cluster. Available through a service-account's secret. |
 | `type` _[ClusterType](#clustertype)_ | Type of the cluster - either `docker` or `k8s`. |
@@ -234,11 +234,11 @@ _Appears in:_
 | --- | --- |
 | `url` _string_ | URL is the git repository URL. |
 | `branch` _string_ | Branch to commit changes to. |
-| `pathPrefix` _string_ | PathPrefix path to commit to in git repository.<br /><br />Deprecated: Use `pathPrefixes` instead. |
+| `pathPrefix` _string_ | PathPrefix path to commit to in git repository.<br />Deprecated: Use `pathPrefixes` instead. |
 | `pathPrefixes` _[PathPrefixes](#pathprefixes)_ | PathPrefixes path to commit to in git repository |
 | `templates` _[GitTemplates](#gittemplates)_ | Templates used for commit messages. |
-| `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git.<br /><br />Deprecated: Use `client.git.auths` instead. |
-| `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits.<br /><br />Deprecated: Use `client.git.author` instead. |
+| `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git.<br />Deprecated: Use `client.git.auths` instead. |
+| `author` _[GitAuthor](#gitauthor)_ | Author used when creating commits.<br />Deprecated: Use `client.git.author` instead. |
 
 
 ### ClusterType
@@ -277,8 +277,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `host` _string_ | Host is the host used in image names when pushing to the registry from<br /><br />outside of the cluster. |
-| `clusterHost` _string_ | ClusterHost is the host where the registry can be reached from within<br /><br />the cluster. Any image which is named after `Host` will be rename to use<br /><br />`ClusterHost` instead. This ensures that the image can be pulled from<br /><br />within the cluster. |
+| `host` _string_ | Host is the host used in image names when pushing to the registry from<br />outside of the cluster. |
+| `clusterHost` _string_ | ClusterHost is the host where the registry can be reached from within<br />the cluster. Any image which is named after `Host` will be rename to use<br />`ClusterHost` instead. This ensures that the image can be pulled from<br />within the cluster. |
 
 
 ### DockerRegistryCredentials
@@ -294,8 +294,8 @@ _Appears in:_
 | --- | --- |
 | `username` _string_ | Username for the docker registry. |
 | `password` _string_ | Password for the docker registry. |
-| `script` _string_ | Script (shell) to execute that should echo the credentials.<br /><br />The output is expected to be a single line (with new-line termination) of format `<username>:<password>`. |
-| `expire` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#duration-v1-meta)_ | Expire is the maximum duration a credential will be cached for, before it's recycled.<br /><br />If a cached credential is rejected before this time, it may be renewed before this duration is expired.<br /><br />Default is `12h`. |
+| `script` _string_ | Script (shell) to execute that should echo the credentials.<br />The output is expected to be a single line (with new-line termination) of format `<username>:<password>`. |
+| `expire` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#duration-v1-meta)_ | Expire is the maximum duration a credential will be cached for, before it's recycled.<br />If a cached credential is rejected before this time, it may be renewed before this duration is expired.<br />Default is `12h`. |
 
 
 ### Email
@@ -337,7 +337,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `schema` _[JSONSchemaProps](#jsonschemaprops)_ | The schema of the extension, expressed as a json-schema<br /><br />(https://json-schema.org/). While the full syntax is supported,<br /><br />some features may be semantically disabled which would make the Platform<br /><br />not start or not process Rollouts. |
+| `schema` _[JSONSchemaProps](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#jsonschemaprops-v1-apiextensions-k8s-io)_ | The schema of the extension, expressed as a json-schema<br />(https://json-schema.org/). While the full syntax is supported,<br />some features may be semantically disabled which would make the Platform<br />not start or not process Rollouts. |
 
 
 ### GitAuth
@@ -354,7 +354,7 @@ _Appears in:_
 | `url` _string_ | URL is a exact match for the repo-url this auth can be used for. |
 | `urlPrefix` _string_ | URLPrefix is a prefix-match for the repo urls this auth can be used for. |
 | `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. |
-| `pullingIntervalSeconds` _integer_ | If no web hook is confugured, pull the git repository at the set interval instead<br /><br />to fetch changes. Defaults to 3 mins if no value. |
+| `pullingIntervalSeconds` _integer_ | If no web hook is confugured, pull the git repository at the set interval instead<br />to fetch changes. Defaults to 3 mins if no value. |
 
 
 ### GitAuthor
@@ -444,7 +444,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `webhookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
-| `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead<br /><br />to fetch changes. Defaults to 3 mins if no value. |
+| `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead<br />to fetch changes. Defaults to 3 mins if no value. |
 
 
 ### GitLab
@@ -463,7 +463,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `groups` _string array_ | Groups is a sequence of GitLab groups.<br /><br />The first is the main group and the rest a nesting of subgroups.<br /><br />If Project is empty, the configuration will match any<br /><br />GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix. |
+| `groups` _string array_ | Groups is a sequence of GitLab groups.<br />The first is the main group and the rest a nesting of subgroups.<br />If Project is empty, the configuration will match any<br />GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix. |
 | `project` _string_ | Project is the GitLab project of the repository. Can be empty for matching all project names. |
 | `auth` _[GitLabAuth](#gitlabauth)_ | Auth contains GitLab specific authentication configuration. |
 | `polling` _[GitLabPolling](#gitlabpolling)_ | Polling contains GitLab specific configuration. |
@@ -497,7 +497,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `webhookSecret` _string_ | WebHookSecret is the secret used to validate incoming webhooks. |
-| `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead<br /><br />to fetch changes. Defaults to 3 mins if no value. |
+| `pullingIntervalSeconds` _integer_ | If webHookSecret isn't set, pull the git repository at the set interval instead<br />to fetch changes. Defaults to 3 mins if no value. |
 
 
 ### GitTemplates
@@ -517,13 +517,17 @@ _Appears in:_
 
 ### HTTPSCredential
 
-_Underlying type:_ _[struct{Username string "json:\"username,omitempty\""; Password string "json:\"password,omitempty\""}](#struct{username-string-"json:\"username,omitempty\"";-password-string-"json:\"password,omitempty\""})_
+
 
 HTTPSCredential specifies basic auth credentials
 
 _Appears in:_
 - [GitCredentials](#gitcredentials)
 
+| Field | Description |
+| --- | --- |
+| `username` _string_ | Username is the basic auth user name |
+| `password` _string_ | Password is the basic auth password |
 
 
 ### Logging
@@ -537,7 +541,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `devMode` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be<br /><br />more human readable. |
+| `devMode` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be<br />more human readable. |
 | `level` _[Level](#level)_ | Level sets the granularity of logging. |
 
 
@@ -552,17 +556,17 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is a human-readable name of the provider. If set this will be used<br /><br />instead of the provider id (the key in<br /><br />`PlatformConfig.Auth.SSO.OIDCProviders`) |
+| `name` _string_ | Name is a human-readable name of the provider. If set this will be used<br />instead of the provider id (the key in<br />`PlatformConfig.Auth.SSO.OIDCProviders`) |
 | `issuerURL` _string_ | IssuerURL is the URL for the OIDC issuer endpoint. |
 | `clientID` _string_ | ClientID is the OAuth client ID. |
 | `clientSecret` _string_ | ClientSecret is the OAuth client secret. |
-| `allowedDomains` _string array_ | AllowedDomains is a list of email domains to allow. If left empty any<br /><br />successful authentication on the provider is allowed. |
-| `scopes` _string array_ | Scopes is a list of additional scopes other than `openid`, `email` and<br /><br />`profile`. |
-| `groupsClaim` _string_ | GroupsClaim is the path to a claim in the JWT containing a string or<br /><br />list of strings of group names. |
+| `allowedDomains` _string array_ | AllowedDomains is a list of email domains to allow. If left empty any<br />successful authentication on the provider is allowed. |
+| `scopes` _string array_ | Scopes is a list of additional scopes other than `openid`, `email` and<br />`profile`. |
+| `groupsClaim` _string_ | GroupsClaim is the path to a claim in the JWT containing a string or<br />list of strings of group names. |
 | `disableJITGroups` _boolean_ | DisableJITGroups disables creation of groups found through OIDC in rig. |
-| `groupMapping` _object (keys:string, values:string)_ | GroupMapping is a mapping from OIDC provided group names to group names<br /><br />used in rig. If an OIDC provided group name is not provided in this<br /><br />mapping we will use the OIDC provided groupname in rig. |
+| `groupMapping` _object (keys:string, values:string)_ | GroupMapping is a mapping from OIDC provided group names to group names<br />used in rig. If an OIDC provided group name is not provided in this<br />mapping we will use the OIDC provided groupname in rig. |
 | `icon` _[OIDCProviderIcon](#oidcprovidericon)_ | Icon is what icon to show for this provider. |
-| `disableUserMerging` _boolean_ | DisableUserMerging disallows merging their OIDC account with an existing user in rig.<br /><br />This effectively means, that if a user is created using OIDC, then it can only login<br /><br />using that OIDC provider. |
+| `disableUserMerging` _boolean_ | DisableUserMerging disallows merging their OIDC account with an existing user in rig.<br />This effectively means, that if a user is created using OIDC, then it can only login<br />using that OIDC provider. |
 
 
 ### OIDCProviderIcon
@@ -590,9 +594,9 @@ OperatorConfig is the Schema for the operator config API
 | --- | --- |
 | `apiVersion` _string_ | `config.rig.dev/v1alpha1`
 | `kind` _string_ | `OperatorConfig`
-| `webhooksEnabled` _boolean_ | WebhooksEnabled sets wether or not webhooks should be enabled. When<br /><br />enabled a certificate should be mounted at the webhook server<br /><br />certificate path. Defaults to true if omitted. |
-| `devModeEnabled` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be<br /><br />more human readable. |
-| `leaderElectionEnabled` _boolean_ | LeaderElectionEnabled enables leader election when running multiple<br /><br />instances of the operator. |
+| `webhooksEnabled` _boolean_ | WebhooksEnabled sets wether or not webhooks should be enabled. When<br />enabled a certificate should be mounted at the webhook server<br />certificate path. Defaults to true if omitted. |
+| `devModeEnabled` _boolean_ | DevModeEnabled enables verbose logs and changes the logging format to be<br />more human readable. |
+| `leaderElectionEnabled` _boolean_ | LeaderElectionEnabled enables leader election when running multiple<br />instances of the operator. |
 | `pipeline` _[Pipeline](#pipeline)_ | Pipeline defines the capsule controller pipeline |
 
 
@@ -623,15 +627,15 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `serviceAccountStep` _[CapsuleStep](#capsulestep)_ | How to handle the service account step of capsules in the cluster.<br /><br />Defaults to rigdev.service_account. |
-| `deploymentStep` _[CapsuleStep](#capsulestep)_ | How to handle the deployment step of capsules in the cluster.<br /><br />Defaults to rigdev.deployment. |
-| `routesStep` _[CapsuleStep](#capsulestep)_ | How to handle the routes for capsules in the cluster.<br /><br />If left empty, routes will not be handled. |
-| `cronJobsStep` _[CapsuleStep](#capsulestep)_ | How to handle the cronjob step of capsules in the cluster.<br /><br />Defaults to rigdev.cron_jobs |
-| `vpaStep` _[CapsuleStep](#capsulestep)_ | How to handle the VPA step of capsules in the cluster.<br /><br />If left empty, no VPAs will be created. |
-| `serviceMonitorStep` _[CapsuleStep](#capsulestep)_ | How to handle the service monitor step of capsules in the cluster.<br /><br />If left empty, no service monitors will be created.<br /><br />rigdev.service_monitor plugin spawns a Prometheus ServiceMonitor per capsule<br /><br />for use with a Prometheus Operator stack. |
+| `serviceAccountStep` _[CapsuleStep](#capsulestep)_ | How to handle the service account step of capsules in the cluster.<br />Defaults to rigdev.service_account. |
+| `deploymentStep` _[CapsuleStep](#capsulestep)_ | How to handle the deployment step of capsules in the cluster.<br />Defaults to rigdev.deployment. |
+| `routesStep` _[CapsuleStep](#capsulestep)_ | How to handle the routes for capsules in the cluster.<br />If left empty, routes will not be handled. |
+| `cronJobsStep` _[CapsuleStep](#capsulestep)_ | How to handle the cronjob step of capsules in the cluster.<br />Defaults to rigdev.cron_jobs |
+| `vpaStep` _[CapsuleStep](#capsulestep)_ | How to handle the VPA step of capsules in the cluster.<br />If left empty, no VPAs will be created. |
+| `serviceMonitorStep` _[CapsuleStep](#capsulestep)_ | How to handle the service monitor step of capsules in the cluster.<br />If left empty, no service monitors will be created.<br />rigdev.service_monitor plugin spawns a Prometheus ServiceMonitor per capsule<br />for use with a Prometheus Operator stack. |
 | `steps` _[Step](#step) array_ | Steps to perform as part of running the operator. |
-| `customPlugins` _[CustomPlugin](#customplugin) array_ | CustomPlugins enables custom plugins to be injected into the<br /><br />operator. The plugins injected here can then be referenced in 'steps' |
-| `capsuleExtensions` _object (keys:string, values:[CapsuleStep](#capsulestep))_ | CapsuleExtensions supported by the Operator. Each extension supported<br /><br />should be configured in the map, with an additional plugin name. |
+| `customPlugins` _[CustomPlugin](#customplugin) array_ | CustomPlugins enables custom plugins to be injected into the<br />operator. The plugins injected here can then be referenced in 'steps' |
+| `capsuleExtensions` _object (keys:string, values:[CapsuleStep](#capsulestep))_ | CapsuleExtensions supported by the Operator. Each extension supported<br />should be configured in the map, with an additional plugin name. |
 
 
 ### PlatformConfig
@@ -647,12 +651,12 @@ PlatformConfig is the Schema for the platform config API
 | `apiVersion` _string_ | `config.rig.dev/v1alpha1`
 | `kind` _string_ | `PlatformConfig`
 | `port` _integer_ | Port sets the port the platform should listen on |
-| `publicURL` _string_ | PublicUrl sets the public url for the platform. This is used for<br /><br />generating urls for the platform when using oauth2. |
-| `telemetryEnabled` _boolean_ | TelemetryEnabled specifies wether or not we are allowed to collect usage<br /><br />data. Defaults to true. |
+| `publicURL` _string_ | PublicUrl sets the public url for the platform. This is used for<br />generating urls for the platform when using oauth2. |
+| `telemetryEnabled` _boolean_ | TelemetryEnabled specifies wether or not we are allowed to collect usage<br />data. Defaults to true. |
 | `auth` _[Auth](#auth)_ | Auth holds authentication configuration. |
 | `client` _[Client](#client)_ | Client holds configuration for clients used in the platform. |
 | `repository` _[Repository](#repository)_ | Repository specifies the type of db to use along with secret key |
-| `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration<br /><br />Deprecated: Use `clusters` instead. |
+| `cluster` _[Cluster](#cluster)_ | Cluster holds cluster specific configuration<br />Deprecated: Use `clusters` instead. |
 | `email` _[Email](#email)_ | Email holds the default configuration for sending emails. Either using mailjet or using SMTP. |
 | `logging` _[Logging](#logging)_ | Logging holds information about the granularity of logging |
 | `clusters` _object (keys:string, values:[Cluster](#cluster))_ | Clusters the platform has access to. |
@@ -672,7 +676,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `tag` _string_ | Optional tag which is readable by plugin when executed |
-| `name` _string_ | Name of the plugin to run.<br /><br />Deprecated, use Plugin. |
+| `name` _string_ | Name of the plugin to run.<br />Deprecated, use Plugin. |
 | `plugin` _string_ | Name of the plugin to run. |
 | `config` _string_ | Config is a string defining the plugin-specific configuration of the plugin. |
 
@@ -691,18 +695,22 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `store` _string_ | Store is what database will be used, can only be postgres. |
-| `secret` _string_ | Secret is a secret key used for encrypting sensitive data before saving<br /><br />it in the database. |
+| `secret` _string_ | Secret is a secret key used for encrypting sensitive data before saving<br />it in the database. |
 
 
 ### SSHCredential
 
-_Underlying type:_ _[struct{PrivateKey string "json:\"privateKey,omitempty\""; PrivateKeyPassword string "json:\"password,omitempty\""}](#struct{privatekey-string-"json:\"privatekey,omitempty\"";-privatekeypassword-string-"json:\"password,omitempty\""})_
+
 
 SSHCredential specifies SSH credentials
 
 _Appears in:_
 - [GitCredentials](#gitcredentials)
 
+| Field | Description |
+| --- | --- |
+| `privateKey` _string_ | PrivateKey is a PEM encoded SSH private key. |
+| `password` _string_ | PrivateKeyPassword is an optional password for the SSH private key. |
 
 
 ### SSO
@@ -716,7 +724,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `oidcProviders` _object (keys:string, values:[OIDCProvider](#oidcprovider))_ | OIDCProviders specifies enabled OIDCProviders which can be used for<br /><br />login. |
+| `oidcProviders` _object (keys:string, values:[OIDCProvider](#oidcprovider))_ | OIDCProviders specifies enabled OIDCProviders which can be used for<br />login. |
 
 
 ### Step
@@ -733,9 +741,9 @@ _Appears in:_
 | `tag` _string_ | Optional tag which is readable by plugins when executed |
 | `match` _[CapsuleMatch](#capsulematch)_ | Match requirements for running the Step on a given Capsule. |
 | `plugins` _[Plugin](#plugin) array_ | Plugins to run as part of this step. |
-| `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run.<br /><br />Deprecated, use Match.Namespaces. |
-| `capsules` _string array_ | If set, only execute the plugin on the capsules specified.<br /><br />Deprecated, use Match.CapsuleNames. |
-| `enableForPlatform` _boolean_ | If set, will enable the step for the Rig platform which is a Capsule as well<br /><br />Deprecated, use Match.EnableForPlatform. |
+| `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run.<br />Deprecated, use Match.Namespaces. |
+| `capsules` _string array_ | If set, only execute the plugin on the capsules specified.<br />Deprecated, use Match.CapsuleNames. |
+| `enableForPlatform` _boolean_ | If set, will enable the step for the Rig platform which is a Capsule as well<br />Deprecated, use Match.EnableForPlatform. |
 
 
 

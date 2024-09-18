@@ -75,9 +75,9 @@ Configuration for the google_cloud_sql_auth_proxy plugin
 | `image` _string_ | The image running on the new container. Defaults to gcr.io/cloud-sql-connectors/cloud-sql-proxy |
 | `tag` _string_ | The tag of the image |
 | `args` _string array_ | Arguments to pass to the cloud sql proxy. These will be appended after the instance connection names. |
-| `envFromSource` _EnvReference array_ | A list of either ConfigMaps or Secrets which will be mounted in as environment variables to the container.<br /><br />It's a reuse of the Capsule CRD |
+| `envFromSource` _EnvReference array_ | A list of either ConfigMaps or Secrets which will be mounted in as environment variables to the container. It's a reuse of the Capsule CRD |
 | `envVars` _[EnvVar](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#envvar-v1-core) array_ | A list of environment variables to set in the container |
-| `files` _File array_ | Files is a list of files to mount in the container. These can either be<br /><br />based on ConfigMaps or Secrets.<br /><br />It's a reuse of the Capsule CRD |
+| `files` _File array_ | Files is a list of files to mount in the container. These can either be based on ConfigMaps or Secrets. It's a reuse of the Capsule CRD |
 | `resources` _[Resources](#resources)_ | Resources defines how large the container request should be. Defaults to the Kubernetes defaults. |
 | `instanceConnectionNames` _string array_ | The instance_connection_names passed to the cloud_sql_proxy. |
 

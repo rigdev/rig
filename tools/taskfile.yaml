@@ -147,8 +147,12 @@ tasks:
     desc: "📦 Install crd-ref-docs"
     env:
       GOBIN: "{{ .TASKFILE_DIR }}/bin"
+    vars:
+      GO_MOD_VERSION:
+        sh: cat go.mod | grep -E "github.com/elastic/crd-ref-docs" | cut -d ' ' -f2
     status:
       - test -s bin/crd-ref-docs
+      - ./bin/crd-ref-docs --version | grep "{{ .GO_MOD_VERSION }}"
     cmds:
       - go install github.com/elastic/crd-ref-docs
 
