@@ -13,6 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type pipelineDryOutput struct {
+	environment string
+	out         capsule_cmd.DryOutput
+}
+
 func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) error {
 	pipelineIDStr := ""
 	var err error
@@ -48,15 +53,40 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 		return nil
 	}
 
-	out := capsule_cmd.ProcessDryRunOutput(resp.Msg.GetOutcome(), resp.Msg.GetRevision().GetSpec(), c.Scheme)
+	var envLabels []string
+	var outs []*pipelineDryOutput
+	for _, out := range resp.Msg.GetDryRunOutcomes() {
+		envLabels = append(envLabels, out.GetEnvironmentId())
+		outs = append(outs, &pipelineDryOutput{
+			environment: out.GetEnvironmentId(),
+			out:         capsule_cmd.ProcessDryRunOutput(out.GetOutcome(), out.GetRevision().GetSpec(), c.Scheme),
+		})
+	}
 
 	if !c.Scope.IsInteractive() {
 		outputType := flags.Flags.OutputType
 		if outputType == common.OutputTypePretty {
 			outputType = common.OutputTypeYAML
 		}
-		return common.FormatPrint(out, outputType)
+		return common.FormatPrint(outs, outputType)
 	}
 
-	return capsule_cmd.PromptDryOutput(ctx, out, resp.Msg.GetOutcome())
+	for {
+		i, _, err := c.Prompter.Select("Select the environment to view the dry run output (CTRL + C to cancel)",
+			envLabels)
+		if err != nil {
+			if common.ErrIsAborted(err) {
+				return nil
+			}
+			return err
+		}
+
+		err = capsule_cmd.PromptDryOutput(ctx, outs[i].out, resp.Msg.GetDryRunOutcomes()[i].GetOutcome())
+		if err != nil {
+			if common.ErrIsAborted(err) {
+				continue
+			}
+			return err
+		}
+	}
 }

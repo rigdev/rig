@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rigdev/rig-go-api/api/v1/environment"
 	"github.com/rigdev/rig-go-api/api/v1/project"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/errors"
@@ -89,7 +90,8 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 				},
 			})
 		case 2:
-			if err := c.updatePromotionPipelines(ctx, p.GetPipelines()); err != nil {
+			pipelines, err := c.updatePromotionPipelines(ctx, p.GetPipelines())
+			if err != nil {
 				if common.ErrIsAborted(err) {
 					continue
 				}
@@ -97,8 +99,10 @@ func (c *Cmd) update(ctx context.Context, _ *cobra.Command, _ []string) error {
 			}
 
 			updates = append(updates, &project.Update{
-				Field: &project.Update_SetPipelines{
-					SetPipelines: p.GetPipelines(),
+				Field: &project.Update_Pipelines_{
+					Pipelines: &project.Update_Pipelines{
+						Pipelines: pipelines,
+					},
 				},
 			})
 		case 3:
@@ -158,44 +162,15 @@ func (c *Cmd) updateNotifiers(ctx context.Context, p *project.NotificationNotifi
 	return nil
 }
 
-func (c *Cmd) updatePromotionPipelines(ctx context.Context, p *project.Pipelines) error {
-	if p == nil {
-		p = &project.Pipelines{}
-	}
-
-	enableDisableStr := "disable global pipelines"
-	if p.GetDisabled() {
-		enableDisableStr = "enable global pipelines"
-	}
-
-	i, _, err := c.Prompter.Select("Select the field to update (CTRL + c to cancel)", []string{
-		enableDisableStr,
-		"Update Pipelines",
-	})
+func (c *Cmd) updatePromotionPipelines(ctx context.Context, p []*model.Pipeline) ([]*model.Pipeline, error) {
+	envsResp, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
+		ProjectFilter: c.Scope.GetCurrentContext().GetProject(),
+	}))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	switch i {
-	case 0:
-		p.Disabled = !p.GetDisabled()
-	case 1:
-		envsResp, err := c.Rig.Environment().List(ctx, connect.NewRequest(&environment.ListRequest{
-			ProjectFilter: c.Scope.GetCurrentContext().GetProject(),
-		}))
-		if err != nil {
-			return err
-		}
-
-		pipelines, err := common.PromptPipelines(c.Prompter, p.GetPipelines(), envsResp.Msg.GetEnvironments())
-		if err != nil {
-			return err
-		}
-
-		p.Pipelines = pipelines
-	}
-
-	return nil
+	return common.PromptPipelines(c.Prompter, p, envsResp.Msg.GetEnvironments())
 }
 
 func (c *Cmd) updateGit(ctx context.Context, cmd *cobra.Command, _ []string) error {
