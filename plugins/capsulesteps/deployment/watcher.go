@@ -432,9 +432,14 @@ func onDeploymentUpdated(
 	objectWatcher plugin.ObjectWatcher,
 ) *apipipeline.ObjectStatusInfo {
 	dep := obj.(*appsv1.Deployment)
+	return OnPodTemplatedUpdated(dep.Spec.Template, objectWatcher)
+}
 
+func OnPodTemplatedUpdated(
+	template v1.PodTemplateSpec, objectWatcher plugin.ObjectWatcher,
+) *apipipeline.ObjectStatusInfo {
 	selector := labels.NewSelector()
-	for key, val := range dep.Spec.Template.GetLabels() {
+	for key, val := range template.GetLabels() {
 		req, err := labels.NewRequirement(key, selection.Equals, []string{val})
 		if err != nil {
 			// This cannot happen
@@ -451,7 +456,7 @@ func onDeploymentUpdated(
 	selector = selector.Add(*req)
 
 	objectWatcher.WatchSecondaryByLabels(selector, &corev1.Pod{}, onPodUpdated)
-	for _, v := range dep.Spec.Template.Spec.Volumes {
+	for _, v := range template.Spec.Volumes {
 		if v.ConfigMap != nil {
 			objectWatcher.WatchSecondaryByName(v.ConfigMap.Name, &corev1.ConfigMap{}, onConfigMapUpdated)
 		} else if v.Secret != nil {

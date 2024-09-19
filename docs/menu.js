@@ -549,6 +549,12 @@ const sidebars = {
             },
             {
               type: "doc",
+              id: "operator-manual/plugins/builtin/envvar_csi",
+              label: "Env Var CSI",
+              className: "homepage-sidebar-item",
+            },
+            {
+              type: "doc",
               id: "operator-manual/plugins/builtin/google_cloud_sql_auth_proxy",
               label: "Google Cloud SQL Auth Proxy",
               className: "homepage-sidebar-item",

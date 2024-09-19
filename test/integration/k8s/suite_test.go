@@ -136,7 +136,7 @@ portName: "metricsport"`,
 		Lifecycle:           lc,
 	}
 
-	require.NoError(t, capsuleReconciler.SetupWithManager(manager))
+	require.NoError(t, capsuleReconciler.SetupWithManager(manager, "capsule"))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {

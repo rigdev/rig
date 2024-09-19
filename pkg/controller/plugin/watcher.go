@@ -379,7 +379,11 @@ func newObjectWatcher(
 
 	w.logger.Info("starting watcher", "gvk", ow.gvkList)
 
-	store, ctrl := cache.NewInformer(ow, obj, 0, ow)
+	store, ctrl := cache.NewInformerWithOptions(cache.InformerOptions{
+		ListerWatcher: ow,
+		ObjectType:    obj,
+		Handler:       ow,
+	})
 	ow.store = store
 	ow.ctrl = ctrl
 
@@ -394,8 +398,11 @@ func newObjectWatcher(
 		},
 		logger: logger,
 	}
-
-	eventStore, eventCtrl := cache.NewInformer(elw, &corev1.Event{}, 0, ow)
+	eventStore, eventCtrl := cache.NewInformerWithOptions(cache.InformerOptions{
+		ListerWatcher: elw,
+		ObjectType:    &corev1.Event{},
+		Handler:       ow,
+	})
 	ow.eventStore = eventStore
 	ow.eventCtrl = eventCtrl
 

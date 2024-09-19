@@ -101,9 +101,9 @@ The dry run will be executed with the resulting list of plugins.`,
 	//nolint:lll
 	dryRun.Flags().StringVar(&specPath, "spec", "", "If given, will read the capsule spec at the path instead of using the capsule spec of an existing capsule from the platform")
 	//nolint:lll
-	dryRun.Flags().StringSliceVar(&replaces, "replace", nil, "Assumes argument of the form '<idx>:<path>' (e.g. '2:conf.yaml'). Will replace the step at the given index (0-indexed) with the config at the path.")
+	dryRun.Flags().StringSliceVar(&replaces, "replace", nil, "Assumes argument of the form '<idx>:<path>' (e.g. '2:conf.yaml'). Will replace the step at the given index (1-indexed) with the config at the path.")
 	//nolint:lll
-	dryRun.Flags().IntSliceVar(&removes, "remove", nil, "Will remove the steps at the specified index(es) (0-indexed)")
+	dryRun.Flags().IntSliceVar(&removes, "remove", nil, "Will remove the steps at the specified index(es) (1-indexed)")
 	//nolint:lll
 	dryRun.Flags().StringSliceVar(&appends, "append", nil, "Will append steps given by the configs at the given paths. Will append them in the order of the arguments.")
 	//nolint:lll

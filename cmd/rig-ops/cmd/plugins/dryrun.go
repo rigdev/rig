@@ -46,7 +46,7 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 
 	idx := 0
 	for i, step := range cfg.Pipeline.Steps {
-		if !slices.Contains(removes, i) {
+		if !slices.Contains(removes, i+1) {
 			cfg.Pipeline.Steps[idx] = step
 			idx++
 		}
@@ -115,7 +115,7 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 		}
 	}
 
-	cfgBytes, err := yaml.Marshal(cfg)
+	cfgBytes, err := obj.EncodeAny(cfg)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func parseReplace(replace string) (int, string, error) {
 	if idx == -1 {
 		return 0, "", errors.New("missing ':'")
 	}
-	idxStr, path := replace[:idx], replace[idx+1:]
+	idxStr, path := replace[:idx-1], replace[idx:]
 	idx, err := strconv.Atoi(idxStr)
 	if err != nil {
 		return 0, "", err

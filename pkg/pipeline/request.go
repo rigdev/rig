@@ -231,6 +231,7 @@ func (r *RequestBase) GetNewInto(obj client.Object) error {
 		return err
 	}
 
+	obj.GetObjectKind().SetGroupVersionKind(gvk)
 	return nil
 }
 
@@ -307,6 +308,7 @@ func (r *RequestBase) ListNew(gvk schema.GroupVersionKind) ([]client.Object, err
 			continue
 		}
 		o := no.New.DeepCopyObject().(client.Object)
+		o.GetObjectKind().SetGroupVersionKind(gvk)
 		res = append(res, o)
 	}
 

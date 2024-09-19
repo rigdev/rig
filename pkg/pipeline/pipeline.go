@@ -210,7 +210,7 @@ func executeRequestInner[T Request](
 
 		for _, s := range steps {
 			if err := s.Apply(ctx, req.GetRequest(), opts); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("step %s failed: %w", s.Name(), err)
 			}
 		}
 

@@ -21,11 +21,12 @@ func (c *Cmd) listSteps(ctx context.Context, _ *cobra.Command, _ []string) error
 	if err != nil {
 		return err
 	}
+
 	var plugins []pluginStep
 	for _, s := range cfg.Pipeline.Steps {
 		step := pluginStep{
-			Namespaces: s.Namespaces,
-			Capsules:   s.Capsules,
+			Namespaces: s.Match.Namespaces,
+			Capsules:   s.Match.Names,
 		}
 		for _, p := range s.Plugins {
 			plugin := pluginInfo{
@@ -64,7 +65,7 @@ func (c *Cmd) listSteps(ctx context.Context, _ *cobra.Command, _ []string) error
 		for i := 0; i < n; i++ {
 			col1, def := "", ""
 			if i == 0 {
-				col1, def = strconv.Itoa(idx), "Matches all"
+				col1, def = strconv.Itoa(idx+1), "Matches all"
 			}
 			tbl.AddRow(col1,
 				getString(pluginNames, i, ""),

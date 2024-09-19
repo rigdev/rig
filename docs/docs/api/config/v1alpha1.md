@@ -742,7 +742,7 @@ _Appears in:_
 | `match` _[CapsuleMatch](#capsulematch)_ | Match requirements for running the Step on a given Capsule. |
 | `plugins` _[Plugin](#plugin) array_ | Plugins to run as part of this step. |
 | `namespaces` _string array_ | If set, only capsules in one of the namespaces given will have this step run.<br />Deprecated, use Match.Namespaces. |
-| `capsules` _string array_ | If set, only execute the plugin on the capsules specified.<br />Deprecated, use Match.CapsuleNames. |
+| `capsules` _string array_ | If set, only execute the plugin on the capsules specified.<br />Deprecated, use Match.Names. |
 | `enableForPlatform` _boolean_ | If set, will enable the step for the Rig platform which is a Capsule as well<br />Deprecated, use Match.EnableForPlatform. |
 
 

@@ -3,6 +3,7 @@ package allplugins
 import (
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/plugins/builtin/annotations"
+	argorollout "github.com/rigdev/rig/plugins/builtin/argo_rollout"
 	"github.com/rigdev/rig/plugins/builtin/datadog"
 	envmapping "github.com/rigdev/rig/plugins/builtin/env_mapping"
 	envvarcsi "github.com/rigdev/rig/plugins/builtin/envvar_csi"
@@ -37,4 +38,5 @@ var Plugins = map[string]plugin.Plugin{
 	vpa.Name:             &vpa.Plugin{},
 	objectcreate.Name:    &objectcreate.Plugin{},
 	envvarcsi.Name:       &envvarcsi.Plugin{},
+	argorollout.Name:     &argorollout.Plugin{},
 }

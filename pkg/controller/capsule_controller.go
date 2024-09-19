@@ -72,7 +72,7 @@ const (
 )
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager, name string) error {
 	ctx := context.TODO()
 
 	r.initialize.Add(1)
@@ -168,7 +168,7 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		b = b.Owns(&vpav1.VerticalPodAutoscaler{})
 	}
 
-	return b.
+	b = b.
 		For(&v1alpha2.Capsule{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&v1.Service{}).
@@ -184,8 +184,11 @@ func (r *CapsuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&v1.Secret{},
 			configEventHandler,
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
-		).
-		Complete(r)
+		)
+	if name != "" {
+		b.Named(name)
+	}
+	return b.Complete(r)
 }
 
 func findCapsulesForConfig(mgr ctrl.Manager) handler.MapFunc {

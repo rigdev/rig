@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -11,6 +12,7 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/uuid"
+	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -50,7 +52,8 @@ func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest, opts pipe
 			"plugin", s.step.Plugins[i].GetPlugin(), "capsule_id", c.Name, "namespace", c.Namespace, "tag", tag,
 		)
 		if err := p.Run(ctx, req, opts); err != nil {
-			return err
+			s.logger.Info("plugin failed", zap.Error(err))
+			return fmt.Errorf("plugin #%v (%s) failed: %w", i+1, p.name, err)
 		}
 	}
 	return nil

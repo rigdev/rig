@@ -17,7 +17,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var meta = metav1.TypeMeta{
+	Kind:       "Deployment",
+	APIVersion: "apps/v1",
+}
+
 func TestObjectPlugin(t *testing.T) {
+
 	name, namespace := "name", "namespace"
 	tests := []struct {
 		name     string
@@ -277,6 +283,7 @@ name: name`
 			assert.NoError(t, req.GetNewInto(deploy))
 			tt.expected.Name = name
 			tt.expected.Namespace = namespace
+			tt.expected.TypeMeta = meta
 			assert.Equal(t, tt.expected, deploy)
 		})
 	}
@@ -337,6 +344,7 @@ object: |
 
 	require.Equal(t, []*appsv1.Deployment{
 		{
+			TypeMeta:   meta,
 			ObjectMeta: metav1.ObjectMeta{Name: "obj1"},
 			Spec: appsv1.DeploymentSpec{
 				Replicas:        ptr.New(int32(10)),
@@ -349,6 +357,7 @@ object: |
 			},
 		},
 		{
+			TypeMeta:   meta,
 			ObjectMeta: metav1.ObjectMeta{Name: "obj2"},
 			Spec: appsv1.DeploymentSpec{
 				Replicas:        ptr.New(int32(10)),
@@ -361,6 +370,7 @@ object: |
 			},
 		},
 		{
+			TypeMeta:   meta,
 			ObjectMeta: metav1.ObjectMeta{Name: "obj3"},
 			Spec: appsv1.DeploymentSpec{
 				Replicas:        ptr.New(int32(10)),
