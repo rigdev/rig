@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1.capsule.instance;
 
 import "google/protobuf/timestamp.proto";
+import "operator/api/v1/pipeline/object_status.proto";
 
 // Status is a representation of the current state of an instance.
 message Status {
@@ -101,14 +102,7 @@ message StepInfo {
 
 message ContainerInfo {
   string name = 1;
-  ContainerType type = 2;
-}
-
-enum ContainerType {
-  CONTAINER_TYPE_UNSPECIFIED = 0;
-  CONTAINER_TYPE_MAIN = 1;
-  CONTAINER_TYPE_SIDECAR = 2;
-  CONTAINER_TYPE_INIT = 3;
+  api.v1.pipeline.ContainerType type = 2;
 }
 
 // Different states a step can be in.

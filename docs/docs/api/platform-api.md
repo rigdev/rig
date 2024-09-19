@@ -3711,7 +3711,7 @@ Where the image came from
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
-| type | [ContainerType](#api-v1-capsule-instance-ContainerType) |  |  |
+| type | [api.v1.pipeline.ContainerType](#api-v1-pipeline-ContainerType) |  |  |
 
 
 
@@ -4027,20 +4027,6 @@ Meta data about a step.
 
 
 
-
-
-
-<a name="api-v1-capsule-instance-ContainerType"></a>
-
-### ContainerType
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| CONTAINER_TYPE_UNSPECIFIED | 0 |  |
-| CONTAINER_TYPE_MAIN | 1 |  |
-| CONTAINER_TYPE_SIDECAR | 2 |  |
-| CONTAINER_TYPE_INIT | 3 |  |
 
 
 
