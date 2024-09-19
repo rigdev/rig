@@ -105,13 +105,6 @@ message ContainerInfo {
   api.v1.pipeline.ContainerType type = 2;
 }
 
-// enum ContainerType {
-//   CONTAINER_TYPE_UNSPECIFIED = 0;
-//   CONTAINER_TYPE_MAIN = 1;
-//   CONTAINER_TYPE_SIDECAR = 2;
-//   CONTAINER_TYPE_INIT = 3;
-// }
-
 // Different states a step can be in.
 enum StepState {
   // Unspecified state.
