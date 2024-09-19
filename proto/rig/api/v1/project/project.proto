@@ -21,18 +21,23 @@ message Project {
   // The notifiers for the project.
   NotificationNotifiers notifiers = 7;
   // Environment pipelines for the project
-  Pipelines pipelines = 8;
+  repeated model.Pipeline pipelines = 2;
 }
 
 // Update msg for a project.
 message Update {
+  message Pipelines {
+    // The pipelines to update.
+    repeated model.Pipeline pipelines = 1;
+  }
+
   oneof field {
     // Set the git store.
     model.GitStore set_git_store = 1;
     // Set the notifiers.
     NotificationNotifiers notifiers = 2;
     // Set the pipelines
-    Pipelines set_pipelines = 3;
+    Pipelines pipelines = 3;
   }
 }
 
@@ -41,11 +46,4 @@ message NotificationNotifiers {
   // if these notifiers at this level are empty.
   bool disabled = 1;
   repeated model.NotificationNotifier notifiers = 2;
-}
-
-message Pipelines {
-  // If the pipelines are disabled, pipelines from parent are not inherited even
-  // if pipelines at this level are empty.
-  bool disabled = 1;
-  repeated model.Pipeline pipelines = 2;
 }

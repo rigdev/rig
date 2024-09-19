@@ -156,10 +156,18 @@ message PromotePipelineRequest {
 
 message PromotePipelineResponse {
   api.v1.capsule.pipeline.Status status = 1;
-  // Breakdown of the changes that this deploy would make to the system.
-  // Only populated if dry-run is used.
-  DeployOutcome outcome = 2;
+  // Breakdown of the changes that will be made to the environments throughout
+  // the pipeline. Only populated if dry-run is used.
+  repeated PipelineDryRunOutput dry_run_outcomes = 2;
   // The capsule revision created.
+  Revision revision = 3;
+}
+
+message PipelineDryRunOutput {
+  // Environment to promote to.
+  string environment_id = 1;
+  // Breakdown of the changes that this deploy would make to the system.
+  DeployOutcome outcome = 2;
   Revision revision = 3;
 }
 
@@ -175,10 +183,14 @@ message StartPipelineRequest {
   string project_id = 1;
   string capsule_id = 2;
   string pipeline_name = 3;
+  bool dry_run = 4;
 }
 
 message StartPipelineResponse {
   api.v1.capsule.pipeline.Status status = 1;
+  // Breakdown of the changes that will be made to the environments throughout
+  // the pipeline. Only populated if dry-run is used.
+  repeated PipelineDryRunOutput dry_run_outcomes = 2;
 }
 
 message WatchRolloutsRequest {
