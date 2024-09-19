@@ -69,6 +69,14 @@ message ContainerStatus {
   ContainerTermination last_termination = 2;
   google.protobuf.Timestamp started_at = 3;
   string image = 4;
+  ContainerType type = 5;
+}
+
+enum ContainerType {
+  CONTAINER_TYPE_UNSPECIFIED = 0;
+  CONTAINER_TYPE_MAIN = 1;
+  CONTAINER_TYPE_SIDECAR = 2;
+  CONTAINER_TYPE_INIT = 3;
 }
 
 message ConfigFileStatus {}
