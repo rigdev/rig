@@ -6491,6 +6491,23 @@ The response of a capsule.Logs RPC
 
 
 
+<a name="api-v1-capsule-PipelineDryRunOutput"></a>
+
+### PipelineDryRunOutput
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  | Environment to promote to. |
+| outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. |
+| revision | [Revision](#api-v1-capsule-Revision) |  |  |
+
+
+
+
+
+
 <a name="api-v1-capsule-PortForwardRequest"></a>
 
 ### PortForwardRequest
@@ -6589,7 +6606,7 @@ The response of a capsule.Logs RPC
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
-| outcome | [DeployOutcome](#api-v1-capsule-DeployOutcome) |  | Breakdown of the changes that this deploy would make to the system. Only populated if dry-run is used. |
+| dry_run_outcomes | [PipelineDryRunOutput](#api-v1-capsule-PipelineDryRunOutput) | repeated | Breakdown of the changes that will be made to the environments throughout the pipeline. Only populated if dry-run is used. |
 | revision | [Revision](#api-v1-capsule-Revision) |  | The capsule revision created. |
 
 
@@ -6710,6 +6727,7 @@ RestartInstanceResponse is an empty response.
 | project_id | [string](#string) |  |  |
 | capsule_id | [string](#string) |  |  |
 | pipeline_name | [string](#string) |  |  |
+| dry_run | [bool](#bool) |  |  |
 
 
 
@@ -6725,6 +6743,7 @@ RestartInstanceResponse is an empty response.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | status | [pipeline.Status](#api-v1-capsule-pipeline-Status) |  |  |
+| dry_run_outcomes | [PipelineDryRunOutput](#api-v1-capsule-PipelineDryRunOutput) | repeated | Breakdown of the changes that will be made to the environments throughout the pipeline. Only populated if dry-run is used. |
 
 
 
@@ -8257,22 +8276,6 @@ Condition that must be met for the trigger to fire.
 
 
 
-<a name="api-v1-project-Pipelines"></a>
-
-### Pipelines
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| disabled | [bool](#bool) |  | If the pipelines are disabled, pipelines from parent are not inherited even if pipelines at this level are empty. |
-| pipelines | [model.Pipeline](#model-Pipeline) | repeated |  |
-
-
-
-
-
-
 <a name="api-v1-project-Project"></a>
 
 ### Project
@@ -8287,7 +8290,7 @@ The top most model that capsules etc belong to.
 | installation_id | [string](#string) |  | The installation id of the project. |
 | git_store | [model.GitStore](#model-GitStore) |  |  |
 | notifiers | [NotificationNotifiers](#api-v1-project-NotificationNotifiers) |  | The notifiers for the project. |
-| pipelines | [Pipelines](#api-v1-project-Pipelines) |  | Environment pipelines for the project |
+| pipelines | [model.Pipeline](#model-Pipeline) | repeated | Environment pipelines for the project |
 
 
 
@@ -8304,7 +8307,22 @@ Update msg for a project.
 | ----- | ---- | ----- | ----------- |
 | set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
 | notifiers | [NotificationNotifiers](#api-v1-project-NotificationNotifiers) |  | Set the notifiers. |
-| set_pipelines | [Pipelines](#api-v1-project-Pipelines) |  | Set the pipelines |
+| pipelines | [Update.Pipelines](#api-v1-project-Update-Pipelines) |  | Set the pipelines |
+
+
+
+
+
+
+<a name="api-v1-project-Update-Pipelines"></a>
+
+### Update.Pipelines
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pipelines | [model.Pipeline](#model-Pipeline) | repeated | The pipelines to update. |
 
 
 
