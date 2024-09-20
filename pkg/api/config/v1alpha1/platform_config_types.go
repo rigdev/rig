@@ -293,6 +293,12 @@ type Cluster struct {
 	// Token for communicating with the cluster. Available through a service-account's secret.
 	Token string `json:"token,omitempty"`
 
+	// Script to execute for getting an access-token to the cluster.
+	// The output is expected to be a json-encoding of an `ExecCredential`.
+	// See https://pkg.go.dev/k8s.io/client-go@v0.31.0/pkg/apis/clientauthentication/v1beta1#ExecCredential
+	// for the format of the struct.
+	Script string `json:"script,omitempty"`
+
 	// Certificate authority for communicating with the cluster. Available through a service-account's secret.
 	CertificateAuthority string `json:"certificateAuthority,omitempty"`
 

@@ -213,6 +213,7 @@ _Appears in:_
 | --- | --- |
 | `url` _string_ | URL to communicate to the cluster. If set, a Token and CertificateAuthority should<br />be provided as well.<br />If not set, the cluster is interpreted to be the cluster in which the platform runs. |
 | `token` _string_ | Token for communicating with the cluster. Available through a service-account's secret. |
+| `script` _string_ | Script to execute for getting an access-token to the cluster.<br />The output is expected to be a json-encoding of an `ExecCredential`.<br />See https://pkg.go.dev/k8s.io/client-go@v0.31.0/pkg/apis/clientauthentication/v1beta1#ExecCredential<br />for the format of the struct. |
 | `certificateAuthority` _string_ | Certificate authority for communicating with the cluster. Available through a service-account's secret. |
 | `type` _[ClusterType](#clustertype)_ | Type of the cluster - either `docker` or `k8s`. |
 | `devRegistry` _[DevRegistry](#devregistry)_ | DevRegistry configuration |
