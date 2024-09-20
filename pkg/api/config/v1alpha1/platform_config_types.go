@@ -1,14 +1,12 @@
 package v1alpha1
 
 import (
-	"fmt"
+	"strings"
 
-	"github.com/xeipuuv/gojsonschema"
 	"go.uber.org/zap/zapcore"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func init() {
@@ -355,12 +353,13 @@ type PathPrefixes struct {
 // for GitHubAuths if there is a match.
 type ClientGit struct {
 	// Auths the git client can behave as.
-	Auths []GitAuth `json:"auths,omitempty"`
+	Auths []GitAuth `json:"auths,omitempty" patchStrategy:"merge" patchMergeKey:"url"`
 
-	// GitHubAuths is authentication information for GitHub repositories
-	GitHubAuths []GitHub `json:"gitHubAuths,omitempty"`
+	// GitHubAuths is authentication information for GitHub repositories.
+	GitHubAuths []GitHub `json:"gitHubAuths,omitempty" patchStrategy:"merge" patchMergeKey:"orgRepo"`
 
-	GiLabAuths []GitLab `json:"gitLabAuths,omitempty"`
+	// GitLabAuths is the authentication information for GitLab repositories.
+	GitLabAuths []GitLab `json:"gitLabAuths,omitempty" patchStrategy:"merge" patchMergeKey:"groupsProject"`
 
 	// Author used when creating commits.
 	Author GitAuthor `json:"author,omitempty"`
@@ -371,7 +370,12 @@ type GitAuth struct {
 	URL string `json:"url,omitempty"`
 
 	// URLPrefix is a prefix-match for the repo urls this auth can be used for.
+	// Deprecated; use Match instead
 	URLPrefix string `json:"urlPrefix,omitempty"`
+
+	// How the url should be matched. Can either be 'exact' or 'prefix'
+	// Defaults to 'exact'
+	Match URLMatch `json:"match,omitempty"`
 
 	// Credentials to use when connecting to git.
 	Credentials GitCredentials `json:"credentials,omitempty"`
@@ -380,6 +384,13 @@ type GitAuth struct {
 	// to fetch changes. Defaults to 3 mins if no value.
 	PullingIntervalSeconds int `json:"pullingIntervalSeconds"`
 }
+
+type URLMatch string
+
+const (
+	URLMatchExact  URLMatch = "exact"
+	URLMatchPrefix URLMatch = "prefix"
+)
 
 // GitHub contains configuration specifically for GitHub repositories.
 // To enable pull requests on a GitHub repository, you must add GitHub authentication
@@ -390,10 +401,18 @@ type GitAuth struct {
 // If you have GitHub app authentication for a GitHub app with read/write access to the repository,
 // you don't need a matching GitAuth section.
 type GitHub struct {
+	// OrgRepo is a string containing the GitHub organization and optionally a repository as well.
+	// If both org and repo is given, they should be seperated by a '/', e.g. 'myorg/myrepo'.
+	// If repo is not given, e.g. 'myrepo', then it matches all repositories within the org 'myorg'.
+	// If both org and repo is given, it matches exactly the repo within the org.
+	OrgRepo string `json:"orgRepo"`
+
 	// Organization is the GitHub organization to match.
+	// Deprecated. Use OrgRepo instead
 	Organization string `json:"organization"`
 
 	// Repository matches the GitHub repository. If empty, matches all.
+	// Deprecated. Use OrgRepo instead
 	Repository string `json:"repository,omitempty"`
 
 	// Auth contains GitHub specific authentication configuration.
@@ -401,6 +420,21 @@ type GitHub struct {
 
 	// Polling contains GitHub specific configuration.
 	Polling GitHubPolling `json:"polling,omitempty"`
+}
+
+func (g GitHub) GetOrgRepo() (string, string) {
+	splits := strings.SplitN(g.OrgRepo, "/", 2)
+	if len(splits) == 2 {
+		return splits[0], splits[1]
+	}
+	return splits[0], ""
+}
+
+func MakeOrgRepo(org, repo string) string {
+	if repo == "" {
+		return org
+	}
+	return org + "/" + repo
 }
 
 // GitHubAuth contains authentication information specifically for a GitHub repository.
@@ -437,13 +471,24 @@ type GitHubPolling struct {
 // if there is a GitAuth section with credentials for the given repository instead.
 // If you have GitLab authentication for a repository, you don't need a matching GitAuth section.
 type GitLab struct {
+	// GroupsProject is a string containing a list of GitLab groups and optionally a project
+	// Groups are separated by '/' and project by ':', e.g.
+	// group/subgroup1/subgroup2:project
+	// If a project is given, it matches exactly that project within that sequence of subsgroups
+	// If no project is given, it matches all projects within all subgroups which are children of the
+	// given group sequence. E.g.
+	// 'group' will match 'group/subgroup1:project1' and 'group/subgroup1/subgroup2:project2'
+	GroupsProject string `json:"groupsProject"`
+
 	// Groups is a sequence of GitLab groups.
 	// The first is the main group and the rest a nesting of subgroups.
 	// If Project is empty, the configuration will match any
 	// GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix.
+	// Deprecated. Use GroupsProject
 	Groups []string `json:"groups,omitempty"`
 
 	// Project is the GitLab project of the repository. Can be empty for matching all project names.
+	// Deprecated. Use GroupsProject
 	Project string `json:"project,omitempty"`
 
 	// Auth contains GitLab specific authentication configuration.
@@ -451,6 +496,24 @@ type GitLab struct {
 
 	// Polling contains GitLab specific configuration.
 	Polling GitLabPolling `json:"polling,omitempty"`
+}
+
+func (g GitLab) GetGroupsProject() ([]string, string) {
+	splits := strings.SplitN(g.GroupsProject, ":", 2)
+	groups := strings.Split(splits[0], "/")
+	var project string
+	if len(splits) == 2 {
+		project = splits[1]
+	}
+	return groups, project
+}
+
+func MakeGroupsProject(groups []string, project string) string {
+	s := strings.Join(groups, "/")
+	if project != "" {
+		s += ":" + project
+	}
+	return s
 }
 
 // GitLabAuth contains authentication information specifically for a GitLab repository.
@@ -627,109 +690,4 @@ func NewDefaultPlatform() *PlatformConfig {
 	})
 
 	return cfg
-}
-
-func (cfg *PlatformConfig) Validate() error {
-	if cfg.Cluster.Type != "" && len(cfg.Clusters) != 0 {
-		return fmt.Errorf("only one of `cluster` and `clusters` must be set")
-	}
-
-	var errs field.ErrorList
-	errs = append(errs, cfg.Cluster.validate(field.NewPath("clusters"))...)
-	errs = append(errs, cfg.validateCapsuleExtensions(field.NewPath("capsuleExtensions"))...)
-
-	return errs.ToAggregate()
-}
-
-func (c Cluster) validate(path *field.Path) field.ErrorList {
-	return c.Git.validate(path.Child("git"))
-}
-
-func (g ClusterGit) validate(path *field.Path) field.ErrorList {
-	var errs field.ErrorList
-	if g.PathPrefix != "" && g.PathPrefixes != (PathPrefixes{}) {
-		return append(errs, field.Invalid(path, g, "can't set both `pathPrefix` and `pathPrefixes`"))
-	}
-
-	return errs
-}
-
-func (cfg *PlatformConfig) validateCapsuleExtensions(path *field.Path) field.ErrorList {
-	var errs field.ErrorList
-	for k, v := range cfg.CapsuleExtensions {
-		if err := v.validate(path.Key(k)); err != nil {
-			errs = append(errs, err...)
-		}
-	}
-	return errs
-}
-
-func (e Extension) validate(path *field.Path) field.ErrorList {
-	var errs field.ErrorList
-
-	schemaPath := path.Child("schema")
-	if e.Schema == nil {
-		errs = append(errs, field.Invalid(
-			path, e, "value has no schema"),
-		)
-		return errs
-	}
-	if e.Schema.Type != "object" {
-		errs = append(errs, field.Invalid(
-			schemaPath.Child("type"), e.Schema.Type, "top level schema must be of type 'object'"),
-		)
-		return errs
-	}
-
-	for key, prop := range e.Schema.Properties {
-		if prop.Type == "object" || prop.Type == "array" {
-			errs = append(errs,
-				field.Invalid(
-					schemaPath.Child("properties").Key(key).Child("type"),
-					prop.Type, "complex child properties are not yet supported"),
-			)
-		}
-	}
-
-	if _, err := gojsonschema.NewSchema(gojsonschema.NewGoLoader(e.Schema)); err != nil {
-		errs = append(errs, field.Invalid(schemaPath, e.Schema, err.Error()))
-	}
-
-	return errs
-}
-
-func (cfg *PlatformConfig) Migrate() {
-	for _, c := range cfg.Clusters {
-		if c.Git.URL != "" && c.Git.Credentials != (GitCredentials{}) {
-			cfg.Client.Git.Auths = append(cfg.Client.Git.Auths, GitAuth{
-				URL:         c.Git.URL,
-				Credentials: c.Git.Credentials,
-			})
-		}
-		if cfg.Client.Git.Author.Name == "" {
-			cfg.Client.Git.Author.Name = c.Git.Author.Name
-			cfg.Client.Git.Author.Email = c.Git.Author.Email
-		}
-	}
-
-	if cfg.Client.Mailjet != (ClientMailjet{}) {
-		cfg.Client.Mailjets["mailjet"] = cfg.Client.Mailjet
-	}
-
-	if cfg.Client.SMTP != (ClientSMTP{}) {
-		cfg.Client.SMTPs["smtp"] = cfg.Client.SMTP
-	}
-
-	if cfg.Email != (Email{}) && cfg.Email.Type != "" {
-		switch cfg.Email.Type {
-		case EmailTypeMailjet:
-			if cfg.Email.ID == "" {
-				cfg.Email.ID = "mailjet"
-			}
-		case EmailTypeSMTP:
-			if cfg.Email.ID == "" {
-				cfg.Email.ID = "smtp"
-			}
-		}
-	}
 }

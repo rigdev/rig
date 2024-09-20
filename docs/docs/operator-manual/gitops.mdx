@@ -86,13 +86,11 @@ rig:
               private_key: <pem-encoded-private-key>
       gitHubAuths:
         # Matches git@github.com:myorg/myrepository2.git and enables WebHook
-        - organization: myorg
-          repository: myrepository2
+        - orgRepo: myorg/myrepository2
           polling:
             webhookSecret: secret123
         # Matches https://github.com/myorg/myrepository3.git, uses GitHub authentication and pulls every 60 seconds.
-        - organization: myorg
-          repository: myrepository3
+        - orgRepo: myorg/myrepository3
           auth:
             appID: 1234
             installationID: 12345
@@ -101,11 +99,7 @@ rig:
             pullingIntervalSeconds: 60
       gitLabAuths
         # Matches git@gitlab.com:mygroup/subgroup1/subgroup2/myproject.git, uses GitLab authentication and enables WebHook.
-        - groups:
-            - mygroup
-            - subgroup1
-            - subgroup2
-          project: myproject
+        - groupsProject: mygroup/subgroup1/subgroup2:myproject
           auth:
             accessToken: MY_ACCESS_TOKEN
           polling:
@@ -119,7 +113,7 @@ When computing the configuration for a repository, Rig first searches the provid
 either polling or authentication sat, it will provide the missing configuration from the first matching general git config (in `client.git.auths`).
 
 #### GitHub Authentication
-[Here](/api/config/v1alpha1#github) you can see the definition of our GitHub configuration. The Organization and Repository uniquely defines a GitHub repository. We support GitHub specific authentication using [GitHub Apps](https://docs.github.com/en/apps).
+[Here](/api/config/v1alpha1#github) you can see the definition of our GitHub configuration. `OrgRepo` uniquely defines a GitHub repository. We support GitHub specific authentication using [GitHub Apps](https://docs.github.com/en/apps).
 You have to make a new GitHub App for either your organization or account. Go through `Settings` -> `Developer Settings` -> `GitHub Apps` -> `New GitHub App`. Give the App a name and HomePage URL (neither of which Rig uses but GitHub requires them). Under `Permissions` and `Repository Permissions`, you'll have to give the app Read/Write access to `Contents`.
 
 After creating the app, go back to the App overview page under `Developer Settings`. Click `Edit` for your newly created app, then Install App and choose your organization or user. After being installed, you can find the app under `Third-party Access` / `GitHub Apps`. Clicking `Configure` takes you to the installation page.

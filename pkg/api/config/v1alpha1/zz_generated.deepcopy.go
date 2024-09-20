@@ -142,8 +142,8 @@ func (in *ClientGit) DeepCopyInto(out *ClientGit) {
 		*out = make([]GitHub, len(*in))
 		copy(*out, *in)
 	}
-	if in.GiLabAuths != nil {
-		in, out := &in.GiLabAuths, &out.GiLabAuths
+	if in.GitLabAuths != nil {
+		in, out := &in.GitLabAuths, &out.GitLabAuths
 		*out = make([]GitLab, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])

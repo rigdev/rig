@@ -150,6 +150,140 @@ capsuleExtensions:
 				"capsuleExtensions[key].schema.type: Invalid value: \"string\": top level schema must be of type 'object'",
 			),
 		},
+		{
+			name: "git auths",
+			files: []string{
+				`apiVersion: config.rig.dev/v1alpha1
+kind: PlatformConfig
+port: 1234
+client:
+  git:
+    auths:
+    - url: https://github.com/myorg/myrepo2.git
+      credentials:
+        https:
+          username: myuser2
+    - url: https://github.com/myorg/myrepo.git
+      credentials:
+        https:
+          username: myuser
+    gitHubAuths:
+    - orgRepo: someorg/somerepo
+      polling:
+        webhookSecret: secret1
+    - orgRepo: someorg
+      polling:
+        webhookSecret: secret2
+    gitLabAuths:
+    - groupsProject: group/subgroup:project
+      auth:
+        accessToken: token1`,
+				`apiVersion: config.rig.dev/v1alpha1
+kind: PlatformConfig
+port: 1234
+client:
+  git:
+    auths:
+    - url: https://github.com/myorg/myrepo.git
+      credentials:
+        https:
+          password: mypass
+    gitHubAuths:
+    - orgRepo: someorg/somerepo
+      polling:
+        webhookSecret: secret3
+    - orgRepo: someotherorg
+      polling:
+        webhookSecret: secret4
+    gitLabAuths:
+    - groupsProject: group/subgroup:project
+      auth:
+        accessToken: token2
+    - groupsProject: group/subgroup
+      auth:
+        accessToken: token3`,
+			},
+			expected: &v1alpha1.PlatformConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "PlatformConfig",
+					APIVersion: "config.rig.dev/v1alpha1",
+				},
+				Port:             1234,
+				TelemetryEnabled: true,
+				Client: v1alpha1.Client{
+					Mailjets: map[string]v1alpha1.ClientMailjet{},
+					SMTPs:    map[string]v1alpha1.ClientSMTP{},
+					Postgres: v1alpha1.ClientPostgres{
+						Port:     5432,
+						Database: "rig",
+					},
+					Operator: v1alpha1.ClientOperator{
+						BaseURL: "rig-operator:9000",
+					},
+					Git: v1alpha1.ClientGit{
+						Auths: []v1alpha1.GitAuth{
+							{
+								URL:   "https://github.com/myorg/myrepo2.git",
+								Match: "exact",
+								Credentials: v1alpha1.GitCredentials{
+									HTTPS: v1alpha1.HTTPSCredential{
+										Username: "myuser2",
+									},
+								},
+							},
+							{
+								URL:   "https://github.com/myorg/myrepo.git",
+								Match: "exact",
+								Credentials: v1alpha1.GitCredentials{
+									HTTPS: v1alpha1.HTTPSCredential{
+										Username: "myuser",
+										Password: "mypass",
+									},
+								},
+							},
+						},
+						GitHubAuths: []v1alpha1.GitHub{
+							{
+								OrgRepo: "someorg/somerepo",
+								Polling: v1alpha1.GitHubPolling{
+									WebhookSecret: "secret3",
+								},
+							},
+							{
+								OrgRepo: "someotherorg",
+								Polling: v1alpha1.GitHubPolling{
+									WebhookSecret: "secret4",
+								},
+							},
+							{
+								OrgRepo: "someorg",
+								Polling: v1alpha1.GitHubPolling{
+									WebhookSecret: "secret2",
+								},
+							},
+						},
+						GitLabAuths: []v1alpha1.GitLab{
+							{
+								GroupsProject: "group/subgroup:project",
+								Auth: v1alpha1.GitLabAuth{
+									Accesstoken: "token2",
+								},
+							},
+							{
+								GroupsProject: "group/subgroup",
+								Auth: v1alpha1.GitLabAuth{
+									Accesstoken: "token3",
+								},
+							},
+						},
+					},
+				},
+				Repository: v1alpha1.Repository{
+					Store: "postgres",
+				},
+				DockerRegistries: map[string]v1alpha1.DockerRegistryCredentials{},
+			},
+		},
 	}
 
 	scheme := scheme.New()
