@@ -46,10 +46,53 @@ func onPodUpdated(
 
 	containers := splitByContainers(status, pod, events)
 
-	makeImagePullingConditions(containers)
+	makePreparingConditions(pod, containers, watcher)
 	makeRunningConditions(pod, containers, watcher)
 
 	return status
+}
+
+func makePreparingConditions(pod *corev1.Pod, containers []containerInfo, watcher plugin.ObjectWatcher) {
+	for _, c := range containers {
+		makePreparingCondition(pod, c, watcher)
+	}
+}
+
+func makePreparingCondition(_ *corev1.Pod, container containerInfo, _ plugin.ObjectWatcher) {
+	makeImagePullingCondition(container)
+
+	c := getObjectCondition(container.subObj.Conditions, "Pull container image")
+	if c.GetState() != apipipeline.ObjectState_OBJECT_STATE_HEALTHY {
+		return
+	}
+
+	if container.status.LastTerminationState != (corev1.ContainerState{}) || container.status.State.Running != nil {
+		container.subObj.Conditions = append(container.subObj.Conditions, &apipipeline.ObjectCondition{
+			Name:    "Preparing",
+			State:   apipipeline.ObjectState_OBJECT_STATE_HEALTHY,
+			Message: "Container is done starting up",
+		})
+		return
+	}
+
+	cond := &apipipeline.ObjectCondition{
+		Name:    "Preparing",
+		State:   apipipeline.ObjectState_OBJECT_STATE_PENDING,
+		Message: "",
+	}
+	if waiting := container.status.State.Waiting; waiting != nil {
+		switch waiting.Reason {
+		case "CreateContainerConfigError":
+			fallthrough
+		case "CreateContainerError":
+			cond.State = apipipeline.ObjectState_OBJECT_STATE_ERROR
+			cond.Message = waiting.Message
+		case "ContainerCreating":
+			cond.State = apipipeline.ObjectState_OBJECT_STATE_PENDING
+			cond.Message = waiting.Message
+		}
+	}
+	container.subObj.Conditions = append(container.subObj.Conditions, cond)
 }
 
 func makeRunningConditions(pod *corev1.Pod, containers []containerInfo, watcher plugin.ObjectWatcher) {
@@ -74,6 +117,10 @@ func makeRunningCondition(pod *corev1.Pod, container containerInfo, watcher plug
 		if container.status.LastTerminationState == (v1.ContainerState{}) && container.status.State.Running == nil {
 			return
 		}
+	}
+
+	if container.status.LastTerminationState == (corev1.ContainerState{}) && container.status.State.Running == nil {
+		return
 	}
 
 	makeExecutingCondition(container)
@@ -206,12 +253,6 @@ func containerStateTerminatedFromK8s(
 	}
 }
 
-func makeImagePullingConditions(containers []containerInfo) {
-	for _, c := range containers {
-		makeImagePullingCondition(c)
-	}
-}
-
 func makeImagePullingCondition(container containerInfo) {
 	cond := &apipipeline.ObjectCondition{
 		Name:  "Pull container image",
@@ -310,8 +351,6 @@ type containerInfo struct {
 	events         []*v1.Event
 	subObj         *apipipeline.SubObjectStatus
 	platformStatus *apipipeline.ContainerStatus
-	initContainer  bool
-	sidecar        bool
 }
 
 func splitByContainers(status *apipipeline.ObjectStatusInfo, pod *v1.Pod, events []*v1.Event) []containerInfo {
@@ -321,17 +360,21 @@ func splitByContainers(status *apipipeline.ObjectStatusInfo, pod *v1.Pod, events
 		containers[c.Name] = containerInfo{
 			name: c.Name,
 			spec: c,
+			platformStatus: &apipipeline.ContainerStatus{
+				Type: apipipeline.ContainerType_CONTAINER_TYPE_MAIN,
+			},
 		}
 	}
 	for _, c := range pod.Spec.InitContainers {
 		ci := containerInfo{
-			name: c.Name,
-			spec: c,
+			name:           c.Name,
+			spec:           c,
+			platformStatus: &apipipeline.ContainerStatus{},
 		}
 		if r := c.RestartPolicy; r != nil && *r == v1.ContainerRestartPolicyAlways {
-			ci.sidecar = true
+			ci.platformStatus.Type = apipipeline.ContainerType_CONTAINER_TYPE_SIDECAR
 		} else {
-			ci.initContainer = true
+			ci.platformStatus.Type = apipipeline.ContainerType_CONTAINER_TYPE_INIT
 		}
 		containers[c.Name] = ci
 	}
@@ -359,7 +402,6 @@ func splitByContainers(status *apipipeline.ObjectStatusInfo, pod *v1.Pod, events
 	}
 
 	for name, c := range containers {
-		c.platformStatus = &apipipeline.ContainerStatus{}
 		c.subObj = &apipipeline.SubObjectStatus{
 			Name:       name,
 			Properties: map[string]string{},
@@ -406,6 +448,15 @@ func getEventWithPrefix(events []*v1.Event, eventType, prefix string) *v1.Event 
 	return nil
 }
 
+func getObjectCondition(conditions []*apipipeline.ObjectCondition, conditionName string) *apipipeline.ObjectCondition {
+	for _, c := range conditions {
+		if c.GetName() == conditionName {
+			return c
+		}
+	}
+	return nil
+}
+
 func timestampFromCondition(condition *v1.PodCondition) *timestamppb.Timestamp {
 	return timestamppb.New(condition.LastTransitionTime.Time)
 }
@@ -438,6 +489,24 @@ func onDeploymentUpdated(
 func OnPodTemplatedUpdated(
 	template v1.PodTemplateSpec, objectWatcher plugin.ObjectWatcher,
 ) *apipipeline.ObjectStatusInfo {
+
+	objectWatcher.WatchSecondaryByLabels(PodLabelSelector(template), &corev1.Pod{}, onPodUpdated)
+	for _, v := range template.Spec.Volumes {
+		if v.ConfigMap != nil {
+			objectWatcher.WatchSecondaryByName(v.ConfigMap.Name, &corev1.ConfigMap{}, onConfigMapUpdated)
+		} else if v.Secret != nil {
+			objectWatcher.WatchSecondaryByName(v.Secret.SecretName, &corev1.Secret{}, onSecretUpdated)
+		}
+	}
+
+	status := &apipipeline.ObjectStatusInfo{
+		Properties: map[string]string{},
+	}
+
+	return status
+}
+
+func PodLabelSelector(template v1.PodTemplateSpec) labels.Selector {
 	selector := labels.NewSelector()
 	for key, val := range template.GetLabels() {
 		req, err := labels.NewRequirement(key, selection.Equals, []string{val})
@@ -453,22 +522,8 @@ func OnPodTemplatedUpdated(
 		// This cannot happen
 		panic(err)
 	}
-	selector = selector.Add(*req)
 
-	objectWatcher.WatchSecondaryByLabels(selector, &corev1.Pod{}, onPodUpdated)
-	for _, v := range template.Spec.Volumes {
-		if v.ConfigMap != nil {
-			objectWatcher.WatchSecondaryByName(v.ConfigMap.Name, &corev1.ConfigMap{}, onConfigMapUpdated)
-		} else if v.Secret != nil {
-			objectWatcher.WatchSecondaryByName(v.Secret.SecretName, &corev1.Secret{}, onSecretUpdated)
-		}
-	}
-
-	status := &apipipeline.ObjectStatusInfo{
-		Properties: map[string]string{},
-	}
-
-	return status
+	return selector.Add(*req)
 }
 
 func onConfigMapUpdated(
