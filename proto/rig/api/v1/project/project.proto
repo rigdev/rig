@@ -21,7 +21,7 @@ message Project {
   // The notifiers for the project.
   NotificationNotifiers notifiers = 7;
   // Environment pipelines for the project
-  repeated model.Pipeline pipelines = 2;
+  repeated model.Pipeline pipelines = 8;
 }
 
 // Update msg for a project.
