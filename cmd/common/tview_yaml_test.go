@@ -33,6 +33,7 @@ complexList:
   - null
 `
 
+	//nolint:lll
 	expected := `[aqua]a[white]: [fuchsia]1
 [aqua]b[white]: [fuchsia]1.2
 [aqua]c[white]: [lime]hej

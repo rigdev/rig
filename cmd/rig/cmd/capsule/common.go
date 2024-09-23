@@ -395,7 +395,9 @@ func DeployDry(input DeployDryInput) error {
 	return PromptDryOutput(input.Ctx, out, outcome)
 }
 
-func ProcessDryRunOutput(outcome *capsule.DeployOutcome, spec *platformv1.Capsule, scheme *runtime.Scheme) (DryOutput, error) {
+func ProcessDryRunOutput(
+	outcome *capsule.DeployOutcome, spec *platformv1.Capsule, scheme *runtime.Scheme,
+) (DryOutput, error) {
 	out := DryOutput{
 		PlatformCapsule: spec,
 	}

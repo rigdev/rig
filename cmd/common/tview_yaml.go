@@ -131,17 +131,10 @@ func writeList(writer *writer, ind indent, object []any) error {
 	ind.level++
 	ind.isList = true
 
-	primitive := true
-	for _, v := range object {
-		if !isPrimitive(v) {
-			primitive = false
-			break
-		}
-	}
-
 	indChoice := indentChoice{}
 	elementSuffix := ", "
 
+	primitive := isPrimitive(object)
 	if !primitive {
 		indChoice.primitive = ind
 		indChoice.complex = ind
