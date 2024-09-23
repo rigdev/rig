@@ -503,7 +503,7 @@ func (s *testSuite) Test_capsule_create_config_no_env() {
 
 func (s *testSuite) getValidToken() string {
 	signedToken, err := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(10 * time.Minute).Unix(),
+		ExpiresAt: time.Date(2056, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
 	}).SignedString([]byte("key"))
 	s.Require().NoError(err)
 
