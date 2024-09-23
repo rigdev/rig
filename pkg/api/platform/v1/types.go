@@ -98,11 +98,7 @@ type Capsule struct {
 	Spec        CapsuleSpec `json:"spec" protobuf:"6"`
 }
 
-// +kubebuilder:object:root=true
-
 type CapsuleSpec struct {
-	metav1.TypeMeta `json:",inline"`
-
 	Annotations map[string]string `json:"annotations" protobuf:"11"`
 
 	// Image specifies what image the Capsule should run.

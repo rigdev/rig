@@ -10,7 +10,6 @@ custom_edit_url: null
 ## Resource Types
 - [Capsule](#capsule)
 - [CapsuleSet](#capsuleset)
-- [CapsuleSpec](#capsulespec)
 - [Environment](#environment)
 - [HostCapsule](#hostcapsule)
 - [Project](#project)
@@ -103,10 +102,6 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `apiVersion` _string_ | `rig.platform/v1`
-| `kind` _string_ | `CapsuleSpec`
-| `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |
-| `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |
 | `annotations` _object (keys:string, values:string)_ |  |
 | `image` _string_ | Image specifies what image the Capsule should run. |
 | `command` _string_ | Command is run as a command in the shell. If left unspecified, the<br />container will run using what is specified as ENTRYPOINT in the<br />Dockerfile. |

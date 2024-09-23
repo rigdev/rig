@@ -57,9 +57,13 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 	var outs []*pipelineDryOutput
 	for _, out := range resp.Msg.GetDryRunOutcomes() {
 		envLabels = append(envLabels, out.GetEnvironmentId())
+		o, err := capsule_cmd.ProcessDryRunOutput(out.GetOutcome(), out.GetRevision().GetSpec(), c.Scheme)
+		if err != nil {
+			return err
+		}
 		outs = append(outs, &pipelineDryOutput{
 			environment: out.GetEnvironmentId(),
-			out:         capsule_cmd.ProcessDryRunOutput(out.GetOutcome(), out.GetRevision().GetSpec(), c.Scheme),
+			out:         o,
 		})
 	}
 

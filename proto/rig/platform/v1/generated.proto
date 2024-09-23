@@ -16,8 +16,6 @@ message CapsuleSet {
 }
 
 message CapsuleSpec {
-  string kind = 1;
-  string apiVersion = 2;
   map<string, string> annotations = 11;
   string image = 3;
   string command = 4;

@@ -158,6 +158,7 @@ func Run(s *cli.SetupContext) error {
 	if len(s.Args) > 0 {
 		rootCmd.SetArgs(s.Args)
 	}
+
 	return rootCmd.Execute()
 }
 

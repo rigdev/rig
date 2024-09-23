@@ -1669,8 +1669,6 @@ A reference to a kubernetes object.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
 | annotations | [CapsuleSpec.AnnotationsEntry](#platform-v1-CapsuleSpec-AnnotationsEntry) | repeated |  |
 | image | [string](#string) |  |  |
 | command | [string](#string) |  |  |
