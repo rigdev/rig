@@ -353,7 +353,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `url` _string_ | URL is a exact match for the repo-url this auth can be used for. |
-| `urlPrefix` _string_ | URLPrefix is a prefix-match for the repo urls this auth can be used for.<br />Deprecated; use Match instead |
+| `urlPrefix` _string_ | URLPrefix is a prefix-match for the repo urls this auth can be used for.<br />Deprecated: use Match instead |
 | `match` _[URLMatch](#urlmatch)_ | How the url should be matched. Can either be 'exact' or 'prefix'<br />Defaults to 'exact' |
 | `credentials` _[GitCredentials](#gitcredentials)_ | Credentials to use when connecting to git. |
 | `pullingIntervalSeconds` _integer_ | If no web hook is confugured, pull the git repository at the set interval instead<br />to fetch changes. Defaults to 3 mins if no value. |
@@ -410,8 +410,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `orgRepo` _string_ | OrgRepo is a string containing the GitHub organization and optionally a repository as well.<br />If both org and repo is given, they should be seperated by a '/', e.g. 'myorg/myrepo'.<br />If repo is not given, e.g. 'myrepo', then it matches all repositories within the org 'myorg'.<br />If both org and repo is given, it matches exactly the repo within the org. |
-| `organization` _string_ | Organization is the GitHub organization to match.<br />Deprecated. Use OrgRepo instead |
-| `repository` _string_ | Repository matches the GitHub repository. If empty, matches all.<br />Deprecated. Use OrgRepo instead |
+| `organization` _string_ | Organization is the GitHub organization to match.<br />Deprecated: Use OrgRepo instead |
+| `repository` _string_ | Repository matches the GitHub repository. If empty, matches all.<br />Deprecated: Use OrgRepo instead |
 | `auth` _[GitHubAuth](#githubauth)_ | Auth contains GitHub specific authentication configuration. |
 | `polling` _[GitHubPolling](#githubpolling)_ | Polling contains GitHub specific configuration. |
 
@@ -467,8 +467,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `groupsProject` _string_ | GroupsProject is a string containing a list of GitLab groups and optionally a project<br />Groups are separated by '/' and project by ':', e.g.<br />group/subgroup1/subgroup2:project<br />If a project is given, it matches exactly that project within that sequence of subsgroups<br />If no project is given, it matches all projects within all subgroups which are children of the<br />given group sequence. E.g.<br />'group' will match 'group/subgroup1:project1' and 'group/subgroup1/subgroup2:project2' |
-| `groups` _string array_ | Groups is a sequence of GitLab groups.<br />The first is the main group and the rest a nesting of subgroups.<br />If Project is empty, the configuration will match any<br />GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix.<br />Deprecated. Use GroupsProject |
-| `project` _string_ | Project is the GitLab project of the repository. Can be empty for matching all project names.<br />Deprecated. Use GroupsProject |
+| `groups` _string array_ | Groups is a sequence of GitLab groups.<br />The first is the main group and the rest a nesting of subgroups.<br />If Project is empty, the configuration will match any<br />GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix.<br />Deprecated: Use GroupsProject |
+| `project` _string_ | Project is the GitLab project of the repository. Can be empty for matching all project names.<br />Deprecated: Use GroupsProject |
 | `auth` _[GitLabAuth](#gitlabauth)_ | Auth contains GitLab specific authentication configuration. |
 | `polling` _[GitLabPolling](#gitlabpolling)_ | Polling contains GitLab specific configuration. |
 

@@ -370,7 +370,7 @@ type GitAuth struct {
 	URL string `json:"url,omitempty"`
 
 	// URLPrefix is a prefix-match for the repo urls this auth can be used for.
-	// Deprecated; use Match instead
+	// Deprecated: use Match instead
 	URLPrefix string `json:"urlPrefix,omitempty"`
 
 	// How the url should be matched. Can either be 'exact' or 'prefix'
@@ -408,11 +408,11 @@ type GitHub struct {
 	OrgRepo string `json:"orgRepo"`
 
 	// Organization is the GitHub organization to match.
-	// Deprecated. Use OrgRepo instead
+	// Deprecated: Use OrgRepo instead
 	Organization string `json:"organization"`
 
 	// Repository matches the GitHub repository. If empty, matches all.
-	// Deprecated. Use OrgRepo instead
+	// Deprecated: Use OrgRepo instead
 	Repository string `json:"repository,omitempty"`
 
 	// Auth contains GitHub specific authentication configuration.
@@ -484,11 +484,11 @@ type GitLab struct {
 	// The first is the main group and the rest a nesting of subgroups.
 	// If Project is empty, the configuration will match any
 	// GitLab repository whose (group, subgroups) sequence where 'groups' is a prefix.
-	// Deprecated. Use GroupsProject
+	// Deprecated: Use GroupsProject
 	Groups []string `json:"groups,omitempty"`
 
 	// Project is the GitLab project of the repository. Can be empty for matching all project names.
-	// Deprecated. Use GroupsProject
+	// Deprecated: Use GroupsProject
 	Project string `json:"project,omitempty"`
 
 	// Auth contains GitLab specific authentication configuration.
