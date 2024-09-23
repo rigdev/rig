@@ -54,5 +54,10 @@ If the capsule already exists, the rollout will consist of the changes from the 
 If the capsule does not already exist it will first be created, and then the rollout will consists of all 
 the properties described in capsule spec.
 
+To see the currently deployed spec for a capsule in a given environment, run
+```
+rig capsule get my-capsule --environment prod --output yaml
+```
+
 The full list of fields that can be used in the Capsule yaml file can be found 
 in the [Capsule API Reference](/api/platformv1/#capsule).
