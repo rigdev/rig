@@ -2,6 +2,9 @@ package root
 
 import (
 	"context"
+	"fmt"
+	"slices"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -25,19 +28,32 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if spec {
-		capSpec := resp.Msg.GetRevision().GetSpec()
-		for env, rev := range resp.Msg.GetEnvironmentRevisions() {
-			if capSpec.GetEnvironments() == nil {
-				capSpec.Environments = map[string]*platformv1.CapsuleSpec{}
+	var environments []*platformv1.Capsule
+	for _, env := range resp.Msg.GetEnvironmentRevisions() {
+		environments = append(environments, env.GetSpec())
+	}
+	slices.SortFunc(environments, func(e1, e2 *platformv1.Capsule) int {
+		return strings.Compare(e1.GetEnvironment(), e2.GetEnvironment())
+	})
+
+	var out any
+	if flags.Flags.Environment != "" {
+		for _, env := range environments {
+			if env.GetEnvironment() == flags.Flags.Environment {
+				out = env
+				break
 			}
-			capSpec.Environments[env] = rev.GetSpec().GetSpec()
 		}
-		ot := flags.Flags.OutputType
-		if ot == common.OutputTypePretty {
-			ot = common.OutputTypeYAML
+	} else {
+		out = environments
+	}
+
+	if flags.Flags.OutputType != common.OutputTypePretty {
+		if out == nil {
+			fmt.Println("capsule not deployed in environment", flags.Flags.Environment)
+			return nil
 		}
-		return common.FormatPrint(capSpec, ot)
+		return common.FormatPrint(out, flags.Flags.OutputType)
 	}
 
 	cc := resp.Msg.GetCapsule()
@@ -60,10 +76,6 @@ func (c *Cmd) get(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	op = output{
 		Capsule: cc,
 		Rollout: r,
-	}
-
-	if flags.Flags.OutputType != common.OutputTypePretty {
-		return common.FormatPrint(op, flags.Flags.OutputType)
 	}
 
 	t := table.NewWriter()
