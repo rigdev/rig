@@ -90,19 +90,24 @@ type configSessionManager struct {
 
 func (s *configSessionManager) GetAccessToken() string {
 	accessToken := s.ctx.GetAuth().AccessToken
-	if accessToken == "" && s.ctx.GetAuth().RefreshToken != "" {
-		res, err := s.noAuthClient.Authentication().RefreshToken(
-			context.Background(),
-			&connect.Request[authentication.RefreshTokenRequest]{
-				Msg: &authentication.RefreshTokenRequest{
-					RefreshToken: s.ctx.GetAuth().RefreshToken,
-				},
-			})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error refreshing auth token: %v\n", err)
-			fmt.Fprintf(os.Stderr, "run `rig auth login` to reconnect\n")
+	if accessToken == "" {
+		if s.ctx.GetAuth().RefreshToken != "" {
+			res, err := s.noAuthClient.Authentication().RefreshToken(
+				context.Background(),
+				&connect.Request[authentication.RefreshTokenRequest]{
+					Msg: &authentication.RefreshTokenRequest{
+						RefreshToken: s.ctx.GetAuth().RefreshToken,
+					},
+				})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error refreshing auth token for context \"%s\": %v\n", s.ctx.Name, err)
+				fmt.Fprintf(os.Stderr, "run `rig auth login --context \"%s\"` to reconnect\n", s.ctx.Name)
+			} else {
+				s.SetAccessToken(res.Msg.GetToken().GetAccessToken(), res.Msg.GetToken().GetRefreshToken())
+			}
 		} else {
-			s.SetAccessToken(res.Msg.GetToken().GetAccessToken(), res.Msg.GetToken().GetRefreshToken())
+			fmt.Fprintf(os.Stderr, "credentials to context `%s` expired\n", s.ctx.Name)
+			fmt.Fprintf(os.Stderr, "run `rig auth login --context \"%s\"` to reconnect\n", s.ctx.Name)
 		}
 	}
 

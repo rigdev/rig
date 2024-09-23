@@ -36,7 +36,6 @@ var (
 	follow             bool
 	previousContainers bool
 	verbose            bool
-	spec               bool
 	force              bool
 	dryRun             bool
 	timeout            time.Duration
