@@ -74,8 +74,7 @@ func write(writer *writer, indent indentChoice, object any) error {
 
 func writeMap(writer *writer, indent indentChoice, object yaml.MapSlice) error {
 	if len(object) == 0 {
-		indent.primitive.write(writer)
-		writer.write(colorDefault, "{}")
+		writer.write(indent.primitive, colorDefault("{}"))
 		return nil
 	}
 
@@ -87,39 +86,33 @@ func writeMap(writer *writer, indent indentChoice, object yaml.MapSlice) error {
 			indent.complex.isList = false
 		}
 		if idx < len(object)-1 {
-			writer.write(0, "\n")
+			writer.write(colorNo("\n"))
 		}
 	}
 	return nil
 }
 
 func writeNumber(writer *writer, indent indent, object any) error {
-	indent.write(writer)
-	writer.write(colorNumeric, fmt.Sprintf("%v", object))
+	writer.write(indent, colorNumeric(fmt.Sprintf("%v", object)))
 	return nil
 }
 
 func writeBool(writer *writer, indent indent, object bool) error {
-	indent.write(writer)
-	writer.write(colorNumeric, fmt.Sprintf("%v", object))
+	writer.write(indent, colorNumeric(fmt.Sprintf("%v", object)))
 	return nil
 }
 
 func writeNull(writer *writer, indent indent) error {
-	indent.write(writer)
-	writer.write(colorDefault, "null")
+	writer.write(indent, colorDefault("null"))
 	return nil
 }
 
 func writeKeyValue(writer *writer, ind indent, key string, value any) error {
-	ind.write(writer)
-	writer.write(colorKey, key)
-	writer.write(colorDefault, ":")
-	if isPrimitive(value) {
-		writer.write(0, " ")
-	} else {
-		writer.write(0, "\n")
+	suffix := " "
+	if !isPrimitive(value) {
+		suffix = "\n"
 	}
+	writer.write(ind, colorKey(key), colorDefault(":"), colorNo(suffix))
 	ind.level++
 	return write(writer, indentChoice{
 		primitive: indent{},
@@ -142,26 +135,25 @@ func writeList(writer *writer, ind indent, object []any) error {
 	}
 
 	if primitive {
-		writer.write(colorDefault, "[")
+		writer.write(colorDefault("["))
 	}
 	for idx, v := range object {
 		if err := write(writer, indChoice, v); err != nil {
 			return err
 		}
 		if idx < len(object)-1 {
-			writer.write(colorDefault, elementSuffix)
+			writer.write(colorDefault(elementSuffix))
 		}
 	}
 	if primitive {
-		writer.write(colorDefault, "]")
+		writer.write(colorDefault("]"))
 	}
 
 	return nil
 }
 
 func writeString(writer *writer, indent indent, object string) error {
-	indent.write(writer)
-	writer.write(colorString, object)
+	writer.write(indent, colorString(object))
 	return nil
 }
 
@@ -177,11 +169,11 @@ type indent struct {
 	isList   bool
 }
 
-func (i indent) write(w *writer) {
+func (i indent) String() string {
 	if i.isList {
-		w.write(colorDefault, strings.Repeat(i.unit, i.level-1)+i.listUnit)
+		return colorDefault(strings.Repeat(i.unit, i.level-1) + i.listUnit).String()
 	} else {
-		w.write(0, strings.Repeat(i.unit, i.level))
+		return strings.Repeat(i.unit, i.level)
 	}
 }
 
@@ -204,35 +196,72 @@ func isPrimitive(object any) bool {
 type yamlColor int
 
 const (
-	colorNo = iota
-	colorDefault
-	colorString
-	colorNumeric
-	colorKey
+	_colorNo = iota
+	_colorDefault
+	_colorString
+	_colorNumeric
+	_colorKey
 )
 
 func (y yamlColor) String() string {
 	switch y {
-	case colorDefault:
+	case _colorDefault:
 		return "[white]"
-	case colorString:
+	case _colorString:
 		return "[lime]"
-	case colorNumeric:
+	case _colorNumeric:
 		return "[fuchsia]"
-	case colorKey:
+	case _colorKey:
 		return "[aqua]"
 	default:
 		return ""
 	}
 }
 
+func colorNo(s string) colored {
+	return newColored(_colorNo, s)
+}
+
+func colorDefault(s string) colored {
+	return newColored(_colorDefault, s)
+}
+
+func colorString(s string) colored {
+	return newColored(_colorString, s)
+}
+
+func colorNumeric(s string) colored {
+	return newColored(_colorNumeric, s)
+}
+
+func colorKey(s string) colored {
+	return newColored(_colorKey, s)
+}
+
+func newColored(c yamlColor, s string) colored {
+	return colored{
+		color:  c,
+		string: s,
+	}
+}
+
+type colored struct {
+	color  yamlColor
+	string string
+}
+
+func (c colored) String() string {
+	return c.color.String() + c.string
+}
+
 type writer struct {
 	buffer bytes.Buffer
 }
 
-func (w *writer) write(color yamlColor, s string) {
-	w.buffer.WriteString(color.String())
-	w.buffer.WriteString(s)
+func (w *writer) write(values ...fmt.Stringer) {
+	for _, v := range values {
+		w.buffer.WriteString(v.String())
+	}
 }
 
 func (w *writer) String() string {
