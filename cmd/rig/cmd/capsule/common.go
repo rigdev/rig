@@ -406,7 +406,7 @@ func ProcessDryRunOutput(
 		if err != nil {
 			return DryOutput{}, err
 		}
-		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
+		out.Kubernetes = append(out.Kubernetes, co)
 	}
 
 	return out, nil
@@ -427,12 +427,7 @@ func PromptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.Deploy
 		listView.AddItem("[::b]Platform Capsule", "", 0, nil)
 		content = append(content, capsuleYaml)
 	}
-	for i, o := range out.DirectKubernetes {
-		obj := o.(client.Object)
-		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
-		content = append(content, outcome.PlatformObjects[i].ContentYaml)
-	}
-	for i, o := range out.DerivedKubernetes {
+	for i, o := range out.Kubernetes {
 		obj := o.(client.Object)
 		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
 		content = append(content, outcome.KubernetesObjects[i].ContentYaml)
@@ -493,9 +488,8 @@ func PromptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.Deploy
 }
 
 type DryOutput struct {
-	PlatformCapsule   *platformv1.Capsule `json:"platformCapsule"`
-	DirectKubernetes  []any               `json:"directKubernetes"`
-	DerivedKubernetes []any               `json:"derivedKubernetes"`
+	PlatformCapsule *platformv1.Capsule `json:"platformCapsule"`
+	Kubernetes      []client.Object     `json:"kubernetes"`
 }
 
 func Rollback(input RollbackInput) (*capsule.Revision, error) {

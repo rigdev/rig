@@ -77,6 +77,9 @@ func Run(s *cli.SetupContext) error {
 	rootCmd.PersistentFlags().StringVarP(&flags.Flags.Context,
 		"context", "C", flags.Flags.Context,
 		"Select a context to use instead of the one currently set in the config.")
+	rootCmd.PersistentFlags().BoolVarP(&flags.Flags.NonInteractive,
+		"non-interactive", "I", flags.Flags.NonInteractive,
+		"Disables all interactivity in the CLI")
 
 	if err := rootCmd.RegisterFlagCompletionFunc("project",
 		cli.HackCtxWrapCompletion(cmd.completeProject, s)); err != nil {
