@@ -9,6 +9,10 @@ import (
 )
 
 func ToYAMLColored(yamlString string) (string, error) {
+	if yamlString == "" {
+		return "", nil
+	}
+
 	out := yaml.MapSlice{}
 	if err := yaml.Unmarshal([]byte(yamlString), &out); err != nil {
 		return "", err

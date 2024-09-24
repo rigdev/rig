@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/rigdev/rig/pkg/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -73,6 +74,22 @@ func DecodeAnyRuntime(bs []byte, scheme *runtime.Scheme) (runtime.Object, error)
 
 func DecodeAny(bs []byte, scheme *runtime.Scheme) (client.Object, error) {
 	ro, err := DecodeAnyRuntime(bs, scheme)
+	if err != nil {
+		return nil, err
+	}
+	return ro.(client.Object), nil
+}
+
+func DecodeUnstructuredRuntime(bs []byte) (runtime.Object, error) {
+	result := &unstructured.Unstructured{}
+	if err := Decode(bs, result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func DecodeUnstructured(bs []byte) (client.Object, error) {
+	ro, err := DecodeUnstructuredRuntime(bs)
 	if err != nil {
 		return nil, err
 	}

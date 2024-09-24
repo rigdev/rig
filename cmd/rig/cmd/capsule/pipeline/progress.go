@@ -56,14 +56,27 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 	var envLabels []string
 	var outs []*pipelineDryOutput
 	for _, out := range resp.Msg.GetDryRunOutcomes() {
-		envLabels = append(envLabels, out.GetEnvironmentId())
-		o, err := capsule_cmd.ProcessDryRunOutput(out.GetOutcome(), out.GetRevision().GetSpec(), c.Scheme)
+		capsule := out.GetRevision().GetSpec()
+		req := &capsule_api.DeployRequest{
+			CapsuleId:     capsule.GetName(),
+			ProjectId:     capsule.GetProject(),
+			EnvironmentId: capsule.GetEnvironment(),
+			DryRun:        true,
+		}
+		resp, err := c.Rig.Capsule().Deploy(ctx, connect.NewRequest(req))
 		if err != nil {
 			return err
 		}
+
+		out2, err := capsule_cmd.ProcessDryRunOutput(out.GetOutcome(), resp.Msg.GetOutcome())
+		if err != nil {
+			return err
+		}
+
+		envLabels = append(envLabels, out.GetEnvironmentId())
 		outs = append(outs, &pipelineDryOutput{
 			environment: out.GetEnvironmentId(),
-			out:         o,
+			out:         out2,
 		})
 	}
 
@@ -85,11 +98,9 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 			return err
 		}
 
-		err = capsule_cmd.PromptDryOutput(ctx, outs[i].out, resp.Msg.GetDryRunOutcomes()[i].GetOutcome())
-		if err != nil {
-			if common.ErrIsAborted(err) {
-				continue
-			}
+		if err := capsule_cmd.PromptDryOutput(ctx, outs[i].out, c.Scheme); common.ErrIsAborted(err) {
+			continue
+		} else if err != nil {
 			return err
 		}
 	}
