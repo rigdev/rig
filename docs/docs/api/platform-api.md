@@ -186,6 +186,21 @@
 
 
 
+### api.v1.metrics.Service
+<a name="api-v1-metrics-Service"></a>
+
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| /api.v1.metrics.Service/GetMetrics | [GetMetricsRequest](#api-v1-metrics-GetMetricsRequest) | [GetMetricsResponse](#api-v1-metrics-GetMetricsResponse) | Retrieve metrics. metric_type is mandatory, while the rest of the fields are optional. If project, env or capsule is not specified, they will be treated as wildcards. |
+
+
+
+
+
+
+
 
 
 
@@ -8026,6 +8041,133 @@ A docker image tag.
 
 
 
+
+
+
+
+
+
+
+
+<a name="api_v1_metrics_metrics-proto"></a>
+
+## api/v1/metrics/metrics.proto
+
+
+
+<a name="api-v1-metrics-Metadata"></a>
+
+### Metadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| capsule | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-Metric"></a>
+
+### Metric
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| value | [double](#double) |  |  |
+| metadata | [Metadata](#api-v1-metrics-Metadata) |  | Metadata is only populated when metrics are aggregated. |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_metrics_service-proto"></a>
+
+## api/v1/metrics/service.proto
+
+
+
+<a name="api-v1-metrics-Aggregation"></a>
+
+### Aggregation
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| aggregator | [Aggregator](#api-v1-metrics-Aggregator) |  |  |
+| bucket_size | [google.protobuf.Duration](#google-protobuf-Duration) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-GetMetricsRequest"></a>
+
+### GetMetricsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metric_type | [string](#string) |  |  |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| capsule | [string](#string) |  |  |
+| from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| aggregation | [Aggregation](#api-v1-metrics-Aggregation) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-GetMetricsResponse"></a>
+
+### GetMetricsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metrics | [Metric](#api-v1-metrics-Metric) | repeated |  |
+
+
+
+
+
+
+
+
+<a name="api-v1-metrics-Aggregator"></a>
+
+### Aggregator
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| AGGREGATOR_UNSPECIFIED | 0 |  |
+| AGGREGATOR_AVG | 1 |  |
+| AGGREGATOR_MIN | 2 |  |
+| AGGREGATOR_MAX | 3 |  |
+| AGGREGATOR_SUM | 4 |  |
 
 
 

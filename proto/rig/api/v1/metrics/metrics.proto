@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package api.v1.metrics;
+
+import "google/protobuf/timestamp.proto";
+
+message Metric {
+  google.protobuf.Timestamp timestamp = 1;
+  double value = 2;
+  // Metadata is only populated when metrics are aggregated.
+  Metadata metadata = 4;
+}
+
+message Metadata {
+  string project = 1;
+  string environment = 2;
+  string capsule = 3;
+}
