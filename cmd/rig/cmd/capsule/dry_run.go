@@ -218,7 +218,12 @@ func makeTViewContent(outcome DryOutput, scheme *runtime.Scheme) ([]content, err
 	}
 
 	for _, o := range outcome.KubernetesObjects {
-		name := fmt.Sprintf("%s/%s", o.New.Object.GetObjectKind().GroupVersionKind().Kind, o.New.Object.GetName())
+		obj := o.New.Object
+		if obj == nil {
+			obj = o.Old.Object
+		}
+
+		name := fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
 
 		diff, err := makeTViewDiff(o.Old.Object, o.New.Object, scheme)
 		if err != nil {
