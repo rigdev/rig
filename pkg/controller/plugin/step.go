@@ -12,7 +12,6 @@ import (
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/uuid"
-	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -43,16 +42,13 @@ func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest, opts pipe
 		return nil
 	}
 	for i, p := range s.plugins {
-		tag := s.step.Tag
-		if s.step.Plugins[i].Tag != "" {
-			tag = s.step.Plugins[i].Tag
-		}
-		s.logger.Info(
-			"running plugin",
-			"plugin", s.step.Plugins[i].GetPlugin(), "capsule_id", c.Name, "namespace", c.Namespace, "tag", tag,
+		logger := s.logger.WithValues(
+			"step", s.name, "plugin_idx", i+1, "plugin", s.step.Plugins[i].GetPlugin(),
+			"capsule_id", c.Name, "namespace", c.Namespace,
 		)
+		logger.Info("running plugin")
 		if err := p.Run(ctx, req, opts); err != nil {
-			s.logger.Info("plugin failed", zap.Error(err))
+			logger.Error(err, "plugin failed")
 			return fmt.Errorf("plugin #%v (%s) failed: %w", i+1, p.name, err)
 		}
 	}
