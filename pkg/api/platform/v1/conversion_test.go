@@ -150,11 +150,9 @@ var (
 		Annotations: map[string]string{"annotation": "value"},
 	}
 	spec = &platformv1.CapsuleSpec{
-		Kind:       "CapsuleSpec",
-		ApiVersion: "v1",
-		Image:      "image",
-		Command:    "cmd",
-		Args:       []string{"arg1", "arg2"},
+		Image:   "image",
+		Command: "cmd",
+		Args:    []string{"arg1", "arg2"},
 		Interfaces: []*platformv1.CapsuleInterface{
 			{
 				Name: "port1",
@@ -305,16 +303,10 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 		expected *platformv1.CapsuleSpec
 	}{
 		{
-			name:  "empty projEnv base",
-			patch: &platformv1.ProjEnvCapsuleBase{},
-			into: &platformv1.CapsuleSpec{
-				Kind:       "CapsuleSpec",
-				ApiVersion: "v1",
-			},
-			expected: &platformv1.CapsuleSpec{
-				Kind:       "CapsuleSpec",
-				ApiVersion: "v1",
-			},
+			name:     "empty projEnv base",
+			patch:    &platformv1.ProjEnvCapsuleBase{},
+			into:     &platformv1.CapsuleSpec{},
+			expected: &platformv1.CapsuleSpec{},
 		},
 		{
 			name: "projEnv config files",
@@ -325,8 +317,6 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				}},
 			},
 			into: &platformv1.CapsuleSpec{
-				Kind:       "CapsuleSpec",
-				ApiVersion: "v1",
 				Files: []*platformv1.File{
 					{
 						Path:  "some-path",
@@ -339,8 +329,6 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				},
 			},
 			expected: &platformv1.CapsuleSpec{
-				Kind:       "CapsuleSpec",
-				ApiVersion: "v1",
 				Files: []*platformv1.File{
 					{
 						Path:  "some-path",
@@ -365,8 +353,6 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				},
 			},
 			into: &platformv1.CapsuleSpec{
-				Kind:       "CapsuleSpec",
-				ApiVersion: "v1",
 				Env: &platformv1.EnvironmentVariables{
 					Raw: map[string]string{
 						"key1": "other-value",
@@ -375,8 +361,6 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				},
 			},
 			expected: &platformv1.CapsuleSpec{
-				Kind:       "CapsuleSpec",
-				ApiVersion: "v1",
 				Env: &platformv1.EnvironmentVariables{
 					Raw: map[string]string{
 						"key1": "value1",
@@ -390,16 +374,12 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 			name:  "empty capsule patch",
 			patch: &platformv1.CapsuleSpec{},
 			into: &platformv1.CapsuleSpec{
-				Kind:       "CapsuleSpec",
-				ApiVersion: "v1",
-				Image:      "image",
-				Args:       []string{"arg"},
+				Image: "image",
+				Args:  []string{"arg"},
 			},
 			expected: &platformv1.CapsuleSpec{
-				Kind:       "CapsuleSpec",
-				ApiVersion: "v1",
-				Image:      "image",
-				Args:       []string{"arg"},
+				Image: "image",
+				Args:  []string{"arg"},
 			},
 		},
 		{
@@ -411,16 +391,12 @@ func Test_mergeCapsuleSpec(t *testing.T) {
 				Annotations: map[string]string{"key2": "value2"},
 			},
 			into: &platformv1.CapsuleSpec{
-				Kind:        "CapsuleSpec",
-				ApiVersion:  "v1",
 				Image:       "otherimage",
 				Command:     "othercommand",
 				Args:        []string{"otherarg"},
 				Annotations: map[string]string{"key3": "value3"},
 			},
 			expected: &platformv1.CapsuleSpec{
-				Kind:        "CapsuleSpec",
-				ApiVersion:  "v1",
 				Image:       "image",
 				Command:     "command",
 				Args:        []string{"arg1", "arg2"},

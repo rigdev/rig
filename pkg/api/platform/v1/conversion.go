@@ -26,9 +26,7 @@ import (
 
 func RolloutConfigToCapsuleSpec(rc *capsule.RolloutConfig) (*platformv1.CapsuleSpec, error) {
 	spec := &platformv1.CapsuleSpec{
-		Kind:       "CapsuleSpec",
-		ApiVersion: "v1", // TODO
-		Image:      rc.GetImageId(),
+		Image: rc.GetImageId(),
 		Scale: &platformv1.Scale{
 			Horizontal: HorizontalScaleConversion(rc.GetHorizontalScale(), rc.GetReplicas()),
 		},
@@ -963,8 +961,6 @@ func mergeCapsuleSpec(patch any, into *platformv1.CapsuleSpec) (*platformv1.Caps
 	if err := json.Unmarshal(outBytes, out); err != nil {
 		return nil, err
 	}
-	out.Kind = into.GetKind()
-	out.ApiVersion = into.GetApiVersion()
 
 	return out, nil
 }

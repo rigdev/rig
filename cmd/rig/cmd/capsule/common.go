@@ -379,7 +379,10 @@ func DeployDry(input DeployDryInput) error {
 	}
 	outcome := resp.Msg.GetOutcome()
 
-	out := ProcessDryRunOutput(outcome, resp.Msg.GetRevision().GetSpec(), input.Scheme)
+	out, err := ProcessDryRunOutput(outcome, resp.Msg.GetRevision().GetSpec(), input.Scheme)
+	if err != nil {
+		return err
+	}
 
 	if !input.IsInteractive {
 		outputType := flags.Flags.OutputType
@@ -392,26 +395,21 @@ func DeployDry(input DeployDryInput) error {
 	return PromptDryOutput(input.Ctx, out, outcome)
 }
 
-func ProcessDryRunOutput(outcome *capsule.DeployOutcome, spec *platformv1.Capsule, scheme *runtime.Scheme) DryOutput {
+func ProcessDryRunOutput(
+	outcome *capsule.DeployOutcome, spec *platformv1.Capsule, scheme *runtime.Scheme,
+) (DryOutput, error) {
 	out := DryOutput{
 		PlatformCapsule: spec,
-	}
-	for _, o := range outcome.GetPlatformObjects() {
-		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
-		if err != nil {
-			return DryOutput{}
-		}
-		out.DirectKubernetes = append(out.DirectKubernetes, co)
 	}
 	for _, o := range outcome.GetKubernetesObjects() {
 		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
 		if err != nil {
-			return DryOutput{}
+			return DryOutput{}, err
 		}
-		out.DerivedKubernetes = append(out.DerivedKubernetes, co)
+		out.Kubernetes = append(out.Kubernetes, co)
 	}
 
-	return out
+	return out, nil
 }
 
 func PromptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.DeployOutcome) error {
@@ -429,15 +427,17 @@ func PromptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.Deploy
 		listView.AddItem("[::b]Platform Capsule", "", 0, nil)
 		content = append(content, capsuleYaml)
 	}
-	for i, o := range out.DirectKubernetes {
-		obj := o.(client.Object)
-		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
-		content = append(content, outcome.PlatformObjects[i].ContentYaml)
-	}
-	for i, o := range out.DerivedKubernetes {
-		obj := o.(client.Object)
-		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
+	for i, o := range out.Kubernetes {
+		listView.AddItem(fmt.Sprintf("%s/%s", o.GetObjectKind().GroupVersionKind().Kind, o.GetName()), "", 0, nil)
 		content = append(content, outcome.KubernetesObjects[i].ContentYaml)
+	}
+
+	for idx, s := range content {
+		s, err := common.ToYAMLColored(s)
+		if err != nil {
+			return err
+		}
+		content[idx] = s
 	}
 
 	textView := tview.NewTextView()
@@ -487,9 +487,8 @@ func PromptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.Deploy
 }
 
 type DryOutput struct {
-	PlatformCapsule   *platformv1.Capsule `json:"platformCapsule"`
-	DirectKubernetes  []any               `json:"directKubernetes"`
-	DerivedKubernetes []any               `json:"derivedKubernetes"`
+	PlatformCapsule *platformv1.Capsule `json:"platformCapsule"`
+	Kubernetes      []client.Object     `json:"kubernetes"`
 }
 
 func Rollback(input RollbackInput) (*capsule.Revision, error) {

@@ -80,7 +80,10 @@ var Module = fx.Module(
 	}),
 	fx.Provide(func() *PromptInformation { return &PromptInformation{} }),
 	// provide a flag to indicate that we cannot prompt for resource creation
-	fx.Provide(func() scope.Interactive { return scope.Interactive(term.IsTerminal(int(os.Stdin.Fd()))) }),
+	fx.Provide(func() scope.Interactive {
+		isTerminal := term.IsTerminal(int(os.Stdin.Fd()))
+		return scope.Interactive(isTerminal && !flags.Flags.NonInteractive)
+	}),
 	fx.Provide(func() common.Prompter { return common.StandardPrompter{} }),
 )
 

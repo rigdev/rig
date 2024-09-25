@@ -9,8 +9,8 @@ import (
 
 func YAMLToCapsuleSpecProto(bytes []byte) (*platformv1.CapsuleSpec, error) {
 	spec := &platformv1.CapsuleSpec{}
-	if err := YAMLToSpecProto(bytes, spec, "CapsuleSpec"); err != nil {
-		return nil, err
+	if err := yaml.Unmarshal(bytes, spec, yaml.DisallowUnknownFields); err != nil {
+		return nil, fmt.Errorf("unmarshal: %s", err)
 	}
 	return spec, nil
 }
