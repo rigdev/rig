@@ -93,19 +93,6 @@ func (c *Cmd) processPlatformOutput(
 	migratedResources *Resources,
 	outcome *capsule.DeployOutcome,
 ) error {
-	for _, resource := range outcome.GetPlatformObjects() {
-		proposal, err := obj.DecodeAny([]byte(resource.GetContentYaml()), c.Scheme)
-		if err != nil {
-			return err
-		}
-
-		if err := migratedResources.AddObject(proposal.GetObjectKind().GroupVersionKind().Kind,
-			resource.GetName(),
-			proposal); err != nil {
-			return err
-		}
-	}
-
 	for _, out := range outcome.GetKubernetesObjects() {
 		proposal, err := obj.DecodeAny([]byte(out.GetContentYaml()), c.Scheme)
 		if err != nil {
@@ -225,6 +212,11 @@ func showOverview(
 
 func showCapsule(capsule *platformv1.Capsule) error {
 	capsuleYaml, err := common.Format(capsule, common.OutputTypeYAML)
+	if err != nil {
+		return err
+	}
+
+	capsuleYaml, err = common.ToYAMLColored(capsuleYaml)
 	if err != nil {
 		return err
 	}

@@ -15,27 +15,20 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/fatih/color"
-	"github.com/gdamore/tcell/v2"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/capsule/capsuleconnect"
 	api_rollout "github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/model"
-	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/cmdconfig"
-	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/pkg/cli"
 	"github.com/rigdev/rig/pkg/cli/scope"
 	"github.com/rigdev/rig/pkg/errors"
-	"github.com/rigdev/rig/pkg/obj"
 	"github.com/rigdev/rig/pkg/utils"
-	"github.com/rivo/tview"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/runtime"
 	"nhooyr.io/websocket"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var CapsuleID string
@@ -360,135 +353,6 @@ func DeployAndWait(input DeployAndWaitInput) error {
 		Timeout: input.Timeout,
 	}
 	return WaitForRollout(waitForRolloutInput)
-}
-
-func DeployDry(input DeployDryInput) error {
-	req := &capsule.DeployRequest{
-		CapsuleId:          input.CapsuleID,
-		Changes:            input.Changes,
-		ProjectId:          input.ProjectID,
-		EnvironmentId:      input.EnvironmentID,
-		DryRun:             true,
-		CurrentRolloutId:   input.CurrentRolloutID,
-		CurrentFingerprint: input.CurrentFingerprint,
-	}
-
-	resp, err := input.Rig.Capsule().Deploy(input.Ctx, connect.NewRequest(req))
-	if err != nil {
-		return err
-	}
-	outcome := resp.Msg.GetOutcome()
-
-	out, err := ProcessDryRunOutput(outcome, resp.Msg.GetRevision().GetSpec(), input.Scheme)
-	if err != nil {
-		return err
-	}
-
-	if !input.IsInteractive {
-		outputType := flags.Flags.OutputType
-		if outputType == common.OutputTypePretty {
-			outputType = common.OutputTypeYAML
-		}
-		return common.FormatPrint(out, outputType)
-	}
-
-	return PromptDryOutput(input.Ctx, out, outcome)
-}
-
-func ProcessDryRunOutput(
-	outcome *capsule.DeployOutcome, spec *platformv1.Capsule, scheme *runtime.Scheme,
-) (DryOutput, error) {
-	out := DryOutput{
-		PlatformCapsule: spec,
-	}
-	for _, o := range outcome.GetKubernetesObjects() {
-		co, err := obj.DecodeAny([]byte(o.GetContentYaml()), scheme)
-		if err != nil {
-			return DryOutput{}, err
-		}
-		out.Kubernetes = append(out.Kubernetes, co)
-	}
-
-	return out, nil
-}
-
-func PromptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.DeployOutcome) error {
-	listView := tview.NewList().ShowSecondaryText(false)
-	listView.SetBorder(true).
-		SetTitle("Resources (Return to view)")
-
-	var content []string
-	if out.PlatformCapsule != nil {
-		capsuleYamlBytes, err := yaml.Marshal(out.PlatformCapsule)
-		if err != nil {
-			return err
-		}
-		capsuleYaml := string(capsuleYamlBytes)
-		listView.AddItem("[::b]Platform Capsule", "", 0, nil)
-		content = append(content, capsuleYaml)
-	}
-	for i, o := range out.Kubernetes {
-		listView.AddItem(fmt.Sprintf("%s/%s", o.GetObjectKind().GroupVersionKind().Kind, o.GetName()), "", 0, nil)
-		content = append(content, outcome.KubernetesObjects[i].ContentYaml)
-	}
-
-	for idx, s := range content {
-		s, err := common.ToYAMLColored(s)
-		if err != nil {
-			return err
-		}
-		content[idx] = s
-	}
-
-	textView := tview.NewTextView()
-	textView.SetTitle(fmt.Sprintf("%s (ESC or CTRL+C to cancel)", "Capsule Diff"))
-	textView.SetBorder(true)
-	textView.SetDynamicColors(true)
-	textView.SetWrap(true)
-	textView.SetText(content[0])
-	textView.SetBackgroundColor(tcell.ColorNone)
-
-	errChan := make(chan error)
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	grid := tview.NewGrid().SetRows(-1).SetColumns(-1, -2)
-	grid.AddItem(textView, 0, 1, 1, 1, 0, 0, false)
-	grid.AddItem(listView, 0, 0, 1, 1, 0, 0, true)
-
-	app := tview.NewApplication().SetRoot(grid, true).EnableMouse(true)
-	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyEnter:
-			textView.SetText(content[listView.GetCurrentItem()])
-		case tcell.KeyEsc, tcell.KeyCtrlC:
-			cancel()
-		}
-		return event
-	})
-
-	go func() {
-		err := app.Run()
-		if err != nil {
-			errChan <- err
-		}
-	}()
-
-	defer app.Stop()
-
-	for {
-		select {
-		case err := <-errChan:
-			return err
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
-type DryOutput struct {
-	PlatformCapsule *platformv1.Capsule `json:"platformCapsule"`
-	Kubernetes      []client.Object     `json:"kubernetes"`
 }
 
 func Rollback(input RollbackInput) (*capsule.Revision, error) {

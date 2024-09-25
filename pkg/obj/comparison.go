@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewComparison(from, to client.Object, scheme *runtime.Scheme) *Comparison {
+func NewComparison(from, to runtime.Object, scheme *runtime.Scheme) *Comparison {
 	return &Comparison{
 		From:   from,
 		To:     to,
@@ -21,8 +21,8 @@ func NewComparison(from, to client.Object, scheme *runtime.Scheme) *Comparison {
 }
 
 type Comparison struct {
-	From client.Object
-	To   client.Object
+	From runtime.Object
+	To   runtime.Object
 
 	scheme *runtime.Scheme
 
@@ -56,22 +56,29 @@ func RemoveAnnotationsFilter(names ...string) FilterFunc {
 }
 
 type Diff struct {
-	From      client.Object
-	To        client.Object
+	From      runtime.Object
+	To        runtime.Object
 	FromBytes []byte
 	ToBytes   []byte
 	Report    *dyff.Report
 }
 
 func (c *Comparison) ComputeDiff() (*Diff, error) {
-	from, err := c.normalize(c.From)
-	if err != nil {
-		return nil, err
+	var err error
+	from := c.From
+	if f, ok := from.(client.Object); ok {
+		from, err = c.normalize(f)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	to, err := c.normalize(c.To)
-	if err != nil {
-		return nil, err
+	to := c.To
+	if f, ok := to.(client.Object); ok {
+		to, err = c.normalize(f)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if from != nil && to != nil {
