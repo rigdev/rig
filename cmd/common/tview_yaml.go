@@ -172,9 +172,8 @@ type indent struct {
 func (i indent) String() string {
 	if i.isList {
 		return colorDefault(strings.Repeat(i.unit, i.level-1) + i.listUnit).String()
-	} else {
-		return strings.Repeat(i.unit, i.level)
 	}
+	return strings.Repeat(i.unit, i.level)
 }
 
 func isPrimitive(object any) bool {

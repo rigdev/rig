@@ -428,8 +428,7 @@ func PromptDryOutput(ctx context.Context, out DryOutput, outcome *capsule.Deploy
 		content = append(content, capsuleYaml)
 	}
 	for i, o := range out.Kubernetes {
-		obj := o.(client.Object)
-		listView.AddItem(fmt.Sprintf("%s/%s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName()), "", 0, nil)
+		listView.AddItem(fmt.Sprintf("%s/%s", o.GetObjectKind().GroupVersionKind().Kind, o.GetName()), "", 0, nil)
 		content = append(content, outcome.KubernetesObjects[i].ContentYaml)
 	}
 
