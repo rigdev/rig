@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package api.v1.metrics;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "api/v1/metrics/metrics.proto";
+
+service Service {
+  // Retrieve metrics. metric_type is mandatory, while the rest of the fields
+  // are optional. If project, env or capsule is not
+  // specified, they will be treated as wildcards.
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {}
+}
+
+message GetMetricsRequest {
+  string metric_type = 1;
+  string project = 2;
+  string environment = 3;
+  string capsule = 4;
+  google.protobuf.Timestamp from = 5;
+  google.protobuf.Timestamp to = 6;
+  Aggregation aggregation = 7;
+}
+
+message GetMetricsResponse {
+  repeated Metric metrics = 1;
+}
+
+message Aggregation {
+  Aggregator aggregator = 1;
+  google.protobuf.Duration bucket_size = 2;
+}
+
+enum Aggregator {
+  AGGREGATOR_UNSPECIFIED = 0;
+  AGGREGATOR_AVG = 1;
+  AGGREGATOR_MIN = 2;
+  AGGREGATOR_MAX = 3;
+  AGGREGATOR_SUM = 4;
+}
