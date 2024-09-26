@@ -193,7 +193,8 @@
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| /api.v1.metrics.Service/GetMetrics | [GetMetricsRequest](#api-v1-metrics-GetMetricsRequest) | [GetMetricsResponse](#api-v1-metrics-GetMetricsResponse) | Retrieve metrics. metric_type is mandatory, while the rest of the fields are optional. If project, env or capsule is not specified, they will be treated as wildcards. |
+| /api.v1.metrics.Service/GetMetrics | [GetMetricsRequest](#api-v1-metrics-GetMetricsRequest) | [GetMetricsResponse](#api-v1-metrics-GetMetricsResponse) | Retrieve metrics. metric_type is mandatory, while the rest of the fields in the tags are optional. If project, env or capsule is not specified, they will be treated as wildcards. |
+| /api.v1.metrics.Service/GetMetricsMany | [GetMetricsManyRequest](#api-v1-metrics-GetMetricsManyRequest) | [GetMetricsManyResponse](#api-v1-metrics-GetMetricsManyResponse) | Retrive metrics for multiple sets of tags at a time. Metrics within the same set of tags will be in ascending order of timestamp. |
 
 
 
@@ -8055,23 +8056,6 @@ A docker image tag.
 
 
 
-<a name="api-v1-metrics-Metadata"></a>
-
-### Metadata
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project | [string](#string) |  |  |
-| environment | [string](#string) |  |  |
-| capsule | [string](#string) |  |  |
-
-
-
-
-
-
 <a name="api-v1-metrics-Metric"></a>
 
 ### Metric
@@ -8082,7 +8066,40 @@ A docker image tag.
 | ----- | ---- | ----- | ----------- |
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | value | [double](#double) |  |  |
-| metadata | [Metadata](#api-v1-metrics-Metadata) |  | Metadata is only populated when metrics are aggregated. |
+
+
+
+
+
+
+<a name="api-v1-metrics-MetricFull"></a>
+
+### MetricFull
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metric | [Metric](#api-v1-metrics-Metric) |  |  |
+| tags | [Tags](#api-v1-metrics-Tags) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-Tags"></a>
+
+### Tags
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| capsule | [string](#string) |  |  |
+| metric_type | [string](#string) |  |  |
 
 
 
@@ -8118,6 +8135,39 @@ A docker image tag.
 
 
 
+<a name="api-v1-metrics-GetMetricsManyRequest"></a>
+
+### GetMetricsManyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tags | [Tags](#api-v1-metrics-Tags) | repeated |  |
+| from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| aggregation | [Aggregation](#api-v1-metrics-Aggregation) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-GetMetricsManyResponse"></a>
+
+### GetMetricsManyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metrics | [MetricFull](#api-v1-metrics-MetricFull) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-metrics-GetMetricsRequest"></a>
 
 ### GetMetricsRequest
@@ -8126,10 +8176,7 @@ A docker image tag.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| metric_type | [string](#string) |  |  |
-| project | [string](#string) |  |  |
-| environment | [string](#string) |  |  |
-| capsule | [string](#string) |  |  |
+| tags | [Tags](#api-v1-metrics-Tags) |  |  |
 | from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | aggregation | [Aggregation](#api-v1-metrics-Aggregation) |  |  |

@@ -7,12 +7,16 @@ import "google/protobuf/timestamp.proto";
 message Metric {
   google.protobuf.Timestamp timestamp = 1;
   double value = 2;
-  // Metadata is only populated when metrics are aggregated.
-  Metadata metadata = 4;
 }
 
-message Metadata {
+message MetricFull {
+  Metric metric = 1;
+  Tags tags = 2;
+}
+
+message Tags {
   string project = 1;
   string environment = 2;
   string capsule = 3;
+  string metric_type = 4;
 }
