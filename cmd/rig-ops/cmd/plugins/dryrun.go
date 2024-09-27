@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"slices"
 	"strconv"
@@ -13,13 +14,12 @@ import (
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-ops/cmd/base"
-	"github.com/rigdev/rig/cmd/rig-ops/cmd/migrate"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/obj"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -74,12 +74,12 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 	}
 
 	var spec string
-	var capsule v1alpha2.Capsule
+	var capsuleSpec v1alpha2.Capsule
 	if len(args) > 0 {
 		if err := c.K8s.Get(ctx, client.ObjectKey{
 			Namespace: args[0],
 			Name:      args[1],
-		}, &capsule); err != nil {
+		}, &capsuleSpec); err != nil {
 			return err
 		}
 	} else if specPath != "" {
@@ -88,7 +88,7 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 			return err
 		}
 		spec = string(bytes)
-		if err := obj.Decode([]byte(spec), &capsule); err != nil {
+		if err := obj.Decode([]byte(spec), &capsuleSpec); err != nil {
 			return err
 		}
 	} else {
@@ -110,7 +110,7 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 		if err := c.K8s.Get(ctx, client.ObjectKey{
 			Namespace: choice[0],
 			Name:      choice[1],
-		}, &capsule); err != nil {
+		}, &capsuleSpec); err != nil {
 			return err
 		}
 	}
@@ -121,8 +121,8 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 	}
 
 	dryRun, err := c.OperatorClient.Pipeline.DryRun(ctx, connect.NewRequest(&pipeline.DryRunRequest{
-		Namespace:      capsule.Namespace,
-		Capsule:        capsule.Name,
+		Namespace:      capsuleSpec.Namespace,
+		Capsule:        capsuleSpec.Name,
 		OperatorConfig: string(cfgBytes),
 		CapsuleSpec:    spec,
 	}))
@@ -130,17 +130,20 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 		return err
 	}
 
-	var objects []any
-	for _, o := range dryRun.Msg.GetOutputObjects() {
-		object := &unstructured.Unstructured{}
-		if err := obj.DecodeInto([]byte(o.GetObject().GetContent()), object, c.Scheme); err != nil {
-			return err
-		}
-		objects = append(objects, object)
+	dryOutput, err := c.processDryRunOutput(dryRun.Msg)
+	if err != nil {
+		return err
 	}
 
 	if interactive {
-		return c.interactiveDiff(dryRun.Msg)
+		return capsule.PromptDryOutput(ctx, dryOutput, c.Scheme)
+	}
+
+	var objects []any
+	for _, o := range dryOutput.KubernetesObjects {
+		if o.New.Object != nil {
+			objects = append(objects, o.New.Object)
+		}
 	}
 
 	out, err := common.Format(objects, common.OutputTypeYAML)
@@ -156,37 +159,51 @@ func (c *Cmd) dryRun(ctx context.Context, _ *cobra.Command, args []string) error
 	return os.WriteFile(output, []byte(out), 0o666)
 }
 
-func (c *Cmd) interactiveDiff(dryRun *pipeline.DryRunResponse) error {
-	current := migrate.NewResources()
-	for _, o := range dryRun.InputObjects {
-		object, err := obj.DecodeAny([]byte(o.GetContent()), c.Scheme)
-		if err != nil {
-			return err
+func (c *Cmd) processDryRunOutput(resp *pipeline.DryRunResponse) (capsule.DryOutput, error) {
+	var res capsule.DryOutput
+
+	objects := map[string]capsule.KubernetesDryObject{}
+	var err error
+	for _, o := range resp.GetInputObjects() {
+		name := fmt.Sprintf("%s %s", o.GetGvk(), o.GetName())
+		var co client.Object
+		if content := o.GetContent(); content != "" {
+			co, err = obj.DecodeUnstructured([]byte(content))
+			if err != nil {
+				return capsule.DryOutput{}, err
+			}
 		}
-		if err := current.AddObject(o.GetGvk().Kind, o.GetName(), object); err != nil {
-			return err
+		k8s := objects[name]
+		k8s.Old = capsule.KubernetesObject{
+			Object: co,
+			YAML:   o.GetContent(),
 		}
-	}
-	overview := current.CreateOverview("Current Resources")
-
-	migrated := migrate.NewResources()
-	if err := migrate.ProcessOperatorOutput(migrated, dryRun.GetOutputObjects(), c.Scheme); err != nil {
-		return err
+		objects[name] = k8s
 	}
 
-	migratedOverview := migrated.CreateOverview("New Resources")
-
-	reports, err := migrated.Compare(current, c.Scheme)
-	if err != nil {
-		return err
+	for _, oo := range resp.GetOutputObjects() {
+		o := oo.GetObject()
+		name := fmt.Sprintf("%s %s", o.GetGvk(), o.GetName())
+		var co client.Object
+		if content := o.GetContent(); content != "" {
+			co, err = obj.DecodeUnstructured([]byte(content))
+			if err != nil {
+				return capsule.DryOutput{}, err
+			}
+		}
+		k8s := objects[name]
+		k8s.New = capsule.KubernetesObject{
+			Object: co,
+			YAML:   o.GetContent(),
+		}
+		objects[name] = k8s
 	}
 
-	warnings := map[string][]*migrate.Warning{}
-	for _, k := range reports.GetKinds() {
-		warnings[k] = nil
+	for _, key := range slices.Sorted(maps.Keys(objects)) {
+		res.KubernetesObjects = append(res.KubernetesObjects, objects[key])
 	}
 
-	return migrate.PromptDiffingChanges(reports, warnings, overview, migratedOverview, nil, c.Prompter)
+	return res, nil
 }
 
 func readPlugin(path string) (v1alpha1.Step, error) {
