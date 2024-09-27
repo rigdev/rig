@@ -91,9 +91,10 @@ Use '--no-wait' to skip this.
 
 If --image is given, rig creates a new reference to the docker image if it doesn't already exist
 
-If the capsule is configured to require a pull request, the deploy will be executed as a proposal,not a direct rollout.
-In that case you must supply branch name in --pr-branch.`,
+If the capsule is configured to require a pull request, the deploy will be executed as a proposal,
+not a direct rollout. In that case you must supply branch name in --pr-branch.`,
 	}
+
 	baseDeploy.Flags().BoolVar(&noWait, "no-wait", false, "skip waiting for the changes to be applied.")
 	setupConfigurationFlags(&baseDeploy)
 
@@ -180,62 +181,63 @@ In that case you must supply branch name in --pr-branch.`,
 }
 
 func setupConfigurationFlags(c *cobra.Command) {
-	c.Flags().StringToStringVarP(
+	flags := common.NewGroupedFlagSet("Configuration", 1)
+	flags.StringToStringVarP(
 		&environmentVariables,
 		"set-env-var", "e", nil,
 		"environment variables to add to the Capsule of the format `key=value`",
 	)
-	c.Flags().StringSliceVar(
+	flags.StringSliceVar(
 		&removeEnvironmentVariables,
 		"rm-env-var", nil,
 		"environment variables to remove from the Capsule",
 	)
 
-	c.Flags().IntVarP(
+	flags.IntVarP(
 		&replicas,
 		"replicas", "r", 0,
 		"replicas of the Capsule to run. If Autoscaler is enabled, this will change the minimum number of replicas "+
 			"for the Capsule",
 	)
-	c.Flags().StringToStringVarP(
+	flags.StringToStringVarP(
 		&annotations,
 		"set-annotation", "A", nil,
 		"annotations to add to the Capsule of the format `key=value`",
 	)
-	c.Flags().StringSliceVar(
+	flags.StringSliceVar(
 		&removeAnnotations,
 		"rm-annotation", nil,
 		"annotation to remove from the Capsule",
 	)
 
-	c.Flags().StringSliceVar(
+	flags.StringSliceVar(
 		&environmentSources,
 		"set-env-source", nil,
 		"environment source references to set on the Capsule. Must be of the format `[ConfigMap|Secret]/name`, "+
 			"e.g. `Secret/my-secret`",
 	)
-	c.Flags().StringSliceVar(
+	flags.StringSliceVar(
 		&removeEnvironmentSources,
 		"rm-env-source", nil,
 		"environment source references to remove from the Capsule. Must be of the format `[ConfigMap|Secret]/name`, "+
 			"e.g. `Secret/my-secret`",
 	)
-	c.Flags().StringVarP(
+	flags.StringVarP(
 		&imageID,
 		"image", "i", "", "container image to deploy. Will register the image in rig if it doesn't exist",
 	)
-	c.Flags().BoolVar(
+	flags.BoolVar(
 		&remote, "remote", false, "if --image is also given, Rig will assume the image is from a remote "+
 			"registry. If not set, Rig will search locally and then remotely",
 	)
-	c.Flags().StringArrayVar(
+	flags.StringArrayVar(
 		&configFiles, "set-config-file", nil,
 		"config files to set in the capsule, adding if not already exists. Must be a mapping from "+
 			"`path=<container-path>,src=<file-path>,[options]`, where `file-path` must be a local file and `container-path` "+
 			"is an absolute path within the container. Options can be `secret`, which "+
 			"would create the resource as a Kubernetes Secret.",
 	)
-	c.Flags().StringArrayVar(
+	flags.StringArrayVar(
 		&configFileRefs, "set-config-file-ref", nil,
 		"config files referencing a kubernetes object to set in the capsule, adding if not already exists. "+
 			"Must be a mapping from `path=<container-path>,obj=<kind>/<name>/<key>`, "+
@@ -243,20 +245,22 @@ func setupConfigurationFlags(c *cobra.Command) {
 			"`name` name of the kubernetes object and `key` the key of the object containing the data, "+
 			"`container-path` is an absolute path within the container.",
 	)
-	c.Flags().StringSliceVar(
+	flags.StringSliceVar(
 		&removeConfigFiles, "rm-config-file", nil, "config files to remove from the capsule. Must be an absolute path "+
 			"of the config-file within the container",
 	)
-	c.Flags().StringSliceVar(&networkInterfaces, "set-network-interface", nil,
+	flags.StringSliceVar(&networkInterfaces, "set-network-interface", nil,
 		"create or update the network interface. The argument is a file from where the network interface "+
 			"can be read. The Network Interface must have both a name and a port.")
-	c.Flags().StringSliceVar(&removeNetworkInterfaces, "rm-network-interface", nil,
+	flags.StringSliceVar(&removeNetworkInterfaces, "rm-network-interface", nil,
 		"remove a network interface by name.")
-	c.Flags().StringVarP(
+	flags.StringVarP(
 		&file, "file", "f", "",
 		`will deploy the capsule spec at the given path. Cannot be used together with any of the other configuration flags.
 The spec is the Platform Capsule spec defined at https://docs.rig.dev/api/platformv1#capsule`,
 	)
+	flags.Finalize()
+	c.Flags().AddFlagSet(flags.FlagSet)
 }
 
 func (c *Cmd) capsuleCompletions(
