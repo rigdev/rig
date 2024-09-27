@@ -81,6 +81,8 @@ func Run(s *cli.SetupContext) error {
 		"non-interactive", "I", flags.Flags.NonInteractive,
 		"Disables all interactivity in the CLI")
 
+	common.SetupRoot(rootCmd)
+
 	if err := rootCmd.RegisterFlagCompletionFunc("project",
 		cli.HackCtxWrapCompletion(cmd.completeProject, s)); err != nil {
 		fmt.Println(err)
