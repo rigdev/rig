@@ -210,7 +210,7 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 		}
 		spec, err := v1.YAMLToCapsuleProto(bytes)
 		if err != nil {
-			return nil, "", "", "", fmt.Errorf("oof: %s", err)
+			return nil, "", "", "", err
 		}
 		return []*capsule.Change{{
 			Field: &capsule.Change_Spec{
