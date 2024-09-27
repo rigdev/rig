@@ -18,6 +18,9 @@ jobs:
           fetch-depth: 0
           path: main
 
+      - name: Sleep
+        run: sleep 1000
+
       - name: Checkout charts repo
         uses: actions/checkout@v3
         with:

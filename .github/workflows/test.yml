@@ -23,6 +23,9 @@ jobs:
           go-version-file: go.mod
           save-cache: false
 
+      - name: Sleep
+        run: sleep 1000
+
       - name: Install Task
         uses: arduino/setup-task@v1
         with:
