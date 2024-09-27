@@ -23,10 +23,10 @@ func (c *Cmd) vertical(ctx context.Context, _ *cobra.Command, _ []string) error 
 		return nil
 	}
 
-	if allFlagsEmpty() {
+	if vflags.Empty() {
 		err = c.setResourcesInteractive(container.Resources)
 	} else {
-		err = setResourcesFromFlags(container.Resources)
+		err = SetResourcesFromFlags(container.Resources, vflags)
 	}
 	if err != nil {
 		return err
@@ -157,16 +157,34 @@ func IntToByteString(i uint64) string {
 	return common.FormatIntToSI(i, 3) + "B"
 }
 
-func setResourcesFromFlags(curResources *capsule.Resources) error {
-	if err := updateResources(curResources.Requests, requestCPU, requestMemory); err != nil {
+type VerticalFlags struct {
+	CPURequest    string
+	CPULimit      string
+	MemoryRequest string
+	MemoryLimit   string
+	GPUType       string
+	GPULimit      uint32
+}
+
+func (v VerticalFlags) Empty(cmd *cobra.Command) bool {
+	return (v.CPURequest == "" &&
+		!cmd.Flags().Changed("cpu-limit") &&
+		v.MemoryRequest == "" &&
+		!cmd.Flags().Changed("memory-limit") &&
+		v.GPUType == "" &&
+		!cmd.Flags().Changed("gpu-limit"))
+}
+
+func SetResourcesFromFlags(curResources *capsule.Resources, flags VerticalFlags) error {
+	if err := updateResources(curResources.Requests, flags.CPURequest, flags.CPULimit); err != nil {
 		return err
 	}
 
-	if err := updateResources(curResources.Limits, limitCPU, limitMemory); err != nil {
+	if err := updateResources(curResources.Limits, flags.CPULimit, flags.CPULimit); err != nil {
 		return err
 	}
 
-	if err := updateGPU(curResources, gpuType, gpuLimit); err != nil {
+	if err := updateGPU(curResources, flags.GPUType, flags.GPULimit); err != nil {
 		return err
 	}
 
@@ -228,8 +246,4 @@ func parseBytes(s string) (uint64, error) {
 	}
 	bytesF := bytesQ.AsApproximateFloat64()
 	return uint64(math.Round(bytesF)), nil
-}
-
-func allFlagsEmpty() bool {
-	return requestCPU == "" && requestMemory == "" && limitCPU == "" && limitMemory == "" && gpuType == ""
 }

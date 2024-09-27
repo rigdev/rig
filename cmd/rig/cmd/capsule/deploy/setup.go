@@ -14,6 +14,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	"github.com/rigdev/rig/cmd/rig/cmd/capsule/scale"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
@@ -38,6 +39,7 @@ var (
 	networkInterfaces          []string
 	removeNetworkInterfaces    []string
 	file                       string
+	vflags                     scale.VerticalFlags
 
 	// Other
 	skipImageCheck     bool
@@ -126,6 +128,14 @@ not a direct rollout. In that case you must supply branch name in --pr-branch.`,
 	baseDeploy.Flags().BoolVarP(
 		&dry, "dry", "d", false,
 		"if set, will not apply the change but display the diff with the current capsule spec.",
+	)
+	baseDeploy.Flags().StringVar(&vflags.CPURequest, "cpu-request", "", "cpu request of the capsule in cores")
+	baseDeploy.Flags().StringVar(&vflags.CPULimit, "cpu-limit", "",
+		"cpu limit of the capsule in cores. If the argument is the empty string or 0, will remove the limit",
+	)
+	baseDeploy.Flags().StringVar(&vflags.MemoryRequest, "memory-request", "", "memory request of the capsule in bytes")
+	baseDeploy.Flags().StringVar(&vflags.MemoryLimit, "memory-limit", "",
+		"memory limit of the capsule in bytes. If the argument is the empty string or 0, will remove the limit",
 	)
 
 	if err := baseDeploy.RegisterFlagCompletionFunc(

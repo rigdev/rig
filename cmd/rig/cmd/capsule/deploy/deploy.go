@@ -23,6 +23,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	api_image "github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/model"
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
@@ -188,7 +189,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	return capsule_cmd.DeployAndWait(input)
 }
 
-func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, string, string, string, error) {
+func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string) (*platformv1.Capsule, error) {
 	if file != "" {
 		if environmentVariables != nil ||
 			removeEnvironmentVariables != nil ||
@@ -201,52 +202,66 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 			configFileRefs != nil ||
 			removeConfigFiles != nil ||
 			networkInterfaces != nil ||
-			removeNetworkInterfaces != nil {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("cannot supply both --file and another configuration flag")
+			removeNetworkInterfaces != nil ||
+			!vflags.Empty() {
+			return nil, errors.InvalidArgumentErrorf("cannot supply both --file and another configuration flag")
 		}
 		bytes, err := os.ReadFile(file)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
 		spec, err := v1.YAMLToCapsuleProto(bytes)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
-		return []*capsule.Change{{
-			Field: &capsule.Change_Spec{
-				Spec: spec.GetSpec(),
-			},
-		}}, spec.GetName(), spec.GetProject(), spec.GetEnvironment(), nil
+		return spec, nil
 	}
 
-	var changes []*capsule.Change
+	// Prompt for project and env if necessary
+	projectID := c.Scope.GetCurrentContext().GetProject()
+	environmentID := c.Scope.GetCurrentContext().GetEnvironment()
+	capsuleID, err := c.getCapsuleID(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+
+	spec := &platformv1.Capsule{
+		Kind:        "Capsule",
+		ApiVersion:  "platform.rig.dev/v1",
+		Name:        capsuleID,
+		Project:     projectID,
+		Environment: environmentID,
+		Spec:        &platformv1.CapsuleSpec{},
+	}
+	resp, err := c.Rig.Capsule().Get(ctx, connect.NewRequest(&capsule.GetRequest{
+		CapsuleId: capsuleID,
+		ProjectId: projectID,
+	}))
+	if errors.IsNotFound(err) {
+	} else if err != nil {
+		return nil, err
+	} else {
+		for _, env := range resp.Msg.GetEnvironmentRevisions() {
+			if env.GetSpec().GetEnvironment() == environmentID {
+				spec = env.GetSpec()
+			}
+		}
+	}
 
 	// Annotations.
 	for _, key := range removeAnnotations {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_RemoveAnnotation{
-				RemoveAnnotation: key,
-			},
-		})
+		delete(spec.Spec.Annotations, key)
 	}
 	for key, value := range annotations {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_SetAnnotation{
-				SetAnnotation: &capsule.Change_KeyValue{
-					Name:  key,
-					Value: value,
-				},
-			},
-		})
+		if spec.Spec.Annotations == nil {
+			spec.Spec.Annotations = map[string]string{}
+		}
+		spec.Spec.Annotations[key] = value
 	}
 
 	// Environment variables.
 	for _, key := range removeEnvironmentVariables {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_RemoveEnvironmentVariable{
-				RemoveEnvironmentVariable: key,
-			},
-		})
+		delete(spec.Spec.GetEnv().GetRaw(), key)
 	}
 	for key, value := range environmentVariables {
 		changes = append(changes, &capsule.Change{
@@ -420,6 +435,10 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 				Replicas: uint32(replicas),
 			},
 		})
+	}
+
+	if cpuRequest != "" {
+
 	}
 
 	// Command and arguments.
@@ -918,7 +937,8 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	return res.Msg.GetImageId(), nil
 }
 
-func (c *Cmd) getCapsuleID(ctx context.Context, capsuleName string, args []string) (string, error) {
+func (c *Cmd) getCapsuleID(ctx context.Context, args []string) (string, error) {
+	var capsuleName string
 	if len(args) > 0 {
 		capsuleName = args[0]
 	}

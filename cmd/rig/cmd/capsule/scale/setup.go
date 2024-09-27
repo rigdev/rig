@@ -20,20 +20,16 @@ var (
 )
 
 var (
-	requestCPU     string
-	requestMemory  string
-	limitCPU       string
-	limitMemory    string
-	gpuType        string
 	autoscalerPath string
 )
+
+var vflags VerticalFlags
 
 var (
 	replicas              uint32
 	utilizationPercentage uint32
 	minReplicas           uint32
 	maxReplicas           uint32
-	gpuLimit              uint32
 )
 
 type Cmd struct {
@@ -76,12 +72,12 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 			common.MaxArgsCompletionFilter(1)),
 		RunE: cli.CtxWrap(cmd.vertical),
 	}
-	scaleVertical.Flags().StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
-	scaleVertical.Flags().StringVar(&requestMemory, "request-memory", "", "Minimum memory per container")
-	scaleVertical.Flags().StringVar(&limitCPU, "limit-cpu", "", "Maximum CPU cores per container")
-	scaleVertical.Flags().StringVar(&limitMemory, "limit-memory", "", "Maximum memory per container")
-	scaleVertical.Flags().Uint32Var(&gpuLimit, "limit-gpu", 0, "Maximum number of GPUs per container")
-	scaleVertical.Flags().StringVar(&gpuType, "gpu-type", "", "GPU type")
+	scaleVertical.Flags().StringVar(&vflags.CPURequest, "request-cpu", "", "Minimum CPU cores per container")
+	scaleVertical.Flags().StringVar(&vflags.MemoryRequest, "request-memory", "", "Minimum memory per container")
+	scaleVertical.Flags().StringVar(&vflags.CPULimit, "limit-cpu", "", "Maximum CPU cores per container")
+	scaleVertical.Flags().StringVar(&vflags.MemoryLimit, "limit-memory", "", "Maximum memory per container")
+	scaleVertical.Flags().Uint32Var(&vflags.GPULimit, "limit-gpu", 0, "Maximum number of GPUs per container")
+	scaleVertical.Flags().StringVar(&vflags.GPUType, "gpu-type", "", "GPU type")
 	scaleVertical.MarkFlagsRequiredTogether("limit-gpu", "gpu-type")
 
 	scaleVertical.Flags().BoolVarP(
@@ -153,4 +149,22 @@ func (c *Cmd) completions(
 	}
 
 	return completions.Capsules(ctx, c.Rig, toComplete, c.Scope)
+}
+
+type VerticalFlags struct {
+	CPURequest    string
+	CPULimit      string
+	MemoryRequest string
+	MemoryLimit   string
+	GPUType       string
+	GPULimit      uint32
+}
+
+func (v VerticalFlags) Empty(cmd *cobra.Command) bool {
+	return (v.CPURequest == "" &&
+		!cmd.Flags().Changed("cpu-limit") &&
+		v.MemoryRequest == "" &&
+		!cmd.Flags().Changed("memory-limit") &&
+		v.GPUType == "" &&
+		!cmd.Flags().Changed("gpu-limit"))
 }
