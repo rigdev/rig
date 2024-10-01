@@ -208,7 +208,7 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 		if err != nil {
 			return nil, "", "", "", err
 		}
-		spec, err := v1.YAMLToCapsuleProto(bytes)
+		spec, err := v1.CapsuleYAMLToProto(bytes)
 		if err != nil {
 			return nil, "", "", "", err
 		}
