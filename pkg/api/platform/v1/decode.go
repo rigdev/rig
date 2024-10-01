@@ -161,7 +161,7 @@ func NewCapsuleProto(projectID, environmentID, capsuleID string, spec *platformv
 		Environment: environmentID,
 		Spec:        spec,
 	}
-	initialise(res)
+	InitialiseProto(res)
 	return res
 }
 
@@ -173,11 +173,11 @@ func NewCapsuleSetProto(projectID, capsuleID string, spec *platformv1.CapsuleSpe
 		Project:    projectID,
 		Spec:       spec,
 	}
-	initialise(res)
+	InitialiseProto(res)
 	return res
 }
 
-func initialise(msg proto.Message) {
+func InitialiseProto(msg proto.Message) {
 	reflectMsg := msg.ProtoReflect()
 	fields := reflectMsg.Descriptor().Fields()
 	for i := 0; i < fields.Len(); i++ {
@@ -191,7 +191,7 @@ func initialise(msg proto.Message) {
 			if !reflectMsg.Has(field) {
 				reflectMsg.Set(field, reflectMsg.NewField(field))
 			}
-			initialise(reflectMsg.Get(field).Message().Interface())
+			InitialiseProto(reflectMsg.Get(field).Message().Interface())
 		}
 	}
 }

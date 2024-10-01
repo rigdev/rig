@@ -94,7 +94,7 @@ func Test_initialise(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initialise(tt.input)
+			InitialiseProto(tt.input)
 			require.True(t, proto.Equal(tt.input, tt.expected))
 		})
 	}

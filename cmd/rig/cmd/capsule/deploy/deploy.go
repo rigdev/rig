@@ -20,9 +20,11 @@ import (
 	container_name "github.com/google/go-containerregistry/pkg/name"
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/api/v1/cluster"
 	api_image "github.com/rigdev/rig-go-api/api/v1/image"
 	"github.com/rigdev/rig-go-api/model"
+	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig/cmd/common"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
@@ -36,23 +38,26 @@ import (
 
 var fileRefRegExp = regexp.MustCompile("path=([^,]*),obj=(.*)/(.*)/(.*)")
 
-func parseEnvironmentSource(value string) (capsule.EnvironmentSource_Kind, string, error) {
-	var kind capsule.EnvironmentSource_Kind
+func parseEnvironmentSource(value string) (*platformv1.EnvironmentSource, error) {
 	parts := strings.SplitN(value, "/", 2)
 	if len(parts) != 2 {
-		return kind, "", errors.InvalidArgumentErrorf("invalid --env-source format: %s", value)
+		return nil, errors.InvalidArgumentErrorf("invalid --env-source format: %s", value)
 	}
 
 	switch strings.ToLower(parts[0]) {
 	case "configmap":
-		kind = capsule.EnvironmentSource_KIND_CONFIG_MAP
+		return &platformv1.EnvironmentSource{
+			Name: parts[1],
+			Kind: "ConfigMap",
+		}, nil
 	case "secret":
-		kind = capsule.EnvironmentSource_KIND_SECRET
+		return &platformv1.EnvironmentSource{
+			Name: parts[1],
+			Kind: "Secret",
+		}, nil
 	default:
-		return kind, "", errors.InvalidArgumentErrorf("invalid --env-source kind, must be ConfigMap or Secret: %s", value)
+		return nil, errors.InvalidArgumentErrorf("invalid --env-source kind, must be ConfigMap or Secret: %s", value)
 	}
-
-	return kind, parts[1], nil
 }
 
 func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) error {
@@ -60,33 +65,22 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		return errors.InvalidArgumentErrorf("cannot give both --fingerprint and --current-rollout")
 	}
 
-	changes, capsuleID, projectID, environmentID, err := c.getChanges(cmd, args)
+	capsule, err := c.getNewSpec(ctx, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	if projectID == "" {
-		projectID = c.Scope.GetCurrentContext().GetProject()
-	}
-	if environmentID == "" {
-		environmentID = c.Scope.GetCurrentContext().GetEnvironment()
-	}
-	capsuleName, err := c.getCapsuleID(ctx, capsuleID, args)
-	if err != nil {
-		return err
-	}
-
-	if _, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule.GetRequest]{
-		Msg: &capsule.GetRequest{
-			CapsuleId: capsuleName,
-			ProjectId: projectID,
+	if _, err := c.Rig.Capsule().Get(ctx, &connect.Request[capsule_api.GetRequest]{
+		Msg: &capsule_api.GetRequest{
+			CapsuleId: capsule.GetName(),
+			ProjectId: capsule.GetProject(),
 		},
 	}); errors.IsNotFound(err) {
-		fmt.Printf("Capsule `%s` doesn't exist, creating Capsule\n", capsuleName)
-		if _, err := c.Rig.Capsule().Create(ctx, &connect.Request[capsule.CreateRequest]{
-			Msg: &capsule.CreateRequest{
-				Name:      capsuleName,
-				ProjectId: projectID,
+		fmt.Printf("Capsule `%s` doesn't exist, creating Capsule\n", capsule.GetName())
+		if _, err := c.Rig.Capsule().Create(ctx, &connect.Request[capsule_api.CreateRequest]{
+			Msg: &capsule_api.CreateRequest{
+				Name:      capsule.GetName(),
+				ProjectId: capsule.GetProject(),
 			},
 		}); err != nil {
 			return err
@@ -96,23 +90,30 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	}
 
 	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
-		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
-			ProjectId:     projectID,
-			EnvironmentId: environmentID,
-			CapsuleId:     capsuleName,
+		ctx, connect.NewRequest(&capsule_api.GetEffectiveGitSettingsRequest{
+			ProjectId:     capsule.GetProject(),
+			EnvironmentId: capsule.GetEnvironment(),
+			CapsuleId:     capsule.GetName(),
 		}),
 	)
 	if errors.IsUnimplemented(err) {
-		respGit = &connect.Response[capsule.GetEffectiveGitSettingsResponse]{}
+		respGit = &connect.Response[capsule_api.GetEffectiveGitSettingsResponse]{}
 	} else if err != nil {
 		return err
 	}
+
+	changes := []*capsule_api.Change{{
+		Field: &capsule_api.Change_Spec{
+			Spec: capsule.GetSpec(),
+		},
+	}}
+
 	if respGit.Msg.GetEnvironmentEnabled() && prBranchName != "" {
-		resp, err := c.Rig.Capsule().ProposeRollout(ctx, connect.NewRequest(&capsule.ProposeRolloutRequest{
-			CapsuleId:     capsuleName,
+		resp, err := c.Rig.Capsule().ProposeRollout(ctx, connect.NewRequest(&capsule_api.ProposeRolloutRequest{
+			CapsuleId:     capsule.GetName(),
 			Changes:       changes,
-			ProjectId:     projectID,
-			EnvironmentId: environmentID,
+			ProjectId:     capsule.GetProject(),
+			EnvironmentId: capsule.GetProject(),
 			BranchName:    prBranchName,
 		}))
 		if err != nil {
@@ -130,15 +131,15 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 		// TODO: Get this from the Deploy command instead.
 		rollbackID = currentRolloutID
 		if rollbackID == 0 {
-			res, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule.ListRolloutsRequest]{
-				Msg: &capsule.ListRolloutsRequest{
+			res, err := c.Rig.Capsule().ListRollouts(ctx, &connect.Request[capsule_api.ListRolloutsRequest]{
+				Msg: &capsule_api.ListRolloutsRequest{
 					Pagination: &model.Pagination{
 						Limit:      1,
 						Descending: true,
 					},
-					ProjectId:     projectID,
-					EnvironmentId: environmentID,
-					CapsuleId:     capsuleName,
+					ProjectId:     capsule.GetProject(),
+					EnvironmentId: capsule.GetEnvironment(),
+					CapsuleId:     capsule.GetName(),
 				},
 			})
 			if err != nil {
@@ -154,9 +155,9 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	baseInput := capsule_cmd.BaseInput{
 		Ctx:           ctx,
 		Rig:           c.Rig,
-		ProjectID:     projectID,
-		EnvironmentID: environmentID,
-		CapsuleID:     capsuleName,
+		ProjectID:     capsule.GetProject(),
+		EnvironmentID: capsule.GetEnvironment(),
+		CapsuleID:     capsule.GetName(),
 	}
 
 	if dry {
@@ -188,7 +189,7 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 	return capsule_cmd.DeployAndWait(input)
 }
 
-func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, string, string, string, error) {
+func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string) (*platformv1.Capsule, error) {
 	if file != "" {
 		if environmentVariables != nil ||
 			removeEnvironmentVariables != nil ||
@@ -202,143 +203,146 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 			removeConfigFiles != nil ||
 			networkInterfaces != nil ||
 			removeNetworkInterfaces != nil {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("cannot supply both --file and another configuration flag")
+			return nil, errors.InvalidArgumentErrorf("cannot supply both --file and another configuration flag")
 		}
 		bytes, err := os.ReadFile(file)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
 		spec, err := v1.CapsuleYAMLToProto(bytes)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
-		return []*capsule.Change{{
-			Field: &capsule.Change_Spec{
-				Spec: spec.GetSpec(),
-			},
-		}}, spec.GetName(), spec.GetProject(), spec.GetEnvironment(), nil
+		return spec, nil
 	}
 
-	var changes []*capsule.Change
+	// Prompt for project and env if necessary
+	projectID := c.Scope.GetCurrentContext().GetProject()
+	environmentID := c.Scope.GetCurrentContext().GetEnvironment()
+	capsuleID, err := c.getCapsuleID(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+
+	spec := v1.NewCapsuleProto(projectID, environmentID, capsuleID, nil)
+	resp, err := c.Rig.Capsule().Get(ctx, connect.NewRequest(&capsule_api.GetRequest{
+		CapsuleId: capsuleID,
+		ProjectId: projectID,
+	}))
+	if errors.IsNotFound(err) {
+	} else if err != nil {
+		return nil, err
+	} else {
+		for _, env := range resp.Msg.GetEnvironmentRevisions() {
+			if env.GetSpec().GetEnvironment() == environmentID {
+				spec = env.GetSpec()
+				v1.InitialiseProto(spec)
+			}
+		}
+	}
 
 	// Annotations.
 	for _, key := range removeAnnotations {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_RemoveAnnotation{
-				RemoveAnnotation: key,
-			},
-		})
+		delete(spec.Spec.Annotations, key)
 	}
 	for key, value := range annotations {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_SetAnnotation{
-				SetAnnotation: &capsule.Change_KeyValue{
-					Name:  key,
-					Value: value,
-				},
-			},
-		})
+		if spec.Spec.Annotations == nil {
+			spec.Spec.Annotations = map[string]string{}
+		}
+		spec.Spec.Annotations[key] = value
 	}
 
 	// Environment variables.
 	for _, key := range removeEnvironmentVariables {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_RemoveEnvironmentVariable{
-				RemoveEnvironmentVariable: key,
-			},
-		})
+		delete(spec.Spec.GetEnv().GetRaw(), key)
 	}
 	for key, value := range environmentVariables {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_SetEnvironmentVariable{
-				SetEnvironmentVariable: &capsule.Change_KeyValue{
-					Name:  key,
-					Value: value,
-				},
-			},
-		})
+		spec.Spec.Env.Raw[key] = value
 	}
 
 	// Environment sources.
 	for _, value := range removeEnvironmentSources {
-		kind, name, err := parseEnvironmentSource(value)
+		source, err := parseEnvironmentSource(value)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_RemoveEnvironmentSource{
-				RemoveEnvironmentSource: &capsule.EnvironmentSource{
-					Kind: kind,
-					Name: name,
-				},
+		spec.Spec.Env.Sources = removeFromList(
+			spec.Spec.Env.Sources, source,
+			func(s1, s2 *platformv1.EnvironmentSource) bool {
+				return s1.Name == s2.Name && s1.Kind == s2.Kind
 			},
-		})
+		)
 	}
 	for _, value := range environmentSources {
-		kind, name, err := parseEnvironmentSource(value)
+		source, err := parseEnvironmentSource(value)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_SetEnvironmentSource{
-				SetEnvironmentSource: &capsule.EnvironmentSource{
-					Kind: kind,
-					Name: name,
-				},
+		spec.Spec.Env.Sources = insertInList(
+			spec.Spec.Env.Sources, source,
+			func(s *platformv1.EnvironmentSource, s2 *platformv1.EnvironmentSource) bool {
+				return s.GetName() == s2.GetName() && s.GetKind() == s2.GetKind()
 			},
-		})
+		)
 	}
 
 	// Image.
 	if imageID != "" {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_AddImage_{
-				AddImage: &capsule.Change_AddImage{
-					Image: imageID,
-				},
-			},
-		})
+		spec.Spec.Image = imageID
 	}
 
 	// Network interfaces.
 	for _, file := range networkInterfaces {
-		bs, err := os.ReadFile(file)
+		data, err := os.ReadFile(file)
 		if err != nil {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("errors reading network interface: %v", err)
+			return nil, errors.InvalidArgumentErrorf("errors reading network interface: %v", err)
 		}
 
-		raw, err := yaml.YAMLToJSON(bs)
+		raw, err := yaml.YAMLToJSON(data)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
 
-		ci := &capsule.Interface{}
+		ci := &platformv1.CapsuleInterface{}
 		if err := protojson.Unmarshal(raw, ci); err != nil {
-			return nil, "", "", "", err
+			// Backwards compatibility if anyone used the old format to deploy interfaces
+			oldCI := &capsule.Interface{}
+			if err2 := protojson.Unmarshal(raw, oldCI); err2 != nil {
+				return nil, fmt.Errorf("error parsing network interface from %s: %w", file, err)
+			}
+			ci, err = v1.InterfaceConversion(oldCI)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing network interface from %s: %w", file, err)
+			}
 		}
-
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_SetInterface{
-				SetInterface: ci,
-			},
-		})
+		found := false
+		for idx, i := range spec.Spec.GetInterfaces() {
+			if i.GetName() == ci.GetName() {
+				spec.Spec.Interfaces[idx] = ci
+				found = true
+				break
+			}
+		}
+		if !found {
+			spec.Spec.Interfaces = append(spec.Spec.Interfaces, ci)
+		}
 	}
 
 	for _, name := range removeNetworkInterfaces {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_RemoveInterface{
-				RemoveInterface: name,
-			},
-		})
+		for idx, i := range spec.Spec.GetInterfaces() {
+			if i.GetName() == name {
+				spec.Spec.Interfaces = append(spec.Spec.Interfaces[:idx], spec.Spec.Interfaces[idx+1:]...)
+			}
+		}
 	}
 
 	// Config Files
 	for _, target := range removeConfigFiles {
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_RemoveConfigFile{
-				RemoveConfigFile: target,
-			},
-		})
+		for idx, f := range spec.Spec.GetFiles() {
+			if f.GetPath() == target {
+				spec.Spec.Files = append(spec.Spec.Files[:idx], spec.Spec.Files[idx+1:]...)
+			}
+		}
 	}
 
 	for _, configFile := range configFiles {
@@ -354,103 +358,106 @@ func (c *Cmd) getChanges(cmd *cobra.Command, args []string) ([]*capsule.Change, 
 			} else if opt == "secret" {
 				secret = true
 			} else {
-				return nil, "", "", "", errors.InvalidArgumentErrorf("invalid config-file argument: %v", configFile)
+				return nil, errors.InvalidArgumentErrorf("invalid config-file argument: %v", configFile)
 			}
 		}
 		if err := validateConfigFilePath(target, "config-file"); err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
 		bs, err := os.ReadFile(source)
 		if err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
 
 		if !utf8.Valid(bs) {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("source file is not valid UTF-8: %v", source)
+			return nil, errors.InvalidArgumentErrorf("source file is not valid UTF-8: %v", source)
 		}
-
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_SetConfigFile{
-				SetConfigFile: &capsule.Change_ConfigFile{
-					Content:  bs,
-					Path:     target,
-					IsSecret: secret,
-				},
-			},
+		file := &platformv1.File{
+			Path:     target,
+			AsSecret: secret,
+			Bytes:    bs,
+			String_:  string(bs),
+		}
+		spec.Spec.Files = insertInList(spec.Spec.Files, file, func(f1, f2 *platformv1.File) bool {
+			return f1.GetPath() == f2.GetPath()
 		})
 	}
 	for _, configFileRef := range configFileRefs {
 		matches := fileRefRegExp.FindStringSubmatch(configFileRef)
 		if len(matches) != 5 {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file-ref does not match the format")
+			return nil, errors.InvalidArgumentErrorf("config-file-ref does not match the format")
 		}
 
 		target, kind, name, key := matches[1], matches[2], matches[3], matches[4]
 		if kind != "Secret" && kind != "ConfigMap" {
-			return nil, "", "", "", errors.InvalidArgumentErrorf(
+			return nil, errors.InvalidArgumentErrorf(
 				"config-file-ref kind must be either Secret or Configmap, was '%s'", kind,
 			)
 		}
 		if err := common.ValidateKubernetesName(name); err != nil {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("config-file-ref name '%s' was invalid: %w", name, err)
+			return nil, errors.InvalidArgumentErrorf("config-file-ref name '%s' was invalid: %w", name, err)
 		}
 		if err := validateConfigFilePath(target, "config-file-ref"); err != nil {
-			return nil, "", "", "", err
+			return nil, err
 		}
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_SetConfigFileRef{
-				SetConfigFileRef: &capsule.Change_ConfigFileRef{
-					Path: target,
-					Kind: kind,
-					Name: name,
-					Key:  key,
-				},
+
+		file := &platformv1.File{
+			Path: target,
+			Ref: &platformv1.FileReference{
+				Kind: kind,
+				Name: name,
+				Key:  key,
 			},
+		}
+		spec.Spec.Files = insertInList(spec.Spec.Files, file, func(f1, f2 *platformv1.File) bool {
+			return f1.GetPath() == f2.GetPath()
 		})
 	}
 
 	// Replicas.
 	if cmd.Flag("replicas").Changed {
 		if replicas < 0 {
-			return nil, "", "", "", errors.InvalidArgumentErrorf("number of replicas cannot be negative: %v", replicas)
+			return nil, errors.InvalidArgumentErrorf("number of replicas cannot be negative: %v", replicas)
 		}
-
-		changes = append(changes, &capsule.Change{
-			Field: &capsule.Change_Replicas{
-				Replicas: uint32(replicas),
-			},
-		})
+		spec.Spec.Scale.Horizontal.Instances.Min = uint32(replicas)
 	}
 
 	// Command and arguments.
 	if idx := cmd.ArgsLenAtDash(); idx >= 0 {
 		extraArgs := args[idx:]
-		args = args[:idx]
-
 		if len(extraArgs) == 0 {
-			// Clear the command.
-			changes = append(changes, &capsule.Change{
-				Field: &capsule.Change_CommandArguments_{
-					CommandArguments: &capsule.Change_CommandArguments{},
-				},
-			})
+			spec.Spec.Command = ""
+			spec.Spec.Args = nil
 		} else {
-			changes = append(changes, &capsule.Change{
-				Field: &capsule.Change_CommandArguments_{
-					CommandArguments: &capsule.Change_CommandArguments{
-						Command: extraArgs[0],
-						Args:    extraArgs[1:],
-					},
-				},
-			})
+			spec.Spec.Command = extraArgs[0]
+			spec.Spec.Args = extraArgs[1:]
 		}
 	}
 
 	if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
-		return nil, "", "", "", err
+		return nil, err
 	}
 
-	return changes, "", "", "", nil
+	return spec, nil
+}
+
+func insertInList[T any](existing []T, obj T, equal func(T, T) bool) []T {
+	for idx, o := range existing {
+		if equal(o, obj) {
+			existing[idx] = obj
+			return existing
+		}
+	}
+	return append(existing, obj)
+}
+
+func removeFromList[T any, K any](existing []T, key K, equal func(T, K) bool) []T {
+	for idx, o := range existing {
+		if equal(o, key) {
+			return append(existing[:idx], existing[idx+1:]...)
+		}
+	}
+	return existing
 }
 
 func validateConfigFilePath(p string, s string) error {
@@ -485,7 +492,7 @@ func (c *Cmd) GetImageID(ctx context.Context, capsuleID string) (string, error) 
 	return c.promptForDockerOrImage(ctx, capsuleID)
 }
 
-func expandImageID(images []*capsule.Image, imageID string) (string, error) {
+func expandImageID(images []*capsule_api.Image, imageID string) (string, error) {
 	if strings.HasPrefix(imageID, "sha256:") {
 		return expandByDigestPrefix(imageID, images)
 	}
@@ -502,7 +509,7 @@ func expandImageID(images []*capsule.Image, imageID string) (string, error) {
 	return "", errors.New("unable to parse image")
 }
 
-func expandByDigestName(imageID string, images []*capsule.Image) (string, error) {
+func expandByDigestName(imageID string, images []*capsule_api.Image) (string, error) {
 	idx := strings.Index(imageID, "@")
 	name := imageID[:idx]
 	digest := imageID[idx+1:]
@@ -510,7 +517,7 @@ func expandByDigestName(imageID string, images []*capsule.Image) (string, error)
 	if err != nil {
 		return "", err
 	}
-	var validImages []*capsule.Image
+	var validImages []*capsule_api.Image
 	for _, b := range images {
 		repoMatch := b.GetRepository() == fmt.Sprintf("%s/%s", tag.RegistryStr(), tag.RepositoryStr())
 		tagMatch := b.GetTag() == tag.TagStr()
@@ -530,8 +537,8 @@ func expandByDigestName(imageID string, images []*capsule.Image) (string, error)
 	return validImages[0].GetImageId(), nil
 }
 
-func expandByLatestTag(ref container_name.Reference, images []*capsule.Image) (string, error) {
-	var latest *capsule.Image
+func expandByLatestTag(ref container_name.Reference, images []*capsule_api.Image) (string, error) {
+	var latest *capsule_api.Image
 	for _, i := range images {
 		if i.GetRepository() != fmt.Sprintf("%s/%s", ref.Context().RegistryStr(), ref.Context().RepositoryStr()) ||
 			i.GetTag() != ref.Identifier() {
@@ -549,8 +556,8 @@ func expandByLatestTag(ref container_name.Reference, images []*capsule.Image) (s
 	return latest.GetImageId(), nil
 }
 
-func expandByDigestPrefix(digestPrefix string, images []*capsule.Image) (string, error) {
-	var validImages []*capsule.Image
+func expandByDigestPrefix(digestPrefix string, images []*capsule_api.Image) (string, error) {
+	var validImages []*capsule_api.Image
 	for _, b := range images {
 		if strings.HasPrefix(b.GetDigest(), digestPrefix) {
 			validImages = append(validImages, b)
@@ -607,7 +614,7 @@ func (c *Cmd) promptForExistingImage(ctx context.Context, capsuleID string) (str
 		return "", err
 	}
 	images := resp.Msg.GetImages()
-	slices.SortFunc(images, func(b1, b2 *capsule.Image) int {
+	slices.SortFunc(images, func(b1, b2 *capsule_api.Image) int {
 		t1 := b1.CreatedAt.AsTime()
 		t2 := b2.CreatedAt.AsTime()
 		if t1.Equal(t2) {
@@ -918,7 +925,8 @@ func (c *Cmd) createImageInner(ctx context.Context, capsuleID string, imageRef i
 	return res.Msg.GetImageId(), nil
 }
 
-func (c *Cmd) getCapsuleID(ctx context.Context, capsuleName string, args []string) (string, error) {
+func (c *Cmd) getCapsuleID(ctx context.Context, args []string) (string, error) {
+	var capsuleName string
 	if len(args) > 0 {
 		capsuleName = args[0]
 	}

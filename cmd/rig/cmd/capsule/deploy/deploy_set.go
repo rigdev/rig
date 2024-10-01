@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/rigdev/rig-go-api/api/v1/capsule"
+	capsule_api "github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/pkg/errors"
@@ -21,30 +21,31 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 		return err
 	}
 
-	changes, capsuleName, projectID, _, err := c.getChanges(cmd, args)
+	capsule, err := c.getNewSpec(ctx, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	capsuleID, err := c.getCapsuleID(ctx, capsuleName, args)
-	if err != nil {
-		return err
-	}
+	changes := []*capsule_api.Change{{
+		Field: &capsule_api.Change_Spec{
+			Spec: capsule.GetSpec(),
+		},
+	}}
 
 	respGit, err := c.Rig.Capsule().GetEffectiveGitSettings(
-		ctx, connect.NewRequest(&capsule.GetEffectiveGitSettingsRequest{
-			ProjectId: projectID,
-			CapsuleId: capsuleID,
+		ctx, connect.NewRequest(&capsule_api.GetEffectiveGitSettingsRequest{
+			ProjectId: capsule.GetProject(),
+			CapsuleId: capsule.GetName(),
 		}),
 	)
 	if err != nil {
 		return err
 	}
 	if respGit.Msg.GetGit().GetCapsuleSetPath() != "" && prBranchName != "" {
-		resp, err := c.Rig.Capsule().ProposeSetRollout(ctx, connect.NewRequest(&capsule.ProposeSetRolloutRequest{
-			CapsuleId:  capsuleID,
+		resp, err := c.Rig.Capsule().ProposeSetRollout(ctx, connect.NewRequest(&capsule_api.ProposeSetRolloutRequest{
+			CapsuleId:  capsule.GetName(),
 			Changes:    changes,
-			ProjectId:  projectID,
+			ProjectId:  capsule.GetProject(),
 			BranchName: prBranchName,
 		}))
 		if err != nil {
@@ -57,10 +58,10 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 		return errors.InvalidArgumentErrorf("--pr-branch was set, but the capsuleset is not git backed")
 	}
 
-	resp, err := c.Rig.Capsule().DeploySet(ctx, connect.NewRequest(&capsule.DeploySetRequest{
-		CapsuleId:          capsuleID,
+	resp, err := c.Rig.Capsule().DeploySet(ctx, connect.NewRequest(&capsule_api.DeploySetRequest{
+		CapsuleId:          capsule.GetName(),
 		Changes:            changes,
-		ProjectId:          projectID,
+		ProjectId:          capsule.GetProject(),
 		CurrentRolloutIds:  currentRolloutIDs,
 		CurrentFingerprint: parseFingerprint(currentFingerprint),
 	}))
@@ -75,9 +76,9 @@ func (c *Cmd) deploySet(ctx context.Context, cmd *cobra.Command, args []string) 
 				BaseInput: capsule_cmd.BaseInput{
 					Ctx:           ctx,
 					Rig:           c.Rig,
-					ProjectID:     projectID,
+					ProjectID:     capsule.GetProject(),
 					EnvironmentID: env,
-					CapsuleID:     capsuleID,
+					CapsuleID:     capsule.GetName(),
 				},
 			},
 			Fingerprints: &model.Fingerprints{
