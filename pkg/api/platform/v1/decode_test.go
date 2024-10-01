@@ -146,6 +146,16 @@ func Test_ProtoToYAML(t *testing.T) {
 		Extensions: map[string]*structpb.Struct{
 			"value": &structpb.Struct{},
 		},
+		Scale: &platformv1.Scale{
+			Horizontal: &platformv1.HorizontalScale{
+				Instances: &platformv1.Instances{
+					Min: 1,
+				},
+			},
+			Vertical: &platformv1.VerticalScale{
+				Cpu: &platformv1.ResourceLimits{},
+			},
+		},
 	}
 
 	s, err := ProtoToYAML(c)
@@ -159,5 +169,9 @@ env:
 extensions:
   value: {}
 image: image
+scale:
+  horizontal:
+    instances:
+      min: 1
 `, s)
 }

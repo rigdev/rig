@@ -6,6 +6,7 @@ import (
 
 	platformv1 "github.com/rigdev/rig-go-api/platform/v1"
 	"github.com/rigdev/rig/pkg/obj"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,7 +66,8 @@ func YAMLToProto[T interface{ GetKind() string }](bs []byte, o T, expectedKind s
 func ProtoToYAML(m proto.Message) (string, error) {
 	m = proto.Clone(m)
 	cleanProto(m)
-	data, err := yaml.Marshal(m)
+	jsonString := protojson.Format(m)
+	data, err := yaml.JSONToYAML([]byte(jsonString))
 	if err != nil {
 		return "", err
 	}
