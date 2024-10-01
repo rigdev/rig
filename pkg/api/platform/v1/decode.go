@@ -23,7 +23,7 @@ func CapsuleSpecYAMLToProto(bytes []byte) (*platformv1.CapsuleSpec, error) {
 
 func CapsuleYAMLToProto(bytes []byte) (*platformv1.Capsule, error) {
 	spec := &platformv1.Capsule{}
-	if err := YAMLToSpecProto(bytes, spec, CapsuleKind); err != nil {
+	if err := YAMLToProto(bytes, spec, CapsuleKind); err != nil {
 		return nil, err
 	}
 	return spec, nil
@@ -31,13 +31,13 @@ func CapsuleYAMLToProto(bytes []byte) (*platformv1.Capsule, error) {
 
 func CapsuleSetYAMLToProto(bytes []byte) (*platformv1.CapsuleSet, error) {
 	spec := &platformv1.CapsuleSet{}
-	if err := YAMLToSpecProto(bytes, spec, CapsuleSetKind); err != nil {
+	if err := YAMLToProto(bytes, spec, CapsuleSetKind); err != nil {
 		return nil, err
 	}
 	return spec, nil
 }
 
-func YAMLToSpecProto[T interface{ GetKind() string }](bs []byte, o T, expectedKind string) error {
+func YAMLToProto[T interface{ GetKind() string }](bs []byte, o T, expectedKind string) error {
 	if err := yaml.Unmarshal(bs, o, yaml.DisallowUnknownFields); err != nil {
 		return fmt.Errorf("unmarshal: %s", err)
 	}
@@ -45,6 +45,31 @@ func YAMLToSpecProto[T interface{ GetKind() string }](bs []byte, o T, expectedKi
 		return fmt.Errorf("kind was %s, not the expected %s", o.GetKind(), expectedKind)
 	}
 	return nil
+}
+
+// ProtoToYAML converts a proto message to YAML in such a way that it empty
+// structs, maps and lists are not included in the YAML. E.g. it will produce
+//
+// field1: value1
+// field2: value2
+//
+// and not
+//
+// field1: value1
+// field2: value2
+// someList: []
+// someObj:
+//
+//	child1: {}
+//	child2: []
+func ProtoToYAML(m proto.Message) (string, error) {
+	m = proto.Clone(m)
+	cleanProto(m)
+	data, err := yaml.Marshal(m)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 func CapsuleProtoToCRD(capsule *platformv1.Capsule, scheme *runtime.Scheme) (*Capsule, error) {
@@ -166,6 +191,105 @@ func initialise(msg proto.Message) {
 			}
 			initialise(reflectMsg.Get(field).Message().Interface())
 		}
-
 	}
+}
+
+func cleanProto(msg proto.Message) {
+	if msg == nil {
+		return
+	}
+	cleanReflect(msg.ProtoReflect())
+}
+
+func cleanReflect(msg protoreflect.Message) {
+	if msg == nil {
+		return
+	}
+
+	fields := msg.Descriptor().Fields()
+	for i := 0; i < fields.Len(); i++ {
+		field := fields.Get(i)
+		value := msg.Get(field)
+		if field.IsMap() {
+			if value.Map().Len() == 0 {
+				msg.Clear(field)
+			}
+		} else if field.IsList() {
+			if value.List().Len() == 0 {
+				msg.Clear(field)
+			}
+		} else if field.Kind() == protoreflect.MessageKind {
+			if isEmpty(value.Message()) {
+				msg.Clear(field)
+			} else {
+				cleanReflect(value.Message())
+			}
+		}
+	}
+}
+
+func isEmpty(msg protoreflect.Message) bool {
+	if msg == nil {
+		return true
+	}
+	fields := msg.Descriptor().Fields()
+	for i := 0; i < fields.Len(); i++ {
+		field := fields.Get(i)
+		if !msg.Has(field) {
+			continue
+		}
+
+		value := msg.Get(field)
+		if field.IsMap() {
+			if value.Map().Len() > 0 {
+				return false
+			}
+		} else if field.IsList() {
+			if value.List().Len() > 0 {
+				return false
+			}
+
+		} else if field.Kind() == protoreflect.MessageKind {
+			if value.Message().IsValid() && !isEmpty(value.Message()) {
+				return false
+			}
+		} else {
+			switch field.Kind() {
+			case protoreflect.BoolKind:
+				if value.Bool() {
+					return false
+				}
+			case protoreflect.DoubleKind:
+				fallthrough
+			case protoreflect.FloatKind:
+				if value.Float() != 0 {
+					return false
+				}
+			case protoreflect.Int32Kind:
+				fallthrough
+			case protoreflect.Int64Kind:
+				if value.Int() != 0 {
+					return false
+				}
+			case protoreflect.StringKind:
+				if value.String() != "" {
+					return false
+				}
+			case protoreflect.Uint32Kind:
+				fallthrough
+			case protoreflect.Uint64Kind:
+				if value.Uint() != 0 {
+					return false
+				}
+			case protoreflect.BytesKind:
+				if len(value.Bytes()) > 0 {
+					return false
+				}
+			default:
+				return false
+			}
+		}
+	}
+
+	return true
 }

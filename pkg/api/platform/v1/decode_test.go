@@ -129,3 +129,35 @@ func Test_NewCapsuleProto(t *testing.T) {
 	}),
 	)
 }
+
+func Test_ProtoToYAML(t *testing.T) {
+	c := &platformv1.CapsuleSpec{
+		Annotations: map[string]string{},
+		Image:       "image",
+		Command:     "cmd",
+		Args:        []string{},
+		Env: &platformv1.EnvironmentVariables{
+			Raw: map[string]string{},
+			Sources: []*platformv1.EnvironmentSource{{
+				Name: "name",
+				Kind: "kind",
+			}},
+		},
+		Extensions: map[string]*structpb.Struct{
+			"value": &structpb.Struct{},
+		},
+	}
+
+	s, err := ProtoToYAML(c)
+	require.NoError(t, err)
+
+	require.Equal(t, `command: cmd
+env:
+  sources:
+  - kind: kind
+    name: name
+extensions:
+  value: {}
+image: image
+`, s)
+}
