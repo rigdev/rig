@@ -102,7 +102,7 @@ func Test_initialise(t *testing.T) {
 
 func Test_NewCapsuleProto(t *testing.T) {
 	c := NewCapsuleProto("project", "env", "capsule", nil)
-	proto.Equal(c, &platformv1.Capsule{
+	require.True(t, proto.Equal(c, &platformv1.Capsule{
 		Kind:        CapsuleKind,
 		ApiVersion:  GroupVersion.String(),
 		Name:        "capsule",
@@ -126,5 +126,6 @@ func Test_NewCapsuleProto(t *testing.T) {
 			},
 			Extensions: map[string]*structpb.Struct{},
 		},
-	})
+	}),
+	)
 }
