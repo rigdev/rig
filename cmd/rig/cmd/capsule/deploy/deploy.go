@@ -422,7 +422,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 		if replicas < 0 {
 			return nil, errors.InvalidArgumentErrorf("number of replicas cannot be negative: %v", replicas)
 		}
-		spec.Spec.Scale.Horizontal.Instances.Min = uint32(replicas)
+		spec.Spec.Scale.Horizontal.Min = uint32(replicas)
 	}
 
 	// Command and arguments.

@@ -199,7 +199,8 @@ func InitialiseProto(msg proto.Message) {
 func DefaultCapsuleSpec() *platformv1.CapsuleSpec {
 	spec := &platformv1.CapsuleSpec{}
 	InitialiseProto(spec)
-	spec.Scale.Horizontal.Instances.Min = 1
+	spec.Scale.Horizontal.Instances = nil
+	spec.Scale.Horizontal.Min = 1
 	spec.Scale.Vertical.Cpu.Request = "0.2"
 	spec.Scale.Vertical.Memory.Request = "256Mi"
 	return spec
