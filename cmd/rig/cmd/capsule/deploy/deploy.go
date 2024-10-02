@@ -33,6 +33,7 @@ import (
 	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/yaml"
 )
 
@@ -423,6 +424,32 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 			return nil, errors.InvalidArgumentErrorf("number of replicas cannot be negative: %v", replicas)
 		}
 		spec.Spec.Scale.Horizontal.Min = uint32(replicas)
+	}
+
+	// Vertical Scale
+	if cpuRequest != "" {
+		if _, err := resource.ParseQuantity(cpuRequest); err != nil {
+			return nil, fmt.Errorf("cpu-request is malformed: %w", err)
+		}
+		spec.Spec.Scale.Vertical.Cpu.Request = cpuRequest
+	}
+	if cmd.Flags().Changed("cpu-limit") {
+		if _, err := resource.ParseQuantity(cpuLimit); cpuLimit != "" && err != nil {
+			return nil, fmt.Errorf("cpu-limit is malformed: %w", err)
+		}
+		spec.Spec.Scale.Vertical.Cpu.Limit = cpuLimit
+	}
+	if memoryRequest != "" {
+		if _, err := resource.ParseQuantity(memoryRequest); err != nil {
+			return nil, fmt.Errorf("memory-request is malformed: %w", err)
+		}
+		spec.Spec.Scale.Vertical.Memory.Request = memoryRequest
+	}
+	if cmd.Flags().Changed("memory-limit") {
+		if _, err := resource.ParseQuantity(memoryLimit); memoryLimit != "" && err != nil {
+			return nil, fmt.Errorf("memory-limit is malformed: %w", err)
+		}
+		spec.Spec.Scale.Vertical.Memory.Limit = memoryLimit
 	}
 
 	// Command and arguments.
