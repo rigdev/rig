@@ -4,7 +4,6 @@ package api.v1.capsule;
 
 import "model/revision.proto";
 import "platform/v1/generated.proto";
-import "api/v1/capsule/change.proto";
 
 message SetRevision {
   platform.v1.CapsuleSet spec = 1;
@@ -14,18 +13,15 @@ message SetRevision {
 message Revision {
   platform.v1.Capsule spec = 1;
   model.RevisionMetadata metadata = 2;
-  repeated api.v1.capsule.Change changes = 3;
   string message = 4;
 }
 
 message Proposal {
   platform.v1.Capsule spec = 1;
-  repeated Change changes = 2;
   model.ProposalMetadata metadata = 3;
 }
 
 message SetProposal {
   platform.v1.CapsuleSet spec = 1;
-  repeated Change changes = 2;
   model.ProposalMetadata metadata = 3;
 }

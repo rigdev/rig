@@ -32,7 +32,6 @@ message RolloutConfig {
   // The user who initiated the rollout.
   model.Author created_by = 1;
   google.protobuf.Timestamp created_at = 2;
-  repeated Change changes = 3;
   uint32 replicas = 4;
   string image_id = 5;
   Network network = 6;
