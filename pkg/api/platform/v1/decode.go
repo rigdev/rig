@@ -265,7 +265,7 @@ func cleanReflectMap(m protoreflect.Map, valueDescriptor protoreflect.FieldDescr
 	}
 	// A map value is either a primitive or a message
 	// We are only interested in messages
-	m.Range(func(k protoreflect.MapKey, v protoreflect.Value) bool {
+	m.Range(func(_ protoreflect.MapKey, v protoreflect.Value) bool {
 		if valueDescriptor.Kind() == protoreflect.MessageKind {
 			cleanReflectMessage(v.Message())
 			return true
