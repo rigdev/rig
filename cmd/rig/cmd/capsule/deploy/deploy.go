@@ -427,29 +427,29 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 	}
 
 	// Vertical Scale
-	if requestCPU != "" {
-		if _, err := resource.ParseQuantity(requestCPU); err != nil {
+	if cpuRequest != "" {
+		if _, err := resource.ParseQuantity(cpuRequest); err != nil {
 			return nil, fmt.Errorf("request-cpu is malformed: %w", err)
 		}
-		spec.Spec.Scale.Vertical.Cpu.Request = requestCPU
+		spec.Spec.Scale.Vertical.Cpu.Request = cpuRequest
 	}
 	if cmd.Flags().Changed("limit-cpu") {
-		if _, err := resource.ParseQuantity(limitCPU); limitCPU != "" && err != nil {
+		if _, err := resource.ParseQuantity(cpuLimit); cpuLimit != "" && err != nil {
 			return nil, fmt.Errorf("limit-cpu is malformed: %w", err)
 		}
-		spec.Spec.Scale.Vertical.Cpu.Limit = limitCPU
+		spec.Spec.Scale.Vertical.Cpu.Limit = cpuLimit
 	}
-	if requestMemory != "" {
-		if _, err := resource.ParseQuantity(requestMemory); err != nil {
+	if memoryRequest != "" {
+		if _, err := resource.ParseQuantity(memoryRequest); err != nil {
 			return nil, fmt.Errorf("request-memory is malformed: %w", err)
 		}
-		spec.Spec.Scale.Vertical.Memory.Request = requestMemory
+		spec.Spec.Scale.Vertical.Memory.Request = memoryRequest
 	}
 	if cmd.Flags().Changed("limit-cpu") {
-		if _, err := resource.ParseQuantity(limitMemory); limitMemory != "" && err != nil {
+		if _, err := resource.ParseQuantity(memoryLimit); memoryLimit != "" && err != nil {
 			return nil, fmt.Errorf("limit-memory is malformed: %w", err)
 		}
-		spec.Spec.Scale.Vertical.Memory.Limit = limitMemory
+		spec.Spec.Scale.Vertical.Memory.Limit = memoryLimit
 	}
 
 	// Command and arguments.
