@@ -433,7 +433,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 		}
 		spec.Spec.Scale.Vertical.Cpu.Request = cpuRequest
 	}
-	if cmd.Flags().Changed("limit-cpu") {
+	if cmd.Flags().Changed("cpu-limit") {
 		if _, err := resource.ParseQuantity(cpuLimit); cpuLimit != "" && err != nil {
 			return nil, fmt.Errorf("limit-cpu is malformed: %w", err)
 		}
@@ -445,7 +445,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 		}
 		spec.Spec.Scale.Vertical.Memory.Request = memoryRequest
 	}
-	if cmd.Flags().Changed("limit-cpu") {
+	if cmd.Flags().Changed("memory-limit") {
 		if _, err := resource.ParseQuantity(memoryLimit); memoryLimit != "" && err != nil {
 			return nil, fmt.Errorf("limit-memory is malformed: %w", err)
 		}
