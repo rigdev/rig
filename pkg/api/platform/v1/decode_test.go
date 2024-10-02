@@ -143,6 +143,38 @@ func Test_ProtoToYAML(t *testing.T) {
 				Kind: "kind",
 			}},
 		},
+		Files: []*platformv1.File{
+			{
+				Path:     "somepath",
+				AsSecret: true,
+				String_:  "hej",
+				Ref:      &platformv1.FileReference{},
+			},
+			{
+				Path: "somepath2",
+				Ref: &platformv1.FileReference{
+					Kind: "kiind",
+					Name: "name",
+					Key:  "key",
+				},
+			},
+		},
+		Interfaces: []*platformv1.CapsuleInterface{
+			{
+				Name:      "http",
+				Port:      80,
+				Liveness:  &platformv1.InterfaceLivenessProbe{},
+				Readiness: &platformv1.InterfaceReadinessProbe{},
+				Routes: []*platformv1.HostRoute{
+					{
+						Id:          "id",
+						Host:        "google.com",
+						Paths:       []*platformv1.HTTPPathRoute{},
+						Annotations: map[string]string{},
+					},
+				},
+			},
+		},
 		Extensions: map[string]*structpb.Struct{
 			"value": &structpb.Struct{},
 		},
@@ -168,7 +200,22 @@ env:
     name: name
 extensions:
   value: {}
+files:
+- asSecret: true
+  path: somepath
+  string: hej
+- path: somepath2
+  ref:
+    key: key
+    kind: kiind
+    name: name
 image: image
+interfaces:
+- name: http
+  port: 80
+  routes:
+  - host: google.com
+    id: id
 scale:
   horizontal:
     instances:

@@ -224,7 +224,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 		return nil, err
 	}
 
-	spec := v1.NewCapsuleProto(projectID, environmentID, capsuleID, nil)
+	var s *platformv1.CapsuleSpec
 	resp, err := c.Rig.Capsule().Get(ctx, connect.NewRequest(&capsule_api.GetRequest{
 		CapsuleId: capsuleID,
 		ProjectId: projectID,
@@ -235,11 +235,14 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 	} else {
 		for _, env := range resp.Msg.GetEnvironmentRevisions() {
 			if env.GetSpec().GetEnvironment() == environmentID {
-				spec = env.GetSpec()
-				v1.InitialiseProto(spec)
+				s = env.GetSpec().GetSpec()
 			}
 		}
 	}
+	if s == nil {
+		s = v1.DefaultCapsuleSpec()
+	}
+	spec := v1.NewCapsuleProto(projectID, environmentID, capsuleID, s)
 
 	// Annotations.
 	for _, key := range removeAnnotations {
