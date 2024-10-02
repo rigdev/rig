@@ -38,6 +38,10 @@ var (
 	networkInterfaces          []string
 	removeNetworkInterfaces    []string
 	file                       string
+	requestCPU                 string
+	limitCPU                   string
+	requestMemory              string
+	limitMemory                string
 
 	// Other
 	skipImageCheck     bool
@@ -260,6 +264,13 @@ func setupConfigurationFlags(c *cobra.Command) {
 		`will deploy the capsule spec at the given path. Cannot be used together with any of the other configuration flags.
 The spec is the Platform Capsule spec defined at https://docs.rig.dev/api/platformv1#capsule`,
 	)
+	flags.StringVar(&requestCPU, "request-cpu", "", "Minimum CPU cores per container")
+	flags.StringVar(&requestMemory, "request-memory", "", "Minimum memory per container (bytes)")
+	flags.StringVar(&limitCPU, "limit-cpu", "", "Maximum CPU cores per container. If empty, will remove the limit.")
+	flags.StringVar(&limitMemory, "limit-memory", "",
+		"Maximum memory per container (bytes). If empty, will remove the limit.",
+	)
+
 	flags.Finalize()
 	c.Flags().AddFlagSet(flags.FlagSet)
 }
