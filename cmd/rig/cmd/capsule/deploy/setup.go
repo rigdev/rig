@@ -250,8 +250,9 @@ func setupConfigurationFlags(c *cobra.Command) {
 			"of the config-file within the container",
 	)
 	flags.StringSliceVar(&networkInterfaces, "set-network-interface", nil,
-		"create or update the network interface. The argument is a file from where the network interface "+
-			"can be read. The Network Interface must have both a name and a port.")
+		"create or update the network interface. The argument is a YAML file from where the network interface "+
+			"can be read. The Network Interface must have both a name and a port. The format of a network interface is "+
+			"defined here: https://docs.prod.rig.dev/api/platformv1#capsuleinterface")
 	flags.StringSliceVar(&removeNetworkInterfaces, "rm-network-interface", nil,
 		"remove a network interface by name.")
 	flags.StringVarP(

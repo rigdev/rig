@@ -519,14 +519,12 @@ func (c *Cmd) migrateDeployment(
 	migration.capsuleSpec.Image = container.Image
 	migration.capsuleSpec.Scale = &platformv1.Scale{
 		Horizontal: &platformv1.HorizontalScale{
-			Instances: &platformv1.Instances{
-				Min: 1,
-			},
+			Min: 1,
 		},
 	}
 
 	if migration.currentResources.Deployment.Spec.Replicas != nil {
-		migration.capsuleSpec.Scale.Horizontal.Instances.Min = uint32(*migration.currentResources.Deployment.Spec.Replicas)
+		migration.capsuleSpec.Scale.Horizontal.Min = uint32(*migration.currentResources.Deployment.Spec.Replicas)
 	}
 
 	if len(container.Resources.Requests) > 0 || len(container.Resources.Limits) > 0 {
@@ -628,10 +626,8 @@ func (c *Cmd) migrateHPA(ctx context.Context, migration *Migration) error {
 			}
 
 			specHorizontalScale := &platformv1.HorizontalScale{
-				Instances: &platformv1.Instances{
-					Max: uint32(hpa.Spec.MaxReplicas),
-					Min: uint32(*hpa.Spec.MinReplicas),
-				},
+				Max: uint32(hpa.Spec.MaxReplicas),
+				Min: uint32(*hpa.Spec.MinReplicas),
 			}
 			if metrics := hpa.Spec.Metrics; len(metrics) > 0 {
 				for _, metric := range metrics {

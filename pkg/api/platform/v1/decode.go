@@ -161,7 +161,7 @@ func NewCapsuleProto(projectID, environmentID, capsuleID string, spec *platformv
 		Environment: environmentID,
 		Spec:        spec,
 	}
-	initialise(res)
+	InitialiseProto(res)
 	return res
 }
 
@@ -173,11 +173,11 @@ func NewCapsuleSetProto(projectID, capsuleID string, spec *platformv1.CapsuleSpe
 		Project:    projectID,
 		Spec:       spec,
 	}
-	initialise(res)
+	InitialiseProto(res)
 	return res
 }
 
-func initialise(msg proto.Message) {
+func InitialiseProto(msg proto.Message) {
 	reflectMsg := msg.ProtoReflect()
 	fields := reflectMsg.Descriptor().Fields()
 	for i := 0; i < fields.Len(); i++ {
@@ -191,19 +191,29 @@ func initialise(msg proto.Message) {
 			if !reflectMsg.Has(field) {
 				reflectMsg.Set(field, reflectMsg.NewField(field))
 			}
-			initialise(reflectMsg.Get(field).Message().Interface())
+			InitialiseProto(reflectMsg.Get(field).Message().Interface())
 		}
 	}
+}
+
+func DefaultCapsuleSpec() *platformv1.CapsuleSpec {
+	spec := &platformv1.CapsuleSpec{}
+	InitialiseProto(spec)
+	spec.Scale.Horizontal.Instances = nil
+	spec.Scale.Horizontal.Min = 1
+	spec.Scale.Vertical.Cpu.Request = "0.2"
+	spec.Scale.Vertical.Memory.Request = "256Mi"
+	return spec
 }
 
 func cleanProto(msg proto.Message) {
 	if msg == nil {
 		return
 	}
-	cleanReflect(msg.ProtoReflect())
+	cleanReflectMessage(msg.ProtoReflect())
 }
 
-func cleanReflect(msg protoreflect.Message) {
+func cleanReflectMessage(msg protoreflect.Message) {
 	if msg == nil {
 		return
 	}
@@ -213,21 +223,56 @@ func cleanReflect(msg protoreflect.Message) {
 		field := fields.Get(i)
 		value := msg.Get(field)
 		if field.IsMap() {
-			if value.Map().Len() == 0 {
-				msg.Clear(field)
-			}
-		} else if field.IsList() {
-			if value.List().Len() == 0 {
-				msg.Clear(field)
-			}
-		} else if field.Kind() == protoreflect.MessageKind {
-			if isEmpty(value.Message()) {
+			m := value.Map()
+			if m.Len() == 0 {
 				msg.Clear(field)
 			} else {
-				cleanReflect(value.Message())
+				cleanReflectMap(m, field.MapValue())
+			}
+		} else if field.IsList() {
+			list := value.List()
+			if list.Len() == 0 {
+				msg.Clear(field)
+			} else {
+				cleanReflectList(list)
+			}
+		} else if field.Kind() == protoreflect.MessageKind {
+			cleanReflectMessage(value.Message())
+			if isEmpty(value.Message()) {
+				msg.Clear(field)
 			}
 		}
 	}
+}
+
+func cleanReflectList(list protoreflect.List) {
+	if list.Len() == 0 {
+		return
+	}
+	// A proto list either contains primitives or messages
+	// There is unfortunately no way of directly getting the type/kind of list elements
+	// so this hack must do.
+	v := list.Get(0)
+	if _, ok := v.Interface().(protoreflect.Message); ok {
+		for idx := 0; idx < list.Len(); idx++ {
+			cleanReflectMessage(list.Get(idx).Message())
+		}
+	}
+}
+
+func cleanReflectMap(m protoreflect.Map, valueDescriptor protoreflect.FieldDescriptor) {
+	if m.Len() == 0 {
+		return
+	}
+	// A map value is either a primitive or a message
+	// We are only interested in messages
+	m.Range(func(_ protoreflect.MapKey, v protoreflect.Value) bool {
+		if valueDescriptor.Kind() == protoreflect.MessageKind {
+			cleanReflectMessage(v.Message())
+			return true
+		}
+		return false
+	})
 }
 
 func isEmpty(msg protoreflect.Message) bool {
