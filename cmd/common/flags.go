@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/rigdev/rig/pkg/utils"
 	"github.com/spf13/pflag"
 	"golang.org/x/term"
 )
@@ -90,7 +92,8 @@ func groupedFlagUsages(cmd *pflag.FlagSet) string {
 			s := fmt.Sprintf("  %s Flags\n", name)
 			buf.Write([]byte(s))
 		}
-		buf.Write([]byte(wrappedFlagUsages(group.flags)))
+		s := flagUsages(group.flags)
+		buf.Write([]byte(s))
 		if idx != len(groups)-1 {
 			buf.Write([]byte("\n"))
 		}
@@ -103,15 +106,80 @@ func groupedFlagUsages(cmd *pflag.FlagSet) string {
 // Uses the users terminal size or width of 80 if cannot determine users width
 //
 //nolint:lll
-func wrappedFlagUsages(cmd *pflag.FlagSet) string {
+// func wrappedFlagUsages(cmd *pflag.FlagSet) string {
+// 	fd := int(os.Stdout.Fd())
+// 	width := 80
+
+// 	// Get the terminal width and dynamically set
+// 	termWidth, _, err := term.GetSize(fd)
+// 	if err == nil {
+// 		width = termWidth
+// 	}
+
+// 	var buffer bytes.Buffer
+// 	numFlags := 0
+// 	cmd.VisitAll(func(_ *pflag.Flag) { numFlags++ })
+// 	idx := 0
+// 	cmd.VisitAll(func(p *pflag.Flag) {
+// 		idx++
+// 		set := pflag.NewFlagSet("", pflag.ContinueOnError)
+// 		set.AddFlag(p)
+// 		s := set.FlagUsagesWrapped(width - 1)
+// 		buffer.WriteString(s)
+// 		if idx < numFlags {
+// 			buffer.WriteString("\n")
+// 		}
+// 	})
+// 	return buffer.String()
+// }
+
+const maxWidth = 120
+
+func flagUsages(flags *pflag.FlagSet) string {
 	fd := int(os.Stdout.Fd())
 	width := 80
-
-	// Get the terminal width and dynamically set
 	termWidth, _, err := term.GetSize(fd)
 	if err == nil {
-		width = termWidth
+		width = min(termWidth, maxWidth)
 	}
 
-	return cmd.FlagUsagesWrapped(width - 1)
+	var buffer bytes.Buffer
+	indent := "  "
+	numFlags := 0
+	flags.VisitAll(func(_ *pflag.Flag) { numFlags++ })
+	idx := 0
+	flags.VisitAll(func(flag *pflag.Flag) {
+		idx++
+		if flag.Hidden {
+			return
+		}
+		header := ""
+		if flag.Shorthand != "" && flag.ShorthandDeprecated == "" {
+			header = fmt.Sprintf("%s-%s, --%s", indent, flag.Shorthand, flag.Name)
+		} else {
+			header = fmt.Sprintf("%s--%s", indent, flag.Name)
+		}
+		if flag.NoOptDefVal != "" {
+			switch flag.Value.Type() {
+			case "string":
+				header += fmt.Sprintf("[=\"%s\"]", flag.NoOptDefVal)
+			case "bool":
+				if flag.NoOptDefVal != "true" {
+					header += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
+				}
+			case "count":
+				if flag.NoOptDefVal != "+1" {
+					header += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
+				}
+			default:
+				header += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
+			}
+		}
+		color.New(color.Bold).Fprintln(&buffer, header+":")
+		buffer.WriteString(utils.WordWrap(flag.Usage, width, indent+indent))
+		if idx < numFlags {
+			buffer.WriteString("\n")
+		}
+	})
+	return buffer.String()
 }
