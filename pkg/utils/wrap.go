@@ -59,11 +59,14 @@ func writeUnits(units []unit, width int, indent string, buffer *bytes.Buffer) {
 	if units[len(units)-1].isWhitespace {
 		units = units[:len(units)-1]
 	}
+
 	w := 0
 	for _, u := range units {
 		w += len(u.s)
 	}
 	missing := width - w - len(indent)
+
+	// Justify line
 	if missing < 10 {
 		idx := 0
 		for missing > 0 {
@@ -74,6 +77,7 @@ func writeUnits(units []unit, width int, indent string, buffer *bytes.Buffer) {
 			idx = (idx + 1) % len(units)
 		}
 	}
+
 	buffer.WriteString(indent)
 	for _, u := range units {
 		buffer.WriteString(u.s)
