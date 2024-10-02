@@ -4440,7 +4440,6 @@ The actual log message
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | spec | [platform.v1.Capsule](#platform-v1-Capsule) |  |  |
-| changes | [Change](#api-v1-capsule-Change) | repeated |  |
 | metadata | [model.ProposalMetadata](#model-ProposalMetadata) |  |  |
 
 
@@ -4458,7 +4457,6 @@ The actual log message
 | ----- | ---- | ----- | ----------- |
 | spec | [platform.v1.Capsule](#platform-v1-Capsule) |  |  |
 | metadata | [model.RevisionMetadata](#model-RevisionMetadata) |  |  |
-| changes | [Change](#api-v1-capsule-Change) | repeated |  |
 | message | [string](#string) |  |  |
 
 
@@ -4475,7 +4473,6 @@ The actual log message
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | spec | [platform.v1.CapsuleSet](#platform-v1-CapsuleSet) |  |  |
-| changes | [Change](#api-v1-capsule-Change) | repeated |  |
 | metadata | [model.ProposalMetadata](#model-ProposalMetadata) |  |  |
 
 
@@ -4970,7 +4967,6 @@ The rollout model.
 | ----- | ---- | ----- | ----------- |
 | created_by | [model.Author](#model-Author) |  | The user who initiated the rollout. |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| changes | [Change](#api-v1-capsule-Change) | repeated |  |
 | replicas | [uint32](#uint32) |  |  |
 | image_id | [string](#string) |  |  |
 | network | [Network](#api-v1-capsule-Network) |  |  |
