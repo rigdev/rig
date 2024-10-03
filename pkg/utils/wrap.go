@@ -72,7 +72,7 @@ func writeUnits(units []unit, width int, indent string, buffer *bytes.Buffer) {
 		for missing > 0 {
 			if !units[idx].isWhitespace && idx != len(units)-1 {
 				units[idx].s += " "
-				missing -= 1
+				missing--
 			}
 			idx = (idx + 1) % len(units)
 		}
