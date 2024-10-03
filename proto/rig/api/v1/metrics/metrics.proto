@@ -18,5 +18,5 @@ message Tags {
   string project = 1;
   string environment = 2;
   string capsule = 3;
-  string metric_type = 4;
+  string metric_name = 4;
 }

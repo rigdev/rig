@@ -50,4 +50,6 @@ message Trigger {
   // If true, all conditions must be met for the trigger to fire. Otherwise only
   // a single condition must be met.
   bool require_all = 2;
+  // If true, the trigger is enabled. Otherwise it is disabled.
+  bool enabled = 3;
 }
