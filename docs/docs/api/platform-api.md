@@ -8095,7 +8095,7 @@ A docker image tag.
 | project | [string](#string) |  |  |
 | environment | [string](#string) |  |  |
 | capsule | [string](#string) |  |  |
-| metric_type | [string](#string) |  |  |
+| metric_name | [string](#string) |  |  |
 
 
 
@@ -8379,6 +8379,7 @@ A docker image tag.
 | ----- | ---- | ----- | ----------- |
 | conditions | [Trigger.Condition](#model-Trigger-Condition) | repeated | The conditions that must be met for the trigger to fire. |
 | require_all | [bool](#bool) |  | If true, all conditions must be met for the trigger to fire. Otherwise only a single condition must be met. |
+| enabled | [bool](#bool) |  | If true, the trigger is enabled. Otherwise it is disabled. |
 
 
 
