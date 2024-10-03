@@ -102,37 +102,6 @@ func groupedFlagUsages(cmd *pflag.FlagSet) string {
 	return buf.String()
 }
 
-// Stolen from https://github.com/vmware-tanzu/community-edition/blob/138acbf49d492815d7f72055db0186c43888ae15/cli/cmd/plugin/unmanaged-cluster/cmd/utils.go#L74-L113
-// Uses the users terminal size or width of 80 if cannot determine users width
-//
-//nolint:lll
-// func wrappedFlagUsages(cmd *pflag.FlagSet) string {
-// 	fd := int(os.Stdout.Fd())
-// 	width := 80
-
-// 	// Get the terminal width and dynamically set
-// 	termWidth, _, err := term.GetSize(fd)
-// 	if err == nil {
-// 		width = termWidth
-// 	}
-
-// 	var buffer bytes.Buffer
-// 	numFlags := 0
-// 	cmd.VisitAll(func(_ *pflag.Flag) { numFlags++ })
-// 	idx := 0
-// 	cmd.VisitAll(func(p *pflag.Flag) {
-// 		idx++
-// 		set := pflag.NewFlagSet("", pflag.ContinueOnError)
-// 		set.AddFlag(p)
-// 		s := set.FlagUsagesWrapped(width - 1)
-// 		buffer.WriteString(s)
-// 		if idx < numFlags {
-// 			buffer.WriteString("\n")
-// 		}
-// 	})
-// 	return buffer.String()
-// }
-
 const maxWidth = 120
 
 func flagUsages(flags *pflag.FlagSet) string {
