@@ -42,7 +42,7 @@ Flags:
 {{- if .HasAvailableInheritedFlags}}
 
 Global Flags:
-{{wrappedFlagUsages .InheritedFlags | trimTrailingWhitespaces}}
+{{groupedFlagUsages .InheritedFlags | trimTrailingWhitespaces}}
 {{- end}}
 
 {{- if .HasHelpSubCommands}}
@@ -54,7 +54,6 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 `
 
 func SetupRoot(cmd *cobra.Command) {
-	cobra.AddTemplateFunc("wrappedFlagUsages", wrappedFlagUsages)
 	cobra.AddTemplateFunc("groupedFlagUsages", groupedFlagUsages)
 	cmd.SetUsageTemplate(usageTemplate)
 
