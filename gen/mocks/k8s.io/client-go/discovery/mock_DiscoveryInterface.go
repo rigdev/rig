@@ -455,7 +455,7 @@ type MockDiscoveryInterface_ServerResourcesForGroupVersion_Call struct {
 
 // ServerResourcesForGroupVersion is a helper method to define mock.On call
 //   - groupVersion string
-func (_e *MockDiscoveryInterface_Expecter) ServerResourcesForGroupVersion(groupVersion any) *MockDiscoveryInterface_ServerResourcesForGroupVersion_Call {
+func (_e *MockDiscoveryInterface_Expecter) ServerResourcesForGroupVersion(groupVersion interface{}) *MockDiscoveryInterface_ServerResourcesForGroupVersion_Call {
 	return &MockDiscoveryInterface_ServerResourcesForGroupVersion_Call{Call: _e.mock.On("ServerResourcesForGroupVersion", groupVersion)}
 }
 
