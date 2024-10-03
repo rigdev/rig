@@ -11,6 +11,7 @@ const (
 	ResourceSettings       = "settings"
 	ResourceCluster        = "cluster"
 	ResourceEnvironment    = "environment"
+	ResourceMetrics        = "metrics"
 )
 
 func WithWildcard(resource string) string {
