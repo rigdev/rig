@@ -535,7 +535,7 @@ func (ow *objectWatcher) Watch(options metav1.ListOptions) (watch.Interface, err
 	return wi, err
 }
 
-func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
+func (ow *objectWatcher) OnAdd(obj any, _ bool) {
 	if e, ok := obj.(*corev1.Event); ok {
 		key := cache.NewObjectName(e.InvolvedObject.Namespace, e.InvolvedObject.Name)
 		item, exists, err := ow.store.GetByKey(key.String())
@@ -596,11 +596,11 @@ func (ow *objectWatcher) OnAdd(obj interface{}, _ bool) {
 	}
 }
 
-func (ow *objectWatcher) OnUpdate(_, newObj interface{}) {
+func (ow *objectWatcher) OnUpdate(_, newObj any) {
 	ow.OnAdd(newObj, false)
 }
 
-func (ow *objectWatcher) OnDelete(obj interface{}) {
+func (ow *objectWatcher) OnDelete(obj any) {
 	if e, ok := obj.(*corev1.Event); ok {
 		key := cache.NewObjectName(e.InvolvedObject.Namespace, e.InvolvedObject.Name)
 		item, exists, err := ow.store.GetByKey(key.String())

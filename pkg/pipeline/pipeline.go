@@ -44,7 +44,7 @@ func (ok ObjectKey) String() string {
 	return fmt.Sprintf("%s/%s", ok.GroupVersionKind.String(), ok.ObjectKey.String())
 }
 
-func (ok ObjectKey) MarshalLog() interface{} {
+func (ok ObjectKey) MarshalLog() any {
 	return struct {
 		Group     string `json:"group,omitempty"`
 		Version   string `json:"version,omitempty"`

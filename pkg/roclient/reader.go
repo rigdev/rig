@@ -125,7 +125,7 @@ func (r *reader) List(_ context.Context, list client.ObjectList, opts ...client.
 		}
 	}
 
-	bs, err := gojson.Marshal(map[string]interface{}{
+	bs, err := gojson.Marshal(map[string]any{
 		"items": objs,
 	})
 	if err != nil {

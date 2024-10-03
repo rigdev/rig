@@ -82,7 +82,7 @@ func (c *Cmd) cronJobFromPath(path string) (*capsule.CronJob, error) {
 		return nil, err
 	}
 
-	var raw interface{}
+	var raw any
 	if err := yaml.Unmarshal(bytes, &raw); err != nil {
 		return nil, err
 	}

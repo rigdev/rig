@@ -124,7 +124,7 @@ object: |
 			}
 			require.NoError(t, plugin.Run(context.Background(), req, hclog.Default()))
 			vpa := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "vpcresources.k8s.aws/v1beta1",
 					"kind":       "SecurityGroupPolicy",
 					"metadata": map[string]any{

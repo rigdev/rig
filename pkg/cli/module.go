@@ -87,7 +87,7 @@ var Module = fx.Module(
 	fx.Provide(func() common.Prompter { return common.StandardPrompter{} }),
 )
 
-type ContextDependency interface{}
+type ContextDependency any
 
 type contextParams struct {
 	fx.In

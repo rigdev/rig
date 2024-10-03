@@ -36,7 +36,7 @@ func ParseTemplatedConfig[T any](data []byte, req pipeline.CapsuleRequest, steps
 		}
 
 		for k, v := range m {
-			result := map[string]interface{}{}
+			result := map[string]any{}
 			d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{TagName: "json", Result: &result})
 			if err != nil {
 				return empty, err
