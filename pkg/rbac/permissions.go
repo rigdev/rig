@@ -109,6 +109,14 @@ func GetViewerPermissions(projectID, environmentID string) []*role.Permission {
 				Project:     projectID,
 			},
 		},
+		{
+			Action: ActionMetricsView,
+			Scope: &role.Scope{
+				Resource:    WithWildcard(ResourceMetrics),
+				Environment: environmentID,
+				Project:     projectID,
+			},
+		},
 	}
 }
 

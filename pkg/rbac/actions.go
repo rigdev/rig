@@ -6,6 +6,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/environment/environmentconnect"
 	"github.com/rigdev/rig-go-api/api/v1/group/groupconnect"
 	"github.com/rigdev/rig-go-api/api/v1/image/imageconnect"
+	"github.com/rigdev/rig-go-api/api/v1/metrics/metricsconnect"
 	"github.com/rigdev/rig-go-api/api/v1/project/projectconnect"
 	"github.com/rigdev/rig-go-api/api/v1/role/roleconnect"
 	"github.com/rigdev/rig-go-api/api/v1/service_account/service_accountconnect"
@@ -107,6 +108,7 @@ const (
 	ActionCapsulePortForward = "capsule:portfoward"
 )
 
+// Image actions
 const (
 	// Create images
 	ActionImageAdd = "image:add"
@@ -116,11 +118,17 @@ const (
 	ActionImageView = "image:view"
 )
 
+// Environment actions
 const (
 	ActionEnvironmentEdit = "environment:edit"
 	// Create and delete ephemeral environments
 	ActionEnvironmentEditEphemeral = "environment:edit:ephemeral"
 	ActionEnvironmentView          = "environment:view"
+)
+
+// Metrics actions
+const (
+	ActionMetricsView = "metrics:view"
 )
 
 var CapsuleActionMap = map[string]string{
@@ -246,4 +254,9 @@ var EnvironmentActionMap = map[string]string{
 	environmentconnect.ServiceGetNamespacesProcedure: ActionEnvironmentView,
 	environmentconnect.ServiceListProcedure:          ActionEnvironmentView,
 	environmentconnect.ServiceUpdateProcedure:        ActionEnvironmentEdit,
+}
+
+var MetricsActionMap = map[string]string{
+	metricsconnect.ServiceGetMetricsProcedure:     ActionMetricsView,
+	metricsconnect.ServiceGetMetricsManyProcedure: ActionMetricsView,
 }
