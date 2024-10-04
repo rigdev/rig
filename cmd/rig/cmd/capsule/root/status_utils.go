@@ -226,7 +226,7 @@ type getInfoStep interface {
 	GetInfo() *rollout.StepInfo
 }
 
-func GetStepInfo(s interface{}) *rollout.StepInfo {
+func GetStepInfo(s any) *rollout.StepInfo {
 	msg, ok := s.(protoreflect.ProtoMessage)
 	if !ok {
 		return nil

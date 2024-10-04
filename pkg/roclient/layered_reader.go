@@ -75,7 +75,7 @@ func (r *LayeredReader) List(ctx context.Context, list client.ObjectList, opts .
 		}
 	}
 
-	bs, err := gojson.Marshal(map[string]interface{}{
+	bs, err := gojson.Marshal(map[string]any{
 		"items": objs,
 	})
 	if err != nil {

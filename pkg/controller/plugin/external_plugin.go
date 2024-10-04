@@ -90,7 +90,7 @@ type loggerSink struct {
 	logger logr.Logger
 }
 
-func (l *loggerSink) Accept(name string, level hclog.Level, msg string, args ...interface{}) {
+func (l *loggerSink) Accept(name string, level hclog.Level, msg string, args ...any) {
 	logger := l.logger.WithName(name).WithValues(args...)
 	if level < hclog.Info {
 		return

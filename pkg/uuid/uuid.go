@@ -71,7 +71,7 @@ func (u *UUID) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-func (u UUID) MarshalYAML() (interface{}, error) {
+func (u UUID) MarshalYAML() (any, error) {
 	if u == Nil {
 		return "", nil
 	}
@@ -105,7 +105,7 @@ func (u *UUID) Unmarshal(v *yaml.Node) error {
 }
 
 func MapstructureDecodeFunc() mapstructure.DecodeHookFuncType {
-	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(f reflect.Type, t reflect.Type, data any) (any, error) {
 		if f == reflect.TypeOf("") && t == reflect.TypeOf(Nil) {
 			s := data.(string)
 

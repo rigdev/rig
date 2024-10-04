@@ -105,14 +105,14 @@ func (s *sliceHeap[E]) Less(i, j int) bool {
 	return s.less(s.s[i], s.s[j])
 }
 
-func (s *sliceHeap[E]) Push(x interface{}) {
+func (s *sliceHeap[E]) Push(x any) {
 	s.s = append(s.s, x.(E))
 	if s.setIndex != nil {
 		s.setIndex(s.s[len(s.s)-1], len(s.s)-1)
 	}
 }
 
-func (s *sliceHeap[E]) Pop() interface{} {
+func (s *sliceHeap[E]) Pop() any {
 	e := s.s[len(s.s)-1]
 	if s.setIndex != nil {
 		s.setIndex(e, -1)

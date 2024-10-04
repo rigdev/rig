@@ -25,7 +25,7 @@ import (
 
 var options []fx.Option
 
-func Register(f interface{}) func(cmd *cobra.Command, args []string) error {
+func Register(f any) func(cmd *cobra.Command, args []string) error {
 	options = append(options,
 		fx.Provide(f),
 	)
