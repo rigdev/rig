@@ -166,10 +166,18 @@ message GetEffectiveGitSettingsResponse {
 
 message GetEffectivePipelineSettingsRequest {
   string project_id = 1;
+  // If set, the response will contain information as to whether the pipeline is
+  // already running for that capsule.
+  string capsule_id = 2;
 }
 
 message GetEffectivePipelineSettingsResponse {
-  repeated model.Pipeline pipelines = 1;
+  message Pipeline {
+    model.Pipeline pipeline = 1;
+    bool already_running = 2;
+  }
+
+  repeated Pipeline pipelines = 1;
 }
 
 message GetEffectiveNotificationSettingsRequest {

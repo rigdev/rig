@@ -8705,6 +8705,7 @@ Response for getting custom metrics for a project and environment.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | project_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  | If set, the response will contain information as to whether the pipeline is already running for that capsule. |
 
 
 
@@ -8719,7 +8720,23 @@ Response for getting custom metrics for a project and environment.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| pipelines | [model.Pipeline](#model-Pipeline) | repeated |  |
+| pipelines | [GetEffectivePipelineSettingsResponse.Pipeline](#api-v1-project-GetEffectivePipelineSettingsResponse-Pipeline) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-project-GetEffectivePipelineSettingsResponse-Pipeline"></a>
+
+### GetEffectivePipelineSettingsResponse.Pipeline
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pipeline | [model.Pipeline](#model-Pipeline) |  |  |
+| already_running | [bool](#bool) |  |  |
 
 
 
