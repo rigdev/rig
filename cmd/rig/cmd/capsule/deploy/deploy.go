@@ -276,7 +276,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 		if err != nil {
 			return nil, err
 		}
-		spec.Spec.Env.Sources = removeFromList(
+		spec.Spec.Env.Sources = utils.RemoveFromList(
 			spec.Spec.Env.Sources, source,
 			func(s1, s2 *platformv1.EnvironmentSource) bool {
 				return s1.Name == s2.Name && s1.Kind == s2.Kind
@@ -288,7 +288,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 		if err != nil {
 			return nil, err
 		}
-		spec.Spec.Env.Sources = insertInList(
+		spec.Spec.Env.Sources = utils.InsertInList(
 			spec.Spec.Env.Sources, source,
 			func(s *platformv1.EnvironmentSource, s2 *platformv1.EnvironmentSource) bool {
 				return s.GetName() == s2.GetName() && s.GetKind() == s2.GetKind()
@@ -388,7 +388,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 			Bytes:    bs,
 			String_:  string(bs),
 		}
-		spec.Spec.Files = insertInList(spec.Spec.Files, file, func(f1, f2 *platformv1.File) bool {
+		spec.Spec.Files = utils.InsertInList(spec.Spec.Files, file, func(f1, f2 *platformv1.File) bool {
 			return f1.GetPath() == f2.GetPath()
 		})
 	}
@@ -419,7 +419,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 				Key:  key,
 			},
 		}
-		spec.Spec.Files = insertInList(spec.Spec.Files, file, func(f1, f2 *platformv1.File) bool {
+		spec.Spec.Files = utils.InsertInList(spec.Spec.Files, file, func(f1, f2 *platformv1.File) bool {
 			return f1.GetPath() == f2.GetPath()
 		})
 	}
@@ -474,25 +474,6 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 	}
 
 	return spec, nil
-}
-
-func insertInList[T any](existing []T, obj T, equal func(T, T) bool) []T {
-	for idx, o := range existing {
-		if equal(o, obj) {
-			existing[idx] = obj
-			return existing
-		}
-	}
-	return append(existing, obj)
-}
-
-func removeFromList[T any, K any](existing []T, key K, equal func(T, K) bool) []T {
-	for idx, o := range existing {
-		if equal(o, key) {
-			return append(existing[:idx], existing[idx+1:]...)
-		}
-	}
-	return existing
 }
 
 func validateConfigFilePath(p string, s string) error {

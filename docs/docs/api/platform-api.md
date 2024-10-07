@@ -4783,6 +4783,71 @@ Information on the instances of the rollout.
 
 
 
+<a name="api-v1-capsule-rollout-Metric"></a>
+
+### Metric
+Metric defines a custom Rollout metric
+Examples:
+
+Emit when rollout starts
+  - stage_name="configure", stage_state={"states": [], "not": true},
+  duration_since="start", duration=0s
+  - This stage_state matches all states of the Configure stage and
+  immediately triggers as duration is 0s
+
+ConfigureCluster takes more than 5 minutes
+  - stage_name="configure" stage_state={"states": ["done"], "not": true},
+  duration_since="stage_enter", duration=5min
+
+ResourceCreation takes more than 5 minutes
+  - stage_name="resource_creation" stage_state={"states": ["done"], "not":
+  true}, duration_since="stage_enter", duration=5min
+  - duration_since="stage_enter" first starts the timer when the rollout
+  reaches the ResourceCreation stage, and not from the begining
+
+At any point in time have Instances be in ONGOING/FAILED for more than 5
+minutes
+  - stage_name="running", step_type="instances", step_state={"states":
+  ["done"], "not": true}, duration_since=step_state_enter,
+  condition_type=any_time_in_condition, duration=5min
+
+Not been in Instances DONE since the start for 5 minutes, but its okay if it
+later on shifts from DONE to ONGOING/FAILEDNGOING/FAILED for more than 5
+minutes
+  - stage_name="running", step_type="instances", step_state={"states":
+  ["done"]}, negate_condition=true, duration_since=start,
+  condition_type=first_time_in_condition, duration=5min
+
+Not been in Instances DONE since entering RUNNING for 5 minutes, but its okay
+if it later on shifts from DONE to ONGOING/FAILEDNGOING/FAILED for more than
+5 minutes
+  - stage_name="running", step_type="instances", step_state={"states":
+  ["done"], "not": true}, duration_since=stage_enter,
+  condition_type=first_time_in_condition, duration=5min
+
+I use strings instead of ENUMS because I envision people would write a YAML
+spec of this message when creating rollout metrics. Thus using ENUMs would
+change the yaml from interpretable strings to opaque integers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| stage_name | [string](#string) |  |  |
+| stage_state | [StateSelector](#api-v1-capsule-rollout-StateSelector) |  |  |
+| step_type | [string](#string) |  |  |
+| step_name | [string](#string) |  |  |
+| step_state | [StateSelector](#api-v1-capsule-rollout-StateSelector) |  |  |
+| duration_since | [string](#string) |  | start stage_enter stage_state_enter step_enter step_state_enter |
+| duration | [google.protobuf.Duration](#google-protobuf-Duration) |  |  |
+| negate_condition | [bool](#bool) |  |  |
+| condition_type | [string](#string) |  | TODO Find better name first_time_in_condition any_time_in_condition |
+
+
+
+
+
+
 <a name="api-v1-capsule-rollout-ResourceCreationStage"></a>
 
 ### ResourceCreationStage
@@ -4876,6 +4941,22 @@ The three stages of a rollout
 | configure | [ConfigureStage](#api-v1-capsule-rollout-ConfigureStage) |  | The configure stage. |
 | resource_creation | [ResourceCreationStage](#api-v1-capsule-rollout-ResourceCreationStage) |  | The resource creation stage. |
 | running | [RunningStage](#api-v1-capsule-rollout-RunningStage) |  | The running stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-StateSelector"></a>
+
+### StateSelector
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| states | [string](#string) | repeated |  |
+| not | [bool](#bool) |  |  |
 
 
 
@@ -10048,6 +10129,36 @@ Platform wide static configuration.
 
 
 
+<a name="api-v1-settings-Metrics"></a>
+
+### Metrics
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rollout_metrics | [RolloutMetrics](#api-v1-settings-RolloutMetrics) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-RolloutMetrics"></a>
+
+### RolloutMetrics
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metrics | [api.v1.capsule.rollout.Metric](#api-v1-capsule-rollout-Metric) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-settings-Settings"></a>
 
 ### Settings
@@ -10059,6 +10170,7 @@ Platform wide settings.
 | notification_notifiers | [model.NotificationNotifier](#model-NotificationNotifier) | repeated |  |
 | git_store | [model.GitStore](#model-GitStore) |  |  |
 | pipelines | [model.Pipeline](#model-Pipeline) | repeated |  |
+| metrics | [Metrics](#api-v1-settings-Metrics) |  |  |
 
 
 
@@ -10076,6 +10188,23 @@ Update message for platform settings.
 | set_notification_notifiers | [Update.SetNotificationNotifiers](#api-v1-settings-Update-SetNotificationNotifiers) |  | Set the notification notifiers. |
 | set_git_store | [model.GitStore](#model-GitStore) |  | Set the git store. |
 | set_pipelines | [Update.SetPipelines](#api-v1-settings-Update-SetPipelines) |  | Set the pipelines. |
+| add_rollout_metric | [api.v1.capsule.rollout.Metric](#api-v1-capsule-rollout-Metric) |  |  |
+| remove_rollout_metric | [Update.RemoveRolloutMetric](#api-v1-settings-Update-RemoveRolloutMetric) |  |  |
+
+
+
+
+
+
+<a name="api-v1-settings-Update-RemoveRolloutMetric"></a>
+
+### Update.RemoveRolloutMetric
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
 
 
 

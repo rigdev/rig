@@ -23,6 +23,12 @@ var cmd Cmd
 
 var gitFlags common.GitFlags
 
+var (
+	addMetric    []string
+	removeMetric []string
+	dry          bool
+)
+
 func initCmd(c Cmd) {
 	cmd = c
 }
@@ -71,6 +77,17 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	}
 	gitFlags.AddFlags(updateGit)
 	update.AddCommand(updateGit)
+
+	updateMetrics := &cobra.Command{
+		Use:   "metrics",
+		Short: "Update metric settings",
+		RunE:  cli.CtxWrap(cmd.updateMetrics),
+		Args:  cobra.NoArgs,
+	}
+	updateMetrics.Flags().StringArrayVarP(&addMetric, "add", "a", nil, "Adds the metric defined by the yaml/json file at the path.")
+	updateMetrics.Flags().StringArrayVarP(&removeMetric, "remov", "r", nil, "Removes the metric with the given name")
+	updateMetrics.Flags().BoolVarP(&dry, "dry", "d", false, "Displays the resulting settings configuration without applying.")
+	update.AddCommand(updateMetrics)
 
 	parent.AddCommand(settings)
 }
