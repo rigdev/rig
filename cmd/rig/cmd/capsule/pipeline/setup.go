@@ -15,6 +15,7 @@ import (
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/capsule"
+	capsule_cmd "github.com/rigdev/rig/cmd/rig/cmd/capsule"
 	"github.com/rigdev/rig/cmd/rig/cmd/completions"
 	"github.com/rigdev/rig/cmd/rig/services/auth"
 	"github.com/rigdev/rig/pkg/cli"
@@ -38,6 +39,7 @@ var (
 	limit        int
 	pipelineName string
 	dryRun       bool
+	force        bool
 )
 
 var cmd Cmd
@@ -123,9 +125,9 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 	pipeline.AddCommand(pipelineAbort)
 
 	pipelineProgress := &cobra.Command{
-		Use: "progress [execution-id]",
-		Short: "Progress the pipeline to the next phase. " +
-			"This will only work if the pipeline is in a state that allows progression. " +
+		Use: "promote [execution-id]",
+		Short: "promote the pipeline to the next phase. " +
+			"This will only work if the pipeline is in a state that allows promotion. " +
 			"I.e. it has a manual trigger",
 		Args: cobra.MaximumNArgs(1),
 		ValidArgsFunction: common.Complete(
@@ -138,8 +140,11 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		},
 	}
 	pipelineProgress.Flags().BoolVar(&dryRun, "dry-run", false,
-		"Dry run the progression. If interactive, it will interactively show the diffs. "+
+		"Dry run the promotion. If interactive, it will interactively show the diffs. "+
 			"Otherwise it will print the resulting resources.")
+	pipelineProgress.Flags().BoolVar(&force, "force", false,
+		"Force the promotion. This will bypass any ready checks and "+
+			"force a manual promotion no matter the configured triggers.")
 	pipeline.AddCommand(pipelineProgress)
 
 	parent.AddCommand(pipeline)
@@ -163,6 +168,7 @@ func (c *Cmd) promptForPipelineName(ctx context.Context) (string, error) {
 	resp, err := c.Rig.Project().GetEffectivePipelineSettings(ctx,
 		connect.NewRequest(&project_api.GetEffectivePipelineSettingsRequest{
 			ProjectId: c.Scope.GetCurrentContext().GetProject(),
+			CapsuleId: capsule_cmd.CapsuleID,
 		}))
 	if err != nil {
 		return "", err
@@ -170,16 +176,18 @@ func (c *Cmd) promptForPipelineName(ctx context.Context) (string, error) {
 
 	header := []string{
 		"Name",
-		"Initial Environment",
+		"1stEnv",
 		"#Phases",
+		"Running",
 	}
 
 	var rows [][]string
 	for _, pipeline := range resp.Msg.GetPipelines() {
 		rows = append(rows, []string{
-			pipeline.GetName(),
-			pipeline.GetInitialEnvironment(),
-			fmt.Sprint(len(pipeline.GetPhases())),
+			pipeline.GetPipeline().GetName(),
+			pipeline.GetPipeline().GetInitialEnvironment(),
+			fmt.Sprint(len(pipeline.GetPipeline().GetPhases())),
+			fmt.Sprint(pipeline.GetAlreadyRunning()),
 		})
 	}
 
@@ -188,7 +196,7 @@ func (c *Cmd) promptForPipelineName(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return resp.Msg.GetPipelines()[i].GetName(), nil
+	return resp.Msg.GetPipelines()[i].GetPipeline().GetName(), nil
 }
 
 func (c *Cmd) promptForPipelineID(ctx context.Context) (string, error) {
@@ -298,8 +306,8 @@ func (c *Cmd) pipelineNameCompletion(
 
 	var pipelineNames []string
 	for _, pipeline := range resp.Msg.GetPipelines() {
-		if strings.HasPrefix(pipeline.GetName(), toComplete) {
-			pipelineNames = append(pipelineNames, pipeline.GetName())
+		if strings.HasPrefix(pipeline.GetPipeline().GetName(), toComplete) {
+			pipelineNames = append(pipelineNames, pipeline.GetPipeline().GetName())
 		}
 	}
 
