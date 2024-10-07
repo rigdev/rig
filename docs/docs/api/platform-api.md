@@ -4212,6 +4212,7 @@ The actual log message
 | state | [PhaseState](#api-v1-capsule-pipeline-PhaseState) |  |  |
 | rollout_id | [uint64](#uint64) |  |  |
 | messages | [PhaseMessage](#api-v1-capsule-pipeline-PhaseMessage) | repeated |  |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 
@@ -4233,6 +4234,7 @@ The actual log message
 | phase_statuses | [PhaseStatus](#api-v1-capsule-pipeline-PhaseStatus) | repeated | The statuses of the phases in the pipeline. |
 | started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the pipeline was started. |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the pipeline was last updated. |
+| current_phase | [uint32](#uint32) |  | current phase |
 
 
 
@@ -6587,6 +6589,7 @@ The response of a capsule.Logs RPC
 | execution_id | [uint64](#uint64) |  |  |
 | dry_run | [bool](#bool) |  | If true, the progression will not be executed, but instead a breakdown of changes will be returned |
 | field_changes | [FieldChange](#api-v1-capsule-FieldChange) | repeated | additional changes to include in the manual promotion |
+| force | [bool](#bool) |  | If true, the pipeline will be force promoted to the next environment regardless of the state of the pipeline and the triggers. |
 
 
 
@@ -6724,6 +6727,7 @@ RestartInstanceResponse is an empty response.
 | capsule_id | [string](#string) |  |  |
 | pipeline_name | [string](#string) |  |  |
 | dry_run | [bool](#bool) |  |  |
+| abort_current | [bool](#bool) |  | If true, and the pipeline is already running for the capsule and project, it will be aborted and a new one started. |
 
 
 
@@ -8359,10 +8363,11 @@ A docker image tag.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | Custom name for the pipeline. |
-| initial_environment | [string](#string) |  |  |
-| phases | [Phase](#model-Phase) | repeated |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| initial_environment | [string](#string) |  | The environment to base the pipeline on. |
+| phases | [Phase](#model-Phase) | repeated | The subsequent phases of the pipeline to promote to. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the pipeline was created. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the pipeline was updated. |
+| description | [string](#string) |  | User specified description of the pipeline. |
 
 
 

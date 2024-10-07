@@ -8,10 +8,16 @@ import "google/protobuf/duration.proto";
 message Pipeline {
   // Custom name for the pipeline.
   string name = 1;
+  // The environment to base the pipeline on.
   string initial_environment = 2;
+  // The subsequent phases of the pipeline to promote to.
   repeated Phase phases = 3;
+  // The time the pipeline was created.
   google.protobuf.Timestamp created_at = 4;
+  // The time the pipeline was updated.
   google.protobuf.Timestamp updated_at = 5;
+  // User specified description of the pipeline.
+  string description = 6;
 }
 
 message Phase {
