@@ -19,6 +19,8 @@ message Status {
   google.protobuf.Timestamp started_at = 6;
   // When the pipeline was last updated.
   google.protobuf.Timestamp updated_at = 7;
+  // current phase
+  uint32 current_phase = 8;
 }
 
 message PhaseStatus {
@@ -26,6 +28,7 @@ message PhaseStatus {
   PhaseState state = 2;
   uint64 rollout_id = 3;
   repeated PhaseMessage messages = 4;
+  google.protobuf.Timestamp started_at = 5;
 }
 
 message PhaseMessage {
