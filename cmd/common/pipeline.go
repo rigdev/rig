@@ -167,15 +167,9 @@ func updatePipeline(
 			header := []string{"Environment", "Manual Trigger", "Auto Trigger", "Field Prefixes"}
 			rows := [][]string{}
 			for _, p := range pipeline.Phases {
-				manualTrigger := "None"
-				if p.GetTriggers().GetManual() != nil {
-					manualTrigger = triggerToString(p.GetTriggers().GetManual())
-				}
-
-				autoTrigger := "None"
-				if p.GetTriggers().GetAutomatic() != nil {
-					autoTrigger = triggerToString(p.GetTriggers().GetAutomatic())
-				}
+				fmt.Println(p.GetTriggers())
+				manualTrigger := triggerToString(p.GetTriggers().GetManual())
+				autoTrigger := triggerToString(p.GetTriggers().GetAutomatic())
 
 				fieldsString := ""
 				if len(p.GetFieldPrefixes().GetPrefixes()) > 0 {
@@ -349,30 +343,9 @@ func updateTriggers(prompter Prompter, triggers *model.Triggers) (*model.Trigger
 	}
 	triggers = proto.Clone(triggers).(*model.Triggers)
 
-	triggerToLabel := func(t *model.Trigger) string {
-		if t == nil {
-			return "None"
-		}
-
-		var conditions []string
-		for _, t := range t.GetConditions() {
-			switch v := t.GetCondition().(type) {
-			case *model.Trigger_Condition_TimeAlive:
-				conditions = append(conditions, fmt.Sprintf("Time Alive: %s", v.TimeAlive.AsDuration().String()))
-			}
-		}
-
-		triggerType := "one-of"
-		if t.GetRequireAll() {
-			triggerType = "all-of"
-		}
-
-		return fmt.Sprintf("%s (%s)", triggerType, strings.Join(conditions, ", "))
-	}
-
 	triggerLabels := []string{
-		"Auto " + triggerToLabel(triggers.GetAutomatic()),
-		"Manual " + triggerToLabel(triggers.GetManual()),
+		"Auto " + triggerToString(triggers.GetAutomatic()),
+		"Manual " + triggerToString(triggers.GetManual()),
 		"Done",
 	}
 
@@ -395,7 +368,7 @@ func updateTriggers(prompter Prompter, triggers *model.Triggers) (*model.Trigger
 			}
 
 			triggers.Manual = t
-			triggerLabels[1] = "Manual " + triggerToLabel(t)
+			triggerLabels[1] = "Manual " + triggerToString(t)
 		case 0:
 			// Add new trigger
 			t, err := updateTrigger(prompter, triggers.GetAutomatic())
@@ -407,7 +380,7 @@ func updateTriggers(prompter Prompter, triggers *model.Triggers) (*model.Trigger
 			}
 
 			triggers.Automatic = t
-			triggerLabels[0] = "Auto " + triggerToLabel(t)
+			triggerLabels[0] = "Auto " + triggerToString(t)
 		}
 	}
 }
@@ -423,9 +396,15 @@ func updateTrigger(prompter Prompter, trigger *model.Trigger) (*model.Trigger, e
 		require = "Require any condition"
 	}
 
+	enable := "Enable"
+	if trigger.GetEnabled() {
+		enable = "Disable"
+	}
+
 	fields := []string{
-		require,
 		"Conditions",
+		require,
+		enable,
 		"Clear",
 		"Done",
 	}
@@ -438,12 +417,6 @@ func updateTrigger(prompter Prompter, trigger *model.Trigger) (*model.Trigger, e
 
 		switch i {
 		case 0:
-			trigger.RequireAll = !trigger.RequireAll
-			fields[0] = "Require all conditions"
-			if trigger.GetRequireAll() {
-				fields[0] = "Require any condition"
-			}
-		case 1:
 			conditions, err := updateConditions(prompter, trigger.GetConditions())
 			if err != nil {
 				if ErrIsAborted(err) {
@@ -453,9 +426,21 @@ func updateTrigger(prompter Prompter, trigger *model.Trigger) (*model.Trigger, e
 			}
 
 			trigger.Conditions = conditions
+		case 1:
+			trigger.RequireAll = !trigger.RequireAll
+			fields[0] = "Require all conditions"
+			if trigger.GetRequireAll() {
+				fields[0] = "Require any condition"
+			}
 		case 2:
-			return nil, nil
+			trigger.Enabled = !trigger.Enabled
+			fields[1] = "Enable"
+			if trigger.GetEnabled() {
+				fields[1] = "Disable"
+			}
 		case 3:
+			return nil, nil
+		case 4:
 			return trigger, nil
 		}
 	}
@@ -551,18 +536,33 @@ func updateTimeAliveCondition(prompter Prompter, c *model.Trigger_Condition) (*m
 }
 
 func triggerToString(t *model.Trigger) string {
-	require := "one-of"
-	if t.GetRequireAll() {
-		require = "all-of"
+	if t == nil {
+		return "None"
+	}
+
+	if !t.GetEnabled() {
+		return "Disabled"
 	}
 
 	conditions := []string{}
-
 	for _, c := range t.GetConditions() {
 		switch v := c.GetCondition().(type) {
 		case *model.Trigger_Condition_TimeAlive:
 			conditions = append(conditions, fmt.Sprintf("Time Alive (%s)", v.TimeAlive.AsDuration().String()))
 		}
+	}
+
+	if len(conditions) == 0 {
+		return "Instant"
+	}
+
+	if len(conditions) == 1 {
+		return conditions[0]
+	}
+
+	require := "one-of"
+	if t.GetRequireAll() {
+		require = "all-of"
 	}
 
 	return fmt.Sprintf("%s: %s)", require, strings.Join(conditions, ", "))

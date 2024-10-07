@@ -269,8 +269,8 @@ forwarded traffic.
 	capsuleCmd.AddCommand(capsuleListSetProposal)
 
 	capsulePromote := &cobra.Command{
-		Use:   "promote [capsule] [from-environment] [to-environment]",
-		Short: "Promote a capsule from one environment to another",
+		Use:   "copy [capsule] [from-environment] [to-environment]",
+		Short: "copy a capsule from one environment to another",
 		Args:  cobra.MaximumNArgs(3),
 		RunE:  cli.CtxWrap(cmd.promote),
 		ValidArgsFunction: common.ChainCompletions(

@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"connectrpc.com/connect"
@@ -56,19 +57,14 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 	var envLabels []string
 	var outs []*pipelineDryOutput
 	for _, out := range resp.Msg.GetDryRunOutcomes() {
-		capsule := out.GetRevision().GetSpec()
-		req := &capsule_api.DeployRequest{
-			CapsuleId:     capsule.GetName(),
-			ProjectId:     capsule.GetProject(),
-			EnvironmentId: capsule.GetEnvironment(),
-			DryRun:        true,
-		}
-		resp, err := c.Rig.Capsule().Deploy(ctx, connect.NewRequest(req))
-		if err != nil {
-			return err
+
+		fmt.Printf("Dry run for environment %v: %v\n", out.GetEnvironmentId(), out.GetOutcome())
+
+		if out.GetOutcome() == nil {
+			continue
 		}
 
-		out2, err := capsule_cmd.ProcessDryRunOutput(out.GetOutcome(), resp.Msg.GetOutcome())
+		out2, err := capsule_cmd.ProcessDryRunOutput(out.GetOutcome(), out.GetOutcome())
 		if err != nil {
 			return err
 		}
