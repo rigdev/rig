@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package model;
+
+import "google/protobuf/timestamp.proto";
+
+enum Level {
+  LEVEL_UNSPECIFIED = 0;
+  LEVEL_INFORMATIVE = 1;
+  LEVEL_MINOR = 2;
+  LEVEL_MAJOR = 3;
+  LEVEL_CRITICAL = 4;
+}
+
+message Issue {
+  string issue_id = 1;
+  string type = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  google.protobuf.Timestamp stale_at = 5;
+  google.protobuf.Timestamp closed_at = 11;
+  Reference reference = 6;
+  string message = 7;
+  Level level = 8;
+  uint32 count = 9;
+}
+
+message Reference {
+  string project_id = 1;
+  string capsule_id = 2;
+  string environment_id = 3;
+  uint64 rollout_id = 4;
+  string instance_id = 5;
+}

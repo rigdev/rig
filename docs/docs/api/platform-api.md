@@ -52,6 +52,7 @@
 
 
 
+
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -5021,6 +5022,77 @@ The rollout model.
 
 
 
+<a name="model_issue-proto"></a>
+
+## model/issue.proto
+
+
+
+<a name="model-Issue"></a>
+
+### Issue
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| issue_id | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| stale_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| closed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| reference | [Reference](#model-Reference) |  |  |
+| message | [string](#string) |  |  |
+| level | [Level](#model-Level) |  |  |
+| count | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="model-Reference"></a>
+
+### Reference
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| rollout_id | [uint64](#uint64) |  |  |
+| instance_id | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+<a name="model-Level"></a>
+
+### Level
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| LEVEL_UNSPECIFIED | 0 |  |
+| LEVEL_INFORMATIVE | 1 |  |
+| LEVEL_MINOR | 2 |  |
+| LEVEL_MAJOR | 3 |  |
+| LEVEL_CRITICAL | 4 |  |
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_status-proto"></a>
 
 ## api/v1/capsule/status.proto
@@ -5185,6 +5257,7 @@ The rollout model.
 | interfaces | [InterfaceStatus](#api-v1-capsule-InterfaceStatus) | repeated |  |
 | config_files | [ConfigFileStatus](#api-v1-capsule-ConfigFileStatus) | repeated |  |
 | cron_jobs | [CronJobStatus](#api-v1-capsule-CronJobStatus) | repeated |  |
+| issues | [model.Issue](#model-Issue) | repeated | List of all issues associated to the Capsule, include those of the current rollout. The list does not include instance-level issues. |
 
 
 
