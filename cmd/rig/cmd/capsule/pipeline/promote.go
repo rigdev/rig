@@ -43,6 +43,7 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 	resp, err := c.Rig.Capsule().PromotePipeline(ctx, connect.NewRequest(&capsule_api.PromotePipelineRequest{
 		ExecutionId: pipelineID,
 		DryRun:      dryRun,
+		Force:       force,
 	}))
 	if err != nil {
 		return err
@@ -50,7 +51,7 @@ func (c *Cmd) progress(ctx context.Context, cmd *cobra.Command, args []string) e
 
 	if !dryRun {
 		cmd.Printf("pipeline execution %v progressed to phase %v \n", pipelineID,
-			resp.Msg.GetStatus().GetPhaseStatuses()[len(resp.Msg.GetStatus().GetPhaseStatuses())-1].GetEnvironmentId())
+			resp.Msg.GetStatus().GetPhaseStatuses()[resp.Msg.GetStatus().GetCurrentPhase()].GetEnvironmentId())
 		return nil
 	}
 

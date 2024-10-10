@@ -54,7 +54,11 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 }
 
 func pipelineStatusToTableRow(s *pipeline_api.Status) []string {
-	currentPhaseStatus := s.GetPhaseStatuses()[len(s.GetPhaseStatuses())-1]
+	currentPhaseStatus := s.GetPhaseStatuses()[s.CurrentPhase]
+	msg := ""
+	if len(currentPhaseStatus.GetMessages()) > 0 {
+		msg = currentPhaseStatus.GetMessages()[len(currentPhaseStatus.GetMessages())-1].Message
+	}
 
 	return []string{
 		fmt.Sprint(s.GetExecutionId()),
@@ -64,6 +68,6 @@ func pipelineStatusToTableRow(s *pipeline_api.Status) []string {
 		currentPhaseStatus.GetEnvironmentId(),
 		currentPhaseStatus.GetState().String(),
 		fmt.Sprint(currentPhaseStatus.GetRolloutId()),
-		currentPhaseStatus.GetMessages()[len(currentPhaseStatus.GetMessages())-1].Message,
+		msg,
 	}
 }
