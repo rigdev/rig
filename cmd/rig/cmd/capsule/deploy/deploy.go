@@ -191,6 +191,12 @@ func (c *Cmd) deploy(ctx context.Context, cmd *cobra.Command, args []string) err
 }
 
 func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string) (*platformv1.Capsule, error) {
+	var extraArgs []string
+	if cmd.ArgsLenAtDash() >= 0 {
+		extraArgs = args[cmd.ArgsLenAtDash():]
+		args = args[:cmd.ArgsLenAtDash()]
+	}
+
 	if file != "" {
 		if environmentVariables != nil ||
 			removeEnvironmentVariables != nil ||
@@ -453,8 +459,7 @@ func (c *Cmd) getNewSpec(ctx context.Context, cmd *cobra.Command, args []string)
 	}
 
 	// Command and arguments.
-	if idx := cmd.ArgsLenAtDash(); idx >= 0 {
-		extraArgs := args[idx:]
+	if extraArgs != nil {
 		if len(extraArgs) == 0 {
 			spec.Spec.Command = ""
 			spec.Spec.Args = nil
