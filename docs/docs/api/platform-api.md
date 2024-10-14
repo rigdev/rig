@@ -197,6 +197,7 @@
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.metrics.Service/GetMetrics | [GetMetricsRequest](#api-v1-metrics-GetMetricsRequest) | [GetMetricsResponse](#api-v1-metrics-GetMetricsResponse) | Retrieve metrics. metric_type is mandatory, while the rest of the fields in the tags are optional. If project, env or capsule is not specified, they will be treated as wildcards. |
 | /api.v1.metrics.Service/GetMetricsMany | [GetMetricsManyRequest](#api-v1-metrics-GetMetricsManyRequest) | [GetMetricsManyResponse](#api-v1-metrics-GetMetricsManyResponse) | Retrive metrics for multiple sets of tags at a time. Metrics within the same set of tags will be in ascending order of timestamp. |
+| /api.v1.metrics.Service/GetMetricsExpression | [GetMetricsExpressionRequest](#api-v1-metrics-GetMetricsExpressionRequest) | [GetMetricsExpressionResponse](#api-v1-metrics-GetMetricsExpressionResponse) |  |
 
 
 
@@ -8323,6 +8324,104 @@ A docker image tag.
 
 
 
+<a name="api-v1-metrics-Expression"></a>
+
+### Expression
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| leaf | [Expression.Leaf](#api-v1-metrics-Expression-Leaf) |  |  |
+| operation | [Expression.Operation](#api-v1-metrics-Expression-Operation) |  |  |
+| constant | [Expression.Constant](#api-v1-metrics-Expression-Constant) |  | Aggregation aggregation = 4; |
+
+
+
+
+
+
+<a name="api-v1-metrics-Expression-Constant"></a>
+
+### Expression.Constant
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| constant | [double](#double) |  | google.protobuf.Duration bucket_size = 2; |
+
+
+
+
+
+
+<a name="api-v1-metrics-Expression-Leaf"></a>
+
+### Expression.Leaf
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tags | [Tags](#api-v1-metrics-Tags) |  |  |
+| aggregator | [Aggregator](#api-v1-metrics-Aggregator) |  | Aggregation aggregation = 2; |
+
+
+
+
+
+
+<a name="api-v1-metrics-Expression-Operation"></a>
+
+### Expression.Operation
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| left | [Expression](#api-v1-metrics-Expression) |  |  |
+| right | [Expression](#api-v1-metrics-Expression) |  |  |
+| operation | [BinOp](#api-v1-metrics-BinOp) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-GetMetricsExpressionRequest"></a>
+
+### GetMetricsExpressionRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| expression | [Expression](#api-v1-metrics-Expression) |  |  |
+| from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| bucket_size | [google.protobuf.Duration](#google-protobuf-Duration) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-GetMetricsExpressionResponse"></a>
+
+### GetMetricsExpressionResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metrics | [Metric](#api-v1-metrics-Metric) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-metrics-GetMetricsManyRequest"></a>
 
 ### GetMetricsManyRequest
@@ -8403,6 +8502,21 @@ A docker image tag.
 | AGGREGATOR_MIN | 2 |  |
 | AGGREGATOR_MAX | 3 |  |
 | AGGREGATOR_SUM | 4 |  |
+
+
+
+<a name="api-v1-metrics-BinOp"></a>
+
+### BinOp
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| BINOP_UNSPECIFIED | 0 |  |
+| BINOP_ADD | 1 |  |
+| BINOP_SUB | 2 |  |
+| BINOP_MULT | 3 |  |
+| BINOP_DIV | 4 |  |
 
 
 
