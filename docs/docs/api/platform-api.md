@@ -8334,7 +8334,7 @@ A docker image tag.
 | ----- | ---- | ----- | ----------- |
 | leaf | [Expression.Leaf](#api-v1-metrics-Expression-Leaf) |  |  |
 | operation | [Expression.Operation](#api-v1-metrics-Expression-Operation) |  |  |
-| constant | [Expression.Constant](#api-v1-metrics-Expression-Constant) |  | Aggregation aggregation = 4; |
+| constant | [Expression.Constant](#api-v1-metrics-Expression-Constant) |  |  |
 
 
 
@@ -8349,7 +8349,7 @@ A docker image tag.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| constant | [double](#double) |  | google.protobuf.Duration bucket_size = 2; |
+| constant | [double](#double) |  |  |
 
 
 
@@ -8365,7 +8365,7 @@ A docker image tag.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | tags | [Tags](#api-v1-metrics-Tags) |  |  |
-| aggregator | [Aggregator](#api-v1-metrics-Aggregator) |  | Aggregation aggregation = 2; |
+| aggregator | [Aggregator](#api-v1-metrics-Aggregator) |  |  |
 
 
 

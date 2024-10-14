@@ -68,7 +68,6 @@ message Expression {
   message Leaf {
     Tags tags = 1;
     Aggregator aggregator = 2;
-    // Aggregation aggregation = 2;
   }
 
   message Operation {
@@ -79,14 +78,12 @@ message Expression {
 
   message Constant {
     double constant = 1;
-    // google.protobuf.Duration bucket_size = 2;
   }
 
   oneof expression {
     Leaf leaf = 1;
     Operation operation = 2;
     Constant constant = 3;
-    // Aggregation aggregation = 4;
   }
 }
 
