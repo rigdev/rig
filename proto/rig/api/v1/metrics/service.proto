@@ -14,6 +14,8 @@ service Service {
   // Retrive metrics for multiple sets of tags at a time. Metrics within the
   // same set of tags will be in ascending order of timestamp.
   rpc GetMetricsMany(GetMetricsManyRequest) returns (GetMetricsManyResponse) {}
+  rpc GetMetricsExpression(GetMetricsExpressionRequest)
+      returns (GetMetricsExpressionResponse) {}
 }
 
 message GetMetricsRequest {
@@ -49,4 +51,46 @@ enum Aggregator {
   AGGREGATOR_MIN = 2;
   AGGREGATOR_MAX = 3;
   AGGREGATOR_SUM = 4;
+}
+
+message GetMetricsExpressionRequest {
+  Expression expression = 1;
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+  google.protobuf.Duration bucket_size = 4;
+}
+
+message GetMetricsExpressionResponse {
+  repeated Metric metrics = 1;
+}
+
+message Expression {
+  message Leaf {
+    Tags tags = 1;
+    Aggregator aggregator = 2;
+  }
+
+  message Operation {
+    Expression left = 1;
+    Expression right = 2;
+    BinOp operation = 3;
+  }
+
+  message Constant {
+    double constant = 1;
+  }
+
+  oneof expression {
+    Leaf leaf = 1;
+    Operation operation = 2;
+    Constant constant = 3;
+  }
+}
+
+enum BinOp {
+  BINOP_UNSPECIFIED = 0;
+  BINOP_ADD = 1;
+  BINOP_SUB = 2;
+  BINOP_MULT = 3;
+  BINOP_DIV = 4;
 }
