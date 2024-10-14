@@ -53,6 +53,7 @@
 
 
 
+
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -196,7 +197,6 @@
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.metrics.Service/GetMetrics | [GetMetricsRequest](#api-v1-metrics-GetMetricsRequest) | [GetMetricsResponse](#api-v1-metrics-GetMetricsResponse) | Retrieve metrics. metric_type is mandatory, while the rest of the fields in the tags are optional. If project, env or capsule is not specified, they will be treated as wildcards. |
 | /api.v1.metrics.Service/GetMetricsMany | [GetMetricsManyRequest](#api-v1-metrics-GetMetricsManyRequest) | [GetMetricsManyResponse](#api-v1-metrics-GetMetricsManyResponse) | Retrive metrics for multiple sets of tags at a time. Metrics within the same set of tags will be in ascending order of timestamp. |
-
 
 
 
@@ -4179,6 +4179,120 @@ The actual log message
 
 
 
+<a name="model_pipeline-proto"></a>
+
+## model/pipeline.proto
+
+
+
+<a name="model-FieldPrefixes"></a>
+
+### FieldPrefixes
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| inclusion | [bool](#bool) |  | If true, only fields with the specified prefixes will be promoted If false, only fields without the specified prefixes will be promoted |
+| prefixes | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="model-Phase"></a>
+
+### Phase
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  | Environment to promote to. The project must be active in this environment. |
+| field_prefixes | [FieldPrefixes](#model-FieldPrefixes) |  | Fields prefixes to either promote or not. |
+| triggers | [Triggers](#model-Triggers) |  | Promotion triggers. |
+
+
+
+
+
+
+<a name="model-Pipeline"></a>
+
+### Pipeline
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Custom name for the pipeline. |
+| initial_environment | [string](#string) |  | The environment to base the pipeline on. |
+| phases | [Phase](#model-Phase) | repeated | The subsequent phases of the pipeline to promote to. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the pipeline was created. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the pipeline was updated. |
+| description | [string](#string) |  | User specified description of the pipeline. |
+
+
+
+
+
+
+<a name="model-Trigger"></a>
+
+### Trigger
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| conditions | [Trigger.Condition](#model-Trigger-Condition) | repeated | The conditions that must be met for the trigger to fire. |
+| require_all | [bool](#bool) |  | If true, all conditions must be met for the trigger to fire. Otherwise only a single condition must be met. |
+| enabled | [bool](#bool) |  | If true, the trigger is enabled. Otherwise it is disabled. |
+
+
+
+
+
+
+<a name="model-Trigger-Condition"></a>
+
+### Trigger.Condition
+Condition that must be met for the trigger to fire.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| time_alive | [google.protobuf.Duration](#google-protobuf-Duration) |  |  |
+
+
+
+
+
+
+<a name="model-Triggers"></a>
+
+### Triggers
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| automatic | [Trigger](#model-Trigger) |  | The automatic trigger |
+| manual | [Trigger](#model-Trigger) |  | The manual trigger |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_pipeline_status-proto"></a>
 
 ## api/v1/capsule/pipeline/status.proto
@@ -4236,6 +4350,7 @@ The actual log message
 | started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the pipeline was started. |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the pipeline was last updated. |
 | current_phase | [uint32](#uint32) |  | current phase |
+| config | [model.Pipeline](#model-Pipeline) |  | the configured pipeline |
 
 
 
@@ -8380,120 +8495,6 @@ A docker image tag.
 | NOTIFICATION_TOPIC_UNSPECIFIED | 0 |  |
 | NOTIFICATION_TOPIC_ROLLOUT | 1 |  |
 | NOTIFICATION_TOPIC_ISSUE | 2 |  |
-
-
-
-
-
-
-
-
-<a name="model_pipeline-proto"></a>
-
-## model/pipeline.proto
-
-
-
-<a name="model-FieldPrefixes"></a>
-
-### FieldPrefixes
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| inclusion | [bool](#bool) |  | If true, only fields with the specified prefixes will be promoted If false, only fields without the specified prefixes will be promoted |
-| prefixes | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="model-Phase"></a>
-
-### Phase
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| environment_id | [string](#string) |  | Environment to promote to. The project must be active in this environment. |
-| field_prefixes | [FieldPrefixes](#model-FieldPrefixes) |  | Fields prefixes to either promote or not. |
-| triggers | [Triggers](#model-Triggers) |  | Promotion triggers. |
-
-
-
-
-
-
-<a name="model-Pipeline"></a>
-
-### Pipeline
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Custom name for the pipeline. |
-| initial_environment | [string](#string) |  | The environment to base the pipeline on. |
-| phases | [Phase](#model-Phase) | repeated | The subsequent phases of the pipeline to promote to. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the pipeline was created. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the pipeline was updated. |
-| description | [string](#string) |  | User specified description of the pipeline. |
-
-
-
-
-
-
-<a name="model-Trigger"></a>
-
-### Trigger
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| conditions | [Trigger.Condition](#model-Trigger-Condition) | repeated | The conditions that must be met for the trigger to fire. |
-| require_all | [bool](#bool) |  | If true, all conditions must be met for the trigger to fire. Otherwise only a single condition must be met. |
-| enabled | [bool](#bool) |  | If true, the trigger is enabled. Otherwise it is disabled. |
-
-
-
-
-
-
-<a name="model-Trigger-Condition"></a>
-
-### Trigger.Condition
-Condition that must be met for the trigger to fire.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| time_alive | [google.protobuf.Duration](#google-protobuf-Duration) |  |  |
-
-
-
-
-
-
-<a name="model-Triggers"></a>
-
-### Triggers
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| automatic | [Trigger](#model-Trigger) |  | The automatic trigger |
-| manual | [Trigger](#model-Trigger) |  | The manual trigger |
-
-
-
-
-
 
 
 

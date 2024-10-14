@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.v1.capsule.pipeline;
 
 import "google/protobuf/timestamp.proto";
+import "model/pipeline.proto";
 
 message Status {
   // The name of the pipeline.
@@ -21,6 +22,8 @@ message Status {
   google.protobuf.Timestamp updated_at = 7;
   // current phase
   uint32 current_phase = 8;
+  // the configured pipeline
+  model.Pipeline config = 9;
 }
 
 message PhaseStatus {
