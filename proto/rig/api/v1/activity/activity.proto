@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package api.v1.activity;
+
+import "google/protobuf/timestamp.proto";
+import "model/notification.proto";
+
+message Activity {
+  model.NotificationTopic topic = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  Scope scope = 3;
+  string message = 4;
+}
+
+message Scope {
+  string project = 1;
+  string environment = 2;
+  string capsule = 3;
+  string user = 4;
+}

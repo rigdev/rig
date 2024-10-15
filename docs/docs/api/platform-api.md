@@ -5,6 +5,23 @@
 
 
 
+### api.v1.activity.Service
+<a name="api-v1-activity-Service"></a>
+
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| /api.v1.activity.Service/GetActivities | [GetActivitiesRequest](#api-v1-activity-GetActivitiesRequest) | [GetActivitiesResponse](#api-v1-activity-GetActivitiesResponse) | Get Activities |
+
+
+
+
+
+
+
+
+
 
 ### api.v1.authentication.Service
 <a name="api-v1-authentication-Service"></a>
@@ -25,7 +42,6 @@
 | /api.v1.authentication.Service/VerifyEmail | [VerifyEmailRequest](#api-v1-authentication-VerifyEmailRequest) | [VerifyEmailResponse](#api-v1-authentication-VerifyEmailResponse) | Verify email |
 | /api.v1.authentication.Service/VerifyPhoneNumber | [VerifyPhoneNumberRequest](#api-v1-authentication-VerifyPhoneNumberRequest) | [VerifyPhoneNumberResponse](#api-v1-authentication-VerifyPhoneNumberResponse) | Verify phone number |
 | /api.v1.authentication.Service/SendVerificationEmail | [SendVerificationEmailRequest](#api-v1-authentication-SendVerificationEmailRequest) | [SendVerificationEmailResponse](#api-v1-authentication-SendVerificationEmailResponse) |  |
-
 
 
 
@@ -207,7 +223,6 @@
 
 
 
-
 ### api.v1.project.Service
 <a name="api-v1-project-Service"></a>
 
@@ -356,6 +371,250 @@
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.user.settings.Service/GetSettings | [GetSettingsRequest](#api-v1-user-settings-GetSettingsRequest) | [GetSettingsResponse](#api-v1-user-settings-GetSettingsResponse) | Gets the users settings for the current project. |
 | /api.v1.user.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-user-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-user-settings-UpdateSettingsResponse) | Sets the users settings for the current project. |
+
+
+
+
+
+
+
+
+
+
+<a name="model_environment-proto"></a>
+
+## model/environment.proto
+
+
+
+<a name="model-EnvironmentFilter"></a>
+
+### EnvironmentFilter
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| all | [EnvironmentFilter.All](#model-EnvironmentFilter-All) |  |  |
+| selected | [EnvironmentFilter.Selected](#model-EnvironmentFilter-Selected) |  |  |
+
+
+
+
+
+
+<a name="model-EnvironmentFilter-All"></a>
+
+### EnvironmentFilter.All
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| include_ephemeral | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="model-EnvironmentFilter-Selected"></a>
+
+### EnvironmentFilter.Selected
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_ids | [string](#string) | repeated |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="model_notification-proto"></a>
+
+## model/notification.proto
+
+
+
+<a name="model-NotificationNotifier"></a>
+
+### NotificationNotifier
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| target | [NotificationTarget](#model-NotificationTarget) |  |  |
+| topics | [NotificationTopic](#model-NotificationTopic) | repeated |  |
+| environments | [EnvironmentFilter](#model-EnvironmentFilter) |  |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget"></a>
+
+### NotificationTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| slack | [NotificationTarget.SlackTarget](#model-NotificationTarget-SlackTarget) |  |  |
+| email | [NotificationTarget.EmailTarget](#model-NotificationTarget-EmailTarget) |  |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget-EmailTarget"></a>
+
+### NotificationTarget.EmailTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| from_email | [string](#string) |  |  |
+| to_emails | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget-SlackTarget"></a>
+
+### NotificationTarget.SlackTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| workspace | [string](#string) |  |  |
+| channel_id | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+<a name="model-NotificationTopic"></a>
+
+### NotificationTopic
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NOTIFICATION_TOPIC_UNSPECIFIED | 0 |  |
+| NOTIFICATION_TOPIC_ROLLOUT | 1 |  |
+| NOTIFICATION_TOPIC_ISSUE | 2 |  |
+
+
+
+
+
+
+
+
+<a name="api_v1_activity_activity-proto"></a>
+
+## api/v1/activity/activity.proto
+
+
+
+<a name="api-v1-activity-Activity"></a>
+
+### Activity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| topic | [model.NotificationTopic](#model-NotificationTopic) |  |  |
+| timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| scope | [Scope](#api-v1-activity-Scope) |  |  |
+| message | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-Scope"></a>
+
+### Scope
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| capsule | [string](#string) |  |  |
+| user | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_activity_service-proto"></a>
+
+## api/v1/activity/service.proto
+
+
+
+<a name="api-v1-activity-GetActivitiesRequest"></a>
+
+### GetActivitiesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-GetActivitiesResponse"></a>
+
+### GetActivitiesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| activities | [Activity](#api-v1-activity-Activity) | repeated |  |
+
+
+
 
 
 
@@ -1064,65 +1323,6 @@ The type of SSO. Currently only OIDC is supported.
 | ---- | ------ | ----------- |
 | SSO_TYPE_UNSPECIFIED | 0 |  |
 | SSO_TYPE_OIDC | 1 |  |
-
-
-
-
-
-
-
-
-<a name="model_environment-proto"></a>
-
-## model/environment.proto
-
-
-
-<a name="model-EnvironmentFilter"></a>
-
-### EnvironmentFilter
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| all | [EnvironmentFilter.All](#model-EnvironmentFilter-All) |  |  |
-| selected | [EnvironmentFilter.Selected](#model-EnvironmentFilter-Selected) |  |  |
-
-
-
-
-
-
-<a name="model-EnvironmentFilter-All"></a>
-
-### EnvironmentFilter.All
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| include_ephemeral | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="model-EnvironmentFilter-Selected"></a>
-
-### EnvironmentFilter.Selected
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| environment_ids | [string](#string) | repeated |  |
-
-
-
-
-
 
 
 
@@ -8604,98 +8804,6 @@ A docker image tag.
 | BINOP_SUB | 2 |  |
 | BINOP_MULT | 3 |  |
 | BINOP_DIV | 4 |  |
-
-
-
-
-
-
-
-
-<a name="model_notification-proto"></a>
-
-## model/notification.proto
-
-
-
-<a name="model-NotificationNotifier"></a>
-
-### NotificationNotifier
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| target | [NotificationTarget](#model-NotificationTarget) |  |  |
-| topics | [NotificationTopic](#model-NotificationTopic) | repeated |  |
-| environments | [EnvironmentFilter](#model-EnvironmentFilter) |  |  |
-
-
-
-
-
-
-<a name="model-NotificationTarget"></a>
-
-### NotificationTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| slack | [NotificationTarget.SlackTarget](#model-NotificationTarget-SlackTarget) |  |  |
-| email | [NotificationTarget.EmailTarget](#model-NotificationTarget-EmailTarget) |  |  |
-
-
-
-
-
-
-<a name="model-NotificationTarget-EmailTarget"></a>
-
-### NotificationTarget.EmailTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| from_email | [string](#string) |  |  |
-| to_emails | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="model-NotificationTarget-SlackTarget"></a>
-
-### NotificationTarget.SlackTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| workspace | [string](#string) |  |  |
-| channel_id | [string](#string) |  |  |
-
-
-
-
-
-
-
-
-<a name="model-NotificationTopic"></a>
-
-### NotificationTopic
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| NOTIFICATION_TOPIC_UNSPECIFIED | 0 |  |
-| NOTIFICATION_TOPIC_ROLLOUT | 1 |  |
-| NOTIFICATION_TOPIC_ISSUE | 2 |  |
 
 
 
