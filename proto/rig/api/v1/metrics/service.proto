@@ -74,16 +74,29 @@ message Expression {
     Expression left = 1;
     Expression right = 2;
     BinOp operation = 3;
+    Tags tags = 4;
   }
 
   message Constant {
     double constant = 1;
   }
 
+  message WithDefault {
+    Expression expression = 1;
+    double default = 2;
+  }
+
+  message Sum {
+    Tags tags = 1;
+    Expression expression = 2;
+  }
+
   oneof expression {
     Leaf leaf = 1;
     Operation operation = 2;
     Constant constant = 3;
+    WithDefault with_default = 4;
+    Sum sum = 5;
   }
 }
 

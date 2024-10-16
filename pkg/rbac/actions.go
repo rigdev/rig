@@ -257,6 +257,7 @@ var EnvironmentActionMap = map[string]string{
 }
 
 var MetricsActionMap = map[string]string{
-	metricsconnect.ServiceGetMetricsProcedure:     ActionMetricsView,
-	metricsconnect.ServiceGetMetricsManyProcedure: ActionMetricsView,
+	metricsconnect.ServiceGetMetricsProcedure:           ActionMetricsView,
+	metricsconnect.ServiceGetMetricsManyProcedure:       ActionMetricsView,
+	metricsconnect.ServiceGetMetricsExpressionProcedure: ActionMetricsView,
 }

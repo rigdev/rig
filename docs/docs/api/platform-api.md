@@ -8335,6 +8335,8 @@ A docker image tag.
 | leaf | [Expression.Leaf](#api-v1-metrics-Expression-Leaf) |  |  |
 | operation | [Expression.Operation](#api-v1-metrics-Expression-Operation) |  |  |
 | constant | [Expression.Constant](#api-v1-metrics-Expression-Constant) |  |  |
+| with_default | [Expression.WithDefault](#api-v1-metrics-Expression-WithDefault) |  |  |
+| sum | [Expression.Sum](#api-v1-metrics-Expression-Sum) |  |  |
 
 
 
@@ -8383,6 +8385,39 @@ A docker image tag.
 | left | [Expression](#api-v1-metrics-Expression) |  |  |
 | right | [Expression](#api-v1-metrics-Expression) |  |  |
 | operation | [BinOp](#api-v1-metrics-BinOp) |  |  |
+| tags | [Tags](#api-v1-metrics-Tags) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-Expression-Sum"></a>
+
+### Expression.Sum
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tags | [Tags](#api-v1-metrics-Tags) |  |  |
+| expression | [Expression](#api-v1-metrics-Expression) |  |  |
+
+
+
+
+
+
+<a name="api-v1-metrics-Expression-WithDefault"></a>
+
+### Expression.WithDefault
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| expression | [Expression](#api-v1-metrics-Expression) |  |  |
+| default | [double](#double) |  |  |
 
 
 
