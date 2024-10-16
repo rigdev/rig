@@ -89,7 +89,7 @@ func (c *CmdWScope) environmentFromArg(ctx context.Context, environmentArg strin
 		}
 
 		if c.Scope.GetCurrentContext().GetProject() != "" &&
-			!slices.Contains(e.GetActiveProjects(), c.Scope.GetCurrentContext().GetProject()) {
+			!e.GetGlobal() && !slices.Contains(e.GetActiveProjects(), c.Scope.GetCurrentContext().GetProject()) {
 			cont, err := c.Prompter.Confirm(
 				fmt.Sprintf(
 					"Warning: project '%s' is not active in environment '%s'.\nDo you want to continue anyways?",
