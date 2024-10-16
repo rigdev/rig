@@ -8245,6 +8245,25 @@ A docker image tag.
 
 
 
+<a name="api-v1-metrics-Keys"></a>
+
+### Keys
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [bool](#bool) |  |  |
+| environment | [bool](#bool) |  |  |
+| capsule | [bool](#bool) |  |  |
+| metric_name | [bool](#bool) |  |  |
+| all | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="api-v1-metrics-Metric"></a>
 
 ### Metric
@@ -8385,7 +8404,8 @@ A docker image tag.
 | left | [Expression](#api-v1-metrics-Expression) |  |  |
 | right | [Expression](#api-v1-metrics-Expression) |  |  |
 | operation | [BinOp](#api-v1-metrics-BinOp) |  |  |
-| tags | [Tags](#api-v1-metrics-Tags) |  |  |
+| on | [Keys](#api-v1-metrics-Keys) |  |  |
+| ignore | [Keys](#api-v1-metrics-Keys) |  |  |
 
 
 
@@ -8400,7 +8420,8 @@ A docker image tag.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| tags | [Tags](#api-v1-metrics-Tags) |  |  |
+| on | [Keys](#api-v1-metrics-Keys) |  |  |
+| ignore | [Keys](#api-v1-metrics-Keys) |  |  |
 | expression | [Expression](#api-v1-metrics-Expression) |  |  |
 
 
