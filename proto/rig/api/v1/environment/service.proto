@@ -12,6 +12,7 @@ service Service {
   // List available environments.
   rpc List(ListRequest) returns (ListResponse) {}
   rpc GetNamespaces(GetNamespacesRequest) returns (GetNamespacesResponse) {}
+  rpc Get(GetRequest) returns (GetResponse) {}
 }
 
 message CreateRequest {
@@ -84,4 +85,12 @@ message GetNamespacesRequest {
 
 message GetNamespacesResponse {
   repeated ProjectEnvironmentNamespace namespaces = 2;
+}
+
+message GetRequest {
+  string environment_id = 1;
+}
+
+message GetResponse {
+  api.v1.environment.Environment environment = 1;
 }
