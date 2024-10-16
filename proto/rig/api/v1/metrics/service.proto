@@ -74,7 +74,8 @@ message Expression {
     Expression left = 1;
     Expression right = 2;
     BinOp operation = 3;
-    Tags tags = 4;
+    Keys on = 4;
+    Keys ignore = 5;
   }
 
   message Constant {
@@ -87,8 +88,9 @@ message Expression {
   }
 
   message Sum {
-    Tags tags = 1;
-    Expression expression = 2;
+    Keys on = 1;
+    Keys ignore = 2;
+    Expression expression = 3;
   }
 
   oneof expression {

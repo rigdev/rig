@@ -20,3 +20,12 @@ message Tags {
   string capsule = 3;
   string metric_name = 4;
 }
+
+message Keys {
+  bool project = 1;
+  bool environment = 2;
+  bool capsule = 3;
+  bool metric_name = 4;
+  bool all = 5;
+}
+
