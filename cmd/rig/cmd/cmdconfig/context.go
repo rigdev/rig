@@ -133,7 +133,7 @@ func (cfg *Config) CreateContext(name, host string, interactive bool) error {
 	})
 
 	if interactive {
-		if ok, err := cfg.prompter.Confirm("Do you want activate this Rig context now?", true); err != nil {
+		if ok, err := cfg.prompter.Confirm("Do you want to activate this Rig context now?", true); err != nil {
 			return err
 		} else if ok {
 			cfg.CurrentContextName = name
