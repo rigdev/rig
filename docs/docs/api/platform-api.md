@@ -138,6 +138,7 @@
 | /api.v1.environment.Service/Delete | [DeleteRequest](#api-v1-environment-DeleteRequest) | [DeleteResponse](#api-v1-environment-DeleteResponse) |  |
 | /api.v1.environment.Service/List | [ListRequest](#api-v1-environment-ListRequest) | [ListResponse](#api-v1-environment-ListResponse) | List available environments. |
 | /api.v1.environment.Service/GetNamespaces | [GetNamespacesRequest](#api-v1-environment-GetNamespacesRequest) | [GetNamespacesResponse](#api-v1-environment-GetNamespacesResponse) |  |
+| /api.v1.environment.Service/Get | [GetRequest](#api-v1-environment-GetRequest) | [GetResponse](#api-v1-environment-GetResponse) |  |
 
 
 
@@ -7495,6 +7496,36 @@ Environment model.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | namespaces | [ProjectEnvironmentNamespace](#api-v1-environment-ProjectEnvironmentNamespace) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-environment-GetRequest"></a>
+
+### GetRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-environment-GetResponse"></a>
+
+### GetResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment | [Environment](#api-v1-environment-Environment) |  |  |
 
 
 
