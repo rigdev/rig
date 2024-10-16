@@ -28,4 +28,3 @@ message Keys {
   bool metric_name = 4;
   bool all = 5;
 }
-
