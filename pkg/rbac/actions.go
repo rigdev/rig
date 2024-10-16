@@ -254,6 +254,7 @@ var EnvironmentActionMap = map[string]string{
 	environmentconnect.ServiceGetNamespacesProcedure: ActionEnvironmentView,
 	environmentconnect.ServiceListProcedure:          ActionEnvironmentView,
 	environmentconnect.ServiceUpdateProcedure:        ActionEnvironmentEdit,
+	environmentconnect.ServiceGetProcedure:           ActionEnvironmentView,
 }
 
 var MetricsActionMap = map[string]string{
