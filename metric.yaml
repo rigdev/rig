@@ -1,0 +1,9 @@
+name: slow_rollout
+stage_name: running
+step_type: instances
+step_state:
+  states: ['ongoing']
+negate_condition: true
+condition_type: first_time_in_condition
+duration: 30s
+duration_since: start

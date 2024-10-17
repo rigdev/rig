@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package api.v1.capsule.rollout;
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 // Status is a representation of the current state of a rollout.
@@ -250,4 +251,76 @@ message InstancesStep {
   uint32 num_stuck = 4;
   // The number of instances with the wrong version.
   uint32 num_wrong_version = 5;
+}
+
+// Metric defines a custom Rollout metric
+// Examples:
+//
+// Emit when rollout starts
+//   - stage_name="configure", stage_state={"states": [], "not": true},
+//   duration_since="start", duration=0s
+//   - This stage_state matches all states of the Configure stage and
+//   immediately triggers as duration is 0s
+//
+// ConfigureCluster takes more than 5 minutes
+//   - stage_name="configure" stage_state={"states": ["done"], "not": true},
+//   duration_since="stage_enter", duration=5min
+//
+// ResourceCreation takes more than 5 minutes
+//   - stage_name="resource_creation" stage_state={"states": ["done"], "not":
+//   true}, duration_since="stage_enter", duration=5min
+//   - duration_since="stage_enter" first starts the timer when the rollout
+//   reaches the ResourceCreation stage, and not from the begining
+//
+// At any point in time have Instances be in ONGOING/FAILED for more than 5
+// minutes
+//   - stage_name="running", step_type="instances", step_state={"states":
+//   ["done"], "not": true}, duration_since=step_state_enter,
+//   condition_type=any_time_in_condition, duration=5min
+//
+// Not been in Instances DONE since the start for 5 minutes, but its okay if it
+// later on shifts from DONE to ONGOING/FAILEDNGOING/FAILED for more than 5
+// minutes
+//   - stage_name="running", step_type="instances", step_state={"states":
+//   ["done"]}, negate_condition=true, duration_since=start,
+//   condition_type=first_time_in_condition, duration=5min
+//
+// Not been in Instances DONE since entering RUNNING for 5 minutes, but its okay
+// if it later on shifts from DONE to ONGOING/FAILEDNGOING/FAILED for more than
+// 5 minutes
+//   - stage_name="running", step_type="instances", step_state={"states":
+//   ["done"], "not": true}, duration_since=stage_enter,
+//   condition_type=first_time_in_condition, duration=5min
+//
+// I use strings instead of ENUMS because I envision people would write a YAML
+// spec of this message when creating rollout metrics. Thus using ENUMs would
+// change the yaml from interpretable strings to opaque integers.
+message Metric {
+  string name = 1;
+
+  string stage_name = 2;
+  StateSelector stage_state = 3;
+
+  string step_type = 4;
+  string step_name = 5;
+  StateSelector step_state = 6;
+
+  // start
+  // stage_enter
+  // stage_state_enter
+  // step_enter
+  // step_state_enter
+  string duration_since = 7;
+  google.protobuf.Duration duration = 8;
+  bool negate_condition = 9;
+
+  // TODO Find better name
+  // first_time_in_condition
+  // any_time_in_condition
+  string condition_type = 10;
+}
+
+message StateSelector {
+  repeated string states = 1;
+  bool not = 2;
 }
