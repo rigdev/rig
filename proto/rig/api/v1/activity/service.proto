@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package api.v1.activity;
+
+import "google/protobuf/timestamp.proto";
+import "api/v1/activity/activity.proto";
+
+service Service {
+  // Get Activities
+  rpc GetActivities(GetActivitiesRequest) returns (GetActivitiesResponse) {}
+}
+
+message GetActivitiesRequest {
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+}
+
+message GetActivitiesResponse {
+  repeated Activity activities = 1;
+}
