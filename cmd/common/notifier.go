@@ -116,7 +116,7 @@ func notifierToRow(n *model.NotificationNotifier) []string {
 
 	var topics []string
 	for _, t := range n.GetTopics() {
-		topics = append(topics, topicToString(t))
+		topics = append(topics, TopicToString(t))
 	}
 
 	row = append(row, fmt.Sprintf("%v", strings.Join(topics, ", ")), environmentToString(n.GetEnvironments()))
@@ -144,7 +144,7 @@ func environmentToString(filter *model.EnvironmentFilter) string {
 	return "Unknown"
 }
 
-func topicToString(t model.NotificationTopic) string {
+func TopicToString(t model.NotificationTopic) string {
 	switch t {
 	case model.NotificationTopic_NOTIFICATION_TOPIC_ISSUE:
 		return "Issue"
@@ -226,7 +226,7 @@ func updateNotifierTopics(prompter Prompter, n *model.NotificationNotifier) erro
 	for {
 		var ts []string
 		for _, t := range availableTopics {
-			tString := topicToString(t)
+			tString := TopicToString(t)
 			if slices.Contains(n.Topics, t) {
 				tString += " *"
 			}

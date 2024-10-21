@@ -32,8 +32,8 @@ require (
 	github.com/nyaruka/phonenumbers v1.1.7
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/rigdev/rig-go-api v0.0.0-20241016115738-abe8c0b9fe81
-	github.com/rigdev/rig-go-sdk v0.0.0-20240612092526-69df8621bc22
+	github.com/rigdev/rig-go-api v0.0.0-20241021083106-6e86765c844a
+	github.com/rigdev/rig-go-sdk v0.0.0-20241021090503-b515c1ca035f
 	github.com/rivo/tview v0.0.0-20240524063012-037df494fb76
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
