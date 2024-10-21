@@ -4,6 +4,7 @@ package api.v1.activity;
 
 import "google/protobuf/timestamp.proto";
 import "api/v1/activity/activity.proto";
+import "model/common.proto";
 
 service Service {
   // Get Activities
@@ -13,6 +14,7 @@ service Service {
 message GetActivitiesRequest {
   google.protobuf.Timestamp from = 1;
   google.protobuf.Timestamp to = 2;
+  model.Pagination pagination = 3;
 }
 
 message GetActivitiesResponse {

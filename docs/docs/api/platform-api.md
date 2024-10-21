@@ -5,6 +5,7 @@
 
 
 
+
 ### api.v1.activity.Service
 <a name="api-v1-activity-Service"></a>
 
@@ -42,7 +43,6 @@
 | /api.v1.authentication.Service/VerifyEmail | [VerifyEmailRequest](#api-v1-authentication-VerifyEmailRequest) | [VerifyEmailResponse](#api-v1-authentication-VerifyEmailResponse) | Verify email |
 | /api.v1.authentication.Service/VerifyPhoneNumber | [VerifyPhoneNumberRequest](#api-v1-authentication-VerifyPhoneNumberRequest) | [VerifyPhoneNumberResponse](#api-v1-authentication-VerifyPhoneNumberResponse) | Verify phone number |
 | /api.v1.authentication.Service/SendVerificationEmail | [SendVerificationEmailRequest](#api-v1-authentication-SendVerificationEmailRequest) | [SendVerificationEmailResponse](#api-v1-authentication-SendVerificationEmailResponse) |  |
-
 
 
 
@@ -581,6 +581,130 @@
 
 
 
+<a name="model_common-proto"></a>
+
+## model/common.proto
+
+
+
+<a name="model-BcryptHashingConfig"></a>
+
+### BcryptHashingConfig
+Bcrypt hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cost | [int32](#int32) |  | The cost of the hashing algorithm. |
+
+
+
+
+
+
+<a name="model-BcryptHashingInstance"></a>
+
+### BcryptHashingInstance
+Bcrypt hashing instance.
+
+
+
+
+
+
+<a name="model-HashingConfig"></a>
+
+### HashingConfig
+Hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| bcrypt | [BcryptHashingConfig](#model-BcryptHashingConfig) |  | if bcrypt is set, use bcrypt. |
+| scrypt | [ScryptHashingConfig](#model-ScryptHashingConfig) |  | if scrypt is set, use scrypt. |
+
+
+
+
+
+
+<a name="model-HashingInstance"></a>
+
+### HashingInstance
+Hashing instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| config | [HashingConfig](#model-HashingConfig) |  | The hashing configuration. |
+| hash | [bytes](#bytes) |  | A hash |
+| bcrypt | [BcryptHashingInstance](#model-BcryptHashingInstance) |  | if bcrypt is set, this bcrypt instance was used. |
+| scrypt | [ScryptHashingInstance](#model-ScryptHashingInstance) |  | if scrypt is set, this scrypt instance was used. |
+
+
+
+
+
+
+<a name="model-Pagination"></a>
+
+### Pagination
+Pagination option.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| offset | [uint32](#uint32) |  | Where to start the pagination. |
+| limit | [uint32](#uint32) |  | How many items to return. |
+| descending | [bool](#bool) |  | Whether to sort in descending order. |
+
+
+
+
+
+
+<a name="model-ScryptHashingConfig"></a>
+
+### ScryptHashingConfig
+Scrypt hashing configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| signer_key | [string](#string) |  | The key used to sign the salt. |
+| salt_separator | [string](#string) |  | The salt separator. |
+| rounds | [int32](#int32) |  | The number of rounds in the algorithm. |
+| mem_cost | [int32](#int32) |  | The memory cost of the algorithm. |
+| p | [int32](#int32) |  | The parallelization factor of the algorithm. |
+| key_len | [int32](#int32) |  | The length of the key. |
+
+
+
+
+
+
+<a name="model-ScryptHashingInstance"></a>
+
+### ScryptHashingInstance
+Scrypt hashing instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| salt | [bytes](#bytes) |  | The salt used to hash the password. |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_activity_service-proto"></a>
 
 ## api/v1/activity/service.proto
@@ -597,6 +721,7 @@
 | ----- | ---- | ----- | ----------- |
 | from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| pagination | [model.Pagination](#model-Pagination) |  |  |
 
 
 
@@ -5594,130 +5719,6 @@ The rollout model.
 | TRANSITION_BEING_CREATED | 1 |  |
 | TRANSITION_UP_TO_DATE | 2 |  |
 | TRANSITION_BEING_DELETED | 3 |  |
-
-
-
-
-
-
-
-
-<a name="model_common-proto"></a>
-
-## model/common.proto
-
-
-
-<a name="model-BcryptHashingConfig"></a>
-
-### BcryptHashingConfig
-Bcrypt hashing configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| cost | [int32](#int32) |  | The cost of the hashing algorithm. |
-
-
-
-
-
-
-<a name="model-BcryptHashingInstance"></a>
-
-### BcryptHashingInstance
-Bcrypt hashing instance.
-
-
-
-
-
-
-<a name="model-HashingConfig"></a>
-
-### HashingConfig
-Hashing configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| bcrypt | [BcryptHashingConfig](#model-BcryptHashingConfig) |  | if bcrypt is set, use bcrypt. |
-| scrypt | [ScryptHashingConfig](#model-ScryptHashingConfig) |  | if scrypt is set, use scrypt. |
-
-
-
-
-
-
-<a name="model-HashingInstance"></a>
-
-### HashingInstance
-Hashing instance.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| config | [HashingConfig](#model-HashingConfig) |  | The hashing configuration. |
-| hash | [bytes](#bytes) |  | A hash |
-| bcrypt | [BcryptHashingInstance](#model-BcryptHashingInstance) |  | if bcrypt is set, this bcrypt instance was used. |
-| scrypt | [ScryptHashingInstance](#model-ScryptHashingInstance) |  | if scrypt is set, this scrypt instance was used. |
-
-
-
-
-
-
-<a name="model-Pagination"></a>
-
-### Pagination
-Pagination option.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| offset | [uint32](#uint32) |  | Where to start the pagination. |
-| limit | [uint32](#uint32) |  | How many items to return. |
-| descending | [bool](#bool) |  | Whether to sort in descending order. |
-
-
-
-
-
-
-<a name="model-ScryptHashingConfig"></a>
-
-### ScryptHashingConfig
-Scrypt hashing configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| signer_key | [string](#string) |  | The key used to sign the salt. |
-| salt_separator | [string](#string) |  | The salt separator. |
-| rounds | [int32](#int32) |  | The number of rounds in the algorithm. |
-| mem_cost | [int32](#int32) |  | The memory cost of the algorithm. |
-| p | [int32](#int32) |  | The parallelization factor of the algorithm. |
-| key_len | [int32](#int32) |  | The length of the key. |
-
-
-
-
-
-
-<a name="model-ScryptHashingInstance"></a>
-
-### ScryptHashingInstance
-Scrypt hashing instance.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| salt | [bytes](#bytes) |  | The salt used to hash the password. |
-
-
-
-
-
 
 
 

@@ -11,6 +11,7 @@ import (
 	settings_api "github.com/rigdev/rig-go-api/api/v1/settings"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
+	"github.com/rigdev/rig/cmd/rig/cmd/activity"
 	"github.com/rigdev/rig/cmd/rig/cmd/auth"
 	capsule_root "github.com/rigdev/rig/cmd/rig/cmd/capsule/root"
 	"github.com/rigdev/rig/cmd/rig/cmd/cluster"
@@ -153,6 +154,7 @@ func Run(s *cli.SetupContext) error {
 	settings.Setup(rootCmd, s)
 	role.Setup(rootCmd, s)
 	git.Setup(rootCmd, s)
+	activity.Setup(rootCmd, s)
 
 	if s.AddTestCommand {
 		noop.Setup(rootCmd, s)
