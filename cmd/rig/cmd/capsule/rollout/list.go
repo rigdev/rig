@@ -7,9 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fatih/color"
-
 	"connectrpc.com/connect"
+	"github.com/fatih/color"
 	"github.com/rigdev/rig-go-api/api/v1/capsule"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig/cmd/common"

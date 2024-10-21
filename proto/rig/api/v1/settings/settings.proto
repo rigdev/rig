@@ -5,12 +5,14 @@ package api.v1.settings;
 import "model/notification.proto";
 import "model/pipeline.proto";
 import "model/git.proto";
+import "api/v1/capsule/rollout/status.proto";
 
 // Platform wide settings.
 message Settings {
   repeated model.NotificationNotifier notification_notifiers = 1;
   model.GitStore git_store = 2;
   repeated model.Pipeline pipelines = 3;
+  Metrics metrics = 4;
 }
 
 // Update message for platform settings.
@@ -23,6 +25,10 @@ message Update {
     repeated model.Pipeline pipelines = 1;
   }
 
+  message RemoveRolloutMetric {
+    string name = 1;
+  }
+
   oneof field {
     // Set the notification notifiers.
     SetNotificationNotifiers set_notification_notifiers = 1;
@@ -30,6 +36,8 @@ message Update {
     model.GitStore set_git_store = 2;
     // Set the pipelines.
     SetPipelines set_pipelines = 3;
+    api.v1.capsule.rollout.Metric add_rollout_metric = 4;
+    RemoveRolloutMetric remove_rollout_metric = 5;
   }
 }
 
@@ -43,4 +51,12 @@ enum Plan {
   PLAN_TEAM = 2;
   // Enterprise tier.
   PLAN_ENTERPRISE = 3;
+}
+
+message Metrics {
+  RolloutMetrics rollout_metrics = 1;
+}
+
+message RolloutMetrics {
+  repeated api.v1.capsule.rollout.Metric metrics = 1;
 }
