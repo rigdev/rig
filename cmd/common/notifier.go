@@ -150,6 +150,14 @@ func TopicToString(t model.NotificationTopic) string {
 		return "Issue"
 	case model.NotificationTopic_NOTIFICATION_TOPIC_ROLLOUT:
 		return "Rollout"
+	case model.NotificationTopic_NOTIFICATION_TOPIC_CAPSULE:
+		return "Capsule"
+	case model.NotificationTopic_NOTIFICATION_TOPIC_USER:
+		return "User"
+	case model.NotificationTopic_NOTIFICATION_TOPIC_PROJECT:
+		return "Project"
+	case model.NotificationTopic_NOTIFICATION_TOPIC_ENVIRONMENT:
+		return "Environment"
 	default:
 		return "Unknown"
 	}
