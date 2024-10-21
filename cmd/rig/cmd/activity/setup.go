@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/rigdev/rig-go-api/api/v1/activity"
+	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
@@ -23,6 +24,9 @@ var (
 	fromStr string
 	toStr   string
 	since   string
+
+	limit  int
+	offset int
 )
 
 type Cmd struct {
@@ -67,6 +71,15 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		"A duration. If set, only include activities younger than 'since'. "+
 			"Cannot be used if either --from or --to is used. Default is 24 hours.",
 	)
+	activity.Flags().IntVar(
+		&limit, "limit", 10,
+		"Limit the number of activities returned. Default is 10.",
+	)
+
+	activity.Flags().IntVar(
+		&offset, "offset", 0,
+		"Offset the activities returned. Default is 0.",
+	)
 
 	parent.AddCommand(activity)
 }
@@ -80,6 +93,11 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 	resp, err := c.Rig.Activity().GetActivities(ctx, connect.NewRequest(&activity.GetActivitiesRequest{
 		From: timestamppb.New(from),
 		To:   timestamppb.New(to),
+		Pagination: &model.Pagination{
+			Limit:      uint32(limit),
+			Offset:     uint32(offset),
+			Descending: true,
+		},
 	}))
 	if err != nil {
 		return err

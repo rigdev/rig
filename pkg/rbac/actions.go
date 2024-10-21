@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"github.com/rigdev/rig-go-api/api/v1/activity/activityconnect"
 	"github.com/rigdev/rig-go-api/api/v1/capsule/capsuleconnect"
 	"github.com/rigdev/rig-go-api/api/v1/cluster/clusterconnect"
 	"github.com/rigdev/rig-go-api/api/v1/environment/environmentconnect"
@@ -129,6 +130,10 @@ const (
 // Metrics actions
 const (
 	ActionMetricsView = "metrics:view"
+)
+
+const (
+	ActionActivityView = "activity:view"
 )
 
 var CapsuleActionMap = map[string]string{
@@ -261,4 +266,8 @@ var MetricsActionMap = map[string]string{
 	metricsconnect.ServiceGetMetricsProcedure:           ActionMetricsView,
 	metricsconnect.ServiceGetMetricsManyProcedure:       ActionMetricsView,
 	metricsconnect.ServiceGetMetricsExpressionProcedure: ActionMetricsView,
+}
+
+var ActivityActionMap = map[string]string{
+	activityconnect.ServiceGetActivitiesProcedure: ActionActivityView,
 }
