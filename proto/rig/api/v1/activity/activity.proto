@@ -29,6 +29,7 @@ message Message {
     model.Level level = 1;
     uint64 rolloutID = 2;
     string message = 3;
+    bool resolved = 4;
   }
 
   message Project {
