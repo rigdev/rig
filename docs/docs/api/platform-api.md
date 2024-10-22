@@ -69,7 +69,6 @@
 
 
 
-
 ### api.v1.capsule.Service
 <a name="api-v1-capsule-Service"></a>
 
@@ -215,6 +214,7 @@
 | /api.v1.metrics.Service/GetMetrics | [GetMetricsRequest](#api-v1-metrics-GetMetricsRequest) | [GetMetricsResponse](#api-v1-metrics-GetMetricsResponse) | Retrieve metrics. metric_type is mandatory, while the rest of the fields in the tags are optional. If project, env or capsule is not specified, they will be treated as wildcards. |
 | /api.v1.metrics.Service/GetMetricsMany | [GetMetricsManyRequest](#api-v1-metrics-GetMetricsManyRequest) | [GetMetricsManyResponse](#api-v1-metrics-GetMetricsManyResponse) | Retrive metrics for multiple sets of tags at a time. Metrics within the same set of tags will be in ascending order of timestamp. |
 | /api.v1.metrics.Service/GetMetricsExpression | [GetMetricsExpressionRequest](#api-v1-metrics-GetMetricsExpressionRequest) | [GetMetricsExpressionResponse](#api-v1-metrics-GetMetricsExpressionResponse) |  |
+
 
 
 
@@ -381,52 +381,427 @@
 
 
 
-<a name="model_environment-proto"></a>
+<a name="api_v1_capsule_rollout_status-proto"></a>
 
-## model/environment.proto
+## api/v1/capsule/rollout/status.proto
 
 
 
-<a name="model-EnvironmentFilter"></a>
+<a name="api-v1-capsule-rollout-ConfigureCapsuleStep"></a>
 
-### EnvironmentFilter
+### ConfigureCapsuleStep
+A step configuring a capsule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The state of the step. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureCommitStep"></a>
+
+### ConfigureCommitStep
+A step committing the changes to git
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information |
+| commit_hash | [string](#string) |  | The hash of the commit containing the changes |
+| commit_url | [string](#string) |  | The url to the commit (if known. May be empty) |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureEnvStep"></a>
+
+### ConfigureEnvStep
+A step configuring an environment.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The result of the environment configuration. |
+| is_secret | [bool](#bool) |  | Whether the environment is a secret. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureFileStep"></a>
+
+### ConfigureFileStep
+A step configuring a file.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The result of the file configuration. |
+| path | [string](#string) |  | The path of the file. |
+| is_secret | [bool](#bool) |  | Whether the file is a secret. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureStage"></a>
+
+### ConfigureStage
+The configure stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
+| steps | [ConfigureStep](#api-v1-capsule-rollout-ConfigureStep) | repeated | The steps of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureStep"></a>
+
+### ConfigureStep
+A step of the configure stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
+| configure_capsule | [ConfigureCapsuleStep](#api-v1-capsule-rollout-ConfigureCapsuleStep) |  | A step configuring a capsule. |
+| configure_file | [ConfigureFileStep](#api-v1-capsule-rollout-ConfigureFileStep) |  | A step configuring a file. |
+| configure_env | [ConfigureEnvStep](#api-v1-capsule-rollout-ConfigureEnvStep) |  | A step configuring an environment. |
+| commit | [ConfigureCommitStep](#api-v1-capsule-rollout-ConfigureCommitStep) |  | A step for commiting the changes to git. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-CreateResourceStep"></a>
+
+### CreateResourceStep
+A step creating a resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| kind | [string](#string) |  | The kind of the resource. |
+| name | [string](#string) |  | The name of the resource. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-GenericStep"></a>
+
+### GenericStep
+A generic step of a stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-InstancesStep"></a>
+
+### InstancesStep
+Information on the instances of the rollout.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
+| num_updated | [uint32](#uint32) |  | The number of updated instances. |
+| num_ready | [uint32](#uint32) |  | The number of ready instances. |
+| num_stuck | [uint32](#uint32) |  | The number of stuck instances. |
+| num_wrong_version | [uint32](#uint32) |  | The number of instances with the wrong version. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ResourceCreationStage"></a>
+
+### ResourceCreationStage
+The resource creation stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
+| steps | [ResourceCreationStep](#api-v1-capsule-rollout-ResourceCreationStep) | repeated | The steps of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ResourceCreationStep"></a>
+
+### ResourceCreationStep
+A step of the resource creation stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
+| create_resource | [CreateResourceStep](#api-v1-capsule-rollout-CreateResourceStep) |  | A step creating a resource. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-RunningStage"></a>
+
+### RunningStage
+The running stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
+| steps | [RunningStep](#api-v1-capsule-rollout-RunningStep) | repeated | The steps of the stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-RunningStep"></a>
+
+### RunningStep
+A step of the running stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
+| instances | [InstancesStep](#api-v1-capsule-rollout-InstancesStep) |  | A step containing information on the instances of the rollout. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-StageInfo"></a>
+
+### StageInfo
+Information about a stage of a rollout.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the stage. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the stage was updated. |
+| state | [StageState](#api-v1-capsule-rollout-StageState) |  | The current state of the stage. |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the stage started. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-Stages"></a>
+
+### Stages
+The three stages of a rollout
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| configure | [ConfigureStage](#api-v1-capsule-rollout-ConfigureStage) |  | The configure stage. |
+| resource_creation | [ResourceCreationStage](#api-v1-capsule-rollout-ResourceCreationStage) |  | The resource creation stage. |
+| running | [RunningStage](#api-v1-capsule-rollout-RunningStage) |  | The running stage. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-Status"></a>
+
+### Status
+Status is a representation of the current state of a rollout.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rollout_id | [uint64](#uint64) |  | The ID of the rollout. |
+| state | [State](#api-v1-capsule-rollout-State) |  | The current state of the rollout. |
+| stages | [Stages](#api-v1-capsule-rollout-Stages) |  | The stages of the rollout. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the rollout was updated. |
+| result | [Result](#api-v1-capsule-rollout-Result) |  | The result of the rollout. |
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-StepInfo"></a>
+
+### StepInfo
+Information about a step of a stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the step. |
+| message | [string](#string) |  | Messages in the step. |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the step was updated. |
+| state | [StepState](#api-v1-capsule-rollout-StepState) |  | The current state of the step. |
+| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the step started. |
+
+
+
+
+
+
+
+
+<a name="api-v1-capsule-rollout-ConfigureResult"></a>
+
+### ConfigureResult
+The result of a configuration step.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONFIGURE_RESULT_UNSPECIFIED | 0 | The result is unspecified. |
+| CONFIGURE_RESULT_CREATED | 1 | The resource is to be created. |
+| CONFIGURE_RESULT_UPDATED | 2 | The resource is to be updated. |
+| CONFIGURE_RESULT_NO_CHANGE | 3 | The resource has no change. |
+| CONFIGURE_RESULT_DELETED | 4 | The resource is to be deleted. |
+
+
+
+<a name="api-v1-capsule-rollout-Result"></a>
+
+### Result
+Different result of a rollout.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| RESULT_UNSPECIFIED | 0 | The result is unspecified. |
+| RESULT_REPLACED | 1 | The rollout has been replaced. |
+| RESULT_FAILED | 2 | The rollout has failed. |
+| RESULT_ABORTED | 3 | The rollout has been aborted. |
+| RESULT_ROLLBACK | 4 | The rollout has been rolled back. |
+
+
+
+<a name="api-v1-capsule-rollout-StageState"></a>
+
+### StageState
+Different states a stage can be in.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STAGE_STATE_UNSPECIFIED | 0 | The state is unspecified. |
+| STAGE_STATE_DEPLOYING | 1 | The stage is deploying. |
+| STAGE_STATE_RUNNING | 2 | The stage is running. |
+| STAGE_STATE_STOPPED | 3 | The stage is stopped. |
+
+
+
+<a name="api-v1-capsule-rollout-State"></a>
+
+### State
+Different states a rollout can be in.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STATE_UNSPECIFIED | 0 | The state is unspecified. |
+| STATE_PREPARING | 1 | The rollout is preparing. |
+| STATE_CONFIGURE | 2 | The rollout is configuring. |
+| STATE_RESOURCE_CREATION | 3 | The rollout is creating resources. |
+| STATE_RUNNING | 4 | The rollout is running. |
+| STATE_STOPPED | 5 | The rollout is stopped. |
+
+
+
+<a name="api-v1-capsule-rollout-StepState"></a>
+
+### StepState
+Different states a step can be in.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STEP_STATE_UNSPECIFIED | 0 | The state is unspecified. |
+| STEP_STATE_ONGOING | 1 | The step is ongoing. |
+| STEP_STATE_FAILED | 2 | The step failed. |
+| STEP_STATE_DONE | 3 | The step is done. |
+
+
+
+
+
+
+
+
+<a name="model_issue-proto"></a>
+
+## model/issue.proto
+
+
+
+<a name="model-Issue"></a>
+
+### Issue
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| all | [EnvironmentFilter.All](#model-EnvironmentFilter-All) |  |  |
-| selected | [EnvironmentFilter.Selected](#model-EnvironmentFilter-Selected) |  |  |
+| issue_id | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| stale_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| closed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| reference | [Reference](#model-Reference) |  |  |
+| message | [string](#string) |  |  |
+| level | [Level](#model-Level) |  |  |
+| count | [uint32](#uint32) |  |  |
 
 
 
 
 
 
-<a name="model-EnvironmentFilter-All"></a>
+<a name="model-Reference"></a>
 
-### EnvironmentFilter.All
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| include_ephemeral | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="model-EnvironmentFilter-Selected"></a>
-
-### EnvironmentFilter.Selected
+### Reference
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| environment_ids | [string](#string) | repeated |  |
+| project_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| rollout_id | [uint64](#uint64) |  |  |
+| instance_id | [string](#string) |  |  |
 
 
 
@@ -435,99 +810,18 @@
 
 
 
+<a name="model-Level"></a>
 
-
-
-
-
-<a name="model_notification-proto"></a>
-
-## model/notification.proto
-
-
-
-<a name="model-NotificationNotifier"></a>
-
-### NotificationNotifier
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| target | [NotificationTarget](#model-NotificationTarget) |  |  |
-| topics | [NotificationTopic](#model-NotificationTopic) | repeated |  |
-| environments | [EnvironmentFilter](#model-EnvironmentFilter) |  |  |
-
-
-
-
-
-
-<a name="model-NotificationTarget"></a>
-
-### NotificationTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| slack | [NotificationTarget.SlackTarget](#model-NotificationTarget-SlackTarget) |  |  |
-| email | [NotificationTarget.EmailTarget](#model-NotificationTarget-EmailTarget) |  |  |
-
-
-
-
-
-
-<a name="model-NotificationTarget-EmailTarget"></a>
-
-### NotificationTarget.EmailTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| from_email | [string](#string) |  |  |
-| to_emails | [string](#string) | repeated |  |
-
-
-
-
-
-
-<a name="model-NotificationTarget-SlackTarget"></a>
-
-### NotificationTarget.SlackTarget
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| workspace | [string](#string) |  |  |
-| channel_id | [string](#string) |  |  |
-
-
-
-
-
-
-
-
-<a name="model-NotificationTopic"></a>
-
-### NotificationTopic
+### Level
 
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| NOTIFICATION_TOPIC_UNSPECIFIED | 0 |  |
-| NOTIFICATION_TOPIC_ROLLOUT | 1 |  |
-| NOTIFICATION_TOPIC_ISSUE | 2 |  |
-| NOTIFICATION_TOPIC_PROJECT | 3 |  |
-| NOTIFICATION_TOPIC_ENVIRONMENT | 4 |  |
-| NOTIFICATION_TOPIC_CAPSULE | 5 |  |
-| NOTIFICATION_TOPIC_USER | 6 |  |
+| LEVEL_UNSPECIFIED | 0 |  |
+| LEVEL_INFORMATIVE | 1 |  |
+| LEVEL_MINOR | 2 |  |
+| LEVEL_MAJOR | 3 |  |
+| LEVEL_CRITICAL | 4 |  |
 
 
 
@@ -550,10 +844,126 @@
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| topic | [model.NotificationTopic](#model-NotificationTopic) |  |  |
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | scope | [Scope](#api-v1-activity-Scope) |  |  |
+| message | [Message](#api-v1-activity-Message) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-Message"></a>
+
+### Message
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rollout | [Message.Rollout](#api-v1-activity-Message-Rollout) |  |  |
+| issue | [Message.Issue](#api-v1-activity-Message-Issue) |  |  |
+| project | [Message.Project](#api-v1-activity-Message-Project) |  |  |
+| environment | [Message.Environment](#api-v1-activity-Message-Environment) |  |  |
+| capsule | [Message.Capsule](#api-v1-activity-Message-Capsule) |  |  |
+| user | [Message.User](#api-v1-activity-Message-User) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-Message-Capsule"></a>
+
+### Message.Capsule
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| capsule_id | [string](#string) |  |  |
+| deleted | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-Message-Environment"></a>
+
+### Message.Environment
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_id | [string](#string) |  |  |
+| deleted | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-Message-Issue"></a>
+
+### Message.Issue
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| level | [model.Level](#model-Level) |  |  |
+| rolloutID | [uint64](#uint64) |  |  |
 | message | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-Message-Project"></a>
+
+### Message.Project
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| deleted | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-Message-Rollout"></a>
+
+### Message.Rollout
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rollout_id | [uint64](#uint64) |  |  |
+| state | [api.v1.capsule.rollout.StepState](#api-v1-capsule-rollout-StepState) |  |  |
+
+
+
+
+
+
+<a name="api-v1-activity-Message-User"></a>
+
+### Message.User
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| printable_name | [string](#string) |  |  |
+| deleted | [bool](#bool) |  |  |
 
 
 
@@ -712,6 +1122,24 @@ Scrypt hashing instance.
 <a name="api_v1_activity_service-proto"></a>
 
 ## api/v1/activity/service.proto
+
+
+
+<a name="api-v1-activity-ActivityFilter"></a>
+
+### ActivityFilter
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_filter | [string](#string) |  |  |
+| environment_filter | [string](#string) |  |  |
+| capsule_filter | [string](#string) |  |  |
+| user_identifier_filter | [string](#string) |  |  |
+
+
+
 
 
 
@@ -1452,6 +1880,65 @@ The type of SSO. Currently only OIDC is supported.
 | ---- | ------ | ----------- |
 | SSO_TYPE_UNSPECIFIED | 0 |  |
 | SSO_TYPE_OIDC | 1 |  |
+
+
+
+
+
+
+
+
+<a name="model_environment-proto"></a>
+
+## model/environment.proto
+
+
+
+<a name="model-EnvironmentFilter"></a>
+
+### EnvironmentFilter
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| all | [EnvironmentFilter.All](#model-EnvironmentFilter-All) |  |  |
+| selected | [EnvironmentFilter.Selected](#model-EnvironmentFilter-Selected) |  |  |
+
+
+
+
+
+
+<a name="model-EnvironmentFilter-All"></a>
+
+### EnvironmentFilter.All
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| include_ephemeral | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="model-EnvironmentFilter-Selected"></a>
+
+### EnvironmentFilter.Selected
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| environment_ids | [string](#string) | repeated |  |
+
+
+
+
+
 
 
 
@@ -4952,384 +5439,6 @@ Condition that must be met for the trigger to fire.
 
 
 
-<a name="api_v1_capsule_rollout_status-proto"></a>
-
-## api/v1/capsule/rollout/status.proto
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureCapsuleStep"></a>
-
-### ConfigureCapsuleStep
-A step configuring a capsule.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The state of the step. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureCommitStep"></a>
-
-### ConfigureCommitStep
-A step committing the changes to git
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information |
-| commit_hash | [string](#string) |  | The hash of the commit containing the changes |
-| commit_url | [string](#string) |  | The url to the commit (if known. May be empty) |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureEnvStep"></a>
-
-### ConfigureEnvStep
-A step configuring an environment.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The result of the environment configuration. |
-| is_secret | [bool](#bool) |  | Whether the environment is a secret. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureFileStep"></a>
-
-### ConfigureFileStep
-A step configuring a file.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| state | [ConfigureResult](#api-v1-capsule-rollout-ConfigureResult) |  | The result of the file configuration. |
-| path | [string](#string) |  | The path of the file. |
-| is_secret | [bool](#bool) |  | Whether the file is a secret. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureStage"></a>
-
-### ConfigureStage
-The configure stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
-| steps | [ConfigureStep](#api-v1-capsule-rollout-ConfigureStep) | repeated | The steps of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureStep"></a>
-
-### ConfigureStep
-A step of the configure stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
-| configure_capsule | [ConfigureCapsuleStep](#api-v1-capsule-rollout-ConfigureCapsuleStep) |  | A step configuring a capsule. |
-| configure_file | [ConfigureFileStep](#api-v1-capsule-rollout-ConfigureFileStep) |  | A step configuring a file. |
-| configure_env | [ConfigureEnvStep](#api-v1-capsule-rollout-ConfigureEnvStep) |  | A step configuring an environment. |
-| commit | [ConfigureCommitStep](#api-v1-capsule-rollout-ConfigureCommitStep) |  | A step for commiting the changes to git. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-CreateResourceStep"></a>
-
-### CreateResourceStep
-A step creating a resource.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| kind | [string](#string) |  | The kind of the resource. |
-| name | [string](#string) |  | The name of the resource. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-GenericStep"></a>
-
-### GenericStep
-A generic step of a stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-InstancesStep"></a>
-
-### InstancesStep
-Information on the instances of the rollout.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StepInfo](#api-v1-capsule-rollout-StepInfo) |  | Step information. |
-| num_updated | [uint32](#uint32) |  | The number of updated instances. |
-| num_ready | [uint32](#uint32) |  | The number of ready instances. |
-| num_stuck | [uint32](#uint32) |  | The number of stuck instances. |
-| num_wrong_version | [uint32](#uint32) |  | The number of instances with the wrong version. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ResourceCreationStage"></a>
-
-### ResourceCreationStage
-The resource creation stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
-| steps | [ResourceCreationStep](#api-v1-capsule-rollout-ResourceCreationStep) | repeated | The steps of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ResourceCreationStep"></a>
-
-### ResourceCreationStep
-A step of the resource creation stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
-| create_resource | [CreateResourceStep](#api-v1-capsule-rollout-CreateResourceStep) |  | A step creating a resource. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-RunningStage"></a>
-
-### RunningStage
-The running stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| info | [StageInfo](#api-v1-capsule-rollout-StageInfo) |  | Stage information. |
-| steps | [RunningStep](#api-v1-capsule-rollout-RunningStep) | repeated | The steps of the stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-RunningStep"></a>
-
-### RunningStep
-A step of the running stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| generic | [GenericStep](#api-v1-capsule-rollout-GenericStep) |  | A generic step. |
-| instances | [InstancesStep](#api-v1-capsule-rollout-InstancesStep) |  | A step containing information on the instances of the rollout. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-StageInfo"></a>
-
-### StageInfo
-Information about a stage of a rollout.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the stage. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the stage was updated. |
-| state | [StageState](#api-v1-capsule-rollout-StageState) |  | The current state of the stage. |
-| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the stage started. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-Stages"></a>
-
-### Stages
-The three stages of a rollout
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| configure | [ConfigureStage](#api-v1-capsule-rollout-ConfigureStage) |  | The configure stage. |
-| resource_creation | [ResourceCreationStage](#api-v1-capsule-rollout-ResourceCreationStage) |  | The resource creation stage. |
-| running | [RunningStage](#api-v1-capsule-rollout-RunningStage) |  | The running stage. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-Status"></a>
-
-### Status
-Status is a representation of the current state of a rollout.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| rollout_id | [uint64](#uint64) |  | The ID of the rollout. |
-| state | [State](#api-v1-capsule-rollout-State) |  | The current state of the rollout. |
-| stages | [Stages](#api-v1-capsule-rollout-Stages) |  | The stages of the rollout. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the rollout was updated. |
-| result | [Result](#api-v1-capsule-rollout-Result) |  | The result of the rollout. |
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-StepInfo"></a>
-
-### StepInfo
-Information about a step of a stage.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the step. |
-| message | [string](#string) |  | Messages in the step. |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The last time the step was updated. |
-| state | [StepState](#api-v1-capsule-rollout-StepState) |  | The current state of the step. |
-| started_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | The time the step started. |
-
-
-
-
-
-
-
-
-<a name="api-v1-capsule-rollout-ConfigureResult"></a>
-
-### ConfigureResult
-The result of a configuration step.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| CONFIGURE_RESULT_UNSPECIFIED | 0 | The result is unspecified. |
-| CONFIGURE_RESULT_CREATED | 1 | The resource is to be created. |
-| CONFIGURE_RESULT_UPDATED | 2 | The resource is to be updated. |
-| CONFIGURE_RESULT_NO_CHANGE | 3 | The resource has no change. |
-| CONFIGURE_RESULT_DELETED | 4 | The resource is to be deleted. |
-
-
-
-<a name="api-v1-capsule-rollout-Result"></a>
-
-### Result
-Different result of a rollout.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| RESULT_UNSPECIFIED | 0 | The result is unspecified. |
-| RESULT_REPLACED | 1 | The rollout has been replaced. |
-| RESULT_FAILED | 2 | The rollout has failed. |
-| RESULT_ABORTED | 3 | The rollout has been aborted. |
-| RESULT_ROLLBACK | 4 | The rollout has been rolled back. |
-
-
-
-<a name="api-v1-capsule-rollout-StageState"></a>
-
-### StageState
-Different states a stage can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| STAGE_STATE_UNSPECIFIED | 0 | The state is unspecified. |
-| STAGE_STATE_DEPLOYING | 1 | The stage is deploying. |
-| STAGE_STATE_RUNNING | 2 | The stage is running. |
-| STAGE_STATE_STOPPED | 3 | The stage is stopped. |
-
-
-
-<a name="api-v1-capsule-rollout-State"></a>
-
-### State
-Different states a rollout can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| STATE_UNSPECIFIED | 0 | The state is unspecified. |
-| STATE_PREPARING | 1 | The rollout is preparing. |
-| STATE_CONFIGURE | 2 | The rollout is configuring. |
-| STATE_RESOURCE_CREATION | 3 | The rollout is creating resources. |
-| STATE_RUNNING | 4 | The rollout is running. |
-| STATE_STOPPED | 5 | The rollout is stopped. |
-
-
-
-<a name="api-v1-capsule-rollout-StepState"></a>
-
-### StepState
-Different states a step can be in.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| STEP_STATE_UNSPECIFIED | 0 | The state is unspecified. |
-| STEP_STATE_ONGOING | 1 | The step is ongoing. |
-| STEP_STATE_FAILED | 2 | The step failed. |
-| STEP_STATE_DONE | 3 | The step is done. |
-
-
-
-
-
-
-
-
 <a name="api_v1_capsule_rollout-proto"></a>
 
 ## api/v1/capsule/rollout.proto
@@ -5460,77 +5569,6 @@ The rollout model.
 | ---- | ------ | ----------- |
 | EVENT_TYPE_UNSPECIFIED | 0 |  |
 | EVENT_TYPE_ABORT | 1 |  |
-
-
-
-
-
-
-
-
-<a name="model_issue-proto"></a>
-
-## model/issue.proto
-
-
-
-<a name="model-Issue"></a>
-
-### Issue
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| issue_id | [string](#string) |  |  |
-| type | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| stale_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| closed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| reference | [Reference](#model-Reference) |  |  |
-| message | [string](#string) |  |  |
-| level | [Level](#model-Level) |  |  |
-| count | [uint32](#uint32) |  |  |
-
-
-
-
-
-
-<a name="model-Reference"></a>
-
-### Reference
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  |  |
-| capsule_id | [string](#string) |  |  |
-| environment_id | [string](#string) |  |  |
-| rollout_id | [uint64](#uint64) |  |  |
-| instance_id | [string](#string) |  |  |
-
-
-
-
-
-
-
-
-<a name="model-Level"></a>
-
-### Level
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| LEVEL_UNSPECIFIED | 0 |  |
-| LEVEL_INFORMATIVE | 1 |  |
-| LEVEL_MINOR | 2 |  |
-| LEVEL_MAJOR | 3 |  |
-| LEVEL_CRITICAL | 4 |  |
 
 
 
@@ -8809,6 +8847,102 @@ A docker image tag.
 | BINOP_SUB | 2 |  |
 | BINOP_MULT | 3 |  |
 | BINOP_DIV | 4 |  |
+
+
+
+
+
+
+
+
+<a name="model_notification-proto"></a>
+
+## model/notification.proto
+
+
+
+<a name="model-NotificationNotifier"></a>
+
+### NotificationNotifier
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| target | [NotificationTarget](#model-NotificationTarget) |  |  |
+| topics | [NotificationTopic](#model-NotificationTopic) | repeated |  |
+| environments | [EnvironmentFilter](#model-EnvironmentFilter) |  |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget"></a>
+
+### NotificationTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| slack | [NotificationTarget.SlackTarget](#model-NotificationTarget-SlackTarget) |  |  |
+| email | [NotificationTarget.EmailTarget](#model-NotificationTarget-EmailTarget) |  |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget-EmailTarget"></a>
+
+### NotificationTarget.EmailTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| from_email | [string](#string) |  |  |
+| to_emails | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="model-NotificationTarget-SlackTarget"></a>
+
+### NotificationTarget.SlackTarget
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| workspace | [string](#string) |  |  |
+| channel_id | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+<a name="model-NotificationTopic"></a>
+
+### NotificationTopic
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NOTIFICATION_TOPIC_UNSPECIFIED | 0 |  |
+| NOTIFICATION_TOPIC_ROLLOUT | 1 |  |
+| NOTIFICATION_TOPIC_ISSUE | 2 |  |
+| NOTIFICATION_TOPIC_PROJECT | 3 |  |
+| NOTIFICATION_TOPIC_ENVIRONMENT | 4 |  |
+| NOTIFICATION_TOPIC_CAPSULE | 5 |  |
+| NOTIFICATION_TOPIC_USER | 6 |  |
 
 
 
