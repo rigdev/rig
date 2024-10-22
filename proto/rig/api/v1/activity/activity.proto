@@ -3,13 +3,13 @@ syntax = "proto3";
 package api.v1.activity;
 
 import "google/protobuf/timestamp.proto";
-import "model/notification.proto";
+import "api/v1/capsule/rollout/status.proto";
+import "model/issue.proto";
 
 message Activity {
-  model.NotificationTopic topic = 1;
-  google.protobuf.Timestamp timestamp = 2;
-  Scope scope = 3;
-  string message = 4;
+  google.protobuf.Timestamp timestamp = 1;
+  Scope scope = 2;
+  Message message = 3;
 }
 
 message Scope {
@@ -17,4 +17,46 @@ message Scope {
   string environment = 2;
   string capsule = 3;
   string user = 4;
+}
+
+message Message {
+  message Rollout {
+    uint64 rollout_id = 1;
+    api.v1.capsule.rollout.StepState state = 2;
+  }
+
+  message Issue {
+    model.Level level = 1;
+    uint64 rolloutID = 2;
+    string message = 3;
+  }
+
+  message Project {
+    string project_id = 1;
+    bool deleted = 2;
+  }
+
+  message Environment {
+    string environment_id = 1;
+    bool deleted = 2;
+  }
+
+  message Capsule {
+    string capsule_id = 1;
+    bool deleted = 2;
+  }
+
+  message User {
+    string printable_name = 1;
+    bool deleted = 2;
+  }
+
+  oneof message {
+    Rollout rollout = 1;
+    Issue issue = 2;
+    Project project = 3;
+    Environment environment = 4;
+    Capsule capsule = 5;
+    User user = 6;
+  }
 }

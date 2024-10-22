@@ -17,6 +17,13 @@ message GetActivitiesRequest {
   model.Pagination pagination = 3;
 }
 
+message ActivityFilter {
+  string project_filter = 1;
+  string environment_filter = 2;
+  string capsule_filter = 3;
+  string user_identifier_filter = 4;
+}
+
 message GetActivitiesResponse {
   repeated Activity activities = 1;
 }
