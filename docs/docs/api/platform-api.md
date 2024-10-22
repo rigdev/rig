@@ -916,6 +916,7 @@ Different states a step can be in.
 | level | [model.Level](#model-Level) |  |  |
 | rolloutID | [uint64](#uint64) |  |  |
 | message | [string](#string) |  |  |
+| resolved | [bool](#bool) |  |  |
 
 
 
@@ -1154,6 +1155,7 @@ Scrypt hashing instance.
 | from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | pagination | [model.Pagination](#model-Pagination) |  |  |
+| filter | [ActivityFilter](#api-v1-activity-ActivityFilter) |  |  |
 
 
 
