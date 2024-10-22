@@ -8,7 +8,9 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/jedib0t/go-pretty/v6/table"
+
 	"github.com/rigdev/rig-go-api/api/v1/activity"
+	rollout_api "github.com/rigdev/rig-go-api/api/v1/capsule/rollout"
 	"github.com/rigdev/rig-go-api/model"
 	"github.com/rigdev/rig-go-sdk"
 	"github.com/rigdev/rig/cmd/common"
@@ -24,6 +26,11 @@ var (
 	fromStr string
 	toStr   string
 	since   string
+
+	projectFilter     string
+	environmentFilter string
+	capsuleFilter     string
+	userFilter        string
 
 	limit  int
 	offset int
@@ -81,6 +88,28 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		"Offset the activities returned. Default is 0.",
 	)
 
+	activity.Flags().StringVar(
+		&projectFilter, "project-filter", "",
+		"Filter activities by project ID",
+	)
+
+	activity.Flags().StringVar(
+		&environmentFilter, "environment-filter", "",
+		"Filter activities by environment ID",
+	)
+
+	activity.Flags().StringVar(
+		&capsuleFilter, "capsule-filter", "",
+		"Filter activities by capsule ID",
+	)
+
+	activity.Flags().StringVar(
+		&userFilter, "user-filter", "",
+		"Filter activities by user ID",
+	)
+
+	// activity.Flags().StringVar()
+
 	parent.AddCommand(activity)
 }
 
@@ -94,9 +123,14 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 		From: timestamppb.New(from),
 		To:   timestamppb.New(to),
 		Pagination: &model.Pagination{
-			Limit:      uint32(limit),
-			Offset:     uint32(offset),
-			Descending: true,
+			Limit:  uint32(limit),
+			Offset: uint32(offset),
+		},
+		Filter: &activity.ActivityFilter{
+			ProjectFilter:        projectFilter,
+			EnvironmentFilter:    environmentFilter,
+			CapsuleFilter:        capsuleFilter,
+			UserIdentifierFilter: userFilter,
 		},
 	}))
 	if err != nil {
@@ -120,8 +154,10 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 	})
 
 	for _, a := range activities {
+		topic, msg := activityMessageToString(a.GetMessage())
+
 		t.AppendRow(table.Row{
-			common.TopicToString(a.GetTopic()), a.GetMessage(), activityScopeToString(a.GetScope()),
+			topic, msg, activityScopeToString(a.GetScope()),
 			a.GetTimestamp().AsTime().Local().Format("2006-01-02 15:04:05"),
 		})
 	}
@@ -129,6 +165,82 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 	fmt.Println(t.Render())
 
 	return nil
+}
+
+func activityMessageToString(m *activity.Message) (string, string) {
+	if m == nil {
+		return "", ""
+	}
+
+	switch v := m.Message.(type) {
+	case *activity.Message_Rollout_:
+		msg := fmt.Sprintf("Rollout #%d", v.Rollout.GetRolloutId())
+		switch v.Rollout.GetState() {
+		case rollout_api.StepState_STEP_STATE_ONGOING:
+			msg += " initiated"
+		case rollout_api.StepState_STEP_STATE_DONE:
+			msg += " deployed"
+		case rollout_api.StepState_STEP_STATE_FAILED:
+			msg += " failed"
+		}
+
+		return "Rollout", msg
+	case *activity.Message_Issue_:
+		var level string
+		switch v.Issue.GetLevel() {
+		case model.Level_LEVEL_INFORMATIVE:
+			level = "informatic"
+		case model.Level_LEVEL_MINOR:
+			level = "minor"
+		case model.Level_LEVEL_MAJOR:
+			level = "major"
+		case model.Level_LEVEL_CRITICAL:
+			level = "critical"
+		}
+
+		action := "reported"
+		if v.Issue.GetResolved() {
+			action = "resolved"
+		}
+
+		return "Issue", fmt.Sprintf("%s issue %s in rollout #%d: %s",
+			level, action, v.Issue.GetRolloutID(), v.Issue.GetMessage())
+
+	case *activity.Message_Project_:
+		action := "created"
+		if v.Project.GetDeleted() {
+			action = "deleted"
+		}
+
+		return "Project", fmt.Sprintf("Project '%s' %s", v.Project.GetProjectId(), action)
+
+	case *activity.Message_Environment_:
+		action := "created"
+		if v.Environment.GetDeleted() {
+			action = "deleted"
+		}
+
+		return "Environment", fmt.Sprintf("Environment '%s' %s", v.Environment.GetEnvironmentId(), action)
+
+	case *activity.Message_Capsule_:
+		action := "created"
+		if v.Capsule.GetDeleted() {
+			action = "deleted"
+		}
+
+		return "Capsule", fmt.Sprintf("Capsule '%s' %s", v.Capsule.GetCapsuleId(), action)
+
+	case *activity.Message_User_:
+		action := "created"
+		if v.User.GetDeleted() {
+			action = "deleted"
+		}
+
+		return "User", fmt.Sprintf("User '%s' %s", v.User.GetPrintableName(), action)
+
+	default:
+		return "", ""
+	}
 }
 
 func activityScopeToString(s *activity.Scope) string {
