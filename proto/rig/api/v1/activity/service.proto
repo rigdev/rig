@@ -15,6 +15,7 @@ message GetActivitiesRequest {
   google.protobuf.Timestamp from = 1;
   google.protobuf.Timestamp to = 2;
   model.Pagination pagination = 3;
+  ActivityFilter filter = 4;
 }
 
 message ActivityFilter {
