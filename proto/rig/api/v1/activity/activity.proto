@@ -54,7 +54,6 @@ message Message {
 
   oneof message {
     Rollout rollout = 1;
-    Issue issue = 2;
     Project project = 3;
     Environment environment = 4;
     Capsule capsule = 5;

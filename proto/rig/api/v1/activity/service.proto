@@ -27,4 +27,5 @@ message ActivityFilter {
 
 message GetActivitiesResponse {
   repeated Activity activities = 1;
+  uint64 total = 2;
 }
