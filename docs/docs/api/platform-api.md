@@ -862,7 +862,6 @@ Different states a step can be in.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rollout | [Message.Rollout](#api-v1-activity-Message-Rollout) |  |  |
-| issue | [Message.Issue](#api-v1-activity-Message-Issue) |  |  |
 | project | [Message.Project](#api-v1-activity-Message-Project) |  |  |
 | environment | [Message.Environment](#api-v1-activity-Message-Environment) |  |  |
 | capsule | [Message.Capsule](#api-v1-activity-Message-Capsule) |  |  |
@@ -1171,6 +1170,7 @@ Scrypt hashing instance.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | activities | [Activity](#api-v1-activity-Activity) | repeated |  |
+| total | [uint64](#uint64) |  |  |
 
 
 

@@ -185,26 +185,6 @@ func activityMessageToString(m *activity.Message) (string, string) {
 		}
 
 		return "Rollout", msg
-	case *activity.Message_Issue_:
-		var level string
-		switch v.Issue.GetLevel() {
-		case model.Level_LEVEL_INFORMATIVE:
-			level = "informatic"
-		case model.Level_LEVEL_MINOR:
-			level = "minor"
-		case model.Level_LEVEL_MAJOR:
-			level = "major"
-		case model.Level_LEVEL_CRITICAL:
-			level = "critical"
-		}
-
-		action := "reported"
-		if v.Issue.GetResolved() {
-			action = "resolved"
-		}
-
-		return "Issue", fmt.Sprintf("%s issue %s in rollout #%d: %s",
-			level, action, v.Issue.GetRolloutID(), v.Issue.GetMessage())
 
 	case *activity.Message_Project_:
 		action := "created"
