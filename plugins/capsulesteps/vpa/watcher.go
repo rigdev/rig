@@ -17,7 +17,7 @@ func (p *Plugin) WatchObjectStatus(ctx context.Context, watcher plugin.CapsuleWa
 func onVPAUpdated(
 	obj client.Object,
 	_ []*corev1.Event,
-	objWatcher plugin.ObjectWatcher,
+	_ plugin.ObjectWatcher,
 ) *apipipeline.ObjectStatusInfo {
 	vpa := obj.(*vpav1.VerticalPodAutoscaler)
 
