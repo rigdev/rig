@@ -4,7 +4,6 @@ package api.v1.activity;
 
 import "google/protobuf/timestamp.proto";
 import "api/v1/capsule/rollout/status.proto";
-import "model/issue.proto";
 
 message Activity {
   google.protobuf.Timestamp timestamp = 1;
@@ -23,13 +22,6 @@ message Message {
   message Rollout {
     uint64 rollout_id = 1;
     api.v1.capsule.rollout.StepState state = 2;
-  }
-
-  message Issue {
-    model.Level level = 1;
-    uint64 rolloutID = 2;
-    string message = 3;
-    bool resolved = 4;
   }
 
   message Project {

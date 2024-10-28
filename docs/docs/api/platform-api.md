@@ -5,7 +5,6 @@
 
 
 
-
 ### api.v1.activity.Service
 <a name="api-v1-activity-Service"></a>
 
@@ -43,6 +42,7 @@
 | /api.v1.authentication.Service/VerifyEmail | [VerifyEmailRequest](#api-v1-authentication-VerifyEmailRequest) | [VerifyEmailResponse](#api-v1-authentication-VerifyEmailResponse) | Verify email |
 | /api.v1.authentication.Service/VerifyPhoneNumber | [VerifyPhoneNumberRequest](#api-v1-authentication-VerifyPhoneNumberRequest) | [VerifyPhoneNumberResponse](#api-v1-authentication-VerifyPhoneNumberResponse) | Verify phone number |
 | /api.v1.authentication.Service/SendVerificationEmail | [SendVerificationEmailRequest](#api-v1-authentication-SendVerificationEmailRequest) | [SendVerificationEmailResponse](#api-v1-authentication-SendVerificationEmailResponse) |  |
+
 
 
 
@@ -197,6 +197,20 @@
 | /api.v1.image.Service/Add | [AddRequest](#api-v1-image-AddRequest) | [AddResponse](#api-v1-image-AddResponse) | Add a new image. Images are immutable and cannot change. Add a new image to make changes from an existing one. |
 | /api.v1.image.Service/List | [ListRequest](#api-v1-image-ListRequest) | [ListResponse](#api-v1-image-ListResponse) | List images for a capsule. |
 | /api.v1.image.Service/Delete | [DeleteRequest](#api-v1-image-DeleteRequest) | [DeleteResponse](#api-v1-image-DeleteResponse) | Delete a image. |
+
+
+
+
+
+
+### api.v1.issue.Service
+<a name="api-v1-issue-Service"></a>
+
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| /api.v1.issue.Service/GetIssues | [GetIssuesRequest](#api-v1-issue-GetIssuesRequest) | [GetIssuesResponse](#api-v1-issue-GetIssuesResponse) | Get issues |
 
 
 
@@ -759,77 +773,6 @@ Different states a step can be in.
 
 
 
-<a name="model_issue-proto"></a>
-
-## model/issue.proto
-
-
-
-<a name="model-Issue"></a>
-
-### Issue
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| issue_id | [string](#string) |  |  |
-| type | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| stale_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| closed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| reference | [Reference](#model-Reference) |  |  |
-| message | [string](#string) |  |  |
-| level | [Level](#model-Level) |  |  |
-| count | [uint32](#uint32) |  |  |
-
-
-
-
-
-
-<a name="model-Reference"></a>
-
-### Reference
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  |  |
-| capsule_id | [string](#string) |  |  |
-| environment_id | [string](#string) |  |  |
-| rollout_id | [uint64](#uint64) |  |  |
-| instance_id | [string](#string) |  |  |
-
-
-
-
-
-
-
-
-<a name="model-Level"></a>
-
-### Level
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| LEVEL_UNSPECIFIED | 0 |  |
-| LEVEL_INFORMATIVE | 1 |  |
-| LEVEL_MINOR | 2 |  |
-| LEVEL_MAJOR | 3 |  |
-| LEVEL_CRITICAL | 4 |  |
-
-
-
-
-
-
-
-
 <a name="api_v1_activity_activity-proto"></a>
 
 ## api/v1/activity/activity.proto
@@ -898,24 +841,6 @@ Different states a step can be in.
 | ----- | ---- | ----- | ----------- |
 | environment_id | [string](#string) |  |  |
 | deleted | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="api-v1-activity-Message-Issue"></a>
-
-### Message.Issue
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| level | [model.Level](#model-Level) |  |  |
-| rolloutID | [uint64](#uint64) |  |  |
-| message | [string](#string) |  |  |
-| resolved | [bool](#bool) |  |  |
 
 
 
@@ -5579,6 +5504,77 @@ The rollout model.
 
 
 
+<a name="api_v1_issue_issue-proto"></a>
+
+## api/v1/issue/issue.proto
+
+
+
+<a name="api-v1-issue-Issue"></a>
+
+### Issue
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| issue_id | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| stale_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| closed_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| reference | [Reference](#api-v1-issue-Reference) |  |  |
+| message | [string](#string) |  |  |
+| level | [Level](#api-v1-issue-Level) |  |  |
+| count | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="api-v1-issue-Reference"></a>
+
+### Reference
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  |  |
+| capsule_id | [string](#string) |  |  |
+| environment_id | [string](#string) |  |  |
+| rollout_id | [uint64](#uint64) |  |  |
+| instance_id | [string](#string) |  |  |
+
+
+
+
+
+
+
+
+<a name="api-v1-issue-Level"></a>
+
+### Level
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| LEVEL_UNSPECIFIED | 0 |  |
+| LEVEL_INFORMATIVE | 1 |  |
+| LEVEL_MINOR | 2 |  |
+| LEVEL_MAJOR | 3 |  |
+| LEVEL_CRITICAL | 4 |  |
+
+
+
+
+
+
+
+
 <a name="api_v1_capsule_status-proto"></a>
 
 ## api/v1/capsule/status.proto
@@ -5743,7 +5739,7 @@ The rollout model.
 | interfaces | [InterfaceStatus](#api-v1-capsule-InterfaceStatus) | repeated |  |
 | config_files | [ConfigFileStatus](#api-v1-capsule-ConfigFileStatus) | repeated |  |
 | cron_jobs | [CronJobStatus](#api-v1-capsule-CronJobStatus) | repeated |  |
-| issues | [model.Issue](#model-Issue) | repeated | List of all issues associated to the Capsule, include those of the current rollout. The list does not include instance-level issues. |
+| issues | [api.v1.issue.Issue](#api-v1-issue-Issue) | repeated | List of all issues associated to the Capsule, include those of the current rollout. The list does not include instance-level issues. |
 
 
 
@@ -8502,6 +8498,71 @@ A docker image tag.
 | ----- | ---- | ----- | ----------- |
 | tag | [string](#string) |  | Tag of the image. |
 | image_created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | When the image was created. |
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="api_v1_issue_service-proto"></a>
+
+## api/v1/issue/service.proto
+
+
+
+<a name="api-v1-issue-Filter"></a>
+
+### Filter
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [string](#string) |  |  |
+| environment | [string](#string) |  |  |
+| capsule | [string](#string) |  |  |
+| level | [Level](#api-v1-issue-Level) |  |  |
+| include_closed | [bool](#bool) |  |  |
+| include_stale | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="api-v1-issue-GetIssuesRequest"></a>
+
+### GetIssuesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pagination | [model.Pagination](#model-Pagination) |  |  |
+| filter | [Filter](#api-v1-issue-Filter) |  |  |
+
+
+
+
+
+
+<a name="api-v1-issue-GetIssuesResponse"></a>
+
+### GetIssuesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| issues | [Issue](#api-v1-issue-Issue) | repeated |  |
+| total | [uint64](#uint64) |  |  |
 
 
 

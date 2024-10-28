@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.v1.capsule;
 
-import "model/issue.proto";
+import "api/v1/issue/issue.proto";
 import "api/v1/capsule/change.proto";
 import "operator/api/v1/pipeline/object_status.proto";
 
@@ -17,7 +17,7 @@ message Status {
   repeated CronJobStatus cron_jobs = 8;
   // List of all issues associated to the Capsule, include those of the current
   // rollout. The list does not include instance-level issues.
-  repeated model.Issue issues = 9;
+  repeated api.v1.issue.Issue issues = 9;
 }
 
 message CapsuleStatus {
