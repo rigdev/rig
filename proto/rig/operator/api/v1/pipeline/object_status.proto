@@ -103,7 +103,17 @@ message PlatformObjectStatus {
     CapsuleStatus capsule = 7;
     InterfaceStatus interface = 8;
     JobExecutionStatus job_execution = 9;
+    VerticalPodAutoscalerStatus vpa = 10;
   }
+}
+
+message VerticalPodAutoscalerStatus {
+  Recommendation cpu_millis = 1;
+  Recommendation memory_bytes = 2;
+}
+
+message Recommendation {
+  uint64 target = 1;
 }
 
 message JobExecutionStatus {
