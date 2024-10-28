@@ -22,23 +22,35 @@ func onVPAUpdated(
 	vpa := obj.(*vpav1.VerticalPodAutoscaler)
 
 	rec := &apipipeline.VerticalPodAutoscalerStatus{}
-	for _, c := range vpa.Status.Recommendation.ContainerRecommendations {
-		// TODO Assume the main container name is the same as the VPA name (which is the capsule name).
-		// We should have a capsule reference here
-		if c.ContainerName == vpa.Name {
-			if r, ok := c.Target[corev1.ResourceCPU]; ok {
-				rec.CpuMillis = &apipipeline.Recommendation{
-					Target: uint64(r.AsApproximateFloat64() * 1000.),
+	if r := vpa.Status.Recommendation; r != nil {
+		for _, c := range r.ContainerRecommendations {
+			// TODO Assume the main container name is the same as the VPA name (which is the capsule name).
+			// We should have a capsule reference here
+			if c.ContainerName == vpa.Name {
+				rec.CpuMillis = &apipipeline.Recommendation{}
+				if r, ok := c.Target[corev1.ResourceCPU]; ok {
+					rec.CpuMillis.Target = uint64(r.MilliValue())
 				}
-			}
-			if r, ok := c.Target[corev1.ResourceMemory]; ok {
-				rec.MemoryBytes = &apipipeline.Recommendation{
-					Target: uint64(r.AsApproximateFloat64()),
+				if r, ok := c.LowerBound[corev1.ResourceCPU]; ok {
+					rec.CpuMillis.LowerBound = uint64(r.MilliValue())
+				}
+				if r, ok := c.UpperBound[corev1.ResourceCPU]; ok {
+					rec.CpuMillis.UpperBound = uint64(r.MilliValue())
+				}
+
+				rec.MemoryBytes = &apipipeline.Recommendation{}
+				if r, ok := c.Target[corev1.ResourceMemory]; ok {
+					rec.MemoryBytes.Target = uint64(r.AsApproximateFloat64())
+				}
+				if r, ok := c.LowerBound[corev1.ResourceMemory]; ok {
+					rec.MemoryBytes.LowerBound = uint64(r.AsApproximateFloat64())
+				}
+				if r, ok := c.UpperBound[corev1.ResourceMemory]; ok {
+					rec.MemoryBytes.UpperBound = uint64(r.AsApproximateFloat64())
 				}
 			}
 		}
 	}
-
 	status := &apipipeline.ObjectStatusInfo{
 		Properties: map[string]string{},
 		PlatformStatus: []*apipipeline.PlatformObjectStatus{
