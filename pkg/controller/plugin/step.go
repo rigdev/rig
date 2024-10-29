@@ -9,6 +9,7 @@ import (
 	"github.com/gobwas/glob"
 	"github.com/rigdev/rig-go-api/operator/api/v1/plugin"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -57,14 +58,13 @@ func (s *Step) Apply(ctx context.Context, req pipeline.CapsuleRequest, opts pipe
 
 func (s *Step) WatchObjectStatus(
 	ctx context.Context,
-	namespace string,
-	capsule string,
+	capsule *v1alpha2.Capsule,
 	callback pipeline.ObjectStatusCallback,
 ) error {
 	// TODO: We need annotations here.
-	if !s.matcher.Match(namespace, capsule, nil) {
+	if !s.matcher.Match(capsule.GetNamespace(), capsule.GetName(), capsule.GetAnnotations()) {
 		for _, p := range s.plugins {
-			callback.UpdateStatus(namespace, capsule, p.id, &plugin.ObjectStatusChange{
+			callback.UpdateStatus(capsule.GetNamespace(), capsule.GetName(), p.id, &plugin.ObjectStatusChange{
 				Change: &plugin.ObjectStatusChange_Checkpoint_{},
 			})
 		}
@@ -81,9 +81,9 @@ func (s *Step) WatchObjectStatus(
 		wg.Add(1)
 		go func(p *pluginExecutor) {
 			defer wg.Done()
-			err := p.WatchObjectStatus(ctx, namespace, capsule, callback)
+			err := p.WatchObjectStatus(ctx, capsule, callback)
 			if errors.IsUnimplemented(err) {
-				callback.UpdateStatus(namespace, capsule, p.id, &plugin.ObjectStatusChange{
+				callback.UpdateStatus(capsule.GetNamespace(), capsule.GetName(), p.id, &plugin.ObjectStatusChange{
 					Change: &plugin.ObjectStatusChange_Checkpoint_{},
 				})
 			} else if err != nil {

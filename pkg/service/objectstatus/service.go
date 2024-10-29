@@ -10,6 +10,7 @@ import (
 	apipipeline "github.com/rigdev/rig-go-api/operator/api/v1/pipeline"
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	svc_pipeline "github.com/rigdev/rig/pkg/service/pipeline"
@@ -25,7 +26,7 @@ type Service interface {
 	Watch(ctx context.Context, namespace string, c chan<- *apipipeline.ObjectStatusChange) error
 
 	CapsulesInitialized()
-	RegisterCapsule(namespace string, capsule string)
+	RegisterCapsule(namespace string, capsule *v1alpha2.Capsule)
 	UnregisterCapsule(namespace string, capsule string)
 
 	UpdateStatus(namespace string, capsule string, pluginID uuid.UUID, change *apiplugin.ObjectStatusChange)
@@ -56,25 +57,24 @@ type service struct {
 	initialized bool
 }
 
-func (s *service) runForCapsule(ctx context.Context, namespace string, c *capsuleCache) {
+func (s *service) runForCapsule(ctx context.Context, c *capsuleCache) {
 	p := s.pipeline.GetDefaultPipeline()
 
 	for _, step := range p.Steps() {
 		for _, pluginID := range step.PluginIDs() {
 			c.plugins[pluginID] = false
 		}
-		go s.runStepForCapsule(ctx, namespace, c.capsule, step)
+		go s.runStepForCapsule(ctx, c.capsule, step)
 	}
 }
 
 func (s *service) runStepForCapsule(
 	ctx context.Context,
-	namespace string,
-	capsule string,
+	capsule *v1alpha2.Capsule,
 	step pipeline.Step[pipeline.CapsuleRequest],
 ) {
 	for {
-		if err := step.WatchObjectStatus(ctx, namespace, capsule, s); errors.IsCanceled(err) {
+		if err := step.WatchObjectStatus(ctx, capsule, s); errors.IsCanceled(err) {
 			return
 		} else if err != nil {
 			s.logger.Error(err, "error getting object status")
@@ -136,7 +136,7 @@ func (s *service) CapsulesInitialized() {
 	}
 }
 
-func (s *service) RegisterCapsule(namespace string, capsule string) {
+func (s *service) RegisterCapsule(namespace string, capsule *v1alpha2.Capsule) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -146,7 +146,9 @@ func (s *service) RegisterCapsule(namespace string, capsule string) {
 		s.capsules[namespace] = cs
 	}
 
-	if _, ok := cs[capsule]; !ok {
+	if _, ok := cs[capsule.GetName()]; ok {
+		cs[capsule.GetName()].capsule = capsule
+	} else {
 		ctx, cancel := context.WithCancel(context.Background())
 		c := &capsuleCache{
 			plugins: map[uuid.UUID]bool{},
@@ -154,9 +156,9 @@ func (s *service) RegisterCapsule(namespace string, capsule string) {
 			cancel:  cancel,
 			objects: map[pipeline.ObjectKey]*objectCache{},
 		}
-		cs[capsule] = c
+		cs[capsule.GetName()] = c
 
-		s.runForCapsule(ctx, namespace, c)
+		s.runForCapsule(ctx, c)
 	}
 }
 
@@ -274,7 +276,7 @@ type capsuleCache struct {
 	plugins map[uuid.UUID]bool
 
 	lock    sync.RWMutex
-	capsule string
+	capsule *v1alpha2.Capsule
 	objects map[pipeline.ObjectKey]*objectCache
 	cancel  context.CancelFunc
 }
@@ -286,7 +288,7 @@ func (c *capsuleCache) getStatuses() []*apipipeline.ObjectStatusChange {
 	var res []*apipipeline.ObjectStatusChange
 	for _, object := range c.objects {
 		res = append(res, &apipipeline.ObjectStatusChange{
-			Capsule: c.capsule,
+			Capsule: c.capsule.GetName(),
 			Change: &apipipeline.ObjectStatusChange_Updated{
 				Updated: object.getStatus(),
 			},
