@@ -12,6 +12,7 @@ rules:
   - secrets
   - pods
   - events
+  - nodes
   verbs:
   - get
   - list
@@ -152,6 +153,14 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - metrics.k8s.io
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
   - watch
 {{- range .Values.rbac.rules }}
 - apiGroups:

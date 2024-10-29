@@ -15,6 +15,7 @@ import (
 	"connectrpc.com/grpcreflect"
 	"github.com/go-logr/logr"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
+	"github.com/rigdev/rig-go-api/operator/api/v1/cluster/clusterconnect"
 	"github.com/rigdev/rig-go-api/operator/api/v1/pipeline/pipelineconnect"
 	"github.com/rigdev/rig/cmd/rig-operator/apichecker"
 	"github.com/rigdev/rig/cmd/rig-operator/certgen"
@@ -23,10 +24,12 @@ import (
 	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/controller/plugin"
 	"github.com/rigdev/rig/pkg/handler/api/capabilities"
+	"github.com/rigdev/rig/pkg/handler/api/cluster"
 	"github.com/rigdev/rig/pkg/handler/api/pipeline"
 	"github.com/rigdev/rig/pkg/manager"
 	"github.com/rigdev/rig/pkg/scheme"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
+	svccluster "github.com/rigdev/rig/pkg/service/cluster"
 	"github.com/rigdev/rig/pkg/service/config"
 	"github.com/rigdev/rig/pkg/service/objectstatus"
 	svcpipeline "github.com/rigdev/rig/pkg/service/pipeline"
@@ -132,6 +135,8 @@ func run(cmd *cobra.Command, _ []string) error {
 			svcpipeline.NewService,
 			objectstatus.NewService,
 			pipeline.NewHandler,
+			svccluster.New,
+			cluster.NewHandler,
 			manager.New,
 		),
 		fx.Invoke(
@@ -143,10 +148,12 @@ func run(cmd *cobra.Command, _ []string) error {
 				sh fx.Shutdowner,
 				cap capabilitiesconnect.ServiceHandler,
 				pip pipelineconnect.ServiceHandler,
+				cluster clusterconnect.ServiceHandler,
 			) {
 				mux := http.NewServeMux()
 				mux.Handle(capabilitiesconnect.NewServiceHandler(cap))
 				mux.Handle(pipelineconnect.NewServiceHandler(pip))
+				mux.Handle(clusterconnect.NewServiceHandler(cluster))
 				mux.Handle(grpcreflect.NewHandlerV1(grpcreflect.NewStaticReflector(
 					capabilitiesconnect.ServiceName,
 					pipelineconnect.ServiceName,
