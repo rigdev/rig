@@ -19,8 +19,22 @@ func (cfg *PlatformConfig) Validate() error {
 	errs = append(errs, cfg.Cluster.validate(field.NewPath("clusters"))...)
 	errs = append(errs, cfg.validateCapsuleExtensions(field.NewPath("capsuleExtensions"))...)
 	errs = append(errs, cfg.Client.validate(field.NewPath("client"))...)
+	errs = append(errs, cfg.Issues.validate(field.NewPath("issues"))...)
 
 	return errs.ToAggregate()
+}
+
+func (i Issues) validate(path *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	if i.OOM.Disabled && i.OOM.AutoFix != (OOMAutoFix{}) {
+		errs = append(errs, field.Invalid(path.Child("oom", "autoFix"), i.OOM.AutoFix, "cannot be set when `disabled` is true"))
+	}
+
+	if i.Provisioning.Disabled && i.Provisioning != (Provisioning{}) {
+		errs = append(errs, field.Invalid(path.Child("provisioning"), i.Provisioning, "cannot be set when `disabled` is true"))
+	}
+
+	return errs
 }
 
 func (c Cluster) validate(path *field.Path) field.ErrorList {

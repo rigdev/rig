@@ -56,6 +56,46 @@ type PlatformConfig struct {
 
 	// CapsuleExtensions contains typed extensions to the Capsule spec.
 	CapsuleExtensions map[string]Extension `json:"capsuleExtensions,omitempty"`
+
+	Issues Issues `json:"issues,omitempty"`
+}
+
+// Issues holds configuration for issue tracking, and possible remediation.
+type Issues struct {
+	//
+	OOM          OOM          `json:"oom,omitempty"`
+	Provisioning Provisioning `json:"provisioning,omitempty"`
+}
+
+type OOM struct {
+	// If true, the platform will ignore OOM issues.
+	Disabled bool `json:"disabled,omitempty"`
+	// If set, the platform will, if possible, automatically fix the OOM issue.
+	AutoFix OOMAutoFix `json:"autoFix,omitempty"`
+}
+
+type OOMAutoFix struct {
+	// The maximum number of bytes to automatically increase the memory limit by.
+	MaxMemoryBytes int `json:"max,omitempty"`
+	// The duration for which the issue must be present before the auto-fix is applied.
+	TimeAlive *metav1.Duration `json:"timeAlive,omitempty"`
+}
+
+type Provisioning struct {
+	// If true, the platform will ignore VPA issues.
+	Disabled bool                `json:"disabled,omitempty"`
+	AutoFix  ProvisioningAutoFix `json:"autoFix,omitempty"`
+}
+
+type ProvisioningAutoFix struct {
+	TimeAlive *metav1.Duration `json:"timeAlive,omitempty"`
+	CPU       Resources        `json:"cpu,omitempty"`
+	Memory    Resources        `json:"memory,omitempty"`
+}
+
+type Resources struct {
+	Max string `json:"max,omitempty"`
+	Min string `json:"min,omitempty"`
 }
 
 // Extension is a typed (through JSON Schema) expansion of a Platform resource,
