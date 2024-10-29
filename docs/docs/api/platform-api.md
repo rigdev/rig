@@ -133,6 +133,7 @@
 | /api.v1.cluster.Service/List | [ListRequest](#api-v1-cluster-ListRequest) | [ListResponse](#api-v1-cluster-ListResponse) |  |
 | /api.v1.cluster.Service/GetConfig | [GetConfigRequest](#api-v1-cluster-GetConfigRequest) | [GetConfigResponse](#api-v1-cluster-GetConfigResponse) | GetConfig returns the config for the cluster. |
 | /api.v1.cluster.Service/GetConfigs | [GetConfigsRequest](#api-v1-cluster-GetConfigsRequest) | [GetConfigsResponse](#api-v1-cluster-GetConfigsResponse) | GetConfigs returns the configs for all clusters. |
+| /api.v1.cluster.Service/ListNodePods | [ListNodePodsRequest](#api-v1-cluster-ListNodePodsRequest) | [ListNodePodsResponse](#api-v1-cluster-ListNodePodsResponse) |  |
 
 
 
@@ -2283,6 +2284,22 @@ A reference to a kubernetes object.
 | kind | [string](#string) |  | Type of object. |
 | name | [string](#string) |  | Name of the object. |
 | api_version | [string](#string) |  | Api version of the object. |
+
+
+
+
+
+
+<a name="model-Resources"></a>
+
+### Resources
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cpu_millis | [uint64](#uint64) |  |  |
+| memory_bytes | [uint64](#uint64) |  |  |
 
 
 
@@ -7507,6 +7524,37 @@ Empty Response for getting the configs of all clusters.
 
 
 
+<a name="api-v1-cluster-ListNodePodsRequest"></a>
+
+### ListNodePodsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cluster_name | [string](#string) |  |  |
+| node_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-cluster-ListNodePodsResponse"></a>
+
+### ListNodePodsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pods | [Pod](#api-v1-cluster-Pod) | repeated |  |
+
+
+
+
+
+
 <a name="api-v1-cluster-ListRequest"></a>
 
 ### ListRequest
@@ -7531,6 +7579,25 @@ Response for listing available clusters.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | clusters | [Cluster](#api-v1-cluster-Cluster) | repeated | List of clusters. |
+
+
+
+
+
+
+<a name="api-v1-cluster-Pod"></a>
+
+### Pod
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pod_name | [string](#string) |  |  |
+| namespace | [string](#string) |  |  |
+| project_name | [string](#string) |  |  |
+| environment_name | [string](#string) |  |  |
+| capsule_name | [string](#string) |  |  |
 
 
 
@@ -8594,6 +8661,7 @@ A docker image tag.
 | environment | [bool](#bool) |  |  |
 | capsule | [bool](#bool) |  |  |
 | metric_name | [bool](#bool) |  |  |
+| cluster | [string](#string) |  |  |
 | all | [bool](#bool) |  |  |
 
 
@@ -8645,6 +8713,7 @@ A docker image tag.
 | environment | [string](#string) |  |  |
 | capsule | [string](#string) |  |  |
 | metric_name | [string](#string) |  |  |
+| cluster | [string](#string) |  |  |
 
 
 

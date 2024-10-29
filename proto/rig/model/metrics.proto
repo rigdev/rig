@@ -47,3 +47,8 @@ message ObjectReference {
   // Api version of the object.
   string api_version = 3;
 }
+
+message Resources {
+  uint64 cpu_millis = 1;
+  uint64 memory_bytes = 2;
+}

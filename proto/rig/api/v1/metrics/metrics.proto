@@ -19,6 +19,7 @@ message Tags {
   string environment = 2;
   string capsule = 3;
   string metric_name = 4;
+  string cluster = 5;
 }
 
 message Keys {
@@ -26,5 +27,6 @@ message Keys {
   bool environment = 2;
   bool capsule = 3;
   bool metric_name = 4;
+  string cluster = 6;
   bool all = 5;
 }
