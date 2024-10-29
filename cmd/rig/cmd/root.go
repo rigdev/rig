@@ -22,6 +22,7 @@ import (
 	"github.com/rigdev/rig/cmd/rig/cmd/flags"
 	"github.com/rigdev/rig/cmd/rig/cmd/git"
 	"github.com/rigdev/rig/cmd/rig/cmd/group"
+	"github.com/rigdev/rig/cmd/rig/cmd/issue"
 	"github.com/rigdev/rig/cmd/rig/cmd/noop"
 	"github.com/rigdev/rig/cmd/rig/cmd/project"
 	"github.com/rigdev/rig/cmd/rig/cmd/role"
@@ -155,6 +156,7 @@ func Run(s *cli.SetupContext) error {
 	role.Setup(rootCmd, s)
 	git.Setup(rootCmd, s)
 	activity.Setup(rootCmd, s)
+	issue.Setup(rootCmd, s)
 
 	if s.AddTestCommand {
 		noop.Setup(rootCmd, s)
