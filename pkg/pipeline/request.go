@@ -505,7 +505,7 @@ func (r *RequestBase) applyChange(ctx context.Context, key ObjectKey, state Reso
 	switch state {
 	case ResourceStateUpdated:
 		r.logger.Info("update object", "object", key)
-		obj := r.newObjects[key]
+		object := r.newObjects[key]
 
 		// Edge case: Deployments, when they are scaled, will apply changes in the following order:
 		//   1) Change the number of replicas (pods) in the current ReplicaSet
@@ -518,18 +518,33 @@ func (r *RequestBase) applyChange(ctx context.Context, key ObjectKey, state Reso
 		// 	 1) First, we apply the template changes (use current number of replicas)
 		//	 2) Then apply the scale changes.
 		// That way the scale is only being applied to the new ReplicaSet.
-		if key.GroupVersionKind == AppsDeploymentGVK && obj.Materialized != nil {
-			currentObj := obj.Current.(*v1.Deployment)
-			newObj := obj.New.(*v1.Deployment)
-			materializedObj := obj.Materialized.(*v1.Deployment)
+		if key.GroupVersionKind == AppsDeploymentGVK && object.Materialized != nil {
+			currentObj := object.Current.(*v1.Deployment)
+			newObj := object.New.(*v1.Deployment)
+			materializedObj := object.Materialized.(*v1.Deployment)
+			for _, c := range currentObj.Status.Conditions {
+				if c.Type == v1.DeploymentProgressing && c.Reason == "ReplicaSetUpdated" {
+					// We have an ongoing rollout, wait a little with scale-up.
+					if newObj.Spec.Replicas != nil &&
+						currentObj.Spec.Replicas != nil &&
+						*newObj.Spec.Replicas > *currentObj.Spec.Replicas {
+						newObj.Spec.Replicas = currentObj.Spec.Replicas
+					}
+				}
+			}
+
 			if !equality.Semantic.DeepEqual(currentObj.Spec.Template, materializedObj.Spec.Template) {
 				// We have changes to the template - don't apply potential replica changes yet.
-				newObj.Spec.Replicas = currentObj.Spec.Replicas
+				if newObj.Spec.Replicas != nil &&
+					currentObj.Spec.Replicas != nil &&
+					*newObj.Spec.Replicas > *currentObj.Spec.Replicas {
+					newObj.Spec.Replicas = currentObj.Spec.Replicas
+				}
 			}
 		}
 
-		obj.New.SetResourceVersion(obj.Current.GetResourceVersion())
-		if err := r.client.Update(ctx, obj.New); err != nil {
+		object.New.SetResourceVersion(object.Current.GetResourceVersion())
+		if err := r.client.Update(ctx, object.New); err != nil {
 			return fmt.Errorf("could not update %s: %w", key.GroupVersionKind, err)
 		}
 
