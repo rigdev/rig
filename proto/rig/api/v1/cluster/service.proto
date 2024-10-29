@@ -12,6 +12,8 @@ service Service {
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
   // GetConfigs returns the configs for all clusters.
   rpc GetConfigs(GetConfigsRequest) returns (GetConfigsResponse) {}
+
+  rpc ListNodePods(ListNodePodsRequest) returns (ListNodePodsResponse) {}
 }
 
 // request for getting cluster config for an environment.
@@ -68,4 +70,21 @@ message ListRequest {
 message ListResponse {
   // List of clusters.
   repeated api.v1.cluster.Cluster clusters = 1;
+}
+
+message ListNodePodsRequest {
+  string cluster_name = 1;
+  string node_name = 2;
+}
+
+message ListNodePodsResponse {
+  repeated Pod pods = 1;
+}
+
+message Pod {
+  string pod_name = 1;
+  string namespace = 2;
+  string project_name = 3;
+  string environment_name = 4;
+  string capsule_name = 5;
 }
