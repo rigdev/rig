@@ -13,6 +13,7 @@ const (
 	ResourceEnvironment    = "environment"
 	ResourceMetrics        = "metrics"
 	ResourceActivity       = "activity"
+	ResourceIssue          = "issue"
 )
 
 func WithWildcard(resource string) string {

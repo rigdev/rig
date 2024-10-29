@@ -7,6 +7,7 @@ import (
 	"github.com/rigdev/rig-go-api/api/v1/environment/environmentconnect"
 	"github.com/rigdev/rig-go-api/api/v1/group/groupconnect"
 	"github.com/rigdev/rig-go-api/api/v1/image/imageconnect"
+	"github.com/rigdev/rig-go-api/api/v1/issue/issueconnect"
 	"github.com/rigdev/rig-go-api/api/v1/metrics/metricsconnect"
 	"github.com/rigdev/rig-go-api/api/v1/project/projectconnect"
 	"github.com/rigdev/rig-go-api/api/v1/role/roleconnect"
@@ -132,8 +133,14 @@ const (
 	ActionMetricsView = "metrics:view"
 )
 
+// Activity actions
 const (
 	ActionActivityView = "activity:view"
+)
+
+// Issue actions
+const (
+	ActionIssueView = "issue:view"
 )
 
 var CapsuleActionMap = map[string]string{
@@ -270,4 +277,8 @@ var MetricsActionMap = map[string]string{
 
 var ActivityActionMap = map[string]string{
 	activityconnect.ServiceGetActivitiesProcedure: ActionActivityView,
+}
+
+var IssueActionMap = map[string]string{
+	issueconnect.ServiceGetIssuesProcedure: ActionIssueView,
 }

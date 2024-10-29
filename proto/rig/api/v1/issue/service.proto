@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package api.v1.issue;
+
+import "model/common.proto";
+import "api/v1/issue/issue.proto";
+
+service Service {
+  // Get issues
+  rpc GetIssues(GetIssuesRequest) returns (GetIssuesResponse) {}
+}
+
+message GetIssuesRequest {
+  model.Pagination pagination = 1;
+  Filter filter = 2;
+}
+
+message Filter {
+  string project = 1;
+  string environment = 2;
+  string capsule = 3;
+  Level level = 4;
+  bool include_closed = 5;
+  bool include_stale = 6;
+}
+
+message GetIssuesResponse {
+  repeated Issue issues = 1;
+  uint64 total = 2;
+}
