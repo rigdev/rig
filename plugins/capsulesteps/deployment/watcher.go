@@ -278,8 +278,14 @@ func makeImagePullingCondition(container containerInfo) {
 		break
 	}
 
-	// Override event if latest event is wrong.
-	if container.status.ImageID != "" && cond.State != apipipeline.ObjectState_OBJECT_STATE_HEALTHY {
+	// Override event if imageID is present.
+	if cond.State != apipipeline.ObjectState_OBJECT_STATE_HEALTHY && container.status.ImageID != "" {
+		cond.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
+		cond.Message = "Image pulled"
+	}
+
+	// Override event if container is running.
+	if cond.State != apipipeline.ObjectState_OBJECT_STATE_HEALTHY && container.status.State.Running != nil {
 		cond.State = apipipeline.ObjectState_OBJECT_STATE_HEALTHY
 		cond.Message = "Image pulled"
 	}
@@ -489,7 +495,6 @@ func onDeploymentUpdated(
 func OnPodTemplatedUpdated(
 	template v1.PodTemplateSpec, objectWatcher plugin.ObjectWatcher,
 ) *apipipeline.ObjectStatusInfo {
-
 	objectWatcher.WatchSecondaryByLabels(PodLabelSelector(template), &corev1.Pod{}, onPodUpdated)
 	for _, v := range template.Spec.Volumes {
 		if v.ConfigMap != nil {

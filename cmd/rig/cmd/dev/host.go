@@ -76,10 +76,12 @@ func (c *Cmd) host(ctx context.Context, cmd *cobra.Command, _ []string) error {
 	}
 
 	if cfg.GetEnvironment() != "" {
+		c.Scope.GetCurrentContext().SetEnvironmentOverride(cfg.GetEnvironment())
 		flags.Flags.Environment = cfg.GetEnvironment()
 	}
 
 	if cfg.GetProject() != "" {
+		c.Scope.GetCurrentContext().SetProjectOverride(cfg.GetProject())
 		flags.Flags.Project = cfg.GetProject()
 	}
 
