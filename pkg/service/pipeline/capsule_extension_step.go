@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/errors"
 	"github.com/rigdev/rig/pkg/pipeline"
 	"github.com/rigdev/rig/pkg/uuid"
@@ -30,10 +31,12 @@ func (s *CapsuleExtensionStep) Apply(ctx context.Context, req pipeline.CapsuleRe
 }
 
 func (s *CapsuleExtensionStep) WatchObjectStatus(
-	ctx context.Context, namespace, capsule string, callback pipeline.ObjectStatusCallback,
+	ctx context.Context, capsule *v1alpha2.Capsule, callback pipeline.ObjectStatusCallback,
 ) error {
-	// TODO: We want to opt out if not relevant for this capsule.
-	return s.step.WatchObjectStatus(ctx, namespace, capsule, callback)
+	if _, ok := capsule.Spec.Extensions[s.name]; !ok {
+		return nil
+	}
+	return s.step.WatchObjectStatus(ctx, capsule, callback)
 }
 
 func (s *CapsuleExtensionStep) PluginIDs() []uuid.UUID {
@@ -73,7 +76,7 @@ func (s *CapsuleExtensionValidationStep) Apply(
 }
 
 func (s *CapsuleExtensionValidationStep) WatchObjectStatus(
-	_ context.Context, _, _ string, _ pipeline.ObjectStatusCallback,
+	_ context.Context, _ *v1alpha2.Capsule, _ pipeline.ObjectStatusCallback,
 ) error {
 	return nil
 }

@@ -173,11 +173,10 @@ func (p *pluginExecutor) Run(ctx context.Context, req pipeline.CapsuleRequest, o
 
 func (p *pluginExecutor) WatchObjectStatus(
 	ctx context.Context,
-	namespace string,
-	capsule string,
+	capsule *v1alpha2.Capsule,
 	callback pipeline.ObjectStatusCallback,
 ) error {
-	return p.pluginClient.WatchObjectStatus(ctx, namespace, capsule, callback, p.id)
+	return p.pluginClient.WatchObjectStatus(ctx, capsule, callback, p.id)
 }
 
 func (p *pluginExecutor) ComputeConfig(ctx context.Context, req pipeline.CapsuleRequest) (string, error) {
@@ -284,14 +283,13 @@ func (m *pluginClient) setupGRPCServer(req pipeline.CapsuleRequest) (*grpc.Serve
 
 func (m *pluginClient) WatchObjectStatus(
 	ctx context.Context,
-	namespace string,
-	capsule string,
+	capsule *v1alpha2.Capsule,
 	callback pipeline.ObjectStatusCallback,
 	pluginID uuid.UUID,
 ) error {
 	c, err := m.client.WatchObjectStatus(ctx, &apiplugin.WatchObjectStatusRequest{
-		Namespace: namespace,
-		Capsule:   capsule,
+		Namespace: capsule.GetNamespace(),
+		Capsule:   capsule.GetName(),
 	})
 	if err != nil {
 		return err
@@ -303,7 +301,7 @@ func (m *pluginClient) WatchObjectStatus(
 			return err
 		}
 
-		callback.UpdateStatus(namespace, capsule, pluginID, res.GetChange())
+		callback.UpdateStatus(capsule.GetNamespace(), capsule.GetName(), pluginID, res.GetChange())
 	}
 }
 

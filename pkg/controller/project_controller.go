@@ -99,8 +99,7 @@ func (s namespaceStep) Apply(_ context.Context, req pipeline.ProjectEnvironmentR
 
 func (s namespaceStep) WatchObjectStatus(
 	_ context.Context,
-	_ string,
-	_ string,
+	_ *v1alpha2.Capsule,
 	_ pipeline.ObjectStatusCallback,
 ) error {
 	return nil

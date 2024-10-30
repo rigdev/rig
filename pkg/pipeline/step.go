@@ -4,6 +4,7 @@ import (
 	"context"
 
 	apiplugin "github.com/rigdev/rig-go-api/operator/api/v1/plugin"
+	"github.com/rigdev/rig/pkg/api/v1alpha2"
 	"github.com/rigdev/rig/pkg/uuid"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -19,7 +20,7 @@ type Options struct {
 type Step[T Request] interface {
 	Name() string
 	Apply(ctx context.Context, req T, opts Options) error
-	WatchObjectStatus(ctx context.Context, namespace, capsule string, callback ObjectStatusCallback) error
+	WatchObjectStatus(ctx context.Context, capsule *v1alpha2.Capsule, callback ObjectStatusCallback) error
 	ComputeConfig(ctx context.Context, req T) StepConfigResult
 	PluginIDs() []uuid.UUID
 }

@@ -296,7 +296,7 @@ func (r *CapsuleReconciler) initializeReconciler(ctx context.Context) {
 		}
 
 		for _, capsule := range capsules.Items {
-			r.ObjectStatusService.RegisterCapsule(capsule.GetNamespace(), capsule.GetName())
+			r.ObjectStatusService.RegisterCapsule(capsule.GetNamespace(), &capsule)
 		}
 
 		break
@@ -367,7 +367,7 @@ func (r *CapsuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	r.ObjectStatusService.RegisterCapsule(capsule.GetNamespace(), capsule.GetName())
+	r.ObjectStatusService.RegisterCapsule(capsule.GetNamespace(), capsule)
 
 	var options []pipeline.CapsuleRequestOption
 	if v, _ := strconv.ParseBool(capsule.Annotations[pipeline.AnnotationOverrideOwnership]); v {
