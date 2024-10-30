@@ -523,7 +523,7 @@ func (r *RequestBase) applyChange(ctx context.Context, key ObjectKey, state Reso
 			newObj := object.New.(*v1.Deployment)
 			materializedObj := object.Materialized.(*v1.Deployment)
 			for _, c := range currentObj.Status.Conditions {
-				if c.Type == v1.DeploymentProgressing && c.Reason == "ReplicaSetUpdated" {
+				if c.Type == v1.DeploymentProgressing && (c.Reason == "NewReplicaSetCreated" || c.Reason == "ReplicaSetUpdated") {
 					// We have an ongoing rollout, wait a little with scale-up.
 					if newObj.Spec.Replicas != nil &&
 						currentObj.Spec.Replicas != nil &&
