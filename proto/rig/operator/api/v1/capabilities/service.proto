@@ -2,10 +2,12 @@ syntax = "proto3";
 
 package api.v1.capabilities;
 
+import "config/v1alpha1/generated.proto";
+
 // The service for getting operator capabilities
 service Service {
-  rpc Get(GetRequest) returns (GetResponse) {}
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse) {}
+  rpc Get(GetRequest) returns (GetResponse) {}
   rpc GetPlugins(GetPluginsRequest) returns (GetPluginsResponse) {}
 }
 
@@ -22,6 +24,7 @@ message GetConfigRequest {}
 
 message GetConfigResponse {
   string yaml = 1;
+  config.v1alpha1.OperatorConfig operator_config = 2;
 }
 
 message GetPluginsRequest {}

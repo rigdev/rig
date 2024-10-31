@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package config.v1alpha1;
+
+message OperatorConfig {
+  string kind = 1;
+  string apiVersion = 2;
+  bool webhooksEnabled = 3;
+  bool devModeEnabled = 4;
+  bool leaderElectionEnabled = 5;
+  Pipeline pipeline = 7;
+}
+
+message Pipeline {
+  CapsuleStep serviceAccountStep = 1;
+  CapsuleStep deploymentStep = 2;
+  CapsuleStep routesStep = 3;
+  CapsuleStep cronJobsStep = 4;
+  CapsuleStep vpaStep = 5;
+  CapsuleStep serviceMonitorStep = 6;
+  repeated Step steps = 7;
+  repeated CustomPlugin customPlugins = 8;
+  map<string, CapsuleStep> capsuleExtensions = 9;
+}
+
+message CapsuleStep {
+  string plugin = 1;
+  string config = 2;
+}
+
+message Step {
+  string tag = 1;
+  CapsuleMatch match = 2;
+  repeated Plugin plugins = 3;
+  repeated string namespaces = 4;
+  repeated string capsules = 5;
+  bool enableForPlatform = 6;
+}
+
+message CapsuleMatch {
+  repeated string namespaces = 1;
+  repeated string names = 2;
+  map<string, string> annotations = 3;
+  bool enableForPlatform = 4;
+}
+
+message Plugin {
+  string tag = 1;
+  string name = 2;
+  string plugin = 3;
+  string config = 4;
+}
+
+message CustomPlugin {
+  string image = 1;
+}

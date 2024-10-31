@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
 	v1 "github.com/rigdev/rig/pkg/api/platform/v1"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
@@ -41,8 +42,9 @@ var (
 		"google/protobuf/struct.proto": struct{}{},
 	}
 	packageRewrites = map[string]string{
-		"github.com/rigdev/rig/pkg/api/v1alpha2":    "v1alpha2",
-		"github.com/rigdev/rig/pkg/api/platform/v1": "platform/v1",
+		"github.com/rigdev/rig/pkg/api/v1alpha2":        "v1alpha2",
+		"github.com/rigdev/rig/pkg/api/platform/v1":     "platform/v1",
+		"github.com/rigdev/rig/pkg/api/config/v1alpha1": "config/v1alpha1",
 	}
 	compiledTypes = []any{
 		v1.CapsuleSet{},
@@ -50,6 +52,7 @@ var (
 		v1.Environment{},
 		v1.Project{},
 		v1.HostCapsule{},
+		v1alpha1.OperatorConfig{},
 	}
 )
 
