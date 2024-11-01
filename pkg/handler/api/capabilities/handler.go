@@ -58,9 +58,9 @@ func (h *handler) GetConfig(
 		return nil, err
 	}
 	return connect.NewResponse(&capabilities.GetConfigResponse{
-		Yaml:           string(bytes),
-		OperatorConfig: config,
-		Version: build.Version()
+		Yaml:            string(bytes),
+		OperatorConfig:  config,
+		OperatorVersion: build.Version(),
 	}), nil
 }
 
