@@ -4,12 +4,15 @@ import (
 	"context"
 
 	connect "connectrpc.com/connect"
+	configv1alpha1 "github.com/rigdev/rig-go-api/config/v1alpha1"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities"
 	"github.com/rigdev/rig-go-api/operator/api/v1/capabilities/capabilitiesconnect"
 	"github.com/rigdev/rig/pkg/api/config/v1alpha1"
+	"github.com/rigdev/rig/pkg/build"
 	"github.com/rigdev/rig/pkg/obj"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
 )
 
 func NewHandler(
@@ -50,8 +53,14 @@ func (h *handler) GetConfig(
 	if err != nil {
 		return nil, err
 	}
+	config := &configv1alpha1.OperatorConfig{}
+	if err := yaml.Unmarshal(bytes, config, yaml.DisallowUnknownFields); err != nil {
+		return nil, err
+	}
 	return connect.NewResponse(&capabilities.GetConfigResponse{
-		Yaml: string(bytes),
+		Yaml:            string(bytes),
+		OperatorConfig:  config,
+		OperatorVersion: build.Version(),
 	}), nil
 }
 

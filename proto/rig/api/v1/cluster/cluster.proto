@@ -2,8 +2,12 @@ syntax = "proto3";
 
 package api.v1.cluster;
 
+import "config/v1alpha1/generated.proto";
+
 // Cluster model.
 message Cluster {
   // ID of the cluster.
   string cluster_id = 1;
+  config.v1alpha1.OperatorConfig operator_config = 2;
+  string operator_version = 3;
 }
