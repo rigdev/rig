@@ -123,6 +123,7 @@
 
 
 
+
 ### api.v1.cluster.Service
 <a name="api-v1-cluster-Service"></a>
 
@@ -386,7 +387,6 @@
 | ----------- | ------------ | ------------- | ------------|
 | /api.v1.user.settings.Service/GetSettings | [GetSettingsRequest](#api-v1-user-settings-GetSettingsRequest) | [GetSettingsResponse](#api-v1-user-settings-GetSettingsResponse) | Gets the users settings for the current project. |
 | /api.v1.user.settings.Service/UpdateSettings | [UpdateSettingsRequest](#api-v1-user-settings-UpdateSettingsRequest) | [UpdateSettingsResponse](#api-v1-user-settings-UpdateSettingsResponse) | Sets the users settings for the current project. |
-
 
 
 
@@ -7423,6 +7423,181 @@ Deprecated: sidecar interface configuration
 
 
 
+<a name="config_v1alpha1_generated-proto"></a>
+
+## config/v1alpha1/generated.proto
+
+
+
+<a name="config-v1alpha1-CapsuleMatch"></a>
+
+### CapsuleMatch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespaces | [string](#string) | repeated |  |
+| names | [string](#string) | repeated |  |
+| annotations | [CapsuleMatch.AnnotationsEntry](#config-v1alpha1-CapsuleMatch-AnnotationsEntry) | repeated |  |
+| enableForPlatform | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="config-v1alpha1-CapsuleMatch-AnnotationsEntry"></a>
+
+### CapsuleMatch.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="config-v1alpha1-CapsuleStep"></a>
+
+### CapsuleStep
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| plugin | [string](#string) |  |  |
+| config | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="config-v1alpha1-CustomPlugin"></a>
+
+### CustomPlugin
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="config-v1alpha1-OperatorConfig"></a>
+
+### OperatorConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| apiVersion | [string](#string) |  |  |
+| webhooksEnabled | [bool](#bool) |  |  |
+| devModeEnabled | [bool](#bool) |  |  |
+| leaderElectionEnabled | [bool](#bool) |  |  |
+| pipeline | [Pipeline](#config-v1alpha1-Pipeline) |  |  |
+
+
+
+
+
+
+<a name="config-v1alpha1-Pipeline"></a>
+
+### Pipeline
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| serviceAccountStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
+| deploymentStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
+| routesStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
+| cronJobsStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
+| vpaStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
+| serviceMonitorStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
+| steps | [Step](#config-v1alpha1-Step) | repeated |  |
+| customPlugins | [CustomPlugin](#config-v1alpha1-CustomPlugin) | repeated |  |
+| capsuleExtensions | [Pipeline.CapsuleExtensionsEntry](#config-v1alpha1-Pipeline-CapsuleExtensionsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="config-v1alpha1-Pipeline-CapsuleExtensionsEntry"></a>
+
+### Pipeline.CapsuleExtensionsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
+
+
+
+
+
+
+<a name="config-v1alpha1-Plugin"></a>
+
+### Plugin
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tag | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| plugin | [string](#string) |  |  |
+| config | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="config-v1alpha1-Step"></a>
+
+### Step
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tag | [string](#string) |  |  |
+| match | [CapsuleMatch](#config-v1alpha1-CapsuleMatch) |  |  |
+| plugins | [Plugin](#config-v1alpha1-Plugin) | repeated |  |
+| namespaces | [string](#string) | repeated |  |
+| capsules | [string](#string) | repeated |  |
+| enableForPlatform | [bool](#bool) |  |  |
+
+
+
+
+
+
+
+
+
+
+
+
+
 <a name="api_v1_cluster_cluster-proto"></a>
 
 ## api/v1/cluster/cluster.proto
@@ -7438,6 +7613,8 @@ Cluster model.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | cluster_id | [string](#string) |  | ID of the cluster. |
+| operator_config | [config.v1alpha1.OperatorConfig](#config-v1alpha1-OperatorConfig) |  |  |
+| operator_version | [string](#string) |  |  |
 
 
 
@@ -11704,181 +11881,6 @@ Request for updating users settings for the Rig project.
 
 ### UpdateSettingsResponse
 Empty response for updating users settings for the Rig project.
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a name="config_v1alpha1_generated-proto"></a>
-
-## config/v1alpha1/generated.proto
-
-
-
-<a name="config-v1alpha1-CapsuleMatch"></a>
-
-### CapsuleMatch
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| namespaces | [string](#string) | repeated |  |
-| names | [string](#string) | repeated |  |
-| annotations | [CapsuleMatch.AnnotationsEntry](#config-v1alpha1-CapsuleMatch-AnnotationsEntry) | repeated |  |
-| enableForPlatform | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="config-v1alpha1-CapsuleMatch-AnnotationsEntry"></a>
-
-### CapsuleMatch.AnnotationsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="config-v1alpha1-CapsuleStep"></a>
-
-### CapsuleStep
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| plugin | [string](#string) |  |  |
-| config | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="config-v1alpha1-CustomPlugin"></a>
-
-### CustomPlugin
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| image | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="config-v1alpha1-OperatorConfig"></a>
-
-### OperatorConfig
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| kind | [string](#string) |  |  |
-| apiVersion | [string](#string) |  |  |
-| webhooksEnabled | [bool](#bool) |  |  |
-| devModeEnabled | [bool](#bool) |  |  |
-| leaderElectionEnabled | [bool](#bool) |  |  |
-| pipeline | [Pipeline](#config-v1alpha1-Pipeline) |  |  |
-
-
-
-
-
-
-<a name="config-v1alpha1-Pipeline"></a>
-
-### Pipeline
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| serviceAccountStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
-| deploymentStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
-| routesStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
-| cronJobsStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
-| vpaStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
-| serviceMonitorStep | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
-| steps | [Step](#config-v1alpha1-Step) | repeated |  |
-| customPlugins | [CustomPlugin](#config-v1alpha1-CustomPlugin) | repeated |  |
-| capsuleExtensions | [Pipeline.CapsuleExtensionsEntry](#config-v1alpha1-Pipeline-CapsuleExtensionsEntry) | repeated |  |
-
-
-
-
-
-
-<a name="config-v1alpha1-Pipeline-CapsuleExtensionsEntry"></a>
-
-### Pipeline.CapsuleExtensionsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [CapsuleStep](#config-v1alpha1-CapsuleStep) |  |  |
-
-
-
-
-
-
-<a name="config-v1alpha1-Plugin"></a>
-
-### Plugin
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| tag | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| plugin | [string](#string) |  |  |
-| config | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="config-v1alpha1-Step"></a>
-
-### Step
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| tag | [string](#string) |  |  |
-| match | [CapsuleMatch](#config-v1alpha1-CapsuleMatch) |  |  |
-| plugins | [Plugin](#config-v1alpha1-Plugin) | repeated |  |
-| namespaces | [string](#string) | repeated |  |
-| capsules | [string](#string) | repeated |  |
-| enableForPlatform | [bool](#bool) |  |  |
 
 
 
