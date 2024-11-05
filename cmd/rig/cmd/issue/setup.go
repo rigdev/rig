@@ -25,6 +25,8 @@ var (
 
 	limit  int
 	offset int
+
+	issueLevel string
 )
 
 type Cmd struct {
@@ -81,19 +83,25 @@ func Setup(parent *cobra.Command, s *cli.SetupContext) {
 		"Filter activities by capsule ID",
 	)
 
+	issue.Flags().StringVar(&issueLevel, "level", "", "Filter issues by level - info, minor, major, critical")
+
 	parent.AddCommand(issue)
 }
 
 func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
+	levelFilter := flagToLevel()
+
 	resp, err := c.Rig.Issue().GetIssues(ctx, connect.NewRequest(&issue.GetIssuesRequest{
 		Pagination: &model.Pagination{
-			Limit:  uint32(limit),
-			Offset: uint32(offset),
+			Limit:      uint32(limit),
+			Offset:     uint32(offset),
+			Descending: false,
 		},
 		Filter: &issue.Filter{
 			Project:     projectFilter,
 			Environment: environmentFilter,
 			Capsule:     capsuleFilter,
+			Level:       levelFilter,
 		},
 	}))
 	if err != nil {
@@ -130,6 +138,21 @@ func (c *Cmd) list(ctx context.Context, _ *cobra.Command, _ []string) error {
 	fmt.Println(t.Render())
 
 	return nil
+}
+
+func flagToLevel() issue.Level {
+	switch issueLevel {
+	case "info":
+		return issue.Level_LEVEL_INFORMATIVE
+	case "minor":
+		return issue.Level_LEVEL_MINOR
+	case "major":
+		return issue.Level_LEVEL_MAJOR
+	case "critical":
+		return issue.Level_LEVEL_CRITICAL
+	default:
+		return issue.Level_LEVEL_UNSPECIFIED
+	}
 }
 
 func issueReferenceToString(r *issue.Reference) string {
