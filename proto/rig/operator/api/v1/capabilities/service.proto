@@ -26,6 +26,7 @@ message GetConfigResponse {
   string yaml = 1;
   config.v1alpha1.OperatorConfig operator_config = 2;
   string operator_version = 3;
+  string k8s_version = 4;
 }
 
 message GetPluginsRequest {}
