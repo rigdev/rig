@@ -19,7 +19,6 @@ message Node {
   string node_name = 1;
   model.Resources allocateable = 2;
   model.Resources usage = 3;
-  uint64 max_pods = 4;
 }
 
 message GetNodePodsRequest {

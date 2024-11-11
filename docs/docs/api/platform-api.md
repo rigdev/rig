@@ -134,6 +134,7 @@
 | /api.v1.cluster.Service/List | [ListRequest](#api-v1-cluster-ListRequest) | [ListResponse](#api-v1-cluster-ListResponse) |  |
 | /api.v1.cluster.Service/GetConfig | [GetConfigRequest](#api-v1-cluster-GetConfigRequest) | [GetConfigResponse](#api-v1-cluster-GetConfigResponse) | GetConfig returns the config for the cluster. |
 | /api.v1.cluster.Service/GetConfigs | [GetConfigsRequest](#api-v1-cluster-GetConfigsRequest) | [GetConfigsResponse](#api-v1-cluster-GetConfigsResponse) | GetConfigs returns the configs for all clusters. |
+| /api.v1.cluster.Service/ListNodes | [ListNodesRequest](#api-v1-cluster-ListNodesRequest) | [ListNodesResponse](#api-v1-cluster-ListNodesResponse) |  |
 | /api.v1.cluster.Service/ListNodePods | [ListNodePodsRequest](#api-v1-cluster-ListNodePodsRequest) | [ListNodePodsResponse](#api-v1-cluster-ListNodePodsResponse) |  |
 
 
@@ -2301,6 +2302,7 @@ A reference to a kubernetes object.
 | ----- | ---- | ----- | ----------- |
 | cpu_millis | [uint64](#uint64) |  |  |
 | memory_bytes | [uint64](#uint64) |  |  |
+| pods | [uint64](#uint64) |  |  |
 
 
 
@@ -7615,6 +7617,10 @@ Cluster model.
 | cluster_id | [string](#string) |  | ID of the cluster. |
 | operator_config | [config.v1alpha1.OperatorConfig](#config-v1alpha1-OperatorConfig) |  |  |
 | operator_version | [string](#string) |  |  |
+| k8s_version | [string](#string) |  |  |
+| allocateable | [model.Resources](#model-Resources) |  |  |
+| usage | [model.Resources](#model-Resources) |  |  |
+| utilization | [model.Resources](#model-Resources) |  |  |
 
 
 
@@ -7727,6 +7733,36 @@ Empty Response for getting the configs of all clusters.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | pods | [Pod](#api-v1-cluster-Pod) | repeated |  |
+
+
+
+
+
+
+<a name="api-v1-cluster-ListNodesRequest"></a>
+
+### ListNodesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cluster_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="api-v1-cluster-ListNodesResponse"></a>
+
+### ListNodesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| nodes | [api.v1.operator.cluster.Node](#api-v1-operator-cluster-Node) | repeated |  |
 
 
 

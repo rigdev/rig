@@ -3,7 +3,9 @@ syntax = "proto3";
 package api.v1.cluster;
 
 import "api/v1/cluster/cluster.proto";
+import "operator/api/v1/cluster/service.proto";
 import "model/common.proto";
+import "model/metrics.proto";
 
 // The service to your cluster running Rig.
 service Service {
@@ -13,6 +15,7 @@ service Service {
   // GetConfigs returns the configs for all clusters.
   rpc GetConfigs(GetConfigsRequest) returns (GetConfigsResponse) {}
 
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse) {}
   rpc ListNodePods(ListNodePodsRequest) returns (ListNodePodsResponse) {}
 }
 
@@ -70,6 +73,14 @@ message ListRequest {
 message ListResponse {
   // List of clusters.
   repeated api.v1.cluster.Cluster clusters = 1;
+}
+
+message ListNodesRequest {
+  string cluster_id = 1;
+}
+
+message ListNodesResponse {
+  repeated api.v1.operator.cluster.Node nodes = 1;
 }
 
 message ListNodePodsRequest {
