@@ -43,8 +43,8 @@ func (s *service) GetNodes(ctx context.Context) ([]*api_cluster.Node, error) {
 			Allocateable: &model.Resources{
 				CpuMillis:   uint64(node.Status.Allocatable.Cpu().MilliValue()),
 				MemoryBytes: uint64(node.Status.Allocatable.Memory().Value()),
+				Pods:        uint64(node.Status.Allocatable.Pods().Value()),
 			},
-			MaxPods: uint64(node.Status.Allocatable.Pods().Value()),
 		}
 	}
 
@@ -60,13 +60,13 @@ func (s *service) GetNodes(ctx context.Context) ([]*api_cluster.Node, error) {
 				NodeName:     node.GetName(),
 				Allocateable: &model.Resources{},
 				Usage:        &model.Resources{},
-				MaxPods:      0,
 			}
 			nodes[node.GetName()] = n
 		}
 		n.Usage = &model.Resources{
 			CpuMillis:   uint64(node.Usage.Cpu().MilliValue()),
 			MemoryBytes: uint64(node.Usage.Memory().Value()),
+			Pods:        uint64(node.Usage.Pods().Value()),
 		}
 	}
 
