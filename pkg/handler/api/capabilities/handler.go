@@ -12,6 +12,7 @@ import (
 	"github.com/rigdev/rig/pkg/obj"
 	svccapabilities "github.com/rigdev/rig/pkg/service/capabilities"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/yaml"
 )
 
@@ -19,18 +20,21 @@ func NewHandler(
 	capabilities svccapabilities.Service,
 	cfg *v1alpha1.OperatorConfig,
 	scheme *runtime.Scheme,
+	discoveryClient discovery.DiscoveryInterface,
 ) capabilitiesconnect.ServiceHandler {
 	return &handler{
-		capabilities: capabilities,
-		cfg:          cfg,
-		scheme:       scheme,
+		capabilities:    capabilities,
+		cfg:             cfg,
+		scheme:          scheme,
+		discoveryClient: discoveryClient,
 	}
 }
 
 type handler struct {
-	capabilities svccapabilities.Service
-	scheme       *runtime.Scheme
-	cfg          *v1alpha1.OperatorConfig
+	capabilities    svccapabilities.Service
+	scheme          *runtime.Scheme
+	cfg             *v1alpha1.OperatorConfig
+	discoveryClient discovery.DiscoveryInterface
 }
 
 // Get implements capabilitiesconnect.ServiceClient.
@@ -57,10 +61,15 @@ func (h *handler) GetConfig(
 	if err := yaml.Unmarshal(bytes, config, yaml.DisallowUnknownFields); err != nil {
 		return nil, err
 	}
+	version, err := h.discoveryClient.ServerVersion()
+	if err != nil {
+		return nil, err
+	}
 	return connect.NewResponse(&capabilities.GetConfigResponse{
 		Yaml:            string(bytes),
 		OperatorConfig:  config,
 		OperatorVersion: build.Version(),
+		K8SVersion:      version.String(),
 	}), nil
 }
 

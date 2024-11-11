@@ -226,9 +226,11 @@ var ProjectActionMap = map[string]string{
 }
 
 var ClusterActionMap = map[string]string{
-	clusterconnect.ServiceGetConfigProcedure:  ActionClusterConfigView,
-	clusterconnect.ServiceGetConfigsProcedure: ActionClusterConfigView,
-	clusterconnect.ServiceListProcedure:       ActionClusterConfigView,
+	clusterconnect.ServiceGetConfigProcedure:    ActionClusterConfigView,
+	clusterconnect.ServiceGetConfigsProcedure:   ActionClusterConfigView,
+	clusterconnect.ServiceListProcedure:         ActionClusterConfigView,
+	clusterconnect.ServiceListNodesProcedure:    ActionClusterConfigView,
+	clusterconnect.ServiceListNodePodsProcedure: ActionClusterConfigView,
 }
 
 var ImageActionMap = map[string]string{
