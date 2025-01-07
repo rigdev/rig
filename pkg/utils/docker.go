@@ -4,19 +4,19 @@ import (
 	"context"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/google/go-containerregistry/pkg/name"
 )
 
-func ImageExistsNatively(ctx context.Context, dc *client.Client, image string) (bool, string, error) {
-	image = strings.TrimPrefix(image, "docker.io/library/")
-	image = strings.TrimPrefix(image, "index.docker.io/library/")
-	is, err := dc.ImageList(ctx, types.ImageListOptions{
+func ImageExistsNatively(ctx context.Context, dc *client.Client, img string) (bool, string, error) {
+	img = strings.TrimPrefix(img, "docker.io/library/")
+	img = strings.TrimPrefix(img, "index.docker.io/library/")
+	is, err := dc.ImageList(ctx, image.ListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "reference",
-			Value: image,
+			Value: img,
 		}),
 	})
 	if err != nil {
@@ -27,7 +27,7 @@ func ImageExistsNatively(ctx context.Context, dc *client.Client, image string) (
 		return false, "", nil
 	}
 
-	ref, err := name.ParseReference(image)
+	ref, err := name.ParseReference(img)
 	if err != nil {
 		return false, "", err
 	}

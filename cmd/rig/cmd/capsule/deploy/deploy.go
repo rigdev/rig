@@ -14,8 +14,8 @@ import (
 	"unicode/utf8"
 
 	"connectrpc.com/connect"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	container_name "github.com/google/go-containerregistry/pkg/name"
 	"github.com/jedib0t/go-pretty/v6/progress"
@@ -741,7 +741,7 @@ func makeDevRegistryImageName(image string, devRegistryHost string) (string, err
 	return tag.String(), nil
 }
 
-func (c *Cmd) pushToDevRegistry(ctx context.Context, image string, host string) (string, error) {
+func (c *Cmd) pushToDevRegistry(ctx context.Context, img string, host string) (string, error) {
 	ac := registry.AuthConfig{
 		ServerAddress: host,
 	}
@@ -750,7 +750,7 @@ func (c *Cmd) pushToDevRegistry(ctx context.Context, image string, host string) 
 		return "", err
 	}
 
-	rc, err := c.DockerClient.ImagePush(ctx, image, types.ImagePushOptions{
+	rc, err := c.DockerClient.ImagePush(ctx, img, image.PushOptions{
 		RegistryAuth: base64.StdEncoding.EncodeToString(secret),
 	})
 	if err != nil {
@@ -856,7 +856,7 @@ func (c *Cmd) getDaemonImage(ctx context.Context) (*imageInfo, error) {
 }
 
 func (c *Cmd) getImagePrompts(ctx context.Context) ([]imageInfo, [][]string, error) {
-	res, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{
+	res, err := c.DockerClient.ImageList(ctx, image.ListOptions{
 		Filters: filters.NewArgs(filters.Arg("dangling", "false")),
 	})
 	if err != nil {

@@ -12,8 +12,8 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/fatih/color"
 	"github.com/rigdev/rig/cmd/common"
 	"github.com/rigdev/rig/cmd/rig-operator/certgen"
@@ -275,9 +275,9 @@ func (c *Cmd) deployInner(ctx context.Context, p deployParams) error {
 	return nil
 }
 
-func (c *Cmd) loadImage(ctx context.Context, cmd *common.DeferredOutputCommand, image, tag string) error {
-	imageTag := fmt.Sprintf("%s:%s", image, tag)
-	res, err := c.DockerClient.ImageList(ctx, types.ImageListOptions{
+func (c *Cmd) loadImage(ctx context.Context, cmd *common.DeferredOutputCommand, img, tag string) error {
+	imageTag := fmt.Sprintf("%s:%s", img, tag)
+	res, err := c.DockerClient.ImageList(ctx, image.ListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "reference",
 			Value: imageTag,
