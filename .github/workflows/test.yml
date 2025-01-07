@@ -141,5 +141,6 @@ jobs:
           if [ -n "$GIT_STATUS" ]; then
             echo "Repository has uncommited files:"
             echo "$GIT_STATUS"
+            git diff
             exit 1
           fi
